@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -77,12 +63,13 @@ public class StatementExtractor {
         PsiSwitchExpression switchExpression =
           PsiTreeUtil.getParentOfType(parentElement, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
         if (switchExpression != null && PsiTreeUtil.isAncestor(root, switchExpression, false)) {
-          boolean isBreak =
-            parentElement instanceof PsiBreakStatement && ((PsiBreakStatement)parentElement).findExitedElement() == switchExpression;
+          boolean isYield =
+            parentElement instanceof PsiBreakStatement && ((PsiBreakStatement)parentElement).findExitedElement() == switchExpression ||
+            parentElement instanceof PsiYieldStatement && ((PsiYieldStatement)parentElement).findEnclosingExpression() == switchExpression;
           boolean isRuleExpression =
             parentElement instanceof PsiExpressionStatement && parentElement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)parentElement.getParent()).getEnclosingSwitchBlock() == switchExpression;
-          if (isBreak || isRuleExpression) {
+          if (isYield || isRuleExpression) {
             result = new Switch(switchExpression, Collections.singletonMap((PsiStatement)parentElement, result));
           }
           else {
@@ -273,6 +260,13 @@ public class StatementExtractor {
         }
 
         @Override
+        public void visitYieldStatement(PsiYieldStatement statement) {
+          if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
+            process(statement);
+          }
+        }
+
+        @Override
         public void visitExpression(PsiExpression expression) {
           // Do not go into any expressions
         }
@@ -288,7 +282,7 @@ public class StatementExtractor {
         }
       });
       replacementMap.forEach((statement, replacements) -> {
-        boolean keep = statement instanceof PsiBreakStatement && shouldKeepBreak(statement);
+        boolean keep = (statement instanceof PsiBreakStatement || statement instanceof PsiYieldStatement) && shouldKeepBreak(statement);
         if (!keep && replacements.length == 1) {
           statement.replace(replacements[0]);
         }
@@ -302,11 +296,14 @@ public class StatementExtractor {
               parent.addBefore(replacement, statement);
             }
           }
-          if (keep) {
-            Objects.requireNonNull(((PsiBreakStatement)statement).getValueExpression()).delete();
+          if (!keep) {
+            statement.delete();
+          }
+          else if (statement instanceof PsiYieldStatement) {
+            statement.replace(factory.createStatementFromText("break;", null));
           }
           else {
-            statement.delete();
+            Objects.requireNonNull(((PsiBreakStatement)statement).getValueExpression()).delete();
           }
         }
       });
@@ -314,7 +311,9 @@ public class StatementExtractor {
     }
 
     public boolean shouldKeepBreak(PsiStatement statement) {
-      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) instanceof PsiStatement) return true;
+      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) instanceof PsiStatement) {
+        return true;
+      }
       PsiElement parent = statement.getParent();
       if (parent instanceof PsiCodeBlock) {
         PsiElement gParent = parent.getParent();

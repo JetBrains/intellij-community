@@ -14,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    * @param settings The code style settings which can be assigned to project.
    */
   public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
-    //noinspection deprecation
     PER_PROJECT_SETTINGS = settings;
   }
 
@@ -133,7 +133,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    */
   @Nullable
   public CodeStyleSettings getMainProjectCodeStyle() {
-    //noinspection deprecation
     return PER_PROJECT_SETTINGS;
   }
 
@@ -173,7 +172,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
     if (project == null || project.isDefault()) {
-      //noinspection deprecation
       getInstance().removeListener(listener);
     }
     else {
@@ -205,10 +203,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     fireCodeStyleSettingsChanged(null);
   }
 
-  private void updateSettingsTracker() {
-    @SuppressWarnings("deprecation") // allowed internally
+  @ApiStatus.Internal
+  public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
   }
-
 }

@@ -186,6 +186,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
           addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties, knownNames);
           addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter, knownNames);
+          addPropertyNameSchemaVariants(schema);
         }
 
         if (isName != ThreeState.YES) {
@@ -195,6 +196,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
+      }
+    }
+
+    private void addPropertyNameSchemaVariants(@NotNull JsonSchemaObject schema) {
+      JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
+      if (propertyNamesSchema == null) return;
+      List<Object> anEnum = propertyNamesSchema.getEnum();
+      if (anEnum == null) return;
+      for (Object o : anEnum) {
+        if (!(o instanceof String)) continue;
+        String key = ((String)o);
+        key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
+        myVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(key)));
       }
     }
 

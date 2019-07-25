@@ -99,9 +99,17 @@ abstract class ProductProperties {
   ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
-   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
+   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifacts}
+   * directory and have ".portable" suffix by default, override {@link #getCrossPlatformZipFileName} to change the file name.
    */
   boolean buildCrossPlatformDistribution = false
+
+  /**
+   * Specifies name of cross-platform ZIP archive if {@link #buildCrossPlatformDistribution} is set to {@code true}
+   */
+  String getCrossPlatformZipFileName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A {@link org.jetbrains.intellij.build.impl.ClassVersionChecker class version checker} config map

@@ -321,7 +321,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   /**
-   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
   @NotNull

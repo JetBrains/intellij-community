@@ -450,7 +450,10 @@ public class MavenRootModelAdapter {
     return result.get();
   }
 
-  @Deprecated // Use artifact.getLibraryName();
+  /**
+   * @deprecated use {@link MavenArtifact#getLibraryName()}
+   */
+  @Deprecated
   public static String makeLibraryName(@NotNull MavenArtifact artifact) {
     return artifact.getLibraryName();
   }

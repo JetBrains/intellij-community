@@ -19,14 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
@@ -57,10 +52,6 @@ import java.util.*;
 class GitChangesCollector {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final VcsDirtyScope myDirtyScope;
   @NotNull private final GitRepository myRepository;
   @NotNull private final VirtualFile myVcsRoot;
 
@@ -75,12 +66,9 @@ class GitChangesCollector {
   @NotNull
   static GitChangesCollector collect(@NotNull Project project,
                                      @NotNull Git git,
-                                     @NotNull ChangeListManager changeListManager,
-                                     @NotNull ProjectLevelVcsManager vcsManager,
-                                     @NotNull AbstractVcs vcs,
-                                     @NotNull VcsDirtyScope dirtyScope,
-                                     @NotNull GitRepository repository) throws VcsException {
-    return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, repository);
+                                     @NotNull GitRepository repository,
+                                     @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
+    return new GitChangesCollector(project, git, repository, dirtyPaths);
   }
 
   @NotNull
@@ -99,21 +87,13 @@ class GitChangesCollector {
 
   private GitChangesCollector(@NotNull Project project,
                               @NotNull Git git,
-                              @NotNull ChangeListManager changeListManager,
-                              @NotNull ProjectLevelVcsManager vcsManager,
-                              @NotNull AbstractVcs vcs,
-                              @NotNull VcsDirtyScope dirtyScope,
-                              @NotNull GitRepository repository) throws VcsException {
+                              @NotNull GitRepository repository,
+                              @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
     myProject = project;
     myGit = git;
-    myChangeListManager = changeListManager;
-    myVcsManager = vcsManager;
-    myVcs = vcs;
-    myDirtyScope = dirtyScope;
     myRepository = repository;
     myVcsRoot = repository.getRoot();
 
-    Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
       collectChanges(dirtyPaths);
       collectUnversionedFiles();
@@ -123,30 +103,35 @@ class GitChangesCollector {
   /**
    * Collect dirty file paths, previous changes are included in collection.
    *
-   * @return the set of dirty paths to check, the paths are automatically collapsed if the summary length more than limit
+   * @return the set of dirty paths to check, grouped by root
+   * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
-  private Collection<FilePath> dirtyPaths() {
-    final List<String> allPaths = new ArrayList<>();
+  @NotNull
+  static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull AbstractVcs vcs,
+                                                            @NotNull VcsDirtyScope dirtyScope,
+                                                            @NotNull ChangeListManager changeListManager,
+                                                            @NotNull ProjectLevelVcsManager vcsManager) {
+    Map<VirtualFile, List<FilePath>> result = new HashMap<>();
 
-    for (FilePath p : myDirtyScope.getRecursivelyDirtyDirectories()) {
-      addToPaths(p, allPaths);
+    for (FilePath p : dirtyScope.getRecursivelyDirtyDirectories()) {
+      addToPaths(p, result, vcs, vcsManager);
     }
-    for (FilePath p : myDirtyScope.getDirtyFilesNoExpand()) {
-      addToPaths(p, allPaths);
+    for (FilePath p : dirtyScope.getDirtyFilesNoExpand()) {
+      addToPaths(p, result, vcs, vcsManager);
     }
 
-    for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
+    for (Change c : changeListManager.getAllChanges()) {
       switch (c.getType()) {
         case NEW:
         case DELETED:
         case MOVED:
-          ContentRevision afterRevision = c.getAfterRevision();
-          if (afterRevision != null) {
-            addToPaths(afterRevision.getFile(), allPaths);
+          FilePath afterPath = ChangesUtil.getAfterPath(c);
+          if (afterPath != null) {
+            addToPaths(afterPath, result, vcs, vcsManager);
           }
-          ContentRevision beforeRevision = c.getBeforeRevision();
-          if (beforeRevision != null) {
-            addToPaths(beforeRevision.getFile(), allPaths);
+          FilePath beforePath = ChangesUtil.getBeforePath(c);
+          if (beforePath != null) {
+            addToPaths(beforePath, result, vcs, vcsManager);
           }
         case MODIFICATION:
         default:
@@ -154,26 +139,34 @@ class GitChangesCollector {
       }
     }
 
-    removeCommonParents(allPaths);
+    for (VirtualFile root : result.keySet()) {
+      List<FilePath> paths = result.get(root);
+      removeCommonParents(paths);
+    }
 
-    return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
+    return result;
   }
 
-  private void addToPaths(FilePath pathToAdd, List<? super String> paths) {
-    VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
-    if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
-      paths.add(pathToAdd.getPath());
+  private static void addToPaths(@NotNull FilePath filePath,
+                                 @NotNull Map<VirtualFile, List<FilePath>> result,
+                                 @NotNull AbstractVcs vcs,
+                                 @NotNull ProjectLevelVcsManager vcsManager) {
+    VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(filePath);
+    if (vcsRoot != null && vcs.equals(vcsRoot.getVcs())) {
+      VirtualFile root = vcsRoot.getPath();
+      List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
+      paths.add(filePath);
     }
   }
 
-  private static void removeCommonParents(List<String> allPaths) {
-    Collections.sort(allPaths);
+  private static void removeCommonParents(List<FilePath> paths) {
+    Collections.sort(paths, Comparator.comparing(FilePath::getPath));
 
-    String prevPath = null;
-    Iterator<String> it = allPaths.iterator();
+    FilePath prevPath = null;
+    Iterator<FilePath> it = paths.iterator();
     while (it.hasNext()) {
-      String path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path, prevPath, true)) { // the file is under previous file, so enough to check the parent
+      FilePath path = it.next();
+      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) { // the file is under previous file, so enough to check the parent
         it.remove();
       }
       else {

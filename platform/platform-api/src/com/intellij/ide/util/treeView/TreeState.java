@@ -280,7 +280,7 @@ public class TreeState implements JDOMExternalizable {
       ContainerUtil.addIfNotNull(selection, treePath);
     }
     if (selection.isEmpty()) return;
-    tree.setSelectionPaths(selection.toArray(new TreePath[0]));
+    tree.setSelectionPaths(selection.toArray(TreeUtil.EMPTY_TREE_PATH));
     if (myScrollToSelection) {
       TreeUtil.showRowCentered(tree, tree.getRowForPath(selection.get(0)), true, true);
     }

@@ -72,10 +72,14 @@ public class GitChangeProvider implements ChangeProvider {
     try {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, addGate,
                                                                myFileDocumentManager, myVcsManager);
+
+      Map<VirtualFile, List<FilePath>> dirtyPaths =
+        GitChangesCollector.collectDirtyPaths(vcs, dirtyScope, myChangeListManager, myVcsManager);
+
       for (GitRepository repo : repos) {
         LOG.debug("checking root: " + repo.getRoot().getPath());
-        GitChangesCollector collector = GitChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
-                                                                    vcs, dirtyScope, repo);
+        List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
+        GitChangesCollector collector = GitChangesCollector.collect(myProject, myGit, repo, rootDirtyPaths);
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {

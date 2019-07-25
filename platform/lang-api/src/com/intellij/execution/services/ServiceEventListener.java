@@ -19,24 +19,21 @@ public interface ServiceEventListener {
     public final Class<?> contributorClass;
 
     public final Object parent;
-    public final int index;
 
     private ServiceEvent(@NotNull EventType type,
                          @NotNull Object target,
                          @NotNull Class<?> contributorClass) {
-      this(type, target, contributorClass, null, -1);
+      this(type, target, contributorClass, null);
     }
 
     private ServiceEvent(@NotNull EventType type,
                          @NotNull Object target,
                          @NotNull Class<?> contributorClass,
-                         @Nullable Object parent,
-                         int index) {
+                         @Nullable Object parent) {
       this.type = type;
       this.target = target;
       this.contributorClass = contributorClass;
       this.parent = parent;
-      this.index = index;
     }
 
     public static ServiceEvent createEvent(@NotNull EventType type,
@@ -51,9 +48,8 @@ public interface ServiceEventListener {
 
     public static ServiceEvent createServiceAddedEvent(@NotNull Object target,
                                                        @NotNull Class<?> contributorClass,
-                                                       @Nullable Object parent,
-                                                       int index) {
-      return new ServiceEvent(EventType.SERVICE_ADDED, target, contributorClass, parent, index);
+                                                       @Nullable Object parent) {
+      return new ServiceEvent(EventType.SERVICE_ADDED, target, contributorClass, parent);
     }
   }
 

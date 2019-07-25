@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference
  */
 abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false) {
 
-  private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
   private val prevRefs: Map<ProcessOutputType, AtomicReference<Output>> =
     listOf(ProcessOutputType.STDOUT, ProcessOutputType.STDERR, ProcessOutputType.SYSTEM)
       .map { it to AtomicReference<Output>() }.toMap()
@@ -146,20 +145,10 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
   }
 
   private fun flushInternal(text: String, key: Key<*>) {
-    var result = text
-    // Cut long lines
-    if (USE_CYCLE_BUFFER &&
-        text.length > currentCyclicBufferSize &&
-        currentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
-      result = text.substring(0, SM_MESSAGE_PREFIX) + text.substring(text.length - SM_MESSAGE_PREFIX)
-    }
-
-    onTextAvailable(result, key)
+    val textToAdd = if (USE_CYCLE_BUFFER) cutLineIfTooLong(text) else text
+    onTextAvailable(textToAdd, key)
   }
 }
-
-
-internal const val SM_MESSAGE_PREFIX = 105
 
 private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
 private const val SERVICE_MESSAGE_START: String = ServiceMessage.SERVICE_MESSAGE_START

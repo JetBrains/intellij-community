@@ -33,6 +33,7 @@
     <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
     <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
     <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
+    <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIndexer"/>
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
     <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
   </extensions>

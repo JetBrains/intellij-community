@@ -118,7 +118,7 @@ public class JsonPointerPosition {
   }
 
   public String toJsonPointer() {
-    return steps.stream().map(step -> escapeForJsonPointer(step.toString())).collect(Collectors.joining("/"));
+    return "/" + steps.stream().map(step -> escapeForJsonPointer(step.myName == null ? String.valueOf(step.myIdx) : step.myName)).collect(Collectors.joining("/"));
   }
 
   @Override

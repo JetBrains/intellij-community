@@ -542,6 +542,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
+    if (!SystemInfo.isLinux) {
+      return;
+    }
+
     try {
       if (!GlobalMenuLinux.isAvailable()) {
         return;

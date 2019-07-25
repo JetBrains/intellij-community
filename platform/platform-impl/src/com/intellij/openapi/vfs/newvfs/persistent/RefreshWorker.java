@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,13 +107,20 @@ public class RefreshWorker {
   private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
+    next:
     while (!myRefreshQueue.isEmpty()) {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pullFirst();
-      boolean fullSync = dir.allChildrenLoaded();
-      boolean succeeded;
+      boolean fullSync = dir.allChildrenLoaded(), succeeded;
+
       do {
         myHelper.beginTransaction();
-        succeeded = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
+        try {
+          succeeded = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
+        }
+        catch (InvalidVirtualFileAccessException e) {
+          myHelper.endTransaction(false);
+          continue next;
+        }
         myHelper.endTransaction(succeeded);
         if (!succeeded && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
       }

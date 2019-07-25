@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
 import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import static git4idea.GitUtil.*;
@@ -51,7 +53,12 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
                                                                    updatedFiles, true, true);
     boolean result = gitUpdateProcess.update(mySettings.getUpdateMethod()).isSuccess();
 
-    return new GitUpdateSession(myProject, gitUpdateProcess.getUpdatedRanges(), result, gitUpdateProcess.getSkippedRoots());
+    Map<GitRepository, HashRange> updatedRanges = gitUpdateProcess.getUpdatedRanges();
+    GitUpdateInfoAsLog.NotificationData notificationData = updatedRanges != null ?
+                                                           new GitUpdateInfoAsLog(myProject, updatedRanges).calculateDataAndCreateLogTab() :
+                                                           null;
+
+    return new GitUpdateSession(myProject, notificationData, result, gitUpdateProcess.getSkippedRoots());
   }
 
   @Override

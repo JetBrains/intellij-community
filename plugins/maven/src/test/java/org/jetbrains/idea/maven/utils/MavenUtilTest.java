@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +40,17 @@ public class MavenUtilTest extends MavenTestCase {
 
   public void testSystemProperties() throws IOException {
 
-    System.setProperty("myRepoPath", "test");
-    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                "<settings>" +
-                                                                "  <localRepository>${myRepoPath}/testpath</localRepository>" +
-                                                                "</settings>");
-    assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    try {
+      MavenServerUtil.addProperty("testSystemPropertiesRepoPath", "test");
+      VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                  "<settings>" +
+                                                                  "  <localRepository>${testSystemPropertiesRepoPath}/testpath</localRepository>" +
+                                                                  "</settings>");
+      assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    } finally {
+      MavenServerUtil.removeProperty("testSystemPropertiesRepoPath");
+    }
+
 
   }
 }

@@ -3,11 +3,13 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.Invoker;
@@ -20,11 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 class ServiceModel implements Disposable, InvokerSupplier {
   private static final ExtensionPointName<ServiceViewContributor> EP_NAME =
@@ -202,7 +202,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
       ServiceViewContributor<?> parentContributor = parent instanceof ServiceNode ? ((ServiceNode)parent).getProvidingContributor() : null;
       if (parentContributor == null) return;
 
-      addService(e.target, parent.getChildren(), myProject, parent, parentContributor, e.index);
+      addService(e.target, parent.getChildren(), myProject, parent, parentContributor);
       return;
     }
 
@@ -228,7 +228,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
 
     addService(e.target, contributorNode.getChildren(), myProject, contributorNode,
-               (ServiceViewContributor<?>)contributorNode.getContributor(), e.index);
+               (ServiceViewContributor<?>)contributorNode.getContributor());
   }
 
   private void removeService(ServiceEvent e) {
@@ -236,7 +236,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     if (item == null) return;
 
     ServiceViewItem parent = item.getParent();
-    if (parent instanceof ServiceGroupNode) {
+    while (parent instanceof ServiceGroupNode) {
       parent.getChildren().remove(item);
       if (!parent.getChildren().isEmpty()) return;
 
@@ -262,6 +262,14 @@ class ServiceModel implements Disposable, InvokerSupplier {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
     if (item == null) return;
 
+    if (item instanceof ServiceNode) {
+      ServiceViewContributor<?> providingContributor = ((ServiceNode)item).getProvidingContributor();
+      if (providingContributor != null && !providingContributor.equals(e.target)) {
+        item.setViewDescriptor(providingContributor.getViewDescriptor());
+        return;
+      }
+    }
+
     //noinspection unchecked
     ServiceViewDescriptor viewDescriptor = item.getContributor().getServiceDescriptor(e.target);
     item.setViewDescriptor(viewDescriptor);
@@ -269,11 +277,17 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   private void groupChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item == null) return;
+    if (!(item instanceof ServiceGroupNode)) return;
 
     //noinspection unchecked
     ServiceViewDescriptor viewDescriptor = ((ServiceViewGroupingContributor)item.getContributor()).getGroupDescriptor(e.target);
     item.setViewDescriptor(viewDescriptor);
+    ServiceViewItem parent = item.getParent();
+    if (parent != null) {
+      List<ServiceViewItem> children = parent.getChildren();
+      children.remove(item);
+      addGroupOrdered(children, (ServiceGroupNode)item);
+    }
   }
 
   private void serviceStructureChanged(ServiceEvent e) {
@@ -287,11 +301,11 @@ class ServiceModel implements Disposable, InvokerSupplier {
     if (parent instanceof ServiceGroupNode) {
       group = (ServiceGroupNode)parent;
       parent = group.getParent();
+      while (parent instanceof ServiceGroupNode) {
+        parent = parent.getParent();
+      }
       if (parent == null) return;
     }
-
-    List<ServiceViewItem> services = flatServices(parent.getChildren());
-    int index = services.indexOf(item);
 
     if (group != null) {
       group.getChildren().remove(item);
@@ -300,9 +314,21 @@ class ServiceModel implements Disposable, InvokerSupplier {
       parent.getChildren().remove(item);
     }
 
-    addService(e.target, parent.getChildren(), myProject, parent, (ServiceViewContributor<?>)item.getContributor(), index);
-    if (group != null && group.getChildren().isEmpty()) {
-      parent.getChildren().remove(group);
+    Object value = e.target;
+    if (item instanceof ServiceNode) {
+      ServiceViewContributor<?> providingContributor = ((ServiceNode)item).getProvidingContributor();
+      if (providingContributor != null && !providingContributor.equals(e.target)) {
+        value = providingContributor;
+      }
+    }
+
+    addService(value, parent.getChildren(), myProject, parent, (ServiceViewContributor<?>)item.getContributor());
+    while (group != null && group.getChildren().isEmpty()) {
+      ServiceViewItem groupParent = group.getParent();
+      if (groupParent == null) return;
+
+      groupParent.getChildren().remove(group);
+      group = groupParent instanceof ServiceGroupNode ? (ServiceGroupNode)groupParent : null;
     }
   }
 
@@ -319,33 +345,26 @@ class ServiceModel implements Disposable, InvokerSupplier {
                                                                   ServiceViewContributor<T> contributor) {
     List<ServiceViewItem> children = new ArrayList<>();
     for (T service : contributor.getServices(project)) {
-      addService(service, children, project, parent, contributor, -1);
+      addService(service, children, project, parent, contributor);
     }
     return children;
-  }
-
-  private static List<ServiceViewItem> flatServices(Collection<ServiceViewItem> items) {
-    return items.stream()
-      .flatMap(child -> child instanceof ServiceGroupNode ? child.getChildren().stream() : Stream.of(child))
-      .collect(Collectors.toList());
   }
 
   private static <T> void addService(Object service,
                                      List<ServiceViewItem> children,
                                      Project project,
                                      ServiceViewItem parent,
-                                     ServiceViewContributor<T> contributor,
-                                     int index) {
+                                     ServiceViewContributor<T> contributor) {
     //noinspection unchecked
     T typedService = (T)service;
     Object value = service instanceof ServiceViewProvidingContributor ? ((ServiceViewProvidingContributor)service).asService() : service;
     if (!(contributor instanceof ServiceViewGroupingContributor) ||
         !addGroupNode((ServiceViewGroupingContributor<T, ?>)contributor,
-                      typedService, value, parent, project, children, index)) {
-      ServiceViewItem
+                      typedService, value, parent, project, children)) {
+      ServiceNode
         serviceNode = new ServiceNode(value, parent, contributor, contributor.getServiceDescriptor(typedService), project,
                                       service instanceof ServiceViewContributor ? (ServiceViewContributor)service : null);
-      addChild(children, serviceNode, index);
+      addServiceOrdered(children, serviceNode, contributor);
     }
   }
 
@@ -354,78 +373,89 @@ class ServiceModel implements Disposable, InvokerSupplier {
                                              Object value,
                                              ServiceViewItem parent,
                                              Project project,
-                                             List<ServiceViewItem> children,
-                                             int index) {
-    G group = groupingContributor.groupBy(service);
-    if (group == null) return false;
+                                             List<ServiceViewItem> children) {
+    List<G> groups = groupingContributor.getGroups(service);
+    if (groups.isEmpty()) return false;
 
-    ServiceGroupNode groupNode = null;
-    for (ServiceViewItem child : children) {
-      if (child instanceof ServiceGroupNode && child.getValue().equals(group)) {
-        groupNode = (ServiceGroupNode)child;
-        break;
+    List<ServiceViewItem> currentChildren = children;
+    ServiceViewItem groupParent = parent;
+    for (G group : groups) {
+      boolean found = false;
+      for (ServiceViewItem child : currentChildren) {
+        if (child.getValue().equals(group)) {
+          groupParent = child;
+          currentChildren = groupParent.getChildren();
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        ServiceGroupNode groupNode = new ServiceGroupNode(group, groupParent, groupingContributor, groupingContributor.getGroupDescriptor(group));
+        addGroupOrdered(currentChildren, groupNode);
+        groupParent = groupNode;
+        currentChildren = groupParent.getChildren();
       }
     }
-    if (groupNode == null) {
-      groupNode = new ServiceGroupNode(group, parent, groupingContributor, groupingContributor.getGroupDescriptor(group));
-      ServiceViewItem
-        serviceNode = new ServiceNode(value, groupNode, groupingContributor, groupingContributor.getServiceDescriptor(service), project,
-                                      service instanceof ServiceViewContributor ? (ServiceViewContributor)service : null);
-      groupNode.getChildren().add(serviceNode);
-      addChild(children, groupNode, index);
-      return true;
-    }
-
-    ServiceViewItem
-      serviceNode = new ServiceNode(value, groupNode, groupingContributor, groupingContributor.getServiceDescriptor(service), project,
+    ServiceNode
+      serviceNode = new ServiceNode(value, groupParent, groupingContributor, groupingContributor.getServiceDescriptor(service), project,
                                     service instanceof ServiceViewContributor ? (ServiceViewContributor)service : null);
-    addGroupChild(children, groupNode, serviceNode, index);
+    addServiceOrdered(currentChildren, serviceNode, groupingContributor);
     return true;
   }
 
-  @SuppressWarnings("DuplicatedCode")
-  private static void addChild(List<ServiceViewItem> children, ServiceViewItem child, int index) {
-    if (index < 0) {
-      children.add(child);
-      return;
-    }
-    List<ServiceViewItem> services = flatServices(children);
-    if (services.size() <= index) {
-      children.add(child);
-      return;
-    }
-    ServiceViewItem anchor = services.get(index);
-    ServiceViewItem anchorParent = anchor.getParent();
-    int serviceIndex = children.indexOf(anchorParent instanceof ServiceGroupNode ? anchorParent : anchor);
-    if (serviceIndex < 0) {
-      children.add(child);
-    }
-    else {
-      children.add(serviceIndex, child);
-    }
-  }
-
-  @SuppressWarnings("DuplicatedCode")
-  private static void addGroupChild(List<ServiceViewItem> children, ServiceGroupNode groupNode, ServiceViewItem child, int index) {
-    List<ServiceViewItem> groupChildren = groupNode.getChildren();
-    if (index < 0) {
-      groupChildren.add(child);
-      return;
-    }
-    List<ServiceViewItem> services = flatServices(children);
-    if (services.size() <= index) {
-      groupChildren.add(child);
-      return;
-    }
-
-    for (ServiceViewItem groupChild : groupChildren) {
-      int childIndex = services.indexOf(groupChild);
-      if (childIndex >= index) {
-        groupChildren.add(groupChildren.indexOf(groupChild), child);
-        return;
+  private static void addServiceOrdered(List<ServiceViewItem> children, ServiceNode child, ServiceViewContributor<?> contributor) {
+    if (!children.isEmpty() && contributor instanceof Comparator) {
+      Comparator comparator = (Comparator)contributor;
+      for (int i = 0; i < children.size(); i++) {
+        ServiceViewItem anchor = children.get(i);
+        if (anchor instanceof ServiceNode) {
+          //noinspection unchecked
+          if (comparator.compare(child.getService(), ((ServiceNode)anchor).getService()) < 0) {
+            children.add(i, child);
+            return;
+          }
+        }
       }
     }
-    groupChildren.add(child);
+    children.add(child);
+  }
+
+  private static void addGroupOrdered(List<ServiceViewItem> children, ServiceGroupNode child) {
+    if (!children.isEmpty()) {
+      for (int i = 0; i < children.size(); i++) {
+        ServiceViewItem anchor = children.get(i);
+        if (anchor instanceof ServiceNode) {
+          children.add(i, child);
+          return;
+        }
+        else if (anchor instanceof ServiceGroupNode) {
+          if (compareGroups(child, (ServiceGroupNode)anchor) < 0) {
+            children.add(i, child);
+            return;
+          }
+        }
+      }
+    }
+    children.add(child);
+  }
+
+  private static int compareGroups(ServiceGroupNode group1, ServiceGroupNode group2) {
+    ServiceViewDescriptor groupDescriptor1 = group1.getViewDescriptor();
+    WeighedItem weighedItem1 = groupDescriptor1 instanceof WeighedItem ? (WeighedItem)groupDescriptor1 : null;
+    ServiceViewDescriptor groupDescriptor2 = group2.getViewDescriptor();
+    WeighedItem weighedItem2 = groupDescriptor2 instanceof WeighedItem ? (WeighedItem)groupDescriptor2 : null;
+    if (weighedItem1 != null) {
+      if (weighedItem2 == null) return -1;
+
+      int diff = weighedItem1.getWeight() - weighedItem2.getWeight();
+      if (diff != 0) return diff;
+    }
+    else if (weighedItem2 != null) {
+      return 1;
+    }
+    String name1 = ServiceViewDragHelper.getDisplayName(groupDescriptor1.getPresentation());
+    String name2 = ServiceViewDragHelper.getDisplayName(groupDescriptor2.getPresentation());
+    return StringUtil.naturalCompare(name1, name2);
   }
 
   abstract static class ServiceViewItem implements ColoredItem {
@@ -533,7 +563,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     @NotNull
     @Override
     protected List<ServiceViewItem> doGetChildren() {
-      return new ArrayList<>();
+      return new CopyOnWriteArrayList<>();
     }
   }
 
@@ -552,12 +582,19 @@ class ServiceModel implements Disposable, InvokerSupplier {
     @NotNull
     @Override
     protected List<ServiceViewItem> doGetChildren() {
-      return myProvidingContributor == null ? Collections.emptyList() : getContributorChildren(myProject, this, myProvidingContributor);
+      return myProvidingContributor == null
+             ? Collections.emptyList()
+             : new CopyOnWriteArrayList<>(getContributorChildren(myProject, this, myProvidingContributor));
     }
 
     @Nullable
     private ServiceViewContributor<?> getProvidingContributor() {
       return myProvidingContributor;
+    }
+
+    @NotNull
+    private Object getService() {
+      return myProvidingContributor != null ? myProvidingContributor : getValue();
     }
   }
 
@@ -570,7 +607,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     @NotNull
     @Override
     protected List<ServiceViewItem> doGetChildren() {
-      return new ArrayList<>();
+      return new CopyOnWriteArrayList<>();
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.find;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class FindSettings{
+public abstract class FindSettings {
 
   public static FindSettings getInstance() {
     return ServiceManager.getService(FindSettings.class);
@@ -35,7 +35,7 @@ public abstract class FindSettings{
 
   public abstract boolean isSearchOverloadedMethods();
 
-  public abstract void setSearchOverloadedMethods (boolean search);
+  public abstract void setSearchOverloadedMethods(boolean search);
 
   public abstract boolean isForward();
 
@@ -78,27 +78,29 @@ public abstract class FindSettings{
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
   /**
-   * FindInProjectSettings.addDirectory
+   * @deprecated use {@link FindInProjectSettings#addStringToFind(String)}
    */
   @Deprecated
   public abstract void addStringToFind(@NotNull String s);
 
   /**
-   * Use FindInProjectSettings.addDirectory
+   * @deprecated use {@link FindInProjectSettings#addStringToReplace(String)}
    */
   @Deprecated
   public abstract void addStringToReplace(@NotNull String s);
 
   /**
-   * FindInProjectSettings.addDirectory
+   * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
    */
   @NotNull
+  @Deprecated
   public abstract String[] getRecentFindStrings();
 
   /**
-   * FindInProjectSettings.addDirectory
+   * @deprecated use {@link FindInProjectSettings#getRecentReplaceStrings()}
    */
   @NotNull
+  @Deprecated
   public abstract String[] getRecentReplaceStrings();
 
   /**
@@ -117,24 +119,32 @@ public abstract class FindSettings{
   public abstract String getFileMask();
 
   public abstract void setFileMask(String fileMask);
+
   public abstract void setCustomScope(String scopeName);
+
   public abstract String getCustomScope();
 
   public abstract boolean isInStringLiteralsOnly();
+
   public abstract void setInStringLiteralsOnly(boolean selected);
 
   public abstract boolean isInCommentsOnly();
+
   public abstract void setInCommentsOnly(boolean selected);
 
   public abstract boolean isExceptStringLiterals();
+
   public abstract void setExceptStringLiterals(boolean selected);
 
   public abstract boolean isExceptComments();
+
   public abstract void setExceptComments(boolean selected);
 
   public abstract boolean isExceptCommentsAndLiterals();
+
   public abstract void setExceptCommentsAndLiterals(boolean selected);
 
   public abstract boolean isShowResultsInSeparateView();
+
   public abstract void setShowResultsInSeparateView(boolean selected);
 }

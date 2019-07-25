@@ -31,6 +31,8 @@ public class UIThemeMetadata {
 
     private boolean deprecated;
 
+    private String since;
+
     public boolean isDeprecated() {
       return deprecated;
     }
@@ -47,6 +49,11 @@ public class UIThemeMetadata {
     @Nullable
     public String getSource() {
       return source;
+    }
+
+    @Nullable
+    public String getSince() {
+      return since;
     }
 
     @SuppressWarnings("unused")
@@ -69,6 +76,11 @@ public class UIThemeMetadata {
       this.source = source;
     }
 
+    @SuppressWarnings("unused")
+    public void setSince(String since) {
+      this.since = since;
+    }
+
     @Override
     public String toString() {
       return "UIKeyMetadata{" +
@@ -76,6 +88,7 @@ public class UIThemeMetadata {
              ", description='" + description + '\'' +
              ", source='" + source + '\'' +
              ", deprecated=" + deprecated +
+             ", since='" + since + '\'' +
              '}';
     }
   }

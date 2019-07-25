@@ -179,7 +179,9 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
 
       int endPosition;
       MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.END_KEY, line, lastState, linePosition);
-      if (endMatch.matched() && (!currentMatch.matched() || currentMatch.offset().getStartOffset() >= endMatch.offset().getStartOffset())) {
+      if (endMatch.matched() && (!currentMatch.matched() ||
+                                 currentMatch.offset().getStartOffset() >= endMatch.offset().getStartOffset() ||
+                                 lastState.equals(currentState))) {
         myStates.pop();
         int startPosition = endPosition = endMatch.offset().getStartOffset();
         closeScopeSelector(startPosition + startLineOffset); // closing content scope

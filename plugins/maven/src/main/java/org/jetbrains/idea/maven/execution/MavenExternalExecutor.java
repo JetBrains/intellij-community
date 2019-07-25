@@ -38,10 +38,10 @@ import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 
-@Deprecated
-/*
-  @deprecated external executor should work through maven run configuration
+/**
+ * @deprecated external executor should work through maven run configuration
  */
+@Deprecated
 public class MavenExternalExecutor extends MavenExecutor {
 
   private OSProcessHandler myProcessHandler;

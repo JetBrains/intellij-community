@@ -93,7 +93,9 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    return new IdeFrameImpl();
+    IdeFrameImpl frame = new IdeFrameImpl();
+    frame.init();
+    return frame;
   }
 
   @Override

@@ -50,9 +50,10 @@ public class EditorModel {
   private final DocumentOfPagesModel documentOfPagesModel;
   private final Collection<RangeHighlighter> pageRangeHighlighters;
 
-  private EvictingQueue<Page> pagesCash = EvictingQueue.create(PAGES_CASH_CAPACITY);
-  private List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
-  private AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
+  private final EvictingQueue<Page> pagesCash = EvictingQueue.create(PAGES_CASH_CAPACITY);
+  private final List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
+  private final AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
+  private boolean isBrokenMode = false;
 
   private final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
   private boolean isLocalScrollBarStabilized = false;
@@ -172,6 +173,11 @@ public class EditorModel {
     return myRootComponent;
   }
 
+  void setBrokenMode() {
+    isBrokenMode = true;
+    requestUpdate();
+  }
+
   void addCaretListener(CaretListener caretListener) {
     editor.getCaretModel().addCaretListener(caretListener);
   }
@@ -257,6 +263,11 @@ public class EditorModel {
 
   @CalledInAwt
   private void update() {
+    if (isBrokenMode) {
+      documentOfPagesModel.removeAllPages(dataProvider.getProject());
+      return;
+    }
+
     long pagesAmountInFile;
     try {
       pagesAmountInFile = dataProvider.getPagesAmount();
@@ -269,6 +280,7 @@ public class EditorModel {
     }
 
     if (isNeedToShowCaret) {
+      ensureTargetCaretPositionIsInFileBounds(pagesAmountInFile);
       targetVisiblePosition.set(targetCaretPosition.pageNumber,
                                 targetVisiblePosition.verticalScrollOffset);  // we can't count the necessary offset at this stage
     }
@@ -685,6 +697,15 @@ public class EditorModel {
     return false;
   }
 
+  private void ensureTargetCaretPositionIsInFileBounds(long pagesAmount) {
+    if (targetCaretPosition.pageNumber < 0) {
+      targetCaretPosition.set(0, 0);
+    }
+    else if (targetCaretPosition.pageNumber >= pagesAmount) {
+      targetCaretPosition.set(pagesAmount, 0);
+    }
+  }
+
   private void normalizePagesInDocumentListEnding() {
     int visibleTargetPageIndex = tryGetIndexOfNeededPageInList(targetVisiblePosition.pageNumber);
     if (visibleTargetPageIndex == -1) {
@@ -740,14 +761,15 @@ public class EditorModel {
       LOG.info(e);
       return;
     }
-
-    targetCaretPosition.set(pagesAmount, 0);
-    isNeedToShowCaret = true;
-    requestUpdate();
+    setCaretAndShow(pagesAmount, 0);
   }
 
   public void setCaretToFileStartAndShow() {
-    targetCaretPosition.set(0, 0);
+    setCaretAndShow(0, 0);
+  }
+
+  public void setCaretAndShow(long pageNumber, int symbolOffsetInPage) {
+    targetCaretPosition.set(pageNumber, symbolOffsetInPage);
     isNeedToShowCaret = true;
     requestUpdate();
   }

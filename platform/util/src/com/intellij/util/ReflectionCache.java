@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,25 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Contrary to the name, this class doesn't do any caching. So the usages may be safely dropped in favor of plain reflection calls.
- *
- * Consider caching higher-level things, if you see reflection in your snapshots.
- *
- * @deprecated
  * @author peter
+ * @deprecated Contrary to the name, this class doesn't do any caching. So the usages may be safely dropped in favor of plain reflection calls.
+ * <p>
+ * Consider caching higher-level things, if you see reflection in your snapshots.
  */
 @Deprecated
 public class ReflectionCache {
+
+  /**
+   * @deprecated doesn't cache
+   */
   @Deprecated
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
+  /**
+   * @deprecated doesn't cache
+   */
   @Deprecated
   public static boolean isInstance(Object instance, @NotNull Class clazz) {
     return clazz.isInstance(instance);

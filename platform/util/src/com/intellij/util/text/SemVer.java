@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import static com.intellij.openapi.util.text.StringUtil.isNotNegativeNumber;
  */
 public final class SemVer implements Comparable<SemVer> {
   /**
-   * @deprecated
+   * @deprecated use {@code null} instead
    */
   @Deprecated public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
 

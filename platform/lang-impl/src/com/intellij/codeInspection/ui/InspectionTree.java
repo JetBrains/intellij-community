@@ -30,6 +30,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
@@ -56,6 +57,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
@@ -394,7 +396,7 @@ public class InspectionTree extends Tree {
 
   public int getSelectedProblemCount() {
     int count = 0;
-    for (TreePath path : TreeUtil.selectMaximals(getSelectionPaths())) {
+    for (TreePath path : TreePathRoots.collect(getSelectionPaths())) {
       LevelAndCount[] levels = ((InspectionTreeNode)path.getLastPathComponent()).getProblemLevels();
       for (LevelAndCount level : levels) {
         count += level.getCount();
@@ -456,7 +458,7 @@ public class InspectionTree extends Tree {
     for (InspectionTreeNode parent : parents) {
       parent.dropProblemCountCaches();
     }
-    TreeUtil.selectPath(this, TreeUtil.findCommonPath(pathsToSelect.toArray(new TreePath[0])));
+    TreeUtil.selectPath(this, TreeUtil.findCommonPath(toTreePathArray(pathsToSelect)));
 
     revalidate();
     repaint();

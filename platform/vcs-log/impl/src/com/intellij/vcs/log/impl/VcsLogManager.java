@@ -49,19 +49,18 @@ public class VcsLogManager implements Disposable {
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
-    this(project, uiProperties, roots, true, null);
+    this(project, uiProperties, findLogProviders(roots, project), true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
-                       @NotNull Collection<? extends VcsRoot> roots,
+                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
                        @Nullable Consumer<? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
     MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
     myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);

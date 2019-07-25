@@ -173,13 +173,19 @@ public class MavenRunnerParameters implements Cloneable {
     }
   }
 
-  @Deprecated // Must be used by XML Serializer only!!!
+  /**
+   * @deprecated Must be used by XML Serializer only!!!
+   */
+  @Deprecated
   @OptionTag("profiles")
   public Collection<String> getEnabledProfilesForXmlSerializer() {
     return myEnabledProfilesForXmlSerializer;
   }
 
-  @Deprecated // Must be used by XML Serializer only!!!
+  /**
+   * @deprecated Must be used by XML Serializer only!!!
+   */
+  @Deprecated
   public void setEnabledProfilesForXmlSerializer(@Nullable Collection<String> enabledProfilesForXmlSerializer) {
     if (enabledProfilesForXmlSerializer != null) {
       if (myEnabledProfilesForXmlSerializer == enabledProfilesForXmlSerializer) return; // Called from XML Serializer

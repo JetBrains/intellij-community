@@ -781,7 +781,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     Element iconEap = getChild(parentNode, "icon-eap");
     if (iconEap != null) {
       mySvgEapIconUrl = iconEap.getAttributeValue("svg");
-      mySmallSvgEapIconUrl = iconElement.getAttributeValue("svg-small");
+      mySmallSvgEapIconUrl = iconEap.getAttributeValue("svg-small");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);

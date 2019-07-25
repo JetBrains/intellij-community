@@ -82,7 +82,10 @@ public class MavenExternalParameters {
 
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
-  @Deprecated // Use createJavaParameters(Project,MavenRunnerParameters, MavenGeneralSettings,MavenRunnerSettings,MavenRunConfiguration)
+  /**
+   * @deprecated use other overloads
+   */
+  @Deprecated
   public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     @NotNull final MavenRunnerParameters parameters,
                                                     @Nullable MavenGeneralSettings coreSettings,

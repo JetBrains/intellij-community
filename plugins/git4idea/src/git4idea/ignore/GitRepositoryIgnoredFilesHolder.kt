@@ -14,7 +14,7 @@ class GitRepositoryIgnoredFilesHolder(private val project: Project,
                                       repository: GitRepository,
                                       repositoryManager: GitRepositoryManager,
                                       private val git: Git)
-  : VcsRepositoryIgnoredFilesHolderBase<GitRepository>(repository, repositoryManager, "GitIgnoreUpdate", "gitRescanIgnored") {
+  : VcsRepositoryIgnoredFilesHolderBase<GitRepository>(repository, repositoryManager) {
 
   @Throws(VcsException::class)
   override fun requestIgnored(paths: Collection<FilePath>?) =

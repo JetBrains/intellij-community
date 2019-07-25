@@ -4,18 +4,20 @@ package com.intellij.largeFilesEditor.editor.actions;
 import com.intellij.largeFilesEditor.actions.LfeBaseEditorActionHandler;
 import com.intellij.largeFilesEditor.editor.EditorManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LfeEditorActionTextEndHandler extends LfeBaseEditorActionHandler {
-  private static final Logger LOG = Logger.getInstance(LfeEditorActionTextEndHandler.class);
+public class LfeEditorActionTextStartEndHandler extends LfeBaseEditorActionHandler {
 
-  public LfeEditorActionTextEndHandler(EditorActionHandler originalHandler) {
+  private final boolean isStart;
+
+  public LfeEditorActionTextStartEndHandler(EditorActionHandler originalHandler, boolean start) {
     super(originalHandler);
+    isStart = start;
   }
 
   @Override
@@ -23,7 +25,18 @@ public class LfeEditorActionTextEndHandler extends LfeBaseEditorActionHandler {
                                 @NotNull Editor editor,
                                 @Nullable Caret caret,
                                 DataContext dataContext) {
-    editorManager.getEditorModel().setCaretToFileEndAndShow();
+    if (isStart) {
+      editorManager.getEditorModel().setCaretToFileStartAndShow();
+    }
+    else {
+      editorManager.getEditorModel().setCaretToFileEndAndShow();
+    }
+
+    IdeDocumentHistory docHistory = IdeDocumentHistory.getInstance(editorManager.getProject());
+    if (docHistory != null) {
+      docHistory.includeCurrentCommandAsNavigation();
+      docHistory.setCurrentCommandHasMoves();
+    }
   }
 
   @Override

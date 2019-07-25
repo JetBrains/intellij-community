@@ -16,6 +16,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -401,7 +402,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * in the area of row that is used to expand/collapse the node and
    * the node at {@code row} does not represent a leaf.
    */
-  @Deprecated
+  @ApiStatus.Experimental
   protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
     if (path == null) return false;
     Rectangle bounds = getRowBounds(getRowForPath(path));

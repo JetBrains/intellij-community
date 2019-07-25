@@ -5,15 +5,15 @@ class SwitchExpressionMigration {
     return switch<caret> (x){
       case 1 -> {
         if (true) {
-          break 0;
+          yield 0;
         }
         else {
-          break 1;
+          yield 1;
         }
       }
       case 2 -> switch (1) {
         case 1 -> {
-          break 12;
+          yield 12;
         }
         default -> 55;
       };

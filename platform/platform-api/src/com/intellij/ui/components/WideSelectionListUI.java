@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.ColoredItem;
+import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,11 @@ public final class WideSelectionListUI extends BasicListUI {
   private static Color getBackground(@NotNull JList list, @Nullable Object value, int row) {
     if (value instanceof ColoredItem) {
       Color background = ((ColoredItem)value).getColor();
+      if (background != null) return background;
+    }
+    if (value instanceof BackgroundSupplier) {
+      BackgroundSupplier supplier = (BackgroundSupplier)value;
+      Color background = supplier.getElementBackground(row);
       if (background != null) return background;
     }
     if (list instanceof ListCellBackgroundSupplier) {

@@ -111,9 +111,8 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String agentFileName = agentFile.getFileName().toString();
     String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.toAbsolutePath().toString(), "debugger-memory-agent",
-                                                            MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
+                                                            MEMORY_AGENT_EXTRACT_DIRECTORY);
     if (path == null) {
       return;
     }

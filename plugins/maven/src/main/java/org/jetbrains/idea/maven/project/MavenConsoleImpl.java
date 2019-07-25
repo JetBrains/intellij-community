@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * to be removed when build tools will be active
+ * @deprecated to be removed when build tools will be active
  */
 @Deprecated
 public class MavenConsoleImpl extends MavenConsole {

@@ -54,6 +54,7 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
@@ -505,14 +506,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getInclusionModel().setInclusion(changes);
   }
 
-  public void clearInclusion() {
-    getInclusionModel().clearInclusion();
-  }
-
-  public void retainInclusion(@NotNull Collection<?> changes) {
-    getInclusionModel().retainInclusion(changes);
-  }
-
   public void includeChange(@NotNull Object change) {
     includeChanges(Collections.singleton(change));
   }
@@ -544,10 +537,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     else {
       excludeChanges(changes);
     }
-  }
-
-  public boolean isInclusionEmpty() {
-    return getInclusionModel().isInclusionEmpty();
   }
 
   public boolean isIncluded(@NotNull Object change) {
@@ -746,7 +735,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
       return true;
     });
-    setSelectionPaths(treeSelection.toArray(new TreePath[0]));
+    setSelectionPaths(toTreePathArray(treeSelection));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 

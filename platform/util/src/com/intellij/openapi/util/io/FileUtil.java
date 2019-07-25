@@ -1074,7 +1074,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /**
-   * @see FileUtil#fileTraverser(File)
+   * @deprecated use  {@link #fileTraverser(File)}
    */
   @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,

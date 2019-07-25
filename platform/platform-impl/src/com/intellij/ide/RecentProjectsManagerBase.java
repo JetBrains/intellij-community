@@ -2,8 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -23,13 +21,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -497,16 +491,21 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Nullable
-  public Project doOpenProject(@NotNull @SystemIndependent String projectPath,
-                               @Nullable Project projectToClose,
-                               boolean forceOpenInNewFrame,
-                               @Nullable IdeFrame frame) {
+  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     VirtualFile dotIdea = LocalFileSystem.getInstance()
       .refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(projectPath) + "/" + Project.DIRECTORY_STORE_FOLDER);
+
+    Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectPath);
+    if (existing != null) {
+      return existing;
+    }
+
     if (dotIdea != null) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
-      if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
-      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options, frame);
+      if (forceOpenInNewFrame) {
+        options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      }
+      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
@@ -607,16 +606,15 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public boolean willReopenProjectOnStart() {
-    @SystemIndependent String lastProjectPath = getLastProjectPath();
-    return lastProjectPath != null && GeneralSettings.getInstance().isReopenLastProject() && ProjectKt.isValidProjectPath(lastProjectPath, true);
+    return getLastProjectPath() != null && GeneralSettings.getInstance().isReopenLastProject();
   }
 
   @Override
   public void reopenLastProjectOnStart() {
-    doReopenLastProject(null);
+    doReopenLastProject();
   }
 
-  protected void doReopenLastProject(@Nullable IdeFrame frame) {
+  protected void doReopenLastProject() {
     if (!GeneralSettings.getInstance().isReopenLastProject()) {
       return;
     }
@@ -631,21 +629,11 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
     }
 
-    if (!openPaths.isEmpty() && frame == null) {
-      Activity activity = StartUpMeasurer.start("showFrame");
-      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
-      activity.end();
-    }
-
     try {
       myBatchOpening = true;
-      boolean usedFrame = false;
       for (String openPath : openPaths) {
         // https://youtrack.jetbrains.com/issue/IDEA-166321
-        if (ProjectKt.isValidProjectPath(openPath, true)) {
-          doOpenProject(openPath, null, forceNewFrame, usedFrame ? null : frame);
-          usedFrame = true;
-        }
+        doOpenProject(openPath, null, forceNewFrame);
       }
     }
     finally {

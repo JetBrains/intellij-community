@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.textmate;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +37,8 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
     if (!loadingBundles.equals(enabledBundles)) {
       List<BundleConfigBean> bundles = new ArrayList<>();
       for (String bundleName : loadingBundles) {
-        bundles.add(new BundleConfigBean(bundleName, TestUtil.getBundleDirectoryPath(bundleName), true));
+        File bundleDirectory = TestUtil.getBundleDirectory(bundleName);
+        bundles.add(new BundleConfigBean(bundleName, bundleDirectory.getAbsolutePath(), true));
       }
       state.setBundles(bundles);
       TextMateSettings.getInstance().loadState(state);
@@ -68,7 +69,12 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
   }
 
   @Override
-  protected final String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/textmate/tests/org/jetbrains/plugins/textmate" + getTestPath();
+  protected String getBasePath() {
+    return "/plugins/textmate/tests/org/jetbrains/plugins/textmate" + getTestPath();
+  }
+
+  @Override
+  protected boolean isCommunity() {
+    return true;
   }
 }

@@ -89,16 +89,15 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    createStatusBar(frame);
-
     IdeMenuBar menu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
-    } else {
+    }
+    else {
       if (isDecoratedMenu()) {
-        JFrame jframe = (JFrame) frame;
+        JFrame jframe = (JFrame)frame;
         JdkEx.setHasCustomDecoration(jframe);
 
         myCustomFrameTitlePane = CustomHeader.Companion.createMainFrameHeader(jframe);
@@ -122,6 +121,10 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
     updateMainMenuVisibility();
+  }
+
+  void init(@NotNull IdeFrame frame) {
+    createStatusBar(frame);
   }
 
   private void updateScreenState(IdeFrame frame) {

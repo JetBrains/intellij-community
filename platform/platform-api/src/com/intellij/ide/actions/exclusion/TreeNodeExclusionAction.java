@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.List;
 
 abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
   private final static Logger LOG = Logger.getInstance(TreeNodeExclusionAction.class);
@@ -38,8 +40,8 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
       return;
     }
     JTree tree = (JTree) component;
-    final TreePath[] selection = TreeUtil.selectMaximals(tree.getSelectionPaths());
-    if (selection.length == 0) {
+    List<TreePath> selection = TreePathRoots.collect(tree.getSelectionPaths());
+    if (selection.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -59,7 +61,7 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
     presentation.setEnabledAndVisible(isEnabled[0]);
     if (isEnabled[0]) {
       String text = getActionText();
-      if (selection.length > 1) {
+      if (selection.size() > 1) {
         text += " All";
       }
       presentation.setText(text);

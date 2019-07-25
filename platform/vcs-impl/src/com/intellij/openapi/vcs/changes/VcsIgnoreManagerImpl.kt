@@ -16,7 +16,9 @@ import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
+import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
@@ -28,8 +30,16 @@ private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 
 class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
+  companion object {
+    fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
+  }
+
+  val ignoreRefreshQueue: MergingUpdateQueue
+
   init {
     checkProjectNotDefault(project)
+    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, project, null,
+                                            Alarm.ThreadToUse.POOLED_THREAD)
   }
 
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {

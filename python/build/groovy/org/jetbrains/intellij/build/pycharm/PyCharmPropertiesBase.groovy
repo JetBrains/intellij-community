@@ -24,6 +24,7 @@ import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_
  * @author nik
  */
 abstract class PyCharmPropertiesBase extends ProductProperties {
+  protected String dependenciesPath
 
   PyCharmPropertiesBase() {
     baseFileName = "pycharm"

@@ -125,6 +125,9 @@ public abstract class MavenImporter {
     return null;
   }
 
+  /**
+   * @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)}
+   */
   @Deprecated
   public void resolve(Project project,
                       MavenProject mavenProject,

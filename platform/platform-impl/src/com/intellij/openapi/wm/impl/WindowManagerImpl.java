@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   private final DesktopLayout myLayout = new DesktopLayout();
 
   // null keys must be supported
+  // null key - root frame
   private final Map<Project, IdeFrameImpl> myProjectToFrame = new HashMap<>();
 
   private final Map<Project, Set<JDialog>> myDialogsToDispose = new HashMap<>();
@@ -422,12 +424,22 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return null;
   }
 
+  @Nullable
+  @ApiStatus.Internal
+  public IdeFrameImpl getRootFrame() {
+    return myProjectToFrame.get(null);
+  }
+
   /**
    * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
+   *
+   * {@link IdeFrameImpl#init()} must be called explicitly.
    */
   @NotNull
   public IdeFrameImpl showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl();
+    LOG.assertTrue(!myProjectToFrame.containsKey(null));
+
+    IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
     Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
@@ -462,6 +474,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
       frame = new IdeFrameImpl();
+      frame.init();
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();

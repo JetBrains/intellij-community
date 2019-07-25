@@ -26,7 +26,9 @@ public class LargeFileEditorProvider extends TextEditorProvider {
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return TextEditorProvider.isTextFile(file)
            && SingleRootFileViewProvider.isTooLargeForContentLoading(file)
-           && (file.getFileType().isBinary() || !Experiments.isFeatureEnabled("new.large.text.file.viewer"));
+           && !(Experiments.isFeatureEnabled("new.large.text.file.viewer")
+                && !file.getFileType().isBinary()
+                && file.isInLocalFileSystem());
   }
 
   @Override

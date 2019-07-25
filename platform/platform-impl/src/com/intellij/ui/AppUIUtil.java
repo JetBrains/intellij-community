@@ -85,6 +85,7 @@ public final class AppUIUtil {
 
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
       if (SystemInfo.isUnix) {
@@ -93,10 +94,10 @@ public final class AppUIUtil {
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
+        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx, 16));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -128,15 +129,21 @@ public final class AppUIUtil {
   }
 
   @NotNull
-  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx) {
+  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl);
+    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, size, fallbackSmallIconUrl);
   }
 
   @NotNull
   public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    Image image = loadSmallApplicationIconImage(ctx);
+    Image image = loadSmallApplicationIconImage(ctx, 16);
+    return new JBImageIcon(image);
+  }
+
+  @NotNull
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    Image image = loadSmallApplicationIconImage(ctx, size);
     return new JBImageIcon(image);
   }
 

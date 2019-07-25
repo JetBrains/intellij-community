@@ -43,6 +43,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   @NotNull
   protected final String myLevel;
@@ -248,7 +250,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       }
     }
     myContext.getDaemonAnalyzer().removeElements(libraries);
-    removePaths(pathsToRemove.toArray(new TreePath[0]));
+    removePaths(toTreePathArray(pathsToRemove));
   }
 
   @Override

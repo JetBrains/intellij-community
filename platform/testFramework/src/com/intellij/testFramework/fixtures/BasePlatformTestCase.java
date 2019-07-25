@@ -18,6 +18,10 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Base class for light tests.
+ * <p/>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ *
  * @author peter
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {

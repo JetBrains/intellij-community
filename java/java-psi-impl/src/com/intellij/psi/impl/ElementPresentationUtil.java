@@ -8,7 +8,6 @@ import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -223,7 +222,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {
-    if (Registry.is("ide.completion.show.visibility.icon") && BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(element.getModifierList(), baseIcon);
     }
     return baseIcon;

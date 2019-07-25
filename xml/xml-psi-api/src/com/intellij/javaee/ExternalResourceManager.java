@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
   public abstract void removeResource(@NotNull String url, @Nullable String version);
 
   /**
-   * @see #getResourceLocation(String, Project)
+   * @deprecated use {@link #getResourceLocation(String, Project)}
    */
   @Deprecated
   public abstract String getResourceLocation(@NotNull @NonNls String url);

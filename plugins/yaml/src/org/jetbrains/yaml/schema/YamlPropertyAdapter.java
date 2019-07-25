@@ -34,7 +34,10 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @Nullable
   @Override
   public JsonValueAdapter getNameValueAdapter() {
-    return null; // todo: we need a separate adapter for names; but currently names schema is rarely used, let's just skip validation
+    if (!(myProperty instanceof YAMLKeyValue)) return null;
+    PsiElement key = ((YAMLKeyValue)myProperty).getKey();
+    if (key == null) return null;
+    return new YamlPropertyKeyAdapter(key);
   }
 
   @NotNull

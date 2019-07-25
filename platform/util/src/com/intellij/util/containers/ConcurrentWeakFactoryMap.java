@@ -20,13 +20,13 @@ import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 
 /**
- * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+ * @deprecated Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
  * TODO to remove in IDEA 2018
  */
 @Deprecated
 public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
   /**
-   * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+   * @deprecated Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
    * TODO to remove in IDEA 2018
    */
   @Deprecated

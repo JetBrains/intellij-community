@@ -45,7 +45,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "MERGE_COMMITS";
+    @NotNull public static final String ID = "MERGE_COMMITS";
 
     @NotNull
     @Override

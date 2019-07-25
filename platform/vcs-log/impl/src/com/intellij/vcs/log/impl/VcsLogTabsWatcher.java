@@ -159,7 +159,7 @@ public class VcsLogTabsWatcher implements Disposable {
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
         LOG.debug("Selected log window \'" + logWindow + "\'");
-        VcsLogUsageTriggerCollector.triggerUsage("TabNavigation");
+        VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null);
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }
     }

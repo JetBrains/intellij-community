@@ -1,13 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 
-/*this class used only for backward compatibility for legacy code, which expect to get MavenIndices. To be removed in future releases*/
+/**
+ * @deprecated this class used only for backward compatibility for legacy code, which expect to get MavenIndices. To be removed in future releases
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public class OnlineMavenIndex implements MavenSearchIndex {
   private final String myRepositoryId;
   private final String myRepositoryUrl;

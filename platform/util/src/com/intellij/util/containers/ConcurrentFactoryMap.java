@@ -21,7 +21,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentMap<K, V> myMap = createMap();
 
   /**
-   * Use {@link #createMap(Function)} instead
+   * @deprecated Use {@link #createMap(Function)} instead
    * TODO to remove in IDEA 2018
    */
   @Deprecated
@@ -230,7 +230,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   /**
-   * needed for compatibility in case of moronic subclassing
+   * @deprecated needed for compatibility in case of moronic subclassing
    * TODO to remove in IDEA 2018
    */
   @Deprecated

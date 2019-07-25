@@ -220,19 +220,19 @@ public abstract class CodeStyleManager  {
   public abstract String getLineIndent(@NotNull Document document, int offset);
 
   /**
-   * @deprecated
+   * @deprecated obsolete
    */
   @Deprecated
   public abstract Indent getIndent(String text, FileType fileType);
 
   /**
-   * @deprecated
+   * @deprecated obsolete
    */
   @Deprecated
   public abstract String fillIndent(Indent indent, FileType fileType);
 
   /**
-   * @deprecated
+   * @deprecated obsolete
    */
   @Deprecated
   public abstract Indent zeroIndent();

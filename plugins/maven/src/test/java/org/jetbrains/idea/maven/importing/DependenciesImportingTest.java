@@ -2467,4 +2467,57 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-javadoc.jar!/");
   }
+
+  public void testReimportingInheritedLibrary() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit1</groupId><artifactId>junit1</artifactId><version>3.3</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    createModulePom("m1", "<parent>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>project</artifactId>" +
+                          "    " +
+                          "    <version>1</version>" +
+                          "  </parent>" +
+                          "<artifactId>m1</artifactId>");
+
+
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId><artifactId>junit</artifactId><version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+
+    assertModuleLibDep("m1", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+  }
 }

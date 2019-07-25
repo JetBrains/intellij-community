@@ -2707,7 +2707,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @see #addIfNotNull(Collection, Object) instead
+   * @deprecated use {@link #addIfNotNull(Collection, Object)} instead
    */
   @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -27,16 +13,19 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -70,11 +59,6 @@ public class VcsProjectLog implements Disposable {
     return cached.getDataManager();
   }
 
-  @NotNull
-  private Collection<VcsRoot> getVcsRoots() {
-    return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
-  }
-
   /**
    * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
    */
@@ -99,9 +83,7 @@ public class VcsProjectLog implements Disposable {
   private void recreateLog() {
     UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
       if (myProject.isDisposed()) return;
-      if (hasDvcsRoots()) {
-        createLog(false);
-      }
+      createLog(false);
     }));
   }
 
@@ -126,9 +108,19 @@ public class VcsProjectLog implements Disposable {
     recreateLog();
   }
 
+  @Nullable
   @CalledInBackground
-  public void createLog(boolean forceInit) {
-    VcsLogManager logManager = myLogManager.getValue();
+  VcsLogManager createLog(boolean forceInit) {
+    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
+    if (!logProviders.isEmpty()) {
+      return createLog(logProviders, forceInit);
+    }
+    return null;
+  }
+
+  @CalledInBackground
+  private VcsLogManager createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
+    VcsLogManager logManager = myLogManager.getValue(logProviders);
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (logManager.isLogVisible() || forceInit) {
@@ -141,14 +133,29 @@ public class VcsProjectLog implements Disposable {
         }
       }
     });
+
+    return logManager;
   }
 
-  private boolean hasDvcsRoots() {
-    return !VcsLogManager.findLogProviders(getVcsRoots(), myProject).isEmpty();
+  @NotNull
+  private Map<VirtualFile, VcsLogProvider> getLogProviders() {
+    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
   }
 
   public static VcsProjectLog getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsProjectLog.class);
+  }
+
+  public void addProjectLogListener(@NotNull ProjectLogListener listener, @NotNull Disposable disposable) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      synchronized (myLogManager) {
+        VcsLogManager cached = myLogManager.getCached();
+        myMessageBus.connect(disposable).subscribe(VCS_PROJECT_LOG_CHANGED, listener);
+        if (cached != null) {
+          listener.logCreated(cached);
+        }
+      }
+    });
   }
 
   @Override
@@ -161,9 +168,9 @@ public class VcsProjectLog implements Disposable {
 
     @NotNull
     @CalledInBackground
-    public synchronized VcsLogManager getValue() {
+    public synchronized VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
-        VcsLogManager value = compute();
+        VcsLogManager value = compute(logProviders);
         myValue = value;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
@@ -174,8 +181,9 @@ public class VcsProjectLog implements Disposable {
 
     @NotNull
     @CalledInBackground
-    protected synchronized VcsLogManager compute() {
-      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
+    protected VcsLogManager compute(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+      return new VcsLogManager(myProject, myUiProperties, logProviders, false,
+                               VcsProjectLog.this::recreateOnError);
     }
 
     @CalledInAwt
@@ -211,9 +219,7 @@ public class VcsProjectLog implements Disposable {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MessageBusConnection connection = project.getMessageBus().connect(project);
         connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
-        if (projectLog.hasDvcsRoots()) {
-          projectLog.createLog(false);
-        }
+        projectLog.createLog(false);
       });
     }
   }

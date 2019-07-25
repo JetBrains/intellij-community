@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
@@ -392,7 +393,19 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+      g = g.create();
+      try {
+        Rectangle iconClip = new Rectangle(x - myCrop.x, y - myCrop.y, myCrop.width, myCrop.height);
+        Rectangle gClip = g.getClipBounds();
+        if (gClip != null) {
+          Rectangle2D.intersect(iconClip, gClip, iconClip);
+        }
+        g.setClip(iconClip);
+        mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+      }
+      finally {
+        g.dispose();
+      }
     }
 
     @Override

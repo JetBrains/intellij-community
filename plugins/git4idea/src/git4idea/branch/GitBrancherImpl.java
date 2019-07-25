@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogRangeFilter;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -128,7 +128,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
-    VcsLogUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
+    VcsLogContentUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
       VcsLogRangeFilter filters = VcsLogFilterObject.fromRange("HEAD", branchName);
       log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters));
     });

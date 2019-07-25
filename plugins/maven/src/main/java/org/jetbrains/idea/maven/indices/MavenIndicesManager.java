@@ -163,7 +163,10 @@ public class MavenIndicesManager implements Disposable {
   }
 
   public synchronized @Nullable
-  MavenIndex createIndexForLocalRepo(Project project, File localRepository) {
+  MavenIndex createIndexForLocalRepo(Project project, @Nullable File localRepository) {
+    if (localRepository == null) {
+      return null;
+    }
     MavenIndices indicesObjectCache = getIndicesObject();
 
     try {

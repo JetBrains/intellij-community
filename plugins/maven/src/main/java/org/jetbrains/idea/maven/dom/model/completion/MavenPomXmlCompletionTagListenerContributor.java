@@ -73,9 +73,9 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
                 if (xmlTag != null) {
                   DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(xmlTag);
                   if (domElement instanceof MavenDomDependency) {
-                    String s = "\n<groupId></groupId>\n";
+                    String s = "\n<groupId></groupId>\n<artifactId></artifactId>\n";
                     context.getDocument().insertString(caretModel.getOffset(), s);
-                    caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</groupId>\n".length());
+                    caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</artifactId>\n".length());
 
                     context.commitDocument();
                     new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), false).run();

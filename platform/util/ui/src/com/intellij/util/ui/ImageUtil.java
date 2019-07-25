@@ -8,6 +8,7 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.RetinaImage;
 import org.imgscalr.Scalr;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +131,21 @@ public class ImageUtil {
   }
 
   /**
+   * Scales the image taking into account its HiDPI awareness.
+   *
+   * @param width target user width
+   * @param height target user height
+   */
+  public static Image scaleImage(Image image, int width, int height) {
+    if (width <= 0 || height <= 0) return image;
+
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).scale(width, height);
+    }
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
+  }
+
+  /**
    * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code ctx} when applicable.
    */
   @Contract("null, _ -> null; !null, _ -> !null")
@@ -144,6 +160,7 @@ public class ImageUtil {
   /**
    * @deprecated Use {@link #ensureHiDPI(Image, ScaleContext)}.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Image ensureHiDPI(@Nullable Image image, @NotNull JBUI.ScaleContext ctx) {

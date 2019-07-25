@@ -215,14 +215,22 @@ public class JsonCachedValues {
     final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
     JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
       VirtualFile virtualFile = originalFile.getVirtualFile();
+      VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
       JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
-      VirtualFile schemaFile = schemaObject == null ? null : service.resolveSchemaFile(schemaObject);
-      PsiFile psiFile = schemaFile == null ? null : originalFile.getManager().findFile(schemaFile);
+      PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
       JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
       return psiFile == null
-             ? CachedValueProvider.Result.create(object, originalFile)
-             : CachedValueProvider.Result.create(object, originalFile, psiFile);
+             ? CachedValueProvider.Result.create(object, originalFile, service)
+             : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
     });
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
+  }
+
+  static VirtualFile getSchemaFile(@NotNull VirtualFile sourceFile, @NotNull JsonSchemaService service) {
+    JsonSchemaServiceImpl serviceImpl = (JsonSchemaServiceImpl)service;
+    Collection<VirtualFile> schemas = serviceImpl.getSchemasForFile(sourceFile, true, false);
+    if (schemas.size() == 0) return null;
+    assert schemas.size() == 1;
+    return schemas.iterator().next();
   }
 }

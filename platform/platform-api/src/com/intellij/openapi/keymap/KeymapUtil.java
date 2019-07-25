@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,8 +84,12 @@ public class KeymapUtil {
     return s;
   }
 
+  /**
+   * @deprecated icons are not applicable for our user interface and will be removed
+   */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;

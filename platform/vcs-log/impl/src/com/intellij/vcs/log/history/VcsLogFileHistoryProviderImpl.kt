@@ -45,10 +45,10 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
     val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
       if (hash != null) {
-        ui.jumpToNearestCommit(hash, root)
+        ui.jumpToNearestCommit(hash, root, true)
       }
       else if (firstTime) {
-        ui.jumpToRow(0)
+        ui.jumpToRow(0, true)
       }
     }
 
@@ -77,9 +77,10 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   }
 
   private fun triggerFileHistoryUsage(paths: Collection<FilePath>, hash: Hash?) {
-    val name = if (paths.size > 1) "MultiplePaths" else if (paths.first().isDirectory) "Folder" else "File"
-    val suffix = if (hash != null) "ForRevision" else ""
-    VcsLogUsageTriggerCollector.triggerUsage("Show" + name + "History" + suffix)
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.HISTORY_SHOWN) { data ->
+      val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
+      data.addData("kind", kind).addData("has.revision", hash != null)
+    }
   }
 
   private fun findOrOpenHistory(project: Project, logManager: VcsLogManager,

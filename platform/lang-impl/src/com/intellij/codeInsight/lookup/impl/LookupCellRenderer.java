@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
@@ -58,13 +59,20 @@ public class LookupCellRenderer implements ListCellRenderer<LookupElement> {
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public static final Color FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
   public static final Color BACKGROUND_COLOR = EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY);
+  private static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.linkColor());
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new JBColor(0xc5dffc, 0x113a5c));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
   private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
@@ -366,7 +374,7 @@ public class LookupCellRenderer implements ListCellRenderer<LookupElement> {
     if (prefix.length() > 0) {
       Iterable<TextRange> ranges = getMatchingFragments(prefix, name);
       if (ranges != null) {
-        SimpleTextAttributes highlighted = new SimpleTextAttributes(style, JBUI.CurrentTheme.Link.linkColor());
+        SimpleTextAttributes highlighted = new SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR);
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
         return;
       }
@@ -426,11 +434,19 @@ public class LookupCellRenderer implements ListCellRenderer<LookupElement> {
       return standard;
     }
 
-    if (!Registry.is("ide.completion.show.visibility.icon") && icon instanceof com.intellij.ui.icons.RowIcon) {
-      com.intellij.ui.icons.RowIcon rowIcon = (RowIcon)icon;
-      if (rowIcon.getIconCount() >= 1 ) {
-        Icon firstIcon = rowIcon.getIcon(0);
-        if (firstIcon != null) icon = firstIcon;
+    if (!Registry.is("ide.completion.show.visibility.icon")) {
+      if (icon instanceof RowIcon) {
+        RowIcon rowIcon = (RowIcon)icon;
+        if (rowIcon.getIconCount() >= 1) {
+          Icon firstIcon = rowIcon.getIcon(0);
+          if (firstIcon != null) {
+            icon = Registry.is("editor.scale.completion.icons") ?
+                   EditorUtil.scaleIconAccordingEditorFont(firstIcon, editor) : firstIcon;
+          }
+        }
+      }
+      else if (icon.getIconWidth() > standard.getIconWidth() || icon.getIconHeight() > standard.getIconHeight()) {
+        icon = IconUtil.cropIcon(icon, new Rectangle(standard.getIconWidth(), standard.getIconHeight()));
       }
     }
 

@@ -9,6 +9,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,10 @@ public class JBScrollPane extends JScrollPane {
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    * @see UIUtil#isUnderDarcula
+   * @deprecated unsupported approach to control a scroll bar painting
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   /**
@@ -235,7 +238,11 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
+  /**
+   * @deprecated unsupported old implementation
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
@@ -793,8 +800,7 @@ public class JBScrollPane extends JScrollPane {
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
     return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
   }

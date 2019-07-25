@@ -83,8 +83,10 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       for(String path: paths) {
         params.getClassPath().addFirst(path);
       }
-      // add +1 because idea_rt.jar will be added as the last entry to the classpath
-      params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
+      // idea_rt.jar/intellij.java.rt will be added as the last entry to the classpath
+      // classpath layout: [internal entry]...[internal entry][user entry]...[user entry][idea_rt.jar/intellij.java.rt]
+      // add internal classpath end to parameters -----------^
+      params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size()));
       params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
     }
   }

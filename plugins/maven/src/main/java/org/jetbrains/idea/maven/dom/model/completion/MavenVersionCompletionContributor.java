@@ -68,7 +68,9 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
   }
 
   @Override
-  protected void fillResult(@NotNull CompletionResultSet result, MavenRepositoryArtifactInfo item) {
+  protected void fillResult(@NotNull MavenDomShortArtifactCoordinates coordinates,
+                            @NotNull CompletionResultSet result,
+                            @NotNull MavenRepositoryArtifactInfo item) {
     result.addAllElements(ContainerUtil.map(item.getItems(), dci -> MavenDependencyCompletionUtil.lookupElement(dci, dci.getVersion())));
   }
 

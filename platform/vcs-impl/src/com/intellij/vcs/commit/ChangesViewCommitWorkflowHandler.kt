@@ -85,11 +85,11 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<VirtualFile>) {
-    if (!ui.isInclusionEmpty()) {
+    if (!inclusionModel.isInclusionEmpty()) {
       val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
 
-      ui.retainInclusion(possibleInclusion)
+      inclusionModel.retainInclusion(possibleInclusion)
     }
 
     if (knownActiveChanges.isNotEmpty()) {
@@ -104,8 +104,8 @@ class ChangesViewCommitWorkflowHandler(
   fun setCommitState(items: Collection<Any>, force: Boolean) {
     val activeChanges = changeListManager.defaultChangeList.changes
 
-    if (force || ui.isInclusionEmpty()) {
-      ui.clearInclusion()
+    if (force || inclusionModel.isInclusionEmpty()) {
+      inclusionModel.clearInclusion()
       ui.includeIntoCommit(items)
 
       // update known active changes on "Commit File"
@@ -113,7 +113,7 @@ class ChangesViewCommitWorkflowHandler(
     }
     else {
       // skip if we have inclusion from other change lists
-      if ((ui.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>().isNotEmpty()) return
+      if ((inclusionModel.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>().isNotEmpty()) return
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges
@@ -127,7 +127,7 @@ class ChangesViewCommitWorkflowHandler(
     ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
-    val inclusion = ui.getInclusion()
+    val inclusion = inclusionModel.getInclusion()
     val activeChanges = changeListManager.defaultChangeList.changes
     val includedActiveChanges = activeChanges.filter { it in inclusion }
 

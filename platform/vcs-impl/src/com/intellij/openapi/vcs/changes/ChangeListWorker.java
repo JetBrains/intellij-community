@@ -30,8 +30,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.stream.Collectors.toSet;
-
 /** should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
@@ -381,18 +379,6 @@ public class ChangeListWorker {
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
     FilePath dir = VcsUtil.getFilePath(virtualFile);
     return myIdx.haveChangesUnder(dir);
-  }
-
-  @NotNull
-  public Set<Change> getChangesUnder(@NotNull FilePath dirPath) {
-    return myIdx.getChanges().stream().filter(change -> isChangeUnder(dirPath, change)).collect(toSet());
-  }
-
-  private static boolean isChangeUnder(@NotNull FilePath parent, @NotNull Change change) {
-    ContentRevision after = change.getAfterRevision();
-    ContentRevision before = change.getBeforeRevision();
-    return after != null && after.getFile().isUnder(parent, false) ||
-           before != null && before.getFile().isUnder(parent, false);
   }
 
   @Nullable

@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 /**
  * @author peter
+ * @deprecated use {@link DomEventListener} directly
  */
 @Deprecated
 public abstract class DomEventAdapter implements DomEventListener {

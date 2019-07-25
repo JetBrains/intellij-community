@@ -53,10 +53,11 @@ public class EditorScrollingPositionKeeper implements Disposable {
       newY = myEditor.offsetToXY(myTopLeftCornerMarker.getStartOffset()).y;
     }
     ScrollingModel scrollingModel = myEditor.getScrollingModel();
+    Rectangle targetArea = scrollingModel.getVisibleAreaOnScrollingFinished();
     // when animated scrolling is in progress, we'll not stop it immediately
-    boolean disableAnimation = scrollingModel.getVisibleAreaOnScrollingFinished().equals(scrollingModel.getVisibleArea()) || stopAnimation;
+    boolean disableAnimation = targetArea.equals(scrollingModel.getVisibleArea()) || stopAnimation;
     if (disableAnimation) scrollingModel.disableAnimation();
-    scrollingModel.scrollVertically(newY - myViewportShift);
+    scrollingModel.scroll(targetArea.x, newY - myViewportShift); // can't use 'scrollVertically' - it aborts horizontal scrolling
     if (disableAnimation) scrollingModel.enableAnimation();
   }
 

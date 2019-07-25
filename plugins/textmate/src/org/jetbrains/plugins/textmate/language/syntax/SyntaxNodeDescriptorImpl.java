@@ -22,7 +22,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private final List<InjectionNodeDescriptor> myInjections= new ArrayList<>();
   private final Map<String, SyntaxNodeDescriptor> myRepository = new HashMap<>();
   private final SyntaxNodeDescriptor myParentNode;
-  private String myScopeName = "";
+  private String myScopeName = null;
 
   SyntaxNodeDescriptorImpl(@Nullable SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;

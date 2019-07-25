@@ -17,7 +17,10 @@ class ChangeReminderCheckAction :
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val project = e.project!!
+    val project = e.project ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     if (!project.anyGitRootsForIndexing()) {
       e.presentation.isEnabled = false
       if (project.getGitRoots().isEmpty()) {

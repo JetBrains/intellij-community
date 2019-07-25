@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
@@ -11,9 +11,7 @@ public class EnhancedSwitchBackwardMigrationInspectionTest extends LightQuickFix
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new EnhancedSwitchBackwardMigrationInspection()
-    };
+    return new LocalInspectionTool[]{new EnhancedSwitchBackwardMigrationInspection()};
   }
 
   @Override
@@ -23,6 +21,6 @@ public class EnhancedSwitchBackwardMigrationInspectionTest extends LightQuickFix
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_12_PREVIEW;
+    return LanguageLevel.JDK_13_PREVIEW;
   }
 }

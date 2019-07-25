@@ -30,6 +30,9 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
+  /**
+   * @deprecated use {@link ContainerUtil#createSoftKeySoftValueMap()} instead
+   */
   @Deprecated
   public SoftKeySoftValueHashMap() {
     DeprecatedMethodException.report("Use ContainerUtil#createSoftKeySoftValueMap() instead");

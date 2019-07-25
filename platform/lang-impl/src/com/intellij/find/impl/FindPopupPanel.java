@@ -2,12 +2,14 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -167,6 +169,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     initComponents();
     initByModel();
+
+    FindUtil.triggerUsedOptionsStats("FindInPath", myHelper.getModel());
   }
 
   @Override
@@ -405,17 +409,17 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     //myTitleLabel.setBorder(JBUI.Borders.emptyRight(16));
     myLoadingDecorator = new LoadingDecorator(new JLabel(EmptyIcon.ICON_16), getDisposable(), 250, true, new AsyncProcessIcon("FindInPathLoading"));
     myLoadingDecorator.setLoadingText("");
-    myCbCaseSensitive = createCheckBox("find.popup.case.sensitive");
+    myCbCaseSensitive = createCheckBox("find.popup.case.sensitive", "FindPopupPanel$ToggleCaseSensitive");
     ItemListener liveResultsPreviewUpdateListener = __ -> scheduleResultsUpdate();
     myCbCaseSensitive.addItemListener(liveResultsPreviewUpdateListener);
-    myCbPreserveCase = createCheckBox("find.options.replace.preserve.case");
+    myCbPreserveCase = createCheckBox("find.options.replace.preserve.case", "FindPopupPanel$TogglePreserveCase");
     myCbPreserveCase.addItemListener(liveResultsPreviewUpdateListener);
     myCbPreserveCase.setVisible(myHelper.getModel().isReplaceState());
-    myCbWholeWordsOnly = createCheckBox("find.popup.whole.words");
+    myCbWholeWordsOnly = createCheckBox("find.popup.whole.words", "FindPopupPanel$ToggleWholeWords");
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
-    myCbRegularExpressions = createCheckBox("find.popup.regex");
+    myCbRegularExpressions = createCheckBox("find.popup.regex", "FindPopupPanel$ToggleRegex");
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
-    myCbFileFilter = createCheckBox("find.popup.filemask");
+    myCbFileFilter = createCheckBox("find.popup.filemask", "FindPopupPanel$ToggleFileFilter");
     myCbFileFilter.addItemListener(__ -> {
       if (myCbFileFilter.isSelected()) {
         myFileMaskField.setEnabled(true);
@@ -902,8 +906,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   }
 
   @NotNull
-  private static StateRestoringCheckBox createCheckBox(String message) {
+  private static StateRestoringCheckBox createCheckBox(String message, String featureId) {
     StateRestoringCheckBox checkBox = new StateRestoringCheckBox(FindBundle.message(message));
+    checkBox.addActionListener(__ -> FUCounterUsageLogger.getInstance().logEvent("find", featureId));
     checkBox.setFocusable(false);
     return checkBox;
   }

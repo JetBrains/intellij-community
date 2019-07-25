@@ -32,7 +32,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    VcsLogUsageTriggerCollector.triggerUsage(e, this)
+    triggerUsage(e)
 
     val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as AbstractVcsLogUi
     val rows = getRowsToJump(ui)
@@ -43,7 +43,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     if (rows.size == 1) {
-      ui.jumpToRow(rows.single())
+      ui.jumpToRow(rows.single(), false)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup("Select ${if (parent) "Parent" else "Child"} to Navigate",
@@ -58,12 +58,16 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       val text = getActionText(ui.table.model.getCommitMetadata(row))
       object : DumbAwareAction(text, "Navigate to $text", null) {
         override fun actionPerformed(e: AnActionEvent) {
-          VcsLogUsageTriggerCollector.triggerUsage(e, "Go to ${if (parent) "Parent" else "Child"} Commit.Select from Popup")
-          ui.jumpToRow(row)
+          triggerUsage(e)
+          ui.jumpToRow(row, false)
         }
       }
     }
     return DefaultActionGroup(actions)
+  }
+
+  private fun DumbAwareAction.triggerUsage(e: AnActionEvent) {
+    VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent.commit", parent) }
   }
 
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {

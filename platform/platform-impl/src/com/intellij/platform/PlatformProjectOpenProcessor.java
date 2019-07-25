@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
@@ -25,12 +27,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,16 +134,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
-    return doOpenProject(virtualFile, projectToClose, line, callback, options, null);
-  }
-
-  @Nullable
-  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
-                                      @Nullable Project projectToClose,
-                                      int line,
-                                      @Nullable ProjectOpenedCallback callback,
-                                      @NotNull EnumSet<Option> options,
-                                      @Nullable IdeFrame frame) {
     VirtualFile baseDir = virtualFile;
     boolean dummyProject = false;
     String dummyProjectName = null;
@@ -177,7 +172,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       if (projectToClose == null) {
-        projectToClose = openProjects[openProjects.length - 1];
+        // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
+        IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+        projectToClose = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+        if (projectToClose == null) {
+          projectToClose = openProjects[openProjects.length - 1];
+        }
       }
 
       if (checkExistingProjectOnOpen(projectToClose, callback, baseDir)) {
@@ -186,18 +186,17 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     Pair<Project, Module> result = null;
-    if (frame == null) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
     }
     else {
+      IdeFrameImpl frame = showFrame();
       Ref<Pair<Project, Module>> refResult = Ref.create();
       VirtualFile finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
       String finalDummyProjectName = dummyProjectName;
-      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName)),
-        "Loading Project...", true, null, frame.getComponent()
-      );
+      Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
       if (progressCompleted) {
         result = refResult.get();
       }
@@ -219,6 +218,28 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return result.first;
   }
 
+  @NotNull
+  private static IdeFrameImpl showFrame() {
+    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+    IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
+    if (freeRootFrame != null) {
+      return freeRootFrame;
+    }
+
+    Activity showFrameActivity = StartUpMeasurer.start("show frame");
+    IdeFrameImpl frame = windowManager.showFrame();
+    showFrameActivity.end();
+    // runProcessWithProgressSynchronously still processes EDT events
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Activity activity = StartUpMeasurer.start("init frame");
+      if (frame.isDisplayable()) {
+        frame.init();
+      }
+      activity.end();
+    }, ModalityState.any());
+    return frame;
+  }
+
   @Nullable
   private static Pair<Project, Module> prepareAndOpenProject(@NotNull VirtualFile virtualFile,
                                                              @NotNull EnumSet<Option> options,
@@ -228,7 +249,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
-    if (PathKt.exists(Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER))) {
+    VirtualFile dotIdeaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    if (dotIdeaDir != null && dotIdeaDir.isDirectory()) {
       project = tryLoadProject(baseDir);
     }
     else {
@@ -266,15 +288,22 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
                                             boolean dummyProject, boolean newProject) {
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
-    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
+    final Ref<Module> module = new Ref<>();
+    if (runConfigurators) {
+      ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
+    }
+    else {
+      module.set(ModuleManager.getInstance(project).getModules()[0]);
+    }
+
     if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ModuleRootModificationUtil.updateModel(module, model -> {
+      ModuleRootModificationUtil.updateModel(module.get(), model -> {
         ContentEntry[] entries = model.getContentEntries();
         if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
         model.addContentEntry(dummyFileContentRoot);
       });
     }
-    return module;
+    return module.get();
   }
 
   private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
@@ -312,9 +341,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
+  public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }

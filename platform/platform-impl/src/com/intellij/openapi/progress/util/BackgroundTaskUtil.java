@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -313,6 +314,35 @@ public class BackgroundTaskUtil {
     });
   }
 
+  public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
+    awaitWithCheckCanceled(() -> waiter.await(50, TimeUnit.MILLISECONDS));
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Future waiter) {
+    awaitWithCheckCanceled(() -> {
+      try {
+        waiter.get(50, TimeUnit.MILLISECONDS);
+        return true;
+      }
+      catch (TimeoutException e) {
+        return false;
+      }
+    });
+  }
+
+  private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+    boolean success = false;
+    while (!success) {
+      ProgressManager.checkCanceled();
+      try {
+        success = waiter.compute();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
+    }
+  }
 
   private static class Helper<T> {
     private static final Object INITIAL_STATE = ObjectUtils.sentinel("INITIAL_STATE");

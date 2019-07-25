@@ -3,12 +3,13 @@ package com.intellij.execution.services;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @ApiStatus.Experimental
 public interface ServiceViewGroupingContributor<T, G> extends ServiceViewContributor<T> {
-  @Nullable
-  G groupBy(@NotNull T service);
+  @NotNull
+  List<G> getGroups(@NotNull T service);
 
   @NotNull
   ServiceViewDescriptor getGroupDescriptor(@NotNull G group);

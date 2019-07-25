@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.DumbAwareSearchParameters;
@@ -74,7 +74,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
 
     /**
-     * Same as {@link #getScopeDeterminedByUser()}. Use {@link #getEffectiveSearchScope} instead
+     * @deprecated Same as {@link #getScopeDeterminedByUser()}, use {@link #getEffectiveSearchScope} instead
      */
     @Deprecated
     @NotNull

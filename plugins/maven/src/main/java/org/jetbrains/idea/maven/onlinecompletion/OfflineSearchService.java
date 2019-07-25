@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.onlinecompletion;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +26,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
-/**
- * this class is a temporary layer
- */
 @ApiStatus.Experimental
-public class OfflineSearchService {
+public class OfflineSearchService implements DependencyCompletionProvider {
 
   private static final DeduplicationCollector<MavenDependencyCompletionItem> GROUP_COLLECTOR =
     new DeduplicationCollector<>(m -> m.getGroupId());
@@ -39,16 +35,10 @@ public class OfflineSearchService {
     new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId());
   private static final DeduplicationCollector VERSION_COLLECTOR =
     new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId() + ":" + m.getVersion());
-  private final Project myProject;
   private final List<DependencyCompletionProvider> myProviders;
 
-  public OfflineSearchService(Project project, List<DependencyCompletionProvider> providers) {
-    myProject = project;
+  public OfflineSearchService(List<DependencyCompletionProvider> providers) {
     myProviders = providers;
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
 
@@ -84,6 +74,7 @@ public class OfflineSearchService {
     return findGroupCandidates(template, SearchParameters.DEFAULT);
   }
 
+  @Override
   public List<MavenDependencyCompletionItem> findGroupCandidates(@NotNull MavenCoordinate template, @NotNull SearchParameters parameters) {
     return doQuery(parameters, template, (p, s) -> p.findGroupCandidates(s, parameters), GROUP_COLLECTOR, groupMatch(template.getGroupId()),
                    localFirstComparator());
@@ -96,6 +87,7 @@ public class OfflineSearchService {
   }
 
   @NotNull
+  @Override
   public List<MavenDependencyCompletionItem> findArtifactCandidates(@NotNull MavenCoordinate template,
                                                                     @NotNull SearchParameters parameters) {
     return doQuery(parameters, template, (p, s) -> p.findArtifactCandidates(s, parameters), ARTIFACT_COLLECTOR,
@@ -109,6 +101,7 @@ public class OfflineSearchService {
 
   @NotNull
   @SuppressWarnings("unchecked")
+  @Override
   public List<MavenDependencyCompletionItem> findAllVersions(@NotNull MavenCoordinate template, @NotNull SearchParameters parameters) {
     return doQuery(parameters, template, (p, s) -> p.findAllVersions(s, parameters),
                    VERSION_COLLECTOR,
@@ -117,13 +110,9 @@ public class OfflineSearchService {
   }
 
   @NotNull
-  public List<MavenDependencyCompletionItemWithClass> findClasses(@NotNull String className) {
-    return findClasses(className, SearchParameters.DEFAULT);
-  }
-
-  @NotNull
   @SuppressWarnings("unchecked")
-  public List<MavenDependencyCompletionItemWithClass> findClasses(@NotNull String className, @NotNull SearchParameters parameters) {
+  @Override
+  public List<MavenDependencyCompletionItemWithClass> findClassesByString(@NotNull String className, @NotNull SearchParameters parameters) {
     return doQuery(parameters, className, (p, s) -> p.findClassesByString(s, parameters), VERSION_COLLECTOR, l -> true,
                    localFirstComparator());
   }
@@ -163,7 +152,7 @@ public class OfflineSearchService {
   }
 
   private static <T extends MavenDependencyCompletionItem> Predicate<T> artifactMatch(String artifactId) {
-    return ci -> StringUtil.isEmpty(artifactId) || (ci.getGroupId() != null && ci.getArtifactId().contains(artifactId));
+    return ci -> StringUtil.isEmpty(artifactId) || (ci.getGroupId() != null &&  ci.getArtifactId()!=null && ci.getArtifactId().contains(artifactId));
   }
 
   private static <T extends MavenDependencyCompletionItem> Comparator<T> versionComparator() {

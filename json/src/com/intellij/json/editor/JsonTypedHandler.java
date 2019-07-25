@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.json.JsonDialectUtil;
@@ -119,9 +120,10 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return;
     PsiElement parent = element.getParent();
-    if (c == '[' && parent instanceof JsonArray
-        || c == '{' && parent instanceof JsonObject
-        || (c == '"' || c == '\'') && parent instanceof JsonStringLiteral) {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    if ((c == '[' && parent instanceof JsonArray
+         || c == '{' && parent instanceof JsonObject) && codeInsightSettings.AUTOINSERT_PAIR_BRACKET
+        || (c == '"' || c == '\'') && parent instanceof JsonStringLiteral && codeInsightSettings.AUTOINSERT_PAIR_QUOTE) {
       if (shouldAddCommaInParentContainer((JsonValue)parent)) {
         editor.getDocument().insertString(parent.getTextRange().getEndOffset(), ",");
       }

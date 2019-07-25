@@ -447,7 +447,10 @@ public class XmlUtil {
     return null;
   }
 
-  @Deprecated()
+  /**
+   * @deprecated use {@link XmlComment#getCommentText()}
+   */
+  @Deprecated
   @NotNull
   public static String getCommentText(XmlComment comment) {
     return comment.getCommentText();

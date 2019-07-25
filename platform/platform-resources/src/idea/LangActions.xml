@@ -147,11 +147,12 @@
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="JumpToNextChange"/>
     </group>
 
+    <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
+
     <group id="GoToCodeGroup">
       <separator/>
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
-      <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
@@ -1172,6 +1173,8 @@
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
+      <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction"
+              text="Restore Configuration" icon="AllIcons.Actions.Rollback"/>
       <separator/>
       <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"
               text="Group Configurations" icon="AllIcons.Actions.GroupByPackage"/>
@@ -1184,11 +1187,11 @@
     <group id="ServiceViewTreeToolbar">
       <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
-                text="Type"/>
+        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"
+                text="Service Type"/>
+        <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"
+                text="Service Groups"/>
       </group>
-      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
-              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
       <separator/>
       <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
               text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
@@ -1203,8 +1206,6 @@
     </group>
     <group id="ServiceViewNodePopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
-      <separator/>
-      <reference id="ServiceView.FlattenServices"/>
       <separator/>
       <reference id="ServiceView.ShowInNewTab"/>
       <reference id="ServiceView.SplitToNewTabs"/>

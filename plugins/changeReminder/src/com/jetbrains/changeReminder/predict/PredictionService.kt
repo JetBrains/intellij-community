@@ -4,29 +4,29 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesViewI
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.impl.VcsProjectLog.VCS_PROJECT_LOG_CHANGED
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 
 class PredictionService(val project: Project,
                         private val changeListManager: ChangeListManager,
-                        private val changesViewManager: ChangesViewI) : Disposable {
+                        private val changesViewManager: ChangesViewI,
+                        private val projectLog: VcsProjectLog) : Disposable {
 
   private data class PredictionRequirements(val dataManager: VcsLogData, val filesHistoryProvider: FilesHistoryProvider)
 
   private var predictionRequirements: PredictionRequirements? = null
-  private lateinit var connection: MessageBusConnection
+  private lateinit var projectLogListenerDisposable: Disposable
   private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
@@ -126,10 +126,8 @@ class PredictionService(val project: Project,
   }
 
   private fun startService() = synchronized(LOCK) {
-    connection = project.messageBus.connect(this)
-    connection.subscribe(VCS_PROJECT_LOG_CHANGED, projectLogListener)
-
-    setDataManager(VcsProjectLog.getInstance(project).dataManager)
+    projectLogListenerDisposable = Disposer.newDisposable()
+    projectLog.addProjectLogListener(projectLogListener, projectLogListenerDisposable)
 
     changeListManager.addChangeListListener(changeListsListener)
   }
@@ -139,7 +137,7 @@ class PredictionService(val project: Project,
 
     removeDataManager()
 
-    connection.disconnect()
+    Disposer.dispose(projectLogListenerDisposable)
   }
 
   private fun setPrediction(newPrediction: Collection<FilePath>) {

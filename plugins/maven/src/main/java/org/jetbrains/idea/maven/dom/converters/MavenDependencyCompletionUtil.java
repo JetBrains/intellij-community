@@ -23,17 +23,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
@@ -41,7 +37,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
@@ -79,50 +74,6 @@ public class MavenDependencyCompletionUtil {
     return parent.getParent() instanceof MavenDomDependencyManagement;
   }
 
-  public static void addTypeAndClassifierAndVersion(@NotNull InsertionContext context,
-                                                    @NotNull MavenDomDependency dependency,
-                                                    @NotNull String groupId, @NotNull String artifactId) {
-    if (!StringUtil.isEmpty(dependency.getVersion().getStringValue())) return;
-
-    Project project = context.getProject();
-
-    if (!isInsideManagedDependency(dependency)) {
-      MavenDomProjectModel model = DomUtil.<MavenDomProjectModel>getFileElement(dependency).getRootElement();
-      MavenDomDependency managedDependency = findManagedDependency(model, project, groupId, artifactId);
-      if (managedDependency != null) {
-        if (dependency.getClassifier().getXmlTag() == null && dependency.getType().getXmlTag() == null) {
-          String classifier = managedDependency.getClassifier().getRawText();
-          if (StringUtil.isNotEmpty(classifier)) {
-            dependency.getClassifier().setStringValue(classifier);
-          }
-          String type = managedDependency.getType().getRawText();
-          if (StringUtil.isNotEmpty(type)) {
-            dependency.getType().setStringValue(type);
-          }
-        }
-        return;
-      }
-    }
-
-    OfflineSearchService service = MavenProjectIndicesManager.getInstance(project).getOfflineSearchService();
-
-    List<MavenDependencyCompletionItem> versions = service.findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null));
-    if (versions.size() == 1) {
-      dependency.getVersion().setStringValue(ContainerUtil.getFirstItem(versions).getVersion());
-      return;
-    }
-
-    dependency.getVersion().setStringValue("");
-
-    int versionPosition = dependency.getVersion().getXmlTag().getValue().getTextRange().getStartOffset();
-
-    context.getEditor().getCaretModel().moveToOffset(versionPosition);
-
-    if (versions.size() > 0) {
-      invokeCompletion(context, CompletionType.BASIC);
-    }
-  }
-
   public static void invokeCompletion(@NotNull final InsertionContext context, final CompletionType completionType) {
     context.setLaterRunnable(
       () -> new CodeCompletionHandlerBase(completionType).invokeCompletion(context.getProject(), context.getEditor()));
@@ -144,13 +95,18 @@ public class MavenDependencyCompletionUtil {
   }
 
   public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info) {
+    return lookupElement(info, getPresentableText(info));
+  }
+
+  public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info, String presentableText) {
     LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
-      .withPresentableText(getPresentableText(info));
+      .withPresentableText(presentableText);
     if (info.getItems().length == 1) {
       return elementBuilder.withIcon(getIcon(info.getItems()[0].getType()));
     }
     return elementBuilder;
   }
+
   private static String getPresentableText(MavenRepositoryArtifactInfo info) {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);

@@ -16,12 +16,12 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,7 +79,7 @@ public interface ChangeListFilteringStrategy {
     @Override
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
-      return ContainerUtil.immutableList(changeLists);
+      return new ArrayList<>(changeLists);
     }
 
     @Override
