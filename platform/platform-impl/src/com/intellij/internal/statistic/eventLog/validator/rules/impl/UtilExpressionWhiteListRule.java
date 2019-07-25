@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
-import com.intellij.internal.statistic.eventLog.LogEventsKt;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public class UtilExpressionWhiteListRule extends PerformanceCareRule implements 
   @NotNull
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    final String escapedData = LogEventsKt.escape(data);
+    final String escapedData = StatisticsEventEscaper.escape(data);
     if (acceptPrefix(escapedData) && acceptSuffix(escapedData)) {
       return myRule.validate(escapedData.substring(myPrefix.length(), escapedData.length() - mySuffix.length()), context);
     }

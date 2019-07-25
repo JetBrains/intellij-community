@@ -80,6 +80,31 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventIdWithLineBreaks() {
+    testEventEscaping(newEvent("recorder-id", "e\n\rvent\ntyp\re"), "recorder-id", "e__vent_typ_e")
+  }
+
+  @Test
+  fun testEventIdWithLineBreaksAndWhitespaces() {
+    testEventEscaping(newEvent("recorder-id", "e\tve  nt\ntyp\re"), "recorder-id", "e_ve__nt_typ_e")
+  }
+
+  @Test
+  fun testEventIdWithSystemAndUnicodeSymbolsToEscape() {
+    testEventEscaping(newEvent("recorder-id", "\u7A97e:v'e\"n\uFFFD\uFFFD\uFFFDt;t\ty,p e"), "recorder-id", "?e_ven???t_t_y_p_e")
+  }
+
+  @Test
+  fun testEventIdWithNumbers() {
+    testEventEscaping(newEvent("recorder-id", "event-type-42"), "recorder-id", "event-type-42")
+  }
+
+  @Test
+  fun testEventIdWithSymbols() {
+    testEventEscaping(newEvent("recorder-id", "ev$)en(t*-7ty2p#e!"), "recorder-id", "ev\$)en(t*-7ty2p#e!")
+  }
+
+  @Test
   fun testEventIdWithAllSymbolsToEscapeInEventDataField() {
     val event = newEvent("recorder-id", "event type")
     event.event.addData("my.key", "value")
@@ -174,6 +199,12 @@ class FeatureEventLogSerializationTest {
     testEventSerialization(newEvent("recorder-id", "event\u5F39type\u02BE\u013C"), false)
     testEventSerialization(newEvent("recorder-id", "event\u02BE"), false)
     testEventSerialization(newEvent("recorder-id", "\uFFFD\uFFFD\uFFFDevent"), false)
+  }
+
+  @Test
+  fun testEventActionWithUnicodeAndSystemSymbols() {
+    testEventSerialization(newEvent("recorder-id", "e'vent \u7A97typ\"e"), false)
+    testEventSerialization(newEvent("recorder-id", "ev:e;nt\u5F39ty pe\u02BE\u013C"), false)
   }
 
   @Test

@@ -3,6 +3,8 @@
 
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escape
+import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import java.util.*
 
 fun newLogEvent(session: String,
@@ -153,17 +155,3 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
     return result
   }
 }
-
-private val nonAscii = Regex("[^\\p{ASCII}]")
-private val systemSymbols = Regex("[ \t:;,]")
-
-fun escape(str: String): String {
-  return str.replace("\'", "").replace("\"", "").
-    replace(systemSymbols, "_").
-    replace(nonAscii, "?")
-}
-
-fun escapeFieldName(str: String): String {
-  return escape(str).replace('.', '_')
-}
-
