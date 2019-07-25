@@ -707,7 +707,9 @@ public class FoldingModelSupport {
           int line1 = document.getLineNumber(region.getStartOffset());
           int line2 = document.getLineNumber(region.getEndOffset()) + 1;
           collapsed = new LineRange(line1, line2);
-          collapsedDescription = ContainerUtil.map(folding.myDescriptions, it -> it.get(), ArrayUtil.EMPTY_STRING_ARRAY);
+          collapsedDescription = ContainerUtil.map(folding.myDescriptions,
+                                                   it -> it != null ? it.get() : null,
+                                                   ArrayUtil.EMPTY_STRING_ARRAY);
           break;
         }
       }
