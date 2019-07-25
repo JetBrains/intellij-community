@@ -40,7 +40,7 @@ import java.util.List;
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
-import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isShowHideBranches;
 
 public class CommitPanel extends JBPanel {
   public static final int SIDE_BORDER = 14;
@@ -236,7 +236,7 @@ public class CommitPanel extends JBPanel {
 
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_HIDE_BRANCHES.equals(e.getDescription())) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isShowHideBranches(e)) {
         myExpanded = !myExpanded;
         update();
       }
