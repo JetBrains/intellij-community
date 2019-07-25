@@ -137,21 +137,21 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   @Override
   public void add(@NotNull VirtualFile file) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
     myList.addIfAbsent(create(file));
   }
 
   @Override
   public void add(@NotNull String url) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
     myList.addIfAbsent(create(url));
   }
 
   @Override
   public void remove(@NotNull VirtualFilePointer pointer) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
     final boolean result = myList.remove(pointer);
     LOG.assertTrue(result);
@@ -160,13 +160,13 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @NotNull
   public List<VirtualFilePointer> getList() {
-    assert !myDisposed;
+    checkDisposed();
     return Collections.unmodifiableList(myList);
   }
 
   @Override
   public void addAll(@NotNull VirtualFilePointerContainer that) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
 
     addAll(Arrays.asList(that.getUrls()));
@@ -199,7 +199,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   @NotNull
   private Trinity<String[], VirtualFile[], VirtualFile[]> getOrCache() {
-    assert !myDisposed;
+    checkDisposed();
     long timeStamp = myTimeStampOfCachedThings;
     Trinity<String[], VirtualFile[], VirtualFile[]> cached = myCachedThings;
     return timeStamp == myVirtualFilePointerManager.getModificationCount() ? cached : cacheThings();
@@ -303,7 +303,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @Nullable
   public VirtualFilePointer findByUrl(@NotNull String url) {
-    assert !myDisposed;
+    checkDisposed();
     for (VirtualFilePointer pointer : ContainerUtil.concat(myList, myJarDirectories, myJarRecursiveDirectories)) {
       if (url.equals(pointer.getUrl())) return pointer;
     }
@@ -371,7 +371,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @NotNull
   public VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
-    assert !myDisposed;
+    checkDisposed();
     VirtualFilePointerContainerImpl clone = (VirtualFilePointerContainerImpl)myVirtualFilePointerManager.createContainer(parent, listener);
 
     List<VirtualFilePointer> toAdd = ContainerUtil.map(myList, p -> clone.create(p.getUrl()));
@@ -383,10 +383,16 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   @Override
   public void dispose() {
-    assert !myDisposed;
+    checkDisposed();
     myDisposed = true;
     kill(null);
     clear();
+  }
+
+  private void checkDisposed() {
+    if (myDisposed) {
+      throwDisposalError("Already disposed:\n" + getStackTrace());
+    }
   }
 
   @Override
