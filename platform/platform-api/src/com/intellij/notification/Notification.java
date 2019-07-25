@@ -364,4 +364,10 @@ public class Notification {
   public final void assertHasTitleOrContent() {
     LOG.assertTrue(hasTitle() || hasContent(), "Notification should have title and/or content; groupId: " + myGroupId);
   }
+
+  @Override
+  public String toString() {
+    return String.format("Notification{id='%s', myGroupId='%s', myType=%s, myTitle='%s', mySubtitle='%s', myContent='%s'}",
+                         id, myGroupId, myType, myTitle, mySubtitle, myContent);
+  }
 }
