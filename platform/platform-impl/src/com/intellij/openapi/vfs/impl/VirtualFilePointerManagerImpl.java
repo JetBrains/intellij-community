@@ -45,7 +45,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
   static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
-  private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {};
+  private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {
+    @Override
+    public int hashCode() {
+      return 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this;
+    }
+  };
+
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = ContainerUtil.newIdentityTroveMap(); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();  // guarded by myContainers

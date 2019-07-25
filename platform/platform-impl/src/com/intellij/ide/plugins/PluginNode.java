@@ -263,7 +263,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   /**
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
-  @Nullable
   @Override
   public PluginId getPluginId() {
     return id;

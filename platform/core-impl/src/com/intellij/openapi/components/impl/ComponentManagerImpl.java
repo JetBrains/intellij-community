@@ -69,7 +69,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
   private final ComponentManager myParentComponentManager;
-  private final Condition myDisposedCondition = __ -> isDisposed();
 
   protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
@@ -389,7 +388,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @NotNull
   public final Condition<?> getDisposed() {
-    return myDisposedCondition;
+    return __ -> isDisposed();
   }
 
   @NotNull

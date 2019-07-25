@@ -72,7 +72,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     // injected files are physical but can sometimes (look at you, completion)
     // be inexplicably injected into non-physical element, in which case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myManager.getProject());
-    if (manager == null) return false; // tests
     PsiFile topLevelFile = manager.getTopLevelFile(dependency);
     return topLevelFile != null && topLevelFile.isPhysical();
   }
