@@ -1524,6 +1524,41 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(suggested, "foo");
   }
 
+  // PY-36003
+  public void testContinueInFinallyBefore38() {
+    final String text = "for x in []:\n" +
+                        "    try:\n" +
+                        "        a = 1\n" +
+                        "    finally:\n" +
+                        "        cont";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text + "<caret>");
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+      }
+    );
+  }
+
+  // PY-36003
+  public void testContinueInFinallyAfter38() {
+    final String text = "for x in []:\n" +
+                        "    try:\n" +
+                        "        a = 1\n" +
+                        "    finally:\n" +
+                        "        cont";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text + "<caret>");
+        myFixture.completeBasic();
+        myFixture.checkResult(text + "inue");
+      }
+    );
+  }
 
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
