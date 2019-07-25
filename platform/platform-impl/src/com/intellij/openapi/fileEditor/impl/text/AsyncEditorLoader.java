@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -92,7 +93,11 @@ public class AsyncEditorLoader {
       .expireWith(myEditorComponent)
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.any(), result -> loadingFinished(result))
-      .submit(ourExecutor);
+      .submit(ourExecutor)
+      .onError(throwable -> {
+        Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", throwable);
+        loadingFinished(null);
+      });
     return future;
   }
 
