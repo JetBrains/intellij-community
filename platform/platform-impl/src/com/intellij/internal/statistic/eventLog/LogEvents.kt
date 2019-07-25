@@ -3,7 +3,6 @@
 
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escape
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import java.util.*
 
@@ -27,7 +26,7 @@ fun newLogEvent(session: String,
                 recorderVersion: String,
                 type: String,
                 isState: Boolean = false): LogEvent {
-  val event = LogEventAction(escape(type), isState, 1)
+  val event = LogEventAction(StatisticsEventEscaper.escape(type), isState, 1)
   return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, event)
 }
 
@@ -39,12 +38,12 @@ open class LogEvent(session: String,
                     groupVersion: String,
                     recorderVersion: String,
                     action: LogEventAction) {
-  val recorderVersion: String = escape(recorderVersion)
-  val session: String = escape(session)
-  val build: String = escape(build)
-  val bucket: String = escape(bucket)
+  val recorderVersion: String = StatisticsEventEscaper.escape(recorderVersion)
+  val session: String = StatisticsEventEscaper.escape(session)
+  val build: String = StatisticsEventEscaper.escape(build)
+  val bucket: String = StatisticsEventEscaper.escape(bucket)
   val time: Long = eventTime
-  val group: LogEventGroup = LogEventGroup(escape(groupId), escape(groupVersion))
+  val group: LogEventGroup = LogEventGroup(StatisticsEventEscaper.escape(groupId), StatisticsEventEscaper.escape(groupVersion))
   val event: LogEventAction = action
 
   fun shouldMerge(next: LogEvent): Boolean {
@@ -132,7 +131,7 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
       data = HashMap()
     }
 
-    val escapedValue = if (value is String) escape(value) else value
+    val escapedValue = if (value is String) StatisticsEventEscaper.escape(value) else value
     data[escapeFieldName(key)] = escapedValue
   }
 
@@ -154,4 +153,9 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
     result = 31 * result + data.hashCode()
     return result
   }
+}
+
+@Deprecated("Use StatisticsEventEscaper#escape", ReplaceWith("StatisticsEventEscaper.escape(str)"))
+fun escape(str: String): String {
+  return StatisticsEventEscaper.escape(str)
 }
