@@ -1121,9 +1121,18 @@ public class JBUI {
   }
 
   /**
+   * Note, the class is deprecated and is kept for backward compatibility.
+   *
    * @deprecated Use {@link JBScalableIcon}.
    */
   @Deprecated
-  @SuppressWarnings("AbstractClassNeverImplemented")
-  public abstract static class JBIcon extends JBScalableIcon {}
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
+    public JBIcon() {
+      super();
+    }
+    public JBIcon(T icon) {
+      super(icon);
+    }
+  }
 }
