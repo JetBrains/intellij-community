@@ -12,7 +12,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.frame.ReferencesPanel;
+import com.intellij.vcs.log.ui.details.commit.ReferencesPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

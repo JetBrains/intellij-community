@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.ui.frame;
+package com.intellij.vcs.log.ui.details.commit;
 
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.components.JBLabel;
@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.ui.frame.WrappedFlowLayout;
 import com.intellij.vcs.log.ui.render.LabelIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -21,7 +21,6 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
-import com.intellij.vcs.log.ui.frame.ReferencesPanel
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
