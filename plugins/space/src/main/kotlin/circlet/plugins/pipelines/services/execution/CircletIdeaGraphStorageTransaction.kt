@@ -118,4 +118,12 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     override fun findNotFinishedJobsWithWorkerId(limit: Int): Sequence<AJobExecutionEntity<*>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun registerSnapshotForJobExecution(id: String, jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun findRemainingJobs(executionId: Long, jobId: String): Sequence<AJobExecutionEntity<*>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
