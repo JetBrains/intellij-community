@@ -28,7 +28,7 @@ public class ForkedDebuggerHelper {
           serverSocket.wait(1);
         }
         catch (InterruptedException e) {
-          System.err.println(e);
+          e.printStackTrace();
         }
       }
       return port;
