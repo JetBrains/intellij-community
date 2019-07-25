@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -26,8 +26,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
+import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ public class VcsLogUiUtil {
   }
 
   public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
-                                             @NotNull DetailsPanel detailsPanel,
+                                             @NotNull VcsLogCommitDetailsListPanel detailsPanel,
                                              @NotNull VcsLogData logData,
                                              @NotNull Disposable disposableParent) {
     Runnable miniDetailsLoadedListener = () -> {

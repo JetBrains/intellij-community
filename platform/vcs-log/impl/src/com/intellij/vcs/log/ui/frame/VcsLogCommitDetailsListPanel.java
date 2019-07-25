@@ -52,7 +52,7 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresenta
 /**
  * @author Kirill Likhodedov
  */
-public class DetailsPanel extends JPanel implements EditorColorsListener, Disposable {
+public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColorsListener, Disposable {
   private static final int MAX_ROWS = 50;
   private static final int MIN_SIZE = 20;
 
@@ -67,9 +67,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @Nullable private ProgressIndicator myResolveIndicator = null;
 
-  public DetailsPanel(@NotNull VcsLogData logData,
-                      @NotNull VcsLogColorManager colorManager,
-                      @NotNull Disposable parent) {
+  public VcsLogCommitDetailsListPanel(@NotNull VcsLogData logData,
+                                      @NotNull VcsLogColorManager colorManager,
+                                      @NotNull Disposable parent) {
     myLogData = logData;
     myColorManager = colorManager;
 
@@ -248,7 +248,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
     CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(graphTable, DetailsPanel.this.myLogData.getMiniDetailsGetter());
+      super(graphTable, VcsLogCommitDetailsListPanel.this.myLogData.getMiniDetailsGetter());
     }
 
     @Override

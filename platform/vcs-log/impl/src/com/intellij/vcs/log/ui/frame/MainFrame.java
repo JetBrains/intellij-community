@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -82,7 +82,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogChangeProcessor myPreviewDiff;
   @NotNull private final Splitter myPreviewDiffSplitter;
 
-  @NotNull private final DetailsPanel myDetailsPanel;
+  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
 
   public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
@@ -96,7 +96,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
-    myDetailsPanel = new DetailsPanel(logData, logUi.getColorManager(), this) {
+    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
         logUi.jumpToCommit(commit.getHash(), commit.getRoot());
