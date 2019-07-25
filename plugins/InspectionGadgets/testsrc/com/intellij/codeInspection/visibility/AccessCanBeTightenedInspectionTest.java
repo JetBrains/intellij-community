@@ -60,6 +60,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     return inspection;
   }
 
+  @SuppressWarnings("FieldMayBeStatic")
   public void testSimple() {
     doTest("import java.util.*;\n" +
            "class C {\n" +
@@ -467,6 +468,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @SuppressWarnings("FieldMayBeStatic")
   public void testSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
     doTest("class SuggestForConstants {\n" +
@@ -475,6 +477,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "}");
   }
 
+  @SuppressWarnings("FieldMayBeStatic")
   public void testDoNotSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = false;
     doTest("class DoNotSuggestForConstants {\n" +
