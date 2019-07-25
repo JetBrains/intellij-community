@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
+import static com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt.getCommitDetailsBackground;
 
 public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;

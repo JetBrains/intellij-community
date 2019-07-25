@@ -1,351 +1,71 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.HtmlPanel;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.ContainingBranchesGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isGoToHash;
-import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isShowHideBranches;
+public class CommitPanel extends CommitDetailsPanel {
+  @NotNull final VcsLogData myLogData;
+  @NotNull final VcsLogColorManager myColorManager;
+  @Nullable CommitId myCommit;
 
-public class CommitPanel extends JBPanel {
-  public static final int SIDE_BORDER = 14;
-  public static final int INTERNAL_BORDER = 10;
-  public static final int EXTERNAL_BORDER = 14;
-  private static final int ROOT_ICON_SIZE = 13;
-  private static final int ROOT_GAP = 4;
-
-  @NotNull private final VcsLogData myLogData;
-
-  @NotNull private final ReferencesPanel myBranchesPanel;
-  @NotNull private final ReferencesPanel myTagsPanel;
-  @NotNull private final MessagePanel myMessagePanel;
-  @NotNull private final HashAndAuthorPanel myHashAndAuthorPanel;
-  @NotNull private final RootPanel myRootPanel;
-  @NotNull private final BranchesPanel myContainingBranchesPanel;
-  @NotNull private final VcsLogColorManager myColorManager;
-
-  @Nullable private CommitId myCommit;
-
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<? super CommitId> navigate) {
+  public CommitPanel(@NotNull VcsLogData logData,
+                     @NotNull VcsLogColorManager colorManager,
+                     @NotNull Consumer<? super CommitId> navigate) {
+    super(logData.getProject(),
+          commitId -> {
+            navigate.consume(commitId);
+            return Unit.INSTANCE;
+          });
     myLogData = logData;
     myColorManager = colorManager;
-
-    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-    setOpaque(false);
-
-    myMessagePanel = new MessagePanel(navigate) {
-      @Override
-      protected boolean hasBackgroundImage() {
-        return super.hasBackgroundImage() ||
-               !StringUtil.isEmpty(PropertiesComponent.getInstance(myLogData.getProject()).getValue(EDITOR_PROP));
-      }
-    };
-    JBPanel metadataPanel = new JBPanel(new BorderLayout(0, 0));
-    myHashAndAuthorPanel = new HashAndAuthorPanel();
-    myRootPanel = new RootPanel(myHashAndAuthorPanel);
-    myBranchesPanel = new ReferencesPanel();
-    myTagsPanel = new ReferencesPanel();
-    myContainingBranchesPanel = new BranchesPanel();
-
-    metadataPanel.setOpaque(false);
-
-    myMessagePanel.setBorder(JBUI.Borders.empty(EXTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, SIDE_BORDER));
-    myHashAndAuthorPanel.setBorder(JBUI.Borders.empty());
-    metadataPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
-    myContainingBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER, EXTERNAL_BORDER, SIDE_BORDER));
-
-    add(myMessagePanel);
-    metadataPanel.add(myRootPanel, BorderLayout.WEST);
-    metadataPanel.add(myHashAndAuthorPanel, BorderLayout.CENTER);
-    add(metadataPanel);
-    add(myBranchesPanel);
-    add(myTagsPanel);
-    add(myContainingBranchesPanel);
   }
 
+  @Override
   public void setCommit(@NotNull CommitId commit, @NotNull CommitPresentationUtil.CommitPresentation presentation) {
-    if (!commit.equals(myCommit) || presentation.isResolved()) {
-      myCommit = commit;
-
-      myMessagePanel.updateMessage(presentation);
-      myHashAndAuthorPanel.updateHashAndAuthor(presentation);
-      VirtualFile root = commit.getRoot();
-      myRootPanel.setRoot(root, myColorManager.hasMultiplePaths() ? VcsLogGraphTable.getRootBackgroundColor(root, myColorManager) : null);
-    }
-
-    List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
-    myContainingBranchesPanel.setBranches(branches);
-  }
-
-  public void setRefs(@NotNull Collection<? extends VcsRef> refs) {
-    List<VcsRef> references = sortRefs(refs);
-    myBranchesPanel.setReferences(ContainerUtil.filter(references, ref -> ref.getType().isBranch()));
-    myTagsPanel.setReferences(ContainerUtil.filter(references, ref -> !ref.getType().isBranch()));
-    if (myTagsPanel.isVisible()) {
-      myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
-      myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
-    }
-    else if (myBranchesPanel.isVisible()) {
-      myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
+    myCommit = commit;
+    super.setCommit(commit, presentation);
+    setBranches(myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash()));
+    VirtualFile root = commit.getRoot();
+    if (myColorManager.hasMultiplePaths()) {
+      setRoot(new RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, myColorManager)));
+    } else {
+      setRoot(null);
     }
   }
 
-  public void update() {
-    myMessagePanel.update();
-    myHashAndAuthorPanel.update();
-    myRootPanel.update();
-    myBranchesPanel.update();
-    myTagsPanel.update();
-    myContainingBranchesPanel.update();
-  }
-
-  public void updateBranches() {
-    if (myCommit != null) {
-      ContainingBranchesGetter getter = myLogData.getContainingBranchesGetter();
-      myContainingBranchesPanel.setBranches(getter.getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
-    }
-    else {
-      myContainingBranchesPanel.setBranches(null);
-    }
-    myContainingBranchesPanel.update();
+  public void setRefs(@NotNull Collection<VcsRef> refs) {
+    setRefs(sortRefs(refs));
   }
 
   @NotNull
-  private List<VcsRef> sortRefs(@NotNull Collection<? extends VcsRef> refs) {
+  protected List<? extends VcsRef> sortRefs(@NotNull Collection<? extends VcsRef> refs) {
     VcsRef ref = ContainerUtil.getFirstItem(refs);
     if (ref == null) return ContainerUtil.emptyList();
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());
   }
 
-  @Override
-  public Color getBackground() {
-    return getCommitDetailsBackground();
-  }
-
-  @NotNull
-  public static Color getCommitDetailsBackground() {
-    return UIUtil.getPanelBackground();
-  }
-
-  private static class MessagePanel extends HtmlPanel {
-    @NotNull final Consumer<? super CommitId> myNavigate;
-    @Nullable CommitPresentationUtil.CommitPresentation myPresentation;
-
-    MessagePanel(@NotNull Consumer<? super CommitId> navigate) {
-      myNavigate = navigate;
+  public void updateBranches() {
+    if (myCommit != null) {
+      ContainingBranchesGetter getter = myLogData.getContainingBranchesGetter();
+      setBranches(getter.getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
     }
-
-    void updateMessage(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
-      myPresentation = presentation;
-      update();
-    }
-
-    @Override
-    public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isGoToHash(e)) {
-        CommitId commitId = notNull(myPresentation).parseTargetCommit(e);
-        if (commitId != null) myNavigate.consume(commitId);
-      }
-      else {
-        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
-      }
-    }
-
-    @NotNull
-    @Override
-    protected String getBody() {
-      return myPresentation == null ? "" : myPresentation.getText();
-    }
-
-    @Override
-    public Color getBackground() {
-      if (hasPanelBackground()) {
-        return getCommitDetailsBackground();
-      }
-      return UIUtil.getTreeBackground();
-    }
-
-    @Override
-    public void update() {
-      setVisible(myPresentation != null); // looks weird when empty
-      setOpaque(!hasPanelBackground());
-      super.update();
-    }
-
-    protected boolean hasPanelBackground() {
-      return UIUtil.isUnderDarcula() || hasBackgroundImage();
-    }
-
-    protected boolean hasBackgroundImage() {
-      return !StringUtil.isEmpty(PropertiesComponent.getInstance().getValue(EDITOR_PROP));
-    }
-  }
-
-  private static class HashAndAuthorPanel extends HtmlPanel {
-    @Nullable CommitPresentationUtil.CommitPresentation myPresentation;
-
-    @NotNull
-    @Override
-    protected String getBody() {
-      return myPresentation == null ? "" : myPresentation.getHashAndAuthor();
-    }
-
-    public void updateHashAndAuthor(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
-      myPresentation = presentation;
-      update();
-    }
-
-    @NotNull
-    @Override
-    protected Font getBodyFont() {
-      return FontUtil.getCommitMetadataFont();
-    }
-
-    @Override
-    public void update() {
-      setVisible(myPresentation != null);
-      super.update();
-    }
-  }
-
-  private static class BranchesPanel extends HtmlPanel {
-    @Nullable private List<String> myBranches;
-    private boolean myExpanded = false;
-
-    @Override
-    public void reshape(int x, int y, int w, int h) {
-      int oldWidth = getWidth();
-      super.reshape(x, y, w, h);
-      if (w != oldWidth) update();
-    }
-
-    @Override
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isShowHideBranches(e)) {
-        myExpanded = !myExpanded;
-        update();
-      }
-    }
-
-    void setBranches(@Nullable List<String> branches) {
-      myBranches = branches;
-      myExpanded = false;
-
-      update();
-    }
-
-    @NotNull
-    @Override
-    protected String getBody() {
-      Insets insets = getInsets();
-      String text = CommitPresentationUtil.getBranchesText(myBranches, myExpanded, getWidth() - insets.left - insets.right,
-                                                           getFontMetrics(getBodyFont()));
-      if (myExpanded) return text;
-      return "<nobr>" + text + "</nobr>";
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
-
-    @NotNull
-    @Override
-    protected Font getBodyFont() {
-      return FontUtil.getCommitMetadataFont();
-    }
-  }
-
-  private static class RootPanel extends Wrapper {
-    @Nullable private ColorIcon myIcon;
-    @Nullable private String myTooltipText;
-    @NotNull final private HashAndAuthorPanel myParent;
-
-    RootPanel(@NotNull HashAndAuthorPanel parent) {
-      myParent = parent;
-      setVerticalSizeReferent(parent);
-      addMouseMotionListener(new MouseAdapter() {
-        @Override
-        public void mouseMoved(MouseEvent e) {
-          if (IdeTooltipManager.getInstance().hasCurrent()) {
-            IdeTooltipManager.getInstance().hideCurrent(e);
-            return;
-          }
-          if (myIcon == null || myTooltipText == null) return;
-          VcsLogUiUtil.showTooltip(RootPanel.this, new Point(myIcon.getIconWidth() / 2, 0), Balloon.Position.above, myTooltipText);
-        }
-      });
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      if (myIcon == null) return new Dimension(0, 0);
-      Dimension size = super.getPreferredSize();
-      return new Dimension(myIcon.getIconWidth() + JBUIScale.scale(ROOT_GAP), size.height);
-    }
-
-    public void setRoot(@NotNull VirtualFile root, @Nullable Color color) {
-      if (color != null) {
-        myIcon = JBUI.scale(new ColorIcon(ROOT_ICON_SIZE, color));
-        myTooltipText = root.getPath();
-      }
-      else {
-        myIcon = null;
-        myTooltipText = null;
-      }
-    }
-
-    public void update() {
-      setVisible(myIcon != null);
-      revalidate();
-      repaint();
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      if (myIcon != null) {
-        int h = FontUtil.getStandardAscent(myParent.getBodyFont(), g);
-        FontMetrics metrics = getFontMetrics(myParent.getBodyFont());
-        myIcon.paintIcon(this, g, 0, metrics.getMaxAscent() - h + (h - myIcon.getIconHeight() - 1) / 2);
-      }
+    else {
+      setBranches(null);
     }
   }
 }

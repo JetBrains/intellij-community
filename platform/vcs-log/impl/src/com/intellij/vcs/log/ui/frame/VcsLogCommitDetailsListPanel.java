@@ -47,6 +47,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt.getCommitDetailsBackground;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
 /**
@@ -92,7 +93,7 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
-        return CommitPanel.getCommitDetailsBackground();
+        return getCommitDetailsBackground();
       }
     };
     myLoadingPanel.add(scrollPane);
@@ -120,7 +121,7 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
 
   @Override
   public Color getBackground() {
-    return CommitPanel.getCommitDetailsBackground();
+    return getCommitDetailsBackground();
   }
 
   public void installCommitSelectionListener(@NotNull VcsLogGraphTable graphTable) {
@@ -329,7 +330,7 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
 
     @Override
     public Color getBackground() {
-      return CommitPanel.getCommitDetailsBackground();
+      return getCommitDetailsBackground();
     }
 
     @Override
