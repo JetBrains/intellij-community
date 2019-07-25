@@ -62,13 +62,10 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
 
       Repository repository = repositoryManager.getRepositoryForFile(ObjectUtils.chooseNotNull(currentPath, branchPath));
       if (currentPath != null && branchPath != null) {
-        if (Comparing.equal(currentPath, branchPath)) {
-          toCheckout.putValue(repository, branchPath);
-        }
-        else {
+        if (!Comparing.equal(currentPath, branchPath)) {
           toDelete.putValue(repository, currentPath);
-          toCheckout.putValue(repository, branchPath);
         }
+        toCheckout.putValue(repository, branchPath);
       }
       else if (currentPath != null) {
         toDelete.putValue(repository, currentPath);

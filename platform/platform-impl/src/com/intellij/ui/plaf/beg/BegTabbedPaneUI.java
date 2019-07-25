@@ -191,12 +191,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
         UIUtil.drawLine(g, x, y, selRect.x, y);
 
         if (selRect.x + selRect.width < right - 1) {
-          if (leftToRight && !lastInRun) {
-            UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
-          }
-          else {
-            UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
-          }
+          UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
         }
         else {
           UIUtil.drawLine(g, x + w - 2, y, x + w - 2, y);

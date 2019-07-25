@@ -121,13 +121,12 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
         for (XmlAttribute attribute : parentTag.getAttributes()) {
           diag.append(", attr: ").append(attribute.getName());
         }
-        diag.append("\n");
       } else {
         for (XmlTag tag : parentTag.getSubTags()) {
           diag.append("\n subtag: ").append(tag.getName());
         }
-        diag.append("\n");
       }
+      diag.append("\n");
     }
     diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
     LOG.error(diag);

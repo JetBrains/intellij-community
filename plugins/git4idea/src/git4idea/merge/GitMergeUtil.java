@@ -103,14 +103,8 @@ public class GitMergeUtil {
       @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
         final List<String> elements = branchChooser.getMarkedElements();
-        if (elements.size() == 0) {
-          strategy.setEnabled(false);
-          updateStrategies(elements);
-        }
-        else {
-          strategy.setEnabled(true);
-          updateStrategies(elements);
-        }
+        strategy.setEnabled(!elements.isEmpty());
+        updateStrategies(elements);
       }
     };
     listener.elementMarkChanged(null, true);

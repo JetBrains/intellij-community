@@ -447,14 +447,11 @@ public class MavenProjectsManagerWatcher {
         newCrc = file.getModificationStamp();
       }
 
-      if (newCrc == -1 // file is invalid
-          || newCrc.equals(crc)) {
-        return true;
-      }
-      else {
+      if (newCrc != -1 // file is valid
+          && !newCrc.equals(crc)) {
         map.put(myProject, newCrc);
-        return true;
       }
+      return true;
     }
 
     @Nullable

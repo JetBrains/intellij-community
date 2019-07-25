@@ -164,13 +164,12 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         PsiFile file = var.getContainingFile();
         if (file == null) {
           LOG.error("no file??? var of type" + var.getClass().getCanonicalName());
-          return false;
         }
         else {
           TextRange range = var.getTextRange();
           LOG.error("var: " + var.getName() + ", offset:" + (range != null ? range.getStartOffset() : -1));
-          return false;
         }
+        return false;
       }
 
       return ReferencesSearch.search(var, var.getUseScope()).forEach(

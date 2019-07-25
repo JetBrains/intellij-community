@@ -122,7 +122,6 @@ public class SwitchStatement extends Statement {
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == default_edge) {
           buf.appendIndent(indent).append("default:").appendLineSeparator();
-          tracer.incrementCurrentSourceLine();
         }
         else {
           buf.appendIndent(indent).append("case ");
@@ -139,8 +138,8 @@ public class SwitchStatement extends Statement {
           }
 
           buf.append(":").appendLineSeparator();
-          tracer.incrementCurrentSourceLine();
         }
+        tracer.incrementCurrentSourceLine();
       }
 
       buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, false, tracer));

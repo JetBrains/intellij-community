@@ -135,17 +135,16 @@ public abstract class AbstractFileObject {
 		}
 
 		if (parentPathLength1 > parentPathLength2) {
-            if (parentPath1.charAt(parentPathLength2) == '/') {
-                return DirectoryObject.createInstance(parentPath2);
-            }
-			return DirectoryObject.createInstance(parentPath1.substring(0, lastSlashIndex));
+			if (parentPath1.charAt(parentPathLength2) == '/') {
+				return DirectoryObject.createInstance(parentPath2);
+			}
 		}
 		else {
 			if (parentPath2.charAt(parentPathLength1) == '/') {
-			    return DirectoryObject.createInstance(parentPath1);
+				return DirectoryObject.createInstance(parentPath1);
 			}
-			return DirectoryObject.createInstance(parentPath1.substring(0, lastSlashIndex));
 		}
+		return DirectoryObject.createInstance(parentPath1.substring(0, lastSlashIndex));
 	}
 
 	private static DirectoryObject getDirectory(AbstractFileObject abstractFileObject) {

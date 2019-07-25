@@ -1123,16 +1123,14 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
         window.switchInfo(c);
         //window.highlightCmp(true);
-        window.setVisible(true);
-        window.toFront();
       }
       else {
         window = new InspectorWindow(c);
         myComponentToInspector.put(c, window);
         window.pack();
-        window.setVisible(true);
-        window.toFront();
       }
+      window.setVisible(true);
+      window.toFront();
     }
 
     @Override

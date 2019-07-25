@@ -496,13 +496,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
       }
-      myNextButton.setEnabled(canGoNext);
     }
     else {
       myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
       myNextButton.setMnemonic('N');
-      myNextButton.setEnabled(canGoNext);
     }
+    myNextButton.setEnabled(canGoNext);
 
     if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode() && getRootPane() != null) {
       getRootPane().setDefaultButton(myNextButton);

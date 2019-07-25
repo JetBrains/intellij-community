@@ -73,14 +73,8 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       }
       else {
         int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-        if (prevSlash < 0) {
-          myParentPath = path.substring(0, lastSlash + 1);
-          myName = path.substring(lastSlash + 1);
-        }
-        else {
-          myParentPath = path.substring(0, lastSlash);
-          myName = path.substring(lastSlash + 1);
-        }
+        myParentPath = path.substring(0, prevSlash < 0 ? lastSlash + 1 : lastSlash);
+        myName = path.substring(lastSlash + 1);
       }
     }
   }

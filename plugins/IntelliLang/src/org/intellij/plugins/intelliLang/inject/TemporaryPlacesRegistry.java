@@ -105,13 +105,11 @@ public class TemporaryPlacesRegistry {
 
         newHost.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
         place.elementPointer = SmartPointerManager.createPointer(newHost);
-
-        return false;
       }
       else {
         element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
-        return false;
       }
+      return false;
     });
     if (!placesToRemove.isEmpty()) {
       myTempPlaces.removeAll(placesToRemove);
