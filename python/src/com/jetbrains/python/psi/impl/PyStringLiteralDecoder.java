@@ -100,7 +100,7 @@ public class PyStringLiteralDecoder {
       final String wholeMatch = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
       assert wholeMatch != null;
 
-      final boolean escapedUnicode = raw && unicode || !raw;
+      final boolean escapedUnicode = !raw || unicode;
 
       final String str;
       if (fStringBrace != null) {

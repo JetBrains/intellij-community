@@ -253,7 +253,7 @@ public class BulkChangesMerger {
         }
 
         // Changes group is not constructed yet.
-        if (!(myDiff > 0 ^ newDiff > 0)) {
+        if (myDiff > 0 == newDiff > 0) {
           myDiff = newDiff;
           continue;
         }
