@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -29,7 +28,6 @@ import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -102,8 +100,8 @@ public class CommitPanel extends JBPanel {
 
       myMessagePanel.update();
       myHashAndAuthorPanel.update();
-
-      myRootPanel.setRoot(commit.getRoot());
+      VirtualFile root = commit.getRoot();
+      myRootPanel.setRoot(root, myColorManager.hasMultiplePaths() ? VcsLogGraphTable.getRootBackgroundColor(root, myColorManager) : null);
     }
 
     List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
@@ -271,12 +269,14 @@ public class CommitPanel extends JBPanel {
     }
   }
 
-  private class RootPanel extends Wrapper {
+  private static class RootPanel extends Wrapper {
     @Nullable private ColorIcon myIcon;
     @Nullable private String myTooltipText;
+    @NotNull final private HashAndAuthorPanel myParent;
 
-    RootPanel(@NotNull JComponent component) {
-      setVerticalSizeReferent(component);
+    RootPanel(@NotNull HashAndAuthorPanel parent) {
+      myParent = parent;
+      setVerticalSizeReferent(parent);
       addMouseMotionListener(new MouseAdapter() {
         @Override
         public void mouseMoved(MouseEvent e) {
@@ -297,9 +297,8 @@ public class CommitPanel extends JBPanel {
       return new Dimension(myIcon.getIconWidth() + JBUIScale.scale(ROOT_GAP), size.height);
     }
 
-    public void setRoot(@NotNull VirtualFile root) {
-      if (myColorManager.hasMultiplePaths()) {
-        JBColor color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
+    public void setRoot(@NotNull VirtualFile root, @Nullable Color color) {
+      if (color != null) {
         myIcon = JBUI.scale(new ColorIcon(ROOT_ICON_SIZE, color));
         myTooltipText = root.getPath();
       }
@@ -323,8 +322,8 @@ public class CommitPanel extends JBPanel {
     @Override
     protected void paintComponent(Graphics g) {
       if (myIcon != null) {
-        int h = FontUtil.getStandardAscent(myHashAndAuthorPanel.getBodyFont(), g);
-        FontMetrics metrics = getFontMetrics(myHashAndAuthorPanel.getBodyFont());
+        int h = FontUtil.getStandardAscent(myParent.getBodyFont(), g);
+        FontMetrics metrics = getFontMetrics(myParent.getBodyFont());
         myIcon.paintIcon(this, g, 0, metrics.getMaxAscent() - h + (h - myIcon.getIconHeight() - 1) / 2);
       }
     }
