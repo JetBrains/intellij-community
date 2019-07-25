@@ -306,6 +306,14 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
+   * @return true iff default configuration options should be shown for the tool. E.g. scope-severity settings.
+   * @apiNote if {@code false} returned, only panel provided by {@link #createOptionsPanel()} is shown if any.
+   */
+  public boolean showDefaultConfigurationOptions() {
+    return true;
+  }
+
+  /**
    * Read in settings from XML config.
    * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
