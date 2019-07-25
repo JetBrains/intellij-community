@@ -8,7 +8,6 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
-        "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
@@ -22,7 +21,6 @@ iml_module(
         "//tools/idea/plugins/junit:intellij.junit",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
-        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/plugins/ByteCodeViewer:intellij.java.byteCodeViewer",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
         "//tools/idea/plugins/eclipse:intellij.eclipse",
@@ -40,7 +38,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
     ],
     # do not sort: must match IML order

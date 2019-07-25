@@ -14,7 +14,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/plugins/properties:intellij.properties",
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
-        "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
@@ -29,7 +28,6 @@ iml_module(
         "//tools/idea/plugins/junit:intellij.junit",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
-        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/plugins/ByteCodeViewer:intellij.java.byteCodeViewer",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
@@ -44,14 +42,16 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/RegExpSupport:intellij.regexp",
-        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/testRunner:intellij.platform.testRunner",
+        "//tools/idea/xml/impl:intellij.xml.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order

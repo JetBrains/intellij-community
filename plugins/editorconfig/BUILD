@@ -10,6 +10,7 @@ iml_module(
         "lib",
     ],
     iml_files = ["intellij.editorconfig.iml"],
+    javacopts = ["-Xep:IdentityBinaryExpression:WARN"],  # github.com/JetBrains/intellij-community/commit/5a244d2
     # do not sort: must match IML order
     resources = [
         "resources",
@@ -18,32 +19,9 @@ iml_module(
     test_resources = ["testData"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/plugins/properties:intellij.properties",
-        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
-        "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
-        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
-        "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
-        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
-        "//tools/idea/java/typeMigration:intellij.java.typeMigration",
-        "//tools/idea/java/manifest:intellij.java.manifest",
-        "//tools/idea/plugins/java-i18n:intellij.java.i18n",
-        "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
-        "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
-        "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
-        "//tools/idea/plugins/testng:intellij.testng",
-        "//tools/idea/plugins/junit:intellij.junit",
-        "//tools/idea:intellij.java.ui.tests",
-        "//tools/idea/plugins/coverage:intellij.java.coverage",
-        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
-        "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
-        "//tools/idea/plugins/ByteCodeViewer:intellij.java.byteCodeViewer",
-        "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
-        "//tools/idea/plugins/eclipse:intellij.eclipse",
-        "//tools/idea/java/plugin:intellij.java.plugin",
-        "//tools/idea/java/ide-resources:intellij.java.ide.resources",
-        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-        "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
@@ -51,10 +29,11 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
@@ -69,7 +48,6 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
-        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/.idea/libraries:automaton",
     ],
 )

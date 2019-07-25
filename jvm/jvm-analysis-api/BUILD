@@ -5,7 +5,6 @@ iml_module(
     name = "intellij.jvm.analysis",
     srcs = ["src"],
     iml_files = ["intellij.jvm.analysis.iml"],
-    test_runtime_deps = ["//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -21,7 +20,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
     ],
     # do not sort: must match IML order
