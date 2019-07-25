@@ -12,6 +12,7 @@ import com.intellij.ide.*
 import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.MainRunner
 import com.intellij.ide.plugins.PluginManager
@@ -47,8 +48,10 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -63,7 +66,7 @@ import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
 private val LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication")
-private var ourPerformProjectLoad = true
+private var ourFilesToLoad: List<File> = emptyList()
 private var ourWizardStepsProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(rawArgs: Array<String>,
@@ -238,6 +241,7 @@ private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): App
   return IdeStarter()
 }
 
+@ApiStatus.Internal
 object IdeaApplication {
   @JvmStatic
   fun initApplication(rawArgs: Array<String>) {
@@ -271,8 +275,8 @@ object IdeaApplication {
   }
 
   @JvmStatic
-  fun disableProjectLoad() {
-    ourPerformProjectLoad = false
+  fun openFilesOnLoading(files: List<File>) {
+    ourFilesToLoad = files
   }
 
   @JvmStatic
@@ -341,7 +345,7 @@ open class IdeStarter : ApplicationStarter {
     appFrameCreatedActivity.end()
 
     // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-    val willOpenProject = commandLineArgs.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+    val willOpenProject = commandLineArgs.isNotEmpty() || ourFilesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
 
     // Temporary check until the jre implementation has been checked and bundled
     if (Registry.`is`("ide.popup.enablePopupType")) {
@@ -367,9 +371,15 @@ open class IdeStarter : ApplicationStarter {
     app.executeOnPooledThread { LifecycleUsageTriggerCollector.onIdeStart() }
 
     TransactionGuard.submitTransaction(app, Runnable {
-      val projectFromCommandLine = if (ourPerformProjectLoad) loadProjectFromExternalCommandLine(commandLineArgs) else null
-      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine)
-      if (projectFromCommandLine == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+      val project = when {
+        ourFilesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, ourFilesToLoad, "MacMenu")
+        commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
+        else -> null
+      }
+
+      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
+
+      if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
         RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
       }
 
