@@ -21,14 +21,14 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     Disposer.register(disposable, this)
   }
 
-  override fun getSelectedChanges(): List<ChangeViewDiffRequestProcessor.Wrapper> = allChanges
+  override fun getSelectedChanges(): List<Wrapper> = allChanges
 
-  override fun getAllChanges(): List<ChangeViewDiffRequestProcessor.Wrapper> {
+  override fun getAllChanges(): List<Wrapper> {
     val change = changeGetter() ?: return emptyList()
     return listOf(MyChangeWrapper(change))
   }
 
-  override fun selectChange(change: ChangeViewDiffRequestProcessor.Wrapper) {}
+  override fun selectChange(change: Wrapper) {}
 
   fun updatePreview(state: Boolean) {
     updatePreview(state, false)
@@ -38,7 +38,7 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     return 10
   }
 
-  private inner class MyChangeWrapper internal constructor(private val change: Change) : ChangeViewDiffRequestProcessor.Wrapper() {
+  private inner class MyChangeWrapper internal constructor(private val change: Change) : Wrapper() {
 
     override fun getUserObject(): Any {
       return change

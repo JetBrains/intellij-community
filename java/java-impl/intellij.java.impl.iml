@@ -6,14 +6,14 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/src" isTestSource="false" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/InspectionGadgets">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/InspectionGadgets/src" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/src" isTestSource="false" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/IntentionPowerPak">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/IntentionPowerPak/src" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/generate-tostring">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/generate-tostring/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
@@ -52,7 +51,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
+          <root url="jar://$IDEA_PROJECT_HOME$/community/lib/wadl-core.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -63,6 +62,8 @@
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
   </component>
   <component name="copyright">
     <Base>
