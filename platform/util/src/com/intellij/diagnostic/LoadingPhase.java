@@ -78,11 +78,15 @@ public enum LoadingPhase {
     if (SKIP_LOADING_PHASE) return;
 
     LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
-    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) return;
+    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) {
+      return;
+    }
 
     Throwable t = new Throwable();
     synchronized (stackTraces) {
-      if (!stackTraces.add(t)) return;
+      if (!stackTraces.add(t)) {
+        return;
+      }
 
       getLogger().warn("Should be called at least at the phase " + phase + ", the current phase is: " + currentPhase + "\n" +
                        "Current violators count: " + stackTraces.size() + "\n\n",
@@ -91,11 +95,13 @@ public enum LoadingPhase {
   }
 
   private static boolean isKnownViolator() {
-    return Arrays.stream(Thread.currentThread().getStackTrace())
-      .anyMatch(element -> {
-        String className = element.getClassName();
-        return className.contains("com.intellij.util.indexing.IndexInfrastructure");
-      });
+    for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+      String className = element.getClassName();
+      if (className.contains("com.intellij.util.indexing.IndexInfrastructure") || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isStartupComplete() {
