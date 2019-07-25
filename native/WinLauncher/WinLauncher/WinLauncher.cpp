@@ -682,10 +682,17 @@ void SetProcessDPIAwareProperty()
 
 std::string getErrorMessage(int errorCode)
 {
+// possible error values:
+// JNI_ERR          (-1)  /* unknown error */
+// JNI_EDETACHED    (-2)  /* thread detached from the VM */
+// JNI_EVERSION     (-3)  /* JNI version error */
+// JNI_ENOMEM       (-4)  /* not enough memory */
+// JNI_EEXIST       (-5)  /* VM already created */
+// JNI_EINVAL       (-6)  /* invalid arguments */
   std::string errorMessage = "";
   if (errorCode == -6)
   {
-      errorMessage = "MaxJavaStackTraceDepth=-1 is outside the allowed range [ 0 ... 1073741823 ].\nImproperly specified VM option 'MaxJavaStackTraceDepth=-1'\n";
+      errorMessage = "Improperly specified VM option.\n";
   }
   return errorMessage;
 }
