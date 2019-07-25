@@ -2,12 +2,14 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.java.langInjection.jps",
+    name = "intellij.java.ide.customization",
     srcs = ["src"],
-    iml_files = ["intellij.java.langInjection.jps.iml"],
+    iml_files = ["intellij.java.ide.customization.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
@@ -16,7 +18,6 @@ iml_module(
         "//tools/idea/java/typeMigration:intellij.java.typeMigration",
         "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/plugins/java-i18n:intellij.java.i18n",
-        "//tools/idea/java/ide-customization:intellij.java.ide.customization",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea/plugins/testng:intellij.testng",
@@ -28,24 +29,26 @@ iml_module(
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
         "//tools/idea/plugins/eclipse:intellij.eclipse",
         "//tools/idea/java/plugin:intellij.java.plugin",
+        "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+    ],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
-        "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
-    ],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    runtime_deps = [
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-        "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
     # do not sort: must match IML order
     deps = [
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
+        "//tools/idea/platform/usageView:intellij.platform.usageView[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
-        "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
-        "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
-        "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
+        "//tools/idea:intellij.java.impl[module]",
+        "//tools/idea/platform/testRunner:intellij.platform.testRunner[module]",
     ],
 )
