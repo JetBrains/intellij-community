@@ -56,20 +56,23 @@ public class CommitPanel extends JBPanel {
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final Consumer<? super CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
-  @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
   public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<? super CommitId> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
-    myNavigate = navigate;
 
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     setOpaque(false);
 
-    myMessagePanel = new MessagePanel();
+    myMessagePanel = new MessagePanel(navigate) {
+      @Override
+      protected boolean hasBackgroundImage() {
+        return super.hasBackgroundImage() ||
+               !StringUtil.isEmpty(PropertiesComponent.getInstance(myLogData.getProject()).getValue(EDITOR_PROP));
+      }
+    };
     JBPanel metadataPanel = new JBPanel(new BorderLayout(0, 0));
     myHashAndAuthorPanel = new HashAndAuthorPanel();
     myRootPanel = new RootPanel(myHashAndAuthorPanel);
@@ -96,9 +99,8 @@ public class CommitPanel extends JBPanel {
   public void setCommit(@NotNull CommitId commit, @NotNull CommitPresentationUtil.CommitPresentation presentation) {
     if (!commit.equals(myCommit) || presentation.isResolved()) {
       myCommit = commit;
-      myPresentation = presentation;
 
-      myMessagePanel.update();
+      myMessagePanel.updateMessage(presentation);
       myHashAndAuthorPanel.updateHashAndAuthor(presentation);
       VirtualFile root = commit.getRoot();
       myRootPanel.setRoot(root, myColorManager.hasMultiplePaths() ? VcsLogGraphTable.getRootBackgroundColor(root, myColorManager) : null);
@@ -158,7 +160,19 @@ public class CommitPanel extends JBPanel {
     return UIUtil.getPanelBackground();
   }
 
-  private class MessagePanel extends HtmlPanel {
+  private static class MessagePanel extends HtmlPanel {
+    @NotNull final Consumer<? super CommitId> myNavigate;
+    @Nullable CommitPresentationUtil.CommitPresentation myPresentation;
+
+    MessagePanel(@NotNull Consumer<? super CommitId> navigate) {
+      myNavigate = navigate;
+    }
+
+    void updateMessage(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
+      myPresentation = presentation;
+      update();
+    }
+
     @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isGoToHash(e)) {
@@ -195,9 +209,8 @@ public class CommitPanel extends JBPanel {
       return UIUtil.isUnderDarcula() || hasBackgroundImage();
     }
 
-    private boolean hasBackgroundImage() {
-      return !StringUtil.isEmpty(PropertiesComponent.getInstance().getValue(EDITOR_PROP)) ||
-             !StringUtil.isEmpty(PropertiesComponent.getInstance(myLogData.getProject()).getValue(EDITOR_PROP));
+    protected boolean hasBackgroundImage() {
+      return !StringUtil.isEmpty(PropertiesComponent.getInstance().getValue(EDITOR_PROP));
     }
   }
 
