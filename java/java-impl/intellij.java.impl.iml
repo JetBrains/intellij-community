@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
@@ -51,7 +52,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$IDEA_PROJECT_HOME$/community/lib/wadl-core.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -63,7 +64,6 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
   </component>
   <component name="copyright">
     <Base>
