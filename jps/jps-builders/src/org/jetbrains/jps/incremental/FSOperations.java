@@ -262,7 +262,7 @@ public class FSOperations {
           boolean markDirty = forceDirty;
           if (!markDirty) {
             // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));;
+            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;

@@ -13,7 +13,7 @@ import java.util.Comparator;
  * @author yole
  */
 public interface JBTabsEx extends JBTabs {
-  public static final DataKey<JBTabsEx> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  DataKey<JBTabsEx> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   boolean isEditorTabs();
 

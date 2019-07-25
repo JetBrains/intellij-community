@@ -418,7 +418,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public boolean isRecursiveOrCircularSymLink() {
     if (!is(VFileProperty.SYMLINK)) return false;
-    NewVirtualFile resolved = getCanonicalFile();;
+    NewVirtualFile resolved = getCanonicalFile();
     // invalid symlink
     if (resolved == null) return false;
     // if it's recursive
