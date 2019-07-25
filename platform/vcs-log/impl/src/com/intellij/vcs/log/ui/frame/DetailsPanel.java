@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Condition;
@@ -321,7 +320,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
   }
 
-  private class MyMainContentPanel extends ScrollablePanel {
+  private class MyMainContentPanel extends JPanel {
     @Override
     public Insets getInsets() {
       // to fight ViewBorder
