@@ -245,7 +245,7 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
+  public static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
     if (branches == null) {
       return "In branches: loading...";
     }
