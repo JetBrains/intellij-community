@@ -28,24 +28,27 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentation
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
@@ -64,7 +67,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private JPanel myBottomPanel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
-  private LibraryTableTreeBuilder myTreeBuilder;
   private final ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private VirtualFile myLastChosen;
 
@@ -75,6 +77,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private LibraryRootsComponentDescriptor myDescriptor;
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
+  private StructureTreeModel<AbstractTreeStructure> myTreeModel;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
@@ -134,12 +137,27 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private void init(AbstractTreeStructure treeStructure) {
-    myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myTreeModel = new StructureTreeModel<>(treeStructure, this);
+    AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+    asyncTreeModel.addTreeModelListener(new TreeModelAdapter() {
+      @Override
+      public void treeNodesInserted(TreeModelEvent event) {
+        Object[] childNodes = event.getChildren();
+        if (childNodes != null) {
+          for (Object childNode : childNodes) {
+            LibraryTableTreeContentElement element = TreeUtil.getUserObject(LibraryTableTreeContentElement.class, childNode);
+            if (element != null) {
+              myTreeModel.expand(element, myTree, path -> { });
+            }
+          }
+        }
+      }
+    });
+    myTree = new Tree(asyncTreeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     new LibraryRootsTreeSpeedSearch(myTree);
     myTree.setCellRenderer(new LibraryTreeRenderer());
-    myTreeBuilder = new LibraryTableTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure);
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
@@ -227,7 +245,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     });
 
     myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    Disposer.register(this, myTreeBuilder);
   }
 
   public JComponent getComponent() {
@@ -291,11 +308,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   @NotNull
   private List<Object> getSelectedElements() {
-    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) {
-      return Collections.emptyList();
-    }
-
-    final TreePath[] selectionPaths = myTreeBuilder.getTree().getSelectionPaths();
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
       return Collections.emptyList();
     }
@@ -346,7 +359,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (myPropertiesEditor != null) {
       myPropertiesEditor.disposeUIResources();
     }
-    myTreeBuilder = null;
   }
 
   public void resetProperties() {
@@ -363,9 +375,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   @Override
   public void updateRootsTree() {
-    if (myTreeBuilder != null) {
-      myTreeBuilder.queueUpdate();
-    }
+    myTreeModel.invalidate();
   }
 
   @Nullable
@@ -455,7 +465,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
       onRootsChanged();
-      myTreeBuilder.queueUpdate();
+      myTreeModel.invalidate();
     }
     return rootsToAttach;
   }
@@ -474,7 +484,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private void libraryChanged(boolean putFocusIntoTree) {
     onRootsChanged();
     updatePropertiesLabel();
-    myTreeBuilder.queueUpdate();
+    myTreeModel.invalidate();
     if (putFocusIntoTree) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
