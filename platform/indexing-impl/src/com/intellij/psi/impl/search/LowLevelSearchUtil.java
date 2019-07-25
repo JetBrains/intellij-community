@@ -62,29 +62,13 @@ public class LowLevelSearchUtil {
    */
   private static TreeElement processTreeUp(@NotNull Project project,
                                            @NotNull PsiElement scope,
+                                           final @NotNull TreeElement leafNode,
+                                           final int offsetInLeaf,
                                            @NotNull StringSearcher searcher,
-                                           final int offset,
                                            final boolean processInjectedPsi,
                                            @NotNull ProgressIndicator progress,
-                                           final TreeElement lastElement,
                                            @NotNull TextOccurenceProcessor processor) {
-    final ASTNode scopeNode = scope.getNode();
-    if (scopeNode == null) {
-      throw new IllegalArgumentException(
-        "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
-      );
-    }
-    final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
-
-    final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
-    if (leafNode == null) return lastElement;
-
-    final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
-    if (offsetInLeaf < 0) {
-      throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
-    }
-
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     TreeElement currentNode = leafNode;
     int currentOffset = offsetInLeaf;
@@ -190,7 +174,27 @@ public class LowLevelSearchUtil {
     TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      lastElement = processTreeUp(project, scope, searcher, offset, processInjectedPsi, progress, lastElement, processor);
+      final ASTNode scopeNode = scope.getNode();
+      if (scopeNode == null) {
+        throw new IllegalArgumentException(
+          "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
+        );
+      }
+      final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
+      if (leafNode == null) {
+        if (lastElement == null) {
+          return false;
+        }
+        else {
+          continue;
+        }
+      }
+      final int scopeStartOffset = scope.getTextRange().getStartOffset();
+      final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
+      if (offsetInLeaf < 0) {
+        throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
+      }
+      lastElement = processTreeUp(project, scope, leafNode, offsetInLeaf, searcher, processInjectedPsi, progress, processor);
       if (lastElement == null) return false;
     }
     return true;
