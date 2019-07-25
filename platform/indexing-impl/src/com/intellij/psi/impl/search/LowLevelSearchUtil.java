@@ -79,29 +79,32 @@ public class LowLevelSearchUtil {
 
     final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
     if (leafNode == null) return lastElement;
-    int start = offset - leafNode.getStartOffset() + scopeStartOffset;
-    if (start < 0) {
+
+    final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
+    if (offsetInLeaf < 0) {
       throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
     }
+
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     TreeElement currentNode = leafNode;
+    int currentOffset = offsetInLeaf;
     boolean contains = false;
     TreeElement prevNode = null;
     PsiElement run = null;
     while (run != scope) {
       ProgressManager.checkCanceled();
-      start += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
+      currentOffset += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
       prevNode = currentNode;
       run = currentNode.getPsi();
-      if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
+      if (!contains) contains = run.getTextLength() - currentOffset >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
-          Boolean result = processInjectedFile(run, searcher, start, progress, injectedLanguageManager, processor);
+          Boolean result = processInjectedFile(run, searcher, currentOffset, progress, injectedLanguageManager, processor);
           if (result != null) {
             return result.booleanValue() ? leafNode : null;
           }
         }
-        if (!processor.execute(run, start)) {
+        if (!processor.execute(run, currentOffset)) {
           return null;
         }
       }
