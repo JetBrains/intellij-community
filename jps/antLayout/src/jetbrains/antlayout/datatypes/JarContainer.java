@@ -16,7 +16,7 @@ public class JarContainer extends ZipContainer {
   protected Zip createTask() {
     String version = Main.getAntVersion();
     Jar task;
-    if (version != null && (version.indexOf("1.8.0") != -1 || version.indexOf("1.8.1") != -1)) {
+    if (version != null && (version.contains("1.8.0") || version.contains("1.8.1"))) {
       task = new PatchedJar();
     }
     else {

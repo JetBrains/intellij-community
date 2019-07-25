@@ -172,7 +172,7 @@ public class PropertyExpander {
 
     String getResult() {
       final String value = myBuilder.toString();
-      if (value.indexOf("$$") >= 0) {
+      if (value.contains("$$")) {
         return $$_PATTERN.matcher(value).replaceAll("\\$");
       }
       return value;

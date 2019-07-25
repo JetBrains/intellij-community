@@ -45,7 +45,7 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
         int offset = e.getOffset();
         int lineNumber = document.getLineNumber(offset);
         TextRange tr = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
-        document.putUserData(KEY, document.getText(tr).indexOf(PyNames.UNICODE_LITERALS) == -1);
+        document.putUserData(KEY, !document.getText(tr).contains(PyNames.UNICODE_LITERALS));
         Boolean hasUnicodeImport = document.getUserData(KEY);
         if (delegate instanceof PythonHighlightingLexer &&
             (((PythonHighlightingLexer)delegate).getImportOffset() > e.getOffset()
@@ -69,7 +69,7 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
   public void setEditor(@NotNull HighlighterClient editor) {
     Lexer l = getLexer();
     if (l instanceof LayeredLexer) {
-      editor.getDocument().putUserData(KEY, editor.getDocument().getText().indexOf(PyNames.UNICODE_LITERALS) == -1);
+      editor.getDocument().putUserData(KEY, !editor.getDocument().getText().contains(PyNames.UNICODE_LITERALS));
     }
     super.setEditor(editor);
   }

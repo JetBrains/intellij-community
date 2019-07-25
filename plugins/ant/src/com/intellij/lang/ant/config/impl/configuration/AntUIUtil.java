@@ -106,7 +106,7 @@ public class AntUIUtil {
     String name = AntInstallation.NAME.get(antProperties);
     component.append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     String versionString = AntInstallation.VERSION.get(antProperties);
-    if (name.indexOf(versionString) == -1)
+    if (!name.contains(versionString))
       component.append(" (" + versionString + ")", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
   }
 

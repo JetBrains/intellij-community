@@ -39,7 +39,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
 
     final FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicyAwtImpl(component);
     if (focusTraversalPolicy != null && focusTraversalPolicy != policyToIgnore) {
-      if (focusTraversalPolicy.getClass().getName().indexOf("LegacyGlueFocusTraversalPolicy") >=0) {
+      if (focusTraversalPolicy.getClass().getName().contains("LegacyGlueFocusTraversalPolicy")) {
         return component;
       }
 
