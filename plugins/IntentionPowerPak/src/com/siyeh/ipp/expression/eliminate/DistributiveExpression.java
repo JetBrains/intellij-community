@@ -141,11 +141,11 @@ class DistributiveExpression extends EliminableExpression {
 
     private static int constructExpressionText(@NotNull StringBuilder sb,
                                                @NotNull PsiPolyadicExpression expression,
-                                               int i,
+                                               int operandIdx,
                                                @Nullable PsiExpression stopAt) {
       PsiExpression[] operands = expression.getOperands();
-      for (; i < operands.length; i++) {
-        PsiExpression operand = operands[i];
+      for (; operandIdx < operands.length; operandIdx++) {
+        PsiExpression operand = operands[operandIdx];
         PsiJavaToken beforeOperand = expression.getTokenBeforeOperand(operand);
         if (beforeOperand != null) sb.append(beforeOperand.getText());
         if (operand == stopAt) break;
@@ -157,7 +157,7 @@ class DistributiveExpression extends EliminableExpression {
         EliminateUtils.processPrefixed(operand, false, (op, isOpNegated) -> sb.append(op.getText()));
       }
 
-      return i;
+      return operandIdx;
     }
   }
 }
