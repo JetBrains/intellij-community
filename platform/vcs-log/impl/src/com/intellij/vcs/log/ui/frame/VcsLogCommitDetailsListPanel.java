@@ -4,29 +4,16 @@ package com.intellij.vcs.log.ui.frame;
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SeparatorComponent;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -35,34 +22,25 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
-import static com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt.getCommitDetailsBackground;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
 /**
  * @author Kirill Likhodedov
  */
-public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColorsListener, Disposable {
-  private static final int MAX_ROWS = 50;
-  private static final int MIN_SIZE = 20;
-
+public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitPanel> implements Disposable {
   @NotNull private final VcsLogData myLogData;
 
-  @NotNull private final JPanel myMainContentPanel;
-  @NotNull private final StatusText myEmptyText;
-
-  @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
@@ -71,57 +49,14 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
   public VcsLogCommitDetailsListPanel(@NotNull VcsLogData logData,
                                       @NotNull VcsLogColorManager colorManager,
                                       @NotNull Disposable parent) {
+    super(parent);
     myLogData = logData;
     myColorManager = colorManager;
 
-    myMainContentPanel = new MyMainContentPanel();
-    myEmptyText = new StatusText(myMainContentPanel) {
-      @Override
-      protected boolean isStatusVisible() {
-        return StringUtil.isNotEmpty(getText());
-      }
-    };
-    myMainContentPanel.setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-
-    myMainContentPanel.setOpaque(false);
-    JScrollPane scrollPane = new JBScrollPane(myMainContentPanel,
-                                              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(JBUI.Borders.empty());
-    scrollPane.setViewportBorder(JBUI.Borders.empty());
-
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
-      @Override
-      public Color getBackground() {
-        return getCommitDetailsBackground();
-      }
-    };
-    myLoadingPanel.add(scrollPane);
-
-    setLayout(new BorderLayout());
-    add(myLoadingPanel, BorderLayout.CENTER);
-
     logData.getProject().getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> update());
 
-    myEmptyText.setText("Commit details");
+    setStatusText("Commit details");
     Disposer.register(parent, this);
-  }
-
-  @Override
-  public void globalSchemeChange(EditorColorsScheme scheme) {
-    update();
-  }
-
-  private void update() {
-    for (int i = 0; i < mySelection.size(); i++) {
-      CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.update();
-    }
-  }
-
-  @Override
-  public Color getBackground() {
-    return getCommitDetailsBackground();
   }
 
   public void installCommitSelectionListener(@NotNull VcsLogGraphTable graphTable) {
@@ -129,46 +64,10 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
   }
 
   public void branchesChanged() {
-    for (int i = 0; i < mySelection.size(); i++) {
-      CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.updateBranches();
-    }
-  }
-
-  protected void navigate(@NotNull CommitId commitId) {
-  }
-
-  private void rebuildCommitPanels(int[] selection) {
-    myEmptyText.setText("");
-
-    int selectionLength = selection.length;
-
-    // for each commit besides the first there are two components: Separator and CommitPanel
-    int existingCount = (myMainContentPanel.getComponentCount() + 1) / 2;
-    int requiredCount = Math.min(selectionLength, MAX_ROWS);
-    for (int i = existingCount; i < requiredCount; i++) {
-      if (i > 0) {
-        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-      }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, this::navigate));
-    }
-
-    // clear superfluous items
-    while (myMainContentPanel.getComponentCount() > 2 * requiredCount - 1) {
-      myMainContentPanel.remove(myMainContentPanel.getComponentCount() - 1);
-    }
-
-    if (selectionLength > MAX_ROWS) {
-      myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(FontUtil.getCommitMetadataFont());
-      label.setBorder(JBUI.Borders.emptyLeft(CommitPanel.SIDE_BORDER));
-      myMainContentPanel.add(label);
-    }
-
-    mySelection = Ints.asList(Arrays.copyOf(selection, requiredCount));
-
-    repaint();
+    forEachPanelIndexed((i, panel) -> {
+      panel.updateBranches();
+      return Unit.INSTANCE;
+    });
   }
 
   private void resolveHashes(@NotNull List<? extends CommitId> ids,
@@ -224,27 +123,21 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
 
   private void setPresentations(@NotNull List<? extends CommitId> ids,
                                 @NotNull List<? extends CommitPresentation> presentations) {
-    assert ids.size() == presentations.size();
-    for (int i = 0; i < mySelection.size(); i++) {
-      CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.setCommit(ids.get(i), presentations.get(i));
-    }
-  }
-
-  @NotNull
-  private CommitPanel getCommitPanel(int index) {
-    return (CommitPanel)myMainContentPanel.getComponent(2 * index);
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    Dimension minimumSize = super.getMinimumSize();
-    return new Dimension(Math.max(minimumSize.width, JBUIScale.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUIScale.scale(MIN_SIZE)));
+    forEachPanelIndexed((i, panel) -> {
+      panel.setCommit(ids.get(i), presentations.get(i));
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
   public void dispose() {
     cancelResolve();
+  }
+
+  @NotNull
+  @Override
+  protected CommitPanel getCommitDetailsPanel() {
+    return new CommitPanel(myLogData, myColorManager, this::navigate);
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
@@ -269,7 +162,11 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
     @Override
     protected void onSelection(@NotNull int[] selection) {
       cancelResolve();
-      rebuildCommitPanels(selection);
+      setStatusText("");
+
+      int shownPanelsCount = rebuildPanel(selection.length);
+      mySelection = Ints.asList(Arrays.copyOf(selection, shownPanelsCount));
+
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<Collection<VcsRef>> result = new ArrayList<>();
@@ -278,10 +175,10 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
         }
         ApplicationManager.getApplication().invokeLater(() -> {
           if (currentSelection == mySelection) {
-            for (int i = 0; i < currentSelection.size(); i++) {
-              CommitPanel commitPanel = getCommitPanel(i);
-              commitPanel.setRefs(result.get(i));
-            }
+            forEachPanelIndexed((i, panel) -> {
+              panel.setRefs(result.get(i));
+              return Unit.INSTANCE;
+            });
           }
         });
       });
@@ -301,12 +198,12 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
 
     @Override
     protected void startLoading() {
-      myLoadingPanel.startLoading();
+      startLoadingDetails();
     }
 
     @Override
     protected void stopLoading() {
-      myLoadingPanel.stopLoading();
+      stopLoadingDetails();
     }
 
     @Override
@@ -315,32 +212,8 @@ public class VcsLogCommitDetailsListPanel extends JPanel implements EditorColors
     }
 
     private void setEmpty(@NotNull String text) {
-      myEmptyText.setText(text);
-      myMainContentPanel.removeAll();
+      setStatusText(text);
       mySelection = ContainerUtil.emptyList();
-    }
-  }
-
-  private class MyMainContentPanel extends JPanel {
-    @Override
-    public Insets getInsets() {
-      // to fight ViewBorder
-      return JBUI.emptyInsets();
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
-
-    @Override
-    protected void paintChildren(Graphics g) {
-      if (StringUtil.isNotEmpty(myEmptyText.getText())) {
-        myEmptyText.paint(this, g);
-      }
-      else {
-        super.paintChildren(g);
-      }
     }
   }
 }
