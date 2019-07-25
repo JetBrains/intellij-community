@@ -48,6 +48,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public boolean isObsolete() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (!getVirtualMachine().canRedefineClasses()) {
+      return false;
+    }
     checkValid();
     if (myIsObsolete != ThreeState.UNSURE) {
       return myIsObsolete.toBoolean();
@@ -56,7 +59,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         Method method = DebuggerUtilsEx.getMethod(location());
-        boolean isObsolete = (getVirtualMachine().canRedefineClasses() && (method == null || method.isObsolete()));
+        boolean isObsolete = method == null || method.isObsolete();
         myIsObsolete = ThreeState.fromBoolean(isObsolete);
         return isObsolete;
       }
