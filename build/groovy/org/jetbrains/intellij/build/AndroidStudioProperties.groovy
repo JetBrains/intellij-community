@@ -95,6 +95,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-samples",
                                            "google-services",
                                            "intellij.android.layoutlib",
+                                           "intellij.android.layoutlib-native",
                                            "intellij.android.smali",
                                            "test-recorder",
                                            "url-assistant",
@@ -107,6 +108,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([]),
       layoutlibPlugin(),
+      layoutlibNativePlugin(),
     ]
     if (buildOptions.includeUiTests) {
       modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "intellij.android.testFramework"]
@@ -234,6 +236,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   static PluginLayout layoutlibPlugin () {
     plugin("intellij.android.layoutlib") {
       withModule("android.sdktools.layoutlib-api")
+    }
+  }
+
+  static PluginLayout layoutlibNativePlugin () {
+    plugin("intellij.android.layoutlib-native") {
+      withModule("android.sdktools.layoutlib-api")
+      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
     }
   }
 
@@ -492,6 +501,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/simpleperf")
         }
         extraExecutables.add("plugins/android/resources/simpleperf/linux-x86_64/simpleperf")
+
+        context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
+          fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
+            include(name: "icu/**")
+            include(name: "linux/**")
+          }
+        }
       }
     }
   }
