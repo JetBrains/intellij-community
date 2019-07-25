@@ -73,7 +73,7 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       }
       else {
         map.forEach {
-          key, value -> writeEntry(key, value, isStringKey)
+          (key, value) -> writeEntry(key, value, isStringKey)
         }
       }
     }
