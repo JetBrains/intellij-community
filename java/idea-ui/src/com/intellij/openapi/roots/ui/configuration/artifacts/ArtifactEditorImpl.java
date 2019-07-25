@@ -87,6 +87,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myContext = createArtifactEditorContext(context);
     myOriginalArtifact = artifact;
     myProject = context.getProject();
+    myValidationManager = new ArtifactValidationManagerImpl(this);
     mySubstitutionParameters.setTypesToShowContent(settings.getTypesToShowContent());
     mySourceItemsTree = new SourceItemsTree(myContext, this);
     myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact, settings.isSortElements());
@@ -114,7 +115,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
     setOutputPath(outputPath);
-    myValidationManager = new ArtifactValidationManagerImpl(this);
     updateShowContentCheckbox();
   }
 
@@ -190,7 +190,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public JComponent createMainComponent() {
-    mySourceItemsTree.initTree();
     myLayoutTreeComponent.initTree();
     DataManager.registerDataProvider(myMainPanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
 

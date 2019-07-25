@@ -91,8 +91,7 @@ public class ArtifactValidationManagerImpl implements Disposable {
   }
 
   private void showProblemInTree(ArtifactProblemDescription problem) {
-    final LayoutTree layoutTree = myArtifactEditor.getLayoutTreeComponent().getLayoutTree();
-    PackagingElementNode<?> node = layoutTree.getRootPackagingNode();
+    PackagingElementNode<?> node = myArtifactEditor.getLayoutTreeComponent().getRootNode();
     final List<PackagingElement<?>> pathToPlace = problem.getPathToPlace();
     if (node != null && pathToPlace != null) {
       List<PackagingElementNode<?>> nodes = node.getNodesByPath(pathToPlace.subList(1, pathToPlace.size()));

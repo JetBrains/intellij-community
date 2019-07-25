@@ -64,6 +64,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.InternalPromiseUtil;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -83,6 +84,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -341,6 +343,15 @@ public class PlatformTestUtil {
 
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
+    return waitForPromise(promise, timeout, false);
+  }
+
+  public static <T> T assertPromiseSucceeds(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME, true);
+  }
+
+  @Nullable
+  private static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.onProcessed(ignore -> complete.set(true));
@@ -351,7 +362,12 @@ public class PlatformTestUtil {
       try {
         result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
-      catch (Exception ignore) {
+      catch (TimeoutException ignore) {
+      }
+      catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
+        if (assertSucceeded) {
+          throw new AssertionError(e);
+        }
       }
       assertMaxWaitTimeSince(start, timeout);
     }
