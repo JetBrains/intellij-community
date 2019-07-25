@@ -1081,6 +1081,7 @@ iml_module(
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module, test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )
 

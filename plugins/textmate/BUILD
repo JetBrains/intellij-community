@@ -10,7 +10,6 @@ iml_module(
         "lib/bundles",
     ],
     iml_files = ["intellij.textmate.iml"],
-    test_resources = ["testResources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/images:intellij.platform.images",
@@ -35,8 +34,8 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
-        "//prebuilts/tools/common/m2/repository/org/jruby/jcodings/jcodings/1.0.43:jar",
-        "//prebuilts/tools/common/m2/repository/org/jruby/joni/joni/2.1.26:jar",
+        "//prebuilts/tools/common/m2/repository/org/jruby/jcodings/jcodings/1.0.44:jar",
+        "//prebuilts/tools/common/m2/repository/org/jruby/joni/joni/2.1.29:jar",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
     ],
