@@ -73,6 +73,11 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return set;
   }
 
+  @Override
+  public int getVersion() {
+    return 2;
+  }
+
   private static String recentPeriod(int recent) {
     if (recent < 15) return "less.than.15";
     if (16 < recent && recent < 31) return "[15_30]";
