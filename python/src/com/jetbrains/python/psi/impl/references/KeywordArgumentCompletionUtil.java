@@ -24,7 +24,10 @@ import java.util.Set;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class KeywordArgumentCompletionUtil {
-  public static void collectFunctionArgNames(PyElement element, List<? super LookupElement> ret, @NotNull final TypeEvalContext context, final boolean addEquals) {
+  public static void collectFunctionArgNames(PyElement element,
+                                             List<? super LookupElement> ret,
+                                             @NotNull final TypeEvalContext context,
+                                             final boolean addEquals) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();

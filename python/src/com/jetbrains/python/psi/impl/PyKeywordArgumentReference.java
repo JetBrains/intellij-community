@@ -39,20 +39,19 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     super(element, textRange, true);
   }
 
+  @NotNull
+  @Override
   public Object[] getVariants() {
     final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
     if (originalElement != null) {
       final List<LookupElement> ret = new ArrayList<>();
-
-      TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(originalElement.getProject(), originalElement.getContainingFile());
-      KeywordArgumentCompletionUtil
-        .collectFunctionArgNames(originalElement, ret, evalCtx, false);
+      final TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(originalElement.getProject(), originalElement.getContainingFile());
+      KeywordArgumentCompletionUtil.collectFunctionArgNames(originalElement, ret, evalCtx, false);
       return ret.toArray();
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
-
 
   @NotNull
   @Override
