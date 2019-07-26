@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CustomizeUIAction;
 import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
@@ -89,7 +88,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
+    IdeMenuBar menu = new IdeMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {

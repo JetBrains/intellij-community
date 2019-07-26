@@ -61,8 +61,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private List<AnAction> myVisibleActions;
   private List<AnAction> myNewVisibleActions;
   private final MenuItemPresentationFactory myPresentationFactory;
-  private final DataManager myDataManager;
-  private final ActionManager myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
   private boolean myDisabled;
 
@@ -76,13 +74,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   private GlobalMenuLinux myGlobalMenuLinux;
 
-  public IdeMenuBar(ActionManager actionManager, DataManager dataManager) {
-    myActionManager = actionManager;
+  public IdeMenuBar() {
     myTimerListener = new MyTimerListener();
     myVisibleActions = new ArrayList<>();
     myNewVisibleActions = new ArrayList<>();
     myPresentationFactory = new MenuItemPresentationFactory();
-    myDataManager = dataManager;
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
@@ -102,6 +98,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
+  @NotNull
   public State getState() {
     return myState;
   }
@@ -245,7 +242,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    myActionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener));
+    ActionManager.getInstance().addTimerListener(1000, new WeakTimerListener(myTimerListener));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -317,8 +314,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     myNewVisibleActions.clear();
 
     if (!myDisabled) {
-      DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
-      expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
+      DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(this);
+      expandActionGroup(dataContext, myNewVisibleActions, ActionManager.getInstance());
     }
 
     if (forceRebuild || !myNewVisibleActions.equals(myVisibleActions)) {

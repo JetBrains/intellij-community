@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.project.Project;
@@ -370,7 +368,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
-        setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
+        setJMenuBar(new IdeMenuBar());
       }
 
       MouseGestureManager.getInstance().add(this);
