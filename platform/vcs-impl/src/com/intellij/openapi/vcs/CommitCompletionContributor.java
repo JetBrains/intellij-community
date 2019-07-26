@@ -15,19 +15,20 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.ui.CommitMessage;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,20 +42,23 @@ public class CommitCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
 
     CommitMessage commitMessage = document.getUserData(CommitMessage.DATA_KEY);
     if (commitMessage == null) return;
 
     result.stopHere();
-    if (parameters.getInvocationCount() <= 0) return;
+    int count = parameters.getInvocationCount();
 
     List<ChangeList> lists = commitMessage.getChangeLists();
     if (lists.isEmpty()) return;
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
+    if (count == 0 && prefix.length() < 5) return;
     CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
+    CompletionResultSet prefixed = result.withPrefixMatcher(prefix);
     for (ChangeList list : lists) {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
@@ -65,8 +69,19 @@ public class CommitCompletionContributor extends CompletionContributor {
           LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
               withIcon(filePath.getFileType().getIcon());
           insensitive.addElement(element);
+          addLanguageSpecificElements(project, count, prefixed, filePath);
         }
       }
     }
+  }
+
+  private static void addLanguageSpecificElements(Project project, int count, CompletionResultSet prefixed, FilePath filePath) {
+    VirtualFile vFile = filePath.getVirtualFile();
+    if (vFile == null) return;
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(vFile);
+    if (psiFile == null) return;
+    TopLevelCompletionContributor contributor = TopLevelCompletionContributorEP.forLanguage(psiFile.getLanguage());
+    if (contributor == null) return;
+    contributor.addLookupElements(psiFile, count, prefixed);
   }
 }

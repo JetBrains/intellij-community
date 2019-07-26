@@ -1222,6 +1222,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
+    <completion.toplevel language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaTopLevelCompletionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider" id="excludeFromCompletion" order="last"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>

@@ -545,6 +545,10 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
+    <extensionPoint name="completion.toplevel" beanClass="com.intellij.codeInsight.completion.TopLevelCompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TopLevelCompletionContributor"/>
+    </extensionPoint>
+
     <extensionPoint name="completion.preselectionBehaviourProvider"
                     interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
 
