@@ -861,26 +861,6 @@ public final class UIUtil extends StartupUiUtil {
       if (ui instanceof BasicRadioButtonUI) {
         buttonIcon = ((BasicRadioButtonUI)ui).getDefaultIcon();
       }
-      else if (isUnderAquaLookAndFeel()) {
-        // inheritors of AquaButtonToggleUI
-        Ref<Method> cached = ourDefaultIconMethodsCache.get(ui.getClass());
-        if (cached == null) {
-          cached = Ref.create(ReflectionUtil.findMethod(Arrays.asList(ui.getClass().getMethods()), "getDefaultIcon", JComponent.class));
-          ourDefaultIconMethodsCache.put(ui.getClass(), cached);
-          if (!cached.isNull()) {
-            cached.get().setAccessible(true);
-          }
-        }
-        Method method = cached.get();
-        if (method != null) {
-          try {
-            buttonIcon = (Icon)method.invoke(ui, cb);
-          }
-          catch (Exception e) {
-            cached.set(null);
-          }
-        }
-      }
     }
 
     Dimension size = new Dimension();
@@ -1312,12 +1292,19 @@ public final class UIUtil extends StartupUiUtil {
    * @deprecated Native OS Look-n-Feel is not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
+
+  /**
+   * @deprecated Aqua Look-n-Feel is not supported anymore
+   */
   @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
@@ -1326,6 +1313,7 @@ public final class UIUtil extends StartupUiUtil {
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
@@ -1334,12 +1322,13 @@ public final class UIUtil extends StartupUiUtil {
    * @deprecated JGoodies Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
+    return SystemInfo.isMac && (isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   public static boolean isUnderDefaultMacTheme() {
@@ -1455,7 +1444,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
-    return isUnderAquaLookAndFeel() || isUnderDarcula();
+    return isUnderDarcula();
   }
 
   public static int getListCellHPadding() {
@@ -2675,18 +2664,11 @@ public final class UIUtil extends StartupUiUtil {
 
   @SuppressWarnings("deprecation")
   public static void setComboBoxEditorBounds(int x, int y, int width, int height, @NotNull JComponent editor) {
-    if (SystemInfo.isMac && isUnderAquaLookAndFeel()) {
-      // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
-      // it adds +4 pixels to editor width. WTF?!
-      editor.reshape(x, y, width - 4, height - 1);
-    }
-    else {
-      editor.reshape(x, y, width, height);
-    }
+    editor.reshape(x, y, width, height);
   }
 
   public static int fixComboBoxHeight(final int height) {
-    return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
+    return height;
   }
 
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
@@ -2746,11 +2728,6 @@ public final class UIUtil extends StartupUiUtil {
     JBIterable<Component> result;
     if (c instanceof JMenu) {
       result = JBIterable.of(((JMenu)c).getMenuComponents());
-    }
-    else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
-      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-      // Disabling these children results in ugly UI: WEB-10733
-      result = JBIterable.empty();
     }
     else {
       result = uiChildren(c);
@@ -3114,21 +3091,6 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
-    if (!isUnderAquaLookAndFeel()) return;
-
-    if (component.getBackground().equals(getPanelBackground())
-        || component instanceof JScrollPane
-        || component instanceof JViewport
-        || component instanceof JLayeredPane) {
-      if (component instanceof JComponent) {
-        ((JComponent)component).setOpaque(false);
-      }
-      if (component instanceof Container) {
-        for (Component c : ((Container)component).getComponents()) {
-          setNotOpaqueRecursively(c);
-        }
-      }
-    }
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
