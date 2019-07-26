@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -201,6 +202,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       ((EditorImpl)myEditor).setPaintSelection(mySelected);
       SelectionModel selectionModel = myEditor.getSelectionModel();
       selectionModel.setSelection(0, mySelected ? myEditor.getDocument().getTextLength() : 0);
+      ObjectUtils.consumeIfCast(myEditor.getCaretModel(), CaretModelImpl.class, CaretModelImpl::updateVisualPosition);
     }
   }
 
