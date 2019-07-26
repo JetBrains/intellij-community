@@ -9,6 +9,10 @@ import java.awt.Graphics
 import javax.swing.border.Border
 
 class CustomHeaderMenuBar : IdeMenuBar() {
+  init {
+    isOpaque = false
+  }
+
   override fun getBorder(): Border? {
     return JBUI.Borders.empty()
   }
@@ -22,12 +26,4 @@ class CustomHeaderMenuBar : IdeMenuBar() {
 
     return actionMenu
   }
-
-  init {
-    isOpaque = false
-  }
  }
-
-
-
-

@@ -368,7 +368,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
-        setJMenuBar(new IdeMenuBar());
+        setJMenuBar(IdeMenuBar.createMenuBar());
       }
 
       MouseGestureManager.getInstance().add(this);

@@ -88,7 +88,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = new IdeMenuBar();
+    IdeMenuBar menu = IdeMenuBar.createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
