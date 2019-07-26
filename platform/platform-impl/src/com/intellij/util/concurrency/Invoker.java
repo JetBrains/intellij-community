@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,11 +10,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -33,11 +37,15 @@ public abstract class Invoker implements Disposable {
   private static final AtomicInteger UID = new AtomicInteger();
   private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
+  private final ThreeState useReadAction;
   private final String description;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
+  private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
+    StringBuilder sb = new StringBuilder().append(UID.getAndIncrement()).append(".Invoker.").append(prefix);
+    if (useReadAction != ThreeState.UNSURE) sb.append(".ReadAction=").append(useReadAction);
+    description = sb.append(": ").append(parent).toString();
+    this.useReadAction = useReadAction;
     register(parent, this);
   }
 
@@ -59,7 +67,11 @@ public abstract class Invoker implements Disposable {
    *
    * @return {@code true} if the current thread is valid, or {@code false} otherwise
    */
-  public abstract boolean isValidThread();
+  public boolean isValidThread() {
+    if (useReadAction != ThreeState.NO) return true;
+    Application application = getApplication();
+    return application == null || !application.isReadAccessAllowed();
+  }
 
   /**
    * Invokes the specified task asynchronously on the valid thread.
@@ -141,7 +153,7 @@ public abstract class Invoker implements Disposable {
         if (getApplication() == null) {
           task.run(); // is not interruptible in tests without application
         }
-        else if (isDispatchThread()) {
+        else if (useReadAction != ThreeState.YES || isDispatchThread()) {
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else if (getApplication().isReadAccessAllowed()) {
@@ -246,7 +258,7 @@ public abstract class Invoker implements Disposable {
    */
   public static final class EDT extends Invoker {
     public EDT(@NotNull Disposable parent) {
-      super("EDT", parent);
+      super("EDT", parent, ThreeState.UNSURE);
     }
 
     @Override
@@ -273,7 +285,7 @@ public abstract class Invoker implements Disposable {
    */
   public static final class BackgroundPool extends Invoker {
     public BackgroundPool(@NotNull Disposable parent) {
-      super("Background.Pool", parent);
+      super("Background.Pool", parent, ThreeState.YES);
     }
 
     @Override
@@ -296,7 +308,7 @@ public abstract class Invoker implements Disposable {
     private volatile Thread thread;
 
     public BackgroundThread(@NotNull Disposable parent) {
-      super("Background.Thread", parent);
+      super("Background.Thread", parent, ThreeState.YES);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), 1);
     }
 
@@ -321,6 +333,59 @@ public abstract class Invoker implements Disposable {
         }
         finally {
           thread = null;
+        }
+      }, delay);
+    }
+  }
+
+  public static final class Background extends Invoker {
+    private final Set<Thread> threads = newConcurrentSet();
+    private final ScheduledExecutorService executor;
+
+    public Background(@NotNull Disposable parent) {
+      this(parent, true);
+    }
+
+    public Background(@NotNull Disposable parent, boolean useReadAction) {
+      this(parent, ThreeState.fromBoolean(useReadAction));
+    }
+
+    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction) {
+      this(parent, useReadAction, 1);
+    }
+
+    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
+      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
+      executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+      executor.shutdown();
+    }
+
+    @Override
+    public boolean isValidThread() {
+      return threads.contains(Thread.currentThread()) && super.isValidThread();
+    }
+
+    @Override
+    void offer(@NotNull Runnable runnable, int delay) {
+      schedule(executor, () -> {
+        Thread thread = Thread.currentThread();
+        if (!threads.add(thread)) {
+          LOG.error("current thread is already used");
+        }
+        else {
+          try {
+            runnable.run(); // may throw an assertion error
+          }
+          finally {
+            if (!threads.remove(thread)) {
+              LOG.error("current thread is already removed");
+            }
+          }
         }
       }, delay);
     }
