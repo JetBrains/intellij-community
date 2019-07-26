@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcsUtil.VcsUtil;

@@ -18,16 +18,16 @@ package com.jetbrains.commandInterface.commandLine.psi;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**

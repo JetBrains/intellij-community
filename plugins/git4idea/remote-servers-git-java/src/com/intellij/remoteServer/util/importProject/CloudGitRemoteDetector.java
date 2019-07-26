@@ -30,7 +30,6 @@ import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentS
 import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 import com.intellij.remoteServer.util.CloudNotifier;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -39,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

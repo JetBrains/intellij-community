@@ -17,7 +17,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.xml.index.SchemaTypeInfo;
 import com.intellij.xml.index.SchemaTypeInheritanceIndex;

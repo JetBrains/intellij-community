@@ -5,7 +5,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.hash.HashMap;
 import org.apache.commons.lang.CharUtils;
 import org.editorconfig.language.psi.EditorConfigHeader;
 import org.jdom.Element;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

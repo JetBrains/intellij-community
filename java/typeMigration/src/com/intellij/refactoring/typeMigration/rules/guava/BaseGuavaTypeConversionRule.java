@@ -24,11 +24,11 @@ import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSetting
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 

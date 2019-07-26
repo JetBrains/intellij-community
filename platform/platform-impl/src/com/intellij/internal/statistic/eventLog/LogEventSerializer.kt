@@ -6,9 +6,9 @@ package com.intellij.internal.statistic.eventLog
 import com.google.common.reflect.TypeToken
 import com.google.gson.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.containers.hash.HashMap
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type
+import java.util.*
 
 object LogEventSerializer {
   private val LOG = Logger.getInstance(LogEventSerializer::class.java)

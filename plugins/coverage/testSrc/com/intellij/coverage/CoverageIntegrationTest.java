@@ -25,9 +25,9 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.testFramework.JavaModuleTestCase;
-import com.intellij.util.containers.hash.HashMap;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**

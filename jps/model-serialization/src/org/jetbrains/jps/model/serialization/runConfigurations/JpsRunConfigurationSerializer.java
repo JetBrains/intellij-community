@@ -3,7 +3,6 @@ package org.jetbrains.jps.model.serialization.runConfigurations;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +11,7 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

@@ -2,9 +2,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class JavaPsiBoxingUtils {
