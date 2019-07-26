@@ -419,8 +419,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             };
             // remove already executed
             visitLinesMethods(frameProxy.location(), false, lines, false, visitor);
-            // remove after jumps
-            visitLinesMethods(frameProxy.location(), true, lines, true, visitor);
+
+            if (!smart) {
+              // remove after jumps
+              visitLinesMethods(frameProxy.location(), true, lines, true, visitor);
+            }
           }
           catch (Exception e) {
             LOG.info(e);
