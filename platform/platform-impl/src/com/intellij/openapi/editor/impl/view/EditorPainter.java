@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -434,8 +435,8 @@ public class EditorPainter implements TextDrawingCallback {
     final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
     boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
     int lineCount = myEditor.getVisibleLineCount();
-    final int whiteSpaceStrokeWidth = JBUIScale.scale(1);
-    final Stroke whiteSpaceStroke = new BasicStroke(whiteSpaceStrokeWidth);
+    float whiteSpaceScale = ((float) myEditor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
+    final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
 
     LineLayout prefixLayout = myView.getPrefixLayout();
     if (startVisualLine == 0 && prefixLayout != null) {
@@ -494,7 +495,8 @@ public class EditorPainter implements TextDrawingCallback {
               whitespacePaintingStrategy.update(text, myDocument.getLineStartOffset(logicalLine), myDocument.getLineEndOffset(logicalLine));
               currentLogicalLine[0] = logicalLine;
             }
-            paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment, whiteSpaceStroke, whiteSpaceStrokeWidth);
+            paintWhitespace(g, text, xStart, y, start, end, fragment.getStartLogicalColumn(), whitespacePaintingStrategy, fragment,
+                            whiteSpaceStroke, whiteSpaceScale);
           }
         }
 
@@ -620,50 +622,63 @@ public class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end,
+  private static int calcFeatureSize(int unscaledSize, float scale) {
+    return Math.max(1, Math.round(scale * unscaledSize));
+  }
+
+  private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end, int startLogicalColumn,
                                LineWhitespacePaintingStrategy whitespacePaintingStrategy,
-                               VisualLineFragmentsIterator.Fragment fragment, Stroke stroke, int strokeWidth) {
+                               VisualLineFragmentsIterator.Fragment fragment, BasicStroke stroke, float scale) {
+    if (!whitespacePaintingStrategy.showAnyWhitespace()) return;
+
     Stroke oldStroke = g.getStroke();
-    try {
-      g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
-      g.setStroke(stroke); // applied for tab & ideographic space
+    Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
 
-      boolean isRtl = fragment.isRtl();
-      int baseStartOffset = fragment.getStartOffset();
-      int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
-      y -= 1;
+    boolean isRtl = fragment.isRtl();
+    int baseStartOffset = fragment.getStartOffset();
+    int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
+    y -= 1;
 
-      for (int i = start; i < end; i++) {
-        int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
-        char c = text.charAt(charOffset);
-        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
-          int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
-          int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
+    for (int i = start; i < end; i++) {
+      int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
+      char c = text.charAt(charOffset);
+      if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
+        int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
+        int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
-          if (c == ' ') {
-            //noinspection SuspiciousNameCombination
-            g.fillRect((startX + endX - strokeWidth) / 2, y - strokeWidth + 1, strokeWidth, strokeWidth);
-          }
-          else if (c == '\t') {
-            endX -= myView.getPlainSpaceWidth() / 4;
-            int height = myView.getCharHeight();
-            int halfHeight = height / 2;
-            int mid = y - halfHeight;
-            int top = y - height;
-            LinePainter2D.paint(g, startX, mid, endX, mid);
-            LinePainter2D.paint(g, endX, y, endX, top);
-            g.fillPolygon(new int[]{endX - halfHeight, endX - halfHeight, endX}, new int[]{y, y - height, y - halfHeight}, 3);
-          }
-          else if (c == '\u3000') { // ideographic space
-            int charHeight = myView.getCharHeight();
-            g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, y - charHeight + strokeWidth / 2,
-                       endX - startX - JBUIScale.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
-          }
+        if (c == ' ') {
+          int lineHeight = myView.getLineHeight();
+          int ascent = myView.getAscent();
+          int tabSize = myView.getTabSize();
+          boolean bold = whitespacePaintingStrategy.isAdvancedHighlighting(charOffset) && (startLogicalColumn + i + 1) % tabSize == 0;
+          float size = (bold ? 3 : 2) * scale;
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          // making center point lie exactly between pixels
+          //noinspection IntegerDivisionInFloatingPointContext
+          g.fill(new Ellipse2D.Float((startX + endX)/2 - size/2, y + 1 - ascent + lineHeight/2 - size/2, size, size));
+        }
+        else if (c == '\t') {
+          int tabLineHeight = calcFeatureSize(4, scale);
+          int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
+          startX = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+          g.setStroke(stroke);
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g.drawLine(startX, y, startX + tabLineWidth, y - tabLineHeight);
+          g.drawLine(startX, y - tabLineHeight * 2, startX + tabLineWidth, y - tabLineHeight);
+        }
+        else if (c == '\u3000') { // ideographic space
+          int charHeight = myView.getCharHeight();
+          int strokeWidth = Math.round(stroke.getLineWidth());
+          g.setStroke(stroke);
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+          g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, y - charHeight + strokeWidth / 2,
+                     endX - startX - JBUIScale.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
         }
       }
-    } finally {
-      g.setStroke(oldStroke);
     }
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+    g.setStroke(oldStroke);
   }
 
   private void collectExtensions(int visualLine, int offset, TIntObjectHashMap<List<LineExtensionData>> extensionData) {
@@ -1382,10 +1397,12 @@ public class EditorPainter implements TextDrawingCallback {
       myTrailingWhitespaceShown = settings.isTrailingWhitespaceShown();
     }
 
+    private boolean showAnyWhitespace() {
+      return myWhitespaceShown && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown);
+    }
+
     private void update(CharSequence chars, int lineStart, int lineEnd) {
-      if (myWhitespaceShown
-          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
-          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
+      if (showAnyWhitespace()) {
         currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
         currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
       }
@@ -1396,6 +1413,10 @@ public class EditorPainter implements TextDrawingCallback {
              && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
                  offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
                  myInnerWhitespaceShown);
+    }
+
+    private boolean isAdvancedHighlighting(int offset) {
+      return offset < currentLeadingEdge;
     }
   }
 
