@@ -53,7 +53,7 @@ interface GlobalMenuLib extends Library {
 
   void execOnMainLoop(JRunnable run);
 
-  Pointer registerWindow(long windowXid, EventHandler handler);
+  Pointer registerWindow(long windowXid, LinuxGlobalMenuEventHandler handler);
   void releaseWindowOnMainLoop(Pointer wi, JRunnable onReleased);
 
   void bindNewWindow(Pointer wi, long windowXid); // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
@@ -77,12 +77,10 @@ interface GlobalMenuLib extends Library {
 
   void toggleItemStateChecked(Pointer item, boolean isChecked);
 
-  interface EventHandler extends Callback {
-    void handleEvent(int uid, int eventType);
-  }
   interface JLogger extends Callback {
     void log(int level, String msg);
   }
+
   interface JRunnable extends Callback {
     void run();
   }
@@ -104,7 +102,7 @@ interface GlobalMenuLib extends Library {
   int ITEM_RADIO = 3;
 }
 
-public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
+public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Disposable {
   private static final String TOGGLE_SWING_MENU_ACTION_NAME = "Toggle Global Menu integration";
   private static final String TOGGLE_SWING_MENU_ACTION_DESC = "Enable/disable global menu integration (in all frames)";
   private static final String TOGGLE_SWING_MENU_ACTION_ID = "ToggleGlobalLinuxMenu";
