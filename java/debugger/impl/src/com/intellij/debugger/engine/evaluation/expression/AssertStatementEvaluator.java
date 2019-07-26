@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -28,7 +29,7 @@ public class AssertStatementEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
     }
     ClassObjectReference classObjectReference = frameProxy.location().declaringType().classObject();
-    Method method = ((ClassType)classObjectReference.referenceType()).concreteMethodByName("desiredAssertionStatus", "()Z");
+    Method method = DebuggerUtils.findMethod(classObjectReference.referenceType(), "desiredAssertionStatus", "()Z");
     if (method != null) {
       Value res = context.getDebugProcess().invokeMethod(context, classObjectReference, method, Collections.emptyList());
       if (res instanceof BooleanValue && !((BooleanValue)res).value()) {

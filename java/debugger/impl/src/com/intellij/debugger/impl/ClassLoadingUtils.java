@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -31,7 +31,7 @@ public class ClassLoadingUtils {
       ArrayType arrayType = (ArrayType)context.getDebugProcess().findClass(context, "java.net.URL[]", context.getClassLoader());
       ArrayReference emptyUrlArray = DebuggerUtilsEx.mirrorOfArray(arrayType, 0, context);
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
-      Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
+      Method ctorMethod = DebuggerUtils.findMethod(loaderClass, JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
       return context.computeAndKeep(() -> (ClassLoaderReference)process
         .newInstance(context, loaderClass, ctorMethod, Arrays.asList(emptyUrlArray, context.getClassLoader())));
     }
@@ -48,7 +48,7 @@ public class ClassLoadingUtils {
     try {
       VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
       Method defineMethod =
-        ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
+        DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
       process.invokeMethod(context, classLoader, defineMethod,
                            Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, proxy, context),
                                          mirrorOf(bytes, context, process),

@@ -127,10 +127,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return overridesToString(type);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      Method toStringMethod = DebuggerUtilsEx.concreteMethodByName((ClassType)type, "toString", "()Ljava/lang/String;");
+      Method toStringMethod = DebuggerUtils.findMethod((ReferenceType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;

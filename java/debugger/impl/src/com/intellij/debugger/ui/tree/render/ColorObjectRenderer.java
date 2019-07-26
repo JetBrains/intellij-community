@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -33,7 +34,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
         ReferenceType refType = objRef.referenceType();
         if (refType instanceof ClassType) {
           Value rgbValue = null;
-          Method getRGBMethod = ((ClassType)refType).concreteMethodByName("getRGB", "()I");
+          Method getRGBMethod = DebuggerUtils.findMethod(refType, "getRGB", "()I");
           if (getRGBMethod != null) {
             ReferenceType rgbMethodDeclaringType = getRGBMethod.declaringType();
             if (rgbMethodDeclaringType.name().equals(getClassName())) { // getRGB is not overridden

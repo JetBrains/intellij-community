@@ -1084,18 +1084,4 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     });
   }
-
-  @Nullable
-  public static Method concreteMethodByName(@NotNull ClassType type, String name, String signature)  {
-    //TODO: currently does not include interface default methods
-    while (type != null) {
-      for (Method candidate : type.methods()) {
-        if (candidate.name().equals(name) && candidate.signature().equals(signature) && !candidate.isAbstract()) {
-          return candidate;
-        }
-      }
-      type = type.superclass();
-    }
-    return null;
-  }
 }

@@ -162,7 +162,7 @@ public abstract class DebuggerUtils {
     Method method = null;
     if (methodSignature != null) {
       if (refType instanceof ClassType) {
-        method = ((ClassType)refType).concreteMethodByName(methodName, methodSignature);
+        method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
       }
       if (method == null) {
         method = ContainerUtil.getFirstItem(refType.methodsByName(methodName, methodSignature));
@@ -172,6 +172,39 @@ public abstract class DebuggerUtils {
       method = ContainerUtil.getFirstItem(refType.methodsByName(methodName));
     }
     return method;
+  }
+
+  /**
+   * Optimized version of {@link com.sun.jdi.ClassType#concreteMethodByName(java.lang.String, java.lang.String)}.
+   * It does not gather all visible methods before checking so can return early
+   */
+  @Nullable
+  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @NotNull String signature)  {
+    LinkedList<InterfaceType> interfaces = new LinkedList<>();
+    // first check classes
+    while (type != null) {
+      for (Method candidate : type.methods()) {
+        if (candidate.name().equals(name) && candidate.signature().equals(signature)) {
+          return !candidate.isAbstract() ? candidate : null;
+        }
+      }
+      interfaces.addAll(type.interfaces());
+      type = type.superclass();
+    }
+    // then interfaces
+    Set<InterfaceType> checkedInterfaces = new HashSet<>();
+    InterfaceType iface;
+    while ((iface = interfaces.poll()) != null) {
+      if (checkedInterfaces.add(iface)) {
+        for (Method candidate : iface.methods()) {
+          if (candidate.name().equals(name) && candidate.signature().equals(signature) && !candidate.isAbstract()) {
+            return candidate;
+          }
+        }
+        interfaces.addAll(0, iface.superinterfaces());
+      }
+    }
+    return null;
   }
 
   public static boolean isNumeric(Value value) {

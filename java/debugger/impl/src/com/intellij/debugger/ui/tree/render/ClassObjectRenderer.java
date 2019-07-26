@@ -41,7 +41,7 @@ class ClassObjectRenderer extends CompoundReferenceRenderer implements FullValue
       public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
         Value value = valueDescriptor.getValue();
         ClassType type = ((ClassType)value.type());
-        Method nameMethod = type.concreteMethodByName("getName", "()Ljava/lang/String;");
+        Method nameMethod = DebuggerUtils.findMethod(type, "getName", "()Ljava/lang/String;");
         if (nameMethod != null) {
           try {
             final DebugProcessImpl process = evaluationContext.getDebugProcess();

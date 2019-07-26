@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -40,7 +41,7 @@ class StackTraceElementObjectRenderer extends CompoundReferenceRenderer implemen
       public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
         Value value = valueDescriptor.getValue();
         ClassType type = ((ClassType)value.type());
-        Method toString = type.concreteMethodByName("toString", "()Ljava/lang/String;");
+        Method toString = DebuggerUtils.findMethod(type, "toString", "()Ljava/lang/String;");
         if (toString != null) {
           try {
             Value res =
