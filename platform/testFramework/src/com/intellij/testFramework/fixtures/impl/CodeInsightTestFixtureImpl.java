@@ -55,6 +55,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -135,6 +136,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static org.junit.Assert.*;
 
 /**
@@ -327,16 +329,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public VirtualFile copyFileToProject(@NotNull String sourcePath, @NotNull String targetPath) {
     String testDataPath = getTestDataPath();
-    File sourceFile = FileUtil.findFirstThatExist(testDataPath + '/' + sourcePath, sourcePath);
+    File sourceFile = new File(testDataPath, toSystemDependentName(sourcePath));
+    if (!sourceFile.exists()) {
+      File candidate = new File(sourcePath);
+      if (candidate.isAbsolute()) {
+        sourceFile = candidate;
+        if (targetPath == sourcePath) {
+          targetPath = PathUtil.getFileName(sourcePath);
+          Logger.getInstance(getClass()).warn("Absolute target path '" + sourcePath + "' trimmed to '" + targetPath + "'");
+        }
+      }
+    }
+
+    targetPath = FileUtil.toSystemIndependentName(targetPath);
+
     VirtualFile targetFile = myTempDirFixture.getFile(targetPath);
 
-    if (sourceFile == null && targetFile != null && targetPath.equals(sourcePath)) {
+    if (!sourceFile.exists() && targetFile != null && targetPath.equals(sourcePath)) {
       return targetFile;
     }
 
     assertFileEndsWithCaseSensitivePath(sourceFile);
 
-    assertNotNull("Cannot find source file: " + sourcePath + "; test data path: " + testDataPath, sourceFile);
+    assertTrue("Cannot find source file: " + sourcePath + "; test data path: " + testDataPath, sourceFile.exists());
     assertTrue("Not a file: " + sourceFile, sourceFile.isFile());
 
     if (targetFile == null) {
