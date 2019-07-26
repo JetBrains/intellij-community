@@ -211,7 +211,7 @@ public class MessageBusImpl implements MessageBus {
         try {
           listeners.add(ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false));
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           LOG.error("Cannot create listener", e);
         }
       }
