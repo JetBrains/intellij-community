@@ -1,8 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,13 +11,14 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
-class MessageBusConnectionImpl implements MessageBusConnection {
+final class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
-  @SuppressWarnings("SSBasedInspection")
   private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
 
   private MessageHandler myDefaultHandler;
@@ -34,10 +31,41 @@ class MessageBusConnectionImpl implements MessageBusConnection {
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException {
     synchronized (myPendingMessages) {
-      if (mySubscriptions.get(topic) != null) {
-        throw new IllegalStateException("Subscription to " + topic + " already exists");
+      Object currentHandler = mySubscriptions.get(topic);
+      if (currentHandler == null) {
+        mySubscriptions = mySubscriptions.plus(topic, handler);
       }
-      mySubscriptions = mySubscriptions.plus(topic, handler);
+      else if (currentHandler instanceof List<?>) {
+        //noinspection unchecked
+        ((List<L>)currentHandler).add(handler);
+      }
+      else {
+        List<Object> newList = new ArrayList<>();
+        newList.add(currentHandler);
+        newList.add(handler);
+        mySubscriptions = mySubscriptions.plus(topic, newList);
+      }
+    }
+    myBus.notifyOnSubscription(this, topic);
+  }
+
+  // avoid notifyOnSubscription and map modification for each handler
+  <L> void subscribe(@NotNull Topic<L> topic, @NotNull List<Object> handlers) throws IllegalStateException {
+    synchronized (myPendingMessages) {
+      Object currentHandler = mySubscriptions.get(topic);
+      if (currentHandler == null) {
+        mySubscriptions = mySubscriptions.plus(topic, handlers);
+      }
+      else if (currentHandler instanceof List<?>) {
+        //noinspection unchecked
+        ((List<Object>)currentHandler).addAll(handlers);
+      }
+      else {
+        List<Object> newList = new ArrayList<>(handlers.size() + 1);
+        newList.add(currentHandler);
+        newList.addAll(handlers);
+        mySubscriptions = mySubscriptions.plus(topic, newList);
+      }
     }
     myBus.notifyOnSubscription(this, topic);
   }
@@ -88,14 +116,20 @@ class MessageBusConnectionImpl implements MessageBusConnection {
     assert messageOnLocalQueue == message;
 
     final Topic topic = message.getTopic();
-    final Object handler = mySubscriptions.get(topic);
-
+    Object handler = mySubscriptions.get(topic);
     try {
       if (handler == myDefaultHandler) {
         myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
       }
       else {
-        myBus.invokeListener(message, handler);
+        if (handler instanceof List<?>) {
+          for (Object o : (List<?>)handler) {
+            myBus.invokeListener(message, o);
+          }
+        }
+        else {
+          myBus.invokeListener(message, handler);
+        }
       }
     }
     catch (AbstractMethodError e) {
@@ -139,9 +173,5 @@ class MessageBusConnectionImpl implements MessageBusConnection {
   @NotNull
   MessageBusImpl getBus() {
     return myBus;
-  }
-
-  boolean isSubscribed(@NotNull Topic<?> topic) {
-    return mySubscriptions.containsKey(topic);
   }
 }

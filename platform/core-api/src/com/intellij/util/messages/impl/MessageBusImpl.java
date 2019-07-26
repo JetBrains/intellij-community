@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -145,13 +144,13 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  public MessageBusConnection connect() {
+  public MessageBusConnectionImpl connect() {
     return connect(myConnectionDisposable);
   }
 
   @Override
   @NotNull
-  public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
+  public MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
     checkNotDisposed();
     MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
@@ -159,7 +158,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @NotNull
-  MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
+  protected MessageBusConnectionImpl createConnectionForLazyListeners() {
     return connect();
   }
 
@@ -194,17 +193,20 @@ public class MessageBusImpl implements MessageBus {
 
       List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
       if (listenerDescriptors != null) {
+        MessageBusConnectionImpl connection = createConnectionForLazyListeners();
+        List<Object> listeners = new SmartList<>();
         for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
           ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
           try {
-            @SuppressWarnings("unchecked")
-            L listener = (L)ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false);
-            MessageBusConnection connection = createConnectionForLazyListeners(topic);
-            connection.subscribe(topic, listener);
+            listeners.add(ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false));
           }
-          catch (ClassNotFoundException e) {
-            LOG.error(e);
+          catch (Exception e) {
+            LOG.error("Cannot create listener", e);
           }
+        }
+
+        if (!listeners.isEmpty()) {
+          connection.subscribe(topic, listeners);
         }
       }
 
@@ -519,31 +521,14 @@ public class MessageBusImpl implements MessageBus {
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<>();
 
-    private final List<MessageBusConnectionImpl> myConnectionPool = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final MessageBusConnectionImpl myLazyConnection = connect();
 
     private volatile boolean myClearedSubscribersCache;
 
     @NotNull
     @Override
-    MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
-      // createConnectionForLazyListeners is never called concurrently for the same topic,
-      // see explanation in syncPublisher
-      for (MessageBusConnectionImpl connection : myConnectionPool) {
-        if (!connection.isSubscribed(topic)) {
-          return connection;
-        }
-      }
-
-      MessageBusConnectionImpl connection = (MessageBusConnectionImpl)connect();
-      myConnectionPool.add(connection);
-      return connection;
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-
-      myConnectionPool.clear();
+    protected MessageBusConnectionImpl createConnectionForLazyListeners() {
+      return myLazyConnection;
     }
 
     @Override
