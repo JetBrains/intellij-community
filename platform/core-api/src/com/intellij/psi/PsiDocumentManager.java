@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,6 +179,8 @@ public abstract class PsiDocumentManager {
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
    */
   public interface Listener extends EventListener {
+    Topic<Listener> TOPIC = new Topic<>("PsiDocumentManager.Listener", Listener.class);
+
     /**
      * Called when a document instance is created for a file.
      *
@@ -185,7 +188,7 @@ public abstract class PsiDocumentManager {
      * @param psiFile the file for which the document was created.
      * @see PsiDocumentManager#getDocument(PsiFile)
      */
-    void documentCreated(@NotNull Document document, PsiFile psiFile);
+    void documentCreated(@NotNull Document document, @Nullable PsiFile psiFile);
 
     /**
      * Called when a file instance is created for a document.
@@ -199,17 +202,15 @@ public abstract class PsiDocumentManager {
   }
 
   /**
-   * Adds a listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
-   *
-   * @param listener the listener to add.
+   * @deprecated Use message bus {@link Listener#TOPIC}.
    */
+  @Deprecated
   public abstract void addListener(@NotNull Listener listener);
 
   /**
-   * Removes a listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
-   *
-   * @param listener the listener to add.
+   * @deprecated Use message bus {@link Listener#TOPIC}.
    */
+  @Deprecated
   public abstract void removeListener(@NotNull Listener listener);
 
   /**
