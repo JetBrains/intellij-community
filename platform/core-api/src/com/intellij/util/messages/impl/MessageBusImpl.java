@@ -51,7 +51,8 @@ public class MessageBusImpl implements MessageBus {
   private final Map<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private volatile Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass;
+  @NotNull
+  private volatile Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass = Collections.emptyMap();
 
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
@@ -85,9 +86,12 @@ public class MessageBusImpl implements MessageBus {
     myRootBus = (RootBus)this;
   }
 
+  /**
+   * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
+   */
   @ApiStatus.Internal
-  public void setLazyListeners(@NotNull Map<String, List<ListenerDescriptor>> map) {
-    if (myTopicClassToListenerClass != null) {
+  public void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map) {
+    if (myTopicClassToListenerClass != Collections.<String, List<ListenerDescriptor>>emptyMap()) {
       throw new IllegalStateException("Already set: "+myTopicClassToListenerClass);
     }
     myTopicClassToListenerClass = map;
@@ -174,47 +178,53 @@ public class MessageBusImpl implements MessageBus {
 
     Class<L> listenerClass = topic.getListenerClass();
 
-    if (myTopicClassToListenerClass == null) {
+    if (myTopicClassToListenerClass.isEmpty()) {
       Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
       Object prev = myPublishers.putIfAbsent(topic, newInstance);
       //noinspection unchecked
       return (L)(prev == null ? newInstance : prev);
     }
-
-    // remove is atomic operation, so, even if topic concurrently created and our topic instance will be not used, still, listeners will be added,
-    // but problem is that if another topic will be returned earlier, then these listeners will not get fired event
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (topic) {
-      //noinspection unchecked
-      publisher = (L)myPublishers.get(topic);
-      if (publisher != null) {
-        return publisher;
+    else {
+      // remove is atomic operation, so, even if topic concurrently created and our topic instance will be not used, still, listeners will be added,
+      // but problem is that if another topic will be returned earlier, then these listeners will not get fired event
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (topic) {
+        return subscribeLazyListeners(topic, listenerClass);
       }
+    }
+  }
 
-      List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
-      if (listenerDescriptors != null) {
-        MessageBusConnectionImpl connection = createConnectionForLazyListeners();
-        List<Object> listeners = new SmartList<>();
-        for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
-          ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
-          try {
-            listeners.add(ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false));
-          }
-          catch (Exception e) {
-            LOG.error("Cannot create listener", e);
-          }
-        }
-
-        if (!listeners.isEmpty()) {
-          connection.subscribe(topic, listeners);
-        }
-      }
-
-      //noinspection unchecked
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
-      myPublishers.put(topic, publisher);
+  @NotNull
+  private <L> L subscribeLazyListeners(@NotNull Topic<L> topic, @NotNull Class<L> listenerClass) {
+    //noinspection unchecked
+    L publisher = (L)myPublishers.get(topic);
+    if (publisher != null) {
       return publisher;
     }
+
+    List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
+    if (listenerDescriptors != null) {
+      MessageBusConnectionImpl connection = createConnectionForLazyListeners();
+      List<Object> listeners = new SmartList<>();
+      for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
+        ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
+        try {
+          listeners.add(ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false));
+        }
+        catch (Exception e) {
+          LOG.error("Cannot create listener", e);
+        }
+      }
+
+      if (!listeners.isEmpty()) {
+        connection.subscribe(topic, listeners);
+      }
+    }
+
+    //noinspection unchecked
+    publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
+    myPublishers.put(topic, publisher);
+    return publisher;
   }
 
   @NotNull

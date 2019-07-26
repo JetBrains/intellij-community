@@ -68,7 +68,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -170,7 +169,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   // this method is not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
   @ApiStatus.Internal
   public void registerMessageBusListeners(@NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
-    Map<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+    ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
     boolean isHeadlessMode = isHeadlessEnvironment();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
       List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
