@@ -58,7 +58,7 @@ public class PreferenceButton extends JComponent {
     y += myIcon.getIconHeight();
     final FontMetrics metrics = getFontMetrics(getFont());
     x = (getWidth() - insets.left - insets.right - metrics.stringWidth(myLabel)) / 2;
-    y += 1.5 * metrics.getHeight();
+    y += metrics.getHeight() * 3 / 2;
     g.setColor(UIUtil.getLabelForeground());
     GraphicsUtil.setupAAPainting(g);
     g.drawString(myLabel, x, y);

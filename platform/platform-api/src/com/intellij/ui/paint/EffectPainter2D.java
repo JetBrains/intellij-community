@@ -245,7 +245,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
         Double round = period <= 2 && !JreHiDpiUtil.isJreHiDPI(g) ? null : period;
-        for (int dx = 0; dx < width; dx += period + period) {
+        for (int dx = 0; dx < width; dx += period * 2) {
           RectanglePainter2D.FILL.paint(g, dx, 0, period, period, round, LinePainter2D.StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
         }
       }

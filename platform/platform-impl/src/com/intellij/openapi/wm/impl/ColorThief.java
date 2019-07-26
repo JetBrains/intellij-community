@@ -437,18 +437,17 @@ public class ColorThief {
                 histoindex = getColorIndex(i, j, k);
                 hval = histo[histoindex];
                 ntot += hval;
-                rsum += (hval * (i + 0.5) * MULT);
-                gsum += (hval * (j + 0.5) * MULT);
-                bsum += (hval * (k + 0.5) * MULT);
+                rsum += (hval * MULT * (2 * i + 1) / 2);
+                gsum += (hval * MULT * (2 * j + 1) / 2);
+                bsum += (hval * MULT * (2 * k + 1) / 2);
               }
             }
           }
 
           if (ntot > 0) {
-            _avg = new int[] {~~(rsum / ntot), ~~(gsum / ntot), ~~(bsum / ntot)};
+            _avg = new int[] {rsum / ntot, gsum / ntot, bsum / ntot};
           } else {
-            _avg = new int[] {~~(MULT * (r1 + r2 + 1) / 2), ~~(MULT * (g1 + g2 + 1) / 2),
-              ~~(MULT * (b1 + b2 + 1) / 2)};
+            _avg = new int[] {MULT * (r1 + r2 + 1) / 2, MULT * (g1 + g2 + 1) / 2, MULT * (b1 + b2 + 1) / 2};
           }
         }
 
@@ -632,10 +631,10 @@ public class ColorThief {
           right = vbox_dim2 - i;
 
           if (left <= right) {
-            d2 = Math.min(vbox_dim2 - 1, ~~(i + right / 2));
+            d2 = Math.min(vbox_dim2 - 1, (i + right / 2));
           } else {
             // 2.0 and cast to int is necessary to have the same behaviour as in JavaScript
-            d2 = Math.max(vbox_dim1, ~~((int) (i - 1 - left / 2.0)));
+            d2 = Math.max(vbox_dim1, ((int)(i - 1 - left / 2.0)));
           }
 
           // avoid 0-count boxes
@@ -791,9 +790,7 @@ public class ColorThief {
     }
 
     public int[] map(int[] color) {
-      int numVBoxes = vboxes.size();
-      for (int i = 0; i < numVBoxes; i++) {
-        MMCQ.VBox vbox = vboxes.get(i);
+      for (MMCQ.VBox vbox : vboxes) {
         if (vbox.contains(color)) {
           return vbox.avg(false);
         }
@@ -806,9 +803,8 @@ public class ColorThief {
       double d2;
       int[] pColor = null;
 
-      int numVBoxes = vboxes.size();
-      for (int i = 0; i < numVBoxes; i++) {
-        int[] vbColor = vboxes.get(i).avg(false);
+      for (MMCQ.VBox vbox : vboxes) {
+        int[] vbColor = vbox.avg(false);
         d2 = Math.sqrt(
           Math.pow(color[0] - vbColor[0], 2) + Math.pow(color[1] - vbColor[1], 2)
           + Math.pow(color[2] - vbColor[2], 2));
