@@ -271,7 +271,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       width = preferredSize.width;
     }
 
-    return new Dimension(width, UIUtil.fixComboBoxHeight(preferredSize.height));
+    return new Dimension(width, preferredSize.height);
   }
 
   @Override

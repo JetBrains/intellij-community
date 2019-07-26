@@ -2667,6 +2667,11 @@ public final class UIUtil extends StartupUiUtil {
     editor.reshape(x, y, width, height);
   }
 
+  /**
+   * @deprecated the method was used to fix Aqua Look-n-Feel problems. Now it does not make sense
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static int fixComboBoxHeight(final int height) {
     return height;
   }

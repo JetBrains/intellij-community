@@ -63,12 +63,6 @@ public class ComboboxEditorTextField extends EditorTextField {
     return getPreferredSize();
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width, UIUtil.fixComboBoxHeight(preferredSize.height));
-  }
-
   private void repaintComboBox() {
     // TODO:
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
