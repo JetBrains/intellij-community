@@ -13,7 +13,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
@@ -73,9 +72,13 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       private boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
-        return VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
-               SideEffectChecker.mayHaveSideEffects(rValue) ||
-               PsiTreeUtil.findChildOfType(rValue, PsiNewExpression.class, false) != null;
+        if (VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
+            SideEffectChecker.mayHaveSideEffects(rValue)) {
+          return true;
+        }
+        return ExpressionUtils.nonStructuralChildren(rValue)
+          .filter(c -> c instanceof PsiCallExpression)
+          .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
       }
 
       private void registerProblem(@NotNull PsiForStatement statement, boolean isSetAll) {
