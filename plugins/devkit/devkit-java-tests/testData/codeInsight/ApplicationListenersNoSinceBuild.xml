@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>foo</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+
+  <error descr="Must specify <idea-version> 'since-build'"><applicationListeners>
+    <listener class="java.lang.String" topic="java.lang.String"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
+  </applicationListeners></error>
+
+</idea-plugin>

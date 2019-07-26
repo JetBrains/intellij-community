@@ -21,9 +21,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -93,6 +95,27 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
     String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
     moduleBuilder.addLibrary("coreImpl", coreImpl)
+  }
+
+  void testApplicationListeners() {
+    doHighlightingTest("ApplicationListeners.xml")
+  }
+
+  void testApplicationListenersNoSinceBuild() {
+    doHighlightingTest("ApplicationListenersNoSinceBuild.xml")
+  }
+
+  void testApplicationListenersPre192() {
+    doHighlightingTest("ApplicationListenersPre192.xml")
+  }
+
+  void testApplicationListenersDepends() {
+    myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml")
+    doHighlightingTest("ApplicationListenersDepends-dependency.xml")
+  }
+
+  void testApplicationListenersNoPluginIdStandalone() {
+    doHighlightingTest("ApplicationListenersNoPluginIdStandalone.xml")
   }
 
   void testExtensionI18n() {

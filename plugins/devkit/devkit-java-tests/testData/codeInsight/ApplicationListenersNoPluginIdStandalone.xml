@@ -1,0 +1,8 @@
+<idea-plugin>
+
+  <error descr="Could not locate main plugin.xml file to determine required <idea-version> 'since-build'"><applicationListeners>
+    <listener class="java.lang.String" topic="java.lang.String"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
+  </applicationListeners></error>
+
+</idea-plugin>

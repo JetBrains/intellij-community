@@ -67,6 +67,7 @@ import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -89,15 +90,16 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = AtomicClearableLazyValue.create(() -> {
-    Map<String, PluginModuleSet> result = new HashMap<>();
-    for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
-      for (String module : modulesSet.modules) {
-        result.put(module, modulesSet);
+  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName =
+    AtomicClearableLazyValue.create(() -> {
+      Map<String, PluginModuleSet> result = new HashMap<>();
+      for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
+        for (String module : modulesSet.modules) {
+          result.put(module, modulesSet);
+        }
       }
-    }
-    return result;
-  });
+      return result;
+    });
 
 
   public PluginXmlDomInspection() {
@@ -108,7 +110,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   @Override
   public JComponent createOptionsPanel() {
     ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, ""));
-    JPanel panel = UiUtils.createAddRemoveTreeClassChooserPanel(table, DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title"));
+    JPanel panel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title"));
     PanelGridBuilder grid = UI.PanelFactory.grid();
     grid.resize().add(
       UI.PanelFactory.panel(panel)
@@ -211,6 +214,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       else if (element instanceof Helpset) {
         highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
       }
+      else if (element instanceof Listeners) {
+        annotateListeners((Listeners)element, holder);
+      }
     }
 
     if (element instanceof GenericDomValue) {
@@ -237,6 +243,54 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
+  private static final int LISTENERS_PLATFORM_VERSION = 192;
+
+  private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
+    final Module module = listeners.getModule();
+    if (module == null || PsiUtil.isIdeaProject(module.getProject())) return;
+
+    IdeaPlugin ideaPlugin = DomUtil.getParentOfType(listeners, IdeaPlugin.class, true);
+    assert ideaPlugin != null;
+    if (!hasRealPluginId(ideaPlugin)) {
+      ideaPlugin = findMainDescriptor(module);
+    }
+
+    if (ideaPlugin == null) {
+      holder.createProblem(listeners, ProblemHighlightType.ERROR,
+                           "Could not locate main plugin.xml file to determine required <idea-version> 'since-build'", null)
+        .highlightWholeElement();
+      return;
+    }
+
+    final GenericAttributeValue<BuildNumber> sinceBuild = ideaPlugin.getIdeaVersion().getSinceBuild();
+    final boolean noSinceBuildXml = !DomUtil.hasXml(sinceBuild);
+    if (noSinceBuildXml ||
+        sinceBuild.getValue() == null) {
+      holder.createProblem(listeners, ProblemHighlightType.ERROR,
+                           "Must specify <idea-version> 'since-build'", null,
+                           noSinceBuildXml ? new AddDomElementQuickFix<>(ideaPlugin.getIdeaVersion()) : null)
+        .highlightWholeElement();
+      return;
+    }
+
+    final int baselineVersion = sinceBuild.getValue().getBaselineVersion();
+    if (baselineVersion >= LISTENERS_PLATFORM_VERSION) return;
+
+    holder.createProblem(listeners, ProblemHighlightType.ERROR,
+                         "Feature available in platform version " + LISTENERS_PLATFORM_VERSION + " or later only, " +
+                         "but specified 'since-build' platform is '" + baselineVersion + "'", null)
+      .highlightWholeElement();
+  }
+
+  @Nullable
+  private static IdeaPlugin findMainDescriptor(@NotNull Module module) {
+      final XmlFile mainPluginXml = PluginModuleType.getPluginXml(module);
+      if (mainPluginXml == null) return null;
+
+      final DomFileElement<IdeaPlugin> mainDomFileElement = DescriptorUtil.getIdeaPlugin(mainPluginXml);
+      return mainDomFileElement != null ? mainDomFileElement.getRootElement() : null;
   }
 
   private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {

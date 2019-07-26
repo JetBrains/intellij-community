@@ -1,0 +1,13 @@
+<idea-plugin>
+  <id>foo</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <idea-version since-build="191"/>
+
+  <error descr="Feature available in platform version 192 or later only, but specified 'since-build' platform is '191'"><applicationListeners>
+    <listener class="java.lang.String" topic="java.lang.String"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
+  </applicationListeners></error>
+
+</idea-plugin>

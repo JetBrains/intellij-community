@@ -138,6 +138,9 @@ public interface IdeaPlugin extends DomElement {
 
   Actions addActions();
 
+  /**
+   * Available since 192.
+   */
   @NotNull
   @SubTagList("applicationListeners")
   List<Listeners> getApplicationListeners();
