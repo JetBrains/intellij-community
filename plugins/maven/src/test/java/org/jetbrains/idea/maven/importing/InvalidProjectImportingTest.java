@@ -20,7 +20,6 @@ import com.intellij.openapi.application.WriteAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;

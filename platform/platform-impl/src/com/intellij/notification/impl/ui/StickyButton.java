@@ -18,7 +18,6 @@ package com.intellij.notification.impl.ui;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 /**
  * @author spleaner

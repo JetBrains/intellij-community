@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.ReflectionUtil;

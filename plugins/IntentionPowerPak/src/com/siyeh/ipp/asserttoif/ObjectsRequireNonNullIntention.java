@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.asserttoif;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -29,8 +28,6 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Bas Leijdekkers

@@ -16,7 +16,6 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;

@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;

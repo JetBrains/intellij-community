@@ -10,7 +10,6 @@ import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextAware;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;

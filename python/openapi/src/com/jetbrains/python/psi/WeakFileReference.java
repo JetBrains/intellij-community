@@ -17,7 +17,6 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;

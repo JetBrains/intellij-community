@@ -21,8 +21,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.Map;
-
 /**
  * @author Maxim.Medvedev
  */

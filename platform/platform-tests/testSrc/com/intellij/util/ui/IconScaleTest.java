@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.DeferredIconImpl;

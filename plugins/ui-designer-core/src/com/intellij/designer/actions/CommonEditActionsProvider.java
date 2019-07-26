@@ -33,7 +33,6 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.uiDesigner.SerializedComponentData;
-import com.intellij.util.ThrowableRunnable;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;

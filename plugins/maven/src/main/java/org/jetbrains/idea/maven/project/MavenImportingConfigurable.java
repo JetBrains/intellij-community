@@ -16,21 +16,16 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 

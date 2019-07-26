@@ -4,7 +4,6 @@ package com.intellij.ui.tree;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.util.List;
 
 public abstract class BaseTreeModel<T> extends AbstractTreeModel implements ChildrenProvider<T> {

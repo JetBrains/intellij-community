@@ -6,7 +6,6 @@ import net.sf.cglib.core.ClassEmitter;
 import net.sf.cglib.core.CodeEmitter;
 import net.sf.cglib.core.MethodInfo;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 

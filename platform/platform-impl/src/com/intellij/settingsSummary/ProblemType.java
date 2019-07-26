@@ -17,10 +17,7 @@ package com.intellij.settingsSummary;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @deprecated use {@link com.intellij.troubleshooting.TroubleInfoCollector}. To be removed in IDEA 2020.1.

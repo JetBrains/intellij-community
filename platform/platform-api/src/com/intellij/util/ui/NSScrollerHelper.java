@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;

@@ -13,7 +13,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 

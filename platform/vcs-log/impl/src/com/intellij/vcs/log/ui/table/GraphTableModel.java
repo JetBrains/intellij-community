@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;

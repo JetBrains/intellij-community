@@ -15,8 +15,6 @@
  */
 package org.zmlx.hg4idea.util;
 
-import com.intellij.openapi.util.SystemInfo;
-
 /**
  * Utilities for operations involving working with a number of changesets: log, incoming, outgoing, parents, etc.
  * Storage for different mercurial response separators.

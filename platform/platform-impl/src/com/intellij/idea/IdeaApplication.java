@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;

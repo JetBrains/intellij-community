@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;

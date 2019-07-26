@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.ex;
 import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.string.DiffStringBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 

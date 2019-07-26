@@ -19,7 +19,6 @@ package com.intellij.history.integration.ui.models;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
 public class DirectoryChangeModel {

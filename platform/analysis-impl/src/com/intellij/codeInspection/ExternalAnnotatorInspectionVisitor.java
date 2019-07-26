@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);

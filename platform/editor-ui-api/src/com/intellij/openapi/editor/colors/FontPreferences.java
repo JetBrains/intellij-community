@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

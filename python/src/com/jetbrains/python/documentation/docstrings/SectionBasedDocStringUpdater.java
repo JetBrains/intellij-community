@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;

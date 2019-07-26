@@ -4,7 +4,6 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileChooserDescriptorFactory {

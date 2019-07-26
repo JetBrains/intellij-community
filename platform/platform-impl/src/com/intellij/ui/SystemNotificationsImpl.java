@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 

@@ -20,14 +20,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclarationKt;
-import org.jetbrains.uast.UElement;
 
 import java.util.Arrays;
 import java.util.HashSet;

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;

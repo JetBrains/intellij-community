@@ -4,7 +4,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection;
-import com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;

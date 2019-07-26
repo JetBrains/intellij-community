@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 public class GenerateSuperMethodCallAction extends BaseCodeInsightAction {

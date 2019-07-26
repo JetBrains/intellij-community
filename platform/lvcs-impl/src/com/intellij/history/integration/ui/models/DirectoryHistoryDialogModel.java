@@ -18,13 +18,11 @@ package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.DifferenceReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;

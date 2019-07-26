@@ -16,8 +16,6 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.dom.MavenVersionComparable;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 
 import java.util.*;
 

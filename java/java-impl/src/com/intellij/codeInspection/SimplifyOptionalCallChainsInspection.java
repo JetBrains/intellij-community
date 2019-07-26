@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;

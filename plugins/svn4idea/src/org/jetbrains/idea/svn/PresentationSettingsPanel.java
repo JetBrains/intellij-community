@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 

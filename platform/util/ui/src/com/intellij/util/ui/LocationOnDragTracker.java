@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;

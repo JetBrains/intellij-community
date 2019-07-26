@@ -1,14 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Bas Leijdekkers

@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.google.common.collect.Maps;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

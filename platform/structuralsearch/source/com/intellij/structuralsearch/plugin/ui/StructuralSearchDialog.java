@@ -74,7 +74,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;

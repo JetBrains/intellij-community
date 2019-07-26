@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

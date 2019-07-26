@@ -18,7 +18,6 @@ package com.intellij.refactoring.typeMigration.usageInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna

@@ -16,7 +16,6 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;

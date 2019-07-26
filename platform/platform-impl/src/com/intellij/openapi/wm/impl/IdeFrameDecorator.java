@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;

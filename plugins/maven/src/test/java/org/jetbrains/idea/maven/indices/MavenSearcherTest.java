@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.List;

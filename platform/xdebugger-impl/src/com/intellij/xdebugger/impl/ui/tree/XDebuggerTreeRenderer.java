@@ -8,7 +8,6 @@ import com.intellij.ui.*;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
-import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;

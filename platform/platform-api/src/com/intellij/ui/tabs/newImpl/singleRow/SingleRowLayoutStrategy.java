@@ -2,7 +2,6 @@
 package com.intellij.ui.tabs.newImpl.singleRow;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.ShapeTransform;
 import com.intellij.ui.tabs.newImpl.TabLabel;

@@ -23,7 +23,6 @@ import java.awt.*;
 import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 
 /**
  * @author Sergey Malenkov

@@ -49,8 +49,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
-import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;

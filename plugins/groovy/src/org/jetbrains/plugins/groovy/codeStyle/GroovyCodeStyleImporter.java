@@ -4,9 +4,7 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;

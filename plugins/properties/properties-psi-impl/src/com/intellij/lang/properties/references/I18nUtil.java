@@ -5,7 +5,6 @@ package com.intellij.lang.properties.references;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;

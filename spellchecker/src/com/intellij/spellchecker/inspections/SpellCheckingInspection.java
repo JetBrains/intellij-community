@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;

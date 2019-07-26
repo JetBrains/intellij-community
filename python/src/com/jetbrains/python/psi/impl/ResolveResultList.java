@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

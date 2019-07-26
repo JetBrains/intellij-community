@@ -23,7 +23,6 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;

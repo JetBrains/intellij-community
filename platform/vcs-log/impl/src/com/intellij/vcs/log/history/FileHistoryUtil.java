@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 

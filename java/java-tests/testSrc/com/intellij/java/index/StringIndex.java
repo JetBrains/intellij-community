@@ -22,7 +22,6 @@ import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;

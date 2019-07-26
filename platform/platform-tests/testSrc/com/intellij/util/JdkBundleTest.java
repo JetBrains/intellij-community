@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 

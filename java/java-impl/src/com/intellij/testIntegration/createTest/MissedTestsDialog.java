@@ -30,7 +30,6 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;

@@ -12,8 +12,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static org.eclipse.aether.RepositoryEvent.EventType.ARTIFACT_RESOLVED;
-import static org.eclipse.aether.RepositoryEvent.EventType.ARTIFACT_RESOLVING;
 import static org.jetbrains.maven.server.EventInfoPrinter.printMavenEventInfo;
 import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 

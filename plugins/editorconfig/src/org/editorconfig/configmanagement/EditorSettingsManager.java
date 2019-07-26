@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;

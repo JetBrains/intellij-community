@@ -18,7 +18,6 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;

@@ -2,7 +2,6 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -15,7 +14,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomInvocationHandler;

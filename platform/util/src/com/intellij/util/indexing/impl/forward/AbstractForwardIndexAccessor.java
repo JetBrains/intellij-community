@@ -4,7 +4,6 @@ package com.intellij.util.indexing.impl.forward;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.Map;
 
 @ApiStatus.Experimental
 public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {

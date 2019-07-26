@@ -24,7 +24,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator;
 import com.intellij.spellchecker.inspections.IdentifierSplitter;
-import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 
