@@ -1,8 +1,5 @@
 // "Replace loop with 'Arrays.fill()' method call" "true"
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 
 class Test {
