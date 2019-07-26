@@ -373,6 +373,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testInferClassParameter6() {
+    doTest(true)
+  }
+
   void testParameterDependencyInsideClosure() {
     doTest(true)
   }

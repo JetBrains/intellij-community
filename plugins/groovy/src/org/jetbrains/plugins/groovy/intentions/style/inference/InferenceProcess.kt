@@ -112,12 +112,13 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
   val factory = GroovyPsiElementFactory.getInstance(resultMethod.project)
   val necessaryTypeParameters = mutableSetOf<PsiTypeParameter>()
   val necessaryTypeNames = mutableSetOf<String>()
+  val classParameters = (resultMethod.containingClass?.typeParameters?.map { it.name!! } ?: emptyList()).toSet()
   val visitor = object : PsiTypeVisitor<Unit>() {
 
     override fun visitClassType(classType: PsiClassType?) {
       classType ?: return
       val resolvedClass = classType.typeParameter()
-      if (resolvedClass != null) {
+      if (resolvedClass != null && resolvedClass.name !in classParameters) {
         if (resolvedClass.name !in necessaryTypeNames) {
           necessaryTypeParameters.add(resolvedClass)
           necessaryTypeNames.add(resolvedClass.name!!)
