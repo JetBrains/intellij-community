@@ -181,12 +181,8 @@ public class LowLevelSearchUtil {
       progress.checkCanceled();
       final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
       if (leafNode == null) {
-        if (lastElement == null) {
-          return false;
-        }
-        else {
-          continue;
-        }
+        LOG.error("Cannot find leaf: scope=" + scope + "; offset=" + offset + "; lastElement=" + lastElement);
+        continue;
       }
       final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
       if (offsetInLeaf < 0) {
