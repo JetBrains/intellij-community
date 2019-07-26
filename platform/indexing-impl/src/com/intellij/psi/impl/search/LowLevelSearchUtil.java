@@ -14,8 +14,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -58,7 +56,7 @@ public class LowLevelSearchUtil {
 
   private static boolean processTreeUp(@NotNull Project project,
                                        @NotNull PsiElement scope,
-                                       final @NotNull TreeElement leafNode,
+                                       final @NotNull ASTNode leafNode,
                                        final int offsetInLeaf,
                                        @NotNull StringSearcher searcher,
                                        final boolean processInjectedPsi,
@@ -66,10 +64,10 @@ public class LowLevelSearchUtil {
                                        @NotNull TextOccurenceProcessor processor) {
     final int patternLength = searcher.getPatternLength();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
-    TreeElement currentNode = leafNode;
+    ASTNode currentNode = leafNode;
     int currentOffset = offsetInLeaf;
     boolean contains = false;
-    TreeElement prevNode = null;
+    ASTNode prevNode = null;
     PsiElement run = null;
     while (run != scope) {
       ProgressManager.checkCanceled();
@@ -102,12 +100,12 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
+  private static ASTNode findNextLeafElementAt(ASTNode scopeNode, ASTNode last, int offset) {
     int offsetR = offset;
-    if (last !=null) {
+    if (last != null) {
       offsetR -= last.getStartOffset() - scopeNode.getStartOffset() + last.getTextLength();
       while (offsetR >= 0) {
-        TreeElement next = last.getTreeNext();
+        ASTNode next = last.getTreeNext();
         if (next == null) {
           last = last.getTreeParent();
           continue;
@@ -119,7 +117,7 @@ public class LowLevelSearchUtil {
       scopeNode = last;
       offsetR += scopeNode.getTextLength();
     }
-    return (LeafElement)scopeNode.findLeafElementAt(offsetR);
+    return scopeNode.findLeafElementAt(offsetR);
   }
 
   public static boolean processElementsContainingWordInElement(@NotNull final TextOccurenceProcessor processor,
@@ -176,10 +174,10 @@ public class LowLevelSearchUtil {
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
 
     // helps to avoid full tree rescan in subsequent com.intellij.lang.ASTNode#findLeafElementAt calls (O(n) instead of O(n^2))
-    TreeElement lastElement = null;
+    ASTNode lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
+      final ASTNode leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
       if (leafNode == null) {
         LOG.error("Cannot find leaf: scope=" + scope + "; offset=" + offset + "; lastElement=" + lastElement);
         continue;
