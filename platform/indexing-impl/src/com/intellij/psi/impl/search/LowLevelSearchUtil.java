@@ -166,17 +166,19 @@ public class LowLevelSearchUtil {
                                           int[] offsetsInScope, @NotNull TextOccurenceProcessor processor) {
     if (offsetsInScope.length == 0) return true;
 
-    Project project = scope.getProject();
+    final Project project = scope.getProject();
+    final ASTNode scopeNode = scope.getNode();
+    if (scopeNode == null) {
+      throw new IllegalArgumentException(
+        "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
+      );
+    }
+    final int scopeStartOffset = scope.getTextRange().getStartOffset();
+
     // helps to avoid full tree rescan in subsequent com.intellij.lang.ASTNode#findLeafElementAt calls (O(n) instead of O(n^2))
     TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      final ASTNode scopeNode = scope.getNode();
-      if (scopeNode == null) {
-        throw new IllegalArgumentException(
-          "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
-        );
-      }
       final TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
       if (leafNode == null) {
         if (lastElement == null) {
@@ -186,7 +188,6 @@ public class LowLevelSearchUtil {
           continue;
         }
       }
-      final int scopeStartOffset = scope.getTextRange().getStartOffset();
       final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
       if (offsetInLeaf < 0) {
         throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
