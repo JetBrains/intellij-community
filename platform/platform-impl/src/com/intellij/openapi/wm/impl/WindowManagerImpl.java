@@ -479,13 +479,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
    */
   @NotNull
   @ApiStatus.Internal
-  public IdeFrameImpl showFrame(@NotNull OpenProjectTask options) {
+  public IdeFrameImpl createFrame(@NotNull OpenProjectTask options) {
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
 
     IdeFrameImpl frame = new IdeFrameImpl();
     if (options.getSendFrameBack()) {
       frame.setAutoRequestFocus(false);
     }
+
     if (options.getProjectWorkspaceId() != null && Registry.is("ide.project.loading.show.last.state")) {
       try {
         frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
@@ -496,20 +497,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         }
       }
     }
-
-    FrameInfo frameInfo = options.getFrame();
-    if (frameInfo == null || frameInfo.getBounds() == null) {
-      frameInfo = defaultFrameInfoHelper.getInfo();
-    }
-    if (frameInfo != null) {
-      // set bounds even if maximized because on unmaximize we must restore previous frame bounds
-      setFrameBoundsFromDeviceSpace(frame, frameInfo);
-    }
-
-    if (frameInfo != null) {
-      setFrameExtendedState(frame, frameInfo);
-    }
-    frame.setVisible(true);
     return frame;
   }
 
@@ -708,6 +695,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Override
   public long getStateModificationCount() {
     return defaultFrameInfoHelper.getModificationCount() + myLayout.getStateModificationCount();
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public FrameInfo getDefaultFrameInfo() {
+    return defaultFrameInfoHelper.getInfo();
   }
 
   @Override

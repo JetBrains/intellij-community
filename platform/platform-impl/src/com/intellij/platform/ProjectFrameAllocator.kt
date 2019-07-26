@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -14,8 +13,8 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
 import com.intellij.openapi.wm.impl.WindowManagerImpl
+import org.jetbrains.annotations.CalledInAwt
 import java.nio.file.Path
-import javax.swing.JComponent
 
 internal open class ProjectFrameAllocator {
   open fun run(task: Runnable, file: Path): Boolean {
@@ -40,18 +39,43 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
   override fun run(task: Runnable, file: Path): Boolean {
     var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
-      val component = showFrame(file)
+      val frame = createFrame(file)
       completed = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(task, "Loading Project...", true, null, component)
+        .runProcessWithProgressSynchronously(
+          {
+            ApplicationManager.getApplication().invokeLater {
+              runActivity("init frame") {
+                initFrame(frame)
+              }
+            }
+            task.run()
+          }, "Loading Project...", true, null, frame.component)
     }
     return completed
   }
 
-  private fun showFrame(file: Path): JComponent {
+  @CalledInAwt
+  private fun initFrame(frame: IdeFrameImpl) {
+    val windowManager = WindowManager.getInstance() as WindowManagerImpl
+    var frameInfo = options.frame
+    if (frameInfo?.bounds == null) {
+      frameInfo = windowManager.defaultFrameInfo
+    }
+    if (frameInfo != null) {
+      // set bounds even if maximized because on unmaximize we must restore previous frame bounds
+      WindowManagerImpl.setFrameBoundsFromDeviceSpace(frame, frameInfo)
+      windowManager.setFrameExtendedState(frame, frameInfo)
+    }
+    frame.isVisible = true
+
+    frame.init()
+  }
+
+  private fun createFrame(file: Path): IdeFrameImpl {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     val freeRootFrame = windowManager.rootFrame
     if (freeRootFrame != null) {
-      return freeRootFrame.component
+      return freeRootFrame
     }
 
     if (options.frame?.bounds == null) {
@@ -64,24 +88,20 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       }
     }
 
-    val showFrameActivity = StartUpMeasurer.start("show frame")
-    val frame = windowManager.showFrame(options)
-    ideFrame = frame
-    showFrameActivity.end()
-    // runProcessWithProgressSynchronously still processes EDT events
-    invokeLaterWithAnyModality {
-      val activity = StartUpMeasurer.start("init frame")
-      if (frame.isDisplayable) {
-        frame.init()
-      }
-      activity.end()
+    val frame = runActivity("create frame") {
+      windowManager.createFrame(options)
     }
-    return frame.component
+    ideFrame = frame
+    return frame
   }
 
   override fun projectLoaded(project: Project) {
-    invokeLaterWithAnyModality(project) {
-      val frame = ideFrame ?: return@invokeLaterWithAnyModality
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+
+      val frame = ideFrame ?: return@invokeLater
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
 
       if (options.frame?.bounds == null) {
@@ -101,13 +121,4 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       ideFrame?.isAutoRequestFocus = true
     }
   }
-}
-
-private inline fun invokeLaterWithAnyModality(project: Project? = null, crossinline runnable: () -> Unit) {
-  ApplicationManager.getApplication().invokeLater(
-    {
-      if (project == null || !project.isDisposed) {
-        runnable()
-      }
-    }, ModalityState.any())
 }

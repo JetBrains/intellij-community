@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea
 
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.LoadingPhase
-import com.intellij.diagnostic.ParallelActivity
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Phases
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.icons.AllIcons
@@ -427,18 +424,6 @@ open class IdeStarter : ApplicationStarter {
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
   }
-}
-
-inline fun Activity.runChild(name: String, task: () -> Unit) {
-  val activity = startChild(name)
-  task()
-  activity.end()
-}
-
-inline fun ParallelActivity.run(name: String, task: () -> Unit) {
-  val activity = start(name)
-  task()
-  activity.end()
 }
 
 /**

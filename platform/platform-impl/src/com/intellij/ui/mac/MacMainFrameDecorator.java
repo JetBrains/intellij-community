@@ -5,7 +5,6 @@ import com.apple.eawt.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +57,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
         enqueue(runnable);
       }
       else {
-        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(runnable);
         waitingForAppKit = true;
       }
     }
