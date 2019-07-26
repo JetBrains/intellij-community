@@ -41,7 +41,6 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,7 +84,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
   };
 
-  private CancellablePromise<?> myAsyncUpdateProgress = null;
   private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
@@ -184,17 +182,14 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private void updateCrumbs() {
     if (myEditor == null || myFile == null || myEditor.isDisposed()) return;
 
-    if (myAsyncUpdateProgress != null) {
-      myAsyncUpdateProgress.cancel();
-    }
-
     Document document = myEditor.getDocument();
     int offset = myEditor.getCaretModel().getOffset();
     Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
-    myAsyncUpdateProgress = ReadAction
+    ReadAction
       .nonBlocking(() -> myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown))
       .withDocumentsCommitted(myProject)
       .expireWith(this)
+      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (_crumbs) -> {
         Iterable<? extends Crumb> crumbs =
           breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment() ? _crumbs : EMPTY_BREADCRUMBS;
@@ -202,7 +197,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         breadcrumbs.setCrumbs(crumbs);
         notifyListeners(crumbs);
       }).submit(NonUrgentExecutor.getInstance());
-    myAsyncUpdateProgress.onProcessed(__ -> myAsyncUpdateProgress = null);
   }
 
   public void queueUpdate() {

@@ -32,7 +32,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.util.List;
@@ -44,7 +43,6 @@ public class EditorNotificationsImpl extends EditorNotifications {
   // do not use project level - use app level instead
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
-  private final Key<CancellablePromise<?>> CURRENT_UPDATE = Key.create("EditorNotifications update"); // non-static, per-project
   private final MergingUpdateQueue myUpdateMerger;
   @NotNull private final Project myProject;
 
@@ -84,27 +82,21 @@ public class EditorNotificationsImpl extends EditorNotifications {
         return;
       }
 
-      CancellablePromise<?> prev = file.getUserData(CURRENT_UPDATE);
-      if (prev != null) {
-        prev.cancel();
-      }
-
       List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
                                                       editor -> !(editor instanceof TextEditor)
                                                                 || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
 
-      CancellablePromise<List<Runnable>> promise = ReadAction
+      ReadAction
         .nonBlocking(() -> calcNotificationUpdates(file, editors))
         .expireWith(myProject)
         .expireWhen(() -> !file.isValid())
+        .coalesceBy(this, file)
         .finishOnUiThread(ModalityState.any(), updates -> {
           for (Runnable update : updates) {
             update.run();
           }
         })
         .submit(NonUrgentExecutor.getInstance());
-      file.putUserData(CURRENT_UPDATE, promise);
-      promise.onProcessed(__ -> file.putUserData(CURRENT_UPDATE, null));
     });
   }
 

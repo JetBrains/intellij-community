@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +24,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -43,11 +43,11 @@ public class NonBlockingReadActionImpl<T>
   implements NonBlockingReadAction<T> {
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
-  private final @Nullable Pair<Class, Object> myIdentity;
+  private final @Nullable List<Object> myCoalesceEquality;
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
-  private static final Map<Pair<Class, Object>, CancellablePromise<?>> ourIdentifiedTasks = ContainerUtil.newConcurrentMap();
+  private static final Map<List<Object>, CancellablePromise<?>> ourTasksByEquality = ContainerUtil.newConcurrentMap();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
     this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null);
@@ -58,11 +58,11 @@ public class NonBlockingReadActionImpl<T>
                                     @NotNull ContextConstraint[] constraints,
                                     @NotNull BooleanSupplier[] cancellationConditions,
                                     @NotNull Set<? extends Expiration> expirationSet,
-                                    @Nullable Pair<Class, Object> identity) {
+                                    @Nullable List<Object> coalesceEquality) {
     super(constraints, cancellationConditions, expirationSet);
     myComputation = computation;
     myEdtFinish = edtFinish;
-    myIdentity = identity;
+    myCoalesceEquality = coalesceEquality;
   }
 
   @NotNull
@@ -70,7 +70,8 @@ public class NonBlockingReadActionImpl<T>
   protected NonBlockingReadActionImpl<T> cloneWith(@NotNull ContextConstraint[] constraints,
                                                    @NotNull BooleanSupplier[] cancellationConditions,
                                                    @NotNull Set<? extends Expiration> expirationSet) {
-    return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet, myIdentity);
+    return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet,
+                                           myCoalesceEquality);
   }
 
   @Override
@@ -96,25 +97,26 @@ public class NonBlockingReadActionImpl<T>
   @Override
   public NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction) {
     return new NonBlockingReadActionImpl<>(myComputation, Pair.create(modality, uiThreadAction),
-                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myIdentity);
+                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myCoalesceEquality);
   }
 
   @Override
-  public NonBlockingReadAction<T> cancelPrevious(@NotNull Object identity) {
-    assert myIdentity == null : "Setting identity twice is not allowed";
+  public NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality) {
+    if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
+    if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
-                                           Pair.create(ReflectionUtil.getGrandCallerClass(), identity));
+                                           ContainerUtil.newArrayList(equality));
   }
 
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     AsyncPromise<T> promise = new AsyncPromise<>();
-    if (myIdentity != null) {
-      CancellablePromise<?> previous = ourIdentifiedTasks.put(myIdentity, promise);
+    if (myCoalesceEquality != null) {
+      CancellablePromise<?> previous = ourTasksByEquality.put(myCoalesceEquality, promise);
       if (previous != null) {
         previous.cancel();
       }
-      promise.onProcessed(__ -> ourIdentifiedTasks.remove(myIdentity, promise));
+      promise.onProcessed(__ -> ourTasksByEquality.remove(myCoalesceEquality, promise));
     }
     new Submission(promise, backgroundThreadExecutor).transferToBgThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) {

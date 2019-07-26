@@ -38,7 +38,7 @@ public class AsyncHighlighterUpdater {
       .nonBlocking(() -> updateHighlighter(project, editor, file))
       .expireWith(project)
       .expireWhen(() -> !file.isValid() || editor.isDisposed())
-      .cancelPrevious(editor)
+      .coalesceBy(AsyncHighlighterUpdater.class, editor)
       .finishOnUiThread(ModalityState.any(), highlighter -> ((EditorEx)editor).setHighlighter(highlighter))
       .submit(NonUrgentExecutor.getInstance());
   }

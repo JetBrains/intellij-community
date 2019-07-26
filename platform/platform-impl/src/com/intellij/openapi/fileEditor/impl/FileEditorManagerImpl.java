@@ -56,7 +56,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -69,7 +69,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -85,7 +84,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -105,8 +103,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
-  private static final ExecutorService
-    ourSwapperExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorFileSwapper");
 
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
@@ -1833,21 +1829,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   private class MyRootsListener implements ModuleRootListener {
-    private CancellablePromise<?> prevTask;
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
-      if (prevTask != null) {
-        prevTask.cancel();
-      }
-
       List<EditorWithProviderComposite> allEditors = StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList();
-      prevTask = ReadAction
+      ReadAction
         .nonBlocking(() -> calcEditorReplacements(allEditors))
         .inSmartMode(myProject)
         .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
-        .submit(ourSwapperExecutor);
-      prevTask.onProcessed(__ -> prevTask = null);
+        .coalesceBy(this)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     private Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> calcEditorReplacements(List<EditorWithProviderComposite> allEditors) {

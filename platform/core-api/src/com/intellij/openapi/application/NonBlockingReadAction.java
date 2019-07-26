@@ -62,17 +62,16 @@ public interface NonBlockingReadAction<T> {
   NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction);
 
   /**
-   * Call this when a newly submitted computation should cancel previous similar ones,
-   * as their results now won't make sense anyway in the changed environment.
-   * @param identity an object that identifies the computation together with the calling class. For simplest cases,
-   *                 a constant string literal or {@code this} can be used to cancel the previously submitted computation.
-   *                 If there can be different computations for different objects (e.g. editors) which can be run in parallel, those objects
-   *                 can be used as identity. Note that the calling class is paired with the identity object, so
-   *                 different computations originating from different classes which have the same identity object won't interfere with each other.
-   * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal identity objects
+   * Merges together similar computations by cancelling the previous ones when a new one is submitted.
+   * This can be useful when the results of the previous computation won't make sense anyway in the changed environment.
+   * @param equality objects that together identify the computation: if they're all equal in two submissions,
+   *                 then the computations are merged. Callers should take care to pass something unique there
+   *                 (e.g. some {@link com.intellij.openapi.util.Key} or {@code this} {@code getClass()}),
+   *                 so that computations from different places won't interfere.
+   * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal equality objects
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> cancelPrevious(@NotNull Object identity);
+  NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality);
 
   /**
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise
