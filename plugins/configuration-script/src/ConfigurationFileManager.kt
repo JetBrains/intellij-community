@@ -22,7 +22,6 @@ import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
 internal class ConfigurationFileManager(project: Project) {

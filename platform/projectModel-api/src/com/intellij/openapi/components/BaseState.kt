@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.serialization.PropertyAccessor
 import com.intellij.util.xmlb.Accessor
@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-private val LOG = Logger.getInstance(BaseState::class.java)
+private val LOG = logger<BaseState>()
 
-private val factory: StatePropertyFactory = ServiceLoader.load<StatePropertyFactory>(StatePropertyFactory::class.java).first()
+private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java).first()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
@@ -37,6 +37,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return p
   }
 
+  @Suppress("RemoveExplicitTypeArguments")
   protected fun <T : BaseState> property(): StoredPropertyBase<T?> = addProperty(factory.stateObject<T?>(null))
 
   /**
