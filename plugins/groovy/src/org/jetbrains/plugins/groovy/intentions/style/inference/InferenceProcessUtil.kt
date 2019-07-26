@@ -82,9 +82,11 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
   })
 }
 
-fun PsiType?.isClosureType(): Boolean {
+fun PsiType?.isClosureTypeDeep(): Boolean {
   return (this as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+         || this?.typeParameter()?.extendsListTypes?.singleOrNull()?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
+
 
 fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {

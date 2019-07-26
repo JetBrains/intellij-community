@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
@@ -107,6 +108,8 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
                                      closureParameter: ParameterizedClosure,
                                      usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
+  val parameterType = parameter.type
+  parameter.setType(PsiType.getTypeByName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, parameter.project, parameter.resolveScope))
   for (usage in usages) {
     val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
     if (nearestCall == usage.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
@@ -137,6 +140,7 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
       constraintCollector.add(TypeConstraint(typeParameter.type(), type, outerMethod))
     }
   }
+  parameter.setType(parameterType)
 }
 
 private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMethod: GrMethod): PsiSubstitutor {

@@ -39,7 +39,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       }
       val alreadyCreatedClosureParameters = closureParameters.keys
       virtualMethod.forEachParameterUsage { parameter, instructions ->
-        if (!(parameter.type.isClosureType() && parameter !in alreadyCreatedClosureParameters)) {
+        if (!(parameter.type.isClosureTypeDeep() && parameter !in alreadyCreatedClosureParameters)) {
           return@forEachParameterUsage
         }
         val requiredCallInstruction = instructions.firstOrNull {
@@ -74,8 +74,6 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       val newClosureParameter = ParameterizedClosure(newParameter)
       newClosureParameter.closureArguments.addAll(closureParameter.closureArguments)
       closureParameter.typeParameters.forEach { directInnerParameter ->
-        // we need to force wildcards here, because otherwise closure may accept outer method's parameter and only it.
-        // This will lead to non-wildcard instantiation of class parameter and we wont be able to guess it's dependencies
         val innerParameterType = manager.createDeeplyParameterizedType(
           substitutor.substitute(directInnerParameter)!!)
         newClosureParameter.types.add(innerParameterType.type)
