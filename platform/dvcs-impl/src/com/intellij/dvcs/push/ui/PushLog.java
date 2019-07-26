@@ -229,7 +229,7 @@ public class PushLog extends JPanel implements DataProvider {
     myChangesBrowser.setMinimumSize(new Dimension(JBUIScale.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
-    JBSplitter splitter = new JBSplitter(SPLITTER_PROPORTION, 0.7f);
+    JBSplitter splitter = new OnePixelSplitter(SPLITTER_PROPORTION, 0.5f);
     final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
     myScrollPane = new JBScrollPane(myTree) {
 
