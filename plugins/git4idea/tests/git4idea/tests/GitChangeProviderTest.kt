@@ -7,7 +7,10 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsTestUtil.*
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
@@ -21,7 +24,6 @@ import git4idea.test.addCommit
 import git4idea.test.createFileStructure
 import org.junit.Assume
 import java.io.File
-import java.util.*
 
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
@@ -72,7 +74,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   protected fun assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
-    val result = getProviderChanges(paths)
+    val result = getProviderChanges()
     for (i in paths.indices) {
       val fp = paths[i]
       val status = fileStatuses[i]
@@ -95,22 +97,13 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   /**
-   * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
-   * Assumes that only one change for a file has happened.
+   * It is assumed that only one change for a file has happened.
    */
-  private fun getProviderChanges(changedPaths: List<FilePath>): Map<FilePath, Change> {
-    // get changes
+  private fun getProviderChanges(): Map<FilePath, Change> {
     val builder = MockChangelistBuilder()
-    changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(),
-                              MockChangeListManagerGate(ChangeListManager.getInstance(myProject)))
+    changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-
-    // get changes for files
-    val result = HashMap<FilePath, Change>()
-    for (change in changes) {
-      result.put(ChangesUtil.getFilePath(change), change)
-    }
-    return result
+    return changes.associateBy { ChangesUtil.getFilePath(it) }
   }
 
   protected fun create(parent: VirtualFile, name: String): VirtualFile {
