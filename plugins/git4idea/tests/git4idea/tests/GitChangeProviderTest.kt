@@ -62,7 +62,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
   override fun makeInitialCommit() = false
 
-  protected fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
+  private fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
 
   /**
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
@@ -114,12 +114,6 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
   protected fun edit(file: VirtualFile, content: String) {
     editFileInCommand(myProject, file, content)
-    dirty(file)
-  }
-
-  protected fun moveFile(file: VirtualFile, newParent: VirtualFile) {
-    dirty(file)
-    moveFileInCommand(myProject, file, newParent)
     dirty(file)
   }
 
