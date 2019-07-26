@@ -93,7 +93,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
     init();
     if (configurable == null) {
-      getPeer().getRootPane().setMinimumSize(new JBDimension(900, 700));
+      JRootPane rootPane = getPeer().getRootPane();
+      if (rootPane != null) {
+        rootPane.setMinimumSize(new JBDimension(900, 700));
+      }
     }
   }
 
