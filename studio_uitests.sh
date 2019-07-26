@@ -1,9 +1,5 @@
 #!/bin/bash -x
 
-readonly out_dir="$1"
-readonly dist_dir="$2"
-readonly build_number="$3"
-
 readonly script_dir="$(realpath "$(dirname "$0")")"
 
 export DISPLAY=:10
@@ -20,21 +16,21 @@ readonly xvfb_script_pid=$!
 (cd "${script_dir}" && "${java}" -jar "${ant_jar}" -Dbundle.gradle.plugin=true "-Dui.test.groups=${test_groups}" uitest)
 readonly ant_exit_status=$?
 
-if [[ -d "${dist_dir}" ]]; then
-  mkdir -p "${dist_dir}/studio_uitests"
+if [[ -d "${DIST_DIR}" ]]; then
+  mkdir -p "${DIST_DIR}/studio_uitests"
   for f in \
       "${script_dir}"/*_pid* \
       "${script_dir}/androidStudio/gui-tests/failures" \
       "${script_dir}/androidStudio/gui-tests/system/log"; do
     if [[ -e "${f}" ]]; then
-      cp -a "${f}" "${dist_dir}/studio_uitests"
+      cp -a "${f}" "${DIST_DIR}/studio_uitests"
     fi
   done
 
   # on AB/ATP, put JUnit XML in place for junit-xml-forwarding
-  mkdir -p "${dist_dir}"/host{,-unreliable}-test-reports
-  mv "${script_dir}/TEST-UNRELIABLE.xml" "${dist_dir}/host-unreliable-test-reports"
-  mv "${script_dir}"/TEST-*.xml "${dist_dir}/host-test-reports"
+  mkdir -p "${DIST_DIR}"/host{,-unreliable}-test-reports
+  mv "${script_dir}/TEST-UNRELIABLE.xml" "${DIST_DIR}/host-unreliable-test-reports"
+  mv "${script_dir}"/TEST-*.xml "${DIST_DIR}/host-test-reports"
 fi
 
 kill -1 "${xvfb_script_pid}"

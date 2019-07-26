@@ -1,8 +1,4 @@
 #!/bin/bash
-# Expected arguments:
-# $1 = out_dir
-# $2 = dist_dir
-# $3 = build_number
 
 # exit on error
 set -e
@@ -11,7 +7,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [<out_dir> [<dist_dir> [<build_number>]]] [--enable-aswb]" > /dev/stderr
+  echo "Usage: $0 [--enable-aswb] [--uitests]" > /dev/stderr
   exit 1
 }
 
@@ -45,22 +41,16 @@ while [[ -n "$1" ]]; do
       ASWB_PROPERTY="-Dinclude.aswb=true"
   elif [[ $1 == "--uitests" ]]; then
     UITESTS=true
-  elif [[ -z "$OUT" ]]; then
-    OUT="$1"
-  elif [[ -z "$DIST" ]]; then
-    DIST="$1"
-  elif [[ -z "$BNUM" ]]; then
-    BNUM="${1/P/-}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
   else
     die "[$0] Unknown parameter: $1"
   fi
   shift
 done
 
-# Set defaults for OUT, DIST, BNUM if necessary
-[[ -z "$OUT" ]] && OUT="out/studio"
-[[ -z "$DIST" ]] && DIST="$OUT/dist"
-[[ -z "$BNUM" ]] && BNUM=SNAPSHOT
+BNUM="${BUILD_NUMBER/P/-}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
+BNUM="${BNUM:-SNAPSHOT}"
+OUT="${OUT_DIR:-out/studio}"
+DIST="${DIST_DIR:-"${OUT}/dist"}"
 
 cd "$PROG_DIR"
 mkdir -p "$OUT"
@@ -95,9 +85,9 @@ echo "## BAZEL: $BAZEL"
 readonly BAZEL_BIN="$($BAZEL info "bazel-bin")"
 echo "## BAZEL_BIN: $BAZEL_BIN"
 
-readonly BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
+readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" build
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$AS_BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" build
 
 $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
@@ -124,7 +114,7 @@ $BAZEL test \
     --test_output=streamed \
     --test_arg=--out="$OUT" \
     --test_arg=--dist="$DIST" \
-    --test_arg=--build=$BUILD_NUMBER \
+    --test_arg=--build=$AS_BUILD_NUMBER \
     --test_arg=--aswb=$ASWB \
     --test_strategy=standalone \
     --spawn_strategy=standalone \
