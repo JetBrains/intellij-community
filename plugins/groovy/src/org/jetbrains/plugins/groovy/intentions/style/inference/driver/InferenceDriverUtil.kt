@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.CONTAINS
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.EQUAL
-import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -161,7 +160,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       if (fieldResult != null) {
         val leftType = fieldResult.type
         val rightType = expression.rValue?.type
-        addRequiredType(rightType?.typeParameter() ?: return@run, UpperBoundConstraint(leftType.resolve() ?: return@run, CONTAINS))
+        processRequiredParameters(rightType.typeParameter() ?: return@run, leftType)
         constraintsCollector.add(TypeConstraint(leftType, rightType, method))
       }
     }

@@ -83,7 +83,8 @@ class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
     for (parameter in targetParameters) {
       val newParameter = parameterMapping.getValue(parameter)
       val isStrictInstance = parameter == varargParameter || substitutor.substitute(parameter.type).isClosureType()
-      val newType = manager.createDeeplyParameterizedType(substitutor.substitute(parameter.type), isStrictInstance)
+      val newType = manager.createDeeplyParameterizedType(substitutor.substitute(parameter.type).forceWildcardsAsTypeArguments(),
+                                                          isStrictInstance)
       newType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       typeParameters.addAll(newType.typeParameters)
       if (parameter == varargParameter) {

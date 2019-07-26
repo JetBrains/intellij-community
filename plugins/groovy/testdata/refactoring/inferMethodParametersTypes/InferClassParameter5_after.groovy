@@ -1,7 +1,9 @@
 class A<T> {
-  void fo<caret>o(List<T> a) {
-    List<T> x = a
+
+  List<T> x
+
+    Object fo<caret>o(List<T> a) {
+    x = a
   }
 }
-
 new A<Integer>().foo([1])

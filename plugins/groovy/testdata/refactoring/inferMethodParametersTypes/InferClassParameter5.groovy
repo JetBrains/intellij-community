@@ -1,7 +1,9 @@
 class A<T> {
-  def fo<caret>o(a) {
-    List<T> x = a
+
+  List<T> x
+
+  Object fo<caret>o(a) {
+    x = a
   }
 }
-
 new A<Integer>().foo([1])
