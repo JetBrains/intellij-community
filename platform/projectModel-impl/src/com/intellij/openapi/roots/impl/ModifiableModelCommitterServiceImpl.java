@@ -13,18 +13,17 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ModifiableModelCommitter {
+@ApiStatus.Internal
+public class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModifiableModelCommitter");
 
-  public static void multiCommit(@NotNull ModifiableRootModel[] rootModels, @NotNull ModifiableModuleModel moduleModel) {
-    multiCommit(Arrays.asList(rootModels), moduleModel);
-  }
-
-  public static void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
+  @Override
+  public void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
