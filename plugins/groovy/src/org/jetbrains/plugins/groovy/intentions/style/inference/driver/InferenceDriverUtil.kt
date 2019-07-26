@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
-import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.CONTAINS
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.EQUAL
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -21,6 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
@@ -39,8 +40,16 @@ tailrec fun extractEndpointType(type: PsiClassType, typeParameters: List<PsiType
   }
 
 
+data class UpperBoundConstraint(val clazz: PsiClass, val marker: ContainMarker) {
+  // containing means the same as in jls-4.5.1
+  enum class ContainMarker {
+    EQUAL,
+    CONTAINS
+  }
+}
+
 data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
-                                val requiredClassTypes: Map<PsiTypeParameter, List<PsiClass>>,
+                                val requiredClassTypes: Map<PsiTypeParameter, List<UpperBoundConstraint>>,
                                 val constraints: Collection<ConstraintFormula>) {
   operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
     return merge(listOf(this, typeUsageInformation))
@@ -61,34 +70,76 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
 }
 
 internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
-  private val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
+  private val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<UpperBoundConstraint>>()
   private val contravariantTypesCollector = mutableSetOf<PsiType>()
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
   private val typeParameters = method.typeParameters.map { it.type() }
 
-  private fun addRequiredType(typeParameter: PsiTypeParameter, clazz: PsiClass) =
-    requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(clazz)
+  private fun addRequiredType(typeParameter: PsiTypeParameter, constraint: UpperBoundConstraint) =
+    requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(constraint)
 
   private fun processMethod(result: GroovyResolveResult) {
     val methodResult = result as? GroovyMethodResult
     val candidate = methodResult?.candidate
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
-      val endpointClassType = extractEndpointType(receiver, typeParameters)
-      if (endpointClassType.isTypeParameter()) {
-        addRequiredType(endpointClassType.typeParameter()!!, candidate.method.containingClass ?: return@run)
-      }
+      val endpointClassType = extractEndpointType(receiver, typeParameters).typeParameter() ?: return@run
+      addRequiredType(endpointClassType, UpperBoundConstraint(candidate.method.containingClass ?: return@run, CONTAINS))
     }
     candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
       run {
-        val argumentTypeParameter = extractEndpointType(argument.type as? PsiClassType ?: return@run, typeParameters)
-        if (argumentTypeParameter.isTypeParameter()) {
-          // todo: add bounds for type parameters instead of bare PsiClass
-          addRequiredType(argumentTypeParameter.typeParameter()!!, type.resolve() ?: return@run)
-        }
+        val argumentTypeParameter =
+          extractEndpointType(argument.type as? PsiClassType ?: return@run, typeParameters).typeParameter() ?: return@run
+        processRequiredParameters(argumentTypeParameter, type)
       }
       methodResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }
+  }
+
+  /**
+   * Calculates required supertypes for all type arguments of [type].
+   * We need to distinguish containing and subtyping relations.
+   */
+  private fun processRequiredParameters(argumentTypeParameter: PsiTypeParameter, type: PsiType) {
+    var currentRestrictedTypeParameter = argumentTypeParameter
+    var firstVisit = true
+    type.accept(object : PsiTypeVisitor<Unit>() {
+
+      fun visitClassParameters(classType: PsiClassType) {
+        val matchedBound =
+          currentRestrictedTypeParameter.extendsListTypes
+            .find {
+              TypesUtil.canAssign(classType.rawType(), it.rawType(), argumentTypeParameter, METHOD_PARAMETER) == OK
+            } ?: return
+        for (classParameterIndex in classType.parameters.indices) {
+          currentRestrictedTypeParameter = extractEndpointType(matchedBound.parameters[classParameterIndex] as PsiClassType,
+                                                               typeParameters).typeParameter() ?: continue
+          classType.parameters[classParameterIndex].accept(this)
+        }
+      }
+
+      override fun visitClassType(classType: PsiClassType?) {
+        classType ?: return
+        val primaryConstraint = if (firstVisit) CONTAINS else EQUAL
+        // first visit necessary because parameter types can accept their subtypes, while type arguments (without wildcard) are not
+        firstVisit = false
+        run {
+          addRequiredType(currentRestrictedTypeParameter, UpperBoundConstraint(classType.resolve() ?: return@run, primaryConstraint))
+        }
+        visitClassParameters(classType)
+        super.visitClassType(classType)
+      }
+
+      override fun visitWildcardType(wildcardType: PsiWildcardType?) {
+        wildcardType ?: return
+        val extendsBound = wildcardType.extendsBound as PsiClassType
+        run {
+          addRequiredType(currentRestrictedTypeParameter, UpperBoundConstraint(extendsBound.resolve() ?: return@run, CONTAINS))
+        }
+        visitClassParameters(extendsBound)
+        super.visitWildcardType(wildcardType)
+      }
+    })
   }
 
 
@@ -104,13 +155,13 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val accessorResult = lValueReference?.advancedResolve() as? GroovyMethodResult
       val mapping = accessorResult?.candidate?.argumentMapping
       mapping?.expectedTypes?.forEach { (type, argument) ->
-        addRequiredType(argument.type?.typeParameter() ?: return@forEach, type.resolve() ?: return@forEach)
+        processRequiredParameters(argument.type?.typeParameter() ?: return@forEach, type)
       }
       val fieldResult = lValueReference?.resolve() as? GrField
       if (fieldResult != null) {
         val leftType = fieldResult.type
         val rightType = expression.rValue?.type
-        addRequiredType(rightType?.typeParameter() ?: return@run, leftType.resolve() ?: return@run)
+        addRequiredType(rightType?.typeParameter() ?: return@run, UpperBoundConstraint(leftType.resolve() ?: return@run, CONTAINS))
         constraintsCollector.add(TypeConstraint(leftType, rightType, method))
       }
     }
@@ -120,7 +171,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     variableDeclaration.variables.forEach {
-      addRequiredType(it.initializerGroovy?.type?.typeParameter() ?: return@forEach, it.type.resolve() ?: return@forEach)
+      processRequiredParameters(it.initializerGroovy?.type?.typeParameter() ?: return@forEach, it.type)
     }
     super.visitVariableDeclaration(variableDeclaration)
   }

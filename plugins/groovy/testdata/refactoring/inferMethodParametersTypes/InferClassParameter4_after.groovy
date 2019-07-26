@@ -1,5 +1,5 @@
 class P<T> {
-  def foo(t) {
+  Object foo(List<T> t) {
     m(t)
   }
 

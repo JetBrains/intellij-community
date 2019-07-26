@@ -161,6 +161,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testMultipleInterfaces2() {
+    doTest(true)
+  }
+
   void testRaw() {
     doTest(true)
   }
@@ -365,6 +369,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+//  void testInferClassParameter5() {
+//    doTest(true)
+//  }
+
   void testParameterDependencyInsideClosure() {
     doTest(true)
   }
@@ -376,5 +384,11 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testParameterizedMethod2() {
     doTest(true)
   }
+
+  void testDeepEquality() {
+    doTest(true)
+  }
+
+
 
 }

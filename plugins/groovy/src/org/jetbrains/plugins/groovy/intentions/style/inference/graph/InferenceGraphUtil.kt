@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
@@ -8,11 +9,17 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.CONTAINS
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.UpperBoundConstraint.ContainMarker.EQUAL
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -24,19 +31,30 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
                                       constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
-  val constantNames = constantTypes.map { it.name }
+  val constantNames = constantTypes.map { it.name }.toMutableList()
   val flexibleTypes = virtualMethod.parameters.map { it.type }
   val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
   val anchorTypeParameters = (virtualMethod.containingClass?.typeParameters ?: emptyArray()).toSet()
+  val strictInstantiations = mutableMapOf<InferenceVariable, PsiClass>()
+  for (variable in variables) {
+    val requiredTypes = usageInformation.requiredClassTypes[variable.parameter.type().typeParameter()] ?: emptyList()
+    val strictInstantiation = findStrictInstantiation(requiredTypes) ?: continue
+    val extendingVariables = variables.filter { it.delegate.extendsListTypes.singleOrNull()?.resolve() == variable.delegate }
+    extendingVariables.forEach {
+      strictInstantiations[it] = strictInstantiation
+    }
+    strictInstantiations[variable] = strictInstantiation
+  }
   for (variable in variables) {
     val variableType = variable.parameter.type()
     val extendsTypes = variable.parameter.extendsList.referencedTypes
-    val requiredTypes = usageInformation.requiredClassTypes[variableType.typeParameter()]
-    val typeParameter = requiredTypes?.find { it is PsiTypeParameter }
+    val requiredTypes =
+      usageInformation.requiredClassTypes[variableType.typeParameter()]?.filter { it.marker == CONTAINS }?.map { it.clazz } ?: emptyList()
+    val typeParameter = requiredTypes.filterIsInstance<PsiTypeParameter>().firstOrNull()
     val residualExtendsTypes = when {
       typeParameter != null && typeParameter in anchorTypeParameters -> listOf(typeParameter.type())
       extendsTypes.size <= 1 -> extendsTypes.toList()
-      else -> extendsTypes.filter { requiredTypes?.contains(it.resolve()) ?: false }
+      else -> extendsTypes.filter { requiredTypes.contains(it.resolve()) }
     }
     val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
@@ -50,6 +68,11 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
     builder.setType(core, filteredType)
     if (variableType in forbiddingTypes) {
       builder.forbidInstantiation(core)
+    }
+    if (strictInstantiations.containsKey(variable) && strictInstantiations[variable] is PsiTypeParameter) {
+      // todo: this block cancels almost all computations above, it should be places higher for faster computing
+      builder.setDirect(core)
+      builder.setType(core, strictInstantiations[variable]!!.type())
     }
     variableMap[core] = variable
   }
@@ -72,4 +95,21 @@ private fun deepConnect(session: GroovyInferenceSession,
       relationHandler(map.getKeysByValue(dependency)!!.first())
     }
   }
+}
+
+fun findStrictInstantiation(constraints: Collection<UpperBoundConstraint>): PsiClass? {
+  val strictTypes = constraints.mapNotNull {
+    when (it.marker) {
+      CONTAINS -> null
+      EQUAL -> it.clazz
+    }
+  }
+  return strictTypes.maxWith(Comparator { left, right ->
+    if (TypesUtil.canAssign(left.type(), right.type(), left, METHOD_PARAMETER) == ConversionResult.OK) {
+      1
+    }
+    else {
+      0
+    }
+  })
 }
