@@ -71,7 +71,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
       @Override
       protected void updateEmptyText() {
-        getEmptyText().setText("File history");
+        VisiblePack visiblePack = getModel().getVisiblePack();
+        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error calculating file history");
+          appendActionToEmptyText("Refresh", () -> myUi.getRefresher().onRefresh());
+        }
+        else {
+          getEmptyText().setText("File history");
+        }
       }
     };
     myGraphTable.setCompactReferencesView(true);

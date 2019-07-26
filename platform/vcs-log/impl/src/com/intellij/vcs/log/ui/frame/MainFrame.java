@@ -10,7 +10,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +19,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -416,18 +414,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     }
 
-    private void appendActionToEmptyText(@NotNull String text, @NotNull Runnable action) {
-      getEmptyText().appendSecondaryText(text, VcsLogUiUtil.getLinkAttributes(), e -> action.run());
-    }
-
     private void appendResetFiltersActionToEmptyText() {
       appendActionToEmptyText("Reset filters", () -> myFilterUi.setFilter(null));
-    }
-
-    private void setErrorEmptyText(@NotNull Throwable error, @NotNull String defaultText) {
-      String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
-      message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
-      getEmptyText().setText(message);
     }
   }
 }

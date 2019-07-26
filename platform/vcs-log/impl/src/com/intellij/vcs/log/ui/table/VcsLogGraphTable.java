@@ -20,6 +20,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -171,6 +172,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   protected void updateEmptyText() {
     getEmptyText().setText(CHANGES_LOG_TEXT);
+  }
+
+  protected void setErrorEmptyText(@NotNull Throwable error, @NotNull String defaultText) {
+    String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
+    message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
+    getEmptyText().setText(message);
+  }
+
+  protected void appendActionToEmptyText(@NotNull String text, @NotNull Runnable action) {
+    getEmptyText().appendSecondaryText(text, VcsLogUiUtil.getLinkAttributes(), e -> action.run());
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
