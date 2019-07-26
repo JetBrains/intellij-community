@@ -18,12 +18,12 @@ class Test {
     int j = i;
   }</fold>
 
-  <fold text='/**ill-formed javadoc ...*/'>/**ill-formed javadoc
+  <fold text='/**ill-formed javadoc */'>/**ill-formed javadoc
    */</fold>
   void bar(char c) <fold text='{}'>{
   }</fold>
 
-  boolean b1 = true; <fold text='/** javadoc with code on the same line ...*/'>/** javadoc with code on the same line */</fold> boolean b2 = false; <fold text='/** second javadoc with code on the same line ...*/'>/** second javadoc with code on the same line */</fold>
+  boolean b1 = true; <fold text='/** javadoc with code on the same line */'>/** javadoc with code on the same line */</fold> boolean b2 = false; <fold text='/** second javadoc with code on the same line */'>/** second javadoc with code on the same line */</fold>
 
   <fold text='/** first line ...*/'>/** first line
    * second line
@@ -31,13 +31,29 @@ class Test {
   void illFormedJavaDocMultilines() <fold text='{}'>{
   }</fold>
 
-  <fold text='/**...*/'>/**
+  <fold text='/** first line */'>/** first line
+   *
+   *
+   */</fold>
+  void javaDocWithTextOnlyOnFirstLine() <fold text='{}'>{
+
+  }</fold>
+
+  <fold text='/** second line */'>/**
+   * second line
+   *
+   */</fold>
+  void javaDocWithTextOnlyOnSecondLine() <fold text='{}'>{
+
+  }</fold>
+
+  <fold text='/***/'>/**
    */</fold>
   void emptyJavadoc() <fold text='{}'>{
 
   }</fold>
 
-  <fold text='/**...*/'>/***/</fold>
+  <fold text='/***/'>/***/</fold>
   void oneLineEmptyJavadoc() <fold text='{}'>{
   }</fold>
 

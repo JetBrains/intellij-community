@@ -180,6 +180,8 @@ public final class CommentFoldingUtil {
     if (prefix == null || suffix == null || linePrefix == null) return null;
 
     final String header = getCommentHeader(document, suffix, prefix, linePrefix, commentRange);
+    final String fullText = getCommentText(document, suffix, prefix, linePrefix, commentRange);
+    if (StringUtil.equalsIgnoreWhitespaces(header, fullText)) replacement = "";
 
     return getCommentPlaceholder(prefix, suffix, header, replacement);
   }
@@ -246,22 +248,38 @@ public final class CommentFoldingUtil {
                                         @NotNull String linePrefix,
                                         @NotNull TextRange commentRange) {
     final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
-
-    TextRange lineRange = getLineRange(document, nFirstCommentLine);
-    String line = getCommentLine(document, lineRange, commentRange, commentPrefix, commentSuffix);
-
-    if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
-
-    final int nSecondCommentLine = nFirstCommentLine + 1;
-    if (nSecondCommentLine >= document.getLineCount()) return "";
-
-    lineRange = getLineRange(document, nSecondCommentLine);
-    if (lineRange.getEndOffset() > commentRange.getEndOffset()) return "";
-    line = getCommentLine(document, lineRange, commentRange, linePrefix, commentSuffix);
-
-    if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
-
+    for (int i = 0; i <= 1; i++) {
+      final String line = getCommentLine(i, nFirstCommentLine, document, commentSuffix, commentPrefix, linePrefix, commentRange);
+      if (line == null) return "";
+      if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
+    }
     return "";
+  }
+
+  /**
+   * Get comment text excluding prefixes and suffixes.
+   * If line contains whitespaces they will be included as well.
+   *
+   * @param document      document with comment
+   * @param commentSuffix doc comment suffix
+   * @param commentPrefix doc comment prefix
+   * @param linePrefix    prefix for doc comment line
+   * @param commentRange  comment text range in document
+   */
+  @NotNull
+  public static String getCommentText(@NotNull Document document,
+                                      @NotNull String commentSuffix,
+                                      @NotNull String commentPrefix,
+                                      @NotNull String linePrefix,
+                                      @NotNull TextRange commentRange) {
+    final StringBuilder sb = new StringBuilder();
+    final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
+    for (int i = 0; ; i++) {
+      final String line = getCommentLine(i, nFirstCommentLine, document, commentSuffix, commentPrefix, linePrefix, commentRange);
+      if (line == null) break;
+      sb.append(line);
+    }
+    return sb.toString();
   }
 
   @NotNull
@@ -270,6 +288,27 @@ public final class CommentFoldingUtil {
     int startOffset = document.getLineStartOffset(nLine);
     int endOffset = document.getLineEndOffset(nLine);
     return new TextRange(startOffset, endOffset);
+  }
+
+  @Nullable
+  private static String getCommentLine(int lineOffset,
+                                       int nFirstCommentLine,
+                                       @NotNull Document document,
+                                       @NotNull String commentSuffix,
+                                       @NotNull String commentPrefix,
+                                       @NotNull String linePrefix,
+                                       @NotNull TextRange commentRange) {
+    if (lineOffset == 0) {
+      final TextRange lineRange = getLineRange(document, nFirstCommentLine);
+      return getCommentLine(document, lineRange, commentRange, commentPrefix, commentSuffix);
+    }
+    final int nCommentLine = nFirstCommentLine + lineOffset;
+    if (nCommentLine >= document.getLineCount()) return null;
+
+    final TextRange lineRange = getLineRange(document, nCommentLine);
+    if (lineRange.getEndOffset() > commentRange.getEndOffset()) return null;
+
+    return getCommentLine(document, lineRange, commentRange, linePrefix, commentSuffix);
   }
 
   @NotNull
