@@ -17,6 +17,7 @@ package com.intellij.vcs.log.paint;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
@@ -232,13 +233,16 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   public void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements) {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+    List<PrintElement> selected = new SmartList<>();
     for (PrintElement printElement : printElements) {
-      if (!printElement.isSelected()) {
+      if (printElement.isSelected()) {
+        selected.add(printElement); // to draw later
+      } else {
         drawElement(g2, printElement, false);
       }
     }
 
-    List<PrintElement> selected = ContainerUtil.filter(printElements, printElement -> printElement.isSelected());
+    // draw selected elements
     for (PrintElement printElement : selected) {
       drawElement(g2, printElement, true);
     }
