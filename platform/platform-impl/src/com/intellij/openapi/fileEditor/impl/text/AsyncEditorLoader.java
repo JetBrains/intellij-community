@@ -94,7 +94,7 @@ public class AsyncEditorLoader {
             throw e;
           } catch (Exception e) {
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
-            throw e;
+            return null;
           }
         });
         future.complete(runnable);
