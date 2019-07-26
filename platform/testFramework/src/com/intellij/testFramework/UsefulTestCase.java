@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -85,7 +84,6 @@ public abstract class UsefulTestCase extends TestCase {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
   }
-
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   @NotNull
@@ -155,8 +153,6 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
     if (shouldContainTempFiles()) {
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
