@@ -36,6 +36,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -642,8 +643,23 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     resetClassFields(aClass.getSuperclass());
   }
 
+  private void registerTestProjectJdk(Sdk jdk) {
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+
+    for (Sdk existingSdk : jdkTable.getAllJdks()) {
+      if (existingSdk == jdk) return;
+    }
+
+    WriteAction.runAndWait(()-> jdkTable.addJdk(jdk, myProject));
+  }
+
   protected void setUpJdk() {
     final Sdk jdk = getTestProjectJdk();
+
+    if (jdk != null) {
+      registerTestProjectJdk(jdk);
+    }
+
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ModuleRootModificationUtil.setModuleSdk(module, jdk);
