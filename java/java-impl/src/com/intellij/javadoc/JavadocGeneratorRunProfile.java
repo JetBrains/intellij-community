@@ -254,7 +254,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
           List<VirtualFile> classRoots = classPathEnumerator.getPathsList().getRootDirs();
 
           if (sourceRoots.size() + classRoots.size() > 0) {
-            if (hasJavaModules) {
+            if (hasJavaModules && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
               if (!sourceRoots.isEmpty()) {
                 String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
                 writer.println("--source-path");
