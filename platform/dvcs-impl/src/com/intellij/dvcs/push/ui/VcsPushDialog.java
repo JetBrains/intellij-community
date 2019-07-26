@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -78,12 +78,22 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
   }
 
+  @Nullable
+  @Override
+  protected JPanel createSouthAdditionalPanel() {
+    return createOptionsPanel();
+  }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent southPanel = super.createSouthPanel();
+    southPanel.setBorder(JBUI.Borders.empty(8, 12));
+    return southPanel;
+  }
+
   @Override
   protected JComponent createCenterPanel() {
-    JPanel optionsPanel = createOptionsPanel();
-    return JBUI.Panels.simplePanel(0, 2)
-      .addToCenter(myListPanel)
-      .addToBottom(optionsPanel);
+    return myListPanel;
   }
 
   @NotNull
@@ -92,7 +102,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
+    optionsPanel.setBorder(JBUI.Borders.emptyLeft(20));
     return optionsPanel;
   }
 
