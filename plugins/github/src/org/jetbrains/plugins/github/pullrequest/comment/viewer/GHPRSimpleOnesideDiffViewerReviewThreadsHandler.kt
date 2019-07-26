@@ -5,21 +5,21 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadsController
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRFileReviewThreadsModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
 class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer: SimpleOnesideDiffViewer,
                                                       componentFactory: GHPREditorReviewThreadComponentFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>(viewer, componentFactory) {
 
-  private val editorThreads = GHPRFileReviewThreadsModel()
+  private val editorThreads = GHPREditorReviewThreadsModel()
 
   override val viewerReady: Boolean = true
 
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
-    GHPRReviewThreadsController(editorThreads, componentFactory, inlaysManager)
+    GHPREditorReviewThreadsController(editorThreads, componentFactory, inlaysManager)
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {

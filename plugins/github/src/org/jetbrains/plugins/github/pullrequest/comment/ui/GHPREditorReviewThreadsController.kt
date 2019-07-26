@@ -3,12 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRFileReviewThreadsModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRReviewThreadModel
 
-class GHPRReviewThreadsController(threadMap: GHPRFileReviewThreadsModel,
-                                  private val componentFactory: GHPREditorReviewThreadComponentFactory,
-                                  componentInlaysManager: EditorComponentInlaysManager) {
+class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
+                                        private val componentFactory: GHPREditorReviewThreadComponentFactory,
+                                        componentInlaysManager: EditorComponentInlaysManager) {
   private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
 
   init {
@@ -19,7 +17,7 @@ class GHPRReviewThreadsController(threadMap: GHPRFileReviewThreadsModel,
       }
     }
 
-    threadMap.addChangesListener(object : GHPRFileReviewThreadsModel.ChangesListener {
+    threadMap.addChangesListener(object : GHPREditorReviewThreadsModel.ChangesListener {
       override fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>) {
         for (thread in threads) {
           val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(thread)) ?: break

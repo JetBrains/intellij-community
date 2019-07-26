@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.comment.ui.model
+package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
@@ -12,8 +12,9 @@ class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
 
   private val collapseStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  val firstCommentId = items.first().id
-  val firstCommentCreated = items.first().dateCreated
+
+  val id: String = thread.id
+  val createdAt = thread.createdAt
 
   var fold by observable(true) { _, _, _ ->
     collapseStateEventDispatcher.multicaster.eventOccurred()
@@ -58,12 +59,12 @@ class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
     if (this === other) return true
     if (other !is GHPRReviewThreadModel) return false
 
-    if (firstCommentId != other.firstCommentId) return false
+    if (id != other.id) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return firstCommentId.hashCode()
+    return id.hashCode()
   }
 }

@@ -6,26 +6,26 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadsController
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRFileReviewThreadsModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
 class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
                                                 componentFactory: GHPREditorReviewThreadComponentFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(viewer, componentFactory) {
 
-  private val editorsThreads: Map<Side, GHPRFileReviewThreadsModel>
+  private val editorsThreads: Map<Side, GHPREditorReviewThreadsModel>
 
   override val viewerReady = true
 
   init {
-    val editorThreadsLeft = GHPRFileReviewThreadsModel()
-    GHPRReviewThreadsController(editorThreadsLeft, componentFactory,
-                                EditorComponentInlaysManager(viewer.editor1 as EditorImpl))
+    val editorThreadsLeft = GHPREditorReviewThreadsModel()
+    GHPREditorReviewThreadsController(editorThreadsLeft, componentFactory,
+                                      EditorComponentInlaysManager(viewer.editor1 as EditorImpl))
 
-    val editorThreadsRight = GHPRFileReviewThreadsModel()
-    GHPRReviewThreadsController(editorThreadsRight, componentFactory,
-                                EditorComponentInlaysManager(viewer.editor2 as EditorImpl))
+    val editorThreadsRight = GHPREditorReviewThreadsModel()
+    GHPREditorReviewThreadsController(editorThreadsRight, componentFactory,
+                                      EditorComponentInlaysManager(viewer.editor2 as EditorImpl))
 
     editorsThreads = mapOf(Side.LEFT to editorThreadsLeft, Side.RIGHT to editorThreadsRight)
   }

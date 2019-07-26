@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.comment.ui.model
+package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.SortedList
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import java.util.*
 
-class GHPRFileReviewThreadsModel {
+class GHPREditorReviewThreadsModel {
   private val changeEventDispatcher = EventDispatcher.create(ChangesListener::class.java)
 
   val threadsByLine: MutableMap<Int, SortedList<GHPRReviewThreadModel>> = mutableMapOf()
@@ -21,10 +21,10 @@ class GHPRFileReviewThreadsModel {
     }
 
     for ((line, mappings) in mappingsByLine) {
-      val threads = threadsByLine.computeIfAbsent(line) { SortedList(compareBy { it.firstCommentCreated }) }
+      val threads = threadsByLine.computeIfAbsent(line) { SortedList(compareBy { it.createdAt }) }
 
-      val threadsById = threads.map { it.firstCommentId to it }.toMap()
-      val mappingsById = mappings.map { it.thread.comments.first().id to it }.toMap()
+      val threadsById = threads.map { it.id to it }.toMap()
+      val mappingsById = mappings.map { it.thread.id to it }.toMap()
       val removedThreads = (threadsById - mappingsById.keys).values
       if (removedThreads.isNotEmpty()) {
         threads.removeAll(removedThreads)
