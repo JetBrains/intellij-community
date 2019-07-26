@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -86,18 +87,23 @@ public class AsyncEditorLoader {
     ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
-        Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> myTextEditor.loadEditorInBackground());
+        Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> {
+          try {
+            return myTextEditor.loadEditorInBackground();
+          } catch (ProcessCanceledException e) {
+            throw e;
+          } catch (Exception e) {
+            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
+            throw e;
+          }
+        });
         future.complete(runnable);
         return runnable;
       })
       .expireWith(myEditorComponent)
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.any(), result -> loadingFinished(result))
-      .submit(ourExecutor)
-      .onError(throwable -> {
-        Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", throwable);
-        loadingFinished(null);
-      });
+      .submit(ourExecutor);
     return future;
   }
 
