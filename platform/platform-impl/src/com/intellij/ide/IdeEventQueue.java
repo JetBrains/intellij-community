@@ -1462,7 +1462,7 @@ public final class IdeEventQueue extends EventQueue {
       return false;
     }
 
-    ActionManager actionManager = ActionManager.getInstance();
+    ActionManager actionManager = ServiceManager.getServiceIfCreated(ActionManager.class);
     return actionManager instanceof ActionManagerImpl &&
            !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
            !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();
