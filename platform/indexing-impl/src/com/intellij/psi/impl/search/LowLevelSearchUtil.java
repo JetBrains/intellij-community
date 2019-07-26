@@ -56,18 +56,14 @@ public class LowLevelSearchUtil {
     return hasMatchedRange ? Boolean.TRUE : null;
   }
 
-  /**
-   * @return null to stop or last found TreeElement
-   * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
-   */
-  private static TreeElement processTreeUp(@NotNull Project project,
-                                           @NotNull PsiElement scope,
-                                           final @NotNull TreeElement leafNode,
-                                           final int offsetInLeaf,
-                                           @NotNull StringSearcher searcher,
-                                           final boolean processInjectedPsi,
-                                           @NotNull ProgressIndicator progress,
-                                           @NotNull TextOccurenceProcessor processor) {
+  private static boolean processTreeUp(@NotNull Project project,
+                                       @NotNull PsiElement scope,
+                                       final @NotNull TreeElement leafNode,
+                                       final int offsetInLeaf,
+                                       @NotNull StringSearcher searcher,
+                                       final boolean processInjectedPsi,
+                                       @NotNull ProgressIndicator progress,
+                                       @NotNull TextOccurenceProcessor processor) {
     final int patternLength = searcher.getPatternLength();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     TreeElement currentNode = leafNode;
@@ -85,11 +81,11 @@ public class LowLevelSearchUtil {
         if (processInjectedPsi) {
           Boolean result = processInjectedFile(run, searcher, currentOffset, progress, injectedLanguageManager, processor);
           if (result != null) {
-            return result.booleanValue() ? leafNode : null;
+            return result.booleanValue();
           }
         }
         if (!processor.execute(run, currentOffset)) {
-          return null;
+          return false;
         }
       }
       currentNode = currentNode.getTreeParent();
@@ -103,7 +99,7 @@ public class LowLevelSearchUtil {
                           (PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) ==
                            PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
 
-    return leafNode;
+    return true;
   }
 
   private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
@@ -171,6 +167,7 @@ public class LowLevelSearchUtil {
     if (offsetsInScope.length == 0) return true;
 
     Project project = scope.getProject();
+    // helps to avoid full tree rescan in subsequent com.intellij.lang.ASTNode#findLeafElementAt calls (O(n) instead of O(n^2))
     TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
@@ -194,8 +191,10 @@ public class LowLevelSearchUtil {
       if (offsetInLeaf < 0) {
         throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
       }
-      lastElement = processTreeUp(project, scope, leafNode, offsetInLeaf, searcher, processInjectedPsi, progress, processor);
-      if (lastElement == null) return false;
+      if (!processTreeUp(project, scope, leafNode, offsetInLeaf, searcher, processInjectedPsi, progress, processor)) {
+        return false;
+      }
+      lastElement = leafNode;
     }
     return true;
   }
