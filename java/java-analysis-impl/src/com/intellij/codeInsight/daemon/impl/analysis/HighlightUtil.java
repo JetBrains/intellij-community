@@ -1239,19 +1239,22 @@ public class HighlightUtil extends HighlightUtilBase {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
         }
         else {
-          String message = JavaErrorMessages.message("text.block.new.line");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          StringBuilder chars = new StringBuilder();
+          int[] offsets = new int[text.length() + 1];
+          boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets);
+          if (!success) {
+            String message = JavaErrorMessages.message("illegal.escape.character.in.string.literal");
+            TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(offsets[chars.length()], offsets[chars.length() + 1])
+                                                                     : expression.getTextRange();
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(expression, textRange)
+              .descriptionAndTooltip(message).create();
+          }
+          else {
+            String message = JavaErrorMessages.message("text.block.new.line");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          }
         }
-      }
-      StringBuilder chars = new StringBuilder();
-      boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, null);
-      if (!success) {
-        String message = JavaErrorMessages.message("illegal.escape.character.in.string.literal");
-        TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(chars.length(), chars.length() + 1) 
-                                                                 : expression.getTextRange();
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(expression, textRange)
-          .descriptionAndTooltip(message).create();
       }
     }
 

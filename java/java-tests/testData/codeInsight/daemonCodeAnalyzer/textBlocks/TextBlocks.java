@@ -8,4 +8,7 @@ class C {
                     invalid escape <error descr="Illegal escape character in string literal">\</error>
                     continue;
                     """;
+  String invalid5 = """
+                    \n\n\n\n<error descr="Illegal escape character in string literal">\</error>
+                    """;
 }
