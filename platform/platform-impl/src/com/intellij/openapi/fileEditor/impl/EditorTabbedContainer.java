@@ -41,10 +41,7 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.newImpl.JBEditorTabPainter;
-import com.intellij.ui.tabs.newImpl.JBEditorTabsBorder;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
-import com.intellij.ui.tabs.newImpl.SingleHeightTabs;
+import com.intellij.ui.tabs.newImpl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBInsets;
@@ -677,7 +674,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private static final class EditorTabs extends SingleHeightTabs {
+  private static final class EditorTabs extends com.intellij.ui.tabs.newImpl.JBEditorTabs {
     @NotNull
     private final EditorWindow myWindow;
 
@@ -687,27 +684,51 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
 
-      project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-        @Override
-        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-          updateActive();
-        }
+      project.getMessageBus().connect(parentDisposable)
+        .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+          @Override
+          public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            updateActive();
+          }
 
-        @Override
-        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-          updateActive();
-        }
+          @Override
+          public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            updateActive();
+          }
 
-        @Override
-        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-          updateActive();
-        }
-      });
+          @Override
+          public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+            updateActive();
+          }
+        });
     }
 
     @Override
-    protected JBEditorTabPainter createTabPainter() {
-      return JBTabPainter.getEDITOR();
+    protected void paintChildren(final Graphics g) {
+      super.paintChildren(g);
+      drawBorder(g);
+    }
+
+    @NotNull
+    @Override
+    protected TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new TabLabel(this, info) {
+        @Override
+        protected int getPreferredHeight() {
+          Insets insets = getInsets();
+          Insets layoutInsets = getLayoutInsets();
+
+          insets.top += layoutInsets.top;
+          insets.bottom += layoutInsets.bottom;
+
+          return super.getPreferredHeight() - insets.top - insets.bottom;
+        }
+      };
+    }
+
+    @Override
+    protected TabPainterAdapter createTabPainterAdapter() {
+      return new EditorTabPainterAdapter();
     }
 
     @Override

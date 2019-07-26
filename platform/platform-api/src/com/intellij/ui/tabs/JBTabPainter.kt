@@ -46,4 +46,9 @@ interface JBTabPainter {
                                 active: Boolean,
                                 hovered: Boolean)
 
+  fun paintUnderline(position: JBTabsPosition,
+                          rect: Rectangle,
+                          borderThickness: Int,
+                          g: Graphics2D,
+                          active: Boolean)
 }

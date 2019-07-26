@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
-import com.jetbrains.rd.util.lifetime.Lifetime;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.rd.DisposableExKt.createLifetime;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class JBTabsImpl extends JComponent
@@ -169,18 +167,14 @@ public class JBTabsImpl extends JComponent
   private SelectionChangeHandler mySelectionChangeHandler;
 
   private Runnable myDeferredFocusRequest;
-  private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
 
-  protected final JBTabPainter myTabPainter = createTabPainter();
+  protected final TabPainterAdapter myTabPainterAdapter = createTabPainterAdapter();
+  protected final JBTabPainter myTabPainter = myTabPainterAdapter.getTabPainter();
   private boolean myAlphabeticalMode = false;
   private boolean mySupportsCompression = false;
   private String myEmptyText = null;
   private boolean myMouseInsideTabsArea = false;
-
-  protected JBTabPainter createTabPainter() {
-    return JBTabPainter.getDEFAULT();
-  }
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -190,7 +184,14 @@ public class JBTabsImpl extends JComponent
     return myTabPainter;
   }
 
-  private Lifetime lifetime = createLifetime(this);
+  public TabPainterAdapter getTabPainterAdapter() {
+    return myTabPainterAdapter;
+  }
+
+  protected TabPainterAdapter createTabPainterAdapter() {
+    return new DefaultTabPainterAdapter(JBTabPainter.getDEFAULT());
+  }
+
   private TabLabel tabLabelAtMouse;
 
   public JBTabsImpl(@NotNull Project project) {
@@ -329,7 +330,6 @@ public class JBTabsImpl extends JComponent
 
     add(mySingleRowLayout.myLeftGhost);
     add(mySingleRowLayout.myRightGhost);
-
 
     new LazyUiDisposable<JBTabsImpl>(parent, this, this) {
       @Override
@@ -1735,7 +1735,7 @@ public class JBTabsImpl extends JComponent
     }
 
     myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
-    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+    drawBorder(g);
 
     if (!isStealthModeEffective() && !isHideTabs()) {
       myLastPaintedSelection = getSelectedInfo();
@@ -1784,8 +1784,11 @@ public class JBTabsImpl extends JComponent
   @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
-
     mySingleRowLayout.myMoreIcon.paintIcon(this, g);
+  }
+
+  protected void drawBorder(Graphics g) {
+    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
   }
 
   private Max computeMaxSize() {
@@ -2309,12 +2312,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  @Override
-  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
-    myAlwaysPaintSelectedTab = paintSelected;
-    return this;
-  }
-
   private abstract static class BaseNavigationAction extends AnAction {
     private final ShadowAction myShadow;
     @NotNull private final ActionManager myActionManager;
@@ -2667,6 +2664,7 @@ public class JBTabsImpl extends JComponent
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
     }
+    c.revalidate();
     c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
 
     return bounds;
@@ -2834,7 +2832,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public int getTabHGap() {
-    return 0;
+    return -myBorder.getThickness();
   }
 
   @Override

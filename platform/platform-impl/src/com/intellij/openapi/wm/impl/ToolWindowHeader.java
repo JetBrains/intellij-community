@@ -16,12 +16,11 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.newImpl.TabsHeightController;
+import com.intellij.ui.tabs.newImpl.TabLabel;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +65,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       add(myWestPanel, "grow");
       myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
 
-      TabsHeightController.registerActive(this, this);
     }
     else {
       setLayout(new BorderLayout());
@@ -213,6 +211,14 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    Insets insets = getInsets();
+    int height = JBUI.scale(TabLabel.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom;
+    return new Dimension(size.width, height);
+  }
+
   private void initWestToolBar(JPanel westPanel) {
     myToolbarWest =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(myActionGroupWest),
@@ -350,26 +356,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract boolean isActive();
 
   protected abstract void hideToolWindow();
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    TabsHeightController.registerAdjective(this, height -> {
-      updateHeight(height);
-      return Unit.INSTANCE;
-    }, this);
-  }
-
-  private void updateHeight(int value) {
-    Dimension size = super.getMinimumSize();
-    Insets insets = getInsets();
-    value = value - insets.top - insets.bottom;
-
-    if(size.height != value) {
-      Dimension newSize = new Dimension(size.width, value);
-      setMinimumSize(newSize);
-    }
-  }
 
   private class ShowOptionsAction extends DumbAwareAction {
     ShowOptionsAction() {

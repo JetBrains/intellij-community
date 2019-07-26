@@ -7,6 +7,7 @@ import com.intellij.ui.tabs.newImpl.themes.EditorTabTheme
 import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.Rectangle
 
 class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
@@ -14,7 +15,6 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
     when (position) {
       JBTabsPosition.top -> rect.height -= borderThickness
       JBTabsPosition.bottom -> rect.y += borderThickness
-      JBTabsPosition.left -> rect.width -= borderThickness
       JBTabsPosition.right -> {
         rect.x += borderThickness
       }
@@ -33,6 +33,41 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
       g.fillRect(rect, theme.hoverBackground)
     }
   }
+
+  override fun paintSelectedTab(position: JBTabsPosition,
+                                g: Graphics2D,
+                                rect: Rectangle,
+                                borderThickness: Int,
+                                tabColor: Color?,
+                                active: Boolean,
+                                hovered: Boolean) {
+
+    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
+
+    color?.let {
+      g.fill2DRect(rect, it)
+    }
+
+    if(hovered) {
+      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
+        g.fill2DRect(rect, it)
+      }
+    }
+  }
+
+  fun paintLeftGap(g: Graphics2D, rect: Rectangle, borderThickness: Int) {
+    val maxY = rect.y + rect.height - borderThickness
+
+    paintBorderLine(g, borderThickness, Point(rect.x, rect.y), Point(rect.x, maxY))
+  }
+
+  fun paintRightGap(g: Graphics2D, rect: Rectangle, borderThickness: Int) {
+    val maxX = rect.x + rect.width - borderThickness
+    val maxY = rect.y + rect.height - borderThickness
+
+    paintBorderLine(g, borderThickness, Point(maxX, rect.y), Point(maxX, maxY))
+  }
+
 
   override fun underlineRectangle(position: JBTabsPosition, rect: Rectangle, thickness: Int): Rectangle {
     return when (position) {

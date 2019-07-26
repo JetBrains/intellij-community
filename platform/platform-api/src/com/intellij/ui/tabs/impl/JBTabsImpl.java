@@ -2908,12 +2908,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  @Override
-  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
-    myAlwaysPaintSelectedTab = paintSelected;
-    return this;
-  }
-
   private abstract static class BaseNavigationAction extends AnAction {
     private final ShadowAction myShadow;
     @NotNull private final ActionManager myActionManager;
