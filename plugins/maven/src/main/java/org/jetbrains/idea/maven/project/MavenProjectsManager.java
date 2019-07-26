@@ -573,7 +573,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (m.isDisposed()) continue;
       ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
       // force re-save (since can be stored externally)
-      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
+        ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      }
     }
   }
 
