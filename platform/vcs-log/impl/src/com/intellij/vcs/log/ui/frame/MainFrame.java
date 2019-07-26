@@ -369,8 +369,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
+    @NotNull private final Runnable myRefresh;
+
     MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
       super(ui, logData, initialDataPack, ui::requestMore);
+      myRefresh = () -> ui.getRefresher().onRefresh();
     }
 
     @Override
@@ -380,29 +383,51 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
-        String message = ObjectUtils.chooseNotNull(((DataPack.ErrorDataPack)dataPack).getError().getMessage(), "Error loading commits");
-        message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
-        getEmptyText().setText(message).appendSecondaryText("Refresh", VcsLogUiUtil.getLinkAttributes(),
-                                                            e -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+        setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(), "Error loading commits");
+        appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-        if (visiblePack.getFilters().isEmpty()) {
+        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
+          if (visiblePack.getFilters().isEmpty()) {
+            appendActionToEmptyText("Refresh", myRefresh);
+          }
+          else {
+            appendResetFiltersActionToEmptyText();
+          }
+        }
+        else if (visiblePack.getFilters().isEmpty()) {
           statusText.setText("No changes committed.").
             appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
-                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
+                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
+                                                                ActionPlaces.UNKNOWN));
           String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
           if (!shortcutText.isEmpty()) {
             statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
           }
         }
         else {
-          statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
-                                                                                 e -> myFilterUi.setFilter(null));
+          statusText.setText("No commits matching filters.");
+          appendResetFiltersActionToEmptyText();
         }
       }
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
+    }
+
+    private void appendActionToEmptyText(@NotNull String text, @NotNull Runnable action) {
+      getEmptyText().appendSecondaryText(text, VcsLogUiUtil.getLinkAttributes(), e -> action.run());
+    }
+
+    private void appendResetFiltersActionToEmptyText() {
+      appendActionToEmptyText("Reset filters", () -> myFilterUi.setFilter(null));
+    }
+
+    private void setErrorEmptyText(@NotNull Throwable error, @NotNull String defaultText) {
+      String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
+      message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
+      getEmptyText().setText(message);
     }
   }
 }

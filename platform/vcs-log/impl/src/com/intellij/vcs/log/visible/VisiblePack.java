@@ -137,4 +137,18 @@ public class VisiblePack implements VcsLogDataPack {
     }
     return VcsUtil.getFilePath(getRoot(index));
   }
+
+  public static class ErrorVisiblePack extends VisiblePack {
+    @NotNull private final Throwable myError;
+
+    public ErrorVisiblePack(@NotNull DataPackBase dataPack, @NotNull VcsLogFilterCollection filters, @NotNull Throwable error) {
+      super(dataPack, EmptyVisibleGraph.getInstance(), false, filters, null);
+      myError = error;
+    }
+
+    @NotNull
+    public Throwable getError() {
+      return myError;
+    }
+  }
 }

@@ -161,13 +161,14 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           throw reThrown;
         }
         catch (Throwable t) {
-          LOG.error("Error while filtering log by " + requests, t);
+          LOG.error("Error while processing requests " + requests, t);
           myTaskController.removeRequests(requests);
         }
       }
 
       List<MoreCommitsRequest> requestsToRun = new ArrayList<>();
-      if (state.getVisiblePack() != myState.getVisiblePack() && state.isValid()) {
+      if (state.getVisiblePack() != myState.getVisiblePack() && state.isValid() &&
+          !(state.getVisiblePack() instanceof VisiblePack.ErrorVisiblePack)) {
         requestsToRun.addAll(state.getRequestsToRun());
         state = state.withRequests(new ArrayList<>());
       }
@@ -264,13 +265,20 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                           state.getVisiblePack().getDataPack() != dataPack ||
                                                                           moreCommitsRequests.isEmpty()));
 
-      Pair<VisiblePack, CommitCountStage> pair =
-        myVcsLogFilterer.filter(dataPack, state.getVisiblePack(), state.getSortType(), state.getFilters(),
-                                state.getCommitCount());
-
-      VcsLogProgress.updateCurrentKey(new VisiblePackProgressKey(myLogId, false));
-
-      return state.withVisiblePack(pair.getFirst()).withCommitCount(pair.getSecond());
+      try {
+        Pair<VisiblePack, CommitCountStage> pair = myVcsLogFilterer.filter(dataPack, state.getVisiblePack(), state.getSortType(),
+                                                                           state.getFilters(), state.getCommitCount());
+        return state.withVisiblePack(pair.getFirst()).withCommitCount(pair.getSecond());
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable t) {
+        return state.withVisiblePack(new VisiblePack.ErrorVisiblePack(dataPack, state.getFilters(), t));
+      }
+      finally {
+        VcsLogProgress.updateCurrentKey(new VisiblePackProgressKey(myLogId, false));
+      }
     }
   }
 
