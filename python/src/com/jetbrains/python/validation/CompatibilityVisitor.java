@@ -157,6 +157,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
                                      " not support starred expressions in tuples, lists, and sets",
                                      node);
+      final PsiElement container = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class);
+      if (container instanceof PyTupleExpression) {
+        final PsiElement tupleParent = container.getParent();
+        if (tupleParent instanceof PyReturnStatement) {
+          registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                  level.isOlderThan(LanguageLevel.PYTHON38) &&
+                                                  registerForLanguageLevel(level),
+                                         " not support unpacking without parentheses in return statements",
+                                         node);
+        }
+
+        if (tupleParent instanceof PyYieldExpression && !((PyYieldExpression)tupleParent).isDelegating()) {
+          registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                  level.isOlderThan(LanguageLevel.PYTHON38) &&
+                                                  registerForLanguageLevel(level),
+                                         " not support unpacking without parentheses in yield statements",
+                                         node);
+        }
+      }
     }
   }
 
