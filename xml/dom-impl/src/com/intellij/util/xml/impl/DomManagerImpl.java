@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -29,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -144,30 +144,22 @@ public final class DomManagerImpl extends DomManager {
     mySemService.setCachedSemElement(key, element, handler);
   }
 
-  private PsiFile getCachedPsiFile(VirtualFile file) {
-    return PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(file);
-  }
-
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
     if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
       return Collections.emptyList();
     }
 
+    FileManager fileManager = PsiManagerEx.getInstanceEx(myProject).getFileManager();
+
     final List<DomEvent> events = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (myProject.isDisposed() || !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) {
-          return false;
-        }
-
         if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {
-          final PsiFile psiFile = getCachedPsiFile(file);
-          if (psiFile != null && StdFileTypes.XML.equals(psiFile.getFileType()) && psiFile instanceof XmlFile) {
-            final DomFileElementImpl domElement = getCachedFileElement((XmlFile)psiFile);
-            if (domElement != null) {
-              events.add(new DomEvent(domElement, false));
-            }
+          PsiFile psiFile = fileManager.getCachedPsiFile(file);
+          DomFileElementImpl domElement = psiFile instanceof XmlFile ? getCachedFileElement((XmlFile)psiFile) : null;
+          if (domElement != null) {
+            events.add(new DomEvent(domElement, false));
           }
         }
         return true;
