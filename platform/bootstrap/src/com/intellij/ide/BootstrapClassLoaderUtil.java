@@ -67,6 +67,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
       .logJarAccess(jarOrder.isEmpty())
+      .autoAssignUrlsWithProtectionDomain()
       .useCache();
     if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
