@@ -748,6 +748,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         removeWindowListener(myWindowListener);
         myWindowListener = null;
       }
+      DialogWrapper wrapper = getDialogWrapper();
+      if (wrapper != null) wrapper.disposeIfNeeded();
 
       DialogWrapper.cleanupWindowListeners(this);
 
