@@ -168,30 +168,41 @@ public class LowLevelSearchUtil {
     if (offsetsInScope.length == 0) {
       return true;
     }
-
-    final Project project = scope.getProject();
     final ASTNode scopeNode = scope.getNode();
     if (scopeNode == null) {
       throw new IllegalArgumentException(
         "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
       );
     }
-    final int scopeStartOffset = scope.getTextRange().getStartOffset();
+    final Project project = scope.getProject();
+    return processOffsets(scopeNode, offsetsInScope, progress, (node, offsetInNode) ->
+      processTreeUp(project, scope, node, offsetInNode, searcher, processInjectedPsi, progress, processor)
+    );
+  }
 
+  interface NodeTextOccurrenceProcessor {
+    boolean execute(@NotNull ASTNode node, int offsetInNode);
+  }
+
+  static boolean processOffsets(@NotNull ASTNode node,
+                                @NotNull int[] offsetsInNode,
+                                @NotNull ProgressIndicator progress,
+                                @NotNull NodeTextOccurrenceProcessor processor) {
+    final int scopeStartOffset = node.getStartOffset();
     // helps to avoid full tree rescan in subsequent com.intellij.lang.ASTNode#findLeafElementAt calls (O(n) instead of O(n^2))
     ASTNode lastElement = null;
-    for (int offset : offsetsInScope) {
+    for (int offset : offsetsInNode) {
       progress.checkCanceled();
-      final ASTNode leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
+      final ASTNode leafNode = findNextLeafElementAt(node, lastElement, offset);
       if (leafNode == null) {
-        LOG.error("Cannot find leaf: scope=" + scope + "; offset=" + offset + "; lastElement=" + lastElement);
+        LOG.error("Cannot find leaf: node=" + node + "; offset=" + offset + "; lastElement=" + lastElement);
         continue;
       }
       final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
       if (offsetInLeaf < 0) {
-        throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
+        throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; node=" + node);
       }
-      if (!processTreeUp(project, scope, leafNode, offsetInLeaf, searcher, processInjectedPsi, progress, processor)) {
+      if (!processor.execute(leafNode, offsetInLeaf)) {
         return false;
       }
       lastElement = leafNode;
