@@ -27,10 +27,8 @@ fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
 private typealias ElementAndOffset = Pair<PsiElement, Int>
 
 @ApiStatus.Experimental
-fun PsiFile.elementsAroundOffsetUp(offset: Int): Iterable<ElementAndOffset> = Iterable {
-  iterator<ElementAndOffset> {
-    elementsAroundOffsetUp(this@elementsAroundOffsetUp, offset)
-  }
+fun PsiFile.elementsAroundOffsetUp(offset: Int): Iterator<ElementAndOffset> = iterator {
+  elementsAroundOffsetUp(this@elementsAroundOffsetUp, offset)
 }
 
 private suspend fun SequenceScope<ElementAndOffset>.elementsAroundOffsetUp(root: PsiFile, offset: Int) {
