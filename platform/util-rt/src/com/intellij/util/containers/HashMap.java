@@ -19,6 +19,7 @@ import java.util.Map;
 
 /**
  * @deprecated Use {@link java.util.HashMap}
+ * todo: TBR in 2020.1
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 @Deprecated
