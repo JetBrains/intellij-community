@@ -16,7 +16,7 @@
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;

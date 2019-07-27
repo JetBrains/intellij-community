@@ -3,7 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 
 import javax.swing.*;
 import java.util.Collection;

@@ -17,7 +17,7 @@ package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

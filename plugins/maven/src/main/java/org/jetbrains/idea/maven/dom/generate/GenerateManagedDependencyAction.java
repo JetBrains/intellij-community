@@ -22,7 +22,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
