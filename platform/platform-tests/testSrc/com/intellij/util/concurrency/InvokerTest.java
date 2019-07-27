@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.idea.IdeaTestApplication;
@@ -20,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ThreeState;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -39,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static javax.swing.SwingUtilities.isEventDispatchThread;
 
 /**
@@ -151,6 +139,44 @@ public class InvokerTest {
       AtomicBoolean current = new AtomicBoolean(true);
       futures.add(invoker.runOrInvokeLater(() -> countDown(latch, 100, error, "task is done before subtask", current::get)));
       current.set(false);
+    });
+  }
+
+  @Test
+  public void testReadActionYes() {
+    testReadAction(new Invoker.Background(parent, ThreeState.YES), true, true);
+  }
+
+  @Test
+  public void testReadActionNo() {
+    testReadAction(new Invoker.Background(parent, ThreeState.NO), false, false);
+  }
+
+  @Test
+  public void testReadAction() {
+    testReadAction(new Invoker.Background(parent, ThreeState.UNSURE), false, true);
+  }
+
+  private static boolean isExpected(CountDownLatch latch, AtomicReference<? super String> error, String message, boolean expected) {
+    if (expected == getApplication().isReadAccessAllowed()) return true;
+    StringBuilder sb = new StringBuilder(expected ? "No expected" : "Unexpected");
+    error.set(sb.append(" read action ").append(message).append(" acquiring a read lock").toString());
+    latch.countDown(); // interrupt with the specified error
+    return false;
+  }
+
+  private static void testReadAction(Invoker invoker, boolean expectedBefore, boolean expectedAfter) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(invoker, latch, error -> {
+      if (isExpected(latch, error, "before", expectedBefore)) {
+        getApplication().runReadAction(() -> {
+          futures.add(invoker.runOrInvokeLater(() -> {
+            if (isExpected(latch, error, "after", expectedAfter)) {
+              latch.countDown(); // interrupt without any error
+            }
+          }));
+        });
+      }
     });
   }
 
