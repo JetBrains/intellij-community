@@ -22,18 +22,11 @@ import java.util.Map;
  * and also usually both sets of branches are needed by components, but are treated differently,
  * so it is more convenient to have them separated, but in a single container.
  * </p>
- *
- * @author Kirill Likhodedov
  */
 public final class GitBranchesCollection {
 
-  public static final GitBranchesCollection EMPTY =
-    new GitBranchesCollection(Collections.emptyMap(), Collections.emptyMap());
-
-  @NotNull
-  private final Map<GitLocalBranch, Hash> myLocalBranches;
-  @NotNull
-  private final Map<GitRemoteBranch, Hash> myRemoteBranches;
+  @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
+  @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
 
   public GitBranchesCollection(@NotNull Map<GitLocalBranch, Hash> localBranches, @NotNull Map<GitRemoteBranch, Hash> remoteBranches) {
     myRemoteBranches = remoteBranches;
@@ -52,16 +45,18 @@ public final class GitBranchesCollection {
 
   @Nullable
   public Hash getHash(@NotNull GitBranch branch) {
-    if (branch instanceof  GitLocalBranch) return myLocalBranches.get(branch);
-    if (branch instanceof  GitRemoteBranch) return myRemoteBranches.get(branch);
+    if (branch instanceof GitLocalBranch) return myLocalBranches.get(branch);
+    if (branch instanceof GitRemoteBranch) return myRemoteBranches.get(branch);
     return null;
   }
 
-  public Collection<GitLocalBranch> findLocalBranchesByHash(Hash hash) {
+  @NotNull
+  public Collection<GitLocalBranch> findLocalBranchesByHash(@NotNull Hash hash) {
     return ContainerUtil.filter(myLocalBranches.keySet(), key -> myLocalBranches.get(key).equals(hash));
   }
 
-  public Collection<GitRemoteBranch> findRemoteBranchesByHash(Hash hash) {
+  @NotNull
+  public Collection<GitRemoteBranch> findRemoteBranchesByHash(@NotNull Hash hash) {
     return ContainerUtil.filter(myRemoteBranches.keySet(), key -> myRemoteBranches.get(key).equals(hash));
   }
 
@@ -78,7 +73,7 @@ public final class GitBranchesCollection {
   }
 
   @Nullable
-  private static <T extends GitBranch> T findByName(Collection<T> branches, @NotNull final String name) {
+  private static <T extends GitBranch> T findByName(@NotNull Collection<T> branches, @NotNull String name) {
     return ContainerUtil.find(branches, branch -> GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName()));
   }
 }
