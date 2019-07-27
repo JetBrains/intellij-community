@@ -104,12 +104,10 @@ public class PsiLiteralExpressionImpl
     }
 
     if (type == JavaTokenType.STRING_LITERAL) {
-      String innerText = getInnerText();
-      return innerText == null ? null : internedParseStringCharacters(innerText);
+      return internedParseStringCharacters(getInnerText());
     }
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      final String textBlockText = getTextBlockText();
-      return textBlockText == null ? null : internedParseStringCharacters(textBlockText);
+      return internedParseStringCharacters(getTextBlockText());
     }
     if (type == JavaTokenType.RAW_STRING_LITERAL) {
       return getRawString();
@@ -214,6 +212,7 @@ public class PsiLiteralExpressionImpl
 
   @Nullable
   private static String internedParseStringCharacters(final String chars) {
+    if (chars == null) return null;
     final StringBuilder outChars = new StringBuilder(chars.length());
     final boolean success = parseStringCharacters(chars, outChars, null);
     return success ? outChars.toString() : null;
