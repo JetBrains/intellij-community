@@ -58,6 +58,12 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testIgnoreCaseValue() = doTest(EditorConfigValueCorrectnessInspection::class)
   fun testIgnoreCaseReference() = doTest(EditorConfigReferenceCorrectnessInspection::class)
 
+  // Bugfixes
+
+  fun testIncompleteHeader() = doTest(EditorConfigNoMatchingFilesInspection::class)
+
+  // Utils
+
   private fun doTest(
     vararg inspections: KClass<out LocalInspectionTool>,
     checkWarnings: Boolean = true,
