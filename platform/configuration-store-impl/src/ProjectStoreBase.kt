@@ -73,20 +73,21 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   }
 
   private fun loadProjectFromTemplate(defaultProject: Project) {
-    val stateStore = defaultProject.stateStore as DefaultProjectStoreImpl
-    runBlocking { stateStore.save() }
-    val element = stateStore.getStateCopy() ?: return
+    runBlocking { defaultProject.stateStore.save() }
+
+    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     LOG.runAndLogException {
       if (isDirectoryBased) {
         normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
       }
       else {
-        moveComponentConfiguration(defaultProject, element, { /* doesn't matter, any path will be resolved as projectFilePath (see fileResolver below) */ PROJECT_FILE }) {
+        moveComponentConfiguration(defaultProject, element) {
           if (it == "workspace.xml") Paths.get(workspaceFilePath)
           else Paths.get(projectFilePath)
         }
       }
     }
+    (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
 
   final override fun getProjectBasePath(): String {
