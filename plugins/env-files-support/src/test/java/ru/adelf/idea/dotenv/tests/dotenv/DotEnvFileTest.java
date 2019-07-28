@@ -4,8 +4,6 @@ import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
-import java.io.File;
-
 public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     @Override
@@ -15,7 +13,7 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     protected String getTestDataPath() {
-        return "src/test/java/ru/adelf/idea/dotenv/tests/dotenv/fixtures";
+        return basePath + "dotenv/fixtures";
     }
 
     public void testEnvKeys() {
@@ -35,6 +33,11 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
         assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR3=\"123 #com\\\"ment\"");
 
         assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR4=\"1\"");
+    }
+
+    public void testEnvEmptyCommentedVars() {
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_EMPTY=");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_EMPTY2=");
     }
 
     public void testEnvComments() {

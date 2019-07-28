@@ -22,7 +22,7 @@ public interface DotEnvTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == KEY) {
+      if (type == KEY) {
         return new DotEnvKeyImpl(node);
       }
       else if (type == PROPERTY) {

@@ -29,7 +29,6 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends LightCodeIns
 
     private void assertIndex(@NotNull ID<String, ?> id, boolean notCondition, @NotNull String... keys) {
         for (String key : keys) {
-
             final Collection<VirtualFile> virtualFiles = new ArrayList<>();
 
             FileBasedIndexImpl.getInstance().getFilesWithKey(id, new HashSet<>(Collections.singletonList(key)), virtualFile -> {

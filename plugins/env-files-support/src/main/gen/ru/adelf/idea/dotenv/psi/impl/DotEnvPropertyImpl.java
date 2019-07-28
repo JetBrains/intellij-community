@@ -1,10 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package ru.adelf.idea.dotenv.psi.impl;
 
+import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
+import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 import ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl;
 import ru.adelf.idea.dotenv.psi.*;
 
@@ -35,22 +38,27 @@ public class DotEnvPropertyImpl extends DotEnvNamedElementImpl implements DotEnv
     return findChildByClass(DotEnvValue.class);
   }
 
+  @Override
   public String getKeyText() {
     return DotEnvPsiUtil.getKeyText(this);
   }
 
+  @Override
   public String getValueText() {
     return DotEnvPsiUtil.getValueText(this);
   }
 
+  @Override
   public String getName() {
     return DotEnvPsiUtil.getName(this);
   }
 
+  @Override
   public PsiElement setName(@NotNull String newName) {
     return DotEnvPsiUtil.setName(this, newName);
   }
 
+  @Override
   public PsiElement getNameIdentifier() {
     return DotEnvPsiUtil.getNameIdentifier(this);
   }
