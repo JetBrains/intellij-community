@@ -36,7 +36,6 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-
         if(psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }

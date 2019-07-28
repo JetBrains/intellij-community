@@ -45,18 +45,18 @@
   <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!--<gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>-->
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
-    <!--<fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>-->
+    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>
 
     <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
     <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
     <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
-    <lang.refactoringSupport language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvRefactoringSupportProvider"/>
+    <!--<lang.refactoringSupport language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvRefactoringSupportProvider"/>
     <lang.findUsagesProvider language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvFindUsagesProvider"/>
-    <referencesSearch implementation="ru.adelf.idea.dotenv.extension.DotEnvReferencesSearcher"/>
+    <referencesSearch implementation="ru.adelf.idea.dotenv.extension.DotEnvReferencesSearcher"/>-->
 
     <localInspection language="DotEnv"
                      groupName="DotEnv"
