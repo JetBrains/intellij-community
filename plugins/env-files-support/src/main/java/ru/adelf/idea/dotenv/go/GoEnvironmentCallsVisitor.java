@@ -4,13 +4,14 @@ import com.goide.psi.GoCallExpr;
 import com.goide.psi.GoStringLiteral;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-class GoEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
+class GoEnvironmentCallsVisitor extends PsiRecursiveElementWalkingVisitor {
     final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override

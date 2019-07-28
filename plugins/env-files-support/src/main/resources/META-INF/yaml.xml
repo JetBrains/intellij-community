@@ -4,6 +4,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DockerComposeKeyGotoHandler"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerComposeKeyGotoHandler"/>
   </extensions>
 </idea-plugin>

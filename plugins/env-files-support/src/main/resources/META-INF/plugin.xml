@@ -1,8 +1,8 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.7</version>
-  <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
+  <version>0.8</version>
+  <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
       <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
@@ -26,7 +26,7 @@
       </ul>
   ]]></change-notes>
 
-  <idea-version since-build="172.0"/>
+  <idea-version since-build="191"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
@@ -45,18 +45,25 @@
   <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
+    <!--<gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>-->
 
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
-    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>
+    <!--<fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>-->
 
     <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
     <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
     <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
+    <lang.refactoringSupport language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvRefactoringSupportProvider"/>
+    <lang.findUsagesProvider language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvFindUsagesProvider"/>
+    <referencesSearch implementation="ru.adelf.idea.dotenv.extension.DotEnvReferencesSearcher"/>
 
-    <localInspection language="DotEnv" groupName="DotEnv"
-                     shortName="DotEnvDuplicateKeyInspection" displayName="Duplicate keys" enabledByDefault="true" level="WARNING"
+    <localInspection language="DotEnv"
+                     groupName="DotEnv"
+                     shortName="DotEnvDuplicateKeyInspection"
+                     displayName="Duplicate keys"
+                     enabledByDefault="true"
+                     level="WARNING"
                      implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
     <lang.syntaxHighlighterFactory language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>

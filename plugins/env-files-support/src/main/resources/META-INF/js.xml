@@ -2,6 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JavaScript" implementationClass="ru.adelf.idea.dotenv.js.JsEnvCompletionProvider"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.js.JsEnvCompletionProvider"/>
+    <psi.referenceContributor implementation="ru.adelf.idea.dotenv.js.JsEnvReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">

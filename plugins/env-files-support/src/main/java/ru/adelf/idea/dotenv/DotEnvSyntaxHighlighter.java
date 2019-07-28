@@ -12,16 +12,16 @@ import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
-public class DotEnvSyntaxHighlighter extends SyntaxHighlighterBase {
-    public static final TextAttributesKey SEPARATOR =
+class DotEnvSyntaxHighlighter extends SyntaxHighlighterBase {
+    private static final TextAttributesKey SEPARATOR =
             createTextAttributesKey("DOTENV_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
-    public static final TextAttributesKey KEY =
+    private static final TextAttributesKey KEY =
             createTextAttributesKey("DOTENV_KEY", DefaultLanguageHighlighterColors.KEYWORD);
-    public static final TextAttributesKey VALUE =
+    private static final TextAttributesKey VALUE =
             createTextAttributesKey("DOTENV_VALUE", DefaultLanguageHighlighterColors.STRING);
-    public static final TextAttributesKey COMMENT =
+    private static final TextAttributesKey COMMENT =
             createTextAttributesKey("DOTENV_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
-    public static final TextAttributesKey BAD_CHARACTER =
+    private static final TextAttributesKey BAD_CHARACTER =
             createTextAttributesKey("DOTENV_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
 
     private static final TextAttributesKey[] BAD_CHAR_KEYS = new TextAttributesKey[]{BAD_CHARACTER};

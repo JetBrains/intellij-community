@@ -17,14 +17,14 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
     @Override
     public WordsScanner getWordsScanner() {
         return new DefaultWordsScanner(new DotEnvLexerAdapter(),
-                TokenSet.create(DotEnvTypes.KEY),
+                TokenSet.create(DotEnvTypes.PROPERTY),
                 TokenSet.create(DotEnvTypes.COMMENT),
                 TokenSet.EMPTY);
     }
 
     @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-        return true;//psiElement instanceof DotEnvProperty;
+        return psiElement instanceof PsiNamedElement;
     }
 
     @Nullable

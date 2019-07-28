@@ -21,7 +21,7 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
     public RubyEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
                 if(psiElement == null || getStringLiteral(psiElement) == null) {
@@ -38,13 +38,13 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if(psiElement == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         RStringLiteral stringLiteral = getStringLiteral(psiElement);
 
         if(stringLiteral == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getContent());
@@ -87,7 +87,7 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
 
     @Nullable
     @Override
-    public String getActionText(DataContext dataContext) {
+    public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

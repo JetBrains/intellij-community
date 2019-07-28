@@ -2,6 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="go" implementationClass="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
+    <psi.referenceContributor implementation="ru.adelf.idea.dotenv.go.GoEnvReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">

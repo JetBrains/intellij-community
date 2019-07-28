@@ -15,7 +15,7 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     protected String getTestDataPath() {
-        return new File(this.getClass().getResource("fixtures").getFile()).getAbsolutePath();
+        return "src/test/java/ru/adelf/idea/dotenv/tests/dotenv/fixtures";
     }
 
     public void testEnvKeys() {

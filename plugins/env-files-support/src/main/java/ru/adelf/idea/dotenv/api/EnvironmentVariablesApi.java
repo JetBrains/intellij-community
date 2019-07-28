@@ -89,7 +89,7 @@ public class EnvironmentVariablesApi {
             return true;
         }, GlobalSearchScope.allScope(project));
 
-        return (targets.size() > 0 ? targets : secondaryTargets).toArray(new PsiElement[0]);
+        return (targets.size() > 0 ? targets : secondaryTargets).toArray(PsiElement.EMPTY_ARRAY);
     }
 
     /**
@@ -116,7 +116,7 @@ public class EnvironmentVariablesApi {
             return true;
         }, GlobalSearchScope.allScope(project));
 
-        return targets.toArray(new PsiElement[0]);
+        return targets.toArray(PsiElement.EMPTY_ARRAY);
     }
 
     private static FileAcceptResult getFileAcceptResult(VirtualFile virtualFile) {

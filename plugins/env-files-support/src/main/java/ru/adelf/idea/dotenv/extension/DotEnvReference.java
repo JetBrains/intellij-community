@@ -12,18 +12,22 @@ import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import java.util.Arrays;
 
 public class DotEnvReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference {
-    private String key;
+    private final String key;
 
     public DotEnvReference(@NotNull PsiElement element, TextRange textRange) {
         super(element, textRange);
         key = element.getText().substring(textRange.getStartOffset(), textRange.getEndOffset());
     }
 
+    public DotEnvReference(@NotNull PsiElement element, TextRange textRange, String key) {
+        super(element, textRange);
+        this.key = key;
+    }
+
     @NotNull
     @Override
     public ResolveResult[] multiResolve(boolean incompleteCode) {
-        Project project = myElement.getProject();
-        final PsiElement[] elements = EnvironmentVariablesApi.getKeyDeclarations(project, key);
+        final PsiElement[] elements = EnvironmentVariablesApi.getKeyDeclarations(myElement.getProject(), key);
 
         return Arrays.stream(elements)
                 .filter(psiElement -> psiElement instanceof PsiNamedElement)

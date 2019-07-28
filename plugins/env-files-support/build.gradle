@@ -1,11 +1,17 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+        maven {
+            url 'https://dl.bintray.com/jetbrains/intellij-plugin-service'
+        }
     }
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.3.11"
+    id "org.jetbrains.intellij" version "0.4.9"
 }
 
 sourceSets {
@@ -24,22 +30,27 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 intellij {
-    version 'IU-182.4129.33'
+    version 'IU-191.7479.19'
     plugins = [
-            'com.jetbrains.php:182.3208.33',
+            'com.jetbrains.php:191.7479.51',
             'JavaScriptLanguage',
             'yaml',
-            'org.jetbrains.plugins.go:182.4129.55.890',
-            'Docker:182.3684.90',
-            'pythonid:2018.2.182.4129.33',
-            'org.jetbrains.plugins.ruby:2018.2.20180716',
+            'org.jetbrains.plugins.go:191.7479.19.213',
+            'Docker',
+            'pythonid:2019.1.191.7479.19',
+            'org.jetbrains.plugins.ruby:2019.1.20190528',
+            'coverage',
+            'CSS',
+            'java-i18n',
+            'properties',
     ]
     pluginName '.env files support'
 }
 
 patchPluginXml {
-    sinceBuild '182'
+    sinceBuild '191'
 }
 
-group 'org.jetbrains'
-version '0.7' // Plugin version
+group 'ru.adelf'
+version '0.8' // Plugin version
+sourceCompatibility = 1.8

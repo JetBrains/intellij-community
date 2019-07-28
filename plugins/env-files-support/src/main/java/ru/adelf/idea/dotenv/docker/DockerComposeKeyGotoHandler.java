@@ -1,9 +1,10 @@
-package ru.adelf.idea.dotenv.extension;
+package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
@@ -19,32 +20,32 @@ public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if(psiElement == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         if(!psiElement.getContainingFile().getName().equals("docker-compose.yml") && !psiElement.getContainingFile().getName().equals("docker-compose.yaml")) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         if(psiElement.getParent() == null || psiElement.getParent().getParent() == null || psiElement.getParent().getParent().getParent() == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         psiElement = psiElement.getParent();
 
         if(psiElement instanceof YAMLScalar) {
             if(!(psiElement.getParent() instanceof YAMLSequenceItem)) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             PsiElement yamlKeyValue = psiElement.getParent().getParent().getParent();
 
             if(!(yamlKeyValue instanceof YAMLKeyValue)) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             if(!"environment".equals(((YAMLKeyValue) yamlKeyValue).getKeyText())) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), EnvironmentVariablesUtil.getKeyFromString(((YAMLScalar) psiElement).getTextValue()));
@@ -52,28 +53,28 @@ public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
 
         if(psiElement instanceof YAMLKeyValue) {
             if(!(psiElement.getParent() instanceof YAMLMapping)) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             PsiElement yamlKeyValue = psiElement.getParent().getParent();
 
             if(!(yamlKeyValue instanceof YAMLKeyValue)) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             if(!"environment".equals(((YAMLKeyValue) yamlKeyValue).getKeyText())) {
-                return new PsiElement[0];
+                return PsiElement.EMPTY_ARRAY;
             }
 
             return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), ((YAMLKeyValue) psiElement).getKeyText());
         }
 
-        return new PsiElement[0];
+        return PsiElement.EMPTY_ARRAY;
     }
 
     @Nullable
     @Override
-    public String getActionText(DataContext dataContext) {
+    public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

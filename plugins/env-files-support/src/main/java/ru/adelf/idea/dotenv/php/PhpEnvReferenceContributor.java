@@ -7,9 +7,8 @@ import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.extension.DotEnvReference;
-import ru.adelf.idea.dotenv.util.PsiUtil;
 
-public class PhpDotEnvReferenceContributor extends PsiReferenceContributor {
+public class PhpEnvReferenceContributor extends PsiReferenceContributor {
     @Override
     public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
         registrar.registerReferenceProvider(PlatformPatterns.psiElement(StringLiteralExpression.class),
@@ -17,11 +16,10 @@ public class PhpDotEnvReferenceContributor extends PsiReferenceContributor {
                     @NotNull
                     @Override
                     public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                                 @NotNull ProcessingContext
-                                                                         context) {
+                                                                 @NotNull ProcessingContext context) {
                         StringLiteralExpression literal = (StringLiteralExpression) element;
 
-                        if(!PsiUtil.isEnvFunctionParameter(literal)) {
+                        if (!PhpPsiHelper.isEnvFunctionParameter(literal)) {
                             return PsiReference.EMPTY_ARRAY;
                         }
 
