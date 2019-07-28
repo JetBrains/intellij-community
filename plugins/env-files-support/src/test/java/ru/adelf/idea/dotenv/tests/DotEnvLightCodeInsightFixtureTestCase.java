@@ -17,6 +17,8 @@ import java.util.HashSet;
  */
 public abstract class DotEnvLightCodeInsightFixtureTestCase extends LightCodeInsightFixtureTestCase {
 
+    protected String basePath = "src/test/java/ru/adelf/idea/dotenv/tests/";
+
     protected void assertIndexContains(@NotNull ID<String, ?> id, @NotNull String... keys) {
         assertIndex(id, false, keys);
     }
