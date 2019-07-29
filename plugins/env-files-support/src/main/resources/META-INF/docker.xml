@@ -4,6 +4,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DockerfileKeyGotoHandler"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
   </extensions>
 </idea-plugin>

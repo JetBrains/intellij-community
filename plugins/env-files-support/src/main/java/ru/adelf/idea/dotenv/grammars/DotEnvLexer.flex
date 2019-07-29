@@ -17,7 +17,7 @@ import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 
 CRLF=\R
 WHITE_SPACE=[\ \t\f]
-FIRST_VALUE_CHARACTER=[^ \n\f\r\"\\] | "\\".
+FIRST_VALUE_CHARACTER=[^ \n\f\r\"\\\#] | "\\".
 VALUE_CHARACTER=[^\r\n\#]
 QUOTED_VALUE_CHARACTER=[^\r\n\"]
 QUOTED_QUOTE="\\\""

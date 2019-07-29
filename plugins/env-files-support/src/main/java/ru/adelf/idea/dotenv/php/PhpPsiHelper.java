@@ -1,4 +1,4 @@
-package ru.adelf.idea.dotenv.util;
+package ru.adelf.idea.dotenv.php;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.php.lang.psi.elements.FunctionReference;
@@ -6,7 +6,7 @@ import com.jetbrains.php.lang.psi.elements.ParameterList;
 
 import java.util.Arrays;
 
-public class PsiUtil {
+class PhpPsiHelper {
 
     /**
      * Checks that this element is first parameter of needed functions, like env('element')
@@ -14,7 +14,7 @@ public class PsiUtil {
      * @param psiElement Checking psi element
      * @return true if it's needed parameter in needed function
      */
-    public static boolean isEnvFunctionParameter(PsiElement psiElement) {
+    static boolean isEnvFunctionParameter(PsiElement psiElement) {
         return isFunctionParameter(psiElement, 0, "getenv", "env");
     }
 
@@ -23,7 +23,7 @@ public class PsiUtil {
      * @param functionReference Checking reference
      * @return true if condition filled
      */
-    public static boolean isEnvFunction(FunctionReference functionReference) {
+    static boolean isEnvFunction(FunctionReference functionReference) {
 
         String name = functionReference.getName();
 

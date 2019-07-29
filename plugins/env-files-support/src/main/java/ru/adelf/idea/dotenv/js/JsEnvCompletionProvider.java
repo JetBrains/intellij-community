@@ -19,7 +19,7 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
     public JsEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
                 if(psiElement == null || !JsPsiHelper.checkPsiElement(psiElement)) {
@@ -36,11 +36,11 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if(psiElement == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         if(!JsPsiHelper.checkPsiElement(psiElement)) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), psiElement.getText());
@@ -48,7 +48,7 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
 
     @Nullable
     @Override
-    public String getActionText(DataContext dataContext) {
+    public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

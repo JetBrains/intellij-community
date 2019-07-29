@@ -99,7 +99,7 @@ class _DotEnvLexer implements FlexLexer {
   private static final String ZZ_ROWMAP_PACKED_0 =
     "\0\0\0\13\0\26\0\41\0\54\0\67\0\102\0\115"+
     "\0\130\0\143\0\156\0\171\0\204\0\102\0\143\0\217"+
-    "\0\232\0\156\0\245\0\260\0\143\0\273\0\306\0\321"+
+    "\0\232\0\143\0\245\0\260\0\143\0\273\0\306\0\321"+
     "\0\334\0\115\0\347\0\362\0\171\0\375\0\321";
 
   private static int [] zzUnpackRowMap() {
@@ -185,8 +185,8 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\4\0\5\1\1\11\4\1\1\11\5\1\1\11\4\1"+
-    "\1\0\5\1";
+    "\4\0\5\1\1\11\4\1\1\11\2\1\1\11\2\1"+
+    "\1\11\4\1\1\0\5\1";
 
   private static int [] zzUnpackAttribute() {
     int [] result = new int[31];

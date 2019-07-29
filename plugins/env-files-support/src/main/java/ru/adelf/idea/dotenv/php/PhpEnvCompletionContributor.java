@@ -1,4 +1,4 @@
-package ru.adelf.idea.dotenv.extension;
+package ru.adelf.idea.dotenv.php;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
@@ -12,13 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
-import ru.adelf.idea.dotenv.util.PsiUtil;
 
-public class DotEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
-    public DotEnvCompletionContributor() {
+public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
+    public PhpEnvCompletionContributor() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
                 if(psiElement == null || getStringLiteral(psiElement) == null) {
@@ -35,13 +34,13 @@ public class DotEnvCompletionContributor extends BaseEnvCompletionProvider imple
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if(psiElement == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         StringLiteralExpression stringLiteral = getStringLiteral(psiElement);
 
         if(stringLiteral == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getContents());
@@ -55,7 +54,7 @@ public class DotEnvCompletionContributor extends BaseEnvCompletionProvider imple
             return null;
         }
 
-        if(!PsiUtil.isEnvFunctionParameter(parent)) {
+        if(!PhpPsiHelper.isEnvFunctionParameter(parent)) {
             return null;
         }
 
@@ -64,7 +63,7 @@ public class DotEnvCompletionContributor extends BaseEnvCompletionProvider imple
 
     @Nullable
     @Override
-    public String getActionText(DataContext dataContext) {
+    public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

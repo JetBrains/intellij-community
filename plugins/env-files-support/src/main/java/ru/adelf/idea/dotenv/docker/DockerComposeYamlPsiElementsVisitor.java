@@ -43,7 +43,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
             }
 
             for(YAMLKeyValue keyValue : getMappingItems(yamlKeyValue)) {
-                collectedItems.add(new KeyValuePsiElement(keyValue.getKeyText(), keyValue.getValueText(), keyValue.getKey()));
+                collectedItems.add(new KeyValuePsiElement(keyValue.getKeyText(), keyValue.getValueText(), keyValue));
             }
         }
     }

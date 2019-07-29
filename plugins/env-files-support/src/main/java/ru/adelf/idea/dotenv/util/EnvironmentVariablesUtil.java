@@ -34,17 +34,6 @@ public class EnvironmentVariablesUtil {
     }
 
     @NotNull
-    public static String getValueFromString(@NotNull String s) {
-        int pos = s.indexOf("=");
-
-        if(pos == -1) {
-            return "";
-        } else {
-            return s.substring(pos + 1).trim();
-        }
-    }
-
-    @NotNull
     public static Set<PsiElement> getElementsByKey(String key, Collection<KeyValuePsiElement> items) {
         return items.stream().filter(item -> item.getKey().equals(key)).map(KeyValuePsiElement::getElement).collect(Collectors.toSet());
     }

@@ -23,7 +23,7 @@ class GoPsiHelper {
      * @param callExpression checking element
      * @return GoStringLiteral
      */
-    public static GoStringLiteral getEnvironmentGoLiteral(GoCallExpr callExpression) {
+    static GoStringLiteral getEnvironmentGoLiteral(GoCallExpr callExpression) {
         GoReferenceExpression ref = GoPsiUtil.getCallReference(callExpression);
         if (ref == null) return null;
 
@@ -39,7 +39,7 @@ class GoPsiHelper {
         if (!ENV_FUNCTIONS.containsKey(functionName)) return null;
 
         int position = ENV_FUNCTIONS.get(functionName);
-        if (callExpression.getArgumentList().getExpressionList().size() < position+1) return null;
+        if (callExpression.getArgumentList().getExpressionList().size() < position + 1) return null;
 
         GoExpression expr = callExpression.getArgumentList().getExpressionList().get(position);
         if(!(expr instanceof GoStringLiteral)) return null;

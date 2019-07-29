@@ -2,10 +2,8 @@ package ru.adelf.idea.dotenv;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
 import java.util.HashSet;

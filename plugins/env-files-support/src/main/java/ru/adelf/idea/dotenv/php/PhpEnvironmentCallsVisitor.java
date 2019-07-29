@@ -6,7 +6,6 @@ import com.jetbrains.php.lang.psi.elements.FunctionReference;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
-import ru.adelf.idea.dotenv.util.PsiUtil;
 
 import java.util.*;
 
@@ -24,7 +23,7 @@ class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
 
     private void visitFunction(FunctionReference expression) {
 
-        if(!PsiUtil.isEnvFunction(expression)) return;
+        if(!PhpPsiHelper.isEnvFunction(expression)) return;
 
         PsiElement[] parameters = expression.getParameters();
 

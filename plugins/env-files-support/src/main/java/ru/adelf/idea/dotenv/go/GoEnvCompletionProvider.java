@@ -21,7 +21,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
     public GoEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
                 if(psiElement == null || getStringLiteral(psiElement) == null) {
@@ -36,15 +36,14 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-
         if(psiElement == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         GoStringLiteral stringLiteral = getStringLiteral(psiElement);
 
         if(stringLiteral == null) {
-            return new PsiElement[0];
+            return PsiElement.EMPTY_ARRAY;
         }
 
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getDecodedText());
@@ -73,7 +72,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
 
     @Nullable
     @Override
-    public String getActionText(DataContext dataContext) {
+    public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

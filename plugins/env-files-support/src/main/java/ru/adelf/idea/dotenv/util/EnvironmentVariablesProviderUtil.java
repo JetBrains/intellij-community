@@ -1,6 +1,5 @@
 package ru.adelf.idea.dotenv.util;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
@@ -17,7 +16,7 @@ public class EnvironmentVariablesProviderUtil {
     private static Set<EnvironmentVariablesProvider> getEnvVariablesProviders() {
         Set<EnvironmentVariablesProvider> providers = new HashSet<>();
 
-        Collections.addAll(providers, Extensions.getExtensions(ExtensionPointName.create("ru.adelf.idea.dotenv.environmentVariablesProvider")));
+        Collections.addAll(providers, Extensions.getExtensions("ru.adelf.idea.dotenv.environmentVariablesProvider", null) );
 
         return providers;
     }
@@ -25,7 +24,7 @@ public class EnvironmentVariablesProviderUtil {
     private static Set<EnvironmentVariablesUsagesProvider> getEnvVariablesUsagesProviders() {
         Set<EnvironmentVariablesUsagesProvider> providers = new HashSet<>();
 
-        Collections.addAll(providers, Extensions.getExtensions(ExtensionPointName.create("ru.adelf.idea.dotenv.environmentVariablesUsagesProvider")));
+        Collections.addAll(providers, Extensions.getExtensions("ru.adelf.idea.dotenv.environmentVariablesUsagesProvider", null));
 
         return providers;
     }
