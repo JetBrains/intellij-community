@@ -2,44 +2,10 @@
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
-import java.util.function.Consumer
-
-internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : Binding {
-  private val itemBinding = createElementBindingByType(itemType, context)
-
-  protected fun createItemConsumer(context: WriteContext): Consumer<Any?> {
-    val writer = context.writer
-    return Consumer {
-      if (it == null) {
-        writer.writeNull()
-      }
-      else {
-        itemBinding.serialize(it, context)
-      }
-    }
-  }
-
-  fun readInto(hostObject: Any?, result: MutableCollection<Any?>, context: ReadContext) {
-    val reader = context.reader
-    reader.stepIn()
-    while (true) {
-      @Suppress("MoveVariableDeclarationIntoWhen")
-      val type = reader.next() ?: break
-      val item = when (type) {
-        IonType.NULL -> null
-        else -> itemBinding.deserialize(context, hostObject)
-      }
-      result.add(item)
-    }
-    reader.stepOut()
-  }
-}
 
 internal class CollectionBinding(type: ParameterizedType, context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
   private val collectionClass = ClassUtil.typeToClass(type)
@@ -113,41 +79,5 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
     }
 
     return ArrayList()
-  }
-}
-
-internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
-  override fun deserialize(context: ReadContext, hostObject: Any?) = readArray(context, hostObject)
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    val type = context.reader.type
-    if (type == IonType.NULL) {
-      property.set(hostObject, null)
-    }
-    else if (type != IonType.INT) {
-      property.set(hostObject, readArray(context, hostObject))
-    }
-  }
-
-  override fun serialize(obj: Any, context: WriteContext) {
-    val array = obj as Array<*>
-    val writer = context.writer
-    if (context.filter.skipEmptyArray && array.isEmpty()) {
-      writer.writeInt(0)
-      return
-    }
-
-    writer.stepIn(IonType.LIST)
-    val consumer = createItemConsumer(context)
-    array.forEach { consumer.accept(it) }
-    writer.stepOut()
-  }
-
-  private fun readArray(context: ReadContext, hostObject: Any?): Array<out Any> {
-    val list = ArrayList<Any?>()
-    readInto(hostObject, list, context)
-    val result = ArrayUtil.newArray(itemClass, list.size)
-    list.toArray(result)
-    return result
   }
 }
