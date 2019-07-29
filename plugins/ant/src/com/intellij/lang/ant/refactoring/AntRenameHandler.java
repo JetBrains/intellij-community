@@ -44,7 +44,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @NotNull final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     if (elements != null && elements.length > 0) {
       invoke(project, new PsiElement[]{elements[0]}, dataContext);

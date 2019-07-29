@@ -155,7 +155,7 @@ public class VfsData {
     }
   }
 
-  public static void initFile(int id, Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
+  public static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
     assert id > 0;
     int offset = getOffset(id);
 
