@@ -49,7 +49,7 @@ public class GitRenameBranchOperation extends GitBranchOperation {
       GitRepository repository = next();
       GitCommandResult result = myGit.renameBranch(repository, myCurrentName, myNewName);
       if (result.success()) {
-        refresh(repository);
+        repository.update();
         markSuccessful(repository);
       }
       else {
@@ -66,7 +66,7 @@ public class GitRenameBranchOperation extends GitBranchOperation {
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
       result.append(repository, myGit.renameBranch(repository, myNewName, myCurrentName));
-      refresh(repository);
+      repository.update();
     }
     if (result.totalSuccess()) {
       myNotifier.notifySuccess("Rollback Successful", "Renamed back to " + myCurrentName);
@@ -94,9 +94,5 @@ public class GitRenameBranchOperation extends GitBranchOperation {
   @Override
   protected String getOperationName() {
     return "rename";
-  }
-
-  private static void refresh(@NotNull GitRepository repository) {
-    repository.update();
   }
 }
