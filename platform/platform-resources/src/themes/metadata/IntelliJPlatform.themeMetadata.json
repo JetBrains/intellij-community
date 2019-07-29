@@ -323,16 +323,18 @@
     },
     {
       "key": "HelpTooltip.background",
-      "description": "Tooltips for toolbar buttons and other controls. To replace the current tooltip in future versions"
+      "deprecated": true
     },
     {
       "key": "HelpTooltip.borderColor"
     },
     {
-      "key": "HelpTooltip.foreground"
+      "key": "HelpTooltip.foreground",
+      "deprecated": true
     },
     {
-      "key": "HelpTooltip.shortcutForeground"
+      "key": "HelpTooltip.shortcutForeground",
+      "deprecated": true
     },
     {
       "key": "HelpTooltip.infoForeground"
@@ -698,6 +700,16 @@
     },
     {
       "key": "ToggleButton.onForeground"
+    },
+    {
+      "key": "ToolTip.infoForeground",
+      "description": "\"Inspection Info\" text in inspection error tooltips"
+    },
+    {
+      "key": "ToolTip.shortcutForeground"
+    },
+    {
+      "key": "ToolTip.borderColor"
     },
     {
       "key": "ToolTip.Actions.background",
