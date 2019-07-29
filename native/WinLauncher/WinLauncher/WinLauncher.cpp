@@ -576,19 +576,6 @@ bool LoadVMOptions()
   std::string dllName(jvmPath);
   std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
 
-  std::vector<char> pathEnvVar(_MAX_PATH);
-  DWORD pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
-  if (pathSizeWithoutTerminator >= pathEnvVar.size())
-  {
-    pathEnvVar.resize(pathSizeWithoutTerminator + 1);
-    pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
-  }
-
-  if (pathSizeWithoutTerminator)
-  {
-    std::string path = binDirs + ";" + std::string(pathEnvVar.data());
-    SetEnvironmentVariableA("PATH", path.c_str());
-  }
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
@@ -610,7 +597,6 @@ bool LoadJVMLibrary()
 {
   std::string dllName(jvmPath);
   std::string binDir = dllName + "\\bin";
-  TCHAR currentDir[MAX_PATH];
   std::string serverDllName = binDir + "\\server\\jvm.dll";
   std::string clientDllName = binDir + "\\client\\jvm.dll";
   if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
@@ -622,15 +608,18 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
-  // ensure we can find msvcr100.dll which is located in jre/bin directory; jvm.dll depends on it.
-  GetCurrentDirectory(sizeof(currentDir),currentDir);
-  SetCurrentDirectoryA(binDir.c_str());
+  // Call SetDllDirectory to allow jvm.dll to load the corresponding runtime libraries.
+  SetDllDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
-  SetCurrentDirectory(currentDir);
+
+  // Now clean up the SetDllDirectory context, because otherwise it will pollute the child processes (and that is
+  // often unwanted for any user programs started from IDE).
+  SetDllDirectoryA(nullptr);
+
   if (!pCreateJavaVM)
   {
     std::string jvmError = "Failed to load JVM DLL ";
