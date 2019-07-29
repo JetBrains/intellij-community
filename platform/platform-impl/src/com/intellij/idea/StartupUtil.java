@@ -116,7 +116,7 @@ public class StartupUtil {
     default void beforeStartupWizard() {}
 
     // called in EDT
-    default void startupWizardFinished() {}
+    default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
 
     // not called in EDT
     default void importFinished(@NotNull Path newConfigDir) {}
@@ -616,13 +616,11 @@ public class StartupUtil {
       return;
     }
 
-    IdeaApplication.setWizardStepsProvider(provider);
-
     appStarter.beforeStartupWizard();
     new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
 
     PluginManagerCore.invalidatePlugins();
-    appStarter.startupWizardFinished();
+    appStarter.startupWizardFinished(provider);
   }
 
   // must be called from EDT
