@@ -29,7 +29,8 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals("initial contents", new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("Wrong cat output: " + result.getRawOutput() + "with error:" + result.getRawError(), "initial contents",
+                 new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
   }
 
 
@@ -49,6 +50,7 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals("initial contents", new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("Wrong cat output: " + result.getRawOutput() + "with error:" + result.getRawError(), "initial contents",
+                 new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
   }
 }
