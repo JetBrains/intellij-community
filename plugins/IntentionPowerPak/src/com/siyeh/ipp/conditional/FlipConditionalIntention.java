@@ -34,7 +34,7 @@ public class FlipConditionalIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiConditionalExpression exp = (PsiConditionalExpression)element;
 
     final PsiExpression condition = exp.getCondition();

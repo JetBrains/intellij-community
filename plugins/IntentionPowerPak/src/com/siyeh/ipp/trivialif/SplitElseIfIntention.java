@@ -31,7 +31,7 @@ public class SplitElseIfIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) {

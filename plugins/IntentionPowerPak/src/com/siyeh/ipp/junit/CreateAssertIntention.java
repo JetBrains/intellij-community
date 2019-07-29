@@ -36,7 +36,7 @@ public class CreateAssertIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiExpressionStatement statement = (PsiExpressionStatement)element;
     final PsiExpression expression = statement.getExpression();
     final String newStatement;

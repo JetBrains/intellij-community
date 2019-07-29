@@ -66,7 +66,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }

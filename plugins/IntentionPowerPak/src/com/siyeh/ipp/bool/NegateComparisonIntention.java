@@ -57,7 +57,7 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(PsiElement element) {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();

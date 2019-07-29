@@ -19,6 +19,8 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
@@ -29,15 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Intention extends BaseElementAtCaretIntentionAction {
-
-  private final PsiElementPredicate predicate;
-
-  /**
-   * @noinspection AbstractMethodCallInConstructor
-   */
-  protected Intention() {
-    predicate = getElementPredicate();
-  }
+  private final NotNullLazyValue<PsiElementPredicate> myPredicate = AtomicNotNullLazyValue.createValue(() -> getElementPredicate());
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
@@ -92,6 +86,10 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Nullable
   PsiElement findMatchingElement(@Nullable PsiElement element, Editor editor) {
+    if (element == null || !JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
+
+    PsiElementPredicate predicate = myPredicate.getValue();
+
     while (element != null) {
       if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
         break;
