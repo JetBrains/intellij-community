@@ -411,17 +411,30 @@ public class FileReferenceSet {
     PsiFile file = getContainingFile();
     if (file == null) return Collections.emptyList();
 
+    Collection<FileTargetContext> targetContexts;
+
     Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
     if (contexts != null) {
-      return toTargetContexts(contexts);
-    }
-
-    if (isAbsolutePathReference()) {
+      targetContexts = toTargetContexts(contexts);
+    } else if (isAbsolutePathReference()) {
       Collection<PsiFileSystemItem> locations = getAbsoluteTopLevelDirLocations(file);
-      return toTargetContexts(locations);
+      targetContexts = toTargetContexts(locations);
+    } else {
+      targetContexts = getTargetContextByFile(file);
     }
 
-    return getTargetContextByFile(file);
+    // CreateFilePathFix and CreateDirectoryPathFix support only local files
+    return filterLocalFsContexts(targetContexts);
+  }
+
+  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<FileTargetContext> contexts) {
+    return ContainerUtil.filter(contexts, c -> {
+      VirtualFile file = c.getFileSystemItem().getVirtualFile();
+      if (file == null || !file.isInLocalFileSystem()) {
+        return false;
+      }
+      return c.getFileSystemItem().isDirectory();
+    });
   }
 
   @Nullable

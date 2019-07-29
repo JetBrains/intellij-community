@@ -69,9 +69,6 @@ public abstract class FileReferenceHelper {
 
   /**
    * Provides root contexts, depending on passed {@code file}.
-   *
-   * @param file file
-   * @return target contexts
    */
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile file) {
@@ -83,13 +80,9 @@ public abstract class FileReferenceHelper {
 
   /**
    * Provides file target contexts, locations where users can create a file, depending on passed {@code file}.
-   *
-   * @param project project
-   * @param file file
-   * @return target contexts
    */
   @NotNull
-  public Collection<FileTargetContext> getTargetContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);
   }
 
