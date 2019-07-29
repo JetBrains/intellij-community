@@ -2,7 +2,6 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
@@ -120,7 +119,6 @@ public final class IdeaTestApplication implements Disposable {
     app.registerMessageBusListeners(loadedPlugins, true);
     RegistryKeyBean.addKeysFromPlugins();
     app.load(configPath, null);
-    LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();

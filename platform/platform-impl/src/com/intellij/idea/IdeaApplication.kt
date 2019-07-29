@@ -354,8 +354,6 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
-    LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN)
-
     val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
     showWizardAndWelcomeFrame(when {
                                 shouldShowWelcomeFrame -> Runnable {
