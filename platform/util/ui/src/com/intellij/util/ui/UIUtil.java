@@ -155,8 +155,12 @@ public final class UIUtil extends StartupUiUtil {
           rootPane.repaint();
         }
       };
-      window.addWindowListener(windowAdapter);
-      onDispose.consume(() -> window.removeWindowListener(windowAdapter));
+      PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
+      window.addPropertyChangeListener("title", propertyChangeListener);
+      onDispose.consume(() -> {
+        window.removeWindowListener(windowAdapter);
+        window.removePropertyChangeListener("title", propertyChangeListener);
+      });
     }
   }
 
