@@ -28,7 +28,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.SystemDock
@@ -43,13 +42,13 @@ import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.exists
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -100,13 +99,13 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
 
   starter.premain(args)
 
-  val futures = ArrayList<Future<*>>()
+  val futures = mutableListOf<Future<*>>()
   futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app))
 
   if (!headless) {
     if (SystemInfo.isMac) {
       // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-      futures.add(ApplicationManager.getApplication().executeOnPooledThread {
+      futures.add(AppExecutorUtil.getAppExecutorService().submit {
         ParallelActivity.PREPARE_APP_INIT.run("mac touchbar") {
           TouchBarsManager.isTouchBarAvailable()
         }
@@ -131,10 +130,15 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     if (!headless) {
       addActivateAndWindowsCliListeners(app)
     }
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity { starter.main(args) }
+
+    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+      starter.main(args)
+    }
 
     if (PluginManagerCore.isRunningFromSources()) {
-      ApplicationManager.getApplication().executeOnPooledThread { AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()) }
+      ApplicationManager.getApplication().executeOnPooledThread {
+        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      }
     }
   }
 }
@@ -290,27 +294,27 @@ open class IdeStarter : ApplicationStarter {
   override fun canProcessExternalCommandLine() = true
 
   override fun processExternalCommandLineAsync(args: Array<String>, currentDirectory: String?): Future<out CliResult> {
-    LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","))
-
-    if (args.isNotEmpty()) {
-      val filename = args[0]
-      val file = if (currentDirectory == null) Paths.get(filename) else Paths.get(currentDirectory, filename)
-      if (Files.exists(file)) {
-        var line = -1
-        if (args.size > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME == args[1]) {
-          try {
-            line = Integer.parseInt(args[2])
-          }
-          catch (ex: NumberFormatException) {
-            LOG.error("Wrong line number:" + args[2])
-          }
-
-        }
-        PlatformProjectOpenProcessor.doOpenProject(file, OpenProjectTask(), line)
-      }
-      return CliResult.error(1, "Can't find file:$file")
+    LOG.info("Request to open in $currentDirectory with parameters: ${args.joinToString(separator = ",")}")
+    if (args.isEmpty()) {
+      return CliResult.ok()
     }
-    return CliResult.ok()
+
+    val filename = args[0]
+    val file = if (currentDirectory == null) Paths.get(filename) else Paths.get(currentDirectory, filename)
+    if (file.exists()) {
+      var line = -1
+      if (args.size > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME == args[1]) {
+        try {
+          line = args[2].toInt()
+        }
+        catch (ex: NumberFormatException) {
+          LOG.error("Wrong line number: ${args[2]}")
+        }
+
+      }
+      PlatformProjectOpenProcessor.doOpenProject(file, OpenProjectTask(), line)
+    }
+    return CliResult.error(1, "Can't find file: $file")
   }
 
   private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
@@ -325,14 +329,13 @@ open class IdeStarter : ApplicationStarter {
   override fun main(args: Array<String>) {
     val frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION)
 
+    val app = ApplicationManager.getApplication()
     // Event queue should not be changed during initialization of application components.
     // It also cannot be changed before initialization of application components because IdeEventQueue uses other
     // application components. So it is proper to perform replacement only here.
-    val setWindowManagerActivity = frameInitActivity.startChild("set window manager")
-    val app = ApplicationManager.getApplication()
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    IdeEventQueue.getInstance().setWindowManager(windowManager)
-    setWindowManagerActivity.end()
+    frameInitActivity.runChild("set window manager") {
+      IdeEventQueue.getInstance().setWindowManager(WindowManager.getInstance() as WindowManagerImpl)
+    }
 
     val commandLineArgs = args.toList()
 
@@ -365,7 +368,9 @@ open class IdeStarter : ApplicationStarter {
 
     frameInitActivity.end()
 
-    app.executeOnPooledThread { LifecycleUsageTriggerCollector.onIdeStart() }
+    AppExecutorUtil.getAppExecutorService().run {
+      LifecycleUsageTriggerCollector.onIdeStart()
+    }
 
     TransactionGuard.submitTransaction(app, Runnable {
       val project = when {
