@@ -393,4 +393,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testClosureAndSamInterface() {
+    doTest(true)
+  }
+
 }

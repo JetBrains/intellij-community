@@ -11,17 +11,22 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 
-class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
-                               private val varargParameter: GrParameter?,
-                               private val closureDriver: InferenceDriver,
-                               private val originalMethod: GrMethod,
-                               private val typeParameters: Collection<PsiTypeParameter>) : InferenceDriver {
+class CommonDriver internal constructor(private val targetParameters: Set<GrParameter>,
+                                        private val varargParameter: GrParameter?,
+                                        private val closureDriver: InferenceDriver,
+                                        private val originalMethod: GrMethod,
+                                        private val typeParameters: Collection<PsiTypeParameter>) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
 
   companion object {
@@ -66,8 +71,10 @@ class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
 
   override fun collectSignatureSubstitutor(): PsiSubstitutor {
     val mapping = setUpParameterMapping(originalMethod, method).map { it.key.name to it.value }.toMap()
-    val inferenceSession = CollectingGroovyInferenceSession(typeParameters().toTypedArray(), proxyMethodMapping = mapping)
-    val constraints = collectOuterConstraints()
+    val (constraints, samParameters) = collectOuterCallsInformation()
+    val inferenceSession = CollectingGroovyInferenceSession(typeParameters().toTypedArray(),
+                                                            proxyMethodMapping = mapping,
+                                                            ignoreClosureArguments = samParameters)
     constraints.forEach { inferenceSession.addConstraint(it) }
     return inferenceSession.inferSubst()
   }
@@ -105,13 +112,22 @@ class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
   }
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {
+    return collectOuterCallsInformation().first
+  }
+
+
+  private fun collectOuterCallsInformation(): Pair<Collection<ConstraintFormula>, Set<GrParameter>> {
     val constraintCollector = mutableListOf<ConstraintFormula>()
     for (parameter in targetParameters) {
       constraintCollector.add(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
+    val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
+    val definitelySamParameters = mutableSetOf<GrParameter>()
+    val mapping = setUpParameterMapping(originalMethod, method)
     for (call in ReferencesSearch.search(originalMethod).findAll().mapNotNull { it.element.parent }) {
       if (call is GrExpression) {
         constraintCollector.add(ExpressionConstraint(null, call))
+        fetchSamCoercions(candidateSamParameters, definitelySamParameters, call, mapping)
       }
       else if (call is GrConstructorInvocation) {
         val resolveResult = call.constructorReference.advancedResolve()
@@ -120,8 +136,39 @@ class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
         }
       }
     }
-    return constraintCollector
+    return Pair(constraintCollector, candidateSamParameters.keys.intersect(definitelySamParameters))
   }
+
+
+  private fun fetchSamCoercions(samCandidates: MutableMap<GrParameter, PsiType>,
+                                samParameters: MutableSet<GrParameter>,
+                                call: GrExpression,
+                                mapping: Map<GrParameter, GrParameter>) {
+    val argumentMapping = ((call as? GrMethodCall)?.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: return
+    argumentMapping.expectedTypes.forEach { (_, argument) ->
+      val virtualParameter = mapping[argumentMapping.targetParameter(argument)]?.ensure { it in samCandidates.keys } ?: return@forEach
+      val argumentType = argument.type as? PsiClassType ?: return@forEach
+      if (virtualParameter in samCandidates.keys) {
+        if (argument.type.isClosureTypeDeep()) {
+          return@forEach
+        }
+        val sam = findSingleAbstractMethod(argumentType.resolve() ?: return@forEach)
+        if (sam == null) {
+          samCandidates.remove(virtualParameter)
+        }
+        else {
+          samParameters.add(virtualParameter)
+          if (TypesUtil.canAssign(argumentType, samCandidates[virtualParameter]!!, method, METHOD_PARAMETER) == OK) {
+            samCandidates[virtualParameter] = argumentType
+          }
+          else if (TypesUtil.canAssign(samCandidates[virtualParameter]!!, argumentType, method, METHOD_PARAMETER) != OK) {
+            samCandidates.remove(virtualParameter)
+          }
+        }
+      }
+    }
+  }
+
 
   override fun collectInnerConstraints(): TypeUsageInformation {
     val typeUsageInformation = closureDriver.collectInnerConstraints()

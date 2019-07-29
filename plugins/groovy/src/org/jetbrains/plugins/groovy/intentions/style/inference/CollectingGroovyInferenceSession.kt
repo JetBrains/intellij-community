@@ -20,11 +20,12 @@ class CollectingGroovyInferenceSession(
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   context: PsiElement = typeParams.first(),
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val parent: CollectingGroovyInferenceSession? = null
+  private val parent: CollectingGroovyInferenceSession? = null,
+  private val ignoreClosureArguments: Set<GrParameter> = emptySet()
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
 
 
-  private fun substituteForeignTypeParameters(type: PsiType?) : PsiType? {
+  private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         if (classType.isTypeParameter()) {
@@ -51,7 +52,7 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, proxyMethodMapping, this)
+    val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, proxyMethodMapping, this, ignoreClosureArguments)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession
@@ -71,6 +72,9 @@ class CollectingGroovyInferenceSession(
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
     for ((expectedType, argument) in mapping.expectedTypes) {
       val parameter = mapping.targetParameter(argument)
+      if (proxyMethodMapping[parameter?.name] in ignoreClosureArguments && argument.type.isClosureTypeDeep()) {
+        continue
+      }
       val resultingParameter = substituteWithInferenceVariables(proxyMethodMapping[parameter?.name]?.type ?: expectedType)
       if (argument is ExpressionArgument) {
         addConstraint(ExpressionConstraint(substitutor.substitute(contextSubstitutor.substitute(resultingParameter)), argument.expression))

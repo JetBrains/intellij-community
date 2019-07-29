@@ -83,7 +83,8 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
 
 fun PsiType?.isClosureTypeDeep(): Boolean {
   return (this as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
-         || this?.typeParameter()?.extendsListTypes?.singleOrNull()?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+         || this?.typeParameter()?.extendsListTypes?.singleOrNull()?.rawType()?.equalsToText(
+    GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
 
 
@@ -273,4 +274,11 @@ fun compress(types: List<PsiType>?): PsiType? {
     types.size == 1 -> types.single()
     else -> PsiIntersectionType.createIntersection(types)
   }
+}
+
+inline fun <T> T?.ensure(predicate: (T) -> Boolean) = if (this != null && predicate(this)) {
+  this
+}
+else {
+  null
 }
