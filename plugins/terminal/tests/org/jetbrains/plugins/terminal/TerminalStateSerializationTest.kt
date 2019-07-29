@@ -9,7 +9,7 @@ import org.junit.Test
 class TerminalStateSerializationTest {
   @Test
   fun envs() {
-    val state = TerminalOptionsProvider.State()
+    val state = TerminalProjectOptionsProvider.State()
     state.envDataOptions.set(EnvironmentVariablesData.create(mapOf("foo" to "bar", "env2" to "true"), false))
 
     testSerializer("""
