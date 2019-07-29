@@ -24,12 +24,10 @@ import com.intellij.openapi.vcs.changes.InclusionListener;
 import com.intellij.openapi.vcs.changes.InclusionModel;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -763,29 +761,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return ProjectViewTree.isFileColorsEnabledFor(this);
   }
 
-  @Override
-  public Color getFileColorFor(Object object) {
-    VirtualFile file;
-    if (object instanceof FilePath) {
-      file = getVirtualFileFor((FilePath)object);
-    }
-    else if (object instanceof Change) {
-      file = getVirtualFileFor(ChangesUtil.getFilePath((Change)object));
-    }
-    else {
-      file = ObjectUtils.tryCast(object, VirtualFile.class);
-    }
-
-    if (file != null) {
-      return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
-    }
-    return super.getFileColorFor(object);
-  }
-
   @Nullable
-  private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
-    if (filePath.isNonLocal()) return null;
-    return ChangesUtil.findValidParentAccurately(filePath);
+  @Override
+  public Color getFileColorForPath(@NotNull TreePath path) {
+    Object component = path.getLastPathComponent();
+    if (component instanceof ChangesBrowserNode<?>) {
+      return ((ChangesBrowserNode)component).getBackgroundColor(myProject);
+    }
+    return null;
   }
 
   @Override

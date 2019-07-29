@@ -814,6 +814,12 @@ public class ShelvedChangesViewManager implements Disposable {
     public int compareTo(@NotNull ShelvedChangeNode o) {
       return compareFilePaths(myFilePath, o.myFilePath);
     }
+
+    @Nullable
+    @Override
+    public Color getBackgroundColor(@NotNull Project project) {
+      return getBackgroundColorFor(project, myFilePath);
+    }
   }
 
   private class MyContentUpdater extends Update {

@@ -9,13 +9,12 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
-import com.intellij.openapi.vcs.changes.LogicalLock;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -354,6 +354,36 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
     renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  @Nullable
+  public Color getBackgroundColor(@NotNull Project project) {
+    return getBackgroundColorFor(project, getUserObject());
+  }
+
+  @Nullable
+  protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
+    VirtualFile file;
+    if (object instanceof FilePath) {
+      file = getScopeVirtualFileFor((FilePath)object);
+    }
+    else if (object instanceof Change) {
+      file = getScopeVirtualFileFor(ChangesUtil.getFilePath((Change)object));
+    }
+    else {
+      file = ObjectUtils.tryCast(object, VirtualFile.class);
+    }
+
+    if (file != null) {
+      return VfsPresentationUtil.getFileBackgroundColor(project, file);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
+    if (filePath.isNonLocal()) return null;
+    return ChangesUtil.findValidParentAccurately(filePath);
   }
 
   @Deprecated
