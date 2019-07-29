@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,12 +117,12 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       RecentGroup group = (RecentGroup)o;
-      return Objects.equals(FILTER_VALUES, group.FILTER_VALUES);
+      return Comparing.haveEqualElements(FILTER_VALUES, group.FILTER_VALUES);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(FILTER_VALUES);
+      return Comparing.unorderedHashcode(FILTER_VALUES);
     }
   }
 
