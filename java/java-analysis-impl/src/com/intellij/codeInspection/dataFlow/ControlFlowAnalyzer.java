@@ -1494,8 +1494,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
       addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
+      actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
-    else if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
+    if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalErrorThrow();
       PsiType boxedType = ((PsiPrimitiveType)actualType).getBoxedType(context);
       addInstruction(new BoxingInstruction(boxedType));
