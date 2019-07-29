@@ -69,11 +69,10 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
       classType ?: return classType
       val mappedParameters = classType.parameters.map {
         val accepted = it.accept(this)
-        if (accepted is PsiWildcardType) {
-          accepted
-        }
-        else {
-          PsiWildcardType.createExtends(manager, accepted)
+        when {
+          accepted is PsiWildcardType -> accepted
+          accepted != null && accepted != PsiType.NULL -> PsiWildcardType.createExtends(manager, accepted)
+          else -> PsiWildcardType.createUnbounded(manager)
         }
       }
       return factory.createType(classType.resolve()!!, *mappedParameters.toTypedArray())

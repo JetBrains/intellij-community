@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 private class Parameterizer(val context: PsiElement,
-                            val registerTypeParameterAction: (Iterable<PsiClassType>) -> PsiClassType) : PsiTypeVisitor<PsiClassType>() {
+                            val registerTypeParameterAction: (Iterable<PsiClassType?>) -> PsiClassType) : PsiTypeVisitor<PsiClassType>() {
   val elementFactory = GroovyPsiElementFactory.getInstance(context.project)
 
 
@@ -39,7 +39,7 @@ private class Parameterizer(val context: PsiElement,
   override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiClassType? {
     wildcardType ?: return null
     val upperBounds = if (wildcardType.isExtends) {
-      listOf(wildcardType.extendsBound.accept(this) as PsiClassType)
+      listOf(wildcardType.extendsBound.accept(this))
     }
     else {
       emptyList()
@@ -49,7 +49,7 @@ private class Parameterizer(val context: PsiElement,
 
   override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiClassType? {
     intersectionType ?: return null
-    val parametrizedConjuncts = intersectionType.conjuncts.map { it.accept(this) as PsiClassType }
+    val parametrizedConjuncts = intersectionType.conjuncts.map { it.accept(this) }
     return registerTypeParameterAction(parametrizedConjuncts)
   }
 }
@@ -66,9 +66,9 @@ class ParameterizationManager(method: GrMethod) {
     fun nonTrivial(type: PsiType) = !type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
   }
 
-  private fun registerTypeParameter(supertypes: Iterable<PsiClassType>, storage: MutableCollection<PsiTypeParameter>): PsiClassType {
+  private fun registerTypeParameter(supertypes: Iterable<PsiClassType?>, storage: MutableCollection<PsiTypeParameter>): PsiClassType {
     val typeParameter =
-      elementFactory.createProperTypeParameter(nameGenerator.name, supertypes.filter { nonTrivial(it) }.toTypedArray())
+      elementFactory.createProperTypeParameter(nameGenerator.name, supertypes.filterNotNull().filter { nonTrivial(it) }.toTypedArray())
     storage.add(typeParameter)
     return typeParameter.type()
   }
@@ -80,7 +80,7 @@ class ParameterizationManager(method: GrMethod) {
   fun createDeeplyParameterizedType(target: PsiType, strict: Boolean = false): ParameterizationResult {
     val createdTypeParameters = mutableListOf<PsiTypeParameter>()
     val registerAction =
-      { upperBounds: Iterable<PsiClassType> -> registerTypeParameter(upperBounds, createdTypeParameters) }
+      { upperBounds: Iterable<PsiClassType?> -> registerTypeParameter(upperBounds, createdTypeParameters) }
     val visitor = Parameterizer(context, registerAction)
     val calculatedType =
       when {
