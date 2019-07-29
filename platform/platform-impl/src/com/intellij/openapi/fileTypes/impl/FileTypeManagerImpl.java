@@ -1527,13 +1527,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myRemovedMappingTracker.saveRemovedMappingsForFileType(map, type.getName(), defaultAssociations, specifyTypeName);
   }
 
-  public void approveRemoval(@NotNull FileNameMatcher matcher) {
-    FileType type = getExtensionMap().findAssociatedFileType(matcher);
-    if (type != null) {
-      myRemovedMappingTracker.approveRemoval(type.getName(), matcher);
-    }
-  }
-
   // -------------------------------------------------------------------------
   // Helper methods
   // -------------------------------------------------------------------------
