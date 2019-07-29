@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
 public abstract class ApplicationStarterEx implements ApplicationStarter {
   @NotNull
   @Override
-  public final Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  public final Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
     processExternalCommandLine(args, currentDirectory);
     return CliResult.ok();
   }

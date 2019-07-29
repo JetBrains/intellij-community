@@ -283,7 +283,7 @@ public final class SocketLock {
 
   @FunctionalInterface
   public interface CliRequestProcessor {
-    Future<? extends CliResult> process(@NotNull List<String> args);
+    Future<CliResult> process(@NotNull List<String> args);
   }
 
   private static final class MyChannelInboundHandler extends MessageDecoder {

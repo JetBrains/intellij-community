@@ -22,7 +22,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
@@ -70,12 +69,11 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
                                 pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
   val args = processProgramArguments(rawArgs)
   val starter = createAppStarter(args, pluginDescriptorsFuture)
-
-  val createAppActivity = initAppActivity.startChild("create app")
   val headless = Main.isHeadless()
-  val app = ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
-                            Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION)
-  createAppActivity.end()
+  val app = initAppActivity.runChild("create app") {
+    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine(),
+                    ApplicationManagerEx.IDEA_APPLICATION)
+  }
 
   if (!headless) {
     // todo investigate why in test mode dummy icon manager is not suitable
@@ -136,7 +134,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     }
 
     if (PluginManagerCore.isRunningFromSources()) {
-      ApplicationManager.getApplication().executeOnPooledThread {
+      AppExecutorUtil.getAppExecutorService().execute {
         AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
       }
     }
@@ -159,7 +157,7 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
       }, AppExecutorUtil.getAppExecutorService())
 
       ParallelActivity.PREPARE_APP_INIT.run("app component registration") {
-        (ApplicationManager.getApplication() as ApplicationImpl).registerComponents(pluginDescriptors)
+        app.registerComponents(pluginDescriptors)
       }
       ParallelActivity.PREPARE_APP_INIT.run("add message bus listeners") {
         app.registerMessageBusListeners(pluginDescriptors, false)
@@ -171,7 +169,7 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
 
 private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   StartupUtil.addExternalInstanceListener { args ->
-    val ref = AtomicReference<Future<out CliResult>>()
+    val ref = AtomicReference<Future<CliResult>>()
     app.invokeAndWait {
       LOG.info("ApplicationImpl.externalInstanceListener invocation")
       val realArgs = if (args.isEmpty()) args else args.subList(1, args.size)
@@ -207,7 +205,7 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
       }
     }
 
-    val ref = AtomicReference<Future<out CliResult>>()
+    val ref = AtomicReference<Future<CliResult>>()
     app.invokeAndWait({ ref.set(CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory).getSecond()) }, state)
     CliResult.getOrWrapFailure(ref.get(), 1).returnCode
   }
@@ -267,7 +265,7 @@ object IdeaApplication {
         break
       }
 
-      if (Comparing.equal(starter.commandName, key)) {
+      if (starter.commandName ==  key) {
         return starter
       }
     }
@@ -292,7 +290,7 @@ open class IdeStarter : ApplicationStarter {
 
   override fun canProcessExternalCommandLine() = true
 
-  override fun processExternalCommandLineAsync(args: Array<String>, currentDirectory: String?): Future<out CliResult> {
+  override fun processExternalCommandLineAsync(args: Array<String>, currentDirectory: String?): Future<CliResult> {
     LOG.info("Request to open in $currentDirectory with parameters: ${args.joinToString(separator = ",")}")
     if (args.isEmpty()) {
       return CliResult.ok()
@@ -306,7 +304,7 @@ open class IdeStarter : ApplicationStarter {
         try {
           line = args[2].toInt()
         }
-        catch (ex: NumberFormatException) {
+        catch (ignore: NumberFormatException) {
           LOG.error("Wrong line number: ${args[2]}")
         }
 

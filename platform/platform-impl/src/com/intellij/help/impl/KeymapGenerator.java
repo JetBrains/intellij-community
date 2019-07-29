@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class KeymapGenerator implements ApplicationStarter {
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull String[] args) {
     ActionManager actionManager = ActionManager.getInstance();
     StringBuilder xml = new StringBuilder();
     xml.append("<Keymaps>\n");

@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public final class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
+  private static Pair<Project, Future<CliResult>> doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = new OpenProjectTask();
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.setCheckDirectoryForFileBasedProjects(false);
@@ -61,7 +60,7 @@ public final class CommandLineProcessor {
   }
 
   @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFile(@NotNull Path ioFile, int line, boolean tempProject, boolean shouldWait) {
+  private static Pair<Project, Future<CliResult>> doOpenFile(@NotNull Path ioFile, int line, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
@@ -105,7 +104,7 @@ public final class CommandLineProcessor {
   }
 
   @NotNull
-  public static Pair<Project, Future<? extends CliResult>> processExternalCommandLine(@NotNull List<String> args,
+  public static Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args,
                                                                                       @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
@@ -140,7 +139,7 @@ public final class CommandLineProcessor {
     }
 
     final boolean shouldWait = args.contains(WAIT_KEY);
-    Pair<Project, Future<? extends CliResult>> projectAndCallback = null;
+    Pair<Project, Future<CliResult>> projectAndCallback = null;
     int line = -1;
     boolean tempProject = false;
 
@@ -206,7 +205,6 @@ public final class CommandLineProcessor {
     if (shouldWait && projectAndCallback == null) {
       return pair(null, error(1, "--wait must be supplied with file or project to wait for"));
     }
-
-    return ObjectUtils.coalesce(projectAndCallback, pair(null, ok()));
+    return projectAndCallback == null ? pair(null, ok()) : projectAndCallback;
   }
 }

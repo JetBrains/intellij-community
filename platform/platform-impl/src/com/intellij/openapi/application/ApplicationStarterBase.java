@@ -41,7 +41,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   @NotNull
   @Override
-  public Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return CliResult.error(1, getUsageMessage());
@@ -71,7 +71,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   public abstract String getUsageMessage();
 
   @NotNull
-  protected abstract Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  protected abstract Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {
@@ -82,10 +82,10 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull String[] args) {
     int exitCode = 0;
     try {
-      Future<? extends CliResult> commandFuture = processCommand(args, null);
+      Future<CliResult> commandFuture = processCommand(args, null);
       CliResult result = commandFuture.get();
       if (result.getMessage() != null) {
         System.out.println(result.getMessage());

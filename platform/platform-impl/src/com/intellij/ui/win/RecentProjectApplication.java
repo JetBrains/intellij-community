@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 /**
  * @author Denis Fokin
  */
-public class RecentProjectApplication extends ApplicationStarterBase {
+public final class RecentProjectApplication extends ApplicationStarterBase {
   public RecentProjectApplication() {
     super("reopen", 1);
   }
@@ -24,7 +24,7 @@ public class RecentProjectApplication extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) {
+  protected Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) {
     ProjectUtil.openProject(args[1], null, false);
     return CliResult.ok();
   }
