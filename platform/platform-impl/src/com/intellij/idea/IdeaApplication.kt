@@ -50,8 +50,6 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
@@ -68,12 +66,18 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
                                 initAppActivity: Activity,
                                 pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
   val args = processProgramArguments(rawArgs)
+  StartupUtil.patchSystem(LOG)
   val starter = createAppStarter(args, pluginDescriptorsFuture)
   val headless = Main.isHeadless()
   val app = initAppActivity.runChild("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine(),
                     ApplicationManagerEx.IDEA_APPLICATION)
   }
+
+  starter.premain(args)
+
+  val futures = mutableListOf<Future<*>>()
+  futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app))
 
   if (!headless) {
     // todo investigate why in test mode dummy icon manager is not suitable
@@ -84,32 +88,25 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
       initAppActivity.runChild("mac app init") {
         MacOSApplicationProvider.initApplication()
       }
+
+      // ensure that TouchBarsManager is loaded before WelcomeFrame/project
+      // do not wait completion - it is thread safe and not required for application start
+      AppExecutorUtil.getAppExecutorService().execute {
+        ParallelActivity.PREPARE_APP_INIT.run("mac touchbar") {
+          TouchBarsManager.isTouchBarAvailable()
+        }
+      }
     }
 
-    app.executeOnPooledThread {
+    SplashManager.showLicenseeInfoOnSplash(LOG)
+
+    AppExecutorUtil.getAppExecutorService().execute {
       AsyncProcessIcon("")
       AsyncProcessIcon.Big("")
       AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
       AnimatedIcon.FS()
       AllIcons.Ide.Shadow.Top.iconHeight
     }
-  }
-
-  starter.premain(args)
-
-  val futures = mutableListOf<Future<*>>()
-  futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app))
-
-  if (!headless) {
-    if (SystemInfo.isMac) {
-      // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-      futures.add(AppExecutorUtil.getAppExecutorService().submit {
-        ParallelActivity.PREPARE_APP_INIT.run("mac touchbar") {
-          TouchBarsManager.isTouchBarAvailable()
-        }
-      })
-    }
-    SplashManager.showLicenseeInfoOnSplash(LOG)
   }
 
   // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
@@ -153,7 +150,6 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
         ParallelActivity.PREPARE_APP_INIT.run("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
         }
-
       }, AppExecutorUtil.getAppExecutorService())
 
       ParallelActivity.PREPARE_APP_INIT.run("app component registration") {
@@ -174,7 +170,6 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
       LOG.info("ApplicationImpl.externalInstanceListener invocation")
       val realArgs = if (args.isEmpty()) args else args.subList(1, args.size)
       val projectAndFuture = CommandLineProcessor.processExternalCommandLine(realArgs, args.firstOrNull())
-
       ref.set(projectAndFuture.getSecond())
       val frame = when (val project = projectAndFuture.getFirst()) {
         null -> WindowManager.getInstance().findVisibleFrame()
@@ -212,31 +207,18 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
 }
 
 private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): ApplicationStarter {
-  StartupUtil.patchSystem(LOG)
-
   if (args.isEmpty()) {
     return IdeStarter()
   }
 
-  try {
-    pluginsLoaded.get()
-  }
-  catch (e: InterruptedException) {
-    throw CompletionException(e)
-  }
-  catch (e: ExecutionException) {
-    throw CompletionException(e)
-  }
+  pluginsLoaded.get()
 
-  val starter = IdeaApplication.findStarter(args[0])
-  if (starter != null) {
-    if (Main.isHeadless() && !starter.isHeadless) {
-      Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
-      exitProcess(Main.NO_GRAPHICS)
-    }
-    return starter
+  val starter = IdeaApplication.findStarter(args[0]) ?: IdeStarter()
+  if (Main.isHeadless() && !starter.isHeadless) {
+    Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
+    exitProcess(Main.NO_GRAPHICS)
   }
-  return IdeStarter()
+  return starter
 }
 
 @ApiStatus.Internal
@@ -245,7 +227,9 @@ object IdeaApplication {
   fun initApplication(rawArgs: Array<String>) {
     val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
     val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
-    EventQueue.invokeLater { executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture) }
+    EventQueue.invokeLater {
+      executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
+    }
 
     val plugins = try {
       PluginManagerCore.getLoadedPlugins(IdeaApplication.javaClass.classLoader)
@@ -260,12 +244,12 @@ object IdeaApplication {
 
   @JvmStatic
   fun findStarter(key: String?): ApplicationStarter? {
-    for (starter in ApplicationStarter.EP_NAME.getIterable(null)) {
+    for (starter in ApplicationStarter.EP_NAME.iterable) {
       if (starter == null) {
         break
       }
 
-      if (starter.commandName ==  key) {
+      if (starter.commandName == key) {
         return starter
       }
     }
