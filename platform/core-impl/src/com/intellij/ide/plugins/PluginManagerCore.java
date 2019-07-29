@@ -1007,7 +1007,7 @@ public class PluginManagerCore {
 
   public static void resolveOptionalDescriptors(@NotNull String fileName,
                                                  @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                 @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
+                                                 @NotNull Function<? super String, IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
     if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
@@ -1071,7 +1071,7 @@ public class PluginManagerCore {
     }
   }
 
-  private static void filterBadPlugins(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
+  private static void filterBadPlugins(@NotNull List<IdeaPluginDescriptorImpl> result,
                                        @NotNull Map<String, String> disabledPluginNames,
                                        @NotNull List<? super String> errors) {
     Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new THashMap<>();
@@ -1609,7 +1609,7 @@ public class PluginManagerCore {
     }
   }
 
-  private static void fixDependencies(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
+  private static void fixDependencies(@NotNull List<IdeaPluginDescriptorImpl> result,
                                       @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
     for (IdeaPluginDescriptorImpl descriptor : result) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
@@ -1640,7 +1640,7 @@ public class PluginManagerCore {
   }
 
   private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area,
-                                                           @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {
+                                                           @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins) {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensionPoints(area);
     }
