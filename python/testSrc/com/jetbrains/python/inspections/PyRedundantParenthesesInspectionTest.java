@@ -88,9 +88,8 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-20324
-  public void testReturn() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  public void testParenthesizedTupleInReturn() {
+    doTest();
   }
 
   // PY-33266
@@ -101,5 +100,15 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   // PY-21530
   public void testReferenceExpression() {
     doTest();
+  }
+
+  // PY-20324
+  public void testParenthesizedTupleWithUnpackingInReturnBefore38() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-35961
+  public void testParenthesizedTupleWithUnpackingInReturn() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
 }
