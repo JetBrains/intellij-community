@@ -154,11 +154,15 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
 
   @Nullable
   public static Runnable prepareToShow() {
-    if (ourInstance != null) return null;
+    if (ourInstance != null) {
+      return null;
+    }
 
-    final IdeFrame frame = createWelcomeFrame();
+    IdeFrame frame = createWelcomeFrame();
     return () -> {
-      if (ourInstance != null) return;
+      if (ourInstance != null) {
+        return;
+      }
 
       ((JFrame)frame).setVisible(true);
 

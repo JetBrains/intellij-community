@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -348,19 +347,20 @@ open class IdeStarter : ApplicationStarter {
     val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
 
     // temporary check until the JRE implementation has been checked and bundled
-    if (Registry.`is`("ide.popup.enablePopupType")) {
+    if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
       @Suppress("SpellCheckingInspection")
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
     val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
-    showWizardAndWelcomeFrame(when {
-                                shouldShowWelcomeFrame -> Runnable {
-                                  WelcomeFrame.prepareToShow()
-                                  lifecyclePublisher.welcomeScreenDisplayed()
-                                }
-                                else -> null
-                              })
+    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
+    showWizardAndWelcomeFrame(when (doShowWelcomeFrame) {
+      null -> null
+      else -> Runnable {
+        doShowWelcomeFrame.run()
+        lifecyclePublisher.welcomeScreenDisplayed()
+      }
+    })
 
     frameInitActivity.end()
 
@@ -381,7 +381,9 @@ open class IdeStarter : ApplicationStarter {
         RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
       }
 
-      EventQueue.invokeLater { PluginManager.reportPluginError() }
+      EventQueue.invokeLater {
+        PluginManager.reportPluginError()
+      }
     })
 
     if (!app.isHeadlessEnvironment) {
