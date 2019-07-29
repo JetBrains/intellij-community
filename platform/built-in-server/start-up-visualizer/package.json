@@ -7,9 +7,9 @@
     "build": "vue-cli-service build && unlink dist/js/pdfmake.*.js && unlink dist/js/pdfmake.*.js.map"
   },
   "dependencies": {
-    "@amcharts/amcharts4": "4.5.6",
-    "element-ui": "^2.10.1",
-    "semver": "^6.2.0",
+    "@amcharts/amcharts4": "4.5.10",
+    "element-ui": "^2.11.1",
+    "semver": "^6.3.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.1.0",
     "vue-property-decorator": "^8.2.1",
@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/semver": "^6.0.1",
     "@vue/cli-plugin-typescript": "^3.9.0",
-    "@vue/cli-service": "^3.9.2",
+    "@vue/cli-service": "^3.9.3",
     "typescript": "^3.5.3",
     "vue-template-compiler": "^2.6.10",
     "vuex-module-decorators": "^0.9.9"

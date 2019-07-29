@@ -405,7 +405,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       }
 
-      Activity componentRegisteredActivity = StartUpMeasurer.start(activityNamePrefix() + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX);
+      Activity beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded");
       String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
       for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getIterable()) {
         try {
@@ -418,12 +418,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(e);
         }
       }
+      Activity initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store");
 
       // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
       ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
       LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
 
-      componentRegisteredActivity.end();
+      initStoreActivity.end();
 
       if (indicator == null) {
         // no splash, no need to to use progress manager
