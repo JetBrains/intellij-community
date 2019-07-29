@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
@@ -610,11 +611,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static final List<String> ourRootPaths;
+  private static final String[] ourRootPaths;
   static {
     //noinspection SpellCheckingInspection
-    ourRootPaths = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    Collections.sort(ourRootPaths, (o1, o2) -> o2.length() - o1.length());  // longest first
+    List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
+    Collections.sort(roots, (o1, o2) -> o2.length() - o1.length());  // longest first
+    ourRootPaths = ArrayUtil.toStringArray(roots);
   }
 
   @NotNull
