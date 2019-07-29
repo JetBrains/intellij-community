@@ -15,6 +15,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +185,8 @@ public class PluginHeaderPanel {
           case RESTART:
           case UNINSTALL:
             //noinspection UnregisteredNamedColor
-            return UIUtil.isUnderDarcula() ?
+            return StartupUiUtil.isUnderDarcula()
+                   ?
                    ColorUtil.mix(JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x4C5052)),
                                  JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x4C5052)), 0.5) : Gray._240;
         }

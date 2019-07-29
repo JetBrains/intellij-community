@@ -60,7 +60,6 @@ internal class GithubPullRequestSearchPanel(project: Project,
     }
     addToLeft(icon)
     addToCenter(searchField)
-    UIUtil.setNotOpaqueRecursively(searchField)
   }
 
   private fun updateQuery() {

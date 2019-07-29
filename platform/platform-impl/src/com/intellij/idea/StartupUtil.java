@@ -4,10 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.SameThreadExecutorService;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeRepaintManager;
@@ -145,6 +142,8 @@ public class StartupUtil {
     throws InvocationTargetException, InterruptedException, ExecutionException {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
+    LoadingPhase.setStrictMode();
+
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
@@ -159,6 +158,8 @@ public class StartupUtil {
         if (!Main.isHeadless()) {
           SplashManager.show(args);
         }
+
+        LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
         // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
         StartupUiUtil.configureHtmlKitStylesheet();

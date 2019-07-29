@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,7 +137,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   @NotNull
   private ThemeInfo getDefaultTheme() {
     if (ApplicationManager.getApplication() != null) {
-      if (UIUtil.isUnderDarcula()) return DARCULA;
+      if (StartupUiUtil.isUnderDarcula()) return DARCULA;
       return INTELLIJ;
     }
     CloudConfigProvider provider = CloudConfigProvider.getProvider();
@@ -180,9 +181,9 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private void applyLaf(ThemeInfo theme, Component component) {
     UIManager.LookAndFeelInfo info = new UIManager.LookAndFeelInfo(theme.name, theme.laf);
     try {
-      boolean wasUnderDarcula = UIUtil.isUnderDarcula();
+      boolean wasUnderDarcula = StartupUiUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
-      AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
+      AppUIUtil.updateForDarcula(StartupUiUtil.isUnderDarcula());
       String className = info.getClassName();
       WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);

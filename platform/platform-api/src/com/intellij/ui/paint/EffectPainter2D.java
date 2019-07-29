@@ -8,7 +8,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -341,7 +340,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       int width = (int)period << (paint instanceof Color ? 8 : 1);
       if (width <= 0 || height <= 0) return null;
 
-      BufferedImage image = UIUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
+      BufferedImage image = ImageUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
       paintImage(image.createGraphics(), paint, width, height, period);
       return image;
     }

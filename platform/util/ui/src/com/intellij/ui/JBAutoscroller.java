@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ public class JBAutoscroller implements ActionListener {
   private static final Key<ScrollDeltaProvider> SCROLL_HANDLER_KEY = Key.create("JBAutoScroller.AutoScrollHandler");
   private static final JBAutoscroller INSTANCE = new JBAutoscroller();
 
-  private final Timer myTimer = UIUtil.createNamedTimer("JBAutoScroller",SCROLL_UPDATE_INTERVAL, this);
+  private final Timer myTimer = TimerUtil.createNamedTimer("JBAutoScroller", SCROLL_UPDATE_INTERVAL, this);
   private final DefaultScrollDeltaProvider myDefaultAutoScrollHandler = new DefaultScrollDeltaProvider();
 
   private SyntheticDragEvent myLatestDragEvent;

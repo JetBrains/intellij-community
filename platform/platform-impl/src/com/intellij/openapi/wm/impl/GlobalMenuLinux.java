@@ -22,7 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
@@ -461,7 +461,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (icon == null || icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0)
       return null;
 
-    final BufferedImage img = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage img = ImageUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     final Graphics2D g2d = img.createGraphics();
     icon.paintIcon(null, g2d, 0, 0);
     g2d.dispose();

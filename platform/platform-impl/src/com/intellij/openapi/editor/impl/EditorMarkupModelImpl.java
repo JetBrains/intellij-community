@@ -36,10 +36,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -1263,9 +1260,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
               int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
               if (myCacheLevel2 == null) {
-                myCacheLevel2 = UIUtil.createImage(g, size.width,
-                                                   myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
-                                                   BufferedImage.TYPE_INT_RGB);
+                myCacheLevel2 = ImageUtil
+                  .createImage(g, size.width, myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
+                               BufferedImage.TYPE_INT_RGB);
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
@@ -1294,7 +1291,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
             }
             if (myCacheLevel1 == null) {
-              myCacheLevel1 = UIUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              myCacheLevel1 =
+                ImageUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               isDirty = true;
             }
             if (isDirty) {
@@ -1355,7 +1353,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               GraphicsUtil.setupAAPainting(g2);
               g2.setClip(new RoundRectangle2D.Double(0, 0, size.width-.5, size.height-.5, 2, 2));
               UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
-              if (UIUtil.isUnderDarcula()) {
+              if (StartupUiUtil.isUnderDarcula()) {
                 //Add glass effect
                 Shape s = new Rectangle(0, 0, size.width, size.height);
                 double cx = size.width / 2;

@@ -22,7 +22,7 @@ public class WavePainter2D extends WavePainter {
   private final BufferedImage myImage;
 
   private WavePainter2D(Color color) {
-    myImage = UIUtil.createImage(PATTERN_WIDTH, 3, BufferedImage.TYPE_INT_ARGB);
+    myImage = ImageUtil.createImage(PATTERN_WIDTH, 3, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = myImage.createGraphics();
     try {
       GraphicsUtil.setupAAPainting(g);

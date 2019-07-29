@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -164,7 +167,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
-        boolean needUninstall = UIUtil.isUnderDarcula();
+        boolean needUninstall = StartupUiUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
         updateWizardLAF(needUninstall);
       }
@@ -179,7 +182,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
     if (WelcomeWizardUtil.getWizardLAF() != null) {
-      if (UIUtil.isUnderDarcula()) {
+      if (StartupUiUtil.isUnderDarcula()) {
         DarculaInstaller.install();
       }
       else if (wasUnderDarcula) {
@@ -397,7 +400,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    boolean dark = UIUtil.isUnderDarcula();
+    boolean dark = StartupUiUtil.isUnderDarcula();
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme current = colorsManager.getGlobalScheme();
     boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
@@ -490,7 +493,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       Font font = new Font(".SF NS Text", style, size);
-      if (!UIUtil.isDialogFont(font)) {
+      if (!StartupUiUtil.isDialogFont(font)) {
         return new FontUIResource(font);
       }
     }
@@ -616,7 +619,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
@@ -624,7 +627,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixProgressBar(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
       uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
@@ -635,7 +638,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * and default UI is created there directly.
    */
   static void fixOptionButton(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
   }
@@ -949,7 +952,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static final boolean invert = UIUtil.isUnderDarcula();
+    private static final boolean invert = StartupUiUtil.isUnderDarcula();
+
     private DefaultMenuArrowIcon(@NotNull Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
@@ -18,7 +18,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.settings.MarkdownCssSettings;
@@ -368,7 +368,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     final String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
     final String customCssURI = cssSettings.isUriEnabled()
                                 ? cssSettings.getStylesheetUri()
-                                : MarkdownCssSettings.getDefaultCssSettings(UIUtil.isUnderDarcula()).getStylesheetUri();
+                                : MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri();
 
     panel.setCSS(inlineCss, customCssURI);
 

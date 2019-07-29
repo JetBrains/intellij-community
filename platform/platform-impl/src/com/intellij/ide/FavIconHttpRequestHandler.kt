@@ -2,7 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.ui.ProductIcons
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.ImageUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -23,7 +23,7 @@ internal class FavIconHttpRequestHandler : HttpRequestHandler() {
     }
 
     val icon = ProductIcons.getInstance().productIcon
-    val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
     icon.paintIcon(null, image.graphics, 0, 0)
     val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
     response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))

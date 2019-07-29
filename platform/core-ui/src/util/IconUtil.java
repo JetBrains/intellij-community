@@ -83,7 +83,7 @@ public class IconUtil {
     final int w = Math.min(imageWidth, maxWidth);
     final int h = Math.min(imageHeight, maxHeight);
 
-    final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
+    final BufferedImage img = ImageUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
     final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;
     final int offY = imageHeight > maxHeight ? (imageHeight - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
@@ -597,13 +597,13 @@ public class IconUtil {
 
   @NotNull
   private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
-    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage src = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = src.createGraphics();
     source.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
-    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage img = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     int rgba;
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {

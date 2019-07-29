@@ -41,7 +41,7 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -190,7 +190,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
 
     if (scheme == null) {
-      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+      scheme = StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
     }
     setGlobalSchemeInner(scheme);
   }
@@ -298,7 +298,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
-    final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
+    final boolean dark = StartupUiUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
@@ -471,7 +471,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
     }
     if (scheme == null) {
-      String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+      String schemeName = StartupUiUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
       DefaultColorSchemesManager colorSchemeManager = DefaultColorSchemesManager.getInstance();
       scheme = colorSchemeManager.getScheme(schemeName);
       assert scheme != null :

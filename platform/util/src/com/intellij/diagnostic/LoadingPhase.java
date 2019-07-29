@@ -28,7 +28,11 @@ public enum LoadingPhase {
     return Logger.getInstance(LoadingPhase.class);
   }
 
-  private final static boolean SKIP_LOADING_PHASE = Boolean.parseBoolean("idea.skip.loading.phase");
+  private static boolean CHECK_LOADING_PHASE = Boolean.parseBoolean("idea.check.loading.phase");
+
+  public static void setStrictMode() {
+    CHECK_LOADING_PHASE = true;
+  }
 
   public static void setCurrentPhase(@NotNull LoadingPhase phase) {
     LoadingPhase old = currentPhase.getAndSet(phase);
@@ -74,7 +78,9 @@ public enum LoadingPhase {
   }
 
   public static void assertAtLeast(@NotNull LoadingPhase phase) {
-    if (SKIP_LOADING_PHASE) return;
+    if (!CHECK_LOADING_PHASE) {
+      return;
+    }
 
     LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
     if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +62,9 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    myAnchorAttributes = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
-      new CustomTextAttributes(textBackgroundColor) :
-      new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+    myAnchorAttributes = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
+                         new CustomTextAttributes(textBackgroundColor) :
+                         new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
 
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);

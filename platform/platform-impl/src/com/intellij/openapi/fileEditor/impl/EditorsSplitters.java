@@ -46,6 +46,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -163,7 +164,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (showEmptyText()) {
       Graphics2D gg = IdeBackgroundUtil.withFrameBackground(g, this);
       super.paintComponent(gg);
-      g.setColor(UIUtil.isUnderDarcula() ? JBColor.border() : new Color(0, 0, 0, 50));
+      g.setColor(StartupUiUtil.isUnderDarcula() ? JBColor.border() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
     }
   }

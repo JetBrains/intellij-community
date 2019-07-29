@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -113,12 +114,12 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+    if (comp.isOpaque() || (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
         g.setColor(selectionBackground);
-        if (icon2 != null && !(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
           g.fillRect(k, 0, j1 - k, k1);
         }
         else{

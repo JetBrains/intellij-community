@@ -55,7 +55,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       createCompactTextAndProgress();
       myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
-    } 
+    }
     else {
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
@@ -117,8 +117,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private ProgressButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
-      new IconButton(myInfo.getCancelTooltipText(), 
-                     myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop, 
+      new IconButton(myInfo.getCancelTooltipText(),
+                     myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
                      myCompact ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered),
       new ActionListener() {
         @Override
@@ -184,7 +184,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText2.setEnabled(true);
       myProgress.setEnabled(true);
     }
-    
+
     myEastButtons.forEach(b -> b.updateAction.run());
   }
 
@@ -260,7 +260,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
 
-      if (!UIUtil.isUnderDarcula()) {
+      if (!StartupUiUtil.isUnderDarcula()) {
         bg = ColorUtil.toAlpha(bg.darker().darker(), 230);
         g.setColor(bg);
 

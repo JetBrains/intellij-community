@@ -680,7 +680,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         childrenLabel.setVisible(true);
         childrenLabel.setBackground(bg);
 
-        final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
+        final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
         childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
                                                   : AllIcons.Icons.Ide.NextStep
                                          : AllIcons.Icons.Ide.NextStepGrayed);

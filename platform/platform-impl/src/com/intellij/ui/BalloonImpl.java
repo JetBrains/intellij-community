@@ -1781,8 +1781,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
-      BufferedImage image = UIUtil.createImage(g, getWidth(), getHeight(),
-                                               BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+      BufferedImage image = ImageUtil.createImage(g, getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       useSafely(image.createGraphics(), imageGraphics -> {
         //noinspection UseJBColor
         imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha

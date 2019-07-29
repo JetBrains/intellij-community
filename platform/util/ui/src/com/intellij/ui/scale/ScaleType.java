@@ -32,13 +32,13 @@ import java.awt.image.ImageObserver;
  *
  * @see com.intellij.ui.JreHiDpiUtil#isJreHiDPIEnabled()
  * @see com.intellij.util.ui.UIUtil#isJreHiDPI()
- * @see com.intellij.util.ui.UIUtil#isJreHiDPI(GraphicsConfiguration)
- * @see com.intellij.util.ui.UIUtil#isJreHiDPI(Graphics2D)
+ * @see com.intellij.ui.JreHiDpiUtil#isJreHiDPI(GraphicsConfiguration)
+ * @see com.intellij.ui.JreHiDpiUtil#isJreHiDPI(Graphics2D)
  * @see JBUIScale#isUsrHiDPI()
  * @see com.intellij.util.ui.UIUtil#drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
  * @see com.intellij.util.ui.UIUtil#createImage(Graphics, int, int, int)
- * @see com.intellij.util.ui.UIUtil#createImage(GraphicsConfiguration, int, int, int)
- * @see com.intellij.util.ui.UIUtil#createImage(int, int, int)
+ * @see com.intellij.util.ui.ImageUtil#createImage(GraphicsConfiguration, int, int, int)
+ * @see com.intellij.util.ui.ImageUtil#createImage(int, int, int)
  * @see ScaleContext
  *
  * @author tav

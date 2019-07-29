@@ -161,7 +161,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Cursor emptyCursor = null;
     if (!GraphicsEnvironment.isHeadless()) {
       try {
-        emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+        emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
                                                                      new Point(),
                                                                      "Empty cursor");
       }
@@ -2914,86 +2914,87 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = UIUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
         if (isDisposed()) {
           stop();
           return;
         }
         myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
-          @Override
-          public void run() {
-            int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-            VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition : getCaretModel().getVisualPosition();
-            int column = caretPosition.column;
-            xPassedCycles++;
-            if (xPassedCycles >= myXCycles) {
-              xPassedCycles = 0;
-              column += myDx;
-            }
+                                            @Override
+                                            public void run() {
+                                              int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+                                              VisualPosition caretPosition =
+                                                myMultiSelectionInProgress ? myTargetMultiSelectionPosition : getCaretModel().getVisualPosition();
+                                              int column = caretPosition.column;
+                                              xPassedCycles++;
+                                              if (xPassedCycles >= myXCycles) {
+                                                xPassedCycles = 0;
+                                                column += myDx;
+                                              }
 
-            int line = caretPosition.line;
-            yPassedCycles++;
-            if (yPassedCycles >= myYCycles) {
-              yPassedCycles = 0;
-              line += myDy;
-            }
+                                              int line = caretPosition.line;
+                                              yPassedCycles++;
+                                              if (yPassedCycles >= myYCycles) {
+                                                yPassedCycles = 0;
+                                                line += myDy;
+                                              }
 
-            line = Math.max(0, line);
-            column = Math.max(0, column);
-            VisualPosition pos = new VisualPosition(line, column);
-            if (!myMultiSelectionInProgress) {
-              getCaretModel().moveToVisualPosition(pos);
-              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            }
+                                              line = Math.max(0, line);
+                                              column = Math.max(0, column);
+                                              VisualPosition pos = new VisualPosition(line, column);
+                                              if (!myMultiSelectionInProgress) {
+                                                getCaretModel().moveToVisualPosition(pos);
+                                                getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+                                              }
 
-            int newCaretOffset = getCaretModel().getOffset();
-            int caretShift = newCaretOffset - mySavedSelectionStart;
+                                              int newCaretOffset = getCaretModel().getOffset();
+                                              int caretShift = newCaretOffset - mySavedSelectionStart;
 
-            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              if (caretShift < 0) {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretStart();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection =
-                      logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
-              else {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretEnd();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection = logicalPositionToOffset(
-                      visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
-              return;
-            }
+                                              if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+                                                if (caretShift < 0) {
+                                                  int newSelection = newCaretOffset;
+                                                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                                                    newSelection = myCaretModel.getWordAtCaretStart();
+                                                  }
+                                                  else {
+                                                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                                                      newSelection =
+                                                        logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                                                    }
+                                                  }
+                                                  if (newSelection < 0) newSelection = newCaretOffset;
+                                                  mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
+                                                  getCaretModel().moveToOffset(newSelection);
+                                                }
+                                                else {
+                                                  int newSelection = newCaretOffset;
+                                                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                                                    newSelection = myCaretModel.getWordAtCaretEnd();
+                                                  }
+                                                  else {
+                                                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                                                      newSelection = logicalPositionToOffset(
+                                                        visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                                                    }
+                                                  }
+                                                  if (newSelection < 0) newSelection = newCaretOffset;
+                                                  mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
+                                                  getCaretModel().moveToOffset(newSelection);
+                                                }
+                                                return;
+                                              }
 
-            if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
-              myTargetMultiSelectionPosition = pos;
-              LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
-              getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-              createSelectionTill(newLogicalPosition);
-            }
-            else {
-              mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-            }
-          }
-        }, EditorBundle.message("move.cursor.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
+                                              if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
+                                                myTargetMultiSelectionPosition = pos;
+                                                LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
+                                                getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
+                                                createSelectionTill(newLogicalPosition);
+                                              }
+                                              else {
+                                                mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
+                                              }
+                                            }
+                                          }, EditorBundle.message("move.cursor.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
                                           getDocument());
       });
       myTimer.start();

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ final class RollbackThemeAction extends DumbAwareAction {
 
     EditorColorsManagerImpl manager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
     manager.schemeChangedOrSwitched(manager.getGlobalScheme());
-    AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
+    AppUIUtil.updateForDarcula(StartupUiUtil.isUnderDarcula());
     LafManager.getInstance().updateUI();
   }
 

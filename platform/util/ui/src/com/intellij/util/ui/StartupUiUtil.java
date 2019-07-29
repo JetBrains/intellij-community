@@ -25,12 +25,15 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class StartupUiUtil {
   private static String ourSystemLaFClassName;
   private static volatile StyleSheet ourDefaultHtmlKitCss;
+
+  public static final String ARIAL_FONT_NAME = "Arial";
 
   @NotNull
   public static String getSystemLookAndFeelClassName() {
@@ -323,5 +326,9 @@ public class StartupUiUtil {
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static boolean isDialogFont(@NotNull Font font) {
+    return Font.DIALOG.equals(font.getFamily(Locale.US));
   }
 }

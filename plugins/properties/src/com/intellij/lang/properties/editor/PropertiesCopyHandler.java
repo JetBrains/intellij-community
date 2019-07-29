@@ -247,7 +247,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          UIUtil.setBackgroundRecursively(component, isSelected ? UIUtil.getListSelectionBackground() : resourceBundleComboBox.getBackground());
+          UIUtil.setBackgroundRecursively(component, isSelected ? UIUtil.getListSelectionBackground(true) : resourceBundleComboBox.getBackground());
           return component;
         }
       });

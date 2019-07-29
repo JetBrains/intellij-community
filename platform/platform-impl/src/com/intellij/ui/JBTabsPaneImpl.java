@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tabs.*;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class JBTabsPaneImpl implements TabbedPane {
     }).getPresentation()
       .setPaintBorder(1, 1, 1, 1)
       .setTabSidePaintBorder(2)
-      .setPaintFocus(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
+      .setPaintFocus(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
       .setGhostsAlwaysVisible(true);
 
     setTabPlacement(tabPlacement);

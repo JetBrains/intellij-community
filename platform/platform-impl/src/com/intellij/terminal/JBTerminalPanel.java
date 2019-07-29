@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
@@ -153,7 +154,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       for (AnAction action : actionsToSkip) {
         for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
           if (sc.isKeyboard() && sc.startsWith(eventShortcut)) {
-            if (!Registry.is("terminal.Ctrl-E.opens.RecentFiles.popup", false) && 
+            if (!Registry.is("terminal.Ctrl-E.opens.RecentFiles.popup", false) &&
                 IdeActions.ACTION_RECENT_FILES.equals(ActionManager.getInstance().getId(action))) {
               if (e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK && e.getKeyCode() == KeyEvent.VK_E) {
                 return false;
@@ -236,7 +237,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected BufferedImage createBufferedImage(int width, int height) {
-    return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    return ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
 
 

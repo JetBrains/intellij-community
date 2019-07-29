@@ -217,7 +217,7 @@ public class CollapsiblePanel extends JPanel {
 
   private void updatePanel() {
     if (paintAsSelected()) {
-      setBackground(UIUtil.getTableSelectionBackground());
+      setBackground(UIUtil.getTableSelectionBackground(true));
     } else {
       setBackground(myContent.getBackground());
     }
@@ -237,7 +237,7 @@ public class CollapsiblePanel extends JPanel {
 
   private void updateToggleButton() {
     if (paintAsSelected()) {
-      myToggleCollapseButton.setBackground(UIUtil.getTableSelectionBackground());
+      myToggleCollapseButton.setBackground(UIUtil.getTableSelectionBackground(true));
     } else {
       myToggleCollapseButton.setBackground(myContent.getBackground());
     }
@@ -246,7 +246,7 @@ public class CollapsiblePanel extends JPanel {
   private void updateTitle() {
     if (paintAsSelected()) {
       myTitleLabel.setForeground(UIUtil.getTableSelectionForeground());
-      myTitleLabel.setBackground(UIUtil.getTableSelectionBackground());
+      myTitleLabel.setBackground(UIUtil.getTableSelectionBackground(true));
     } else {
       myTitleLabel.setForeground(UIUtil.getLabelForeground());
       myTitleLabel.setBackground(myContent.getBackground());

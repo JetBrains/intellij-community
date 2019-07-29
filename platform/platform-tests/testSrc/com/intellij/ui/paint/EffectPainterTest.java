@@ -1,8 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -76,7 +77,7 @@ public final class EffectPainterTest {
 
   private static void testPainter(EffectPainter2D painter, int width, int height) {
     if (painter == EffectPainter2D.STRIKE_THROUGH) height += 10; // default font size
-    testPainter(painter, UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB));
+    testPainter(painter, ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB));
   }
 
   private static void testPainter(EffectPainter2D painter, BufferedImage image) {

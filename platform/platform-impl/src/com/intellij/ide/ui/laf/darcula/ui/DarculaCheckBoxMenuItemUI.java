@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.MenuItemLayoutHelper;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -39,7 +39,7 @@ public class DarculaCheckBoxMenuItemUI extends DarculaMenuItemUIBase {
     g.fillRoundRect(0, 0, sz, sz - 1, 4, 4);
 
     g.setPaint(new GradientPaint(sz / 2, 1, Gray._120.withAlpha(0x5a), sz / 2, sz, Gray._105.withAlpha(90)));
-    g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? 1 : 0), sz, sz - 1, 4, 4);
+    g.drawRoundRect(0, (StartupUiUtil.isUnderDarcula() ? 1 : 0), sz, sz - 1, 4, 4);
 
     g.setPaint(Gray._40.withAlpha(180));
     g.drawRoundRect(0, 0, sz, sz - 1, 4, 4);

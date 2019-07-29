@@ -46,10 +46,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -646,7 +643,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         JButton button = new JButton(action) {
           @Override
           public void setUI(ButtonUI ui) {
-            boolean isDarcula = ui instanceof DarculaButtonUI && UIUtil.isUnderDarcula();
+            boolean isDarcula = ui instanceof DarculaButtonUI && StartupUiUtil.isUnderDarcula();
             if (isDarcula) {
               ui = new DarculaButtonUI() {
                 @Override

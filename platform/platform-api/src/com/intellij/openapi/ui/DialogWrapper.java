@@ -460,7 +460,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
+    return UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
   private static boolean isRemoveHelpButton() {
@@ -702,7 +702,7 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
+        int gap = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
           .scale(8);
         buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.ide.ui.LafManager;
@@ -7,7 +8,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -31,7 +32,7 @@ public class MarkdownApplicationSettings implements PersistentStateComponent<Mar
     final MarkdownLAFListener lafListener = new MarkdownLAFListener();
     LafManager.getInstance().addLafManagerListener(lafListener);
     // Let's init proper CSS scheme
-    ApplicationManager.getApplication().invokeLater(() -> lafListener.updateCssSettingsForced(UIUtil.isUnderDarcula()));
+    ApplicationManager.getApplication().invokeLater(() -> lafListener.updateCssSettingsForced(StartupUiUtil.isUnderDarcula()));
   }
 
   @NotNull

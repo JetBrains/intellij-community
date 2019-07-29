@@ -25,7 +25,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1255,7 +1255,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     private final Function<ScaleContext, ImageRef> myImageProvider = __ -> {
       int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
       int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
-      return new ImageRef(UIUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
+      return new ImageRef(ImageUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
     };
 
     /*

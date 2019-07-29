@@ -11,6 +11,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -142,7 +143,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
     @NotNull private final LabelPainter myReferencePainter;
 
-    @NotNull protected GraphImage myGraphImage = new GraphImage(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
     private int myHeight;
     private AffineTransform myAffineTransform;

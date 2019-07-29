@@ -20,10 +20,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,9 +257,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, UIUtil.isUnderDarcula());
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula());
               if (icon == null) {
-                if (UIUtil.isUnderDarcula()) {
+                if (StartupUiUtil.isUnderDarcula()) {
                   //No dark icon for this project
                   icon = recentProjectsManage.getProjectIcon(projectPath, false);
                 }

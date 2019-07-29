@@ -11,6 +11,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -251,7 +253,7 @@ public class SheetController implements Disposable {
 
         paintShadow(g);
         // draw the sheet background
-        if (UIUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula()) {
           g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
         } else {
           //todo make bottom corners
@@ -407,7 +409,7 @@ public class SheetController implements Disposable {
 
 
   private static float getShadowAlpha() {
-    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+    return ((StartupUiUtil.isUnderDarcula())) ? .85f : .35f;
   }
 
   private void paintShadowFromParent(Graphics2D g2d) {
@@ -485,7 +487,7 @@ public class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    BufferedImage image = UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

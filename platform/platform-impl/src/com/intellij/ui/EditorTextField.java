@@ -46,6 +46,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -552,7 +553,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected void setupBorder(@NotNull EditorEx editor) {
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       if (UIUtil.isUnderDefaultMacTheme()) {
         editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
       } else if (UIUtil.isUnderWin10LookAndFeel()) {
@@ -613,11 +614,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)this) != null && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)this) != null && (StartupUiUtil
+                                                                                                                                .isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 
-    if (UIUtil.isUnderDarcula()/* || UIUtil.isUnderIntelliJLaF()*/) return UIUtil.getTextFieldBackground();
+    if (StartupUiUtil.isUnderDarcula()/* || UIUtil.isUnderIntelliJLaF()*/) return UIUtil.getTextFieldBackground();
 
     return enabled
            ? colorsScheme.getDefaultBackground()
@@ -680,7 +682,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUIScale.scale(16));
       }
 

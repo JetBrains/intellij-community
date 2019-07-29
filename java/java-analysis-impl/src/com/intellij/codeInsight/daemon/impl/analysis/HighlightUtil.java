@@ -50,8 +50,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import java.util.HashSet;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -2804,7 +2803,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
                                                            @Nullable PsiType rType,
                                                            @NotNull TextRange textRange,
-                                                           int navigationShift, 
+                                                           int navigationShift,
                                                            String reason) {
     lType = lType != null ? PsiUtil.convertAnonymousToBaseType(lType) : null;
     rType = rType != null ? PsiUtil.convertAnonymousToBaseType(rType) : null;
@@ -2816,7 +2815,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
       .navigationShift(navigationShift).create();
   }
-  
+
   interface IncompatibleTypesTooltipComposer {
     String consume(String lRawType, String lTypeArguments, String rRawType, String rTypeArguments);
   }
@@ -2835,9 +2834,9 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
       PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeData.third.substitute(lTypeParameter);
       PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeData.third.substitute(rTypeParameter);
-      boolean matches = lSubstitutedType == rSubstitutedType || 
-                        lSubstitutedType != null && 
-                        rSubstitutedType != null && 
+      boolean matches = lSubstitutedType == rSubstitutedType ||
+                        lSubstitutedType != null &&
+                        rSubstitutedType != null &&
                         TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true);
       String openBrace = i == 0 ? "&lt;" : "";
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
@@ -2849,9 +2848,9 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-    return consumer.consume(redIfNotMatch(lRawType, assignable), 
-                            requiredRow.toString(), 
-                            redIfNotMatch(rRawType, assignable), 
+    return consumer.consume(redIfNotMatch(lRawType, assignable),
+                            requiredRow.toString(),
+                            redIfNotMatch(rRawType, assignable),
                             foundRow.toString());
   }
 
@@ -2891,7 +2890,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @NotNull
   private static String redIfNotMatch(@Nullable PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
-    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+    String color = StartupUiUtil.isUnderDarcula() ? "FF6B68" : "red";
     return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 

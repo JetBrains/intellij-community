@@ -18,7 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,7 +95,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     @Override
     public void paintComponent(Graphics g) {
       ActionButtonLook look = getButtonLook();
-      if (selectedActionEnabled() || !UIUtil.isUnderDarcula()) {
+      if (selectedActionEnabled() || !StartupUiUtil.isUnderDarcula()) {
         int state = getPopState();
         if (state == PUSHED) state = POPPED;
         look.paintBackground(g, this, state);

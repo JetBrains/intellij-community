@@ -53,6 +53,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.*;
@@ -139,7 +140,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.start("instantiate AppDelayQueue");
-    myLock = new ReadMostlyRWLock(UIUtil.invokeAndWaitIfNeeded(() -> {
+    Ref<Thread> result = new Ref<>();
+    Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
       AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
@@ -148,8 +150,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       Disposer.register(this, () -> {
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
-      return Thread.currentThread();
-    }));
+      result.set(Thread.currentThread());
+    };
+    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    myLock = new ReadMostlyRWLock(result.get());
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);

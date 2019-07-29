@@ -14,6 +14,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,7 +324,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       // the text jumps as more or less space becomes available.
       // a proper text layout algorithm on painting in DarculaLabelUI can fix that.
       String text = cc.getText();
-      int maxWidth = bounds.width - (padding == null || UIUtil.isUnderDarcula() ? 0 : padding.right);
+      int maxWidth = bounds.width - (padding == null || StartupUiUtil.isUnderDarcula() ? 0 : padding.right);
       if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
         int max0 = ObjectUtils.binarySearch(7, text.length() - 1, idx -> {
           cc.setText(StringUtil.trimMiddle(text, idx));

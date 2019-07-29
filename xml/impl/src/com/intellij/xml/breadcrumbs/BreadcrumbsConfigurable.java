@@ -16,6 +16,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,6 @@ import static com.intellij.application.options.colors.ColorAndFontOptions.select
 import static com.intellij.openapi.application.ApplicationBundle.message;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static com.intellij.util.containers.ContainerUtil.newSmartList;
-import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.SwingConstants.LEFT;
 
 /**
@@ -71,7 +71,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
           map.put(id, configurable.createComponent());
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUIScale.scale(10) : 0, 0));
+      JPanel boxes = new JPanel(new GridLayout(0, 3, StartupUiUtil.isUnderDarcula() ? JBUIScale.scale(10) : 0, 0));
       map.values().stream().sorted((box1, box2) -> naturalCompare(box1.getText(), box2.getText())).forEach(box -> boxes.add(box));
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));

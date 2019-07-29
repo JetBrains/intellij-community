@@ -692,7 +692,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       component.setBackground(isSelected
-                              ? table.hasFocus() ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground()
+                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListUnfocusedSelectionBackground()
                               : UIUtil.getListBackground());
       return component;
     }

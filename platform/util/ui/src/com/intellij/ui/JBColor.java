@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class JBColor extends Color {
   public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
 
   private static final class Lazy {
-    private static volatile boolean DARK = UIUtil.isUnderDarcula();
+    private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
   }
 
   private final Color darkColor;

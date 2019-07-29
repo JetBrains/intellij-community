@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +42,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     if (cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 
-    final boolean wasDarcula = UIUtil.isUnderDarcula();
+    final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
     lafMan.setCurrentLookAndFeel(lf);
 
     Runnable updater = () -> {
@@ -52,7 +52,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
       LafManagerListener listener = (s) -> updated.set(true);
       lafMan.addLafManagerListener(listener);
       try {
-        if (UIUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula()) {
           DarculaInstaller.install();
         }
         else if (wasDarcula) {

@@ -10,10 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +127,7 @@ public final class MemoryUsagePanel extends JButton implements CustomStatusBarWi
       Insets insets = getInsets();
 
       int barWidth = size.width - INDENT;
-      myBufferedImage = UIUtil.createImage(g, barWidth, size.height, BufferedImage.TYPE_INT_ARGB);
+      myBufferedImage = ImageUtil.createImage(g, barWidth, size.height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = JBSwingUtilities.runGlobalCGTransform(this, myBufferedImage.createGraphics());
       UISettings.setupAntialiasing(g2);
 

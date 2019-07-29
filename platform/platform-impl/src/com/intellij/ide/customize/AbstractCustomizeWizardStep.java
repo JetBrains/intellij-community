@@ -4,6 +4,7 @@ package com.intellij.ide.customize;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
 
   @NotNull
   protected static Color getSelectionBackground() {
-    return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), UIUtil.isUnderDarcula() ? .5 : .75);
+    return ColorUtil.mix(UIUtil.getListSelectionBackground(true), UIUtil.getLabelBackground(), StartupUiUtil.isUnderDarcula() ? .5 : .75);
   }
 
   public static Border createSmallEmptyBorder() {

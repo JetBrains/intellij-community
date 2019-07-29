@@ -11,6 +11,7 @@ import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +98,7 @@ public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
   }
 
   private static int getBaseGray() {
-    return UIUtil.isUnderDarcula() ? 0xB1 : 0x6C;
+    return StartupUiUtil.isUnderDarcula() ? 0xB1 : 0x6C;
   }
 
   private static int[] getDominantColor(Icon icon) {

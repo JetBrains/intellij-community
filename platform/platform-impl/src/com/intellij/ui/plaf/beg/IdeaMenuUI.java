@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -205,7 +206,7 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   protected final void paintHover(Graphics g, JComponent comp, JMenu jMenu, Icon allowedIcon) {
     g.setColor(selectionBackground);
-    if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
     }
     else {

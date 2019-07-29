@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.popup;
 
@@ -10,6 +10,7 @@ import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +72,7 @@ public class FramelessNotificationPopup {
 
     myActionListener = listener;
 
-    myFadeInTimer = UIUtil.createNamedTimer("Frameless fade in",10, myFadeTracker);
+    myFadeInTimer = TimerUtil.createNamedTimer("Frameless fade in", 10, myFadeTracker);
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
       .setRequestFocus(false)
       .setResizable(false)

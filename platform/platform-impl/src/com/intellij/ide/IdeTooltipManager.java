@@ -434,7 +434,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
+    return StartupUiUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
   @SuppressWarnings({"UnusedParameters"})

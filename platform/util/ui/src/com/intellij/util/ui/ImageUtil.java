@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
@@ -14,12 +17,82 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.*;
 
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
-
 /**
  * @author Konstantin Bulenkov
  */
-public class ImageUtil {
+public final class ImageUtil {
+  /**
+   * Creates a HiDPI-aware BufferedImage in device scale.
+   *
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in device scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   */
+  @NotNull
+  public static BufferedImage createImage(int width, int height, int type) {
+    if (StartupUiUtil.isJreHiDPI()) {
+      return RetinaImage.create(width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics config scale.
+   *
+   * @param gc the graphics config
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   */
+  @NotNull
+  public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
+    if (JreHiDpiUtil.isJreHiDPI(gc)) {
+      return RetinaImage.create(gc, width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics device scale.
+   *
+   * @param g the graphics of the target device
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   */
+  @NotNull
+  public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+    return createImage(g, width, height, type, PaintUtil.RoundingMode.FLOOR);
+  }
+
+  /**
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   */
+  @NotNull
+  public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      if (JreHiDpiUtil.isJreHiDPI(g2d)) {
+        return RetinaImage.create(g2d, width, height, type, rm);
+      }
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(rm.round(width), rm.round(height), type);
+    }
+    return createImage(rm.round(width), rm.round(height), type);
+  }
+
   @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image) {
     return toBufferedImage(image, false);
@@ -133,7 +206,7 @@ public class ImageUtil {
     if (image instanceof JBHiDPIScaledImage) {
       return ((JBHiDPIScaledImage)image).scale(width, height);
     }
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
+    return Scalr.resize(toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
   }
 
   /**
@@ -143,7 +216,7 @@ public class ImageUtil {
   public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx) {
     if (image == null) return null;
     if (StartupUiUtil.isJreHiDPI(ctx)) {
-      return RetinaImage.createFrom(image, ctx.getScale(SYS_SCALE), null);
+      return RetinaImage.createFrom(image, ctx.getScale(ScaleType.SYS_SCALE), null);
     }
     return image;
   }

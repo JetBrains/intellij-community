@@ -7,6 +7,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,7 +91,7 @@ public abstract class ProgressStripeIcon implements Icon {
     private static class ProgressStripeColor extends JBColor {
       private ProgressStripeColor(@NotNull JBColor defaultColor, @NotNull Color graphiteColor) {
         super(() -> {
-          if (UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && UIUtil.isGraphite()) {
+          if (UIUtil.isUnderAquaBasedLookAndFeel() && !StartupUiUtil.isUnderDarcula() && UIUtil.isGraphite()) {
             return graphiteColor;
           }
           return defaultColor;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -40,6 +41,29 @@ public abstract class EdtInvocationManager {
   @SuppressWarnings("unused") // Used in upsource
   public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
     ourInstance.set(edtInvocationManager);
+  }
+
+  /**
+   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
+   * Invoke and wait in the event dispatch thread
+   * or in the current thread if the current thread
+   * is event queue thread.
+   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   */
+  public void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
+    if (isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      try {
+        invokeAndWait(runnable);
+      }
+      catch (Exception e) {
+        Logger.getInstance("#com.intellij.util.ui.EdtInvocationManager").error(e);
+      }
+    }
   }
 
   public static void executeWithCustomManager(@NotNull EdtInvocationManager manager, @NotNull Runnable runnable) {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class FontUtil {
+public final class FontUtil {
   @NotNull
   public static String rightArrow(@NotNull Font font) {
     return canDisplay(font, '\u2192', "->");

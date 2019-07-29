@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class GotItPanel {
         GraphicsUtil.setupAAPainting(g);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, BODY_COLOR_1, 0, getHeight(), BODY_COLOR_2));
         g.fillRoundRect(0, 0, getWidth() - JBUIScale.scale(1), getHeight() - JBUIScale.scale(1), JBUIScale.scale(5), JBUIScale.scale(5));
-        ((Graphics2D)g).setStroke(new BasicStroke(UIUtil.isUnderDarcula() ? 2f : 1f));
+        ((Graphics2D)g).setStroke(new BasicStroke(StartupUiUtil.isUnderDarcula() ? 2f : 1f));
         g.setColor(BORDER_COLOR);
         g.drawRoundRect(0, 0, getWidth() - JBUIScale.scale(1), getHeight() - JBUIScale.scale(1), JBUIScale.scale(5), JBUIScale.scale(5));
       }

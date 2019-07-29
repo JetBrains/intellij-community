@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -87,23 +88,23 @@ public class ApplicationActivationStateManager {
       state = State.DEACTIVATING;
       LOG.debug("The app is in the deactivating state");
 
-      Timer timer = UIUtil.createNamedTimer("ApplicationDeactivation",Registry.intValue("application.deactivation.timeout"), new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent evt) {
+      Timer timer =
+        TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout"), new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent evt) {
 
-          if (state == State.DEACTIVATING) {
+            if (state == State.DEACTIVATING) {
 
-            state = State.DEACTIVATED;
-            LOG.debug("The app is in the deactivated state");
+              state = State.DEACTIVATED;
+              LOG.debug("The app is in the deactivated state");
 
-            IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
-            if (ideFrame != null) {
-              application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+              IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
+              if (ideFrame != null) {
+                application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+              }
             }
           }
-
-        }
-      });
+        });
 
       timer.setRepeats(false);
       timer.start();

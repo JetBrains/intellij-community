@@ -919,7 +919,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
         ((JComponent)result).setOpaque(false);
       }
       else if (selected) {
-        result.setBackground(UIUtil.getTableSelectionBackground());
+        result.setBackground(UIUtil.getTableSelectionBackground(true));
       }
       else {
         result.setBackground(UIUtil.getTableBackground());

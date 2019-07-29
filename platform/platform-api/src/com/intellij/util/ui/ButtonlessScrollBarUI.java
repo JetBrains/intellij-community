@@ -783,7 +783,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected boolean isDark() {
-    return UIUtil.isUnderDarcula();
+    return StartupUiUtil.isUnderDarcula();
   }
 
   protected boolean alwaysPaintThumb() {

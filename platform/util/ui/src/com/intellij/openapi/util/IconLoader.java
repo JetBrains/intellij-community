@@ -57,6 +57,7 @@ public final class IconLoader {
     protected Boolean initialValue() {
       return false;
     }
+
     @Override
     public Boolean get() {
       if (STRICT_GLOBAL) return true;
@@ -70,7 +71,7 @@ public final class IconLoader {
     installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
   }
 
-  private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+  private static final ImageIcon EMPTY_ICON = new ImageIcon(ImageUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @Override
     @NonNls
     public String toString() {
@@ -219,8 +220,8 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
    */
   @Nullable
-  public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
-    return findIcon(path, aClass, false);
+  public static Icon findIcon(@NotNull String path, @NotNull Class aClass) {
+    return findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT_LOCAL.get()), false);
   }
 
   @Nullable
@@ -1084,7 +1085,7 @@ public final class IconLoader {
 
     @NotNull
     public static IconTransform getDefault() {
-      return new IconTransform(UIUtil.isUnderDarcula(), new IconPathPatcher[0], null);
+      return new IconTransform(StartupUiUtil.isUnderDarcula(), new IconPathPatcher[0], null);
     }
   }
 }

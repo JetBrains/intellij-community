@@ -36,10 +36,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IndentedIcon;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1018,8 +1015,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      myExpandIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
+      myCollapseIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }

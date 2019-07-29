@@ -41,6 +41,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -198,13 +199,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JBSplitter splitter = new OnePixelSplitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       treePanel.setBorder(JBUI.Borders.emptyTop(3));
     } else {
       treePanel.setBorder(new LineBorder(JBColor.border()));
     }
     leftPanel.add(treePanel, BorderLayout.CENTER);
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       CompoundBorder border =
         new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), JBUI.Borders.empty());
       leftPanel.setBorder(border);
@@ -237,14 +238,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, true);
     JPanel scrollPaneWrap = new JPanel(new BorderLayout());
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       scrollPaneWrap.setBorder(JBUI.Borders.emptyTop(3));
     } else {
       scrollPaneWrap.setBorder(new LineBorder(JBColor.border()));
     }
 
     rightPanel.add(scrollPaneWrap, BorderLayout.CENTER);
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       rightPanel.setBorder(new CompoundBorder(new CustomLineBorder(0, 1, 0, 0), JBUI.Borders.empty()));
     } else {
       rightPanel.setBorder(JBUI.Borders.empty(3, 0, 3, 3));
@@ -275,7 +276,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);

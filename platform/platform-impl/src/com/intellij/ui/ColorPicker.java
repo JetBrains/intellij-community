@@ -25,6 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1097,7 +1098,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private DefaultColorPipette(@NotNull JComponent parent, @NotNull ColorListener colorListener) {
       super(parent, colorListener);
-      myTimer = UIUtil.createNamedTimer("DefaultColorPipette",5, new ActionListener() {
+      myTimer = TimerUtil.createNamedTimer("DefaultColorPipette", 5, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           updatePipette();

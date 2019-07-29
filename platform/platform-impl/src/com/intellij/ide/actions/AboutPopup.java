@@ -59,7 +59,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -728,7 +727,7 @@ public class AboutPopup {
         viewer.addHyperlinkListener(new BrowserHyperlinkListener());
 
         String resultHtmlText = getScaledHtmlText();
-        if (isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula()) {
           resultHtmlText = resultHtmlText.replaceAll("779dbd", "5676a0");
         }
         viewer.setText(resultHtmlText);

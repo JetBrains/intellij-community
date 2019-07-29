@@ -15,6 +15,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -113,7 +115,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       panel.add(buttonPanel, BorderLayout.EAST);
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 
-      if (!UIUtil.isUnderDarcula()) {
+      if (!StartupUiUtil.isUnderDarcula()) {
         myHelpButton.putClientProperty("JButton.buttonType", "help");
       }
 
@@ -243,7 +245,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       if (myIcon == null) {
         return;
       }
-      final BufferedImage image = UIUtil.createImage(g, myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = ImageUtil.createImage(g, myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D gg = image.createGraphics();
       myIcon.paintIcon(this, gg, 0, 0);
 

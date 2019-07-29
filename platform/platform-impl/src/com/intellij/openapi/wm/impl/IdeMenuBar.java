@@ -24,13 +24,11 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -88,7 +86,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
-      myActivationWatcher = UIUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
+      myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
       myClockPanel = new ClockPanel();
       myButton = new MyExitFullScreenButton();
       add(myClockPanel);
@@ -120,7 +118,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
 
     // fix for Darcula double border
-    if (state == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
+    if (state == State.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula()) {
       return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0);
     }
 
@@ -377,7 +375,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected void paintBackground(Graphics g) {
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
     }

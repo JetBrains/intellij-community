@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
     }
 
-    myTimer = UIUtil.createNamedTimer("Restart context menu", 500, new ActionListener() {
+    myTimer = TimerUtil.createNamedTimer("Restart context menu", 500, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myDisposed) return;
@@ -121,9 +121,9 @@ public class ContextMenuImpl extends JPanel implements Disposable {
           return;
         }
 
-        myTimer = UIUtil.createNamedTimer("Restart context menu now", 50, new ActionListener() {
+        myTimer = TimerUtil.createNamedTimer("Restart context menu now", 50, new ActionListener() {
           @Override
-          public void actionPerformed(ActionEvent e) {
+          public void actionPerformed(ActionEvent e1) {
             if (myShow) {
               if (myVisible) {
                 scheduleHide();
@@ -189,7 +189,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myTimer.stop();
     }
 
-    myTimer = UIUtil.createNamedTimer("Hide context menu", 1500, new ActionListener() {
+    myTimer = TimerUtil.createNamedTimer("Hide context menu", 1500, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;

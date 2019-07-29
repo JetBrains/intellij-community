@@ -296,7 +296,7 @@ public class VcsStructureChooser extends DialogWrapper {
       };
       myFictive = new JBList();
       myFictive.setBackground(tree.getBackground());
-      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground());
+      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
       myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {

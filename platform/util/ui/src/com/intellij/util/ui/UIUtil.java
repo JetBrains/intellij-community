@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,6 +78,10 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil extends StartupUiUtil {
+  static {
+    LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+  }
+
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
@@ -99,7 +104,8 @@ public final class UIUtil extends StartupUiUtil {
 
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") &&
+                                                                   StartupUiUtil.isUnderDarcula());
     }
   }
 
@@ -389,10 +395,6 @@ public final class UIUtil extends StartupUiUtil {
     }
   }
 
-  public static boolean isDialogFont(@NotNull Font font) {
-    return Font.DIALOG.equals(font.getFamily(Locale.US));
-  }
-
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
@@ -402,7 +404,6 @@ public final class UIUtil extends StartupUiUtil {
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   @NonNls public static final String HTML_MIME = "text/html";
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
-  @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
    * Prevent component DataContext from returning parent editor
@@ -446,7 +447,6 @@ public final class UIUtil extends StartupUiUtil {
 
   public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
-  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._223, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
   public static final Color TRANSPARENT_COLOR = Gray.TRANSPARENT;
 
@@ -1209,7 +1209,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
-    boolean white = selected && focused || isUnderDarcula();
+    boolean white = selected && focused || StartupUiUtil.isUnderDarcula();
 
     Icon expandedDefault = getTreeExpandedIcon();
     Icon collapsedDefault = getTreeCollapsedIcon();
@@ -1332,7 +1332,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (isUnderDarcula() || isUnderIntelliJLaF());
+    return SystemInfo.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   public static boolean isUnderDefaultMacTheme() {
@@ -1448,7 +1448,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
-    return isUnderDarcula();
+    return StartupUiUtil.isUnderDarcula();
   }
 
   public static int getListCellHPadding() {
@@ -1786,52 +1786,25 @@ public final class UIUtil extends StartupUiUtil {
    *  Use it to set up default RenderingHints.
    */
   public static void applyRenderingHints(@NotNull Graphics g) {
-    Graphics2D g2d = (Graphics2D)g;
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    //noinspection HardCodedStringLiteral
-    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
-    if (map != null) {
-      g2d.addRenderingHints(map);
-    }
+    GraphicsUtil.applyRenderingHints(g);
   }
 
   /**
-   * Creates a HiDPI-aware BufferedImage in device scale.
-   *
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
-   * @return a HiDPI-aware BufferedImage in device scale
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @deprecated Use {@link ImageUtil#createImage(int, int, int)}
    */
+  @Deprecated
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
-    if (isJreHiDPI()) {
-      return RetinaImage.create(width, height, type);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+    return ImageUtil.createImage(width, height, type);
   }
 
   /**
-   * Creates a HiDPI-aware BufferedImage in the graphics config scale.
-   *
-   * @param gc the graphics config
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
-   * @return a HiDPI-aware BufferedImage in the graphics scale
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @deprecated Use {@link ImageUtil#createImage(GraphicsConfiguration, int, int, int)}
    */
+  @Deprecated
   @NotNull
-  public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
-    if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+  public static BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
+    return ImageUtil.createImage(gc, width, height, type);
   }
 
   /**
@@ -1869,36 +1842,21 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * Creates a HiDPI-aware BufferedImage in the graphics device scale.
-   *
-   * @param g the graphics of the target device
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
-   * @return a HiDPI-aware BufferedImage in the graphics scale
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
    */
+  @Deprecated
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
-    return createImage(g, width, height, type, RoundingMode.FLOOR);
+    return ImageUtil.createImage(g, width, height, type);
   }
 
   /**
-   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @deprecated Use {@link ImageUtil#createImage(Graphics, double, double, int, RoundingMode)}
    */
+  @Deprecated
   @NotNull
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
-      if (JreHiDpiUtil.isJreHiDPI(g2d)) {
-        return RetinaImage.create(g2d, width, height, type, rm);
-      }
-      //noinspection UndesirableClassUsage
-      return new BufferedImage(rm.round(width), rm.round(height), type);
-    }
-    return createImage(rm.round(width), rm.round(height), type);
+    return ImageUtil.createImage(g, width, height, type, rm);
   }
 
   /**
@@ -1915,8 +1873,8 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp.getGraphicsConfiguration(), width, height, type) :
-           createImage(width, height, type);
+           ImageUtil.createImage(comp.getGraphicsConfiguration(), width, height, type) :
+           ImageUtil.createImage(width, height, type);
   }
 
   /**
@@ -1925,7 +1883,7 @@ public final class UIUtil extends StartupUiUtil {
   @Deprecated
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    return createImage(g, width, height, type);
+    return ImageUtil.createImage(g, width, height, type);
   }
 
   /**
@@ -2187,7 +2145,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Color getFocusedFillColor() {
-    return toAlpha(getListSelectionBackground(), 100);
+    return toAlpha(getListSelectionBackground(true), 100);
   }
 
   @NotNull
@@ -2507,17 +2465,7 @@ public final class UIUtil extends StartupUiUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      try {
-        EdtInvocationManager.getInstance().invokeAndWait(runnable);
-      }
-      catch (Exception e) {
-        getLogger().error(e);
-      }
-    }
+    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
   }
 
   /**
@@ -2819,8 +2767,8 @@ public final class UIUtil extends StartupUiUtil {
     private Color myColor;
 
     public TextPainter() {
-      myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ isUnderDarcula();
-      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
+      myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ StartupUiUtil.isUnderDarcula();
+      myShadowColor = StartupUiUtil.isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
 
@@ -2955,7 +2903,7 @@ public final class UIUtil extends StartupUiUtil {
           }
 
           if (myDrawShadow) {
-            int xOff = isUnderDarcula() ? 1 : 0;
+            int xOff = StartupUiUtil.isUnderDarcula() ? 1 : 0;
             Color oldColor1 = g.getColor();
             g.setColor(myShadowColor);
 
@@ -2969,7 +2917,7 @@ public final class UIUtil extends StartupUiUtil {
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
             g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
-            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.drawString(shortcut, xOffset + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor1);
           }
 
@@ -3044,24 +2992,22 @@ public final class UIUtil extends StartupUiUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
+  /**
+   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int, ActionListener)}
+   */
   @NotNull
-  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
-    return new Timer(delay, listener) {
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
+  @Deprecated
+  public static Timer createNamedTimer(@NonNls @NotNull String name, int delay, @NotNull ActionListener listener) {
+    return TimerUtil.createNamedTimer(name, delay, listener);
   }
 
+  /**
+   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int)}
+   */
   @NotNull
-  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay) {
-    return new Timer(delay, null) {
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
+  @Deprecated
+  public static Timer createNamedTimer(@NonNls @NotNull String name, int delay) {
+    return TimerUtil.createNamedTimer(name, delay);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {
@@ -3099,7 +3045,11 @@ public final class UIUtil extends StartupUiUtil {
     return maxWidthAnchor;
   }
 
-  public static void setNotOpaqueRecursively(@NotNull Component component) {
+  /**
+   * @deprecated Not required.
+   */
+  @Deprecated
+  public static void setNotOpaqueRecursively(@SuppressWarnings("unused") @NotNull Component component) {
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
@@ -3158,7 +3108,7 @@ public final class UIUtil extends StartupUiUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = isUnderDarcula() ? 140 : 230;
+        lcdContrastValue = StartupUiUtil.isUnderDarcula() ? 140 : 230;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 
@@ -3235,14 +3185,6 @@ public final class UIUtil extends StartupUiUtil {
       if (each.isVisible() && each.isActive()) return each;
     }
     return JOptionPane.getRootFrame();
-  }
-
-  public static void suppressFocusStealing (@NotNull Window window) {
-    // Focus stealing is not a problem on Mac
-    if (SystemInfo.isMac) return;
-    if (SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
-      setAutoRequestFocus(window, false);
-    }
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {

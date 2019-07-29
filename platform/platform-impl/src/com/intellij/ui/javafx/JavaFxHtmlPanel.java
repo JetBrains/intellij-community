@@ -10,7 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.webkit.Accessor;
 import com.sun.webkit.WebPage;
@@ -86,7 +86,7 @@ public class JavaFxHtmlPanel implements Disposable {
 
     myLafManagerListener = new JavaFXLafManagerListener();
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
-    runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
+    runInPlatformWhenAvailable(() -> updateLaf(StartupUiUtil.isUnderDarcula()));
   }
 
   @NotNull

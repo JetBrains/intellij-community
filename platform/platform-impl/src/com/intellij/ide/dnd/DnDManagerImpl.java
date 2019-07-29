@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
@@ -11,14 +11,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.util.ui.GeometryUtil;
-import com.intellij.util.ui.MultiResolutionImageProvider;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -51,14 +50,15 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   private final DragGestureListener myDragGestureListener = new MyDragGestureListener();
   private final DropTargetListener myDropTargetListener = new MyDropTargetListener();
 
-  private static final Image EMPTY_IMAGE = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
+  private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
-  private final Timer myTooltipTimer = UIUtil.createNamedTimer("DndManagerImpl tooltip timer",ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      onTimer();
-    }
-  });
+  private final Timer myTooltipTimer =
+    TimerUtil.createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        onTimer();
+      }
+    });
   private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
