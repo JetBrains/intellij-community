@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static java.util.Collections.emptySet;
-
 /**
  * Change related utilities
  */
@@ -55,7 +53,6 @@ public class GitChangeUtils {
    * @param parentRevision the parent revision for this change list
    * @param s              the lines to parse
    * @param changes        a list of changes to update
-   * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
   public static void parseChanges(Project project,
@@ -63,10 +60,9 @@ public class GitChangeUtils {
                                   @Nullable GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   String s,
-                                  Collection<? super Change> changes,
-                                  final Set<String> ignoreNames) throws VcsException {
+                                  Collection<? super Change> changes) throws VcsException {
     StringScanner sc = new StringScanner(s);
-    parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
+    parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes);
     if (sc.hasMoreData()) {
       throw new IllegalStateException("Unknown file status: " + sc.line());
     }
@@ -81,7 +77,6 @@ public class GitChangeUtils {
    * @param parentRevision the parent revision for this change list
    * @param s              the lines to parse
    * @param changes        a list of changes to update
-   * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
   private static void parseChanges(Project project,
@@ -89,8 +84,7 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber thisRevision,
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
-                                   Collection<? super Change> changes,
-                                   final Set<String> ignoreNames) throws VcsException {
+                                   Collection<? super Change> changes) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
       if (s.isEol()) {
@@ -141,9 +135,7 @@ public class GitChangeUtils {
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
       }
-      if (ignoreNames == null || !ignoreNames.contains(path)) {
-        changes.add(new Change(before, after, status));
-      }
+      changes.add(new Change(before, after, status));
     }
   }
 
@@ -290,7 +282,7 @@ public class GitChangeUtils {
       final GitRevisionNumber parentRevision = parents.length > 0 ? resolveReference(project, root, parents[0]) : null;
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
-      parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes, null);
+      parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes);
     }
     else {
       // This is the merge commit. It has multiple parent commits.
@@ -303,7 +295,7 @@ public class GitChangeUtils {
         diffHandler.setSilent(true);
         diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());
         String diff = Git.getInstance().runCommand(diffHandler).getOutputOrThrow();
-        parseChanges(project, root, thisRevision, parentRevision, diff, changes, null);
+        parseChanges(project, root, thisRevision, parentRevision, diff, changes);
 
         if (changes.size() > 0) {
           break;
@@ -357,7 +349,7 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, range, dirtyPaths, false, detectRenames);
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, newRev, oldRev, output, changes, emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes);
     return changes;
   }
 
@@ -388,7 +380,7 @@ public class GitChangeUtils {
     String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, emptySet());
+    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes);
     return changes;
   }
 
@@ -434,8 +426,7 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse, detectRenames);
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
-    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
-                 emptySet());
+    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes);
     return changes;
   }
 
