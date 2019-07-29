@@ -52,11 +52,16 @@ class TextMateLexerState implements LexerState {
     return syntaxRule.equals(state.syntaxRule) &&
            matchData.equals(state.matchData) &&
            priorityMatch == state.priorityMatch &&
-           Objects.equals(string, state.string);
+           stringId() == state.stringId();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(syntaxRule, matchData, priorityMatch, string);
+    return Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
+  }
+
+  @Nullable
+  private Object stringId() {
+    return string != null ? string.id : null;
   }
 }
