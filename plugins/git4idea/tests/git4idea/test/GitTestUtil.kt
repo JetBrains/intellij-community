@@ -123,7 +123,7 @@ fun registerRepo(project: Project, root: String): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root, GitVcs.NAME)
   val file = LocalFileSystem.getInstance().findFileByIoFile(File(root))
-  assertFalse(vcsManager.allVcsRoots.isEmpty())
+  assertFalse("There are no VCS roots. Active VCSs: ${vcsManager.allActiveVcss}", vcsManager.allVcsRoots.isEmpty())
   val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
   assertNotNull("Couldn't find repository for root $root", repository)
   cd(root)
