@@ -971,6 +971,12 @@ public class GitUtil {
   }
 
   @NotNull
+  public static String getLogStringGitDiffChanges(@NotNull String root,
+                                                  @NotNull Collection<? extends GitChangeUtils.GitDiffChange> changes) {
+    return getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
+  }
+
+  @NotNull
   public static String getLogString(@NotNull String root, @NotNull Collection<? extends Change> changes) {
     return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
   }

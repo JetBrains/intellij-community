@@ -43,6 +43,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -309,16 +310,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       }
 
       // Check what is staged besides our changes
-      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
-      LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
+      Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
+      LOG.debug("Found staged changes: " + getLogStringGitDiffChanges(rootPath, stagedChanges));
       Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
       processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
         if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
       });
 
       // Find unstaged deletions, we might not be able to restore them after
-      Collection<Change> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
-      LOG.debug("Found unstaged changes: " + GitUtil.getLogString(rootPath, unstagedChanges));
+      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      LOG.debug("Found unstaged changes: " + getLogStringGitDiffChanges(rootPath, unstagedChanges));
       Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
       processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
         if (before != null && after == null) excludedUnstagedDeletions.add(before);
@@ -542,13 +543,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return files;
   }
 
-  private static void processExcludedPaths(@NotNull Collection<? extends Change> changes,
+  private static void processExcludedPaths(@NotNull Collection<? extends GitDiffChange> changes,
                                            @NotNull Set<FilePath> added,
                                            @NotNull Set<FilePath> removed,
                                            @NotNull PairConsumer<? super FilePath, ? super FilePath> function) {
-    for (Change change : changes) {
-      FilePath before = getBeforePath(change);
-      FilePath after = getAfterPath(change);
+    for (GitDiffChange change : changes) {
+      FilePath before = change.beforePath;
+      FilePath after = change.afterPath;
       if (removed.contains(before)) before = null;
       if (added.contains(after)) after = null;
       function.consume(before, after);

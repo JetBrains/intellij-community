@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -55,12 +56,12 @@ public class GitChangeUtils {
    * @param changes        a list of changes to update
    * @throws VcsException if the input format does not matches expected format
    */
-  public static void parseChanges(Project project,
-                                  VirtualFile vcsRoot,
-                                  @Nullable GitRevisionNumber thisRevision,
-                                  GitRevisionNumber parentRevision,
-                                  String s,
-                                  Collection<? super Change> changes) throws VcsException {
+  private static void parseChanges(Project project,
+                                   VirtualFile vcsRoot,
+                                   @Nullable GitRevisionNumber thisRevision,
+                                   GitRevisionNumber parentRevision,
+                                   String s,
+                                   Collection<? super Change> changes) throws VcsException {
     StringScanner sc = new StringScanner(s);
     parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes);
     if (sc.hasMoreData()) {
@@ -85,6 +86,17 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
                                    Collection<? super Change> changes) throws VcsException {
+    parseChanges(project, vcsRoot, s, (status, beforePath, afterPath) -> {
+      ContentRevision before = beforePath != null ? GitContentRevision.createRevision(beforePath, parentRevision, project) : null;
+      ContentRevision after = afterPath != null ? GitContentRevision.createRevision(afterPath, thisRevision, project) : null;
+      changes.add(new Change(before, after, status));
+    });
+  }
+
+  private static void parseChanges(@NotNull Project project,
+                                   @NotNull VirtualFile vcsRoot,
+                                   @NotNull StringScanner s,
+                                   @NotNull FileStatusLineConsumer consumer) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
       if (s.isEol()) {
@@ -96,16 +108,16 @@ public class GitChangeUtils {
         return;
       }
       String[] tokens = s.line().split("\t");
-      final ContentRevision before;
-      final ContentRevision after;
+      final FilePath before;
+      final FilePath after;
       final String path = tokens[tokens.length - 1];
       final FilePath filePath = GitContentRevision.createPathFromEscaped(vcsRoot, path);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
-          before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = null;
+          after = filePath;
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -113,30 +125,33 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = filePath;
+          after = filePath;
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          before = filePath;
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          final FilePath oldFilePath = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
-          before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
+          after = filePath;
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
-          after = GitContentRevision.createRevisionForTypeChange(filePath, thisRevision, project);
+          before = filePath;
+          after = filePath;
           break;
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
       }
-      changes.add(new Change(before, after, status));
+      consumer.consume(status, before, after);
     }
+  }
+
+  private interface FileStatusLineConsumer {
+    void consume(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath);
   }
 
   /**
@@ -354,14 +369,14 @@ public class GitChangeUtils {
   }
 
   @NotNull
-  public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static Collection<GitDiffChange> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     return getLocalChanges(project, root, "--cached", "-M");
   }
 
   @NotNull
-  public static Collection<Change> getUnstagedChanges(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
-                                                      boolean detectMoves) throws VcsException {
+  public static Collection<GitDiffChange> getUnstagedChanges(@NotNull Project project,
+                                                             @NotNull VirtualFile root,
+                                                             boolean detectMoves) throws VcsException {
     if (detectMoves) {
       return getLocalChanges(project, root, "-M");
     }
@@ -371,16 +386,22 @@ public class GitChangeUtils {
   }
 
   @NotNull
-  private static Collection<Change> getLocalChanges(@NotNull Project project,
-                                                    @NotNull VirtualFile root,
-                                                    String... parameters) throws VcsException {
+  private static Collection<GitDiffChange> getLocalChanges(@NotNull Project project,
+                                                           @NotNull VirtualFile root,
+                                                           String... parameters) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
     diff.addParameters("--name-status");
     diff.addParameters(parameters);
     String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
 
-    Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes);
+    StringScanner sc = new StringScanner(output);
+    Collection<GitDiffChange> changes = new ArrayList<>();
+    parseChanges(project, root, sc, (status, beforePath, afterPath) -> {
+      changes.add(new GitDiffChange(status, beforePath, afterPath));
+    });
+    if (sc.hasMoreData()) {
+      throw new IllegalStateException("Unknown file status: " + sc.line());
+    }
     return changes;
   }
 
@@ -418,11 +439,11 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
-                                                          @NotNull VirtualFile root,
-                                                          @NotNull String oldRevision,
-                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
-                                                          boolean reverse,
-                                                          boolean detectRenames) throws VcsException {
+                                                         @NotNull VirtualFile root,
+                                                         @NotNull String oldRevision,
+                                                         @Nullable Collection<? extends FilePath> dirtyPaths,
+                                                         boolean reverse,
+                                                         boolean detectRenames) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse, detectRenames);
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
@@ -494,6 +515,24 @@ public class GitChangeUtils {
     catch (VcsException e) {
       LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
       return null;
+    }
+  }
+
+  public static class GitDiffChange {
+    @NotNull public final FileStatus status;
+    @Nullable public final FilePath beforePath;
+    @Nullable public final FilePath afterPath;
+
+    public GitDiffChange(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
+      assert beforePath != null || afterPath != null;
+      this.status = status;
+      this.beforePath = beforePath;
+      this.afterPath = afterPath;
+    }
+
+    @NotNull
+    public FilePath getFilePath() {
+      return ObjectUtils.assertNotNull(afterPath != null ? afterPath : beforePath);
     }
   }
 }
