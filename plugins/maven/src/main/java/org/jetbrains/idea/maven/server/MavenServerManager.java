@@ -129,7 +129,15 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       }
 
       if (!eventListenerJar.exists()) {
-        MavenLog.LOG.error("Event listener does not exist " + eventListenerJar);
+        if (ApplicationManager.getApplication().isInternal()) {
+          MavenLog.LOG.error("Event listener does not exist: Please run rebuild for maven modules:\n" +
+                             "community/plugins/maven/maven-event-listener\n" +
+                             "and all maven*-server* modules"
+          );
+        }
+        else {
+          MavenLog.LOG.error("Event listener does not exist " + eventListenerJar);
+        }
       }
     }
 
