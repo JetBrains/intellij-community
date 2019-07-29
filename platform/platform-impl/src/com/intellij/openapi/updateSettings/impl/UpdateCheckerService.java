@@ -93,7 +93,7 @@ public final class UpdateCheckerService implements Disposable {
 
   private void scheduleFirstCheck() {
     UpdateSettings settings = UpdateSettings.getInstance();
-    if (!settings.isCheckNeeded()) {
+    if (!settings.isCheckNeeded() || ApplicationManager.getApplication().isUnitTestMode()) { // Android Studio: do not run during tests
       return;
     }
 
