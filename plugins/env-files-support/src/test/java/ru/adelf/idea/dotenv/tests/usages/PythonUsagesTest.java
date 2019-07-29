@@ -1,6 +1,5 @@
 package ru.adelf.idea.dotenv.tests.usages;
 
-import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
 public class PythonUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
@@ -16,6 +15,6 @@ public class PythonUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     public void testUsages() {
-        assertIndexContains(DotEnvUsagesIndex.KEY,"PYTHON_TEST", "PYTHON_TEST2");
+        assertUsagesContains("PYTHON_TEST", "PYTHON_TEST2");
     }
 }

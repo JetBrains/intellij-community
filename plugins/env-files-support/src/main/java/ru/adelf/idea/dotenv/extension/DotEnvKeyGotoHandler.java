@@ -14,7 +14,6 @@ public class DotEnvKeyGotoHandler implements GotoDeclarationHandler {
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-
         if(psiElement == null || psiElement.getParent() == null) {
             return PsiElement.EMPTY_ARRAY;
         }

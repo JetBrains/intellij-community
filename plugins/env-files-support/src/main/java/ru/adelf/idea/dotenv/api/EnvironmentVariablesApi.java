@@ -6,11 +6,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
-import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
 import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
@@ -101,20 +102,18 @@ public class EnvironmentVariablesApi {
     public static PsiElement[] getKeyUsages(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
 
-        FileBasedIndex.getInstance().getFilesWithKey(DotEnvUsagesIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
-            PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
-            if(psiFileTarget == null) {
-                return true;
-            }
+        PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 
-            for(EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
-                if(provider.acceptFile(virtualFile)) {
-                    targets.addAll(EnvironmentVariablesUtil.getUsagesElementsByKey(key, provider.getUsages(psiFileTarget)));
-                }
+        Processor<PsiFile> psiFileProcessor = psiFile -> {
+            for (EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
+                targets.addAll(EnvironmentVariablesUtil.getUsagesElementsByKey(key, provider.getUsages(psiFile)));
             }
 
             return true;
-        }, GlobalSearchScope.allScope(project));
+        };
+
+        searchHelper.processAllFilesWithWord(key, GlobalSearchScope.allScope(project), psiFileProcessor, true);
+        searchHelper.processAllFilesWithWordInLiterals(key, GlobalSearchScope.allScope(project), psiFileProcessor);
 
         return targets.toArray(PsiElement.EMPTY_ARRAY);
     }

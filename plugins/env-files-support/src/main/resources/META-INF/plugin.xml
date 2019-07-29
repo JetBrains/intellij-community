@@ -12,21 +12,19 @@
         <li>Environment variables completion for PHP, JavaScript, Python, Go and Ruby languages</li>
         <li>Dockerfile and docker-compose.yml files support.</li>
         <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
-        <li>.env file commenter</li>
+        <li>.env file syntax highlighter</li>
       </ul>
     ]]></description>
 
   <change-notes><![CDATA[
-      0.7
+      0.8
       <ul>
-        <li>.env syntax highlighting</li>
-        <li>Go support</li>
-        <li>.env.* files support</li>
-        <li>Javascript indexing optimization(remove /node_modules from index)</li>
+        <li>Improved performance by removing additional indexing</li>
+        <li>.env syntax fix</li>
       </ul>
   ]]></change-notes>
 
-  <idea-version since-build="191"/>
+  <idea-version since-build="191" until-build="192.*"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
@@ -49,14 +47,10 @@
 
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
-    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>
 
     <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
     <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
     <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
-    <!--<lang.refactoringSupport language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvRefactoringSupportProvider"/>
-    <lang.findUsagesProvider language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvFindUsagesProvider"/>
-    <referencesSearch implementation="ru.adelf.idea.dotenv.extension.DotEnvReferencesSearcher"/>-->
 
     <localInspection language="DotEnv"
                      groupName="DotEnv"

@@ -21,7 +21,7 @@ sourceSets {
     }
     test {
         java.srcDirs 'src/test/java'
-        //resources.srcDirs 'src/test/resources'
+        resources.srcDirs 'src/test/resources'
     }
 }
 
@@ -49,6 +49,7 @@ intellij {
 
 patchPluginXml {
     sinceBuild '191'
+    untilBuild '192.*'
 }
 
 group 'ru.adelf'

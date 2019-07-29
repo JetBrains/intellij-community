@@ -2,12 +2,12 @@ package ru.adelf.idea.dotenv.tests.usages;
 
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
-public class PhpUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
+public class GoUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("usages.php"));
+        myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("usages.go"));
     }
 
     protected String getTestDataPath() {
@@ -15,6 +15,6 @@ public class PhpUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     public void testUsages() {
-        assertUsagesContains("PHP_TEST", "PHP_TEST2");
+        assertUsagesContains("GO_TEST", "GO_TEST2");
     }
 }

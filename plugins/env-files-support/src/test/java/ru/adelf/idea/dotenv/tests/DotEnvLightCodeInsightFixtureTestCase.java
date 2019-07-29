@@ -1,11 +1,13 @@
 package ru.adelf.idea.dotenv.tests;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +42,15 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends LightCodeIns
                 fail(String.format("Fail that ID '%s' not contains '%s'", id.toString(), key));
             } else if(!notCondition && virtualFiles.size() == 0) {
                 fail(String.format("Fail that ID '%s' contains '%s'", id.toString(), key));
+            }
+        }
+    }
+
+    protected void assertUsagesContains(@NotNull String... keys) {
+        for (String key : keys) {
+            PsiElement[] usages = EnvironmentVariablesApi.getKeyUsages(this.myFixture.getProject(), key);
+            if(usages.length == 0) {
+                fail(String.format("Fail that usages contains '%s'", key));
             }
         }
     }
