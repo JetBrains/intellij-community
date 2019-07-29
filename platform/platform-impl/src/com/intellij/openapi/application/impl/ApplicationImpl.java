@@ -407,13 +407,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       Activity componentRegisteredActivity = StartUpMeasurer.start(activityNamePrefix() + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX);
       String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
+      for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getIterable()) {
+        try {
+          listener.beforeApplicationLoaded(this, effectiveConfigPath);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
 
       // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
       ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
       LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
 
-      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
       componentRegisteredActivity.end();
 
       if (indicator == null) {
