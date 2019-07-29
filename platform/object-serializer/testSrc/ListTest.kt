@@ -88,6 +88,19 @@ class ListTest {
   }
 
   @Test
+  fun `empty list as empty list on read`() {
+    class TestBean {
+      @JvmField
+      var list: List<String>? = null
+    }
+
+    val bean = TestBean()
+    bean.list = emptyList()
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean.list).isSameAs(emptyList<String>())
+  }
+
+  @Test
   fun `parameterized array`() {
     class TestBean<T> {
       @JvmField
@@ -109,7 +122,7 @@ class ListTest {
     assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
       {
         version:42,
-        formatVersion:2,
+        formatVersion:3,
         data:[
           foo,
           bar
