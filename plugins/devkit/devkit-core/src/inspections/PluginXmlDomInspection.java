@@ -217,6 +217,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       else if (element instanceof Listeners) {
         annotateListeners((Listeners)element, holder);
       }
+      else if (element instanceof Listeners.Listener) {
+        annotateListener((Listeners.Listener)element, holder);
+      }
     }
 
     if (element instanceof GenericDomValue) {
@@ -243,6 +246,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
+  private static void annotateListener(Listeners.Listener listener, DomElementAnnotationHolder holder) {
+    final PsiClass listenerClass = listener.getListenerClassName().getValue();
+    final PsiClass topicClass = listener.getTopicClassName().getValue();
+    if (listenerClass == null || topicClass == null) return;
+
+    if (!listenerClass.isInheritor(topicClass, true)) {
+      holder.createProblem(listener.getListenerClassName(),
+                           "'" + listener.getListenerClassName().getStringValue() + "' does not inherit from " +
+                           "'" + listener.getTopicClassName().getStringValue() + "'");
+    }
   }
 
   private static final int LISTENERS_PLATFORM_VERSION = 192;

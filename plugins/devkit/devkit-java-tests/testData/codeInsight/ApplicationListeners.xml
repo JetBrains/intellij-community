@@ -6,7 +6,7 @@
   <idea-version since-build="192.*"/>
 
   <applicationListeners>
-    <listener class="java.lang.String" topic="java.lang.String"
+    <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners>
 
@@ -17,11 +17,11 @@
               activeInHeadlessMode="true" activeInTestMode="true"/>
 
 
-    <listener class="<error descr="'java.lang.Runnable' is not a concrete class"><error descr="Interface is not allowed">java.lang.Runnable</error></error>"
-              topic="java.lang.String"/>
+    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="'java.util.Collection' is not a concrete class"><error descr="Interface is not allowed">java.util.Collection</error></error></error>"
+              topic="java.util.Collection"/>
 
 
-    <listener class="java.lang.String" topic="java.lang.String"
+    <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </applicationListeners>

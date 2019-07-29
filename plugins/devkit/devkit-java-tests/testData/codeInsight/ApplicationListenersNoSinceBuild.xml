@@ -5,7 +5,7 @@
 
 
   <error descr="Must specify <idea-version> 'since-build'"><applicationListeners>
-    <listener class="java.lang.String" topic="java.lang.String"
+    <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners></error>
 

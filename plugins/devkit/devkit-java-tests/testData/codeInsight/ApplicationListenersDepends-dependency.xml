@@ -1,7 +1,7 @@
 <idea-plugin>
 
   <error descr="Feature available in platform version 192 or later only, but specified 'since-build' platform is '191'"><applicationListeners>
-    <listener class="java.lang.String" topic="java.lang.String"
+    <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners></error>
 
