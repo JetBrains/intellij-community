@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 /**
  * User: catherine
  * <p>
@@ -75,6 +73,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     mySerializer.readExternal(this, node);
   }
 
+  private static boolean isTupleWithUnpacking(@NotNull PyExpression expression) {
+    return expression instanceof PyTupleExpression &&
+           ContainerUtil.or(((PyTupleExpression)expression).getElements(), PyStarExpression.class::isInstance);
+  }
+
   private class Visitor extends PyInspectionVisitor {
     Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
@@ -91,6 +94,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       if (expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
         return;
       }
+      final LanguageLevel languageLevel = LanguageLevel.forElement(node);
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
           final PsiElement parent = node.getParent();
@@ -115,8 +119,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (node.getParent() instanceof PyReturnStatement) {
-        final PyTupleExpression tuple = as(expression, PyTupleExpression.class);
-        if (!(tuple != null && ContainerUtil.or(tuple.getElements(), PyStarExpression.class::isInstance))) {
+        if (!isTupleWithUnpacking(expression) || languageLevel.isAtLeast(LanguageLevel.PYTHON38)) {
           registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
