@@ -87,6 +87,13 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
       myNoteLabel.setVisible(true);
     }
 
-    myPasswordLabel.setText(myRepository.isInCloud() ? "API Token:" : "Password:");
+    if (myRepository.isInCloud()) {
+      myUsernameLabel.setText("Email:");
+      myPasswordLabel.setText("API Token:");
+    }
+    else {
+      myUsernameLabel.setText("Username:");
+      myPasswordLabel.setText("Password:");
+    }
   }
 }
