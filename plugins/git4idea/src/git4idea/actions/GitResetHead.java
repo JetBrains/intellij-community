@@ -52,13 +52,9 @@ public class GitResetHead extends GitRepositoryAction {
             VcsNotifier.getInstance(project).notifyError(GitBundle.getString("resetting.title"),
                                                          result.getErrorOutputAsHtmlString());
           }
+          GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot());
+          VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
         }
-      }
-
-      @Override
-      public void onFinished() {
-        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot());
-        VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
       }
     }.queue();
   }
