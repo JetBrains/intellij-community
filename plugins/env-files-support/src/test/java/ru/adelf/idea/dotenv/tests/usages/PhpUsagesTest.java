@@ -1,4 +1,4 @@
-package ru.adelf.idea.dotenv.tests.php;
+package ru.adelf.idea.dotenv.tests.usages;
 
 import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
@@ -12,10 +12,10 @@ public class PhpUsagesTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     protected String getTestDataPath() {
-        return basePath + "php/fixtures";
+        return basePath + "usages/fixtures";
     }
 
     public void testUsages() {
-        assertIndexContains(DotEnvUsagesIndex.KEY,"TEST", "TEST2");
+        assertIndexContains(DotEnvUsagesIndex.KEY,"PHP_TEST", "PHP_TEST2");
     }
 }
