@@ -448,16 +448,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assert instance != null : mainClass;
   }
 
-  // For JDK 11 `TestProperties` bundle try load over class
-  public static class MyTestProperties extends PropertyResourceBundle {
-    public MyTestProperties() throws IOException {
-      super(new StringReader(MyClassFinder.TEST_PROPERTY_CONTENT));
-    }
-  }
-
   private static class MyClassFinder extends InstrumentationClassFinder {
-    private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
-    private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
+    private final byte[] myTestPropertiesBytes = Charset.defaultCharset().encode(TestProperties.TEST_PROPERTY_CONTENT).array();
+    private final String myTestPropertiesClassInternalName = TestProperties.class.getName().replace('.', '/');
+    private final String myTestPropertiesFileInternalName = myTestPropertiesClassInternalName + ".properties";
     private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
@@ -474,21 +468,16 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       if (bytes != null) {
         return new ByteArrayInputStream(bytes);
       }
-      return null;
-    }
-
-    @Override
-    protected Class findClass(String name) {
-      if ("TestProperties".equals(name)) {
-        return MyTestProperties.class;
+      if (myTestPropertiesClassInternalName.equals(internalClassName)) {
+        return TestProperties.class.getClassLoader().getResourceAsStream(myTestPropertiesClassInternalName + ".class");
       }
       return null;
     }
 
     @Override
     public InputStream getResourceAsStream(String name) throws IOException {
-      if (name.equals("TestProperties.properties")) {
-        return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
+      if (myTestPropertiesFileInternalName.equals(name)) {
+        return new ByteArrayInputStream(myTestPropertiesBytes, 0, TestProperties.TEST_PROPERTY_CONTENT.length());
       }
       return super.getResourceAsStream(name);
     }

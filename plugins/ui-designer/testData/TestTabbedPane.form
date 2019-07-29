@@ -20,7 +20,7 @@
       </component>
       <component id="980c7" class="javax.swing.JButton">
         <constraints>
-          <tabbedpane title-resource-bundle="TestProperties" title-key="test"/>
+          <tabbedpane title-resource-bundle="com/intellij/uiDesigner/core/TestProperties" title-key="test"/>
         </constraints>
         <properties>
           <enabled value="true"/>

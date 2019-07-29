@@ -13,7 +13,7 @@
       <component id="f484d" class="javax.swing.JButton" default-binding="true">
         <constraints border-constraint="North"/>
         <properties>
-          <text resource-bundle="TestProperties" key="test"/>
+          <text resource-bundle="com/intellij/uiDesigner/core/TestProperties" key="test"/>
         </properties>
       </component>
     </children>
