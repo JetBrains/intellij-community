@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -336,28 +337,66 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   public abstract <T> T getComponent(Class<T> clazz);
 
   protected void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
+
+    if (VersionComparatorUtil.compare(getMavenVersion(), "3.2.5") >= 0) {
+      executeWithSessionScope(request, runnable);
+    }
+    else {
+      executeWithMavenSessionLegacy(request, runnable);
+    }
+  }
+
+  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, Runnable runnable) {
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    MavenSession mavenSession = createMavenSession(request, maven);
+    LegacySupport legacySupport = getComponent(LegacySupport.class);
+    MavenSession oldSession = legacySupport.getSession();
+    legacySupport.setSession(mavenSession);
+    // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+    notifyAfterSessionStart(mavenSession);
+    try {
+      runnable.run();
+    }
+    finally {
+      legacySupport.setSession(oldSession);
+    }
+  }
+
+  @NotNull
+  private MavenSession createMavenSession(MavenExecutionRequest request, DefaultMaven maven) {
+    RepositorySystemSession repositorySession = maven.newRepositorySession(request);
+    request.getProjectBuildingRequest().setRepositorySession(repositorySession);
+    return new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
+  }
+
+  private void notifyAfterSessionStart(MavenSession mavenSession) {
+    try {
+      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+        listener.afterSessionStart(mavenSession);
+      }
+    }
+    catch (MavenExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+
+  protected void executeWithSessionScope(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     SessionScope sessionScope = getComponent(SessionScope.class);
     sessionScope.enter();
 
     try {
-      RepositorySystemSession repositorySession = maven.newRepositorySession(request);
-      request.getProjectBuildingRequest().setRepositorySession(repositorySession);
-      MavenSession mavenSession = new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
+      MavenSession mavenSession = createMavenSession(request, maven);
       sessionScope.seed(MavenSession.class, mavenSession);
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession oldSession = legacySupport.getSession();
       legacySupport.setSession(mavenSession);
 
+      notifyAfterSessionStart(mavenSession);
       // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
       try {
-        for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
-          listener.afterSessionStart(mavenSession);
-        }
         runnable.run();
-      }
-      catch (MavenExecutionException e) {
-        throw new RuntimeException(e);
       }
       finally {
         legacySupport.setSession(oldSession);
