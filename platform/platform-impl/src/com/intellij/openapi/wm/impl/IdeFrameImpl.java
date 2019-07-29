@@ -92,16 +92,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     super();
     updateTitle();
 
-    Runnable hideSplashTask = SplashManager.getHideTask();
-    if (hideSplashTask != null) {
-      addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          hideSplashTask.run();
-          removeWindowListener(this);
-        }
-      });
-    }
+    SplashManager.hideBeforeShow(this);
 
     myRootPane = new IdeRootPane(this);
     setRootPane(myRootPane);

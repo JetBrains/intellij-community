@@ -1,11 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +38,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
-public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
+public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
@@ -50,6 +47,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   private final BalloonLayout myBalloonLayout;
 
   public WelcomeFrame() {
+    SplashManager.hideBeforeShow(this);
+
     JRootPane rootPane = getRootPane();
     final WelcomeScreen screen = createScreen(rootPane);
 
@@ -158,7 +157,6 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     if (ourInstance != null) return null;
 
     final IdeFrame frame = createWelcomeFrame();
-
     return () -> {
       if (ourInstance != null) return;
 
@@ -214,7 +212,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     return getBounds();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Project getProject() {
     return ProjectManager.getInstance().getDefaultProject();

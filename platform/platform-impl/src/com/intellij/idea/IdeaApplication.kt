@@ -62,8 +62,9 @@ import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
 private val LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication")
-private var ourFilesToLoad: List<File> = emptyList()
-private var ourWizardStepsProvider: CustomizeIDEWizardStepsProvider? = null
+
+private var filesToLoad: List<File> = emptyList()
+private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(rawArgs: Array<String>,
                                 initAppActivity: Activity,
@@ -277,12 +278,12 @@ object IdeaApplication {
 
   @JvmStatic
   fun openFilesOnLoading(files: List<File>) {
-    ourFilesToLoad = files
+    filesToLoad = files
   }
 
   @JvmStatic
   fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-    ourWizardStepsProvider = provider
+    wizardStepProvider = provider
   }
 }
 
@@ -345,7 +346,7 @@ open class IdeStarter : ApplicationStarter {
     appFrameCreatedActivity.end()
 
     // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-    val willOpenProject = commandLineArgs.isNotEmpty() || ourFilesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+    val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
 
     // temporary check until the JRE implementation has been checked and bundled
     if (Registry.`is`("ide.popup.enablePopupType")) {
@@ -356,15 +357,13 @@ open class IdeStarter : ApplicationStarter {
     LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN)
 
     val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
-
-    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
-    val showWelcomeFrame: Runnable? = if (doShowWelcomeFrame == null) null
-    else Runnable {
-      SplashManager.hideNow()
-      doShowWelcomeFrame.run()
-      lifecyclePublisher.welcomeScreenDisplayed()
-    }
-    showWizardAndWelcomeFrame(showWelcomeFrame)
+    showWizardAndWelcomeFrame(when {
+                                shouldShowWelcomeFrame -> Runnable {
+                                  WelcomeFrame.prepareToShow()
+                                  lifecyclePublisher.welcomeScreenDisplayed()
+                                }
+                                else -> null
+                              })
 
     frameInitActivity.end()
 
@@ -374,7 +373,7 @@ open class IdeStarter : ApplicationStarter {
 
     TransactionGuard.submitTransaction(app, Runnable {
       val project = when {
-        ourFilesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, ourFilesToLoad, "MacMenu")
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
         commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
         else -> null
       }
@@ -394,7 +393,7 @@ open class IdeStarter : ApplicationStarter {
   }
 
   private fun showWizardAndWelcomeFrame(showWelcomeFrame: Runnable?) {
-    ourWizardStepsProvider?.let { wizardStepsProvider ->
+    wizardStepProvider?.let { wizardStepsProvider ->
       val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepsProvider, null, false, true) {
         override fun doOKAction() {
           super.doOKAction()

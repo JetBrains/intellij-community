@@ -107,6 +107,19 @@ public final class SplashManager {
     };
   }
 
+  public static void hideBeforeShow(@NotNull Window window) {
+    Runnable hideSplashTask = getHideTask();
+    if (hideSplashTask != null) {
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowOpened(WindowEvent e) {
+          hideSplashTask.run();
+          window.removeWindowListener(this);
+        }
+      });
+    }
+  }
+
   @Nullable
   public static Runnable getHideTask() {
     if (SPLASH_WINDOW == null) {
@@ -124,12 +137,5 @@ public final class SplashManager {
         splash.dispose();
       }
     };
-  }
-
-  public static void hideNow() {
-    final Runnable hideTask = getHideTask();
-    if (hideTask != null) {
-      hideTask.run();
-    }
   }
 }
