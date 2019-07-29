@@ -14,7 +14,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.util.Collection;
-import java.util.HashMap;
+import com.intellij.util.containers.HashMap;
 import java.util.List;
 import java.util.Map;
 
