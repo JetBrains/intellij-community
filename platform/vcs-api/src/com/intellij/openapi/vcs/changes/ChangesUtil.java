@@ -217,12 +217,6 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static VirtualFile findValidParentUnderReadAction(@NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    return file != null ? file : getValidParentUnderReadAction(path);
-  }
-
-  @Nullable
   public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();
 
