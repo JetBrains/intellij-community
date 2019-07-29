@@ -16,6 +16,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -1093,7 +1094,7 @@ public class PluginManagerConfigurableNewLayout
     Downloads, Name, Rating, Relevance, Updated
   }
 
-  private class MarketplaceSortByAction extends ToggleAction {
+  private class MarketplaceSortByAction extends ToggleAction implements DumbAware {
     private final SortBySearchOption myOption;
     private boolean myState;
 
@@ -1145,7 +1146,7 @@ public class PluginManagerConfigurableNewLayout
     Downloaded, NeedUpdate, Enabled, Disabled, Invalid, Bundled
   }
 
-  private class InstalledSearchOptionAction extends ToggleAction {
+  private class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
     private final InstalledSearchOption myOption;
     private boolean myState;
 
