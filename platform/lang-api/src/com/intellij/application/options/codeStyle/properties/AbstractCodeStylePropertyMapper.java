@@ -42,7 +42,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   private void addAccessorsFor(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap,
                                @NotNull Object codeStyleObject,
                                @Nullable Set<String> supportedFields) {
-    Class codeStyleClass = codeStyleObject.getClass();
+    Class codeStyleClass = getObjectStorageClass(codeStyleObject);
     for (Field field : getCodeStyleFields(codeStyleClass)) {
       String fieldName = field.getName();
       if (supportedFields == null || supportedFields.contains(fieldName)) {
@@ -52,6 +52,14 @@ public abstract class AbstractCodeStylePropertyMapper {
         }
       }
     }
+  }
+
+  private static Class getObjectStorageClass(@NotNull Object codeStyleObject) {
+    Class objectClass = codeStyleObject.getClass();
+    if (CodeStyleSettings.class.isAssignableFrom(objectClass)) {
+      return CodeStyleSettings.class;
+    }
+    return objectClass;
   }
 
   @Nullable
