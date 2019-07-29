@@ -375,11 +375,6 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   }
 
   @Override
-  public boolean needsLegacyDefaultMappings() {
-    return true;
-  }
-
-  @Override
   public MergeProvider getMergeProvider() {
     if (myMergeProvider != null) {
       myMergeProvider = new CvsMergeProvider();

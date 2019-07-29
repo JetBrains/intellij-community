@@ -714,6 +714,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public boolean needsLegacyDefaultMappings() {
+    return false;
+  }
+
+  @Override
   public MergeProvider getMergeProvider() {
     if (myMergeProvider == null) {
       myMergeProvider = new SvnMergeProvider(myProject);
