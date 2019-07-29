@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
 
-  private static final String FILE_SEPARATORS = "/" + File.separator;
+  private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
 
   private VfsImplUtil() { }
 
