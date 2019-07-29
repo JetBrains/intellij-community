@@ -19,39 +19,33 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-import java.util.HashSet;
 import java.util.Set;
 
 class OperatorAssignmentPredicate implements PsiElementPredicate {
-
-  private static final Set<IElementType> OPERATOR_ASSIGNMENT_TOKENS =
-    new HashSet();
-
-  static {
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PLUSEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.MINUSEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ASTERISKEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PERCEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.DIVEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ANDEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.OREQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.XOREQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.LTLTEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTEQ);
-    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTGTEQ);
+  private static class Lazy {
+    private static final Set<IElementType> OPERATOR_ASSIGNMENT_TOKENS = ContainerUtil.newHashSet(
+      JavaTokenType.PLUSEQ,
+      JavaTokenType.MINUSEQ,
+      JavaTokenType.ASTERISKEQ,
+      JavaTokenType.PERCEQ,
+      JavaTokenType.DIVEQ,
+      JavaTokenType.ANDEQ,
+      JavaTokenType.OREQ,
+      JavaTokenType.XOREQ,
+      JavaTokenType.LTLTEQ,
+      JavaTokenType.GTGTEQ,
+      JavaTokenType.GTGTGTEQ
+    );
   }
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAssignmentExpression)) {
-      return false;
-    }
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
-    final IElementType tokenType =
-      assignmentExpression.getOperationTokenType();
-    return OPERATOR_ASSIGNMENT_TOKENS.contains(tokenType);
+    if (!(element instanceof PsiAssignmentExpression)) return false;
+    PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+    IElementType tokenType = assignmentExpression.getOperationTokenType();
+    return Lazy.OPERATOR_ASSIGNMENT_TOKENS.contains(tokenType);
   }
 }
