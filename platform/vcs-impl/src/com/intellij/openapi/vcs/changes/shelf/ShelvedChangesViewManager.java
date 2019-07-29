@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor;
-import com.intellij.openapi.vcs.changes.DnDActivateOnHoldTargetContent;
-import com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -263,7 +260,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myModel.insertNodeInto(shelvedListNode, parentNode, parentNode.getChildCount());
         for (ShelvedWrapper shelved : shelvedChanges) {
           Change change = shelved.getChange(myProject);
-          insertChangeNode(change, shelvedListNode, new ShelvedChangeNode(shelved, change.getOriginText(myProject)));
+          FilePath filePath = ChangesUtil.getFilePath(change);
+          insertChangeNode(change, shelvedListNode, new ShelvedChangeNode(shelved, filePath, change.getOriginText(myProject)));
         }
       });
     }
@@ -771,14 +769,18 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> {
+  private static class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> implements Comparable<ShelvedChangeNode> {
 
     @NotNull private final ShelvedWrapper myShelvedChange;
+    @NotNull private final FilePath myFilePath;
     @Nullable private final String myAdditionalText;
 
-    protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange, @Nullable String additionalText) {
+    protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange,
+                                @NotNull FilePath filePath,
+                                @Nullable String additionalText) {
       super(shelvedChange);
       myShelvedChange = shelvedChange;
+      myFilePath = filePath;
       myAdditionalText = additionalText;
     }
 
@@ -809,9 +811,8 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    public int compareUserObjects(ShelvedWrapper o2) {
-      return compareFilePaths(VcsUtil.getFilePath(getUserObject().getRequestName()),
-                              VcsUtil.getFilePath(o2.getRequestName()));
+    public int compareTo(@NotNull ShelvedChangeNode o) {
+      return compareFilePaths(myFilePath, o.myFilePath);
     }
   }
 
