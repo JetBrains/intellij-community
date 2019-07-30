@@ -1271,8 +1271,6 @@ public class PluginManagerCore {
 
   @NotNull
   public static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);
-
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
@@ -1296,8 +1294,6 @@ public class PluginManagerCore {
     catch (InterruptedException | ExecutionException e) {
       ExceptionUtil.rethrow(e);
     }
-
-    activity.end();
 
     return topoSortPlugins(result, errors);
   }

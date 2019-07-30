@@ -38,7 +38,6 @@ public final class StartUpMeasurer {
 
     // actually, now it is also registers services, not only components,but it doesn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
-    public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "component registered callback";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";

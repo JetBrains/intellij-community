@@ -77,7 +77,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   starter.premain(args)
 
   val futures = mutableListOf<Future<*>>()
-  futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app))
+  futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app, initAppActivity))
 
   if (!headless) {
     // todo investigate why in test mode dummy icon manager is not suitable
@@ -114,12 +114,12 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   EventQueue.invokeLater {
     placeOnEventQueueActivity.end()
     StartupUtil.installExceptionHandler()
-    initAppActivity.end()
-    val activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT)
-    for (future in futures) {
-      future.get()
+    initAppActivity.runChild(Phases.WAIT_PLUGIN_INIT) {
+      for (future in futures) {
+        future.get()
+      }
     }
-    activity.end()
+    initAppActivity.end()
 
     app.load(null, SplashManager.getProgressIndicator())
     if (!headless) {
@@ -139,7 +139,8 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
 }
 
 private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
-                                                      app: ApplicationImpl): CompletableFuture<Void> {
+                                                      app: ApplicationImpl,
+                                                      initAppActivity: Activity): CompletableFuture<Void> {
   return pluginDescriptorsFuture
     .thenCompose { pluginDescriptors ->
       val future = CompletableFuture.runAsync(Runnable {
@@ -152,10 +153,10 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
         }
       }, AppExecutorUtil.getAppExecutorService())
 
-      ParallelActivity.PREPARE_APP_INIT.run("app component registration") {
+      initAppActivity.runChild("app component registration") {
         app.registerComponents(pluginDescriptors)
       }
-      ParallelActivity.PREPARE_APP_INIT.run("add message bus listeners") {
+      initAppActivity.runChild("add message bus listeners") {
         app.registerMessageBusListeners(pluginDescriptors, false)
       }
 
@@ -232,7 +233,9 @@ object IdeaApplication {
     }
 
     val plugins = try {
-      PluginManagerCore.getLoadedPlugins(IdeaApplication.javaClass.classLoader)
+      initAppActivity.runChild("plugin descriptors loading") {
+        PluginManagerCore.getLoadedPlugins(IdeaApplication.javaClass.classLoader)
+      }
     }
     catch (e: Throwable) {
       pluginDescriptorsFuture.completeExceptionally(e)
