@@ -9,10 +9,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.Scale;
-import com.intellij.ui.scale.UserScaleContext;
+import com.intellij.ui.scale.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -1033,13 +1030,14 @@ public class JBUI {
   }
 
   /*
-   * The scaling classes/methods below are left for binary compatibility with plugins (based on API Watcher).
+   * The scaling classes/methods below are kept for binary compatibility with plugins built with IJ SDK 2018.3-2019.1
    */
 
   /**
    * @deprecated Use {@link com.intellij.ui.scale.ScaleType}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public enum ScaleType {
     USR_SCALE,
     SYS_SCALE,
@@ -1051,6 +1049,7 @@ public class JBUI {
    * @deprecated Use {@link UserScaleContext}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static class BaseScaleContext extends UserScaleContext {
     @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
     public boolean update(@Nullable BaseScaleContext ctx) {
@@ -1061,6 +1060,10 @@ public class JBUI {
       return setScale(scale);
     }
 
+    /**
+     * @deprecated Use {@link UserScaleContext#getScale(com.intellij.ui.scale.ScaleType)}.
+     */
+    @Deprecated
     public double getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value();
@@ -1103,6 +1106,7 @@ public class JBUI {
       setScale(scale);
     }
 
+    @Override
     public double getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value();
@@ -1113,19 +1117,17 @@ public class JBUI {
       return 1f; // unreachable
     }
 
-    // backward compatibility
-    @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+    @Override
     public boolean update(@Nullable BaseScaleContext context) {
       return super.update(context);
     }
   }
 
   /**
-   * Note, the class is deprecated and is kept for backward compatibility.
-   *
    * @deprecated Use {@link JBScalableIcon}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("DeprecatedIsStillUsed")
   public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
     public JBIcon() {

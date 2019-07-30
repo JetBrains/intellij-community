@@ -2,6 +2,7 @@
 package com.intellij.ui.scale;
 
 import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,8 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * @see ScaleContextAware
  * @author tav
  */
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ScaleContext extends UserScaleContext {
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
+public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { // extends BaseScaleContext for backward compatibility
   protected Scale sysScale = ScaleType.SYS_SCALE.of(JBUIScale.sysScale());
 
   @Nullable
