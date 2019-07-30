@@ -141,13 +141,16 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
     TextRange selectionRange = new TextRange(start, end);
     while (true) {
+      if (elt instanceof PsiFile) {
+        return elt.getLanguage();
+      }
       PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
       if (range == null) {
         LOG.error("Range is null for " + elt + "; " + elt.getClass());
         return file.getLanguage();
       }
-      if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
+      if (range.contains(selectionRange) || parent == null) {
         return elt.getLanguage();
       }
       elt = parent;
