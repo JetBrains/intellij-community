@@ -27,11 +27,9 @@ public final class UsageDescriptor {
     this(key, value, new FeatureUsageData());
   }
 
-  @Deprecated
-  public UsageDescriptor(@NotNull String key, int value, @NotNull String... contextData) {
-    this(key, value, contextData.length > 0 ? FUSUsageContext.create(contextData) : null);
-  }
-
+  /**
+   * @deprecated Create named event data with {@link FeatureUsageData}
+   */
   @Deprecated
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
     this(key, value);
@@ -43,9 +41,9 @@ public final class UsageDescriptor {
   }
 
   public UsageDescriptor(@NotNull String key, int value, @Nullable FeatureUsageData data) {
-    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myKey = key;
     myValue = value;
-    myData = data;
+    myData = data == null ? new FeatureUsageData() : data;
   }
 
   public String getKey() {

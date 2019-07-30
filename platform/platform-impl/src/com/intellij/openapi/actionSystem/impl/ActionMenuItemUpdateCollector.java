@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.*;
@@ -33,7 +32,7 @@ public class ActionMenuItemUpdateCollector implements PersistentStateComponent<A
     State state = getState();
     if (state == null) return;
 
-    String key = ConvertUsagesUtil.escapeDescriptorName(place) + "@" + (actionId != null ? actionId : action.toString());
+    String key = place + "@" + (actionId != null ? actionId : action.toString());
 
     Map<String, Integer> sourceIntegerMap = myLocalState.computeIfAbsent(sourceKey, k -> new HashMap<>());
     final Integer count = sourceIntegerMap.get(key);

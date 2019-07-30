@@ -62,8 +62,7 @@ public class FUCounterUsageLogger {
   }
 
   /**
-   * Don't call this method directly, register counter group in XML as
-   * <statistics.counterUsagesCollector groupId="ID" version="VERSION"/>
+   * @deprecated Don't call this method directly, register counter group in XML as <statistics.counterUsagesCollector groupId="ID" version="VERSION"/>
    */
   @Deprecated
   public void register(@NotNull FeatureUsageGroup group) {
