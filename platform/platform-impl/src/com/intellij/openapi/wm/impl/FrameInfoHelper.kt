@@ -4,11 +4,11 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOS
+import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.WindowManagerImpl.FrameBoundsConverter.convertToDeviceSpace
-import com.intellij.ui.FrameState
 import com.intellij.ui.ScreenUtil
 import sun.awt.AWTAccessor
+import java.awt.Frame
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.peer.FramePeer
@@ -16,8 +16,13 @@ import java.awt.peer.FramePeer
 class FrameInfoHelper {
   companion object {
     @JvmStatic
-    fun isFullScreenSupportedInCurrentOS(): Boolean {
+    fun isFullScreenSupportedInCurrentOs(): Boolean {
       return SystemInfo.isMacOSLion || SystemInfo.isWindows || (SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported())
+    }
+
+    @JvmStatic
+    fun isMaximized(state: Int): Boolean {
+      return state and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
     }
   }
 
@@ -73,11 +78,11 @@ private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangl
     }
   }
 
-  val isInFullScreen = isFullScreenSupportedInCurrentOS() && frame.isInFullScreen
-  val isMaximized = FrameState.isMaximized(extendedState) || isInFullScreen
+  val isInFullScreen = isFullScreenSupportedInCurrentOs() && frame.isInFullScreen
+  val isMaximized = FrameInfoHelper.isMaximized(extendedState) || isInFullScreen
 
   val oldBounds = oldFrameInfo?.bounds
-  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration, lastNormalFrameBounds ?: frame.bounds)
+  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration, if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frame.bounds)
 
   val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&
@@ -93,7 +98,7 @@ private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangl
     frameInfo.bounds = newBounds
   }
   frameInfo.extendedState = extendedState
-  if (isFullScreenSupportedInCurrentOS()) {
+  if (isFullScreenSupportedInCurrentOs()) {
     frameInfo.fullScreen = isInFullScreen
   }
   frameInfo.bounds = newBounds

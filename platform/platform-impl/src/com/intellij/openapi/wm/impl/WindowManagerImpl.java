@@ -133,7 +133,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
       else {
         ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
-        projectFrameBounds.markDirty(IdeFrameImpl.isMaximized(extendedState) ? null : bounds);
+        projectFrameBounds.markDirty(FrameInfoHelper.isMaximized(extendedState) ? null : bounds);
       }
     }
   };
@@ -520,7 +520,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       frame.setBounds(bounds);
     }
 
-    if (frameInfo.getFullScreen() && isFullScreenSupportedInCurrentOS()) {
+    if (frameInfo.getFullScreen() && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
       frame.toggleFullScreen(true);
     }
   }
@@ -586,7 +586,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
       frame.setVisible(true);
 
-      if (isFullScreenSupportedInCurrentOS() &&
+      if (FrameInfoHelper.isFullScreenSupportedInCurrentOs() &&
           ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
         frame.toggleFullScreen(true);
       }
@@ -754,11 +754,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
-    return FrameInfoHelper.isFullScreenSupportedInCurrentOS();
+    return FrameInfoHelper.isFullScreenSupportedInCurrentOs();
   }
 
   static boolean isFloatingMenuBarSupported() {
-    return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
+    return !SystemInfo.isMac && FrameInfoHelper.isFullScreenSupportedInCurrentOs();
   }
 
   static boolean isTranslucencySupported() {

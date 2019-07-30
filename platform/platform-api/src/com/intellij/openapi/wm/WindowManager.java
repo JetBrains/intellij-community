@@ -98,6 +98,7 @@ public abstract class WindowManager {
   /**
    * @return {@code true} if full screen mode is supported in current OS.
    */
+  @SuppressWarnings("unused")
   public abstract boolean isFullScreenSupportedInCurrentOS();
 
   public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);

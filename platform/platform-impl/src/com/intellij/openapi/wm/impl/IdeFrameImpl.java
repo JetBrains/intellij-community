@@ -266,7 +266,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @Override
   public void setExtendedState(int state) {
-    if (getExtendedState() == Frame.NORMAL && isMaximized(state)) {
+    if (getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
@@ -274,7 +274,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
     int state = frameInfo.getExtendedState();
-    boolean isMaximized = isMaximized(state);
+    boolean isMaximized = FrameInfoHelper.isMaximized(state);
     if (bounds != null && isMaximized && getExtendedState() == Frame.NORMAL) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, bounds);
     }
@@ -282,10 +282,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     super.setExtendedState(state);
 
     return isMaximized;
-  }
-
-  public static boolean isMaximized(int state) {
-    return (state & Frame.MAXIMIZED_BOTH) != 0;
   }
 
   private void setupCloseAction() {
