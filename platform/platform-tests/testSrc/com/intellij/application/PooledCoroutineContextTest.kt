@@ -2,10 +2,7 @@
 package com.intellij.application
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.junit.Test
 
 class PooledCoroutineContextTest {
@@ -14,7 +11,7 @@ class PooledCoroutineContextTest {
     val errorMessage = "don't swallow me"
     // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
     try {
-      GlobalScope.launch(pooledThreadContext) {
+      GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
         throw RuntimeException(errorMessage)
       }.join()
     }
@@ -29,7 +26,7 @@ class PooledCoroutineContextTest {
     class MyCustomException : RuntimeException()
 
     try {
-      withContext(pooledThreadContext) {
+      withContext(Dispatchers.ApplicationThreadPool) {
         throw MyCustomException()
       }
     }
