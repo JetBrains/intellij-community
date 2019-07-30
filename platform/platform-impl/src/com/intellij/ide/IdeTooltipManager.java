@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -46,16 +45,15 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
-public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComponent {
-  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+public final class IdeTooltipManager implements Disposable, AWTEventListener {
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
-  private RegistryValue myIsEnabled;
-  private RegistryValue myHelpTooltip;
+  private final RegistryValue myIsEnabled;
+  private final RegistryValue myHelpTooltip;
 
   private HelpTooltipManager myHelpTooltipManager;
   private boolean myHideHelpTooltip;
@@ -64,14 +62,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   private Component myQueuedComponent;
 
   private BalloonImpl myCurrentTipUi;
-  private MouseEvent  myCurrentEvent;
-  private boolean     myCurrentTipIsCentered;
+  private MouseEvent myCurrentEvent;
+  private boolean myCurrentTipIsCentered;
 
   private Disposable myLastDisposable;
 
   private Runnable myHideRunnable;
-
-  private final JBPopupFactory myPopupFactory;
 
   private boolean myShowDelay = true;
 
@@ -81,15 +77,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   private int myY;
 
   private IdeTooltip myCurrentTooltip;
-  private Runnable   myShowRequest;
+  private Runnable myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
-  public IdeTooltipManager(JBPopupFactory popupFactory) {
-    myPopupFactory = popupFactory;
-  }
-
-  @Override
-  public void initComponent() {
+  public IdeTooltipManager() {
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myHelpTooltip = Registry.get("ide.helptooltip.enabled");
 
@@ -366,7 +357,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
     Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
-    BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
+    BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
       .setBorderColor(borderColor)
       .setBorderInsets(tooltip.getBorderInsets())
