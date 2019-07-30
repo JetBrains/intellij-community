@@ -24,8 +24,9 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.*;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +40,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
-public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
+public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
   private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   @NotNull
@@ -62,7 +64,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
-  private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
+  private final Set<IdeStatusBarImpl> myChildren = new THashSet<>();
 
   private static class WidgetBean {
     JComponent component;
@@ -97,15 +99,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return frame != null ? frame.getStatusBar() : this;
   }
 
-  private void updateChildren(ChildAction action) {
+  private void updateChildren(@NotNull Consumer<IdeStatusBarImpl> consumer) {
     for (IdeStatusBarImpl child : myChildren) {
-      action.update(child);
+      consumer.accept(child);
     }
-  }
-
-  @FunctionalInterface
-  interface ChildAction {
-    void update(IdeStatusBarImpl child);
   }
 
   @Override
@@ -120,9 +117,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       WidgetBean eachBean = myWidgetMap.get(eachId);
       if (eachBean.widget instanceof StatusBarWidget.Multiframe) {
         StatusBarWidget copy = ((StatusBarWidget.Multiframe)eachBean.widget).copy();
-        UIUtil.invokeLaterIfNeeded(() -> bar.addWidget(copy, eachBean.position, eachBean.anchor));
+        bar.addWidget(copy, eachBean.position, eachBean.anchor);
       }
     }
+    bar.repaint();
 
     return bar;
   }
@@ -138,13 +136,13 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
-    addWidget(myInfoAndProgressPanel, Position.CENTER);
+    addWidget(myInfoAndProgressPanel, Position.CENTER, "__IGNORED__");
 
     setOpaque(true);
     updateUI();
 
     if (addToolWindowsWidget) {
-      addWidget(new ToolWindowsWidget(this), Position.LEFT);
+      addWidget(new ToolWindowsWidget(this), Position.LEFT, "__IGNORED__");
     }
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
@@ -176,7 +174,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void addWidget(@NotNull StatusBarWidget widget) {
-    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, "__AUTODETECT__"));
+    addWidget(widget, "__AUTODETECT__");
   }
 
   @Override
@@ -184,14 +182,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       addWidget(widget, Position.RIGHT, anchor);
+      repaint();
     }
     else {
-      app.invokeLater(() -> addWidget(widget, Position.RIGHT, anchor));
+      app.invokeLater(() -> {
+        addWidget(widget, Position.RIGHT, anchor);
+        repaint();
+      });
     }
-  }
-
-  private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos) {
-    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, pos, "__IGNORED__"));
   }
 
   @Override
@@ -269,6 +267,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       removeWidget(id);
     }
     myCustomComponentIds.clear();
+  }
+
+  @ApiStatus.Internal
+  public void doAddWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+    addWidget(widget, Position.RIGHT, anchor);
   }
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos, @NotNull String anchor) {
@@ -374,14 +377,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     installWidget(widget, pos, c, anchor);
 
     if (widget instanceof StatusBarWidget.Multiframe) {
-      final StatusBarWidget.Multiframe mfw = (StatusBarWidget.Multiframe)widget;
-      updateChildren(child -> UIUtil.invokeLaterIfNeeded(() -> {
-        StatusBarWidget widgetCopy = mfw.copy();
-        child.addWidget(widgetCopy, pos, anchor);
-      }));
+      StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
+      updateChildren(child -> child.addWidget(multiFrameWidget.copy(), pos, anchor));
     }
-
-    repaint();
   }
 
   @Override
@@ -534,15 +532,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return uiClassID;
   }
 
-  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  protected void setUI(StatusBarUI ui) {
-    super.setUI(ui);
-  }
-
   @Override
   public void updateUI() {
     if (UIManager.get(getUIClassID()) != null) {
-      setUI((StatusBarUI)UIManager.getUI(this));
+      setUI(UIManager.getUI(this));
     }
     else {
       setUI(new StatusBarUI());
@@ -559,7 +552,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void removeWidget(@NotNull final String id) {
+  public void removeWidget(@NotNull String id) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
     final WidgetBean bean = myWidgetMap.get(id);
     if (bean != null) {
@@ -668,7 +661,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private static final class TextPresentationWrapper extends TextPanel implements StatusBarWrapper {
     private final StatusBarWidget.TextPresentation myPresentation;
-    private final Consumer<MouseEvent> myClickConsumer;
+    private final com.intellij.util.Consumer<MouseEvent> myClickConsumer;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
       myPresentation = presentation;
@@ -696,7 +689,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private static final class IconPresentationWrapper extends TextPanel.WithIconAndArrows implements StatusBarWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
-    private final Consumer<MouseEvent> myClickConsumer;
+    private final com.intellij.util.Consumer<MouseEvent> myClickConsumer;
 
     private IconPresentationWrapper(@NotNull final StatusBarWidget.IconPresentation presentation) {
       myPresentation = presentation;

@@ -305,7 +305,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   @Override
-  public StatusBar getStatusBar() {
+  public IdeStatusBarImpl getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
@@ -450,18 +450,17 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   private final Set<String> widgetIds = new THashSet<>();
 
-  private void addWidget(@NotNull StatusBar statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+  private void addWidget(@NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
     if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
       return;
     }
 
-    //noinspection deprecation
-    statusBar.addWidget(widget, anchor);
+    statusBar.doAddWidget(widget, anchor);
   }
 
   private void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    StatusBar statusBar = Objects.requireNonNull(getStatusBar());
+    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
@@ -478,15 +477,16 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       addWidget(statusBar, widget, widgetProvider.getAnchor());
     }
 
+    statusBar.repaint();
+
     disposeWidgets(project);
   }
 
   private void disposeWidgets(@NotNull Project project) {
     Disposer.register(project, () -> {
-      StatusBar statusBar = getStatusBar();
+      IdeStatusBarImpl statusBar = getStatusBar();
       if (statusBar != null) {
         for (String widgetID: widgetIds) {
-          //noinspection deprecation
           statusBar.removeWidget(widgetID);
         }
       }

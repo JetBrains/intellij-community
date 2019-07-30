@@ -290,7 +290,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   @Nullable
-  final StatusBar getStatusBar() {
+  final IdeStatusBarImpl getStatusBar() {
     return myStatusBar;
   }
 
