@@ -1,4 +1,4 @@
-def <T0, Y0> void foo(List<Y0> a, Y0 b) {
+def <T0, W0> void foo(List<W0> a, W0 b) {
   a.add(b)
 }
 

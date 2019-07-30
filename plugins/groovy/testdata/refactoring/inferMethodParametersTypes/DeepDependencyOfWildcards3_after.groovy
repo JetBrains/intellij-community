@@ -1,4 +1,4 @@
-def <V0 extends List<? extends X1>> void foo(List<V0> a, V0 b) {
+def <U0 extends List<? extends X1>> void foo(List<U0> a, U0 b) {
   a.add(b)
 }
 

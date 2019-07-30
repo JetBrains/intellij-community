@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
-import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeVisitor
@@ -33,7 +32,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         parameterizedClosure.closureArguments.addAll(calls.map { it as GrClosableBlock })
         closureParameters[parameter] = parameterizedClosure
         repeat((calls.first() as GrClosableBlock).allParameters.size) {
-          val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+          val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
           virtualMethod.typeParameterList!!.add(newTypeParameter)
           parameterizedClosure.typeParameters.add(newTypeParameter)
         }
@@ -51,7 +50,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           val parameterizedClosure = ParameterizedClosure(parameter)
           closureParameters[parameter] = parameterizedClosure
           repeat(directClosureCall.expressionArguments.size) {
-            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
             virtualMethod.typeParameterList!!.add(newTypeParameter)
             parameterizedClosure.typeParameters.add(newTypeParameter)
           }
@@ -67,7 +66,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
             val parameterizedClosure = ParameterizedClosure(parameter)
             closureParameters[parameter] = parameterizedClosure
             repeat(availableParameterNumber(closureParamsAnno)) {
-              val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+              val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
               virtualMethod.typeParameterList!!.add(newTypeParameter)
               parameterizedClosure.typeParameters.add(newTypeParameter)
             }

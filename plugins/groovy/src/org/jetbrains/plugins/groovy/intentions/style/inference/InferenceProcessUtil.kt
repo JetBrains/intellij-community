@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.typing.box
@@ -48,10 +51,16 @@ fun Iterable<PsiType>.flattenIntersections(): Iterable<PsiType> {
   return this.flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else listOf(it) }
 }
 
-fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: Array<out PsiClassType>): PsiTypeParameter {
+fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: PsiType?): PsiTypeParameter {
+  val extendsTypes = when {
+    superType is PsiIntersectionType -> superType.conjuncts.asList()
+    superType != null -> listOf(superType)
+    else -> emptyList()
+  }
+  val filteredSupertypes = extendsTypes.filter { !it.equalsToText(JAVA_LANG_OBJECT) && !it.equalsToText(GROOVY_OBJECT) }
+
   val extendsBound =
-    if (superTypes.size > 1 || superTypes.size == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      val filteredSupertypes = superTypes.filter { !it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) }
+    if (filteredSupertypes.isNotEmpty()) {
       " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(true) }}"
     }
     else {
@@ -82,9 +91,8 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
 }
 
 fun PsiType?.isClosureTypeDeep(): Boolean {
-  return (this as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
-         || this?.typeParameter()?.extendsListTypes?.singleOrNull()?.rawType()?.equalsToText(
-    GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+  return (this as? PsiClassType)?.rawType()?.equalsToText(GROOVY_LANG_CLOSURE) ?: false
+         || this?.typeParameter()?.extendsListTypes?.singleOrNull()?.rawType()?.equalsToText(GROOVY_LANG_CLOSURE) ?: false
 }
 
 
@@ -160,7 +168,7 @@ fun PsiType?.typeParameter(): PsiTypeParameter? {
 fun findOverridableMethod(method: GrMethod): PsiMethod? {
   val clazz = method.containingClass ?: return null
   val superMethods = method.findSuperMethods()
-  val hasJavaLangOverride = method.annotations.any { it.qualifiedName == CommonClassNames.JAVA_LANG_OVERRIDE }
+  val hasJavaLangOverride = method.annotations.any { it.qualifiedName == JAVA_LANG_OVERRIDE }
   if (hasJavaLangOverride && superMethods.isNotEmpty()) {
     return superMethods.first()
   }
@@ -276,7 +284,7 @@ fun compress(types: List<PsiType>?): PsiType? {
   }
 }
 
-inline fun <T> T?.ensure(predicate: (T) -> Boolean) : T? =
+inline fun <T> T?.ensure(predicate: (T) -> Boolean): T? =
   if (this != null && predicate(this)) {
     this
   }

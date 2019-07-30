@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
+import com.intellij.psi.PsiIntersectionType.createIntersection
+import com.intellij.psi.PsiIntersectionType.flatten
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
@@ -161,11 +163,11 @@ class TypeParameterCollector(context: PsiElement) {
                                  resultSubstitutor: PsiSubstitutor,
                                  advice: PsiType): PsiTypeParameter {
     val mappedSupertypes = when (advice) {
-      is PsiClassType -> arrayOf(resultSubstitutor.substitute(advice) as PsiClassType)
-      is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {
-        resultSubstitutor.substitute(it) as PsiClassType
-      }.toTypedArray()
-      else -> emptyArray()
+      is PsiClassType -> resultSubstitutor.substitute(advice)
+      is PsiIntersectionType -> createIntersection(flatten(advice.conjuncts, mutableSetOf()).map {
+        resultSubstitutor.substitute(it)
+      })
+      else -> null
     }
     return factory.createProperTypeParameter(name, mappedSupertypes).apply {
       this@TypeParameterCollector.typeParameterList.add(this)

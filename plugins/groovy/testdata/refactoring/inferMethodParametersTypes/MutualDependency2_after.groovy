@@ -1,4 +1,4 @@
-def <V0> int foo(Comparable<V0> a, V0 b) {
+def <U0> int foo(Comparable<U0> a, U0 b) {
   a <=> b
 }
 

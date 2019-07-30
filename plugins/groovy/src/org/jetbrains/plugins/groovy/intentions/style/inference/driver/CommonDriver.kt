@@ -51,7 +51,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         .toSet()
       val typeParameters = mutableListOf<PsiTypeParameter>()
       for (parameter in targetParameters) {
-        val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+        val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
         typeParameters.add(newTypeParameter)
         virtualMethod.typeParameterList!!.add(newTypeParameter)
         parameter.setType(newTypeParameter.type())
@@ -92,9 +92,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val typeParameters = mutableListOf<PsiTypeParameter>()
     for (parameter in targetParameters) {
       val newParameter = parameterMapping.getValue(parameter)
-      val isStrictInstance = parameter == varargParameter
-      val newType = manager.createDeeplyParameterizedType(substitutor.substitute(parameter.type).forceWildcardsAsTypeArguments(),
-                                                          isStrictInstance)
+      val newType = manager.createDeeplyParameterizedType(substitutor.substitute(parameter.type).forceWildcardsAsTypeArguments())
       newType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       typeParameters.addAll(newType.typeParameters)
       if (parameter == varargParameter) {

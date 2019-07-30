@@ -119,7 +119,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
 
   fun substituteTypes(resultSubstitutor: PsiSubstitutor,
                       typeParametersDependencies: Map<PsiTypeParameter, List<PsiTypeParameter>>) {
-    val javaLangObject = PsiType.getJavaLangObject(typeParameters.first().manager, typeParameters.first().resolveScope)
+    val javaLangObject = PsiType.getJavaLangObject(parameter.manager, parameter.resolveScope)
     val substitutedTypes = types.map { parameterType ->
       val dependencies = typeParametersDependencies
         .filter { it.key.type() != parameterType }

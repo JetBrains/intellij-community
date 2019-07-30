@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
+import com.intellij.psi.PsiIntersectionType.createIntersection
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 private class Parameterizer(val context: PsiElement,
-                            val registerTypeParameterAction: (Iterable<PsiClassType?>) -> PsiClassType) : PsiTypeVisitor<PsiClassType>() {
+                            val registerTypeParameterAction: (PsiType?) -> PsiClassType) : PsiTypeVisitor<PsiType>() {
   val elementFactory = GroovyPsiElementFactory.getInstance(context.project)
 
 
@@ -28,7 +28,7 @@ private class Parameterizer(val context: PsiElement,
     }
     val mappedParameters = generifiedClassType.parameters.map { it.accept(this) }.toTypedArray()
     if (classType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      return registerTypeParameterAction(emptyList())
+      return registerTypeParameterAction(null)
     }
     else {
       // we should not create new type parameter here because it may be a component of an intersection type
@@ -38,19 +38,19 @@ private class Parameterizer(val context: PsiElement,
 
   override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiClassType? {
     wildcardType ?: return null
-    val upperBounds = if (wildcardType.isExtends) {
-      listOf(wildcardType.extendsBound.accept(this))
+    val upperBound = if (wildcardType.isExtends) {
+      wildcardType.extendsBound.accept(this)
     }
     else {
-      emptyList()
+      null
     }
-    return registerTypeParameterAction(upperBounds)
+    return registerTypeParameterAction(upperBound)
   }
 
-  override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiClassType? {
+  override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
     intersectionType ?: return null
     val parametrizedConjuncts = intersectionType.conjuncts.map { it.accept(this) }
-    return registerTypeParameterAction(parametrizedConjuncts)
+    return createIntersection(parametrizedConjuncts)
   }
 }
 
@@ -62,13 +62,9 @@ class ParameterizationManager(method: GrMethod) {
   private val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
   private val context: PsiElement = method
 
-  companion object {
-    fun nonTrivial(type: PsiType) = !type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
-  }
-
-  private fun registerTypeParameter(supertypes: Iterable<PsiClassType?>, storage: MutableCollection<PsiTypeParameter>): PsiClassType {
+  private fun registerTypeParameter(supertype: PsiType?, storage: MutableCollection<PsiTypeParameter>): PsiClassType {
     val typeParameter =
-      elementFactory.createProperTypeParameter(nameGenerator.name, supertypes.filterNotNull().filter { nonTrivial(it) }.toTypedArray())
+      elementFactory.createProperTypeParameter(nameGenerator.name, supertype)
     storage.add(typeParameter)
     return typeParameter.type()
   }
@@ -77,26 +73,25 @@ class ParameterizationManager(method: GrMethod) {
    * Creates type parameter with upper bound of [target].
    * If [target] is parametrized, all it's parameter types will also be parametrized.
    */
-  fun createDeeplyParameterizedType(target: PsiType, strict: Boolean = false): ParameterizationResult {
+  fun createDeeplyParameterizedType(target: PsiType): ParameterizationResult {
     val createdTypeParameters = mutableListOf<PsiTypeParameter>()
     val registerAction =
-      { upperBounds: Iterable<PsiClassType?> -> registerTypeParameter(upperBounds, createdTypeParameters) }
+      { upperBound: PsiType? -> registerTypeParameter(upperBound, createdTypeParameters) }
     val visitor = Parameterizer(context, registerAction)
     val calculatedType =
       when {
-        strict -> target.accept(visitor)
         target is PsiArrayType -> {
           if (target.componentType is PsiPrimitiveType) {
             target
           }
           else {
-            target.componentType.accept(visitor).createArrayType()
+            registerAction(target.componentType.accept(visitor)).createArrayType()
           }
         }
-        target.isTypeParameter() -> registerAction(listOf(target as PsiClassType))
-        target is PsiIntersectionType -> target.accept(visitor)
-        target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(emptyList())
-        else -> registerAction(listOf(target.accept(visitor)))
+        target.isTypeParameter() -> registerAction(target)
+        target is PsiIntersectionType -> registerAction(target.accept(visitor))
+        target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(null)
+        else -> registerAction(target.accept(visitor))
       }
     return ParameterizationResult(calculatedType, createdTypeParameters)
   }
