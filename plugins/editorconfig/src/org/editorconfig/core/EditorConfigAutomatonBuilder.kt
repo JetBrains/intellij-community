@@ -35,8 +35,8 @@ object EditorConfigAutomatonBuilder {
   fun getCachedHeaderAutomaton(header: EditorConfigHeader): Automaton =
     CachedValuesManager.getCachedValue(header, KEY_EDITORCONFIG_ELEMENT_AUTOMATON) {
       val text = header.text
-      Log.assertTrue(header.isValidGlob, "builder was given invalid header: ${header.text}")
-      Log.assertTrue(text.length >= 3, "builder was given a header of insufficient length: ${header.text}")
+      Log.assertTrue(header.isValidGlob, "builder was given invalid header: $text")
+      Log.assertTrue(text.length >= 3, "builder was given a header of insufficient length: $text")
       val internalText = text.substring(1, text.length - 1)
       val path = EditorConfigPresentationUtil.path(header)
       val automaton = RegExp(sanitizeGlob(internalText, path)).toAutomaton()
