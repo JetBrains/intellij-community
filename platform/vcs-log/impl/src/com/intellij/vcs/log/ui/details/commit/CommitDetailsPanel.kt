@@ -2,13 +2,11 @@
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
@@ -38,11 +36,7 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
   data class RootColor(val root: VirtualFile, val color: Color)
 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
-  private val messagePanel = object : CommitMessagePanel(navigate) {
-    override fun hasBackgroundImage(): Boolean {
-      return super.hasBackgroundImage() || !PropertiesComponent.getInstance(project).getValue(EDITOR_PROP).isNullOrEmpty()
-    }
-  }
+  private val messagePanel = CommitMessagePanel(navigate)
   private val branchesPanel = ReferencesPanel()
   private val tagsPanel = ReferencesPanel()
   private val rootPanel = RootColorPanel(hashAndAuthorPanel)
@@ -112,7 +106,7 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
   override fun getBackground(): Color = getCommitDetailsBackground()
 }
 
-private open class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : HtmlPanel() {
+private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : HtmlPanel() {
   private var presentation: CommitPresentation? = null
 
   override fun hyperlinkUpdate(e: HyperlinkEvent) {
@@ -139,23 +133,12 @@ private open class CommitMessagePanel(private val navigate: (CommitId) -> Unit) 
 
   override fun getBody() = presentation?.text ?: ""
 
-  override fun getBackground(): Color = if (hasPanelBackground()) {
-    getCommitDetailsBackground()
-  }
-  else {
-    UIUtil.getTreeBackground()
-  }
+  override fun getBackground(): Color = getCommitDetailsBackground()
 
   override fun update() {
     isVisible = presentation != null
-    isOpaque = !hasPanelBackground()
     super.update()
   }
-
-  private fun hasPanelBackground(): Boolean = UIUtil.isUnderDarcula() || hasBackgroundImage()
-
-  protected open fun hasBackgroundImage(): Boolean =
-    !PropertiesComponent.getInstance().getValue(EDITOR_PROP).isNullOrEmpty()
 }
 
 private class ContainingBranchesPanel : HtmlPanel() {
@@ -282,4 +265,4 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
   }
 }
 
-fun getCommitDetailsBackground(): Color = UIUtil.getPanelBackground()
+fun getCommitDetailsBackground(): Color = UIUtil.getTreeBackground()
