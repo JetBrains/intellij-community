@@ -5,6 +5,8 @@ import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -33,6 +35,8 @@ import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublishe
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
+  private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
+
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
@@ -238,6 +242,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @Override
   public void update() {
+    if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error("Reading Git repository information should not be done on the EDT");
+    }
     GitRepoInfo previousInfo = myInfo;
     myInfo = readRepoInfo();
     notifyIfRepoChanged(this, previousInfo, myInfo);
