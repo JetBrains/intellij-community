@@ -109,6 +109,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public StatusBar createChild(@NotNull IdeFrame frame) {
     IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
+    bar.setVisible(isVisible());
     myChildren.add(bar);
     Disposer.register(this, bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
@@ -161,6 +162,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     Insets insets = getInsets();
     int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
     return new Dimension(size.width, Math.max(size.height, minHeight));
+  }
+
+  @Override
+  public void setVisible(boolean aFlag) {
+    super.setVisible(aFlag);
+    for (IdeStatusBarImpl child : myChildren) {
+      child.setVisible(aFlag);
+    }
   }
 
   @Override
