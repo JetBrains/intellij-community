@@ -47,6 +47,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
@@ -165,6 +166,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
+    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
+      return getExactlySelectedVirtualFiles(this);
+    }
     if (IGNORED_FILES_DATA_KEY.is(dataId)) {
       return getSelectedIgnoredFiles();
     }
@@ -222,6 +226,17 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     return getSelectionNodesStream(tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
       .distinct();
+  }
+
+  @NotNull
+  static Stream<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
+    VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
+
+    return exactlySelected.rawUserObjectsStream().map(object -> {
+      if (object instanceof VirtualFile) return (VirtualFile)object;
+      if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
+      return null;
+    }).filter(Objects::nonNull);
   }
 
   @NotNull
