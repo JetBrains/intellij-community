@@ -692,7 +692,7 @@ std::string getErrorMessage(int errorCode)
   std::string errorMessage = "";
   if (errorCode == -6)
   {
-      errorMessage = "Improperly specified VM option.\n";
+      errorMessage = "Improperly specified VM option.";
   }
   return errorMessage;
 }
