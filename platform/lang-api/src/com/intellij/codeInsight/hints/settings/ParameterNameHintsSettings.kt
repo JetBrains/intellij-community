@@ -16,6 +16,9 @@ private object XmlTagHelper {
   const val ADDED = "added"
   const val REMOVED = "removed"
   const val PATTERN = "pattern"
+  const val DISABLED_LANGUAGES = "disabledLanguages"
+  const val DISABLED_LANGUAGE_ITEM = "language"
+  const val DISABLED_LANGUAGE_ID = "id"
 }
 
 class Diff(val added: Set<String>, val removed: Set<String>) {
@@ -86,11 +89,21 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       }
     }
 
-    options.forEach { id, value ->
+    options.forEach { (id, value) ->
       val element = Element("option")
       element.setAttribute("id", id)
       element.setAttribute("value", value.toString())
       root.addContent(element)
+    }
+
+    if (disabledLanguages.isNotEmpty()) {
+      val disabledLanguagesElement = Element(XmlTagHelper.DISABLED_LANGUAGES)
+      disabledLanguagesElement.addContent(disabledLanguages.map {
+        val element = Element(XmlTagHelper.DISABLED_LANGUAGE_ITEM)
+        element.setAttribute(XmlTagHelper.DISABLED_LANGUAGE_ID, it)
+        element
+      })
+      root.addContent(disabledLanguagesElement)
     }
 
     return root
@@ -112,6 +125,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     addedPatterns.clear()
     removedPatterns.clear()
     options.clear()
+    disabledLanguages.clear()
 
     val allBlacklistElements = state.getChild(XmlTagHelper.BLACKLISTS)
                           ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
@@ -129,6 +143,13 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     state.getChildren("option").forEach {
       val id = it.getAttributeValue("id")
       options[id] = it.getAttributeBooleanValue("value")
+    }
+
+    state.getChild(XmlTagHelper.DISABLED_LANGUAGES)?.apply {
+      getChildren(XmlTagHelper.DISABLED_LANGUAGE_ITEM).forEach {
+        val languageId = it.attributeValue(XmlTagHelper.DISABLED_LANGUAGE_ID) ?: return@forEach
+        disabledLanguages.add(languageId)
+      }
     }
   }
 
