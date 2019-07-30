@@ -3231,8 +3231,7 @@ public class HighlightUtil extends HighlightUtilBase {
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
     ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"),
     SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions"),
-    TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
-    RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
+    TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks");
 
     private final LanguageLevel level;
     private final String key;

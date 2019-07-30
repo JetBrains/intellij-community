@@ -1035,7 +1035,6 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
-    <customPasteProvider implementation="com.intellij.codeInsight.editorActions.RawStringLiteralPasteProcessor"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>
@@ -1663,14 +1662,6 @@
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertRawToStringLiteralAction</className>
-      <category>Java/Strings</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertStringLiteralToRawAction</className>
-      <category>Java/Strings</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
       <category>Java/Numbers</category>
     </intentionAction>
@@ -1680,10 +1671,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Java/Strings</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.SplitRawStringIntentionAction</className>
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -110,9 +109,6 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       return internedParseStringCharacters(getTextBlockText());
     }
-    if (type == JavaTokenType.RAW_STRING_LITERAL) {
-      return getRawString();
-    }
 
     String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
     final int textLength = text.length();
@@ -211,7 +207,7 @@ public class PsiLiteralExpressionImpl
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public String getRawString() {
-    return StringUtil.nullize(StringUtil.trimLeading(StringUtil.trimTrailing(getCanonicalText(), '`'), '`'));
+    return null;
   }
 
   @Nullable
@@ -263,28 +259,9 @@ public class PsiLiteralExpressionImpl
     return this;
   }
 
-  @Override
   @NotNull
+  @Override
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
-    if (getLiteralElementType() == JavaTokenType.RAW_STRING_LITERAL) {
-      return new LiteralTextEscaper<PsiLiteralExpressionImpl>(this) {
-        @Override
-        public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-          outChars.append(rangeInsideHost.substring(myHost.getText()));
-          return true;
-        }
-
-        @Override
-        public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-          return offsetInDecoded + rangeInsideHost.getStartOffset();
-        }
-
-        @Override
-        public boolean isOneLine() {
-          return false;
-        }
-      };
-    }
     return new StringLiteralEscaper<>(this);
   }
 }

@@ -469,13 +469,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitJavaToken(PsiJavaToken token) {
     super.visitJavaToken(token);
 
-    if (!myHolder.hasErrorResults()) {
-      IElementType type = token.getTokenType();
-      if (type == JavaTokenType.TEXT_BLOCK_LITERAL) myHolder.add(checkFeature(token, Feature.TEXT_BLOCKS));
-      if (type == JavaTokenType.RAW_STRING_LITERAL) myHolder.add(checkFeature(token, Feature.RAW_LITERALS));
+    IElementType type = token.getTokenType();
+    if (!myHolder.hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      myHolder.add(checkFeature(token, Feature.TEXT_BLOCKS));
     }
 
-    if (!myHolder.hasErrorResults() && token.getTokenType() == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
+    if (!myHolder.hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
       PsiCodeBlock codeBlock;
       PsiType returnType;

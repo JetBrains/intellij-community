@@ -160,11 +160,6 @@ public class JavaLexer extends LexerBase {
         }
         break;
 
-      case '`':
-        myTokenType = JavaTokenType.RAW_STRING_LITERAL;
-        myTokenEndOffset = getRawLiteralEnd(myBufferIndex);
-        break;
-
       default:
         flexLocateToken();
     }
@@ -271,23 +266,6 @@ public class JavaLexer extends LexerBase {
         break;
       }
     }
-
-    return pos;
-  }
-
-  private int getRawLiteralEnd(int offset) {
-    int pos = offset;
-
-    while (pos < myBufferEndOffset && charAt(pos) == '`') pos++;
-    int quoteLen = pos - offset;
-
-    int start;
-    do {
-      while (pos < myBufferEndOffset && charAt(pos) != '`') pos++;
-      start = pos;
-      while (pos < myBufferEndOffset && charAt(pos) == '`') pos++;
-    }
-    while (pos - start != quoteLen && pos < myBufferEndOffset);
 
     return pos;
   }

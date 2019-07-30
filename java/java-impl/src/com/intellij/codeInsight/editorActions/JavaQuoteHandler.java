@@ -92,21 +92,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Nullable
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    IElementType tokenType = iterator.getTokenType();
-    if (tokenType == JavaTokenType.TEXT_BLOCK_LITERAL && offset == iterator.getStart() + 3) {
-      return "\"\"\"";
-    }
-    if (tokenType == JavaTokenType.RAW_STRING_LITERAL) {
-      CharSequence text = iterator.getDocument().getImmutableCharSequence();
-      int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text.subSequence(iterator.getStart(), offset));
-      if (isOpeningQuote(iterator, offset - leadingTicsSequence)) {
-        int closingSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text.subSequence(offset, iterator.getEnd()));
-        if (closingSequence + 1 == leadingTicsSequence) {
-          return "`";
-        }
-      }
-    }
-    return null;
+    return iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL && offset == iterator.getStart() + 3 ? "\"\"\"" : null;
   }
 
   @Override
