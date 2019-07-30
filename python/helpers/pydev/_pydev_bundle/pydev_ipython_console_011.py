@@ -87,6 +87,7 @@ class PyDevIPCompleter(IPCompleter):
             self.matchers.remove(self.python_matches)
             
 class PyDevIPCompleter6(IPCompleter):
+    _pydev_matchers = None
 
     def __init__(self, *args, **kwargs):
         """ Create a Completer that reuses the advanced completion support of PyDev
@@ -95,14 +96,22 @@ class PyDevIPCompleter6(IPCompleter):
 
     @property
     def matchers(self):
-        """All active matcher routines for completion"""
         # To remove python_matches we now have to override it as it's now a property in the superclass.
-        return [
-            self.file_matches,
-            self.magic_matches,
-            self.python_func_kw_matches,
-            self.dict_key_matches,
-        ]
+        if self._pydev_matchers is None:
+            self._pydev_matchers = self._remove_python_matches(IPCompleter.matchers.fget(self))
+        return self._pydev_matchers
+
+    @matchers.setter
+    def matchers(self, value):
+        # Provide a setter for an overridden property
+        self._pydev_matchers = self._remove_python_matches(value)
+
+    def _remove_python_matches(self, original_matchers):
+        # `self.python_matches` matches attributes or global python names
+        if self.python_matches in original_matchers:
+            original_matchers.remove(self.python_matches)
+        return original_matchers
+
 
 class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     banner1 = Unicode(default_pydev_banner, config=True,
