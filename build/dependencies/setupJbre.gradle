@@ -138,7 +138,7 @@ def createTarJbreTask(String taskName,
   if (OperatingSystem.current().isWindows()) {
     task(taskName, type: Tar) {
       def untarOutputs = untarTask.outputs.files
-      inputs.file(untarOutputs)
+      inputs.files(untarOutputs)
       from "$untarOutputs.singleFile/$dirToTar"
       if (!includeToolsJar) {
         exclude "**/tools.jar"
