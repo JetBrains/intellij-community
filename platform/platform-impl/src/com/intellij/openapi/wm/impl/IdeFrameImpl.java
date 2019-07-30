@@ -117,6 +117,17 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
+  }
+
+  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
+  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
+  public void init() {
+    IdeRootPane rootPane = myRootPane;
+    if (rootPane == null) {
+      return;
+    }
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
       @Override
@@ -155,36 +166,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
         return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
       }
     });
-  }
-
-  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
-  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
-  public void init() {
-    IdeRootPane rootPane = myRootPane;
-    if (rootPane == null) {
-      return;
-    }
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
-
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
-        // Every time a component is removed, AWT asks focus layout policy
-        // who is supposed to be the next focus owner.
-        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
-        FileEditorManagerEx fileEditorManager = myProject == null ? null : FileEditorManagerEx.getInstanceEx(myProject);
-        if (fileEditorManager != null) {
-          EditorWindow window = fileEditorManager.getCurrentWindow();
-          EditorWithProviderComposite editor = window == null ? null : window.getSelectedEditor();
-          JComponent component = editor == null ? null : editor.getPreferredFocusedComponent();
-          if (component != null) {
-            return component;
-          }
-        }
-        return super.getComponentAfter(focusCycleRoot, aComponent);
-      }
-    });
 
     rootPane.init(this);
 
@@ -199,34 +180,37 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     AppUIUtil.updateWindowIcon(this);
   }
 
+  @Nullable
   private Component findNextFocusComponent() {
-    if (myProject != null) {
-      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
-        EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
-        if (currentWindow != null) {
-          EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
-          if (selectedEditor != null) {
-            JComponent preferredFocusedComponent = selectedEditor.getPreferredFocusedComponent();
-            if (preferredFocusedComponent != null) {
-              return preferredFocusedComponent;
-            }
+    if (myProject == null) {
+      return null;
+    }
+
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
+      EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
+      if (currentWindow != null) {
+        EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
+        if (selectedEditor != null) {
+          JComponent preferredFocusedComponent = selectedEditor.getPreferredFocusedComponent();
+          if (preferredFocusedComponent != null) {
+            return preferredFocusedComponent;
           }
         }
       }
-      else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
-        if (content != null) {
-          JComponent component = content.getPreferredFocusableComponent();
-          if (component == null) {
-            LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
-                     toolWindowId + " tool window to avoid focus-related problems.");
-          }
-          return component == null ? getComponentToRequestFocus(toolWindow)  : component;
+    }
+    else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
+      String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+      ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+      Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
+      if (content != null) {
+        JComponent component = content.getPreferredFocusableComponent();
+        if (component == null) {
+          LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
+                   toolWindowId + " tool window to avoid focus-related problems.");
         }
+        return component == null ? getComponentToRequestFocus(toolWindow)  : component;
       }
     }
     return null;
