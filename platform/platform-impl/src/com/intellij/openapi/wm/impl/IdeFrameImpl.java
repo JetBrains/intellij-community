@@ -89,13 +89,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   public IdeFrameImpl() {
     super();
-    updateTitle();
 
     SplashManager.hideBeforeShow(this);
-
-    myRootPane = new IdeRootPane(this);
-    setRootPane(myRootPane);
-    setBackground(UIUtil.getPanelBackground());
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
@@ -111,22 +106,22 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
 
     setupCloseAction();
-    MnemonicHelper.init(this);
-
-    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-
-    MouseGestureManager.getInstance().add(this);
-
-    myFrameDecorator = IdeFrameDecorator.decorate(this);
   }
 
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    IdeRootPane rootPane = myRootPane;
-    if (rootPane == null) {
-      return;
-    }
+    updateTitle();
+
+    myRootPane = new IdeRootPane(this);
+    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
+
+    setRootPane(myRootPane);
+    setBackground(UIUtil.getPanelBackground());
+
+    MnemonicHelper.init(this);
+
+    myFrameDecorator = IdeFrameDecorator.decorate(this);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
 
@@ -168,8 +163,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       }
     });
 
-    rootPane.init(this);
-
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfo.isMac) {
@@ -179,6 +172,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     IdeMenuBar.installAppMenuIfNeeded(this);
     // in production (not from sources) makes sense only on Linux
     AppUIUtil.updateWindowIcon(this);
+
+    MouseGestureManager.getInstance().add(this);
   }
 
   @Nullable

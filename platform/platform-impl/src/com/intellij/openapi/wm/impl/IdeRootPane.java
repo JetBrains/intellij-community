@@ -72,9 +72,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull IdeFrame frame) {
-    if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
-      //setUI(DarculaRootPaneUI.createUI(this));
+  IdeRootPane(@NotNull IdeFrameImpl frame) {
+    if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
       }
@@ -90,17 +89,16 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     });
 
     IdeMenuBar menu = IdeMenuBar.createMenuBar();
-    myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
+    myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
     }
     else {
       if (isDecoratedMenu()) {
-        JFrame jframe = (JFrame)frame;
-        JdkEx.setHasCustomDecoration(jframe);
+        JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(jframe);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
@@ -121,14 +119,10 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
 
-    if (frame instanceof JFrame) {
-      UIUtil.setCustomTitleBar((JFrame)frame, this, runnable -> Disposer.register(this, () -> runnable.run()));
-    }
+    UIUtil.setCustomTitleBar(frame, this, runnable -> Disposer.register(this, () -> runnable.run()));
 
     updateMainMenuVisibility();
-  }
 
-  void init(@NotNull IdeFrame frame) {
     createStatusBar(frame);
   }
 
