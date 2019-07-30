@@ -345,6 +345,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testClosureParamsInfluence2() {
+    doTest(true)
+  }
+
   void testClosurePassedToDGM() {
     doTest(true)
   }

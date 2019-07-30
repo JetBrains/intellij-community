@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -42,16 +43,36 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         if (!(parameter.type.isClosureTypeDeep() && parameter !in alreadyCreatedClosureParameters)) {
           return@forEachParameterUsage
         }
-        val requiredCallInstruction = instructions.firstOrNull {
-          (it.element?.parentOfType<GrCall>()?.advancedResolve() as? GroovyMethodResult)?.candidate?.receiver == parameter.type
+        val callUsages = instructions.mapNotNull { it.element?.parentOfType<GrCall>() }
+        val directClosureCall = callUsages.firstOrNull {
+          (it.advancedResolve() as? GroovyMethodResult)?.candidate?.receiver == parameter.type
         }
-        val requiredCall = requiredCallInstruction?.element?.parentOfType<GrCall>() ?: return@forEachParameterUsage
-        val parameterizedClosure = ParameterizedClosure(parameter)
-        closureParameters[parameter] = parameterizedClosure
-        repeat(requiredCall.expressionArguments.size) {
-          val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
-          virtualMethod.typeParameterList!!.add(newTypeParameter)
-          parameterizedClosure.typeParameters.add(newTypeParameter)
+        if (directClosureCall != null) {
+          val parameterizedClosure = ParameterizedClosure(parameter)
+          closureParameters[parameter] = parameterizedClosure
+          repeat(directClosureCall.expressionArguments.size) {
+            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+            virtualMethod.typeParameterList!!.add(newTypeParameter)
+            parameterizedClosure.typeParameters.add(newTypeParameter)
+          }
+        }
+        else {
+          callUsages.find { call ->
+            val argument = call.argumentList?.allArguments?.find { it.reference?.resolve() == parameter } ?: return@find false
+            val parameterIndex = call.argumentList?.getExpressionArgumentIndex(argument as? GrExpression) ?: return@find false
+            val targetParameter = call.resolveMethod()?.parameters?.get(parameterIndex) as? GrParameter ?: return@find false
+            val closureParamsAnno = targetParameter.modifierList.annotations.find {
+              it.qualifiedName == ParameterizedClosure.CLOSURE_PARAMS_FQ
+            } ?: return@find false
+            val parameterizedClosure = ParameterizedClosure(parameter)
+            closureParameters[parameter] = parameterizedClosure
+            repeat(availableParameterNumber(closureParamsAnno)) {
+              val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+              virtualMethod.typeParameterList!!.add(newTypeParameter)
+              parameterizedClosure.typeParameters.add(newTypeParameter)
+            }
+            return@find true
+          }
         }
       }
       if (closureParameters.isEmpty()) {

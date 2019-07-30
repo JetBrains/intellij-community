@@ -2,15 +2,19 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiLiteral
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_ABSTRACT_TYPE_METHODS
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_STRING
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.MAP_ENTRY_OR_KEY_VALUE
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.SIMPLE_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -156,4 +160,30 @@ private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMe
   }
   return resolveSession.inferSubst(resolveResult)
 }
+
+
+fun availableParameterNumber(annotation: GrAnnotation): Int {
+  val value = (annotation.parameterList.attributes.find { it.name == "value" }?.value?.reference?.resolve() as? PsiClass) ?: return 0
+  val options = lazy {
+    annotation.parameterList.attributes.find { it.name == "options" }?.value as? GrAnnotationArrayInitializer
+  }
+  return when (value.name) {
+    SIMPLE_TYPE -> parseSimpleType(options.value ?: return 0)
+    FROM_STRING -> parseFromString(options.value ?: return 0)
+    in ParameterizedClosure.availableHints -> return 1
+    FROM_ABSTRACT_TYPE_METHODS -> /*todo*/ return 0
+    MAP_ENTRY_OR_KEY_VALUE -> /*todo*/ return 2
+    else -> unreachable()
+  }
+}
+
+private fun parseFromString(signatures: GrAnnotationArrayInitializer): Int {
+  val signature = signatures.initializers.firstOrNull()?.text ?: return 0
+  return signature.count { it == ',' } + 1
+}
+
+private fun parseSimpleType(parameterTypes: GrAnnotationArrayInitializer): Int {
+  return parameterTypes.initializers.size
+}
+
 

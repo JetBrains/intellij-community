@@ -19,12 +19,19 @@ class ParameterizedClosure(val parameter: GrParameter) {
 
   companion object {
     private const val CLOSURE_PARAMS = "ClosureParams"
-    private const val FROM_STRING = "FromString"
-    private const val SIMPLE_TYPE = "SimpleType"
+    const val FROM_STRING = "FromString"
+    const val SIMPLE_TYPE = "SimpleType"
+    const val FROM_ABSTRACT_TYPE_METHODS = "FromAbstractTypeMethods"
+    const val MAP_ENTRY_OR_KEY_VALUE = "MapEntryOrKeyValue"
     private const val ANNOTATION_PACKAGE = "groovy.transform.stc"
-    private const val CLOSURE_PARAMS_FQ = "$ANNOTATION_PACKAGE.$CLOSURE_PARAMS"
-    private const val FROM_STRING_FQ = "$ANNOTATION_PACKAGE.$FROM_STRING"
-    private const val SIMPLE_TYPE_FQ = "$ANNOTATION_PACKAGE.$SIMPLE_TYPE"
+    const val CLOSURE_PARAMS_FQ = "$ANNOTATION_PACKAGE.$CLOSURE_PARAMS"
+    const val FROM_STRING_FQ = "$ANNOTATION_PACKAGE.$FROM_STRING"
+    const val SIMPLE_TYPE_FQ = "$ANNOTATION_PACKAGE.$SIMPLE_TYPE"
+
+    val availableHints = cartesianProduct((0..2), (-1..2)).map { (paramIndex, genericIndex) ->
+      "${evaluateParameterIndex(paramIndex)}${evaluateGenericParameterIndex(genericIndex)}"
+    }.toSet()
+
     private fun typeHintFactory(parameterIndex: Int, genericIndex: Int) =
       { parameterList: PsiParameterList, pattern: PsiType ->
         val type = parameterList.parameters.getOrNull(parameterIndex)?.type.run {
@@ -50,11 +57,14 @@ class ParameterizedClosure(val parameter: GrParameter) {
       }
     }
 
-
     private fun createSingleParameterAnnotation(parameterIndex: Int, genericIndex: Int, project: Project): PsiAnnotation {
       return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(
-        "@$CLOSURE_PARAMS_FQ($ANNOTATION_PACKAGE.${evaluateParameterIndex(parameterIndex)}${evaluateGenericParameterIndex(genericIndex)})")
+        createSingleParameterAnnotationText(parameterIndex, genericIndex))
     }
+
+    private fun createSingleParameterAnnotationText(parameterIndex: Int, genericIndex: Int): String =
+      "@$CLOSURE_PARAMS_FQ($ANNOTATION_PACKAGE.${evaluateParameterIndex(parameterIndex)}${evaluateGenericParameterIndex(genericIndex)})"
+
 
     private fun evaluateParameterIndex(index: Int): String =
       when (index) {

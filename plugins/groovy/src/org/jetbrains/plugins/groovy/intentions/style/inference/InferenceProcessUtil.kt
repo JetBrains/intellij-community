@@ -276,9 +276,10 @@ fun compress(types: List<PsiType>?): PsiType? {
   }
 }
 
-inline fun <T> T?.ensure(predicate: (T) -> Boolean) = if (this != null && predicate(this)) {
-  this
-}
-else {
-  null
-}
+inline fun <T> T?.ensure(predicate: (T) -> Boolean) : T? =
+  if (this != null && predicate(this)) {
+    this
+  }
+  else {
+    null
+  }

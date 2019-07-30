@@ -8,10 +8,12 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureDriver
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
@@ -19,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 
@@ -136,6 +139,16 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         }
       }
     }
+    method.accept(object : GroovyRecursiveElementVisitor() {
+      override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
+        val resolveResult = methodCallExpression.advancedResolve() as? GroovyMethodResult
+        val argumentMapping = resolveResult?.candidate?.argumentMapping ?: return
+        argumentMapping.expectedTypes.forEach { (type, argument) ->
+          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).ensure { it in typeParameters } ?: return@forEach
+          constraintCollector.add(TypeConstraint(type, typeParameter.type(), method))
+        }
+      }
+    })
     return Pair(constraintCollector, candidateSamParameters.keys.intersect(definitelySamParameters))
   }
 
