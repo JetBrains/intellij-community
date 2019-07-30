@@ -13,8 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -224,26 +222,6 @@ public class GitChangeUtils {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     StringScanner s = new StringScanner(output);
     return parseChangeList(project, root, s, skipDiffsForMerge, h, local, revertable);
-  }
-
-  @Nullable
-  public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                  List<? extends VirtualFile> paths, final String... parameters) {
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    h.setSilent(true);
-    h.addParameters(parameters);
-    h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", anyReference, "--");
-    if (paths != null && ! paths.isEmpty()) {
-      h.addRelativeFiles(paths);
-    }
-    try {
-      final String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return HashImpl.build(output);
-    }
-    catch (VcsException e) {
-      return null;
-    }
   }
 
   /**

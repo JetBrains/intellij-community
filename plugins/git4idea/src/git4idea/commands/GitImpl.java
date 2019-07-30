@@ -769,12 +769,14 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  @NotNull
-  public GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object) {
+  @Nullable
+  public String getObjectType(@NotNull GitRepository repository, @NotNull String object) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CAT_FILE);
     h.setSilent(true);
     h.addParameters("-t", object);
-    return runCommand(h);
+    GitCommandResult result = runCommand(h);
+    if (!result.success()) return null;
+    return result.getOutputAsJoinedString();
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
