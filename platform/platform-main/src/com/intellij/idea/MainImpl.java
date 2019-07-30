@@ -12,7 +12,7 @@ public final class MainImpl {
   /**
    * Called from PluginManager via reflection.
    */
-  private static void start(@NotNull String[] args) throws Exception {
+  public static void start(@NotNull String[] args) throws Exception {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
 
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
