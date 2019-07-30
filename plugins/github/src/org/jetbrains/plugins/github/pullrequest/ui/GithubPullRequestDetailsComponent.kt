@@ -28,12 +28,12 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
                                                  busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                  metadataService: GithubPullRequestsMetadataService,
                                                  stateService: GithubPullRequestsStateService,
-                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+                                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GHPullRequest>(), Disposable {
 
   private val detailsModel = SingleValueModel<GHPullRequest?>(null)
   private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
-                                                           iconProviderFactory)
+                                                           avatarIconsProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false

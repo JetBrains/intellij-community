@@ -10,7 +10,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
@@ -19,7 +19,7 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRReviewThreadPanel(private val avatarsProvider: CachingGithubAvatarIconsProvider,
+class GHPRReviewThreadPanel(private val avatarIconsProvider: GHAvatarIconsProvider,
                             private val thread: GHPRReviewThreadModel)
   : JPanel(VerticalFlowLayout(0, JBUI.scale(10))) {
 
@@ -46,7 +46,7 @@ class GHPRReviewThreadPanel(private val avatarsProvider: CachingGithubAvatarIcon
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(GHPRReviewCommentComponent(avatarsProvider, thread.getElementAt(i)), i + 1)
+          add(GHPRReviewCommentComponent(avatarIconsProvider, thread.getElementAt(i)), i + 1)
         }
         updateFolding()
         validate()
@@ -60,11 +60,11 @@ class GHPRReviewThreadPanel(private val avatarsProvider: CachingGithubAvatarIcon
     })
     thread.addFoldStateChangeListener { updateFolding() }
 
-    add(GHPRReviewCommentComponent(avatarsProvider, thread.items.first()))
+    add(GHPRReviewCommentComponent(avatarIconsProvider, thread.items.first()))
     add(unfoldButtonPanel)
 
     for (i in 1 until thread.items.size) {
-      add(GHPRReviewCommentComponent(avatarsProvider, thread.getElementAt(i)))
+      add(GHPRReviewCommentComponent(avatarIconsProvider, thread.getElementAt(i)))
     }
     updateFolding()
 

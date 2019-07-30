@@ -19,9 +19,9 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
     val wrapper = RoundedPanel().apply {
       border = IdeBorderFactory.createRoundedBorder(10, 1)
     }
-    val avatarsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), wrapper)
+    val avatarIconsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), wrapper)
 
-    val panel = GHPRReviewThreadPanel(avatarsProvider, thread).apply {
+    val panel = GHPRReviewThreadPanel(avatarIconsProvider, thread).apply {
       border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP)
     }
     wrapper.setContent(panel)

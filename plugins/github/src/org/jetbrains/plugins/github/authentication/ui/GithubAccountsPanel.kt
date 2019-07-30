@@ -26,9 +26,9 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -366,7 +366,7 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
  */
 private class GithubAccountDecorator(val account: GithubAccount, var projectDefault: Boolean) {
   var details: GithubAuthenticatedUser? = null
-  var iconProvider: CachingGithubAvatarIconsProvider? = null
+  var iconProvider: GHAvatarIconsProvider? = null
 
   var loadingError: String? = null
   var showLoginLink = false

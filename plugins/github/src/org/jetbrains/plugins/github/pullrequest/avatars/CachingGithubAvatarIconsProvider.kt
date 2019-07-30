@@ -24,7 +24,7 @@ class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubU
                                        private val imagesResizer: GithubImageResizer,
                                        private val requestExecutor: GithubApiRequestExecutor,
                                        private val iconSize: JBValue,
-                                       private val component: Component) {
+                                       private val component: Component) : GHAvatarIconsProvider {
 
   private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
@@ -37,7 +37,7 @@ class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubU
   }
 
   @CalledInAwt
-  fun getIcon(avatarUrl: String?): Icon {
+  override fun getIcon(avatarUrl: String?): Icon {
     val iconSize = iconSize.get()
 
     // so that icons are rescaled when any scale changes (be it font size or current DPI)

@@ -70,7 +70,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
   }
 
   inner class GithubPullRequestsComponent(requestExecutor: GithubApiRequestExecutor,
-                                          private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                           pullRequestUiSettings: GithubPullRequestsProjectUISettings,
                                           repository: GitRepository, remote: GitRemote,
                                           accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)

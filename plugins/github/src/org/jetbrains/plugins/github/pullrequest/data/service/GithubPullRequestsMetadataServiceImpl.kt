@@ -25,12 +25,13 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
 import org.jetbrains.plugins.github.util.*
 import java.awt.Component
@@ -341,11 +342,11 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
-    class Users(private val iconsProvider: CachingGithubAvatarIconsProvider)
+    class Users(private val avatarIconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
 
       override fun getText(value: GHUser) = value.login
-      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHUser) = avatarIconsProvider.getIcon(value.avatarUrl)
 
     }
 

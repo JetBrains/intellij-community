@@ -33,13 +33,13 @@ internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullReque
                                              busyStateTracker: GithubPullRequestsBusyStateTracker,
                                              metadataService: GithubPullRequestsMetadataService,
                                              stateService: GithubPullRequestsStateService,
-                                             iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+                                             avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.value == null
   }
-  private val iconsProvider = iconProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
+  private val iconsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
 
   private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService, iconsProvider).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)

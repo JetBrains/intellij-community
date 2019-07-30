@@ -10,9 +10,9 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
@@ -26,7 +26,7 @@ internal class GithubPullRequestMetadataPanel(private val model: SingleValueMode
                                               private val securityService: GithubPullRequestsSecurityService,
                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                               private val metadataService: GithubPullRequestsMetadataService,
-                                              private val iconsProvider: CachingGithubAvatarIconsProvider)
+                                              private val avatarIconsProvider: GHAvatarIconsProvider)
   : JPanel(), Disposable {
 
   private val directionPanel = GithubPullRequestDirectionPanel()
@@ -95,7 +95,7 @@ internal class GithubPullRequestMetadataPanel(private val model: SingleValueMode
   }
 
   private fun createUserLabel(user: GHUser) = JLabel(user.login,
-                                                     iconsProvider.getIcon(user.avatarUrl),
+                                                     avatarIconsProvider.getIcon(user.avatarUrl),
                                                      SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }

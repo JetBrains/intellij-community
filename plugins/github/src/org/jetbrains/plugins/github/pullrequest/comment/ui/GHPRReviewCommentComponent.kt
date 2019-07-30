@@ -8,13 +8,12 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.JPanel
 
-class GHPRReviewCommentComponent(avatarsProvider: CachingGithubAvatarIconsProvider, comment: GHPRReviewCommentModel)
-  : JPanel() {
+class GHPRReviewCommentComponent(avatarIconsProvider: GHAvatarIconsProvider, comment: GHPRReviewCommentModel) : JPanel() {
 
   private val avatarLabel: LinkLabel<*>
   private val titlePane: HtmlEditorPane
@@ -31,7 +30,7 @@ class GHPRReviewCommentComponent(avatarsProvider: CachingGithubAvatarIconsProvid
     avatarLabel = LinkLabel.create("") {
       comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
     }.apply {
-      icon = avatarsProvider.getIcon(comment.authorAvatarUrl)
+      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl)
       isFocusable = true
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
