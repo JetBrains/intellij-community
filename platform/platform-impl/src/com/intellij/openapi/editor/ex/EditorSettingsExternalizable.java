@@ -655,7 +655,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowAllParameterHints(boolean) instead
+   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage instead
    */
   @Deprecated
   public boolean isShowParameterNameHints() {
