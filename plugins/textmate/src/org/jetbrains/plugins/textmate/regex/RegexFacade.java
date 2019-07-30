@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Trinity;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.joni.Matcher;
@@ -23,9 +24,7 @@ public class RegexFacade {
   @NotNull
   private final Regex myRegex;
 
-  private Object lastId = null;
-  private int lastOffset = Integer.MAX_VALUE;
-  private MatchData lastMatch = MatchData.NOT_MATCHED;
+  private final ThreadLocal<Trinity<Object, Integer, MatchData>> matchResult = new ThreadLocal<>();
 
   private RegexFacade(@NotNull String regexString) {
     byte[] bytes = regexString.getBytes(StandardCharsets.UTF_8);
@@ -45,8 +44,14 @@ public class RegexFacade {
   }
 
   public MatchData match(@NotNull StringWithId string, int byteOffset) {
+    Trinity<Object, Integer, MatchData> lastResult = matchResult.get();
+    Object lastId = lastResult != null ? lastResult.first : null;
+    int lastOffset = lastResult != null ? lastResult.second : Integer.MAX_VALUE;
+    MatchData lastMatch = lastResult != null ? lastResult.third : MatchData.NOT_MATCHED;
+
     if (lastId == string.id && lastOffset <= byteOffset) {
       if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
+        checkMatched(lastMatch, string);
         return lastMatch;
       }
     }
@@ -56,7 +61,17 @@ public class RegexFacade {
     final Matcher matcher = myRegex.matcher(string.bytes);
     int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
     lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    checkMatched(lastMatch, string);
+    matchResult.set(new Trinity<>(lastId, lastOffset, lastMatch));
     return lastMatch;
+  }
+
+  private static void checkMatched(MatchData match, StringWithId string) {
+    if (match.matched() && match.byteOffset().getEndOffset() > string.bytes.length) {
+      throw new IllegalStateException(
+        "Match data out of bounds: " + match.byteOffset().getStartOffset() + " > " + string.bytes.length + "\n" +
+        new String(string.bytes, StandardCharsets.UTF_8));
+    }
   }
 
   public Searcher searcher(byte[] stringBytes) {
