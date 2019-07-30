@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
@@ -27,7 +28,7 @@ private class Parameterizer(val context: PsiElement,
       classType
     }
     val mappedParameters = generifiedClassType.parameters.map { it.accept(this) }.toTypedArray()
-    if (classType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+    if (classType.equalsToText(JAVA_LANG_OBJECT)) {
       return registerTypeParameterAction(null)
     }
     else {
@@ -38,7 +39,7 @@ private class Parameterizer(val context: PsiElement,
 
   override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiClassType? {
     wildcardType ?: return null
-    val upperBound = if (wildcardType.isExtends) {
+    val upperBound = if (wildcardType.isExtends && !wildcardType.extendsBound.equalsToText(JAVA_LANG_OBJECT)) {
       wildcardType.extendsBound.accept(this)
     }
     else {

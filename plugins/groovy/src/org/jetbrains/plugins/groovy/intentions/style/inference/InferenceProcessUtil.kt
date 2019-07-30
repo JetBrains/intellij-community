@@ -48,7 +48,7 @@ fun getInferenceVariable(session: GroovyInferenceSession, variableType: PsiType)
 }
 
 fun Iterable<PsiType>.flattenIntersections(): Iterable<PsiType> {
-  return this.flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else listOf(it) }
+  return this.flatMap { if (it is PsiIntersectionType) PsiIntersectionType.flatten(it.conjuncts, mutableSetOf()) else listOf(it) }
 }
 
 fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: PsiType?): PsiTypeParameter {

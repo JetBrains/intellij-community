@@ -1,9 +1,9 @@
 def <T0, X0> void foo(List<T0> a, List<?> b, List<X0> c, X0 d) {
   // invariant type variable
   a.add(a.get(0))
-  // contravariant type variable
-  def x = b.get(0)
   // covariant type variable
+  def x = b.get(0)
+  // contravariant type variable
   c.add(d)
 }
 
