@@ -282,7 +282,9 @@ public class HelpTooltip {
     JComponent tipPanel = createTipPanel();
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(true);
+        createComponentPopupBuilder(tipPanel, null).
+        setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
+        setBorderColor(BORDER_COLOR).setShowShadow(true);
   }
 
   protected void initPopupBuilder(@NotNull HelpTooltip instance) {

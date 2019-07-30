@@ -712,6 +712,9 @@
       "key": "ToolTip.borderColor"
     },
     {
+      "key": "ToolTip.paintBorder"
+    },
+    {
       "key": "ToolTip.Actions.background",
       "description": "Actions in editor tooltips for inspection errors. Registry key \"ide.tooltip.show.with.actions\" should be on."
     },
