@@ -340,7 +340,6 @@ public class DateFormatUtil {
     void CFRelease(Pointer p);
   }
 
-  // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
     CF cf = Native.load("CoreFoundation", CF.class);
     Pointer locale = cf.CFLocaleCopyCurrent();
