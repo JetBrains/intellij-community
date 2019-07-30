@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
+  private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
 
   /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
   @Deprecated
@@ -106,6 +107,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
 
   private volatile boolean breakpointsInitialized;
+  private long myUserRequestStart;
 
   public XDebugSessionImpl(@NotNull ExecutionEnvironment environment, @NotNull XDebuggerManagerImpl debuggerManager) {
     this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false, null);
@@ -509,6 +511,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepOver(final boolean ignoreBreakpoints) {
+    rememberUserActionStart("Step Over");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
@@ -519,6 +522,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepInto() {
+    rememberUserActionStart("Step Into");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startStepInto(doResume());
@@ -526,6 +530,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepOut() {
+    rememberUserActionStart("Step Out");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startStepOut(doResume());
@@ -533,6 +538,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
+    rememberUserActionStart("Smart Step Into");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     final XSuspendContext context = doResume();
@@ -541,6 +547,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void forceStepInto() {
+    rememberUserActionStart("Force Step Into");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startForceStepInto(doResume());
@@ -548,6 +555,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void runToPosition(@NotNull final XSourcePosition position, final boolean ignoreBreakpoints) {
+    rememberUserActionStart("Run To Cursor");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
@@ -558,6 +566,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void pause() {
+    rememberUserActionStart("Pause");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startPausing();
@@ -576,6 +585,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void resume() {
+    rememberUserActionStart("Resume");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.resume(doResume());
@@ -845,6 +855,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
     updateExecutionPosition();
 
+    logPerformanceEvent("Position reached");
+
     final boolean showOnSuspend = myShowTabOnSuspend.compareAndSet(true, false);
     if (showOnSuspend || attract) {
       AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
@@ -1090,5 +1102,17 @@ public class XDebugSessionImpl implements XDebugSession {
   @Nullable
   public ExecutionEnvironment getExecutionEnvironment() {
     return myEnvironment;
+  }
+
+  private void rememberUserActionStart(String action) {
+    if (PERFORMANCE_LOG.isDebugEnabled()) {
+      myUserRequestStart = System.currentTimeMillis();
+    }
+  }
+
+  private void logPerformanceEvent(String event) {
+    if (myUserRequestStart > 0 && PERFORMANCE_LOG.isDebugEnabled()) {
+      PERFORMANCE_LOG.debug(event + " in " + (System.currentTimeMillis() - myUserRequestStart) + "ms");
+    }
   }
 }
