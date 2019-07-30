@@ -6,6 +6,7 @@ import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.lang.java.JavaLanguage
@@ -129,12 +130,18 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       }
 
       private fun pairPresentation(attribute: PsiNameValuePair) = with(factory) {
-        seq(
-          psiSingleReference(smallText(attribute.name ?: ""), resolve = { attribute.reference?.resolve() }),
-          smallText(" = "),
-          smallText(attribute.value?.text ?: "")
-        )
+        when (val attrName = attribute.name) {
+          null -> attrValuePresentation(attribute)
+          else -> seq(
+            psiSingleReference(smallText(attrName ?: ""), resolve = { attribute.reference?.resolve() }),
+            smallText(" = "),
+            attrValuePresentation(attribute)
+          )
+        }
       }
+
+      private fun PresentationFactory.attrValuePresentation(attribute: PsiNameValuePair) =
+        smallText(attribute.value?.text ?: "")
     }
   }
 
