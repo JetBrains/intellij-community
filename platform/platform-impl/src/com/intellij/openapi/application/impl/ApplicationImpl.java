@@ -55,7 +55,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
-import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
@@ -395,16 +394,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      if (!isHeadlessEnvironment()) {
-        // wanted for UI, but should not affect start-up time,
-        // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
-        // (call itself is cheap but leads to loading classes)
-        executeOnPooledThread(() -> {
-          //IDEA-170295
-          PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
-        });
-      }
-
       Activity beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded");
       String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
       for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getIterable()) {

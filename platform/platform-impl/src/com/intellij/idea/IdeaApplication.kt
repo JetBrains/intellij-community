@@ -43,6 +43,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.exists
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
+import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
@@ -107,6 +108,9 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
       AnimatedIcon.FS()
       AllIcons.Ide.Shadow.Top.iconHeight
     }
+
+    //IDEA-170295
+    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
   }
 
   // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
