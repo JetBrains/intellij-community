@@ -1,7 +1,7 @@
 package circlet.auth
 
 import circlet.platform.api.oauth.*
-import circlet.workspaces.*
+import circlet.platform.workspaces.*
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
