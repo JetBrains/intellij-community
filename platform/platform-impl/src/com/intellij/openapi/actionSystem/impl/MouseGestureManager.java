@@ -1,87 +1,68 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
 
-public class MouseGestureManager {
-
+@Service
+public final class MouseGestureManager {
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 
-  private final Map<IdeFrame, Object> myListeners = new HashMap<>();
-  private boolean HAS_TRACKPAD = false;
-
-  public MouseGestureManager() {
-  }
-
-  public void add(final IdeFrame frame) {
-    if (!Registry.is("actionSystem.mouseGesturesEnabled")) return;
-
-    if (SystemInfo.isMacOSSnowLeopard) {
-      try {
-        if (myListeners.containsKey(frame)) {
-          remove(frame);
-        }
-
-        Object listener = new MacGestureAdapter(this, frame);
-
-        myListeners.put(frame, listener);
-      }
-      catch (Throwable e) {
-        LOG.error("Can't initialize MacGestureAdapter", e);
-      }
-    }
-  }
-
-  protected void activateTrackpad() {
-    HAS_TRACKPAD = true;
-  }
-  
-  public boolean hasTrackpad() {
-    return HAS_TRACKPAD;
-  }
-
-  public void remove(IdeFrame frame) {
-    if (!Registry.is("actionSystem.mouseGesturesEnabled")) return;
-
-    if (SystemInfo.isMacOSSnowLeopard) {
-      try {
-        Object listener = myListeners.get(frame);
-        JComponent cmp = frame.getComponent();
-        myListeners.remove(frame);
-        if (listener != null && cmp != null && cmp.isShowing()) {
-          ((MacGestureAdapter)listener).remove(cmp);
-        }
-      }
-      catch (Throwable e) {
-        LOG.debug(e);
-      }
-    }
-
-  }
+  private final Map<IdeFrame, Object> myListeners = new THashMap<>();
+  private boolean hasTrackPad = false;
 
   public static MouseGestureManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(MouseGestureManager.class);
+    return ServiceManager.getService(MouseGestureManager.class);
+  }
+
+  public void add(@NotNull IdeFrame frame) {
+    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+      return;
+    }
+
+    try {
+      if (myListeners.containsKey(frame)) {
+        remove(frame);
+      }
+      myListeners.put(frame, new MacGestureAdapter(this, frame));
+    }
+    catch (Throwable e) {
+      LOG.error("Can't initialize MacGestureAdapter", e);
+    }
+  }
+
+  void activateTrackpad() {
+    hasTrackPad = true;
+  }
+
+  public boolean hasTrackpad() {
+    return hasTrackPad;
+  }
+
+  public void remove(@NotNull IdeFrame frame) {
+    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+      return;
+    }
+
+    try {
+      Object listener = myListeners.get(frame);
+      JComponent cmp = frame.getComponent();
+      myListeners.remove(frame);
+      if (listener != null && cmp != null && cmp.isShowing()) {
+        ((MacGestureAdapter)listener).remove(cmp);
+      }
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
   }
 }

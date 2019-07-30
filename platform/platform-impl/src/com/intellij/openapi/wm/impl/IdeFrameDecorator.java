@@ -25,7 +25,7 @@ import java.awt.event.WindowEvent;
 public abstract class IdeFrameDecorator implements Disposable {
   protected IdeFrameImpl myFrame;
 
-  protected IdeFrameDecorator(IdeFrameImpl frame) {
+  protected IdeFrameDecorator(@NotNull IdeFrameImpl frame) {
     myFrame = frame;
   }
 
