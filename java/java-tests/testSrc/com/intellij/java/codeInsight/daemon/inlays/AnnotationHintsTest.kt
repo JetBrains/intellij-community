@@ -39,7 +39,7 @@ class Demo {
     traverser.forEach {
       collector.collect(it, editor, sink)
     }
-    sink.applyToEditor(editor, listOf(), listOf(), true)
+    sink.applyToEditor(editor, MarkList(listOf()), MarkList(listOf()), true)
     val blockElements = editor.inlayModel.getBlockElementsInRange(0, file.textRange.endOffset)
     val inlineElements = editor.inlayModel.getBlockElementsInRange(0, file.textRange.endOffset)
     return Inlays(blockElements, inlineElements)
