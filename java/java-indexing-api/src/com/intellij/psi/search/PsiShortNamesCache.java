@@ -9,17 +9,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by non-qualified names.
@@ -86,19 +81,6 @@ public abstract class PsiShortNamesCache {
   }
 
   /**
-   * Adds the names of all classes in the project and (optionally) libraries
-   * to the specified set.
-   *
-   * @param dest the set to add the names to.
-   * @deprecated use {@link #processAllClassNames}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void getAllClassNames(@NotNull HashSet<String> dest) {
-    processAllClassNames(new CommonProcessors.CollectProcessor<>(dest));
-  }
-
-  /**
    * Returns the list of all methods with the specified name in the specified scope.
    *
    * @param name  the name of the methods to find.
@@ -143,19 +125,6 @@ public abstract class PsiShortNamesCache {
   public abstract String[] getAllMethodNames();
 
   /**
-   * Adds the names of all methods in the project and (optionally) libraries
-   * to the specified set.
-   *
-   * @param set the set to add the names to.
-   * @deprecated use {@link #processAllMethodNames(Processor, GlobalSearchScope, IdFilter)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void getAllMethodNames(@NotNull HashSet<String> set) {
-    Collections.addAll(set, getAllMethodNames());
-  }
-
-  /**
    * Returns the list of all fields with the specified name in the specified scope.
    *
    * @param name  the name of the fields to find.
@@ -173,19 +142,6 @@ public abstract class PsiShortNamesCache {
    */
   @NotNull
   public abstract String[] getAllFieldNames();
-
-  /**
-   * Adds the names of all methods in the project and (optionally) libraries
-   * to the specified set.
-   *
-   * @param set the set to add the names to.
-   * @deprecated use {@link #processAllFieldNames(Processor, GlobalSearchScope, IdFilter)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void getAllFieldNames(@NotNull HashSet<String> set) {
-    Collections.addAll(set, getAllFieldNames());
-  }
 
   public boolean processFieldsWithName(@NotNull String name,
                                        @NotNull Processor<? super PsiField> processor,
