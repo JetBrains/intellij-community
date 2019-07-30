@@ -369,12 +369,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   @Nullable
-  public final Window suggestParentWindow(@Nullable final Project project) {
+  public final Window suggestParentWindow(@Nullable Project project) {
     return myWindowWatcher.suggestParentWindow(project);
   }
 
   @Override
-  public final StatusBar getStatusBar(final Project project) {
+  public StatusBar getStatusBar(@NotNull Project project) {
     IdeFrameImpl frame = myProjectToFrame.get(project);
     return frame == null ? null : frame.getStatusBar();
   }

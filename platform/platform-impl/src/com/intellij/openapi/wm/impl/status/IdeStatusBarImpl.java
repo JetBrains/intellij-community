@@ -66,7 +66,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   private final Set<IdeStatusBarImpl> myChildren = new THashSet<>();
 
-  private static class WidgetBean {
+  private static final class WidgetBean {
     JComponent component;
     Position position;
     StatusBarWidget widget;
@@ -105,6 +105,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     }
   }
 
+  @NotNull
   @Override
   public StatusBar createChild(@NotNull IdeFrame frame) {
     IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
@@ -324,7 +325,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       panel = myCenterPanel;
     }
 
-    final JComponent c = wrap(widget);
+    JComponent c = wrap(widget);
     if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
       String widgetId;
       boolean before;

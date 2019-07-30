@@ -113,6 +113,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 
+  @Nullable
   StatusBar createChild(@NotNull IdeFrame frame);
 
   JComponent getComponent();

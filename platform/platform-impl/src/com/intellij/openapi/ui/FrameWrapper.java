@@ -91,7 +91,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myDataMap.put(dataId, data);
   }
 
-  public void setProject(@NotNull final Project project) {
+  public void setProject(@NotNull Project project) {
     myProject = project;
     setData(CommonDataKeys.PROJECT.getName(), project);
     ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);

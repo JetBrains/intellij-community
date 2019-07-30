@@ -46,10 +46,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final StatusBar getStatusBar(final Project project) {
-    if (project == null) {
-      return null;
-    }
+  public final StatusBar getStatusBar(@NotNull Project project) {
     synchronized (STATUS_BAR) {
       StatusBar statusBar = project.getUserData(STATUS_BAR);
       if (statusBar == null) {
@@ -213,6 +210,7 @@ public final class TestWindowManager extends WindowManagerEx {
       return new Dimension(0, 0);
     }
 
+    @NotNull
     @Override
     public StatusBar createChild(@NotNull IdeFrame frame) {
       return null;

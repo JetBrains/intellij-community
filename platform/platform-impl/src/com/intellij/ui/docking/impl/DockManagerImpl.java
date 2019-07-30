@@ -403,8 +403,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return window;
   }
 
-  private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
-
+  private final class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
     private final String myId;
     private final DockContainer myContainer;
 
@@ -414,7 +413,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
 
-    private DockWindow(String id, Project project, DockContainer container, boolean dialog) {
+    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean dialog) {
       super(project, null, dialog);
       myId = id;
       myContainer = container;
