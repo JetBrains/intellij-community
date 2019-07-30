@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.io.*;
 public class ResizeableMappedFile implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ResizeableMappedFile");
 
+  private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;
   private long myLastWrittenLogicalSize;
   private final PagedFileStorage myStorage;
@@ -259,7 +261,7 @@ public class ResizeableMappedFile implements Forceable {
   public void close() {
     try {
       force();
-      if (myLogicalSize < myStorage.length()) {
+      if (truncateOnClose && myLogicalSize < myStorage.length()) {
         myStorage.resize(myLogicalSize);
       }
     }
