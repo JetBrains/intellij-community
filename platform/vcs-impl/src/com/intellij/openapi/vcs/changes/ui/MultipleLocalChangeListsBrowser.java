@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
@@ -296,6 +297,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       return new ChangeList[]{myChangeList};
+    }
+    else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
+      return ChangesListView.getExactlySelectedVirtualFiles(myViewer);
     }
     return super.getData(dataId);
   }

@@ -5,27 +5,29 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
+import kotlin.streams.toList
 
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData<Project>(CommonDataKeys.PROJECT)
+    val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
+    val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
+
     val ignored =
-      e.getRequiredData<Array<VirtualFile>>(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+      (exactlySelectedFiles ?: e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList())
         .filter { VcsUtil.getVcsFor(project, it) == vcs }
         .map { IgnoredBeanFactory.ignoreFile(it, project) }
-        .toTypedArray()
 
-    addNewElements(project, ignoreFile, *ignored)
+    addNewElements(project, ignoreFile, ignored)
     ChangeListManagerImpl.getInstanceImpl(project).scheduleUnversionedUpdate()
     OpenFileDescriptor(project, ignoreFile).navigate(true)
   }

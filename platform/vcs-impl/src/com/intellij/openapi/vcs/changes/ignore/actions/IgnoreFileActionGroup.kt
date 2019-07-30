@@ -11,12 +11,17 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
+import kotlin.streams.toList
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
@@ -28,8 +33,9 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   var actions: Collection<AnAction> = emptyList()
 
   override fun update(e: AnActionEvent) {
-    val selectedFiles = e.getData<Array<VirtualFile>>(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-    val project = e.getData<Project>(CommonDataKeys.PROJECT)
+    val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
+    val selectedFiles = exactlySelectedFiles ?: e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+    val project = e.getData(CommonDataKeys.PROJECT)
     val presentation = e.presentation
 
     if (project == null || selectedFiles == null || ScheduleForAdditionAction.getUnversionedFiles(e, project).isEmpty()) {
@@ -53,7 +59,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   override fun getChildren(e: AnActionEvent?) = actions.toTypedArray()
 
-  private fun filterSelectedFiles(project: Project, files: Array<VirtualFile>) =
+  private fun filterSelectedFiles(project: Project, files: List<VirtualFile>) =
     files.filter { file ->
       VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file)) && !ChangeListManager.getInstance(project).isIgnoredFile(file)
     }
@@ -78,8 +84,12 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   private fun VirtualFile.toTextRepresentation(project: Project, size: Int): String {
     if (size == 1) return message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename)
-    val vcsRoot = VcsUtil.getVcsRootFor(project, this) ?: return name
+    val projectRoot = project.getProjectRoot() ?: return name
 
-    return VfsUtil.getRelativePath(this, vcsRoot) ?: name
+    return VfsUtil.getRelativePath(this, projectRoot) ?: name
   }
+
+  private fun Project.getProjectRoot() =
+    if (isDirectoryBased) stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByPath)?.parent
+    else projectFile?.parent
 }
