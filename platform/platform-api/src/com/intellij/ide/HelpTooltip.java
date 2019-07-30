@@ -98,13 +98,13 @@ public class HelpTooltip {
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
   private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
 
-  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 2);
+  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
   private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 8);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
-  private static final JBValue FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
-  private static final JBValue DESCRIPTION_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.descriptionSizeDelta", 0);
+  private static final JBValue HEADER_FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
+  private static final JBValue DESCRIPTION_FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.descriptionSizeDelta", 0);
   private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
   private static final String DOTS = "...";
@@ -453,13 +453,14 @@ public class HelpTooltip {
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
   }
 
-  private static Font deriveActionFont(Font font) {
-    return font.deriveFont((float)font.getSize() + FONT_SIZE_DELTA.get());
+  private static Font deriveHeaderFont(Font font) {
+    return font.deriveFont((float)font.getSize() + HEADER_FONT_SIZE_DELTA.get());
   }
 
   private static Font deriveDescriptionFont(Font font, boolean hasTitle) {
-    return hasTitle ? deriveActionFont(font) :
-           font.deriveFont((float)font.getSize() + DESCRIPTION_SIZE_DELTA.get());
+    return hasTitle ?
+           font.deriveFont((float)font.getSize() + DESCRIPTION_FONT_SIZE_DELTA.get()) :
+           deriveHeaderFont(font);
   }
 
   private class Header extends JPanel {
@@ -477,7 +478,7 @@ public class HelpTooltip {
     private Header() {
       setOpaque(false);
 
-      Font font = deriveActionFont(getFont());
+      Font font = deriveHeaderFont(getFont());
       setFont(font);
 
       Font titleFont = StringUtil.isNotEmpty(description) ? font.deriveFont(Font.BOLD) : font;
