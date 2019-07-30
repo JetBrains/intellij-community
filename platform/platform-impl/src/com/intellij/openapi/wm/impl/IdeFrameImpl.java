@@ -52,7 +52,8 @@ import javax.accessibility.AccessibleContext;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +69,7 @@ import java.util.Set;
 public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
-  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
+  static final String NORMAL_STATE_BOUNDS = "normalBounds";
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
@@ -82,7 +83,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private final ComponentListener resizedListener;
 
   private volatile Image selfie;
 
@@ -96,17 +96,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
 
-    resizedListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (getExtendedState() == Frame.NORMAL) {
-          getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
-        }
-      }
-    };
-
-    myRootPane.addComponentListener(resizedListener);
-
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
     size.height = Math.min(1000, size.height - 40);
@@ -119,32 +108,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
         !ApplicationManager.getApplication().isActive()) {
       setAutoRequestFocus(false);
     }
-
-    //LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
-        // Every time a component is removed, AWT asks focus layout policy
-        // who is supposed to be the next focus owner.
-        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
-        if (myProject != null) {
-          final FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-          if (fileEditorManagerEx != null) {
-            final EditorWindow window = fileEditorManagerEx.getCurrentWindow();
-            if (window != null) {
-              final EditorWithProviderComposite editor = window.getSelectedEditor();
-              if (editor != null) {
-                final JComponent component = editor.getPreferredFocusedComponent();
-                if (component != null) {
-                  return component;
-                }
-              }
-            }
-          }
-        }
-        return super.getComponentAfter(focusCycleRoot, aComponent);
-      }
-    });
 
     setupCloseAction();
     MnemonicHelper.init(this);
@@ -203,6 +166,25 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
+
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+      @Override
+      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
+        // Every time a component is removed, AWT asks focus layout policy
+        // who is supposed to be the next focus owner.
+        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
+        FileEditorManagerEx fileEditorManager = myProject == null ? null : FileEditorManagerEx.getInstanceEx(myProject);
+        if (fileEditorManager != null) {
+          EditorWindow window = fileEditorManager.getCurrentWindow();
+          EditorWithProviderComposite editor = window == null ? null : window.getSelectedEditor();
+          JComponent component = editor == null ? null : editor.getPreferredFocusedComponent();
+          if (component != null) {
+            return component;
+          }
+        }
+        return super.getComponentAfter(focusCycleRoot, aComponent);
+      }
+    });
 
     rootPane.init(this);
 
@@ -543,7 +525,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
-      myRootPane.removeComponentListener(resizedListener);
       setRootPane(new JRootPane());
       Disposer.dispose(myRootPane);
       myRootPane = null;

@@ -113,6 +113,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     private void update(@NotNull ComponentEvent e) {
       IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
+
+      if (frame.getExtendedState() == Frame.NORMAL) {
+        JRootPane rootPane = frame.getRootPane();
+        if (rootPane != null) {
+          rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, frame.getBounds());
+        }
+      }
+
       Project project = frame.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
