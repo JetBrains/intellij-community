@@ -11,7 +11,9 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,7 +29,6 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
-import org.apache.log4j.Logger;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ import java.awt.image.ImageObserver;
 import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
-  private static final Logger LOG = Logger.getLogger(JBTerminalPanel.class);
+  private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
   private static final String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
     "ActivateMessagesToolWindow",
@@ -316,11 +317,17 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
    * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
    */
   private class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
+
+    private boolean myRegistered = false;
+
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent((KeyEvent)e) + ", registered:" + myRegistered);
+        }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
-        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214782, revert once it's fixed.
+        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830, revert once it's fixed.
         if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
           // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
           processKeyEvent((KeyEvent)e);
@@ -332,10 +339,26 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
 
     void register() {
+      if (LOG.isDebugEnabled()) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (myRegistered) {
+          LOG.error("Already registered terminal event dispatcher");
+        }
+        LOG.debug("Register terminal event dispatcher");
+      }
+      myRegistered = true;
       IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
     }
 
     void unregister() {
+      if (LOG.isDebugEnabled()) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        if (!myRegistered) {
+          LOG.error("Not registered terminal event dispatcher");
+        }
+        LOG.debug("Unregister terminal event dispatcher");
+      }
+      myRegistered = false;
       IdeEventQueue.getInstance().removeDispatcher(this);
     }
   }
