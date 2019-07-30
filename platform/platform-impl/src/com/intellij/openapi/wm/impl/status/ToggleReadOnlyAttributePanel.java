@@ -24,7 +24,7 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation, FileEditorManagerListener {
+public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private StatusBar myStatusBar;
 
   @Override
@@ -62,9 +62,18 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
     Project project = statusBar.getProject();
-    if (project != null) {
-      project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
+    if (project == null) {
+      return;
     }
+
+    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+          if (myStatusBar != null) {
+            myStatusBar.updateWidget(ID());
+          }
+        }
+    });
   }
 
   @Override
@@ -107,19 +116,12 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
   private Project getProject() {
     return myStatusBar != null ? myStatusBar.getProject() : null;
   }
-  
+
   @Nullable
   private VirtualFile getCurrentFile() {
     final Project project = getProject();
     if (project == null) return null;
     EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(myStatusBar.getComponent());
     return splitters.getCurrentFile();
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    if (myStatusBar != null) {
-      myStatusBar.updateWidget(ID());
-    }
   }
 }

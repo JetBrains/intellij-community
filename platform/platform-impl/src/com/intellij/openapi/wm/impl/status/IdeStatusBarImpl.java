@@ -4,6 +4,8 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -173,16 +175,22 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void addWidget(@NotNull final StatusBarWidget widget) {
+  public void addWidget(@NotNull StatusBarWidget widget) {
     UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, "__AUTODETECT__"));
   }
 
   @Override
-  public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final String anchor) {
-    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, anchor));
+  public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      addWidget(widget, Position.RIGHT, anchor);
+    }
+    else {
+      app.invokeLater(() -> addWidget(widget, Position.RIGHT, anchor));
+    }
   }
 
-  private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos) {
+  private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos) {
     UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, pos, "__IGNORED__"));
   }
 
@@ -263,7 +271,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     myCustomComponentIds.clear();
   }
 
-  private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {
+  private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos, @NotNull String anchor) {
     myOrderedWidgets.add(widget.ID());
 
     JPanel panel;
@@ -315,43 +323,45 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     final JComponent c = wrap(widget);
     if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
-      String wid;
+      String widgetId;
       boolean before;
-      if (!anchor.equals("__AUTODETECT__")) {
+      if (anchor.equals("__AUTODETECT__")) {
+        widgetId = IdeNotificationArea.WIDGET_ID;
+        before = true;
+      }
+      else {
         final List<String> parts = StringUtil.split(anchor, " ");
         if (parts.size() < 2 || !myWidgetMap.containsKey(parts.get(1))) {
-          wid = IdeNotificationArea.WIDGET_ID;
+          widgetId = IdeNotificationArea.WIDGET_ID;
           before = true;
         }
         else {
-          wid = parts.get(1);
+          widgetId = parts.get(1);
           before = "before".equalsIgnoreCase(parts.get(0));
         }
       }
-      else {
-        wid = IdeNotificationArea.WIDGET_ID;
-        before = true;
-      }
 
-      for (final String id : myWidgetMap.keySet()) {
-        if (id.equalsIgnoreCase(wid)) {
-          final WidgetBean bean = myWidgetMap.get(id);
-          int i = 0;
-          for (final Component component : myRightPanel.getComponents()) {
-            if (component == bean.component) {
-              if (before) {
-                panel.add(c, i);
-              }
-              else {
-                panel.add(c, i + 1);
-              }
+      for (String id : myWidgetMap.keySet()) {
+        if (!id.equalsIgnoreCase(widgetId)) {
+          continue;
+        }
 
-              installWidget(widget, pos, c, anchor);
-              return;
+        WidgetBean bean = myWidgetMap.get(id);
+        int i = 0;
+        for (Component component : myRightPanel.getComponents()) {
+          if (component == bean.component) {
+            if (before) {
+              panel.add(c, i);
+            }
+            else {
+              panel.add(c, i + 1);
             }
 
-            i++;
+            installWidget(widget, pos, c, anchor);
+            return;
           }
+
+          i++;
         }
       }
     }
@@ -447,10 +457,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     new NotificationPopup(this, content, backgroundColor);
   }
 
-  private void installWidget(@NotNull final StatusBarWidget widget,
-                             @NotNull final Position pos,
-                             @NotNull final JComponent c,
-                             String anchor) {
+  private void installWidget(@NotNull StatusBarWidget widget,
+                             @NotNull Position pos,
+                             @NotNull JComponent c,
+                             @NotNull String anchor) {
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
     widget.install(this);
     Disposer.register(this, widget);

@@ -66,9 +66,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       WindowManagerImpl.setFrameBoundsFromDeviceSpace(frame, frameInfo)
       windowManager.setFrameExtendedState(frame, frameInfo)
     }
-    frame.isVisible = true
 
     frame.init()
+    frame.isVisible = true
   }
 
   private fun createFrame(file: Path): IdeFrameImpl {

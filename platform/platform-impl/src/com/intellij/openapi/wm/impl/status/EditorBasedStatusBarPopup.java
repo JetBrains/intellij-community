@@ -33,7 +33,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -51,13 +50,6 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
-
-  /**
-   * @deprecated use this{@link #EditorBasedStatusBarPopup(Project,boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public EditorBasedStatusBarPopup(@NotNull Project project) {this(project, false);}
 
   public EditorBasedStatusBarPopup(@NotNull Project project, boolean writeableFileRequired) {
     super(project);
@@ -78,9 +70,21 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+  public final void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     VirtualFile newFile = event.getNewFile();
+
+    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    myEditor = new WeakReference<>(editor);
+
+    fileChanged(newFile);
+  }
+
+  public final void selectionChanged(@Nullable VirtualFile newFile) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
@@ -330,8 +334,9 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @Nullable
   protected abstract ListPopup createPopup(DataContext context);
 
-  protected abstract void registerCustomListeners();
+  protected void registerCustomListeners() {
+  }
 
   @NotNull
-  protected abstract StatusBarWidget createInstance(Project project);
+  protected abstract StatusBarWidget createInstance(@NotNull Project project);
 }

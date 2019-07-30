@@ -75,7 +75,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
 
   @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
+  protected StatusBarWidget createInstance(@NotNull Project project) {
     return new EncodingPanel(project);
   }
 

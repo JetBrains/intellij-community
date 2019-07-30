@@ -71,7 +71,6 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   @ApiStatus.ScheduledForRemoval
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
 
-
   /**
    * @deprecated Use {@link StatusBarWidgetProvider}
    */
@@ -148,6 +147,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
     public static String before(String widgetId) {
       return "before " + widgetId;
     }
+
     public static String after(String widgetId) {
       return "after " + widgetId;
     }

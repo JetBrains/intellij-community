@@ -16,7 +16,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @see StatusBarWidgetProvider
- * @see StatusBar#addWidget(StatusBarWidget)
  */
 public interface StatusBarWidget extends Disposable {
   /**
@@ -46,7 +45,7 @@ public interface StatusBarWidget extends Disposable {
     return null;
   }
 
-  void install(@NotNull final StatusBar statusBar);
+  void install(@NotNull StatusBar statusBar);
 
   interface Multiframe extends StatusBarWidget {
     StatusBarWidget copy();

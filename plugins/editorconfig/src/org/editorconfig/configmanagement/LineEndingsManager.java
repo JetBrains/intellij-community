@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Dennis.Ushakov
- */
-public class LineEndingsManager implements FileDocumentManagerListener {
+public final class LineEndingsManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String lineEndingsKey = "end_of_line";
 
@@ -47,12 +42,9 @@ public class LineEndingsManager implements FileDocumentManagerListener {
     ApplicationManager.getApplication().invokeLater(() -> {
       IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
       StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
-      StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
-
+      StatusBarWidget widget = statusBar == null ? null : statusBar.getWidget("LineSeparator");
       if (widget instanceof LineSeparatorPanel) {
-        FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(myProject),
-                                                                  null, null, null, null);
-        ((LineSeparatorPanel)widget).selectionChanged(event);
+        ((LineSeparatorPanel)widget).selectionChanged((VirtualFile)null);
       }
     });
   }
@@ -64,27 +56,30 @@ public class LineEndingsManager implements FileDocumentManagerListener {
   }
 
   private void applySettings(VirtualFile file) {
-    if (file == null) return;
-    if (!Utils.isEnabled(CodeStyle.getSettings(myProject))) return;
+    if (file == null || !Utils.isEnabled(CodeStyle.getSettings(myProject))) {
+      return;
+    }
 
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
-    if (!lineEndings.isEmpty()) {
-      try {
-        LineSeparator separator = LineSeparator.valueOf(StringUtil.toUpperCase(lineEndings));
-        String oldSeparator = file.getDetectedLineSeparator();
-        String newSeparator = separator.getSeparatorString();
-        if (!StringUtil.equals(oldSeparator, newSeparator)) {
-          file.setDetectedLineSeparator(newSeparator);
-          if (!statusBarUpdated) {
-            statusBarUpdated = true;
-            updateStatusBar();
-          }
+    if (lineEndings.isEmpty()) {
+      return;
+    }
+
+    try {
+      LineSeparator separator = LineSeparator.valueOf(StringUtil.toUpperCase(lineEndings));
+      String oldSeparator = file.getDetectedLineSeparator();
+      String newSeparator = separator.getSeparatorString();
+      if (!StringUtil.equals(oldSeparator, newSeparator)) {
+        file.setDetectedLineSeparator(newSeparator);
+        if (!statusBarUpdated) {
+          statusBarUpdated = true;
+          updateStatusBar();
         }
       }
-      catch (IllegalArgumentException e) {
-        Utils.invalidConfigMessage(myProject, lineEndings, lineEndingsKey, file.getCanonicalPath());
-      }
+    }
+    catch (IllegalArgumentException e) {
+      Utils.invalidConfigMessage(myProject, lineEndings, lineEndingsKey, file.getCanonicalPath());
     }
   }
 }

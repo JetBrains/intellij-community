@@ -42,6 +42,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -59,7 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -447,39 +448,49 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
   }
 
-  private final Set<String> widgetIDs = new HashSet<>();
+  private final Set<String> widgetIds = new THashSet<>();
 
-  private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
-    if (!widgetIDs.add(widget.ID())) {
+  private void addWidget(@NotNull StatusBar statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+    if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
       return;
     }
+
+    //noinspection deprecation
     statusBar.addWidget(widget, anchor);
   }
 
-  private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
-    final StatusBar statusBar = getStatusBar();
+  private void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+    StatusBar statusBar = Objects.requireNonNull(getStatusBar());
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
-    addWidget(statusBar, new ToggleReadOnlyAttributePanel(),
-              StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
     for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
       StatusBarWidget widget = widgetProvider.getWidget(project);
-      if (widget == null) continue;
+      if (widget == null) {
+        continue;
+      }
+
       addWidget(statusBar, widget, widgetProvider.getAnchor());
     }
 
+    disposeWidgets(project);
+  }
+
+  private void disposeWidgets(@NotNull Project project) {
     Disposer.register(project, () -> {
+      StatusBar statusBar = getStatusBar();
       if (statusBar != null) {
-        for (String widgetID: widgetIDs) {
+        for (String widgetID: widgetIds) {
+          //noinspection deprecation
           statusBar.removeWidget(widgetID);
         }
       }
-      widgetIDs.clear();
+      widgetIds.clear();
     });
   }
 
