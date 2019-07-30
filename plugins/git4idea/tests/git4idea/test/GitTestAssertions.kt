@@ -190,7 +190,7 @@ class ChangesBuilder {
 
   fun rename(from: String, to: String) {
     HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) { status, beforePath, afterPath ->
-      (beforePath != afterPath) && from == beforePath.relativePath && to == afterPath.relativePath
+      (beforePath?.path != afterPath?.path) && from == beforePath.relativePath && to == afterPath.relativePath
     }))
   }
 }
