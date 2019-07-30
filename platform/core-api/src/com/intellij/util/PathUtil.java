@@ -94,7 +94,7 @@ public class PathUtil {
 
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
+    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path) && Character.isUpperCase(path.charAt(0))) {
       return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;
