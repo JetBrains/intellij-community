@@ -14,6 +14,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,7 @@ public abstract class PsiShortNamesCache {
    * @deprecated use {@link #processAllClassNames}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void getAllClassNames(@NotNull HashSet<String> dest) {
     processAllClassNames(new CommonProcessors.CollectProcessor<>(dest));
   }
@@ -108,13 +110,18 @@ public abstract class PsiShortNamesCache {
 
   @NotNull
   public abstract PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+
   @NotNull
   public abstract PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
 
-  public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiMethod> processor);
+  public abstract boolean processMethodsWithName(@NonNls @NotNull String name,
+                                                 @NotNull GlobalSearchScope scope,
+                                                 @NotNull Processor<PsiMethod> processor);
 
-  public boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull final Processor<? super PsiMethod> processor,
-                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull final Processor<? super PsiMethod> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
     return processMethodsWithName(name, scope, method -> processor.process(method));
   }
 
@@ -143,6 +150,7 @@ public abstract class PsiShortNamesCache {
    * @deprecated use {@link #processAllMethodNames(Processor, GlobalSearchScope, IdFilter)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void getAllMethodNames(@NotNull HashSet<String> set) {
     Collections.addAll(set, getAllMethodNames());
   }
@@ -174,6 +182,7 @@ public abstract class PsiShortNamesCache {
    * @deprecated use {@link #processAllFieldNames(Processor, GlobalSearchScope, IdFilter)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void getAllFieldNames(@NotNull HashSet<String> set) {
     Collections.addAll(set, getAllFieldNames());
   }
