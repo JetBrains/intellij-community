@@ -70,6 +70,18 @@ public abstract class FileTypeRegistry {
   public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
 
   /**
+   * Returns the file type for the specified file.
+   *
+   * @param file The file for which the type is requested.
+   * @param content Content of the file (if already available, to avoid reading from disk again)
+   * @return The file type instance.
+   */
+  @NotNull
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+    return getFileTypeByFile(file);
+  }
+
+  /**
    * Returns the file type for the specified file name.
    *
    * @param fileNameSeq The file name for which the type is requested.

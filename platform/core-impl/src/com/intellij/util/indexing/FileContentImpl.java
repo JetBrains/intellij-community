@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
@@ -74,7 +75,7 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
-    myFileType = file.getFileType();
+    myFileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
     myStamp = stamp;

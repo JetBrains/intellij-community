@@ -554,7 +554,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         if (after == null) {
           try {
-            after = detectFromContentAndCache(file);
+            after = detectFromContentAndCache(file, null);
           }
           catch (IOException e) {
             crashed.add(file);
@@ -701,10 +701,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+    return getFileTypeByFile(file, null);
+  }
+
+  @Override
+  @NotNull
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
     FileType fileType = getByFile(file);
 
     if (fileType == null) {
-      fileType = file instanceof StubVirtualFile ? UnknownFileType.INSTANCE : getOrDetectFromContent(file);
+      fileType = file instanceof StubVirtualFile ? UnknownFileType.INSTANCE : getOrDetectFromContent(file, content);
     }
 
     return fileType;
@@ -748,7 +754,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType getOrDetectFromContent(@NotNull VirtualFile file) {
+  private FileType getOrDetectFromContent(@NotNull VirtualFile file, @Nullable byte[] content) {
     if (!isDetectable(file)) return UnknownFileType.INSTANCE;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
@@ -785,7 +791,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (fileType == null) {
       // run autodetection
       try {
-        fileType = detectFromContentAndCache(file);
+        fileType = detectFromContentAndCache(file, content);
       }
       catch (IOException e) {
         fileType = UnknownFileType.INSTANCE;
@@ -934,9 +940,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContentAndCache(@NotNull final VirtualFile file) throws IOException {
+  private FileType detectFromContentAndCache(@NotNull final VirtualFile file, @Nullable byte[] content) throws IOException {
     long start = System.currentTimeMillis();
-    FileType fileType = detectFromContent(file, FileTypeDetector.EP_NAME.getExtensionList());
+    FileType fileType = detectFromContent(file, content, FileTypeDetector.EP_NAME.getExtensionList());
 
     cacheAutoDetectedFileType(file, fileType);
     counterAutoDetect.incrementAndGet();
@@ -947,31 +953,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
+  private FileType detectFromContent(@NotNull VirtualFile file, @Nullable byte[] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
     FileType fileType;
-    try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-      if (toLog()) {
-        log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
-      }
+    if (content != null) {
+      fileType = detect(file, content, content.length, detectors);
+    }
+    else {
+      try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
+        if (toLog()) {
+          log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
+        }
 
-      int fileLength = (int)file.getLength();
+        int fileLength = (int)file.getLength();
 
-      byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
-                      ? FileUtilRt.getThreadLocalBuffer()
-                      : new byte[Math.min(fileLength, FileUtilRt.getUserContentLoadLimit())];
+        byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
+                        ? FileUtilRt.getThreadLocalBuffer()
+                        : new byte[Math.min(fileLength, FileUtilRt.getUserContentLoadLimit())];
 
-      int n = readSafely(inputStream, buffer, 0, buffer.length);
-      fileType = detect(file, buffer, n, detectors);
+        int n = readSafely(inputStream, buffer, 0, buffer.length);
+        fileType = detect(file, buffer, n, detectors);
 
-      if (toLog()) {
-        try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-          byte[] buffer2 = new byte[50];
-          int n2 = newStream.read(buffer2, 0, buffer2.length);
-          log("F: detectFromContentAndCache(" + file.getName() + "): result: " + fileType.getName() +
-              "; stream: " + streamInfo(inputStream) +
-              "; newStream: " + streamInfo(newStream) +
-              "; read: " + n2 +
-              "; buffer: " + Arrays.toString(buffer2));
+        if (toLog()) {
+          try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
+            byte[] buffer2 = new byte[50];
+            int n2 = newStream.read(buffer2, 0, buffer2.length);
+            log("F: detectFromContentAndCache(" + file.getName() + "): result: " + fileType.getName() +
+                "; stream: " + streamInfo(inputStream) +
+                "; newStream: " + streamInfo(newStream) +
+                "; read: " + n2 +
+                "; buffer: " + Arrays.toString(buffer2));
+          }
         }
       }
     }
@@ -1113,7 +1124,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         detectors != null ? ContainerUtil.concat(detectors, myUntypedFileTypeDetectors) : myUntypedFileTypeDetectors;
 
       try {
-        FileType detectedType = detectFromContent(file, applicableDetectors);
+        FileType detectedType = detectFromContent(file, null, applicableDetectors);
         if (detectedType != UnknownFileType.INSTANCE && detectedType != PlainTextFileType.INSTANCE) {
           cacheAutoDetectedFileType(file, detectedType);
         }
