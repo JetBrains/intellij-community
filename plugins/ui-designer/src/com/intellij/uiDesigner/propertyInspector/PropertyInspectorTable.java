@@ -6,7 +6,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -16,6 +18,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.JavaPsiFacade;
@@ -82,6 +85,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Updates UIs of synthetic properties
    */
+  private Disposable myLafManagerDisposable;
   private final MyLafManagerListener myLafManagerListener;
   /**
    * This is property exists in this map then it's expanded.
@@ -301,12 +305,21 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   @Override
   public void addNotify() {
     super.addNotify();
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+    }
+    myLafManagerDisposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(myLafManagerDisposable).subscribe(LafManagerListener.TOPIC, myLafManagerListener);
   }
 
   @Override
   public void removeNotify() {
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+      myLafManagerDisposable = null;
+    }
+
     super.removeNotify();
   }
 

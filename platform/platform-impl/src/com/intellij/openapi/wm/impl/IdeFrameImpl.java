@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.SplashManager;
@@ -83,7 +82,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
 
   private volatile Image selfie;
@@ -97,7 +95,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     myRootPane = new IdeRootPane(this);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
-    LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
 
     resizedListener = new ComponentAdapter() {
       @Override
@@ -204,6 +201,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     if (rootPane == null) {
       return;
     }
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
 
     rootPane.init(this);
 
@@ -553,7 +552,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
-    if (myLafListener != null) LafManager.getInstance().removeLafManagerListener(myLafListener);
 
     super.dispose();
   }

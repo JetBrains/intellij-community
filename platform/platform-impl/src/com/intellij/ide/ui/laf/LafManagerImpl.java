@@ -154,11 +154,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) {
-    myEventDispatcher.addListener(listener, disposable);
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, listener);
   }
 
   @Override
-  public void removeLafManagerListener(@NotNull final LafManagerListener listener) {
+  public void removeLafManagerListener(@NotNull LafManagerListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 
@@ -426,6 +426,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
+  /**
+   * @deprecated Use {@link AppUIUtil#updateForDarcula(boolean)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static void updateForDarcula(boolean isDarcula) {
@@ -439,14 +442,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       return IconLoader.getDisabledIcon(arrowIcon);
     }
 
-    return null;
-  }
-
-  @Nullable
-  private static Icon getAquaMenuInvertedIcon() {
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      return AllIcons.Mac.Tree_white_right_arrow;
-    }
     return null;
   }
 
@@ -484,6 +479,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       updateUI(frame);
     }
 
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
     myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
@@ -609,17 +605,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
   }
 
-  private static void fixMenuIssues(UIDefaults uiDefaults) {
+  private static void fixMenuIssues(@NotNull UIDefaults uiDefaults) {
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
+      uiDefaults.put("Menu.invertedArrowIcon", AllIcons.Mac.Tree_white_right_arrow);
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
+    }
+    else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 

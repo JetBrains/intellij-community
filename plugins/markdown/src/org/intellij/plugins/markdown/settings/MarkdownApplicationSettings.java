@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
-import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -9,28 +9,24 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.intellij.plugins.markdown.settings.MarkdownCssSettings.DARCULA;
-import static org.intellij.plugins.markdown.settings.MarkdownCssSettings.DEFAULT;
-
 @State(
   name = "MarkdownApplicationSettings",
   storages = @Storage("markdown.xml")
 )
-public class MarkdownApplicationSettings implements PersistentStateComponent<MarkdownApplicationSettings.State>,
-                                                    MarkdownCssSettings.Holder,
-                                                    MarkdownPreviewSettings.Holder {
+public final class MarkdownApplicationSettings implements PersistentStateComponent<MarkdownApplicationSettings.State>,
+                                                          MarkdownCssSettings.Holder,
+                                                          MarkdownPreviewSettings.Holder {
 
-  private final State myState = new State();
+  private State myState = new State();
 
   public MarkdownApplicationSettings() {
-    final MarkdownLAFListener lafListener = new MarkdownLAFListener();
-    LafManager.getInstance().addLafManagerListener(lafListener);
+    MarkdownLAFListener lafListener = new MarkdownLAFListener();
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, lafListener);
     // Let's init proper CSS scheme
     ApplicationManager.getApplication().invokeLater(() -> lafListener.updateCssSettingsForced(StartupUiUtil.isUnderDarcula()));
   }
@@ -48,7 +44,7 @@ public class MarkdownApplicationSettings implements PersistentStateComponent<Mar
 
   @Override
   public void loadState(@NotNull State state) {
-    XmlSerializerUtil.copyBean(state, myState);
+    myState = state;
   }
 
   @Override
@@ -60,8 +56,8 @@ public class MarkdownApplicationSettings implements PersistentStateComponent<Mar
   @NotNull
   @Override
   public MarkdownCssSettings getMarkdownCssSettings() {
-    if (DARCULA.getStylesheetUri().equals(myState.myCssSettings.getStylesheetUri())
-        || DEFAULT.getStylesheetUri().equals(myState.myCssSettings.getStylesheetUri())) {
+    if (MarkdownCssSettings.DARCULA.getStylesheetUri().equals(myState.myCssSettings.getStylesheetUri())
+        || MarkdownCssSettings.DEFAULT.getStylesheetUri().equals(myState.myCssSettings.getStylesheetUri())) {
       return new MarkdownCssSettings(false,
                                      "",
                                      myState.myCssSettings.isTextEnabled(),
@@ -99,7 +95,7 @@ public class MarkdownApplicationSettings implements PersistentStateComponent<Mar
     return myState.myHideErrors;
   }
 
-  public static class State {
+  public static final class State {
     @Property(surroundWithTag = false)
     @NotNull
     private MarkdownCssSettings myCssSettings = MarkdownCssSettings.DEFAULT;

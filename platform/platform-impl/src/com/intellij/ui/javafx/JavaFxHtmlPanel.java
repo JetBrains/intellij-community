@@ -36,7 +36,6 @@ public class JavaFxHtmlPanel implements Disposable {
   private final JPanel myPanelWrapper;
   @NotNull
   private final List<Runnable> myInitActions = new ArrayList<>();
-  private final JavaFXLafManagerListener myLafManagerListener;
   @Nullable
   protected JFXPanel myPanel;
   @Nullable protected WebView myWebView;
@@ -84,8 +83,7 @@ public class JavaFxHtmlPanel implements Disposable {
       }));
     })));
 
-    myLafManagerListener = new JavaFXLafManagerListener();
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, new JavaFXLafManagerListener());
     runInPlatformWhenAvailable(() -> updateLaf(StartupUiUtil.isUnderDarcula()));
   }
 
@@ -175,10 +173,7 @@ public class JavaFxHtmlPanel implements Disposable {
 
   @Override
   public void dispose() {
-    runInPlatformWhenAvailable(
-      () -> getWebViewGuaranteed().getEngine().load(null)
-    );
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().load(null));
   }
 
 

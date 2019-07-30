@@ -5,11 +5,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.StartupUiUtil;
@@ -49,8 +52,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
       // a twist not to updateUI twice: here and in DarculaInstaller
       // double updateUI shall be avoided and causes NPE in some components (HelpView)
       Ref<Boolean> updated = Ref.create(false);
-      LafManagerListener listener = (s) -> updated.set(true);
-      lafMan.addLafManagerListener(listener);
+      Disposable disposable = Disposer.newDisposable();
+      ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, source -> updated.set(true));
       try {
         if (StartupUiUtil.isUnderDarcula()) {
           DarculaInstaller.install();
@@ -60,7 +63,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
         }
       }
       finally {
-        lafMan.removeLafManagerListener(listener);
+        Disposer.dispose(disposable);
         if (!updated.get()) {
           lafMan.updateUI();
         }

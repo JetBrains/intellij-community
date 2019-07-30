@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
@@ -12,23 +13,23 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.RGBImageFilter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
-  private static final Map<Icon, int[]> ourCache = new HashMap<>();
+public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
+  private static final Map<Icon, int[]> ourCache = new THashMap<>();
+
   static {
-    LafManager.getInstance().addLafManagerListener(x -> ourCache.clear());
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> ourCache.clear());
   }
 
   @NotNull
@@ -94,7 +95,7 @@ public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
     ScaleContext ctx = ScaleContext.create((Graphics2D)g);
     Image rawImage = ImageUtil.filter(IconUtil.toImage(myIcon, ctx), filter);
     Image hidpiImage = ImageUtil.ensureHiDPI(rawImage, ctx);
-    UIUtil.drawImage(g, hidpiImage, x, y, null);
+    StartupUiUtil.drawImage(g, hidpiImage, x, y, null);
   }
 
   private static int getBaseGray() {

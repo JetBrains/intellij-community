@@ -18,6 +18,10 @@ public class Topic<L> {
     this(displayName, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
+  public Topic(@NotNull Class<L> listenerClass) {
+    this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
+  }
+
   public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
     myDisplayName = displayName;
     myListenerClass = listenerClass;
