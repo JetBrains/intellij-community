@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
 
@@ -44,10 +47,6 @@ import java.util.*;
  * parallel to the table.
  *
  * <p>
- * Additional methods, such as {@code addAndMoveToFirst()}, make it easy to use
- * instances of this class as a cache (e.g., with LRU policy).
- *
- * <p>
  * The iterators provided by this class are type-specific
  * {@linkplain java.util.ListIterator list iterators}, and can be started at any
  * element <em>which is in the set</em> (if the provided element is not in the
@@ -55,9 +54,7 @@ import java.util.*;
  * the provided element is not the first or last element in the set, the first
  * access to the list index will require linear time, as in the worst case the
  * entire set must be scanned in iteration order to retrieve the positional
- * index of the starting element. If you use just the methods of a type-specific
- * {@link it.unimi.dsi.fastutil.BidirectionalIterator}, however, all operations
- * will be performed in constant time.
+ * index of the starting element.
  */
 public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>, Serializable, Cloneable {
   private static final long serialVersionUID = 0L;
@@ -190,8 +187,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   private void tryCapacity(final long capacity) {
-    final int needed = (int)Math.min(1 << 30,
-                                     Math.max(2, nextPowerOfTwo((long)Math.ceil(capacity / f))));
+    final int needed = (int)Math.min(1 << 30, Math.max(2, nextPowerOfTwo((long)Math.ceil(capacity / f))));
     if (needed > n) {
       rehash(needed);
     }
@@ -200,7 +196,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   @Override
   public boolean addAll(Collection<? extends K> c) {
     // The resulting collection will be at least c.size() big
-    if (f <= .5) {
+    if (f <= 0.5) {
       ensureCapacity(c.size()); // The resulting collection will be sized for c.size() elements
     }
     else {
@@ -224,12 +220,12 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       K curr;
       final K[] key = this.key;
       // The starting point.
-      if (!((curr = key[pos = (mix((k).hashCode())) & mask]) == null)) {
-        if (((curr).equals(k))) {
+      if ((curr = key[pos = mix(k.hashCode()) & mask]) != null) {
+        if (curr.equals(k)) {
           return false;
         }
-        while (!((curr = key[pos = (pos + 1) & mask]) == null)) {
-          if (((curr).equals(k))) {
+        while ((curr = key[pos = pos + 1 & mask]) != null) {
+          if (curr.equals(k)) {
             return false;
           }
         }
@@ -242,8 +238,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       link[pos] = -1L;
     }
     else {
-      link[last] ^= ((link[last] ^ (pos & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-      link[pos] = ((last & UNSIGNED_INT_MAX_VALUE) << 32) | UNSIGNED_INT_MAX_VALUE;
+      link[last] ^= (link[last] ^ pos & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+      link[pos] = (last & UNSIGNED_INT_MAX_VALUE) << 32 | UNSIGNED_INT_MAX_VALUE;
       last = pos;
     }
     if (size++ >= maxFill) {
@@ -279,12 +275,12 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       K curr;
       final K[] key = this.key;
       // The starting point.
-      if (!((curr = key[pos = (mix((k).hashCode())) & mask]) == null)) {
-        if (((curr).equals(k))) {
+      if ((curr = key[pos = mix(k.hashCode()) & mask]) != null) {
+        if (curr.equals(k)) {
           return curr;
         }
-        while (!((curr = key[pos = (pos + 1) & mask]) == null)) {
-          if (((curr).equals(k))) {
+        while ((curr = key[pos = pos + 1 & mask]) != null) {
+          if (curr.equals(k)) {
             return curr;
           }
         }
@@ -297,8 +293,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       link[pos] = -1L;
     }
     else {
-      link[last] ^= ((link[last] ^ (pos & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-      link[pos] = ((last & UNSIGNED_INT_MAX_VALUE) << 32) | UNSIGNED_INT_MAX_VALUE;
+      link[last] ^= (link[last] ^ pos & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+      link[pos] = (last & UNSIGNED_INT_MAX_VALUE) << 32 | UNSIGNED_INT_MAX_VALUE;
       last = pos;
     }
     if (size++ >= maxFill) {
@@ -318,18 +314,19 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     int last, slot;
     K curr;
     final K[] key = this.key;
-    for (; ; ) {
-      pos = ((last = pos) + 1) & mask;
-      for (; ; ) {
-        if (((curr = key[pos]) == null)) {
-          key[last] = (null);
+    for (;;) {
+      last = pos;
+      pos = pos + 1 & mask;
+      for (;;) {
+        if ((curr = key[pos]) == null) {
+          key[last] = null;
           return;
         }
-        slot = (mix(curr.hashCode())) & mask;
+        slot = mix(curr.hashCode()) & mask;
         if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
           break;
         }
-        pos = (pos + 1) & mask;
+        pos = pos + 1 & mask;
       }
       key[last] = curr;
       fixPointers(pos, last);
@@ -348,7 +345,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
 
   private boolean removeNullEntry() {
     containsNull = false;
-    key[n] = (null);
+    key[n] = null;
     size--;
     fixPointers(n);
     if (n > minN && size < maxFill / 4 && n > DEFAULT_INITIAL_SIZE) {
@@ -360,28 +357,18 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   @Override
   public boolean remove(final Object k) {
     if (k == null) {
-      if (containsNull) {
-        return removeNullEntry();
-      }
+      if (containsNull) return removeNullEntry();
       return false;
     }
     K curr;
     final K[] key = this.key;
     int pos;
     // The starting point.
-    if ((curr = key[pos = (mix((k).hashCode())) & mask]) == null) {
-      return false;
-    }
-    if (k.equals(curr)) {
-      return removeEntry(pos);
-    }
+    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return false;
+    if (k.equals(curr)) return removeEntry(pos);
     while (true) {
-      if (((curr = key[pos = (pos + 1) & mask]) == null)) {
-        return false;
-      }
-      if (((k).equals(curr))) {
-        return removeEntry(pos);
-      }
+      if ((curr = key[pos = pos + 1 & mask]) == null) return false;
+      if (k.equals(curr)) return removeEntry(pos);
     }
   }
 
@@ -394,19 +381,11 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     final K[] key = this.key;
     int pos;
     // The starting point.
-    if (((curr = key[pos = (mix((k).hashCode())) & mask]) == null)) {
-      return false;
-    }
-    if (((k).equals(curr))) {
-      return true;
-    }
+    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return false;
+    if (k.equals(curr)) return true;
     while (true) {
-      if (((curr = key[pos = (pos + 1) & mask]) == null)) {
-        return false;
-      }
-      if (((k).equals(curr))) {
-        return true;
-      }
+      if ((curr = key[pos = pos + 1 & mask]) == null) return false;
+      if (k.equals(curr)) return true;
     }
   }
 
@@ -418,28 +397,18 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    * {@code null}.
    */
   public K get(final Object k) {
-    if (k == null) {
-      return key[n]; // This is correct independently of the value of containsNull and of the set
-    }
+    if (k == null) return key[n]; // This is correct independently of the value of containsNull and of the set
     // being custom
     K curr;
     final K[] key = this.key;
     int pos;
     // The starting point.
-    if (((curr = key[pos = (mix((k).hashCode())) & mask]) == null)) {
-      return null;
-    }
-    if (((k).equals(curr))) {
-      return curr;
-    }
+    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return null;
+    if (k.equals(curr)) return curr;
     // There's always an unused entry.
     while (true) {
-      if (((curr = key[pos = (pos + 1) & mask]) == null)) {
-        return null;
-      }
-      if (((k).equals(curr))) {
-        return curr;
-      }
+      if ((curr = key[pos = pos + 1 & mask]) == null) return null;
+      if (k.equals(curr)) return curr;
     }
   }
 
@@ -456,7 +425,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     }
     size = 0;
     containsNull = false;
-    Arrays.fill(key, (null));
+    Arrays.fill(key, null);
     first = last = -1;
   }
 
@@ -500,8 +469,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     final long linki = link[i];
     final int prev = (int)(linki >>> 32);
     final int next = (int)linki;
-    link[prev] ^= ((link[prev] ^ (linki & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-    link[next] ^= ((link[next] ^ (linki & 0xFFFFFFFF00000000L)) & 0xFFFFFFFF00000000L);
+    link[prev] ^= (link[prev] ^ linki & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+    link[next] ^= (link[next] ^ linki & 0xFFFFFFFF00000000L) & 0xFFFFFFFF00000000L;
   }
 
   /**
@@ -520,21 +489,21 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     }
     if (first == s) {
       first = d;
-      link[(int)link[s]] ^= ((link[(int)link[s]] ^ ((d & UNSIGNED_INT_MAX_VALUE) << 32)) & 0xFFFFFFFF00000000L);
+      link[(int)link[s]] ^= (link[(int)link[s]] ^ (d & UNSIGNED_INT_MAX_VALUE) << 32) & 0xFFFFFFFF00000000L;
       link[d] = link[s];
       return;
     }
     if (last == s) {
       last = d;
-      link[(int)(link[s] >>> 32)] ^= ((link[(int)(link[s] >>> 32)] ^ (d & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
+      link[(int)(link[s] >>> 32)] ^= (link[(int)(link[s] >>> 32)] ^ d & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
       link[d] = link[s];
       return;
     }
     final long links = link[s];
     final int prev = (int)(links >>> 32);
     final int next = (int)links;
-    link[prev] ^= ((link[prev] ^ (d & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-    link[next] ^= ((link[next] ^ ((d & UNSIGNED_INT_MAX_VALUE) << 32)) & 0xFFFFFFFF00000000L);
+    link[prev] ^= (link[prev] ^ d & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+    link[next] ^= (link[next] ^ (d & UNSIGNED_INT_MAX_VALUE) << 32) & 0xFFFFFFFF00000000L;
     link[d] = links;
   }
 
@@ -600,9 +569,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
 
     @Override
     public K previous() {
-      if (!hasPrevious()) {
-        throw new NoSuchElementException();
-      }
+      if (!hasPrevious()) throw new NoSuchElementException();
       curr = prev;
       prev = (int)(link[curr] >>> 32);
       next = curr;
@@ -647,9 +614,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     @Override
     public void remove() {
       ensureIndexKnown();
-      if (curr == -1) {
-        throw new IllegalStateException();
-      }
+      if (curr == -1) throw new IllegalStateException();
       if (curr == prev) {
         /*
          * If the last operation was a next(), we are removing an entry that preceeds
@@ -670,37 +635,38 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         first = next;
       }
       else {
-        link[prev] ^= ((link[prev] ^ (next & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
+        link[prev] ^= (link[prev] ^ next & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
       }
       if (next == -1) {
         last = prev;
       }
       else {
-        link[next] ^= ((link[next] ^ ((prev & UNSIGNED_INT_MAX_VALUE) << 32)) & 0xFFFFFFFF00000000L);
+        link[next] ^= (link[next] ^ (prev & UNSIGNED_INT_MAX_VALUE) << 32) & 0xFFFFFFFF00000000L;
       }
       int last, slot, pos = curr;
       curr = -1;
       if (pos == n) {
         ObjectLinkedOpenHashSet.this.containsNull = false;
-        ObjectLinkedOpenHashSet.this.key[n] = (null);
+        ObjectLinkedOpenHashSet.this.key[n] = null;
       }
       else {
         K curr;
         final K[] key = ObjectLinkedOpenHashSet.this.key;
         // We have to horribly duplicate the shiftKeys() code because we need to update
         // next/prev.
-        for (; ; ) {
-          pos = ((last = pos) + 1) & mask;
-          for (; ; ) {
+        for (;;) {
+          last = pos;
+          pos = pos + 1 & mask;
+          for (;;) {
             if ((curr = key[pos]) == null) {
-              key[last] = (null);
+              key[last] = null;
               return;
             }
-            slot = (mix(curr.hashCode())) & mask;
+            slot = mix(curr.hashCode()) & mask;
             if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
               break;
             }
-            pos = (pos + 1) & mask;
+            pos = pos + 1 & mask;
           }
           key[last] = curr;
           if (next == pos) {
@@ -762,7 +728,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    * Rehashes the set.
    *
    * <p>
-   * This method implements the basic rehashing strategy, and may be overriden by
+   * This method implements the basic rehashing strategy, and may be overridden by
    * subclasses implementing different rehashing strategies (e.g., disk-based
    * rehashing). However, you should not override this method unless you
    * understand the internal workings of this class.
@@ -779,19 +745,19 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     final long[] newLink = new long[newN + 1];
     first = -1;
     for (int j = size; j-- != 0; ) {
-      if (((key[i]) == null)) {
+      if (key[i] == null) {
         pos = newN;
       }
       else {
-        pos = (mix((key[i]).hashCode())) & mask;
-        while (!((newKey[pos]) == null)) {
-          pos = (pos + 1) & mask;
+        pos = mix(key[i].hashCode()) & mask;
+        while (newKey[pos] != null) {
+          pos = pos + 1 & mask;
         }
       }
       newKey[pos] = key[i];
       if (prev != -1) {
-        newLink[newPrev] ^= ((newLink[newPrev] ^ (pos & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-        newLink[pos] ^= ((newLink[pos] ^ ((newPrev & UNSIGNED_INT_MAX_VALUE) << 32)) & 0xFFFFFFFF00000000L);
+        newLink[newPrev] ^= (newLink[newPrev] ^ pos & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+        newLink[pos] ^= (newLink[pos] ^ (newPrev & UNSIGNED_INT_MAX_VALUE) << 32) & 0xFFFFFFFF00000000L;
         newPrev = pos;
       }
       else {
@@ -846,8 +812,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    * Returns a hash code for this set.
    * <p>
    * This method overrides the generic method provided by the superclass. Since
-   * {@code equals()} is not overriden, it is important that the value returned by
-   * this method is the same value as the one returned by the overriden method.
+   * {@code equals()} is not overridden, it is important that the value returned by
+   * this method is the same value as the one returned by the overridden method.
    *
    * @return a hash code for this set.
    */
@@ -902,14 +868,14 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         s.append("(this collection)");
       }
       else {
-        s.append(String.valueOf(k));
+        s.append(k);
       }
     }
     s.append("}");
     return s.toString();
   }
 
-  private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
+  private void writeObject(ObjectOutputStream s) throws IOException {
     final Iterator<K> i = iterator();
     s.defaultWriteObject();
     for (int j = size; j-- != 0; ) {
@@ -918,7 +884,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   @SuppressWarnings("unchecked")
-  private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+  private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
     s.defaultReadObject();
     n = arraySize(size, f);
     maxFill = maxFill(n, f);
@@ -935,14 +901,14 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         containsNull = true;
       }
       else {
-        if (!((key[pos = (mix((k).hashCode())) & mask]) == null)) {
-          while (!((key[pos = (pos + 1) & mask]) == null)) ;
+        if (key[pos = mix(k.hashCode()) & mask] != null) {
+          while (key[pos = pos + 1 & mask] != null) ;
         }
       }
       key[pos] = k;
       if (first != -1) {
-        link[prev] ^= ((link[prev] ^ (pos & UNSIGNED_INT_MAX_VALUE)) & UNSIGNED_INT_MAX_VALUE);
-        link[pos] ^= ((link[pos] ^ ((prev & UNSIGNED_INT_MAX_VALUE) << 32)) & 0xFFFFFFFF00000000L);
+        link[prev] ^= (link[prev] ^ pos & UNSIGNED_INT_MAX_VALUE) & UNSIGNED_INT_MAX_VALUE;
+        link[pos] ^= (link[pos] ^ (prev & UNSIGNED_INT_MAX_VALUE) << 32) & 0xFFFFFFFF00000000L;
         prev = pos;
       }
       else {
@@ -960,8 +926,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   private static long nextPowerOfTwo(long x) {
-    if (x == 0L) {
-      return 1L;
+    if (x == 0) {
+      return 1;
     }
     else {
       --x;
@@ -984,8 +950,8 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   private static int arraySize(int expected, float f) {
-    long s = Math.max(2L, nextPowerOfTwo((long)Math.ceil(expected / f)));
-    if (s > 1073741824L) {
+    long s = Math.max(2, nextPowerOfTwo((long)Math.ceil(expected / f)));
+    if (s > 1073741824) {
       throw new IllegalArgumentException("Too large (" + expected + " expected elements with load factor " + f + ")");
     }
     else {
