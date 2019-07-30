@@ -209,8 +209,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   private static boolean calcAlphaModelSupported() {
-    if (AWTUtilitiesWrapper.isTranslucencyAPISupported()) {
-      return AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT);
+    GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+    if (device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
+      return true;
     }
     try {
       return WindowUtils.isWindowAlphaSupported();
