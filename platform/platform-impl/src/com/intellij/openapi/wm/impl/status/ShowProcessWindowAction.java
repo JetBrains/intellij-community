@@ -37,9 +37,9 @@ public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   public boolean isSelected(@NotNull AnActionEvent e) {
     IdeFrameImpl frame = getFrame();
     if (frame != null) {
-      StatusBar statusBar = frame.getStatusBar();
+      StatusBarEx statusBar = frame.getStatusBar();
       if (statusBar != null) {
-        return ((StatusBarEx)statusBar).isProcessWindowOpen();
+        return statusBar.isProcessWindowOpen();
       }
     }
 
@@ -56,9 +56,9 @@ public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     IdeFrameImpl frame = getFrame();
     if (frame != null) {
-      StatusBar statusBar = frame.getStatusBar();
+      StatusBarEx statusBar = frame.getStatusBar();
       if (statusBar != null) {
-        ((StatusBarEx)statusBar).setProcessWindowOpen(state);
+        statusBar.setProcessWindowOpen(state);
       }
     }
   }
