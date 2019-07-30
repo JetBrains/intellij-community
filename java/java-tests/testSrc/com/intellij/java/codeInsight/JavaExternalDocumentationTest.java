@@ -28,6 +28,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +119,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     return LOCALHOST_URL_PATTERN.matcher(actualText).replaceAll("placeholder");
   }
 
-  private static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
+  static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
     if (actionCallback == null) return;
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < 300000) {
@@ -147,17 +148,30 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     return getDocumentationText(getProject(), sourceEditorText);
   }
 
-  public static String getDocumentationText(Project project, String sourceEditorText) {
+  public static String getDocumentationText(Project project,
+                                          String sourceEditorText) {
+    return getDocumentationText(project, sourceEditorText, DocumentationComponent::getDecoratedText);
+  }
+
+  public static String getDocumentationText(Project project,
+                                            String sourceEditorText,
+                                            @NotNull Function<? super DocumentationComponent, String> componentEvaluator) {
     int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
     if (caretPosition >= 0) {
       sourceEditorText = sourceEditorText.substring(0, caretPosition) +
                          sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
     }
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
-    return getDocumentationText(psiFile, caretPosition);
+    return getDocumentationText(psiFile, caretPosition, componentEvaluator);
   }
 
   public static String getDocumentationText(@NotNull PsiFile psiFile, int caretPosition) {
+    return getDocumentationText(psiFile, caretPosition, DocumentationComponent::getDecoratedText);
+  }
+
+  public static String getDocumentationText(@NotNull PsiFile psiFile,
+                                            int caretPosition,
+                                            @NotNull Function<? super DocumentationComponent, String> componentEvaluator) {
     Project project = psiFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assertNotNull(document);
@@ -166,7 +180,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
       if (caretPosition >= 0) {
         editor.getCaretModel().moveToOffset(caretPosition);
       }
-      return getDocumentationText(editor);
+      return getDocumentationText(editor, componentEvaluator);
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
@@ -174,6 +188,11 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   }
 
   public static String getDocumentationText(@NotNull Editor editor) {
+    return getDocumentationText(editor, DocumentationComponent::getDecoratedText);
+  }
+
+  public static String getDocumentationText(@NotNull Editor editor,
+                                            @NotNull Function<? super DocumentationComponent, String> componentEvaluator) {
     Project project = editor.getProject();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
@@ -187,7 +206,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      return documentationComponent.getDecoratedText();
+      return componentEvaluator.fun(documentationComponent);
     }
     finally {
       JBPopup hint = documentationComponent.getHint();
