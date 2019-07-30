@@ -70,7 +70,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -854,7 +853,6 @@ public final class UIUtil extends StartupUiUtil {
     return defColor;
   }
 
-  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
     // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
@@ -943,10 +941,6 @@ public final class UIUtil extends StartupUiUtil {
     return BundleBase.replaceMnemonicAmpersand(value);
   }
 
-  public static Color getTableHeaderBackground() {
-    return UIManager.getColor("TableHeader.background");
-  }
-
   /**
    * @deprecated use {@link #getTreeForeground()}
    */
@@ -997,14 +991,6 @@ public final class UIUtil extends StartupUiUtil {
   @Deprecated
   public static Color getTextInactiveTextColor() {
     return getInactiveTextColor();
-  }
-
-  public static void installPopupMenuColorAndFonts(@NotNull JComponent contentPane) {
-    LookAndFeel.installColorsAndFont(contentPane, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
-  }
-
-  public static void installPopupMenuBorder(@NotNull JComponent contentPane) {
-    LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
   public static Color getTreeSelectionBorderColor() {
@@ -1095,10 +1081,6 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getFont("ToolTip.font");
   }
 
-  public static Color getTabbedPaneBackground() {
-    return UIManager.getColor("TabbedPane.background");
-  }
-
   public static void setSliderIsFilled(@NotNull final JSlider slider, final boolean value) {
     slider.putClientProperty("JSlider.isFilled", value);
   }
@@ -1128,14 +1110,12 @@ public final class UIUtil extends StartupUiUtil {
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
-  public static Color getSeparatorBackground() {
-    return UIManager.getColor("Separator.background");
-  }
-
   public static Color getSeparatorShadow() {
     return UIManager.getColor("Separator.shadow");
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated
   public static Color getSeparatorHighlight() {
     return UIManager.getColor("Separator.highlight");
   }
@@ -1157,7 +1137,7 @@ public final class UIUtil extends StartupUiUtil {
    * @deprecated unsupported UI feature
    */
   @Deprecated
-  public static void setLineStyleAngled(@NotNull final JTree component) {
+  public static void setLineStyleAngled(@SuppressWarnings("unused") @NotNull JTree component) {
   }
 
   public static Color getTableFocusCellForeground() {
@@ -1203,6 +1183,8 @@ public final class UIUtil extends StartupUiUtil {
     return AllIcons.General.BalloonError;
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated
   public static Icon getRadioButtonIcon() {
     return UIManager.getIcon("RadioButton.icon");
   }
@@ -1259,6 +1241,8 @@ public final class UIUtil extends StartupUiUtil {
     return icon != null ? icon : getTreeExpandedIcon();
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated
   public static Border getTableHeaderCellBorder() {
     return UIManager.getBorder("TableHeader.cellBorder");
   }
@@ -1935,6 +1919,7 @@ public final class UIUtil extends StartupUiUtil {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
       Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
+      //noinspection ConstantConditions
       return (Thread)method.invoke(eventQueue);
     }
     catch (Exception e) {
