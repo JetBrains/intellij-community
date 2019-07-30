@@ -17,7 +17,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
@@ -226,7 +225,6 @@ public class PushLog extends JPanel implements DataProvider {
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setMinimumSize(new Dimension(JBUIScale.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
     JBSplitter splitter = new OnePixelSplitter(SPLITTER_PROPORTION, 0.5f);
@@ -258,9 +256,7 @@ public class PushLog extends JPanel implements DataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
-    myTree.setMinimumSize(new Dimension(JBUIScale.scale(400), myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
-    myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
 
   public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {

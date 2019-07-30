@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
@@ -39,6 +40,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
   private static final String ID = "Vcs.Push.Dialog";
+  private static final int CENTER_PANEL_HEIGHT = 450;
+  private static final int CENTER_PANEL_WIDTH = 800;
 
   protected final Project myProject;
   private final PushLog myListPanel;
@@ -93,7 +96,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected JComponent createCenterPanel() {
-    return myListPanel;
+    JPanel panel = myListPanel;
+    panel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
+    return panel;
   }
 
   @NotNull
