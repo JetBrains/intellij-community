@@ -55,11 +55,11 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, type, templateText);
 
+    file = (PsiFile)directory.add(file);
     if (template.isReformatCode()) {
       CodeStyleManager.getInstance(project).reformat(file);
     }
 
-    file = (PsiFile)directory.add(file);
     return file;
   }
 
