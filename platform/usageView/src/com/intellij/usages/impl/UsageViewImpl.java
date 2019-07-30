@@ -857,7 +857,7 @@ public class UsageViewImpl implements UsageViewEx {
       new Separator(),
       isPreviewUsageActionEnabled() ? new PreviewUsageAction(this) : null,
       new Separator(),
-      canShowSettings() ? showSettings() : null,
+      canShowSettings() ? new ShowSettings() : null,
     };
   }
 
@@ -865,43 +865,6 @@ public class UsageViewImpl implements UsageViewEx {
     if (myTargets.length == 0) return false;
     NavigationItem target = myTargets[0];
     return target instanceof ConfigurableUsageTarget;
-  }
-
-  @NotNull
-  private AnAction showSettings() {
-    final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
-    String description = null;
-    try {
-      description = configurableUsageTarget == null ? null : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-    if (description == null) {
-      description = "Show find usages settings dialog";
-    }
-    return new AnAction("Settings...", description, AllIcons.General.GearPlain) {
-      {
-        KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
-        if (shortcut != null) {
-          registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
-        }
-      }
-
-      @Override
-      public boolean startInTransaction() {
-        return true;
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
-      }
-    };
   }
 
   private static ConfigurableUsageTarget getConfigurableTarget(@NotNull UsageTarget[] targets) {
@@ -1096,6 +1059,43 @@ public class UsageViewImpl implements UsageViewEx {
     @Override
     protected void setOptionValue(boolean value) {
       getUsageViewSettings().setFilterDuplicatedLine(value);
+    }
+  }
+
+  private class ShowSettings extends AnAction {
+    private ShowSettings() {
+      super("Settings...", null, AllIcons.General.GearPlain);
+      final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
+      String description = null;
+      try {
+        description = configurableUsageTarget == null ? null : "Show settings for " + configurableUsageTarget.getLongDescriptiveName();
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+      if (description == null) {
+        description = "Show find usages settings dialog";
+      }
+      getTemplatePresentation().setDescription(description);
+      KeyboardShortcut shortcut =
+        configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
+      if (shortcut != null) {
+        registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
+      }
+    }
+
+    @Override
+    public boolean startInTransaction() {
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
     }
   }
 
