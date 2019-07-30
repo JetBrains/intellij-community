@@ -20,23 +20,17 @@ import java.util.Arrays;
 import static org.jetbrains.jps.incremental.storage.HashStorage.HashPerTarget;
 
 public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> implements StampsStorage<HashStorage.Hash> {
-  public static final int MD5_SIZE = 16;
+  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
+  private static final int MD5_SIZE = 16;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
   private final File myHashesRoot;
-  private final MessageDigest md;
 
   public HashStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
     super(new File(calcStorageRoot(dataStorageRoot), "data"), new PathStringDescriptor(), new StateExternalizer());
     myHashesRoot = calcStorageRoot(dataStorageRoot);
     myRelativizer = relativizer;
     myTargetsState = targetsState;
-    try {
-      md = MessageDigest.getInstance("MD5");
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new IOException(e);
-    }
   }
 
   @NotNull
@@ -72,10 +66,8 @@ public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> i
   public Hash lastModified(File file) throws IOException {
     // todo: check file size ad ready with buffered reader
     byte[] bytes = Files.readAllBytes(file.toPath());
-    synchronized (md) {
-      byte[] digest = md.digest(bytes);
-      return Hash.fromBytes(digest);
-    }
+    byte[] digest = getMessageDigest().digest(bytes);
+    return Hash.fromBytes(digest);
   }
 
   @Override
@@ -88,6 +80,20 @@ public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> i
     int targetId = myTargetsState.getBuildTargetId(target);
     String path = relativePath(file);
     update(path, updateTimestamp(getState(path), targetId, stamp.asBytes()));
+  }
+
+  @NotNull
+  private static MessageDigest getMessageDigest() throws IOException {
+    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get();
+    if (messageDigest != null) return messageDigest;
+    try {
+      messageDigest = MessageDigest.getInstance("MD5");
+      MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest);
+      return messageDigest;
+    }
+    catch (NoSuchAlgorithmException e) {
+      throw new IOException(e);
+    }
   }
 
   @NotNull
