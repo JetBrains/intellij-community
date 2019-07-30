@@ -20,6 +20,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -140,7 +141,7 @@ public class PushLog extends JPanel implements DataProvider {
       }
     };
     myTree.setUI(new MyTreeUi());
-    myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
+    myTree.setBorder(JBUI.Borders.emptyTop(10));
     myTree.setEditable(true);
     myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
@@ -220,11 +221,18 @@ public class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
+      @NotNull
+      @Override
+      protected Border createViewerBorder() {
+        return IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM);
+      }
+    };
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
+    myChangesBrowser.setBorder(JBUI.Borders.emptyTop(2));
     setDefaultEmptyText();
 
     JBSplitter splitter = new OnePixelSplitter(SPLITTER_PROPORTION, 0.5f);
@@ -251,6 +259,7 @@ public class PushLog extends JPanel implements DataProvider {
     if (syncStrategyPanel != null) {
       myScrollPane.add(syncStrategyPanel);
     }
+    myScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
     splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(myChangesBrowser);
 
@@ -289,7 +298,7 @@ public class PushLog extends JPanel implements DataProvider {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(myTree.getBackground());
     final LinkLabel<String> linkLabel = new LinkLabel<>("Edit all targets", null);
-    linkLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
       public void linkSelected(LinkLabel aSource, String aLinkData) {
@@ -581,10 +590,15 @@ public class PushLog extends JPanel implements DataProvider {
       myCheckbox.setBorder(null); //checkBox may have no border by default, but insets are not null,
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
+      ColoredTreeCellRenderer renderer = getTextRenderer();
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         RepositoryNode valueNode = (RepositoryNode)value;
-        myCheckbox.setVisible(valueNode.isCheckboxVisible());
+        boolean isCheckboxVisible = valueNode.isCheckboxVisible();
+        myCheckbox.setVisible(isCheckboxVisible);
+        if (!isCheckboxVisible) {
+          renderer.setBorder(JBUI.Borders.emptyLeft(10));
+        }
         if (valueNode.isChecked() && valueNode.isLoading()) {
           myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
         }
@@ -593,7 +607,6 @@ public class PushLog extends JPanel implements DataProvider {
         }
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      ColoredTreeCellRenderer renderer = getTextRenderer();
       if (value instanceof CustomRenderedTreeNode) {
         if (tree.isEditing() && mySyncStrategy && value instanceof RepositoryNode) {
           //sync rendering all editable fields

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +80,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
+  }
+
+  @Nullable
+  @Override
+  protected Border createContentPaneBorder() {
+    return null;
   }
 
   @Nullable
