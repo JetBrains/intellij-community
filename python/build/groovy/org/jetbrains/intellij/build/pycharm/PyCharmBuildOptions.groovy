@@ -21,6 +21,12 @@ class PyCharmBuildOptions {
   static final boolean usePrebuiltStubs = SystemProperties.getBooleanProperty("intellij.build.pycharm.use.prebuilt.stubs", false)
 
   /**
+   * Pass 'false' to skip bundling <a href="http://google.comhttps://plugins.jetbrains.com/plugin/12174-datalore">Datalore plugin</a>
+   * to PyCharm Professional
+   */
+  static final boolean bundleDatalorePlugin = SystemProperties.getBooleanProperty("intellij.build.pycharm.bundle.datalore.plugin", true)
+
+  /**
    * Path to a zip file containing generated universal stubs.
    */
   static final String prebuiltStubsArchive = System.getProperty("intellij.build.pycharm.prebuilt.stubs.archive")
