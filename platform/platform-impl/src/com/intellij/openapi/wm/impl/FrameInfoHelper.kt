@@ -10,6 +10,7 @@ import com.intellij.ui.FrameState
 import com.intellij.ui.ScreenUtil
 import sun.awt.AWTAccessor
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.peer.FramePeer
 
 class FrameInfoHelper {
@@ -32,19 +33,20 @@ class FrameInfoHelper {
   }
 
   fun updateFrameInfo(frame: IdeFrameImpl) {
-    info = updateFrameInfo(frame, info)
+    info = updateFrameInfo(frame, null, info)
   }
 
   fun getModificationCount(): Long {
     return info?.modificationCount ?: 0
   }
 
-  fun updateAndGetModificationCount(project: Project, windowManager: WindowManagerImpl): Long {
-    return updateAndGetModificationCount(windowManager.getFrame(project) ?: return getModificationCount(), windowManager)
+  fun updateAndGetModificationCount(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
+    val frame = windowManager.getFrame(project) ?: return getModificationCount()
+    return updateAndGetModificationCount(frame, lastNormalFrameBounds, windowManager)
   }
 
-  fun updateAndGetModificationCount(frame: IdeFrameImpl, windowManager: WindowManagerImpl): Long {
-    val newInfo = updateFrameInfo(frame, info)
+  fun updateAndGetModificationCount(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
+    val newInfo = updateFrameInfo(frame, lastNormalFrameBounds, info)
     updateDefaultFrameInfoInDeviceSpace(windowManager, newInfo)
     info = newInfo
 
@@ -61,7 +63,7 @@ class FrameInfoHelper {
   }
 }
 
-private fun updateFrameInfo(frame: IdeFrameImpl, oldFrameInfo: FrameInfo?): FrameInfo {
+private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
   var extendedState = frame.extendedState
   if (SystemInfo.isMacOSLion) {
     val peer = AWTAccessor.getComponentAccessor().getPeer(frame)
@@ -75,9 +77,9 @@ private fun updateFrameInfo(frame: IdeFrameImpl, oldFrameInfo: FrameInfo?): Fram
   val isMaximized = FrameState.isMaximized(extendedState) || isInFullScreen
 
   val oldBounds = oldFrameInfo?.bounds
-  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration, frame.bounds)
+  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration, lastNormalFrameBounds ?: frame.bounds)
 
-  val usePreviousBounds = isMaximized &&
+  val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&
                           newBounds.contains(Point(oldBounds.centerX.toInt(), oldBounds.centerY.toInt()))
 

@@ -56,18 +56,17 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   @CalledInAwt
   private fun initFrame(frame: IdeFrameImpl) {
+    frame.init()
+
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
       frameInfo = windowManager.defaultFrameInfo
     }
-    if (frameInfo != null) {
-      // set bounds even if maximized because on unmaximize we must restore previous frame bounds
-      WindowManagerImpl.setFrameBoundsFromDeviceSpace(frame, frameInfo)
-      windowManager.setFrameExtendedState(frame, frameInfo)
-    }
 
-    frame.init()
+    if (frameInfo != null) {
+      windowManager.restoreFrameState(frame, frameInfo)
+    }
     frame.isVisible = true
   }
 
@@ -107,8 +106,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       if (options.frame?.bounds == null) {
         val frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
         if (frameInfo?.bounds != null) {
-          WindowManagerImpl.setFrameBoundsFromDeviceSpace(frame, frameInfo)
-          windowManager.setFrameExtendedState(frame, frameInfo)
+          windowManager.restoreFrameState(frame, frameInfo)
         }
       }
 

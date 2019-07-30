@@ -264,21 +264,28 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
   }
 
-  /**
-   * This is overridden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
-   * and it does it plain wrong. Setting bounds to {@code null} means default value should be taken from the underlying OS.
-   */
-  @Override
-  public synchronized void setMaximizedBounds(Rectangle bounds) {
-    super.setMaximizedBounds(null);
-  }
-
   @Override
   public void setExtendedState(int state) {
-    if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
+    if (getExtendedState() == Frame.NORMAL && isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
+  }
+
+  public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
+    int state = frameInfo.getExtendedState();
+    boolean isMaximized = isMaximized(state);
+    if (bounds != null && isMaximized && getExtendedState() == Frame.NORMAL) {
+      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, bounds);
+    }
+
+    super.setExtendedState(state);
+
+    return isMaximized;
+  }
+
+  public static boolean isMaximized(int state) {
+    return (state & Frame.MAXIMIZED_BOTH) != 0;
   }
 
   private void setupCloseAction() {
@@ -461,10 +468,10 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
     addWidget(statusBar, lineSeparatorPanel, StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
-    EncodingPanel encodignPanel = new EncodingPanel(project);
-    addWidget(statusBar, encodignPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
+    EncodingPanel encodingPanel = new EncodingPanel(project);
+    addWidget(statusBar, encodingPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
 
-    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodignPanel.ID()));
+    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
     addWidget(statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
     for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {

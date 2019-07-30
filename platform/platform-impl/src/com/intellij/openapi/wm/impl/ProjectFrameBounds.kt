@@ -21,6 +21,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   private val frameInfoHelper = FrameInfoHelper()
+  private var pendingBounds: Rectangle? = null
 
   val isInFullScreen: Boolean
     get() = frameInfoHelper.info?.fullScreen ?: false
@@ -33,7 +34,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
   override fun getModificationCount(): Long {
     return when {
-      frameInfoHelper.isDirty -> frameInfoHelper.updateAndGetModificationCount(project, WindowManager.getInstance() as WindowManagerImpl)
+      frameInfoHelper.isDirty -> frameInfoHelper.updateAndGetModificationCount(project, pendingBounds, WindowManager.getInstance() as WindowManagerImpl)
       else -> frameInfoHelper.getModificationCount()
     }
   }
@@ -45,23 +46,30 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
   fun getActualFrameInfoInDeviceSpace(frame: IdeFrameImpl, windowManager: WindowManagerImpl): FrameInfo? {
     if (frameInfoHelper.isDirty) {
-      frameInfoHelper.updateAndGetModificationCount(frame, windowManager)
+      updateAndGetModificationCount(frame, windowManager)
     }
     return frameInfoHelper.info
+  }
+
+  private fun updateAndGetModificationCount(frame: IdeFrameImpl, windowManager: WindowManagerImpl) {
+    frameInfoHelper.updateAndGetModificationCount(frame, pendingBounds, windowManager)
   }
 
   fun updateDefaultFrameInfoOnProjectClose() {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     if (frameInfoHelper.isDirty || frameInfoHelper.info == null) {
       // not really required, because will be applied during project save on close
-      frameInfoHelper.updateAndGetModificationCount(project, windowManager)
+      frameInfoHelper.updateAndGetModificationCount(project, pendingBounds, windowManager)
     }
     else {
       updateDefaultFrameInfoInDeviceSpace(windowManager, frameInfoHelper.info ?: return)
     }
   }
 
-  fun markDirty() {
+  fun markDirty(bounds: Rectangle?) {
+    if (bounds != null) {
+      pendingBounds = Rectangle(bounds)
+    }
     frameInfoHelper.isDirty = true
   }
 }

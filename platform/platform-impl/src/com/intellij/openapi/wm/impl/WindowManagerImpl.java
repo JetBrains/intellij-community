@@ -114,10 +114,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     private void update(@NotNull ComponentEvent e) {
       IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
 
-      if (frame.getExtendedState() == Frame.NORMAL) {
+      int extendedState = frame.getExtendedState();
+      Rectangle bounds = frame.getBounds();
+      if (extendedState == Frame.NORMAL) {
         JRootPane rootPane = frame.getRootPane();
         if (rootPane != null) {
-          rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, frame.getBounds());
+          rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
         }
       }
 
@@ -130,7 +132,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         defaultFrameInfoHelper.updateFrameInfo(frame);
       }
       else {
-        ProjectFrameBounds.getInstance(project).markDirty();
+        ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
+        projectFrameBounds.markDirty(IdeFrameImpl.isMaximized(extendedState) ? null : bounds);
       }
     }
   };
@@ -509,9 +512,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return frame;
   }
 
-  public void setFrameExtendedState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
-    frame.setExtendedState(frameInfo.getExtendedState());
-    if (isFullScreenSupportedInCurrentOS() && frameInfo.getFullScreen()) {
+  public void restoreFrameState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
+    Rectangle deviceBounds = frameInfo.getBounds();
+    Rectangle bounds = deviceBounds == null ? null : validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(deviceBounds));
+    frame.setExtendedState(frameInfo, bounds);
+    if (bounds != null) {
+      frame.setBounds(bounds);
+    }
+
+    if (frameInfo.getFullScreen() && isFullScreenSupportedInCurrentOS()) {
       frame.toggleFullScreen(true);
     }
   }
