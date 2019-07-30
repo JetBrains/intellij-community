@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = "TerminalArrangementManager", storages = {
-  @Storage(StoragePathMacros.CACHE_FILE)
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)
 })
 public class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
 
