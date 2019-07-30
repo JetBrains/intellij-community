@@ -19,6 +19,8 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>("c
  * @param T settings type of this provider, if no settings required, please, use [NoSettings]
  * @see com.intellij.openapi.editor.InlayModel.addInlineElement
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
+ *
+ * To test it you may use InlayHintsProviderTestCase.
  */
 interface InlayHintsProvider<T : Any> {
   /**
