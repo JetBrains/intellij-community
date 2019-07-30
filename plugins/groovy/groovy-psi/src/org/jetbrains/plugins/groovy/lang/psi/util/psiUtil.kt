@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -69,4 +70,12 @@ fun GrCodeReferenceElement.mayContainTypeArguments(): Boolean {
 
 fun GrExpression?.isNullLiteral(): Boolean {
   return this is GrLiteral && GrLiteralImpl.getLiteralType(this) == KW_NULL
+}
+
+fun GrExpression?.skipParenthesesDown(): GrExpression? {
+  var current = this
+  while (current is GrParenthesizedExpression) {
+    current = current.operand
+  }
+  return current
 }
