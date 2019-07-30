@@ -33,7 +33,7 @@ public class DateFormatUtil {
   public static final long YEAR = DAY * 365;
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
 
-  // do not expose this constants - they are very likely to be changed in future
+  // do not expose these constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT;
   private static final SyncDateFormat TIME_FORMAT;
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
@@ -332,6 +332,7 @@ public class DateFormatUtil {
       }
     }
 
+    Pointer CFLocaleCopyCurrent();
     Pointer CFDateFormatterCreate(Pointer allocator, Pointer locale, long dateStyle, long timeStyle);
     Pointer CFDateFormatterGetFormat(Pointer formatter);
     long CFStringGetLength(Pointer str);
@@ -342,16 +343,22 @@ public class DateFormatUtil {
   // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
     CF cf = Native.load("CoreFoundation", CF.class);
-    return new DateFormat[]{
-      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
-      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
-      getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
-      getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
-    };
+    Pointer locale = cf.CFLocaleCopyCurrent();
+    try {
+      return new DateFormat[]{
+        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
+        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
+        getMacFormat(cf, locale, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterMediumStyle),  // medium time
+        getMacFormat(cf, locale, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterShortStyle)  // short date/time
+      };
+    }
+    finally {
+      cf.CFRelease(locale);
+    }
   }
 
-  private static DateFormat getMacFormat(CF cf, long dateStyle, long timeStyle) {
-    Pointer formatter = cf.CFDateFormatterCreate(null, null, dateStyle, timeStyle);
+  private static DateFormat getMacFormat(CF cf, Pointer locale, long dateStyle, long timeStyle) {
+    Pointer formatter = cf.CFDateFormatterCreate(null, locale, dateStyle, timeStyle);
     if (formatter == null) throw new IllegalStateException("CFDateFormatterCreate: null");
     try {
       Pointer format = cf.CFDateFormatterGetFormat(formatter);
