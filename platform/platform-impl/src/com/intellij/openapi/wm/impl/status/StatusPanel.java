@@ -56,7 +56,7 @@ class StatusPanel extends JPanel {
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
-  private final Action myCopyAction;
+  private Action myCopyAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -105,7 +105,6 @@ class StatusPanel extends JPanel {
         return true;
       }
     }.installOn(myTextPanel);
-    myCopyAction = createCopyAction();
 
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -120,7 +119,9 @@ class StatusPanel extends JPanel {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        if (myCopyAction != null && e.isPopupTrigger()) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+          if (myCopyAction == null) myCopyAction = createCopyAction();
+
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
           menu.show(myTextPanel, e.getX(), e.getY());
