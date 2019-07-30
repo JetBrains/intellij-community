@@ -3,10 +3,8 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,7 +66,6 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
                    false);
   }
 
-  @Bombed(month = Calendar.JULY, day = 31, user = "lya Kazakevich", description = "see 272b51f7be366acbf2096a6078523fba0147652b")
   public void testMergingLineBreaks() {
     doCheckOutptut("Testing started at 11:14 ...\n" +
                    "/bin/bash -c \"/Users/user/.rvm/bin/rvm ruby-2.5.3@everydayrails do /Users/user/.rvm/rubies/ruby-2.5.3/bin/ruby /Users/user/Downloads/everydayrails-2017/bin/rspec /Users/user/Downloads/everydayrails-2017/spec --require teamcity/spec/runner/formatter/teamcity/formatter --format Spec::Runner::Formatter::TeamcityFormatter --pattern '**/*_spec.rb' --no-color\"\n" +
