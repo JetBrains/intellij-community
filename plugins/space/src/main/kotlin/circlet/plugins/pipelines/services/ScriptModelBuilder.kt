@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.services
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
+import circlet.pipelines.config.dsl.resolve.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
@@ -76,10 +77,18 @@ object ScriptModelBuilder : KLogging() {
             val scriptDefFile = JarFinder.find("pipelines-config-dsl-scriptdefinition")
             logger.debug("build. path to `pipelines-config-dsl-scriptdefinition` jar: $scriptDefFile")
 
-            val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
-            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(dslFile.path), targetJar, kotlinCompilerPath, scriptDefFile.absolutePath)
+            val outputFolder = createTempDir().absolutePath + "/"
+            val targetJar = outputFolder + "compiledJar.jar"
+            val metadataPath = outputFolder + "compilationMetadata"
+            DslJarCompiler(logger).compile(
+                DslSourceFileDelegatingFileProvider(dslFile.path),
+                targetJar,
+                metadataPath,
+                kotlinCompilerPath,
+                scriptDefFile.absolutePath)
 
-            val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
+            val metadata = ScriptResolveResultMetadataUtil.tryReadFromFile(metadataPath) ?: ScriptResolveResultMetadataUtil.empty()
+            val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "", "")
             config.applyIds()
 
             return ScriptViewModelFactory.create(lifetime, config)

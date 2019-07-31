@@ -12,6 +12,7 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
     val taskIsRunning = mutableProperty(false)
     val script = mutableProperty<ScriptViewModel?>(null)
     val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
+    val extendedViewModeEnabled = mutableProperty<Boolean>(true)
     val logBuildData = mutableProperty<LogData?>(null)
     val logRunData = mutableProperty<LogData?>(null)
 
