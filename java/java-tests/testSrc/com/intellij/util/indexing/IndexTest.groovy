@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.index
+package com.intellij.util.indexing
 
 import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.java.index.StringIndex
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -773,6 +775,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   class RecordingVfsListener extends IndexedFilesListener {
+    RecordingVfsListener() {
+      super(ManagingFS.getInstance())
+    }
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
