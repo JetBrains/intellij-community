@@ -442,16 +442,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType fileType;
     try {
       if (fileTypeBean.fieldName != null) {
-        final Class<Object> fileTypeBeanClass = fileTypeBean.findClass(fileTypeBean.implementationClass);
+        final Class<Object> fileTypeBeanClass = fileTypeBean.findExtensionClass(fileTypeBean.implementationClass);
         final Field field = fileTypeBeanClass.getDeclaredField(fileTypeBean.fieldName);
         fileType = (FileType) field.get(null);
       }
       else {
-        fileType = fileTypeBean.instantiate(fileTypeBean.implementationClass, ApplicationManager.getApplication().getPicoContainer());
+        fileType = fileTypeBean.instantiateClass(fileTypeBean.implementationClass, ApplicationManager.getApplication().getPicoContainer());
       }
     }
-    catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-      LOG.error(e);
+    catch (NoSuchFieldException | IllegalAccessException e) {
+      LOG.error(new PluginException(e, fileTypeBean.getPluginId()));
       return null;
     }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -254,18 +255,18 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   protected ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
-        return new ProviderProducer(instantiate(providerClass, myPicoContainer));
+        return new ProviderProducer(instantiateClass(providerClass, myPicoContainer));
       }
       if (instanceClass != null) {
-        return new ClassProducer(myPicoContainer, findClass(instanceClass));
+        return new ClassProducer(myPicoContainer, findExtensionClass(instanceClass));
       }
       if (implementationClass != null) {
-        return new ClassProducer(myPicoContainer, findClass(implementationClass));
+        return new ClassProducer(myPicoContainer, findExtensionClass(implementationClass));
       }
-      throw new RuntimeException("configurable class name is not set");
+      throw new PluginException("configurable class name is not set", getPluginId());
     }
     catch (AssertionError | Exception | LinkageError error) {
-      LOG.error(error);
+      LOG.error(new PluginException(error, getPluginId()));
     }
     return new ObjectProducer();
   }
@@ -287,13 +288,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       return null;
     }
     try {
-      return instantiate(findClass(treeRendererClass), myPicoContainer);
+      return instantiate(findExtensionClass(treeRendererClass), myPicoContainer);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
     }
     catch (AssertionError | LinkageError | Exception e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
     }
     return null;
   }

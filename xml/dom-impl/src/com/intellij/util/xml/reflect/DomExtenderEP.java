@@ -48,11 +48,8 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
                                            @NotNull final DomInvocationHandler handler,
                                            @Nullable DomExtensionsRegistrarImpl registrar) {
     if (myDomClass == null) {
-      try {
-        myDomClass = findClass(domClassName);
-      }
-      catch (Throwable e) {
-        LOG.error(new PluginException(e, getPluginId()));
+      myDomClass = findClassNoExceptions(domClassName);
+      if (myDomClass == null) {
         return registrar;
       }
     }
@@ -64,7 +61,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
 
     if (myExtender == null) {
       try {
-        myExtender = instantiate(extenderClassName, project.getPicoContainer());
+        myExtender = instantiateClass(extenderClassName, project.getPicoContainer());
       }
       catch (Throwable e) {
         LOG.error(new PluginException(e, getPluginId()));

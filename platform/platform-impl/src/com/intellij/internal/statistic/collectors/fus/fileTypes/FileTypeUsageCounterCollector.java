@@ -62,8 +62,8 @@ public class FileTypeUsageCounterCollector {
 
     private final LazyInstance<T> myHandler = new LazyInstance<T>() {
       @Override
-      protected Class<T> getInstanceClass() throws ClassNotFoundException {
-        return findClass(implementationClass);
+      protected Class<T> getInstanceClass() {
+        return findExtensionClass(implementationClass);
       }
     };
 

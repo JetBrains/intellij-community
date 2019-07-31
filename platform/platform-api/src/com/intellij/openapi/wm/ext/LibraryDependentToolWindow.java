@@ -20,7 +20,7 @@ public class LibraryDependentToolWindow extends ToolWindowEP {
   public LibrarySearchHelper getLibrarySearchHelper() {
     if (myLibrarySearchHelper == null) {
       try {
-        myLibrarySearchHelper = instantiate(getLibrarySearchClass(), ApplicationManager.getApplication().getPicoContainer());
+        myLibrarySearchHelper = instantiateClass(getLibrarySearchClass(), ApplicationManager.getApplication().getPicoContainer());
       }
       catch(Exception e) {
         LOG.error(e);

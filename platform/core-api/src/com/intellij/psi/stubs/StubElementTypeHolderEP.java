@@ -16,6 +16,7 @@
 
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -76,11 +77,11 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
         }
         return result;
       } else {
-        findClass(holderClass);
+        findExtensionClass(holderClass);
       }
     }
     catch (ClassNotFoundException e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
     }
     return Collections.emptyList();
   }
@@ -91,12 +92,7 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
    */
   @Deprecated
   public void initialize() {
-    try {
-      findClass(holderClass);
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
+    findClassNoExceptions(holderClass);
   }
 
   @Override

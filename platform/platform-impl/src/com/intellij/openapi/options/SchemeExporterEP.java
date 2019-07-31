@@ -47,8 +47,8 @@ public class SchemeExporterEP <S extends Scheme> extends AbstractExtensionPointB
   
   private final LazyInstance<SchemeExporter<S>> myExporterInstance = new LazyInstance<SchemeExporter<S>>() {
     @Override
-    protected Class<SchemeExporter<S>> getInstanceClass() throws ClassNotFoundException {
-      return findClass(implementationClass);
+    protected Class<SchemeExporter<S>> getInstanceClass() {
+      return findExtensionClass(implementationClass);
     }
   };
   

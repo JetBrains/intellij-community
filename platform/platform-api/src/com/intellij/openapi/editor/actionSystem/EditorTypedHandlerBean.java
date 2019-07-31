@@ -28,7 +28,7 @@ public class EditorTypedHandlerBean extends AbstractExtensionPointBean {
       try {
         DefaultPicoContainer container = new DefaultPicoContainer(ApplicationManager.getApplication().getPicoContainer());
         container.registerComponentInstance(originalHandler);
-        myHandler = instantiate(implementationClass, container);
+        myHandler = instantiateClass(implementationClass, container);
       }
       catch(Exception e) {
         LOG.error(e);

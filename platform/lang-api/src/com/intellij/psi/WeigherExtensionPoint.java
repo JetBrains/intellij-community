@@ -44,15 +44,10 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
     @Override
     @NotNull
     protected final Weigher compute() {
-      try {
-        Class<Weigher> tClass = findClass(implementationClass);
-        final Weigher weigher = ReflectionUtil.newInstance(tClass);
-        weigher.setDebugName(id);
-        return weigher;
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      Class<Weigher> tClass = findExtensionClass(implementationClass);
+      final Weigher weigher = ReflectionUtil.newInstance(tClass);
+      weigher.setDebugName(id);
+      return weigher;
     }
   };
 

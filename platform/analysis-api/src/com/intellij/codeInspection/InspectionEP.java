@@ -191,14 +191,9 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    try {
-      final InspectionProfileEntry entry = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
-      entry.myNameProvider = this;
-      return entry;
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    final InspectionProfileEntry entry = instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+    entry.myNameProvider = this;
+    return entry;
   }
 
   @Override

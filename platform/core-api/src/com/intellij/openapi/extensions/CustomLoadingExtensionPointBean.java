@@ -22,13 +22,7 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
       instance = ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(className, picoContainer, myPluginDescriptor);
     }
     else {
-      ExtensionFactory factory;
-      try {
-        factory = instantiate(factoryClass, picoContainer);
-      }
-      catch (ClassNotFoundException e) {
-        throw new PluginException(e, myPluginDescriptor == null ? null : myPluginDescriptor.getPluginId());
-      }
+      ExtensionFactory factory = instantiateExtension(factoryClass, picoContainer);
       //noinspection unchecked
       instance = (T)factory.createInstance(factoryArgument, className);
     }

@@ -66,9 +66,9 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       }
 
       try {
-        return (T)epBean.instantiate(epBean.implementationClass, picoContainer);
+        return (T)epBean.instantiateClass(epBean.implementationClass, picoContainer);
       }
-      catch (ProcessCanceledException e) {
+      catch (ProcessCanceledException | ExtensionInstantiationException e) {
         throw e;
       }
       catch (Exception e) {
@@ -94,10 +94,10 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       if (Comparing.strEqual(epBean.key, key, true)) {
         try {
           if (epBean.implementationClass != null) {
-            result = epBean.instantiate(epBean.implementationClass, myPicoContainer);
+            result = epBean.instantiateClass(epBean.implementationClass, myPicoContainer);
           }
           else {
-            Object factory = epBean.instantiate(epBean.factoryClass, myPicoContainer);
+            Object factory = epBean.instantiateClass(epBean.factoryClass, myPicoContainer);
             result = method.invoke(factory, args);
           }
           if (result != null) {
@@ -108,6 +108,9 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
           Throwable t = e.getCause();
           if (t instanceof ControlFlowException && t instanceof RuntimeException) throw (RuntimeException)t;
           throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
+        }
+        catch (ExtensionInstantiationException e) {
+          throw e;
         }
         catch (RuntimeException e) {
           if (e instanceof ControlFlowException) {
