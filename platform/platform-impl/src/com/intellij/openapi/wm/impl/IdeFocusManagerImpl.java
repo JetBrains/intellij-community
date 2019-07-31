@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WeakFocusStackManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class IdeFocusManagerImpl extends IdeFocusManager {
-  public IdeFocusManagerImpl() {
-    WeakFocusStackManager.getInstance();
-  }
-
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
@@ -62,14 +57,6 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
     getGlobalInstance().typeAheadUntil(callback, cause);
   }
 
-
-  @NotNull
-  @Override
-  public ActionCallback requestDefaultFocus(boolean forced) {
-    //todo need to implement
-    return ActionCallback.DONE;
-  }
-
   @Override
   public boolean isFocusTransferEnabled() {
     return getGlobalInstance().isFocusTransferEnabled();
@@ -103,9 +90,5 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void toFront(JComponent c) {
     getGlobalInstance().toFront(c);
-  }
-
-  @Override
-  public void dispose() {
   }
 }

@@ -92,7 +92,9 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Requests default focus. The method should not be called by the user code.
    */
   @NotNull
-  public abstract ActionCallback requestDefaultFocus(boolean forced);
+  public ActionCallback requestDefaultFocus(boolean forced) {
+    return ActionCallback.DONE;
+  }
 
   /**
    * Reports of focus transfer is enabled right now. It can be disabled if the app is inactive. In this case
@@ -166,7 +168,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return instance != null ? instance : findInstanceByContext(null);
   }
 
-
   @Nullable
   private static IdeFocusManager findByComponent(Component c) {
     final Component parent = UIUtil.findUltimateParent(c);
@@ -208,18 +209,22 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   @NotNull
   public static IdeFocusManager getGlobalInstance() {
-    IdeFocusManager fm = null;
+    IdeFocusManager focusManager = null;
 
     Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      fm = app.getComponent(IdeFocusManager.class);
+    if (app != null && LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      focusManager = app.getComponent(IdeFocusManager.class);
     }
 
-    if (fm == null) {
+    if (focusManager == null) {
       // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
-      fm = PassThroughIdeFocusManager.getInstance();
+      focusManager = PassThroughIdeFocusManager.getInstance();
     }
 
-    return fm;
+    return focusManager;
+  }
+
+  @Override
+  public void dispose() {
   }
 }
