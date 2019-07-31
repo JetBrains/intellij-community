@@ -15,14 +15,15 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.BadPaddingException;
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -67,31 +68,6 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   @NonNls public static final String DEFAULT_PASSWORD = "changeit";
 
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
-
-  /**
-   * Note that deprecated {@link BrowserCompatHostnameVerifier} is used intentionally here
-   * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and
-   * {@link org.apache.http.conn.ssl.DefaultHostnameVerifier} is not.
-   *
-   * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
-    private volatile HostnameVerifier myHostnameVerifier;
-    @Override
-    public boolean verify(String s, SSLSession session) {
-      HostnameVerifier hostnameVerifier = myHostnameVerifier;
-      if (hostnameVerifier == null) {
-        //noinspection SynchronizeOnThis
-        synchronized (this) {
-          hostnameVerifier = myHostnameVerifier;
-          if (hostnameVerifier == null) myHostnameVerifier = hostnameVerifier = new BrowserCompatHostnameVerifier();
-        }
-      }
-      return hostnameVerifier.verify(s, session);
-    }
-  };
 
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
