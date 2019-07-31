@@ -33,14 +33,14 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
   }
 
   @Override
-  public boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
-    if (super.locationMatches(process, frameProxy)) {
+  public boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl frameProxy) throws EvaluateException {
+    if (super.locationMatches(process, location, frameProxy) && frameProxy != null) {
       Value lambdaReference = getLambdaReference(frameProxy);
       if (lambdaReference instanceof ObjectReference) {
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(
           ((ObjectReference)lambdaReference).referenceType(), process.getVirtualMachineProxy().getClassesByNameProvider());
-        Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
-        return location != null && myMethodFilter.locationMatches(process, location);
+        Location newLocation = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
+        return newLocation != null && myMethodFilter.locationMatches(process, newLocation);
       }
     }
     return false;

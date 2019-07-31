@@ -77,8 +77,8 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   }
 
   @Override
-  public boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
-    return locationMatches(process, frameProxy.location(), frameProxy, false);
+  public boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl frameProxy) throws EvaluateException {
+    return locationMatches(process, location, frameProxy, false);
   }
 
   private boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl stackFrame, boolean caller)

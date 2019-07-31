@@ -5,14 +5,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface MethodFilter {
   boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException;
 
-  default boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
-    return locationMatches(process, frameProxy.location());
+  default boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl frameProxy) throws EvaluateException {
+    return locationMatches(process, location);
   }
 
   @Nullable Range<Integer> getCallingExpressionLines();

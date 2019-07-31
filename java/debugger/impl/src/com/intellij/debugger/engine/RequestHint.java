@@ -16,10 +16,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Range;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.StepRequest;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,9 +173,9 @@ public class RequestHint {
     return mySteppedOut;
   }
 
-  public Integer checkCurrentPosition(SuspendContextImpl context) {
+  public Integer checkCurrentPosition(SuspendContextImpl context, Location location) {
     if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
-      SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+      SourcePosition locationPosition = context.getDebugProcess().getPositionManager().getSourcePosition(location);
       if (locationPosition != null) {
         return ReadAction.compute(() -> {
           if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
@@ -191,17 +194,27 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
-      final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+      Location location;
+      // getting location from the event set is much faster than obtaining the frame and getting it from there
+      LocatableEvent event =
+        StreamEx.of(ContainerUtil.notNullize(context.getEventSet())).select(LocatableEvent.class).findFirst().orElse(null);
+      if (event != null) {
+        location = event.location();
+      }
+      else {
+        StackFrameProxyImpl frameProxy = context.getFrameProxy();
+        location = frameProxy != null ? frameProxy.location() : null;
+      }
 
       // smart step feature stop check
       if (myMethodFilter != null &&
-          frameProxy != null &&
+          location != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
           !isTheSameFrame(context)) {
-        if (isProxyMethod(frameProxy.location().method())) { // step into bridge and proxy methods
+        if (isProxyMethod(location.method())) { // step into bridge and proxy methods
           return StepRequest.STEP_INTO;
         }
-        if (myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy)) {
+        if (myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
           if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
             myTargetMethodMatched = true;
             return myMethodFilter.onReached(context, this);
@@ -209,7 +222,7 @@ public class RequestHint {
         }
       }
 
-      Integer resultDepth = checkCurrentPosition(context);
+      Integer resultDepth = checkCurrentPosition(context, location);
       if (resultDepth != null) {
         return resultDepth.intValue();
       }
@@ -218,13 +231,10 @@ public class RequestHint {
 
       final DebuggerSettings settings = DebuggerSettings.getInstance();
 
-      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters))&& frameProxy != null) {
-        final Location location = frameProxy.location();
-        if (location != null) {
-          if (DebuggerUtils.isSynthetic(location.method())) {
-            return myDepth;
-          }
-        }
+      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
+          location != null &&
+          DebuggerUtils.isSynthetic(location.method())) {
+        return myDepth;
       }
 
       if (!myIgnoreFilters) {
@@ -239,22 +249,16 @@ public class RequestHint {
           }
         }
 
-        if (frameProxy != null) {
+        if (location != null) {
           if (settings.SKIP_CONSTRUCTORS) {
-            final Location location = frameProxy.location();
-            if (location != null) {
-              final Method method = location.method();
-              if (method != null && method.isConstructor()) {
-                return StepRequest.STEP_OUT;
-              }
+            final Method method = location.method();
+            if (method != null && method.isConstructor()) {
+              return StepRequest.STEP_OUT;
             }
           }
 
-          if (settings.SKIP_CLASSLOADERS) {
-            final Location location = frameProxy.location();
-            if (location != null && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
-              return StepRequest.STEP_OUT;
-            }
+          if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+            return StepRequest.STEP_OUT;
           }
         }
 
