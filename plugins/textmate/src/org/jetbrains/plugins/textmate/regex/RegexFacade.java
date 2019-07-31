@@ -6,7 +6,6 @@ import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.openapi.util.Trinity;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.joni.Matcher;
@@ -26,7 +25,7 @@ public class RegexFacade {
   private byte[] myRegexBytes;
   private Regex myRegex = null;
 
-  private final ThreadLocal<Trinity<Object, Integer, MatchData>> matchResult = new ThreadLocal<>();
+  private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();
 
   private RegexFacade(@NotNull byte[] regexBytes) {
     myRegexBytes = regexBytes;
@@ -37,10 +36,10 @@ public class RegexFacade {
   }
 
   public MatchData match(@NotNull StringWithId string, int byteOffset) {
-    Trinity<Object, Integer, MatchData> lastResult = matchResult.get();
-    Object lastId = lastResult != null ? lastResult.first : null;
-    int lastOffset = lastResult != null ? lastResult.second : Integer.MAX_VALUE;
-    MatchData lastMatch = lastResult != null ? lastResult.third : MatchData.NOT_MATCHED;
+    LastMatch lastResult = matchResult.get();
+    Object lastId = lastResult != null ? lastResult.lastId : null;
+    int lastOffset = lastResult != null ? lastResult.lastOffset : Integer.MAX_VALUE;
+    MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
 
     if (lastId == string.id && lastOffset <= byteOffset) {
       if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
@@ -55,7 +54,7 @@ public class RegexFacade {
     int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
     lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
     checkMatched(lastMatch, string);
-    matchResult.set(new Trinity<>(lastId, lastOffset, lastMatch));
+    matchResult.set(new LastMatch(lastId, lastOffset, lastMatch));
     return lastMatch;
   }
 
@@ -96,6 +95,18 @@ public class RegexFacade {
     }
     catch (ExecutionException e) {
       return new RegexFacade(regexString.getBytes(StandardCharsets.UTF_8));
+    }
+  }
+
+  private class LastMatch {
+    private final Object lastId;
+    private final int lastOffset;
+    private final MatchData lastMatch;
+
+    private LastMatch(Object id, int offset, MatchData data) {
+      lastId = id;
+      lastOffset = offset;
+      lastMatch = data;
     }
   }
 }
