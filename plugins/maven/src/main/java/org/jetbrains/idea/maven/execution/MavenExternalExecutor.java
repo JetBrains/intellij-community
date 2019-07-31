@@ -19,6 +19,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.OSProcessHandler;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +39,8 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSp
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
+
+import java.util.function.BiConsumer;
 
 /**
  * @deprecated external executor should work through maven run configuration
@@ -51,7 +55,7 @@ public class MavenExternalExecutor extends MavenExecutor {
 
   private JavaParameters myJavaParameters;
   private ExecutionException myParameterCreationError;
-  private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+
 
 
   public MavenExternalExecutor(Project project,
@@ -79,40 +83,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
 
       myProcessHandler =
-        new OSProcessHandler(myJavaParameters.toCommandLine()) {
-          @Override
-          public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
-            // todo move this logic to ConsoleAdapter class
-            if (myConsole instanceof BuildViewMavenConsole) {
-              ((BuildViewMavenConsole)myConsole).onTextAvailable(text, outputType);
-            }
-            if (!myConsole.isSuppressed(text) && (!MavenSpyOutputParser.isSpyLog(text) || Registry.is("maven.spy.events.debug"))) {
-              myDecoder.escapeText(text, outputType, (t, ot) -> super.notifyTextAvailable(t, ot));
-            }
-            updateProgress(indicator, text);
-          }
-
-          @NotNull
-          @Override
-          protected BaseOutputReader.Options readerOptions() {
-            return new BaseOutputReader.Options() {
-              @Override
-              public BaseDataReader.SleepingPolicy policy() {
-                return BaseDataReader.SleepingPolicy.BLOCKING;
-              }
-
-              @Override
-              public boolean splitToLines() {
-                return true;
-              }
-
-              @Override
-              public boolean sendIncompleteLines() {
-                return false;
-              }
-            };
-          }
-        };
+        new MyLineSplittingProcessHandler(myJavaParameters.toCommandLine(), myConsole, line -> updateProgress(indicator, line));
 
       myConsole.attachToProcess(myProcessHandler);
     }
@@ -152,6 +123,135 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
       if (text.matches(PHASE_INFO_REGEXP)) {
         indicator.setText2(text.substring(INFO_PREFIX_SIZE));
+      }
+    }
+  }
+
+  private static class MyLineSplittingProcessHandler extends OSProcessHandler {
+    private final MavenSpyEventsBuffer mySpyEventsBuffer;
+    private final MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
+    private final @NotNull MavenConsole myConsole;
+    private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+    @Nullable private final Consumer<String> myProgressConsumer;
+
+    MyLineSplittingProcessHandler(@NotNull GeneralCommandLine commandLine,
+                                  @NotNull MavenConsole console,
+                                  @Nullable Consumer<String> progressConsumer
+    ) throws ExecutionException {
+      super(commandLine);
+      myProgressConsumer = progressConsumer;
+      this.myConsole = console;
+
+      mySpyEventsBuffer = new MavenSpyEventsBuffer((line, key) -> {
+        sendToMavenEventParser(line, key);
+        if (myProgressConsumer != null) {
+          myProgressConsumer.consume(line);
+        }
+      });
+      mySimpleConsoleEventsBuffer = new MavenSimpleConsoleEventsBuffer((line, key) -> printSimpleOutput(line, key), Registry
+        .is("maven.spy.events.debug"));
+    }
+
+    @Override
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
+      mySpyEventsBuffer.addText(text, outputType);
+      mySimpleConsoleEventsBuffer.addText(text, outputType);
+    }
+
+
+    private void sendToMavenEventParser(@NotNull String text, @NotNull Key outputType) {
+      if (myConsole instanceof BuildViewMavenConsole) {
+        ((BuildViewMavenConsole)myConsole).sendToEventParser(text, outputType);
+      }
+    }
+
+    private void printSimpleOutput(@NotNull String text, @NotNull Key outputType) {
+      if (!myConsole.isSuppressed(text)) {
+        myDecoder.escapeText(text, outputType, (t, ot) -> super.notifyTextAvailable(t, ot));
+      }
+    }
+
+    @NotNull
+    @Override
+    protected BaseOutputReader.Options readerOptions() {
+      return new BaseOutputReader.Options() {
+        @Override
+        public BaseDataReader.SleepingPolicy policy() {
+          return BaseDataReader.SleepingPolicy.BLOCKING;
+        }
+
+        @Override
+        public boolean splitToLines() {
+          return true;
+        }
+
+        @Override
+        public boolean sendIncompleteLines() {
+          return true;
+        }
+      };
+    }
+  }
+
+  /**
+   * Expect to receive onle one line or part of it. splitToLines should be enabled
+   */
+  public static class MavenSpyEventsBuffer {
+    private final StringBuilder myBuffer = new StringBuilder();
+    private final BiConsumer<String, Key> myConsumer;
+
+    public MavenSpyEventsBuffer(BiConsumer<String, Key> consumer) {myConsumer = consumer;}
+
+    public void addText(@NotNull String text, @NotNull Key outputType) {
+      if (text.charAt(text.length() - 1) == '\n') {
+        String textToSend = myBuffer.length() == 0 ? text : myBuffer.toString() + text;
+        myConsumer.accept(textToSend, outputType);
+        myBuffer.setLength(0);
+      }
+      else {
+        myBuffer.append(text);
+      }
+    }
+  }
+
+  public static class MavenSimpleConsoleEventsBuffer {
+    private final StringBuilder myBuffer = new StringBuilder();
+    private final BiConsumer<String, Key> myConsumer;
+    private final boolean myShowSpyOutput;
+    private boolean isProcessingSpyNow;
+
+    public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key> consumer, boolean showSpyOutput) {
+      myConsumer = consumer;
+      myShowSpyOutput = showSpyOutput;
+    }
+
+    public void addText(@NotNull String text, @NotNull Key outputType) {
+      if (myShowSpyOutput) {
+        myConsumer.accept(text, outputType);
+        return;
+      }
+
+      boolean lastChunk = text.charAt(text.length() - 1) == '\n';
+      if (isProcessingSpyNow) {
+        myBuffer.setLength(0);
+
+        isProcessingSpyNow = !lastChunk;
+        return;
+      }
+
+
+      String textToSend = myBuffer.length() == 0 ? text : myBuffer.toString() + text;
+      if (textToSend.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
+        myBuffer.setLength(0);
+        if (!MavenSpyOutputParser.isSpyLog(text)) {
+          myConsumer.accept(textToSend, outputType);
+        }
+        else {
+          isProcessingSpyNow = !lastChunk;
+        }
+      }
+      else {
+        myBuffer.append(text);
       }
     }
   }

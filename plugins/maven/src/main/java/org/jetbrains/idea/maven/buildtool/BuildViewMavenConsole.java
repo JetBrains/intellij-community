@@ -134,7 +134,7 @@ public class BuildViewMavenConsole extends MavenConsole {
     myEventParser.onTextAvailable(text, type == OutputType.ERROR);
   }
 
-  public void onTextAvailable(String text, Key outputType) {
+  public void sendToEventParser(String text, Key outputType) {
     myDecoder.escapeText(text, outputType, myEventParser);
   }
 
