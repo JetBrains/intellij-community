@@ -293,7 +293,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));
     }
-    throw new PicoPluginExtensionInitializationException(message, null, id2);
+    throw new ExtensionInstantiationException(message, pluginDescriptor);
   }
 
   public void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {

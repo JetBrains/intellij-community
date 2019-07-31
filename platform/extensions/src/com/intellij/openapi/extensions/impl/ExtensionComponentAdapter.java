@@ -47,8 +47,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
       throw e;
     }
     catch (Throwable t) {
-      PluginId pluginId = myPluginDescriptor.getPluginId();
-      throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
+      throw new ExtensionInstantiationException(t, myPluginDescriptor);
     }
 
     if (instance instanceof PluginAware) {

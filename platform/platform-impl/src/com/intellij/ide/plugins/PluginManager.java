@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -116,9 +115,6 @@ public class PluginManager extends PluginManagerCore {
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
       if (t instanceof ExtensionInstantiationException) {
         pluginId = ((ExtensionInstantiationException)t).getExtensionOwnerId();
-      }
-      else if (t instanceof PicoPluginExtensionInitializationException) {
-        pluginId = ((PicoPluginExtensionInitializationException)t).getPluginId();
       }
     }
 
