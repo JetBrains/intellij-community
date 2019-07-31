@@ -60,11 +60,7 @@ public class GitChangeUtils {
                                    GitRevisionNumber parentRevision,
                                    String s,
                                    Collection<? super Change> changes) throws VcsException {
-    StringScanner sc = new StringScanner(s);
-    parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes);
-    if (sc.hasMoreData()) {
-      throw new IllegalStateException("Unknown file status: " + sc.line());
-    }
+    parseChanges(project, vcsRoot, thisRevision, parentRevision, new StringScanner(s), changes);
   }
 
   /**
@@ -391,14 +387,10 @@ public class GitChangeUtils {
     });
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    StringScanner sc = new StringScanner(output);
     Collection<GitDiffChange> changes = new ArrayList<>();
-    parseChanges(root, sc, (status, beforePath, afterPath) -> {
+    parseChanges(root, new StringScanner(output), (status, beforePath, afterPath) -> {
       changes.add(new GitDiffChange(status, beforePath, afterPath));
     });
-    if (sc.hasMoreData()) {
-      throw new IllegalStateException("Unknown file status: " + sc.line());
-    }
     return changes;
   }
 
