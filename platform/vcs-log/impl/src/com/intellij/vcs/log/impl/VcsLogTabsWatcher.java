@@ -94,12 +94,13 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void closeLogTabs() {
-    if (myToolWindow != null) {
+    ToolWindow window = (myToolWindow != null) ? myToolWindow : myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    if (window != null) {
       Collection<String> tabs = getTabs();
       for (String tabId : tabs) {
-        boolean closed = VcsLogContentUtil.closeLogTab(myToolWindow.getContentManager(), tabId);
+        boolean closed = VcsLogContentUtil.closeLogTab(window.getContentManager(), tabId);
         LOG.assertTrue(closed, "Could not find content component for tab " + tabId + "\nExisting content: " +
-                               Arrays.toString(myToolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
+                               Arrays.toString(window.getContentManager().getContents()) + "\nTabs to close: " + tabs);
       }
     }
   }
