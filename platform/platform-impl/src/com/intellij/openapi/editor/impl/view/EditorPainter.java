@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.CachingPainter;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -57,6 +58,8 @@ public class EditorPainter implements TextDrawingCallback {
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
   private static final Key<TextAttributes> INNER_HIGHLIGHTING = Key.create("inner.highlighting");
+  private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
+  private static final Object ourCachedBoldDot = ObjectUtils.sentinel("accented space symbol");
 
   private final EditorView myView;
   private final EditorImpl myEditor;
@@ -632,8 +635,7 @@ public class EditorPainter implements TextDrawingCallback {
     if (!whitespacePaintingStrategy.showAnyWhitespace()) return;
 
     Stroke oldStroke = g.getStroke();
-    Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
+    Color color = myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR);
 
     boolean isRtl = fragment.isRtl();
     int baseStartOffset = fragment.getStartOffset();
@@ -653,31 +655,37 @@ public class EditorPainter implements TextDrawingCallback {
           int tabSize = myView.getTabSize();
           boolean bold = whitespacePaintingStrategy.isAdvancedHighlighting(charOffset) && (startLogicalColumn + i + 1) % tabSize == 0;
           float size = (bold ? 3 : 2) * scale;
-          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           // making center point lie exactly between pixels
           //noinspection IntegerDivisionInFloatingPointContext
-          g.fill(new Ellipse2D.Float((startX + endX)/2 - size/2, y + 1 - ascent + lineHeight/2 - size/2, size, size));
+          CachingPainter.paint(g, (startX + endX) / 2 - size / 2, y + 1 - ascent + lineHeight / 2 - size / 2, size, size, _g -> {
+            _g.setColor(color);
+            _g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            _g.fill(new Ellipse2D.Float(0, 0, size, size));
+          }, bold ? ourCachedBoldDot : ourCachedDot, color);
         }
         else if (c == '\t') {
           int tabLineHeight = calcFeatureSize(4, scale);
           int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
           startX = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+          g.setColor(color);
           g.setStroke(stroke);
+          Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g.drawLine(startX, y, startX + tabLineWidth, y - tabLineHeight);
           g.drawLine(startX, y - tabLineHeight * 2, startX + tabLineWidth, y - tabLineHeight);
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+
         }
         else if (c == '\u3000') { // ideographic space
           int charHeight = myView.getCharHeight();
           int strokeWidth = Math.round(stroke.getLineWidth());
+          g.setColor(color);
           g.setStroke(stroke);
-          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
           g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, y - charHeight + strokeWidth / 2,
                      endX - startX - JBUIScale.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
         }
       }
     }
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
     g.setStroke(oldStroke);
   }
 
