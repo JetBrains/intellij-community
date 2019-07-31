@@ -91,6 +91,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -105,6 +106,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -504,8 +507,10 @@ public class DiffUtil {
     }
 
     List<JComponent> components = new ArrayList<>(titles.size());
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       components.add(title);
     }
@@ -526,9 +531,14 @@ public class DiffUtil {
     if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
     }
-
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     contents.get(i),
+                                     equalCharsets,
+                                     equalSeparators,
+                                     editors.get(i),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       result.add(title);
     }
@@ -561,7 +571,8 @@ public class DiffUtil {
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
-                                        @Nullable Editor editor) {
+                                        @Nullable Editor editor,
+                                        @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     if (content instanceof EmptyContent) return null;
     DocumentContent documentContent = (DocumentContent)content;
 
@@ -570,12 +581,17 @@ public class DiffUtil {
     LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, separator, charset, bom, isReadOnly);
+    return createTitle(title, separator, charset, bom, isReadOnly, titleCustomizer);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, null, false);
+    return createTitle(title, null, null, null, false, null);
+  }
+
+  @NotNull
+  public static JComponent createTitle(@NotNull String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+    return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
@@ -583,12 +599,17 @@ public class DiffUtil {
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
-                                       boolean readOnly) {
+                                       boolean readOnly,
+                                       @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
-    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
-    panel.add(titleLabel, BorderLayout.CENTER);
+    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
+    JComponent titleLabel = titleCustomizer == null ? new JBLabel(title).setCopyable(true) : titleCustomizer.getLabel();
+    labelWithIcon.addToCenter(titleLabel);
+    if (readOnly) {
+      labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
+    }
+    panel.add(labelWithIcon, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
