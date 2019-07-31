@@ -158,6 +158,8 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @Override
   @CalledInAwt
   public void refresh(boolean fromModelRefresh) {
+    if (isDisposed()) return;
+
     List<Wrapper> selectedChanges = getSelectedChanges();
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
