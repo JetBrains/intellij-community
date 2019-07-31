@@ -12,6 +12,8 @@
                         serviceImplementation="com.intellij.util.QueriesImpl"/>
     <applicationService serviceInterface="com.intellij.model.search.SearchService"
                         serviceImplementation="com.intellij.model.search.impl.SearchServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.model.psi.PsiSymbolService"
+                        serviceImplementation="com.intellij.model.psi.impl.PsiSymbolServiceImpl"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.SearcherQueryExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
