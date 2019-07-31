@@ -198,7 +198,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       if (adapter != null) {
         message += ". It came from " + adapter;
       }
-      throw new RuntimeException(message);
+      throw new ExtensionException(message, extension.getClass());
     }
   }
 
@@ -788,7 +788,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         myExtensionClass = extensionClass = extClass;
       }
       catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
+        throw new ExtensionInstantiationException(e, myDescriptor);
       }
     }
     return extensionClass;

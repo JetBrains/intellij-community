@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ExceptionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         throw e;
       }
       catch (Exception e) {
-        throw new RuntimeException(e);
+        throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
       }
     }
     return null;
@@ -104,14 +105,18 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
           }
         }
         catch (InvocationTargetException e) {
-          ExceptionUtil.rethrowUnchecked(e.getCause());
-          throw new RuntimeException(e);
+          Throwable t = e.getCause();
+          if (t instanceof ControlFlowException && t instanceof RuntimeException) throw (RuntimeException)t;
+          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
         }
         catch (RuntimeException e) {
-          throw e;
+          if (e instanceof ControlFlowException) {
+            throw e;
+          }
+          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
         }
         catch (Exception e) {
-          throw new RuntimeException(e);
+          throw new ExtensionInstantiationException(e, epBean.getPluginDescriptor());
         }
       }
     }
