@@ -701,6 +701,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   @NotNull
+  @CalledInAwt
   Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<? extends ShelvedChangeList> shelvedListsToDelete,
                                              @NotNull List<? extends ShelvedChangeList> shelvedListsFromChanges,
                                              @NotNull List<? extends ShelvedChange> changesToDelete,
@@ -745,6 +746,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   @Nullable
+  @CalledInAwt
   private ShelvedChangeList removeChangesFromChangeList(@NotNull ShelvedChangeList list,
                                                         @NotNull List<? extends ShelvedChange> changes,
                                                         @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
@@ -1003,6 +1005,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
   }
 
+  @CalledInAwt
   public void updateListAfterUnshelve(@NotNull ShelvedChangeList listToUpdate,
                                       @NotNull List<? extends FilePatch> patches,
                                       @NotNull List<? extends ShelvedBinaryFile> binaries,
@@ -1017,6 +1020,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
    * changes and delete these changes from the original list - > in this case new list with applied (deleted) changes will be a return value
    */
   @Nullable
+  @CalledInAwt
   private ShelvedChangeList saveRemainingPatchesIfNeeded(final ShelvedChangeList changeList,
                                                          final List<? extends FilePatch> remainingPatches,
                                                          final List<? extends ShelvedBinaryFile> remainingBinaries,
@@ -1055,6 +1059,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
    * @return newly created recycled/deleted list or null if no new list was created
    */
   @Nullable
+  @CalledInAwt
   private ShelvedChangeList saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList,
                                                           final List<? extends FilePatch> remainingPatches,
                                                           final List<? extends ShelvedBinaryFile> remainingBinaries,

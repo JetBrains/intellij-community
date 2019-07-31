@@ -237,6 +237,7 @@ public class PatchApplier<Unused> {
     }, true);
   }
 
+  @CalledInAwt
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
