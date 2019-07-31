@@ -73,7 +73,7 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
     @Nullable
     @Override
     public Boolean getKeepTrailingSpacesOnCaretLine() {
-      return myTrimTrailingSpaces != null ? !myTrimTrailingSpaces : null;
+      return null;
     }
   }
 }
