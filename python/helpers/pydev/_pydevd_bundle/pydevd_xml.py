@@ -244,8 +244,8 @@ def is_numpy(x):
            or 'float' in type_name or 'complex' in type_name
 
 
-def is_numeric_container(var_type):
-    return var_type in ("ndarray", "DataFrame", "Series")
+def is_numeric_container(var_type, var):
+    return var_type in ("ndarray", "DataFrame", "Series") and hasattr(var, "shape")
 
 
 def should_evaluate_full_value(val):
@@ -380,7 +380,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     else:
         xml_value = ''
 
-    if is_numeric_container(typeName):
+    if is_numeric_container(typeName, v):
         xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
     else:
         xml_shape = ''
