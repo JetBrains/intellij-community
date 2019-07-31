@@ -27,7 +27,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.PathInterner;
+import com.intellij.util.containers.WeakInterner;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class TextMateServiceImpl extends TextMateService {
   @NonNls public static final String INSTALLED_BUNDLES_PATH =
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
   private final Set<TextMateBundleListener> myListeners = new HashSet<>();
-  private final Interner<CharSequence> myInterner = new PathInterner.PathEnumerator();
+  private final Interner<CharSequence> myInterner = new WeakInterner<>();
 
   @Override
   public void registerEnabledBundles() {
