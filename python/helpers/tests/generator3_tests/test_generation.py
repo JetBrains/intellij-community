@@ -304,6 +304,10 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
+    @unittest.skipUnless(six.PY3, 'Python 3 only test')
+    def test_introspecting_submodule_modifies_sys_modules(self):
+        self.check_generator_output('mod', 'mod.py')
+
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False,
                                success=True, **kwargs):

@@ -613,7 +613,8 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             path = name.split(".")
             redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
             if redo_imports:
-                for m in sys.modules.keys():
+                initial_module_set = set(sys.modules)
+                for m in list(sys.modules):
                     if m.startswith("pycharm_generator_utils"): continue
                     action("looking at possible submodule %r", m)
                     if m == name or m in old_modules or m in sys.builtin_module_names:
@@ -627,6 +628,10 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                         try:
                             redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
                                         sdk_dir=sdk_skeletons_dir)
+                            extra_modules = set(sys.modules) - initial_module_set
+                            if extra_modules:
+                                report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
+                                       m, name, ', '.join(extra_modules))
                         finally:
                             action("closing %r", mod_cache_dir)
             return GenerationStatus.GENERATED
