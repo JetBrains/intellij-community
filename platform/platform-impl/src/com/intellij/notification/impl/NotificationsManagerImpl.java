@@ -7,7 +7,6 @@ import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
-import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
@@ -284,10 +283,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       callback.run();
     }
     else {
-      Topics.subscribe(FrameStateListener.TOPIC, balloon, new FrameStateListener() {
+      Disposable listener = Disposer.newDisposable();
+      Disposer.register(balloon, listener);
+      Topics.subscribe(FrameStateListener.TOPIC, listener, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
-          FrameStateManager.getInstance().removeListener(this);
+          Disposer.dispose(listener);
           callback.run();
         }
       });
