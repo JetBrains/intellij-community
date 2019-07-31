@@ -282,9 +282,7 @@ public class PerformanceWatcher implements Disposable {
 
   public void edtEventStarted(long start) {
     if (PRECISE_MODE) {
-      if (myCurrentEDTEventChecker != null) {
-        myCurrentEDTEventChecker.cancel(false);
-      }
+      edtEventFinished(); // finish previous event if any, this way we handle nested event dispatchers
       myCurrentEDTEventChecker = myExecutor
         .schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
     }
