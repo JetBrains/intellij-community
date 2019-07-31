@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -91,7 +91,7 @@ public class WSLUtil {
     }
 
     // add legacy WSL if it's available and enabled
-    if (Experiments.isFeatureEnabled("wsl.legacy.distribution")) {
+    if (Experiments.getInstance().isFeatureEnabled("wsl.legacy.distribution")) {
       ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
     }
 
@@ -130,7 +130,7 @@ public class WSLUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   @NotNull
   public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
-    if (Experiments.isFeatureEnabled("wsl.close.process.input")) {
+    if (Experiments.getInstance().isFeatureEnabled("wsl.close.process.input")) {
       processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
       processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
     }

@@ -19,17 +19,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.function.Consumer;
 
-/**
- * @author yole
- */
-public class CreatePackageAction extends DumbAwareAction {
+public final class CreatePackageAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.actions.CreatePackageAction");
 
   @Override
@@ -62,7 +62,7 @@ public class CreatePackageAction extends DumbAwareAction {
       }
     };
 
-    if (Experiments.isFeatureEnabled("show.create.new.element.in.popup")) {
+    if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
       JBPopup popup = createLightWeightPopup(validator, consumer);
       if (project != null) {
         popup.showCenteredInCurrentWindow(project);
@@ -111,17 +111,12 @@ public class CreatePackageAction extends DumbAwareAction {
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return;
     }
-    if (template != null) {
-      try {
-        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+
+    try {
+      FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
     }
-    else {
-      final PsiFile file = PsiFileFactory.getInstance(directory.getProject()).createFileFromText(PyNames.INIT_DOT_PY, "");
-      directory.add(file);
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 

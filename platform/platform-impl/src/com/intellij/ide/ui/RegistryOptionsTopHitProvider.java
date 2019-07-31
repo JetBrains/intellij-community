@@ -58,7 +58,7 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
       }
       for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensions()) {
         ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(feature.id, feature.id);
-        if (Experiments.isChanged(feature.id)) {
+        if (Experiments.getInstance().isChanged(feature.id)) {
           result.add(0, descriptor);
         }
         else {

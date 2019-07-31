@@ -46,7 +46,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
-    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.getInstance().isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
       ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
         getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));

@@ -706,7 +706,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux ||
         Registry.is("linux.native.menu.force.disable") ||
-        !Experiments.isFeatureEnabled("linux.native.menu") ||
+        !Experiments.getInstance().isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
       return null;

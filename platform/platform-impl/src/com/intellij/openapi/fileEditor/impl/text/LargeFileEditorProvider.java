@@ -20,13 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
-public class LargeFileEditorProvider extends TextEditorProvider {
-
+public final class LargeFileEditorProvider extends TextEditorProvider {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return TextEditorProvider.isTextFile(file)
            && SingleRootFileViewProvider.isTooLargeForContentLoading(file)
-           && !(Experiments.isFeatureEnabled("new.large.text.file.viewer")
+           && !(Experiments.getInstance().isFeatureEnabled("new.large.text.file.viewer")
                 && !file.getFileType().isBinary()
                 && file.isInLocalFileSystem());
   }

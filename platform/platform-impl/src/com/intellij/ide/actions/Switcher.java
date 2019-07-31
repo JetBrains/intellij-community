@@ -999,7 +999,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     boolean isCheckboxMode() {
-      return isPinnedMode() && Experiments.isFeatureEnabled("recent.and.edited.files.together");
+      return isPinnedMode() && Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together");
     }
 
     void toggleShowEditedFiles() {

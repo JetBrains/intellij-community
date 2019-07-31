@@ -1,35 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class Experiments {
+@Service
+public final class Experiments {
   public static final ExtensionPointName<ExperimentalFeature> EP_NAME = ExtensionPointName.create("com.intellij.experimentalFeature");
   private static final Logger LOG = Logger.getInstance(Experiments.class);
-  private static final Map<String, Boolean> myCache = ContainerUtil.newConcurrentMap();
 
-  public static boolean isFeatureEnabled(String featureId) {
-    if (ApplicationManager.getApplication() == null) {
+  private final Map<String, Boolean> cache = ContainerUtil.newConcurrentMap();
+
+  @NotNull
+  public static Experiments getInstance() {
+    return ServiceManager.getService(Experiments.class);
+  }
+
+  public boolean isFeatureEnabled(@NotNull String featureId) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
       return false;
     }
-    Boolean result = myCache.get(featureId);
+
+    Boolean result = cache.get(featureId);
     if (result == null) {
       result = calcIsFeatureEnabled(featureId);
-      myCache.put(featureId, result);
+      cache.put(featureId, result);
     }
     return result;
   }
 
-  private static boolean calcIsFeatureEnabled(String featureId) {
+  private static boolean calcIsFeatureEnabled(@NotNull String featureId) {
     ExperimentalFeature feature = getFeatureById(featureId);
     if (feature != null) {
       String key = toPropertyKey(feature);
@@ -41,10 +50,10 @@ public class Experiments {
     return false;
   }
 
-  public static void setFeatureEnabled(String featureId, boolean enabled) {
+  public void setFeatureEnabled(@NotNull String featureId, boolean enabled) {
     ExperimentalFeature feature = getFeatureById(featureId);
     if (feature != null) {
-      myCache.put(featureId, enabled);
+      cache.put(featureId, enabled);
       String key = toPropertyKey(feature);
       PropertiesComponent.getInstance().setValue(key, enabled, feature.isEnabled());
       LOG.info("Experimental feature '" + featureId + "' is now turned " + (enabled ? "ON" : "OFF"));
@@ -52,8 +61,12 @@ public class Experiments {
   }
 
   @Nullable
-  private static ExperimentalFeature getFeatureById(String featureId) {
-    for (ExperimentalFeature feature : EP_NAME.getExtensions()) {
+  private static ExperimentalFeature getFeatureById(@NotNull String featureId) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      return null;
+    }
+
+    for (ExperimentalFeature feature : EP_NAME.getIterable()) {
       if (feature.id.equals(featureId)) {
         return feature;
       }
@@ -61,7 +74,7 @@ public class Experiments {
     return null;
   }
 
-  public static boolean isChanged(String featureId) {
+  public boolean isChanged(@NotNull String featureId) {
     ExperimentalFeature feature = getFeatureById(featureId);
     return feature != null && feature.isEnabled() != isFeatureEnabled(featureId);
   }

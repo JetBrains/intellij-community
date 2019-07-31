@@ -18,7 +18,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 @State(name = "Registry", storages = @Storage("ide.general.xml"))
-public class RegistryState implements PersistentStateComponent<Element> {
+public final class RegistryState implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);
 
   @Override
@@ -42,7 +42,7 @@ public class RegistryState implements PersistentStateComponent<Element> {
     // make logging for experimental features here to have registry + experiments together in the log file
     List<String> enabledIds = new SmartList<>();
     for (ExperimentalFeature e : Experiments.EP_NAME.getExtensionList()) {
-      if (Experiments.isFeatureEnabled(e.id)) {
+      if (Experiments.getInstance().isFeatureEnabled(e.id)) {
         enabledIds.add(e.id);
       }
     }

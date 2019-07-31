@@ -309,7 +309,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   private static boolean isFeatureDisabled() {
-    return !Experiments.isFeatureEnabled("property.value.inplace.editing");
+    return !Experiments.getInstance().isFeatureEnabled("property.value.inplace.editing");
   }
 
   private static class MyEnterAction extends AnAction {

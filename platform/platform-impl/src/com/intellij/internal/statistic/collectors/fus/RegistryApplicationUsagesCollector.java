@@ -16,14 +16,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
-
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
@@ -37,8 +34,8 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
       .map(key -> new UsageDescriptor(key.getKey()))
       .collect(Collectors.toSet());
 
-    Set<UsageDescriptor> experiments = Arrays.stream(Experiments.EP_NAME.getExtensions())
-      .filter(f -> Experiments.isFeatureEnabled(f.id))
+    Set<UsageDescriptor> experiments = Experiments.EP_NAME.extensions()
+      .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
       .map(f -> new UsageDescriptor(f.id))
       .collect(Collectors.toSet());
 
