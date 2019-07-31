@@ -27,13 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
 
 public final class SyntaxMatchUtils {
-  private static final Pattern DIGIT_GROUP_REGEX = Pattern.compile("\\\\([0-9]+)");
   private static final LoadingCache<MatchKey, TextMateLexerState> CACHE = CacheBuilder.newBuilder().maximumSize(32768).weakValues()
     .build(CacheLoader.from(
       key -> matchFirstUncached(Objects.requireNonNull(key).descriptor, key.string, key.byteOffset, key.priority, key.currentScope)));
@@ -179,21 +176,33 @@ public final class SyntaxMatchUtils {
     if (string == null || !matchData.matched()) {
       return patternString.toString();
     }
-    Matcher matcher = DIGIT_GROUP_REGEX.matcher(patternString);
     StringBuilder result = new StringBuilder();
-    int lastPosition = 0;
-    while (matcher.find()) {
-      int groupIndex = StringUtil.parseInt(matcher.group(1), -1);
-      if (groupIndex >= 0 && matchData.count() > groupIndex) {
-        result.append(patternString, lastPosition, matcher.start());
-        TextRange range = matchData.byteOffset(groupIndex);
-        String text = new String(string.bytes, range.getStartOffset(), range.getLength(), StandardCharsets.UTF_8);
-        StringUtil.escapeToRegexp(text, result);
-        lastPosition = matcher.end();
+    int charIndex = 0;
+    int length = patternString.length();
+    while (charIndex < length) {
+      char c = patternString.charAt(charIndex);
+      if (c == '\\') {
+        boolean hasGroupIndex = false;
+        int groupIndex = 0;
+        int digitIndex = charIndex + 1;
+        while (digitIndex < length) {
+          int digit = Character.digit(patternString.charAt(digitIndex), 10);
+          if (digit == -1) {
+            break;
+          }
+          hasGroupIndex = true;
+          groupIndex = groupIndex * 10 + digit;
+          digitIndex++;
+        }
+        if (hasGroupIndex && matchData.count() > groupIndex) {
+          TextRange range = matchData.byteOffset(groupIndex);
+          StringUtil.escapeToRegexp(new String(string.bytes, range.getStartOffset(), range.getLength(), StandardCharsets.UTF_8), result);
+          charIndex = digitIndex;
+          continue;
+        }
       }
-    }
-    if (lastPosition < patternString.length()) {
-      result.append(patternString.subSequence(lastPosition, patternString.length()));
+      result.append(c);
+      charIndex++;
     }
     return result.toString();
   }
