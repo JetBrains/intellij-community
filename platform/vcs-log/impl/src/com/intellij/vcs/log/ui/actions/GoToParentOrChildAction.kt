@@ -67,7 +67,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   private fun DumbAwareAction.triggerUsage(e: AnActionEvent) {
-    VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent.commit", parent) }
+    VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent_commit", parent) }
   }
 
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {

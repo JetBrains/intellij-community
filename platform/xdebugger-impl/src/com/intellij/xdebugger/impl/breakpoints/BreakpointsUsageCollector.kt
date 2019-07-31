@@ -18,7 +18,7 @@ class BreakpointsUsageCollector {
       if (breakpoint is XBreakpointBase<*, *, *>) {
         val data = FeatureUsageData()
         addType(type, data)
-        data.addData("within.session", withinSession)
+        data.addData("within_session", withinSession)
         FUCounterUsageLogger.getInstance().logEvent(breakpoint.getProject(), GROUP, "breakpoint.added", data)
       }
     }

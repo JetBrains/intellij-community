@@ -22,6 +22,7 @@ internal enum class ChangeReminderData {
 }
 
 internal fun <T : Enum<*>> T.getReportedId() = this.name.toLowerCase(Locale.ENGLISH).replace('_', '.')
+internal fun <T : Enum<*>> T.getReportedFieldName() = this.name.toLowerCase(Locale.ENGLISH)
 
 internal fun logEvent(project: Project, event: ChangeReminderEvent, factor: ChangeReminderData, value: Long) =
   logEvent(project, event, mapOf(factor to value))
@@ -30,7 +31,7 @@ internal fun logEvent(project: Project, event: ChangeReminderEvent, data: Map<Ch
   val logData = FeatureUsageData()
 
   data.forEach { (factor, value) ->
-    logData.addData(factor.getReportedId(), value)
+    logData.addData(factor.getReportedFieldName(), value)
   }
 
   FUCounterUsageLogger.getInstance().logEvent(project, "vcs.change.reminder", event.getReportedId(), logData)
