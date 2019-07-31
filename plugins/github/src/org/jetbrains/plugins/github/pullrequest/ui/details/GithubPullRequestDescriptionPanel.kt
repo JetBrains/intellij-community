@@ -20,7 +20,6 @@ internal class GithubPullRequestDescriptionPanel(private val model: GithubPullRe
   private val htmlPanel = object : HtmlPanel() {
     init {
       border = JBUI.Borders.empty()
-      editorKit = UIUtil.JBWordWrapHtmlEditorKit()
     }
 
     override fun update() {
