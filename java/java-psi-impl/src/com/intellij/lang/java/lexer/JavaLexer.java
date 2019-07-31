@@ -265,6 +265,7 @@ public class JavaLexer extends LexerBase {
         pos += 2;
         break;
       }
+      if (charAt(pos) == '\\') pos++;
     }
 
     return pos;

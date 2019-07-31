@@ -155,6 +155,7 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\"\"\".\\\\.\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\.\\\"\"\" ')");
     doTest("\"\"\"\"\"\"+\"\"\"\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nPLUS ('+')\nTEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\\\"\"\".\"\"\" ", "BAD_CHARACTER ('\\')\nTEXT_BLOCK_LITERAL ('\"\"\".\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n  \"\\\"\"\"  \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')");
   }
 
   @Override
