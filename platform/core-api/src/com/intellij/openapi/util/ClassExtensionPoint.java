@@ -33,7 +33,7 @@ public class ClassExtensionPoint<T> extends AbstractExtensionPointBean implement
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
     @Override
-    protected Class<T> getInstanceClass() throws ClassNotFoundException {
+    protected Class<T> getInstanceClass() {
       return findExtensionClass(implementationClass);
     }
   };
