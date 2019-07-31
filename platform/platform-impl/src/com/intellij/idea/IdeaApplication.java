@@ -6,6 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
@@ -59,7 +60,7 @@ public final class IdeaApplication {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private static boolean ourPerformProjectLoad = true;
+  private static List<File> ourFilesToLoad = Collections.emptyList();
 
   private IdeaApplication() { }
 
@@ -397,9 +398,13 @@ public final class IdeaApplication {
       app.executeOnPooledThread(() -> LifecycleUsageTriggerCollector.onIdeStart());
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
-        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
-        if (projectFromCommandLine == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+        Project project = !ourFilesToLoad.isEmpty() ? ProjectUtil.tryOpenFileList(null, ourFilesToLoad, "MacMenu") :
+                          !commandLineArgs.isEmpty() ? loadProjectFromExternalCommandLine(commandLineArgs) :
+                          null;
+
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+
+        if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
           RecentProjectsManager.getInstance().reopenLastProjectOnStart();
         }
 
@@ -434,7 +439,7 @@ public final class IdeaApplication {
     }
   }
 
-  public static void disableProjectLoad() {
-    ourPerformProjectLoad = false;
+  public static void openFilesOnLoading(@NotNull List<File> files) {
+    ourFilesToLoad = files;
   }
 }

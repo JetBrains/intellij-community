@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
@@ -66,14 +68,16 @@ public final class MacOSApplicationProvider {
       });
 
       application.setOpenFileHandler(event -> {
-        Project project = getProject(false);
-        List<File> list = event.getFiles();
-        if (list.isEmpty()) return;
-        submit("OpenFile", () -> {
-          if (ProjectUtil.tryOpenFileList(project, list, "MacMenu")) {
-            IdeaApplication.disableProjectLoad();
-          }
-        });
+        List<File> files = event.getFiles();
+        if (files.isEmpty()) return;
+        ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+        if (app != null && app.isLoaded()) {
+          Project project = getProject(false);
+          submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
+        }
+        else {
+          IdeaApplication.openFilesOnLoading(files);
+        }
       });
 
       if (JnaLoader.isLoaded()) {

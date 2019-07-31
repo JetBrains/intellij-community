@@ -346,33 +346,38 @@ public class ProjectUtil {
     return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
   }
 
-  public static boolean tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
+  public static @Nullable Project tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
+    Project result = null;
+
     for (File file : list) {
-      if (openOrImport(file.getAbsolutePath(), project, true) != null) {
+      result = openOrImport(file.getAbsolutePath(), project, true);
+      if (result != null) {
         LOG.debug(location + ": load project from ", file);
-        return true;
+        return result;
       }
     }
 
-    boolean result = false;
     for (File file : list) {
       if (file.exists()) {
         LOG.debug(location + ": open file ", file);
         String path = file.getAbsolutePath();
         if (project != null) {
           OpenFileAction.openFile(path, project);
-          result = true;
-        } else {
+          result = project;
+        }
+        else {
           CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
           if (processor != null) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
             if (virtualFile != null && virtualFile.isValid()) {
-              result |= processor.openProjectAndFile(virtualFile, -1, false) != null;
+              Project opened = processor.openProjectAndFile(virtualFile, -1, false);
+              if (opened != null && result == null) result = opened;
             }
           }
         }
       }
     }
+
     return result;
   }
 
