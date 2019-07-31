@@ -93,7 +93,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  public void closeLogTabs() {
+  private void closeLogTabs() {
     if (myToolWindow != null) {
       Collection<String> tabs = getTabs();
       for (String tabId : tabs) {
@@ -115,6 +115,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Override
   public void dispose() {
+    closeLogTabs();
     removeListeners();
   }
 

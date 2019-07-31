@@ -169,8 +169,6 @@ public class VcsLogManager implements Disposable {
   public void dispose(@Nullable Runnable callback) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
-    myTabsLogRefresher.closeLogTabs();
-
     Disposer.dispose(myTabsLogRefresher);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);
