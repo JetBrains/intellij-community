@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -47,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
 
@@ -275,7 +278,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     getBrowser().setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
 
     addInclusionListener(() -> updateButtons(), this);
-    getBrowser().getViewer().addSelectionListener(() -> changeDetails(getBrowser().getViewer().isModelUpdateInProgress()));
+    getBrowser().getViewer().addSelectionListener(() -> {
+      refreshDetails(getBrowser().getViewer().isModelUpdateInProgress(), true);
+    });
 
     initCommitActions(myWorkflow.getCommitExecutors());
 
@@ -313,7 +318,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       @Override
       public void on(int hideableHeight) {
         if (hideableHeight == 0) return;
-        myDiffDetails.refresh(false);
+        getWindow().addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            e.getComponent().removeComponentListener(this);
+            refreshDetails(false, true);
+          }
+        });
         mySplitter.skipNextLayout();
         myDetailsSplitter.getComponent().skipNextLayout();
         Dimension dialogSize = getSize();
@@ -396,9 +407,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
     if (showDetails) {
       myDetailsSplitter.initOn();
-      runWhenWindowOpened(getWindow(), () -> myDetailsSplitter.setInitialProportion());
+      myDetailsSplitter.setInitialProportion();
+      runWhenWindowOpened(getWindow(), () -> {
+        myDetailsSplitter.setInitialProportion();
+        refreshDetails(false, false);
+      });
     }
-    changeDetails(false);
   }
 
   protected void updateWarning() {
@@ -742,12 +756,18 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
-  private void changeDetails(boolean fromModelRefresh) {
-    SwingUtilities.invokeLater(() -> {
+  private void refreshDetails(boolean fromModelRefresh, boolean async) {
+    Runnable task = () -> {
       if (myDetailsSplitter.isOn()) {
         myDiffDetails.refresh(fromModelRefresh);
       }
-    });
+    };
+    if (async) {
+      ApplicationManager.getApplication().invokeLater(task, ModalityState.stateForComponent(getRootPane()));
+    }
+    else {
+      task.run();
+    }
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
