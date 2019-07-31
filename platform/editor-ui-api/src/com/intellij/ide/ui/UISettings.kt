@@ -513,18 +513,8 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
       }
-      else {
-        var oldDefFontScale = defFontScale
-        if (SystemInfo.isLinux) {
-          val fontData = JBUIScale.getSystemFontData()
-          // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-          // not converting fonts stored with scale equal to the old calculation
-          oldDefFontScale = fontData.second / 12f
-          verbose("oldDefFontScale=%.2f", oldDefFontScale)
-        }
-        if (readScale != defFontScale && readScale != oldDefFontScale) {
-          size = ((readSize / readScale) * defFontScale).roundToInt()
-        }
+      else if (readScale != defFontScale) {
+        size = ((readSize / readScale) * defFontScale).roundToInt()
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
