@@ -3,8 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -19,7 +23,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
     val wrapper = RoundedPanel().apply {
       border = IdeBorderFactory.createRoundedBorder(10, 1)
     }
-    val avatarIconsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), wrapper)
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val panel = GHPRReviewThreadPanel(avatarIconsProvider, thread).apply {
       border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP)

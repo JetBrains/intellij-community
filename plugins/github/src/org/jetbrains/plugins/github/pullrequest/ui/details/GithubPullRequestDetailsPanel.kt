@@ -10,7 +10,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.StatusText
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -22,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsM
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Graphics
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
@@ -39,7 +39,7 @@ internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullReque
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.value == null
   }
-  private val iconsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
+  private val iconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
 
   private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService, iconsProvider).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)

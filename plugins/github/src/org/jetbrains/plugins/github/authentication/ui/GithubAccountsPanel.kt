@@ -29,6 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -42,8 +43,6 @@ internal class GithubAccountsPanel(private val project: Project,
                                    private val executorFactory: GithubApiRequestExecutor.Factory,
                                    private val avatarLoader: CachingGithubUserAvatarLoader,
                                    private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
-
-  private val accountIconSize = JBValue.UIInteger("Github.Profile.Avatar.Size", 40)
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
@@ -232,7 +231,7 @@ internal class GithubAccountsPanel(private val project: Project,
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList)
+          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, GithubUIUtil.avatarSize, accountList)
           loadingError = null
           showLoginLink = false
         })

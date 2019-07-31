@@ -119,7 +119,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                currentListExtractor: (GHPullRequest) -> List<GHUser>)
     : CompletableFuture<CollectionDelta<GHUser>> {
     return showChooser(pullRequest, popupTitle, parentComponent, { list ->
-      val avatarIconsProvider = avatarIconsProviderFactory.create(JBUI.uiIntValue("GitHub.Avatars.Size", 20), list)
+      val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
       SelectionListCellRenderer.Users(avatarIconsProvider)
     }, availableListProvider, currentListExtractor)
   }

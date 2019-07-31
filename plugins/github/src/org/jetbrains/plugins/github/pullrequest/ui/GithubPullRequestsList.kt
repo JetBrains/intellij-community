@@ -32,8 +32,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
                                       model: ListModel<GHPullRequestShort>)
   : JBList<GHPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
 
-  private val avatarIconSize = JBValue.UIInteger("Github.PullRequests.List.Assignee.Avatar.Size", 20)
-  private val avatarIconsProvider = avatarIconsProviderFactory.create(avatarIconSize, this)
+  private val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
 
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION

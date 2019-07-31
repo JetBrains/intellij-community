@@ -6,6 +6,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GHLabel
 import java.awt.Color
@@ -14,6 +15,8 @@ import java.util.*
 import javax.swing.JComponent
 
 object GithubUIUtil {
+  val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     val apiColor = ColorUtil.fromHex(label.color)
     background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
