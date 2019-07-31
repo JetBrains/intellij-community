@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.configuration;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -28,6 +29,7 @@ import static org.jetbrains.plugins.textmate.TextMateServiceImpl.INSTALLED_BUNDL
 import static org.jetbrains.plugins.textmate.TextMateServiceImpl.PREINSTALLED_BUNDLES_PATH;
 
 public class TextMateBundlesListPanel implements Disposable {
+  private static final String TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle";
   private final CheckBoxList<BundleConfigBean> myBundlesList;
   private Collection<TextMateBundlesChangeStateListener> myListeners = new ArrayList<>();
 
@@ -77,10 +79,6 @@ public class TextMateBundlesListPanel implements Disposable {
     }
   }
 
-  public void addChangeStateListener(TextMateBundlesChangeStateListener listener) {
-    myListeners.add(listener);
-  }
-
   public JPanel createMainComponent() {
     return createDecorator(myBundlesList).setRemoveAction(new AnActionButtonRunnable() {
       @Override
@@ -106,9 +104,9 @@ public class TextMateBundlesListPanel implements Disposable {
         VirtualFile fileToSelect = null;
         final int itemsCount = myBundlesList.getItemsCount();
         if (itemsCount > 0) {
-          BundleConfigBean lastAddedBundle = myBundlesList.getItemAt(itemsCount - 1);
-          if (lastAddedBundle != null) {
-            fileToSelect = LocalFileSystem.getInstance().findFileByPath(lastAddedBundle.getPath());
+          String lastAddedBundle = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE);
+          if (StringUtil.isNotEmpty(lastAddedBundle)) {
+            fileToSelect = LocalFileSystem.getInstance().findFileByPath(lastAddedBundle);
           }
         }
 
@@ -116,8 +114,8 @@ public class TextMateBundlesListPanel implements Disposable {
         if (bundleDirectories.length > 0) {
           StringBuilder errorMessage = new StringBuilder();
           for (final VirtualFile bundleDirectory : bundleDirectories) {
-            final ThrowableComputable<Bundle, Exception> readBundleProcess =
-              () -> TextMateService.getInstance().createBundle(bundleDirectory);
+            PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.getPath());
+            ThrowableComputable<Bundle, Exception> readBundleProcess = () -> TextMateService.getInstance().createBundle(bundleDirectory);
             Bundle bundle = null;
             try {
               bundle = ProgressManager.getInstance().runProcessWithProgressSynchronously(readBundleProcess, "Add Bundle", true, null);
