@@ -72,6 +72,7 @@ public class HgExecutor {
     }
     int exitValue = result.getExitValue();
     if (!ignoreNonZeroExitCode && exitValue != 0) {
+      debug("exit code: " + exitValue + " " + result.getRawOutput());
       throw new RuntimeException(result.getRawError());
     }
     return result.getRawOutput();
