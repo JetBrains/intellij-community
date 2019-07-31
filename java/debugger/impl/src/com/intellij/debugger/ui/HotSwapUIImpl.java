@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -302,6 +303,12 @@ public class HotSwapUIImpl extends HotSwapUI {
         callback.onFailure(ContainerUtil.newSmartList(session));
       }
     }
+  }
+
+  @Override
+  public void compileAndReload(@NotNull DebuggerSession session, @NotNull VirtualFile... files) {
+    dontAskHotswapAfterThisCompilation();
+    ProjectTaskManager.getInstance(session.getProject()).compile(files);
   }
 
   public void dontAskHotswapAfterThisCompilation() {

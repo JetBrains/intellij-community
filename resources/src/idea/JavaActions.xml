@@ -556,6 +556,7 @@
               icon="AllIcons.Debugger.Db_set_breakpoint">
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
       </action>
+      <action id="Debugger.ReloadFile" class="com.intellij.debugger.actions.ReloadFileAction" text="Compile And Reload File"/>
     </group>
 
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
@@ -625,6 +626,7 @@
     <group id="EditorPopupMenuDebugJava">
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
+      <reference ref="Debugger.ReloadFile"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
     </group>
