@@ -106,7 +106,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   /**
    * Creates special kind of {@code SSLContext}, which X509TrustManager first checks certificate presence in
    * in default system-wide trust store (usually located at {@code ${JAVA_HOME}/lib/security/cacerts} or specified by
-   * {@code javax.net.ssl.trustStore} property) and when in the one specified by field {@link #myCacertsPath}.
+   * {@code javax.net.ssl.trustStore} property) and when in the one specified by the constant {@link #DEFAULT_PATH}.
    * If certificate wasn't found in either, manager will ask user, whether it can be
    * accepted (like web-browsers do) and then, if it does, certificate will be added to specified trust store.
    * <p/>
