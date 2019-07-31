@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
@@ -25,7 +26,8 @@ class DateFormatUtilTest {
     assumeTrue("Unsupported OS", SystemInfo.isMac)
     val testDate = LocalDateTime.of(2019, 5, 22, 13, 45).toMillis()
     val helper = File(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS").toURI())
-    val expected = ExecUtil.execAndReadLine(GeneralCommandLine(helper.path, "${testDate / 1000}"))
+    FileUtil.setExecutable(helper)
+    val expected = ExecUtil.execAndGetOutput(GeneralCommandLine(helper.path, "${testDate / 1000}")).stdoutLines[0]
     assertEquals(expected, DateFormatUtil.formatDateTime(testDate))
   }
 
