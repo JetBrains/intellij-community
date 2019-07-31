@@ -273,7 +273,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         Icon icon = ToolWindowManagerEx.getInstanceEx(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
           .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", icon),
+          new IconButton("Open in Find Tool Window", icon),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
