@@ -187,8 +187,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
-    //noinspection deprecation
+    LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getDefaultCommonSettings() : null;
   }
 
