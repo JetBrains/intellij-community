@@ -362,7 +362,7 @@
     <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchProjectViewPane$MyStructureProvider" order="last"/>
 
-    <fileType name="Scratch" language="TEXT" implementationClass="com.intellij.ide.scratch.ScratchFileType" fieldName="INSTANCE"/>
+    <fileType name="Scratch" implementationClass="com.intellij.ide.scratch.ScratchFileType" fieldName="INSTANCE"/>
     <navbar implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$NavBarExtension"/>
     <lang.substitutor language="TEXT" implementationClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Substitutor" order="first"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$AccessExtension"/>

@@ -835,6 +835,22 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(1, detectorCalls.get());
   }
 
+  public void testUniqueLanguage() {
+    Map<String, LanguageFileType> map = new HashMap<>();
+    for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (!(type instanceof LanguageFileType)) continue;
+      LanguageFileType languageFileType = (LanguageFileType)type;
+      if (!languageFileType.isSecondary()) {
+        String id = languageFileType.getLanguage().getID();
+        LanguageFileType oldFileType = map.get(id);
+        if (oldFileType != null) {
+          fail("Multiple primary file types for language " + id + ": "+ oldFileType.getName() + ", " + languageFileType.getName());
+        }
+        map.put(id, languageFileType);
+      }
+    }
+  }
+
   @NotNull
   private static FileType createTestFileType() {
     return new FileType() {

@@ -15,7 +15,7 @@ import javax.swing.*;
 public class DGMFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final DGMFileType INSTANCE = new DGMFileType();
   private DGMFileType() {
-    super(PropertiesLanguage.INSTANCE);
+    super(PropertiesLanguage.INSTANCE, true);
   }
 
   @NotNull
