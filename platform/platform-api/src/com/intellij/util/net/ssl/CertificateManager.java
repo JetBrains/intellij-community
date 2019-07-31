@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -68,7 +69,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
   /**
-   * Note that deprecated {@link org.apache.http.conn.ssl.BrowserCompatHostnameVerifier} is used intentionally here
+   * Note that deprecated {@link BrowserCompatHostnameVerifier} is used intentionally here
    * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and
    * {@link org.apache.http.conn.ssl.DefaultHostnameVerifier} is not.
    *
@@ -77,7 +78,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
-    private volatile HostnameVerifier myHostnameVerifier; 
+    private volatile HostnameVerifier myHostnameVerifier;
     @Override
     public boolean verify(String s, SSLSession session) {
       HostnameVerifier hostnameVerifier = myHostnameVerifier;
@@ -102,35 +103,28 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     return ApplicationManager.getApplication().getComponent(CertificateManager.class);
   }
 
-  private final String myCacertsPath;
-  private final String myPassword;
-  private final Config myConfig;
+  private final Config myConfig = new Config();
 
-  private final ConfirmingTrustManager myTrustManager;
+  private final AtomicNotNullLazyValue<ConfirmingTrustManager> myTrustManager =
+    AtomicNotNullLazyValue.createValue(() -> ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD));
 
-  /**
-   * Lazy initialized
-   */
-  private SSLContext mySslContext;
+  private final AtomicNotNullLazyValue<SSLContext> mySslContext = AtomicNotNullLazyValue.createValue(() -> calcSslContext());
 
   /**
    * Component initialization constructor
    */
   public CertificateManager() {
-    myCacertsPath = DEFAULT_PATH;
-    myPassword = DEFAULT_PASSWORD;
-    myConfig = new Config();
-    myTrustManager = ConfirmingTrustManager.createForStorage(myCacertsPath, myPassword);
-
-    try {
-      // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
-      // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
-      SSLContext.setDefault(getSslContext());
-      LOG.info("Default SSL context initialized");
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
+        // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
+        SSLContext.setDefault(getSslContext());
+        LOG.info("Default SSL context initialized");
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   /**
@@ -150,20 +144,22 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    */
   @NotNull
   public synchronized SSLContext getSslContext() {
-    if (mySslContext == null) {
-      SSLContext context = getSystemSslContext();
-      try {
-        // SSLContext context = SSLContext.getDefault();
-        // NOTE: existence of default trust manager can be checked here as
-        // assert systemManager.getAcceptedIssuers().length != 0
-        context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
-      }
-      catch (KeyManagementException e) {
-        LOG.error(e);
-      }
-      mySslContext = context;
+    return mySslContext.getValue();
+  }
+
+  @NotNull
+  private SSLContext calcSslContext() {
+    SSLContext context = getSystemSslContext();
+    try {
+      // SSLContext context = SSLContext.getDefault();
+      // NOTE: existence of default trust manager can be checked here as
+      // assert systemManager.getAcceptedIssuers().length != 0
+      context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
     }
-    return mySslContext;
+    catch (KeyManagementException e) {
+      LOG.error(e);
+    }
+    return context;
   }
 
   @NotNull
@@ -242,22 +238,22 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
 
   @NotNull
   public String getCacertsPath() {
-    return myCacertsPath;
+    return DEFAULT_PATH;
   }
 
   @NotNull
   public String getPassword() {
-    return myPassword;
+    return DEFAULT_PASSWORD;
   }
 
   @NotNull
   public ConfirmingTrustManager getTrustManager() {
-    return myTrustManager;
+    return myTrustManager.getValue();
   }
 
   @NotNull
   public ConfirmingTrustManager.MutableTrustManager getCustomTrustManager() {
-    return myTrustManager.getCustomManager();
+    return getTrustManager().getCustomManager();
   }
 
   public static boolean showAcceptDialog(final @NotNull Callable<? extends DialogWrapper> dialogFactory) {
@@ -313,12 +309,13 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
 
   public <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
                                                                         @NotNull final UntrustedCertificateStrategy strategy) throws E {
-    myTrustManager.myUntrustedCertificateStrategy.set(strategy);
+    ConfirmingTrustManager trustManager = getTrustManager();
+    trustManager.myUntrustedCertificateStrategy.set(strategy);
     try {
       return computable.compute();
     }
     finally {
-      myTrustManager.myUntrustedCertificateStrategy.remove();
+      trustManager.myUntrustedCertificateStrategy.remove();
     }
   }
 

@@ -1,6 +1,10 @@
 <idea-plugin>
   <application-components>
     <component>
+      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
       <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl</implementation-class>
     </component>
@@ -93,10 +97,6 @@
 
     <component>
       <implementation-class>com.intellij.util.net.HttpConfigurable</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
     </component>
 
     <component>
