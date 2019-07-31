@@ -1347,6 +1347,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
