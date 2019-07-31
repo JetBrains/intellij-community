@@ -84,7 +84,7 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
                                    Collection<? super Change> changes) throws VcsException {
-    parseChanges(project, vcsRoot, s, (status, beforePath, afterPath) -> {
+    parseChanges(vcsRoot, s, (status, beforePath, afterPath) -> {
       assert beforePath != null || afterPath != null;
       ContentRevision before = beforePath != null ? GitContentRevision.createRevision(beforePath, parentRevision, project) : null;
       ContentRevision after = afterPath != null ? GitContentRevision.createRevision(afterPath, thisRevision, project) : null;
@@ -92,8 +92,7 @@ public class GitChangeUtils {
     });
   }
 
-  private static void parseChanges(@NotNull Project project,
-                                   @NotNull VirtualFile vcsRoot,
+  private static void parseChanges(@NotNull VirtualFile vcsRoot,
                                    @NotNull StringScanner s,
                                    @NotNull FileStatusLineConsumer consumer) throws VcsException {
     while (s.hasMoreData()) {
@@ -394,7 +393,7 @@ public class GitChangeUtils {
 
     StringScanner sc = new StringScanner(output);
     Collection<GitDiffChange> changes = new ArrayList<>();
-    parseChanges(project, root, sc, (status, beforePath, afterPath) -> {
+    parseChanges(root, sc, (status, beforePath, afterPath) -> {
       changes.add(new GitDiffChange(status, beforePath, afterPath));
     });
     if (sc.hasMoreData()) {
