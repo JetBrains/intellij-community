@@ -23,7 +23,11 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testEscapeQuotes() {
-    doTestPaste("\"\"\"\ntarget\"\"\"".trimIndent())
+    doTestPaste("\"\"\"\ntarget\"\"\"")
+  }
+
+  fun testEscapeQuotes2() {
+    doTestPaste("\"\ntarget\"")
   }
 
   fun testNoEscapeWhenNotInTextBlockContent() {

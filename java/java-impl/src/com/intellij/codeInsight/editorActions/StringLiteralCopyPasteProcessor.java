@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -135,7 +121,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return escapeCharCharacters(text, token);
     }
     else if (isTextBlock(token)) {
-      return escapeTextBlock(text);
+      final String before = document.getText(new TextRange(selectionStart - 1, selectionStart));
+      final String after = document.getText(new TextRange(selectionEnd, selectionEnd + 1));
+      return escapeTextBlock(text, "\"".equals(before), "\"".equals(after));
     }
     return text;
   }
@@ -241,13 +229,11 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  protected String escapeTextBlock(@NotNull String text) {
+  protected String escapeTextBlock(@NotNull String text, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
     for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      //todo don't escape single quote; prefer \""" if the next char is not a quote
-      StringUtil.escapeStringCharacters(line.length(), line, buffer);
+      buffer.append(StringUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
       if (i < lines.length - 1) {
         buffer.append("\n");
       }

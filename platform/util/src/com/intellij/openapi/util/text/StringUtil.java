@@ -643,6 +643,51 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
+  public static String escapeTextBlockCharacters(@NotNull String s) {
+    return escapeTextBlockCharacters(s, false, true);
+  }
+
+    @NotNull
+  @Contract(pure = true)
+  public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote, boolean escapeEndQuote) {
+    int length = s.length();
+    StringBuilder result = new StringBuilder(length);
+    int q = 0;
+    for (int i = 0; i < length; i++) {
+      char c = s.charAt(i);
+      if (c == '"') {
+        if (escapeStartQuote && i == 0) result.append('\\');
+        q++;
+      }
+      else {
+        appendQuotes(q, result);
+        if (c == '\\') result.append('\\');
+        result.append(c);
+        q = 0;
+      }
+    }
+    appendQuotes(q, result);
+    if (escapeEndQuote && result.charAt(result.length() - 1) == '"') {
+      result.insert(result.length() - 1, '\\');
+    }
+    return result.toString();
+  }
+
+  private static void appendQuotes(int quotes, StringBuilder result) {
+    int q = quotes;
+    while (q > 0) {
+      if (quotes >= 3) result.append('\\');
+      switch (q) {
+        default: result.append('"');
+        case 2: result.append('"');
+        case 1: result.append('"');
+      }
+      q -= 3;
+    }
+  }
+
+  @NotNull
+  @Contract(pure = true)
   public static String escapeStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder(s.length());
     escapeStringCharacters(s.length(), s, "\"", buffer);
