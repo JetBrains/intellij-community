@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLinkedMap;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileNameCache {
   
   @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
+
   static {
     final int protectedSize = 40000 / ourNameCache.length;
     final int probationalSize = 20000 / ourNameCache.length;
@@ -38,7 +41,11 @@ public class FileNameCache {
     }
   }
 
+  private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
   public static int storeName(@NotNull String name) {
+    if (name.length() > 1 && StringUtil.containsAnyChar(name, FS_SEPARATORS)) {
+      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
+    }
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
