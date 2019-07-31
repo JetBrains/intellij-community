@@ -272,18 +272,18 @@ class SkeletonCachingTest(GeneratorTestCase):
         mod_hash = generator3.module_hash('_abc', None)
         template = textwrap.dedent("""\
         # encoding: utf-8
-        # module _abc
+        # module _ast
         # from {origin}
         # by generator 1000.0
         """)
 
         cache_entry_dir = os.path.join(self.temp_cache_dir, mod_hash)
         mkdir(cache_entry_dir)
-        with open(os.path.join(cache_entry_dir, '_abc.py'), 'w') as f:
+        with open(os.path.join(cache_entry_dir, '_ast.py'), 'w') as f:
             f.write(template.format(origin='(pre-generated)'))
 
-        self.run_generator('_abc', None, True)
-        with open(os.path.join(self.temp_skeletons_dir, '_abc.py')) as f:
+        self.run_generator('_ast', None, True)
+        with open(os.path.join(self.temp_skeletons_dir, '_ast.py')) as f:
             self.assertEquals(template.format(origin='(built-in)'), f.read())
 
     def test_single_pyexpat_skeletons_layout(self):
