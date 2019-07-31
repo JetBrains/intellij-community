@@ -405,7 +405,6 @@ public class StartupUtil {
            checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
   }
 
-  @SuppressWarnings("SSBasedInspection")
   private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
     String problem = null, reason = null;
     Path tempFile = null;
