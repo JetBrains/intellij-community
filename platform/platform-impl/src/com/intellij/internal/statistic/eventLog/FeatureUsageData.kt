@@ -225,6 +225,9 @@ class FeatureUsageData {
     }
 
     val escapedKey = escapeFieldName(key)
+    if (escapedKey != key) {
+      LOG.warn("Key contains invalid symbols, they will be escaped: '$key' -> '$escapedKey'")
+    }
     data[escapedKey] = value
     return this
   }
