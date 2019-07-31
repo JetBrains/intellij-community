@@ -17,7 +17,7 @@ use_frame_eval = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)
 use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 
 
-if not IS_PY36_OR_GREATER:
+if not IS_PY36_OR_GREATER or sys.version_info[:3] == (3, 6, 1):  # PY-37312
     pass
 
 elif use_cython == 'NO':

@@ -2231,4 +2231,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testSubprocess() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForTerminate();
+        outputContains("The subprocess finished with the return code 0.");
+      }
+    });
+  }
 }
