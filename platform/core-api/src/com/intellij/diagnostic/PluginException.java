@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
  * <p> If the problem is caused by a class, use {@link #createByClass} to create
  * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
  * to get the plugin ID.
+ *
+ * <p> In order to report problems from code in 'intellij.platform.extensions' module where this class is not accessible, use
+ * {@link com.intellij.openapi.extensions.ExtensionInstantiationException} or {@link com.intellij.openapi.extensions.ExtensionException} instead.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;

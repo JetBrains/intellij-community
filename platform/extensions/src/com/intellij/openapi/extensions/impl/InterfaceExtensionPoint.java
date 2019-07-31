@@ -34,8 +34,8 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull MutablePicoContainer picoContainer) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
     if (implementationClassName == null) {
-      throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
-                                 + pluginDescriptor.getPluginId() + "' plugin");
+      throw new ExtensionInstantiationException("'implementation' attribute not specified for '" + getName() + "' extension in '"
+                                                + pluginDescriptor.getPluginId() + "' plugin", pluginDescriptor);
     }
 
     String orderId = extensionElement.getAttributeValue("id");
