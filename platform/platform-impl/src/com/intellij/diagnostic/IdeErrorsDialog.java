@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
@@ -829,6 +830,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
+    }
+    if (t instanceof ExtensionInstantiationException) {
+      return ((ExtensionInstantiationException)t).getExtensionOwnerId();
     }
     if (t instanceof PicoPluginExtensionInitializationException) {
       return ((PicoPluginExtensionInitializationException)t).getPluginId();

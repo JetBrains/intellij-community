@@ -92,7 +92,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
         myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
       }
       catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
+        throw new ExtensionInstantiationException(e, myPluginDescriptor);
       }
     }
     return (Class<?>)implementationClassOrName;

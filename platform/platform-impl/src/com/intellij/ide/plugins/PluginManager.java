@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.project.Project;
@@ -113,7 +114,10 @@ public class PluginManager extends PluginManagerCore {
       }
     }
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      if (t instanceof PicoPluginExtensionInitializationException) {
+      if (t instanceof ExtensionInstantiationException) {
+        pluginId = ((ExtensionInstantiationException)t).getExtensionOwnerId();
+      }
+      else if (t instanceof PicoPluginExtensionInitializationException) {
         pluginId = ((PicoPluginExtensionInitializationException)t).getPluginId();
       }
     }
