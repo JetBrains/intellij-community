@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.util.ui.ImageUtil;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,12 +36,22 @@ public class CachingPainter {
   public static void paint(@NotNull Graphics2D g, float x, float y, float width, float height, @NotNull Consumer<Graphics2D> painter,
                            @NotNull Object key, @NotNull Object... parameters) {
     GraphicsConfiguration config = g.getDeviceConfiguration();
+    float scale = JBUIScale.sysScale(config);
+    if ((int) scale != scale) {
+      // fractional-scale setups are not supported currently
+      paintAndDispose((Graphics2D)g.create(), _g -> {
+        _g.setComposite(AlphaComposite.SrcOver);
+        _g.translate(x, y);
+        painter.accept(_g);
+      });
+      return;
+    }
     int xInt = (int)Math.floor(x);
     int yInt = (int)Math.floor(y);
     int widthInt = (int)Math.ceil(x + width) - xInt;
     int heightInt = (int)Math.ceil(y + height) - yInt;
     CachedPainting painting = ourCache.get(key);
-    if (painting != null && !painting.matches(config, width, height, widthInt, heightInt, parameters)) {
+    if (painting != null && !painting.matches(config, width, height, parameters)) {
       painting = null;
     }
     int validationResult = painting == null ? VolatileImage.IMAGE_INCOMPATIBLE : painting.image.validate(config);
@@ -48,24 +60,16 @@ public class CachingPainter {
     }
     if (validationResult != VolatileImage.IMAGE_OK) {
       // We cannot perform antialiased rendering onto volatile image using Src composite, so we draw to a buffered image first.
-      BufferedImage bi = ImageUtil.createImage(config, widthInt, heightInt, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D big = bi.createGraphics();
-      try {
-        big.setComposite(AlphaComposite.Src);
-        big.translate(x - xInt, y - yInt);
-        painter.accept(big);
-      }
-      finally {
-        big.dispose();
-      }
-      Graphics2D vig = painting.image.createGraphics();
-      try {
-        vig.setComposite(AlphaComposite.Src);
-        StartupUiUtil.drawImage(vig, bi, 0, 0, null);
-      }
-      finally {
-        vig.dispose();
-      }
+      BufferedImage bi = new JBHiDPIScaledImage(config, widthInt, heightInt, BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
+      paintAndDispose(bi.createGraphics(), _g -> {
+        _g.setComposite(AlphaComposite.Src);
+        _g.translate(x - xInt, y - yInt);
+        painter.accept(_g);
+      });
+      paintAndDispose(painting.image.createGraphics(), _g -> {
+        _g.setComposite(AlphaComposite.Src);
+        StartupUiUtil.drawImage(_g, bi, 0, 0, null);
+      });
     }
     Composite savedComposite = g.getComposite();
     g.setComposite(AlphaComposite.SrcOver);
@@ -73,6 +77,15 @@ public class CachingPainter {
     g.setComposite(savedComposite);
     // We don't check whether volatile image's content was lost at this point,
     // cause we cannot repeat painting over the initial graphics reliably anyway (without restoring its initial contents first).
+  }
+
+  private static void paintAndDispose(Graphics2D g, Consumer<Graphics2D> painter) {
+    try {
+      painter.accept(g);
+    }
+    finally {
+      g.dispose();
+    }
   }
 
   private static class CachedPainting {
@@ -90,11 +103,9 @@ public class CachingPainter {
       this.deviceTransform = config.getDefaultTransform();
     }
 
-    private boolean matches(GraphicsConfiguration config, float width, float height, int widthInt, int heightInt, Object[] parameters) {
+    private boolean matches(GraphicsConfiguration config, float width, float height, Object[] parameters) {
       return this.width == width &&
              this.height == height &&
-             image.getWidth() == widthInt &&
-             image.getHeight() == heightInt &&
              Objects.equals(deviceTransform, config.getDefaultTransform()) &&
              Arrays.equals(this.parameters, parameters);
     }
