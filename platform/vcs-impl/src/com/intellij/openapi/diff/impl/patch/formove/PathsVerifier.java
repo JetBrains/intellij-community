@@ -113,7 +113,7 @@ public class PathsVerifier {
   }
 
   @CalledInAwt
-  public List<FilePatch> nonWriteActionPreCheck() {
+  List<FilePatch> nonWriteActionPreCheck() {
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
@@ -130,11 +130,11 @@ public class PathsVerifier {
     return failedToApply;
   }
 
-  public List<FilePatch> getSkipped() {
+  List<FilePatch> getSkipped() {
     return mySkipped;
   }
 
-  public List<FilePatch> execute() {
+  List<FilePatch> execute() {
     List<FilePatch> failedPatches = new ArrayList<>();
     try {
       final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
