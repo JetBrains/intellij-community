@@ -38,19 +38,34 @@ interface UastCodeGenerationPlugin {
 
   fun createReturnExpresion(expression: UExpression, inLambda: Boolean = false): UReturnExpression?
 
-  fun createLocalVariable(name: String?, type: PsiType?, initializer: UExpression, immutable: Boolean = false): ULocalVariable?
+  fun createLocalVariable(suggestedName: String?, type: PsiType?, initializer: UExpression, immutable: Boolean = false): ULocalVariable?
 
   fun createBlockExpression(expressions: List<UExpression>, project: Project): UBlockExpression?
 
-  fun createLambdaExpression(parameters: List<UParameter>, body: UExpression): ULambdaExpression?
+  fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression?
 
   fun createDeclarationExpression(declarations: List<UDeclaration>, project: Project): UDeclarationsExpression?
 
-  fun <T: UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
+  fun createCallExpression(receiver: UExpression?,
+                           methodName: String,
+                           parameters: List<UExpression>,
+                           project: Project,
+                           expectedReturnType: PsiType?,
+                           kind: UastCallKind): UCallExpression?
+
+  fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression? = null): UIfExpression?
+
+  fun <T : UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
 }
 
 @ApiStatus.Experimental
-inline fun <reified T: UElement> UElement.replace(newElement: T): T? =
+data class UParameterInfo(val type: PsiType?, val suggestedName: String?)
+
+@ApiStatus.Experimental
+infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, this)
+
+@ApiStatus.Experimental
+inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
   this.getLanguagePlugin()
     .let { UastCodeGenerationPlugin.byLanguage(it.language) }
     ?.replace(this, newElement, T::class.java)
@@ -61,3 +76,4 @@ inline fun <reified T : UElement> T.refreshed() = sourcePsi?.toUElementOfType<T>
 val UElement.generationPlugin: UastCodeGenerationPlugin?
   @ApiStatus.Experimental
   get() = getLanguagePlugin().let { UastCodeGenerationPlugin.byLanguage(it.language) }
+
