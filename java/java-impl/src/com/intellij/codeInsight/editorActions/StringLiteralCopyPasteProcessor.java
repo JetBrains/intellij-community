@@ -178,11 +178,14 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     if (elementAtSelectionStart == null) {
       return null;
     }
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock(elementAtSelectionStart)) {
+    final boolean isTextBlock = isTextBlock(elementAtSelectionStart);
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock) {
       return null;
     }
 
-    if (elementAtSelectionStart.getTextRange().getEndOffset() < selectionEnd) {
+    final TextRange range = elementAtSelectionStart.getTextRange();
+    final TextRange textRange = isTextBlock ? new TextRange(range.getStartOffset() + 3, range.getEndOffset() - 2) : range;
+    if (textRange.getEndOffset() < selectionEnd) {
       final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
       if (elementAtSelectionEnd == null) {
         return null;
@@ -193,7 +196,6 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       }
     }
     
-    final TextRange textRange = elementAtSelectionStart.getTextRange();
     if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
       return null;
     }

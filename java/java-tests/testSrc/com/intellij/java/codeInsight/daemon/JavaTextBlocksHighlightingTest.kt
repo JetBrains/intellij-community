@@ -26,6 +26,10 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTestPaste("\"\"\"\ntarget\"\"\"".trimIndent())
   }
 
+  fun testNoEscapeWhenNotInTextBlockContent() {
+    doTestPaste("\\");
+  }
+
   private fun doTestPaste(textToPaste: String) {
     myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY)
