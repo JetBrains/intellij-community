@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
@@ -372,7 +371,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
             @Override
             public boolean sendIncompleteLines() {
-              return false;
+              return true;
             }
           };
         }
@@ -453,29 +452,40 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     private ProcessListener filtered(ProcessListener listener) {
-      return new ProcessListener() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          listener.startNotified(event);
-        }
+      return new ProcessListenerWithFilteredSpyOutput(listener);
+    }
 
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          listener.processTerminated(event);
-        }
+    private class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
+      private final ProcessListener myListener;
+      private final MavenExternalExecutor.MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
 
-        @Override
-        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-          listener.processWillTerminate(event, willBeDestroyed);
-        }
+      ProcessListenerWithFilteredSpyOutput(ProcessListener listener) {
+        myListener = listener;
+        mySimpleConsoleEventsBuffer = new MavenExternalExecutor.MavenSimpleConsoleEventsBuffer(
+          (l, k) -> myListener.onTextAvailable(new ProcessEvent(MavenHandlerFilterSpyWrapper.this, l), k),
+          Registry.is("maven.spy.events.debug")
+        );
+      }
 
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          if (!MavenSpyOutputParser.isSpyLog(event.getText()) || Registry.is("maven.spy.events.debug")) {
-            listener.onTextAvailable(event, outputType);
-          }
-        }
-      };
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        myListener.startNotified(event);
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        myListener.processTerminated(event);
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        myListener.processWillTerminate(event, willBeDestroyed);
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        mySimpleConsoleEventsBuffer.addText(event.getText(), outputType);
+      }
     }
   }
 }

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MavenSpyOutputParser {
-  private final static String PREFIX = "[IJ]-";
+  public final static String PREFIX = "[IJ]-";
   private final static String SEPARATOR = "-[IJ]-";
   private final static String NEWLINE = "-[N]-";
   public static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
