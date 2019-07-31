@@ -49,6 +49,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,7 +91,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
     ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
                                                            getDiffContents(myMergeRequest),
-                                                           getDiffContentTitles(myMergeRequest));
+                                                           getDiffContentTitles(myMergeRequest)) {
+      @Nullable
+      @Override
+      public <T> T getUserData(@NotNull Key<T> key) {
+        return myMergeRequest.getUserData(key);
+      }
+
+      @Override
+      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+        myMergeRequest.putUserData(key, value);
+      }
+    };
     diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
     myViewer = new MyThreesideViewer(diffContext, diffRequest);

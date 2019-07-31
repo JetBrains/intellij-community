@@ -10,6 +10,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,18 @@ public class BinaryMergeTool implements MergeTool {
       myDiffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
       myDiffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
                                             getDiffContents(myMergeRequest),
-                                            getDiffContentTitles(myMergeRequest));
+                                            getDiffContentTitles(myMergeRequest)) {
+        @Nullable
+        @Override
+        public <T> T getUserData(@NotNull Key<T> key) {
+          return myMergeRequest.getUserData(key);
+        }
+
+        @Override
+        public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+          myMergeRequest.putUserData(key, value);
+        }
+      };
 
       myViewer = new MyThreesideViewer(myDiffContext, myDiffRequest);
     }
