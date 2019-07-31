@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +59,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
       List<FilePatch> patches = new ArrayList<>(remaining);
-      for (PatchApplier applier : appliers) {
-        patches.addAll(applier.getRemainingPatches());
-      }
+      patches.addAll(ContainerUtil.concat(appliers, PatchApplier::getRemainingPatches));
       shelveChangesManager
         .updateListAfterUnshelve(myCurrentShelveChangeList, patches, mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
                                                                                                   ? ((ShelvedBinaryFilePatch)patch)
