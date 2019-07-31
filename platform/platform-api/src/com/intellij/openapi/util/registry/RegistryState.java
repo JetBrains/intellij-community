@@ -8,17 +8,17 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 @State(name = "Registry", storages = @Storage("ide.general.xml"))
-public final class RegistryState implements PersistentStateComponent<Element> {
+final class RegistryState implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);
 
   @Override
@@ -30,13 +30,19 @@ public final class RegistryState implements PersistentStateComponent<Element> {
   public void loadState(@NotNull Element state) {
     Registry.getInstance().loadState(state);
 
-    SortedMap<String, String> userProperties = new TreeMap<>(Registry.getInstance().getUserProperties());
-    userProperties.remove("ide.firstStartup");
-    if (!userProperties.isEmpty()) {
-      LOG.info("Registry values changed by user:");
-      for (Map.Entry<String, String> entry : userProperties.entrySet()) {
-        LOG.info("  " + entry.getKey() + " = " + entry.getValue());
+    Map<String, String> userProperties = Registry.getInstance().getUserProperties();
+    if (userProperties.size() > (userProperties.containsKey("ide.firstStartup") ? 1 : 0)) {
+      String[] keys = ArrayUtilRt.toStringArray(userProperties.keySet());
+      Arrays.sort(keys);
+      StringBuilder builder = new StringBuilder("Registry values changed by user: ");
+      for (String key : keys) {
+        if ("ide.firstStartup".equals(key)) {
+          continue;
+        }
+
+        builder.append(key).append(" = ").append(userProperties.get(key)).append(", ");
       }
+      LOG.info(builder.substring(0, builder.length() - 2));
     }
 
     // make logging for experimental features here to have registry + experiments together in the log file

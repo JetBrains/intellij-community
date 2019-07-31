@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
  * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
  * {@code <registryKey>} extension point (see {@link com.intellij.openapi.util.registry.RegistryKeyBean} for more details).
  */
-public class Registry  {
+public final class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
