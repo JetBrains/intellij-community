@@ -27,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
@@ -111,6 +112,8 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
 
     //IDEA-170295
     PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+
+    WeakFocusStackManager.getInstance()
   }
 
   // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance

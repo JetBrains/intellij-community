@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -37,7 +39,6 @@ import java.awt.*;
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 public abstract class IdeFocusManager implements FocusRequestor {
-
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     return requestFocus(c, false);
   }
@@ -65,7 +66,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Executes given runnable after all focus activities are finished.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
-
 
   /**
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
@@ -139,9 +139,13 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void toFront(JComponent c);
 
   public static IdeFocusManager getInstance(@Nullable Project project) {
-    if (project == null || project.isDisposed() || !project.isInitialized()) return getGlobalInstance();
-
-    return project.getComponent(IdeFocusManager.class);
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isHeadlessEnvironment() || app.isUnitTestMode() || project == null || project.isDisposed() || !project.isInitialized()) {
+      return getGlobalInstance();
+    }
+    else {
+      return ServiceManager.getService(project, IdeFocusManager.class);
+    }
   }
 
   @NotNull
@@ -192,6 +196,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
   @NotNull
   public FocusRequestor getFurtherRequestor() {

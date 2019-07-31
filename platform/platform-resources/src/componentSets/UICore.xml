@@ -39,11 +39,6 @@
       <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl</headless-implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
-      <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
