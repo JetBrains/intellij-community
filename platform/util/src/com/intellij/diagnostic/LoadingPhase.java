@@ -28,7 +28,7 @@ public enum LoadingPhase {
     return Logger.getInstance(LoadingPhase.class);
   }
 
-  private static boolean CHECK_LOADING_PHASE = Boolean.parseBoolean("idea.check.loading.phase");
+  private static boolean CHECK_LOADING_PHASE;
 
   public static void setStrictMode() {
     CHECK_LOADING_PHASE = true;
