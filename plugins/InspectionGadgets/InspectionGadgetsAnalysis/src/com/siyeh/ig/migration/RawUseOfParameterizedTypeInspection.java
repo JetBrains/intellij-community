@@ -33,7 +33,7 @@ import javax.swing.*;
 
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
-  @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = true;
+  @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
 
   @SuppressWarnings("PublicField") public boolean ignoreTypeCasts = false;
 

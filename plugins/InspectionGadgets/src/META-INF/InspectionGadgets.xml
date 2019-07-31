@@ -1327,7 +1327,7 @@
                      implementationClass="com.siyeh.ig.migration.MethodCanBeVariableArityMethodInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="rawtypes" alternativeId="RawUseOfParameterized" shortName="RawUseOfParameterizedType" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="raw.use.of.parameterized.type.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="StringBufferMayBeStringBuilder" shortName="StringBufferReplaceableByStringBuilder"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.buffer.replaceable.by.string.builder.display.name"
