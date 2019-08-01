@@ -19,10 +19,11 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import java.awt.dnd.DnDConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangesViewManager.getDropRootNode;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
@@ -128,6 +128,21 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     if (tableCellRect != null && fitsInBounds(tableCellRect)) {
       aEvent.setHighlighting(new RelativeRectangle(myTree, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     }
+  }
+
+  @Nullable
+  public static ChangesBrowserNode<?> getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
+    RelativePoint dropPoint = event.getRelativePoint();
+    Point onTree = dropPoint.getPoint(tree);
+    final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
+
+    if (dropPath == null) return null;
+
+    ChangesBrowserNode<?> dropNode = (ChangesBrowserNode<?>)dropPath.getLastPathComponent();
+    while (!dropNode.getParent().isRoot()) {
+      dropNode = dropNode.getParent();
+    }
+    return dropNode;
   }
 
   @Override

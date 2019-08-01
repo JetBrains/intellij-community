@@ -26,14 +26,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,16 +55,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
-import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.ui.IdeBorderFactory.createBorder;
@@ -473,21 +468,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  @Nullable
-  public static ChangesBrowserNode<?> getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
-    RelativePoint dropPoint = event.getRelativePoint();
-    Point onTree = dropPoint.getPoint(tree);
-    final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
-
-    if (dropPath == null) return null;
-
-    ChangesBrowserNode<?> dropNode = (ChangesBrowserNode<?>)dropPath.getLastPathComponent();
-    while (!dropNode.getParent().isRoot()) {
-      dropNode = dropNode.getParent();
-    }
-    return dropNode;
-  }
-
   public static class State {
 
     @Deprecated
@@ -626,8 +606,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event),
-                                !ChangesDnDSupport.isCopyAction(event));
+        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
+                                                     ChangesDnDSupport.getDropRootNode(myView, event),
+                                                     !ChangesDnDSupport.isCopyAction(event));
       }
     }
 
