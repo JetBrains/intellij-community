@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.WeakStringInterner;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -35,7 +36,7 @@ public final class SyntaxMatchUtils {
     .build(CacheLoader.from(
       key -> matchFirstUncached(Objects.requireNonNull(key).descriptor, key.string, key.byteOffset, key.priority, key.currentScope)));
   private final static Joiner MY_OPEN_TAGS_JOINER = Joiner.on(" ").skipNulls();
-  private final static WeakStringInterner MY_SCOPES_INTERNER = new WeakStringInterner();
+  private final static Map<List<CharSequence>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   @NotNull
@@ -209,7 +210,7 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   public static String selectorsToScope(@NotNull List<CharSequence> selectors) {
-    return MY_SCOPES_INTERNER.intern(MY_OPEN_TAGS_JOINER.join(selectors));
+    return MY_SCOPES_INTERNER.computeIfAbsent(selectors, MY_OPEN_TAGS_JOINER::join);
   }
 
   private static class MatchKey {
