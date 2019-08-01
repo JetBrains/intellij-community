@@ -38,18 +38,17 @@ public interface StampsStorage<T extends Stamp> {
 
   void clean() throws IOException;
 
-  T getStamp(File file, BuildTarget<?> target) throws IOException;
+  T getPreviousStamp(File file, BuildTarget<?> target) throws IOException;
 
-  T lastModified(File file) throws IOException; // todo: rename
-
-  // todo: rename
-  default T lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException { return lastModified(file); }
+  T getCurrentStamp(File file) throws IOException;
 
   boolean wipe();
 
   void close() throws IOException;
 
-  interface Stamp {
-    boolean isEqual(Stamp other);
-  }
+  boolean isDirtyStamp(Stamp stamp, File file) throws IOException;
+
+  boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) throws IOException;
+
+  interface Stamp { }
 }

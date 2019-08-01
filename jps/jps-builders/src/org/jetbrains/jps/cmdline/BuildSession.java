@@ -406,14 +406,10 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Applying dirty path from fs event: " + changed);
         }
-        StampsStorage.Stamp fileStamp = null;
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            if (fileStamp == null) {
-              fileStamp = stampsStorage.lastModified(file); // lazy init
-            }
-            StampsStorage.Stamp stamp = stampsStorage.getStamp(file, descriptor.getTarget());
-            if (!stamp.isEqual(fileStamp)) {
+            StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(file, descriptor.getTarget());
+            if (stampsStorage.isDirtyStamp(stamp, file)) {
               if (!cacheCleared) {
                 cacheCleared = true;
               }
@@ -421,7 +417,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             else {
               if (LOG.isDebugEnabled()) {
-                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + changed + "; timestamp= " + stamp);
+                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + changed + "; stamp= " + stamp);
               }
             }
           }

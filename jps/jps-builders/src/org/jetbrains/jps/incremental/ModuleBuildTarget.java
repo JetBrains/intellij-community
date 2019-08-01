@@ -250,7 +250,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }
-    if (ProjectStamps.USE_HASHES) {
+    if (ProjectStamps.PORTABLE_CACHES) {
       enumerator = enumerator.withoutSdk();
     }
 

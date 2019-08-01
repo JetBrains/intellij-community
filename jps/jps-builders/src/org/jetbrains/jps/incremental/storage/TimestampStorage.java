@@ -40,17 +40,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
   }
 
   @Override
-  public void force() {
-    super.force();
-  }
-
-  @Override
-  public void clean() throws IOException {
-    super.clean();
-  }
-
-  @Override
-  public Timestamp getStamp(File file, BuildTarget<?> target) throws IOException {
+  public Timestamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
     final TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
@@ -64,14 +54,22 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
   }
 
   @Override
-  public Timestamp lastModified(File file) {
+  public Timestamp getCurrentStamp(File file) {
     return Timestamp.fromLong(FSOperations.lastModified(file));
   }
 
   @Override
-  public Timestamp lastModified(File file, @NotNull BasicFileAttributes attrs) {
+  public boolean isDirtyStamp(@NotNull Stamp stamp, File file) {
+    if (!(stamp instanceof Timestamp)) return true;
+    return ((Timestamp) stamp).myTimestamp != FSOperations.lastModified(file);
+  }
+
+  @Override
+  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
+    if (!(stamp instanceof Timestamp)) return true;
+    Timestamp timestamp = (Timestamp) stamp;
     // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-    return attrs.isRegularFile() ? Timestamp.fromLong(attrs.lastModifiedTime().toMillis()) : lastModified(file);
+    return attrs.isRegularFile() ? attrs.lastModifiedTime().toMillis() != timestamp.myTimestamp : isDirtyStamp(timestamp, file);
   }
 
   @Override
@@ -149,7 +147,7 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
     }
   }
 
-  static class Timestamp implements HashStorage.Stamp {
+  static class Timestamp implements StampsStorage.Stamp {
     static final Timestamp MINUS_ONE = new Timestamp(-1L);
     private final long myTimestamp;
 
@@ -166,8 +164,10 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTar
     }
 
     @Override
-    public boolean isEqual(Stamp other) {
-      return myTimestamp == ((Timestamp)other).myTimestamp;
+    public String toString() {
+      return "Timestamp{" +
+             "myTimestamp=" + myTimestamp +
+             '}';
     }
   }
 }

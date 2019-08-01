@@ -179,7 +179,7 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testNothingChanged() {
-    if (!ProjectStamps.USE_HASHES) return;
+    if (!ProjectStamps.PORTABLE_CACHES) return;
     doTest();
   }
 

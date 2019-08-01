@@ -261,7 +261,7 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            markDirty = !stampStorage.getStamp(_file, rd.getTarget()).isEqual(stampStorage.lastModified(f.toFile(), attrs));
+            markDirty = stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(_file, rd.getTarget()), file, attrs);
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
@@ -313,7 +313,7 @@ public class FSOperations {
 
     boolean markDirty = forceDirty;
     if (!markDirty) {
-      markDirty = !(stampsStorage.getStamp(file, rd.getTarget()).isEqual(stampsStorage.lastModified(file)));
+      markDirty = stampsStorage.isDirtyStamp(stampsStorage.getPreviousStamp(file, rd.getTarget()), file);
     }
     if (markDirty) {
       // if it is full project rebuild, all storages are already completely cleared;

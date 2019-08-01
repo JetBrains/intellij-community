@@ -26,7 +26,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class ProjectStamps {
-  public static final boolean USE_HASHES = Boolean.getBoolean("org.jetbrains.jps.use.hashes");
+  public static final boolean PORTABLE_CACHES = Boolean.getBoolean("org.jetbrains.jps.portable.caches");
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectStamps");
 
@@ -35,8 +35,8 @@ public class ProjectStamps {
   public ProjectStamps(File dataStorageRoot,
                        BuildTargetsState targetsState,
                        PathRelativizerService relativizer) throws IOException {
-    myStampsStorage = USE_HASHES
-                      ? new HashStorage(dataStorageRoot, relativizer, targetsState)
+    myStampsStorage = PORTABLE_CACHES
+                      ? new FileStampStorage(dataStorageRoot, relativizer, targetsState)
                       : new TimestampStorage(dataStorageRoot, targetsState);
   }
 

@@ -395,9 +395,9 @@ public class BuildFSState {
         CompileScope scope = context.getScope();
         for (File file : files) {
           if (scope.isAffected(target, file)) {
-            final long currentFileStamp = FSOperations.lastModified(file);
-            StampsStorage.Stamp stamp = stampsStorage.lastModified(file);
-            if (!rd.isGenerated() && (currentFileStamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
+            final long currentFileTimestamp = FSOperations.lastModified(file);
+            StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(file);
+            if (!rd.isGenerated() && (currentFileTimestamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               // Important!
