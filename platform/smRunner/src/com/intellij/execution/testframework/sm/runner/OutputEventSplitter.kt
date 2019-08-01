@@ -148,10 +148,8 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
     }
   }
 
-
   private fun flushInternal(text: String, key: Key<*>, lastFlush: Boolean = false) {
-
-    if (cutNewLineBeforeServiceMessage) {
+    if (cutNewLineBeforeServiceMessage && key is ProcessOutputType && key.isStdout) {
       if (newLinePending) { //Prev. flush was "\n".
         if (!text.startsWith(SERVICE_MESSAGE_START) || (lastFlush)) {
           onTextAvailable("\n", key)
@@ -163,7 +161,6 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
         return
       }
     }
-
 
     val textToAdd = if (USE_CYCLE_BUFFER) cutLineIfTooLong(text) else text
     onTextAvailable(textToAdd, key)
