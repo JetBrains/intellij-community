@@ -216,6 +216,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public static void appendTimestamp(@NotNull Project project,
                                      @NotNull SimpleColoredComponent component,
                                      @NotNull VirtualFile file) {
+    if (!UISettings.getInstance().getShowInplaceComments()) {
+      return;
+    }
+
     try {
       Long timestamp = getInstance(project).getRecentFilesTimestamps().get(file.getPath());
       if (timestamp != null) {
