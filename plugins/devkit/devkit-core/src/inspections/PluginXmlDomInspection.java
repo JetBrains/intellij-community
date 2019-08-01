@@ -211,7 +211,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           annotateProjectComponent((Component.Project)element, holder);
         }
       }
-      else if (element instanceof Helpset) {
+      else //noinspection deprecation
+        if (element instanceof Helpset) {
         highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
       }
       else if (element instanceof Listeners) {
