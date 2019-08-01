@@ -43,6 +43,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
@@ -199,8 +201,8 @@ public class ShelvedChangesViewManager implements Disposable {
         DnDSupport.createBuilder(myTree)
           .setImageProvider(this::createDraggedImage)
           .setBeanProvider(this::createDragStartBean)
-          .setTargetChecker(myContent)
-          .setDropHandler(myContent)
+          .setTargetChecker(myContent.myDnDTarget)
+          .setDropHandler(myContent.myDnDTarget)
           .setDisposableParent(myContent)
           .install();
       }
@@ -577,27 +579,36 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  public class MyShelfContent extends DnDActivateOnHoldTargetContent {
+  public class MyShelfContent extends ContentImpl {
+    private final MyDnDTarget myDnDTarget;
 
     private MyShelfContent(JPanel panel, @NotNull String displayName, boolean isLockable) {
-      super(myProject, panel, displayName, isLockable);
+      super(panel, displayName, isLockable);
+      myDnDTarget = new MyDnDTarget(myProject, this);
+      putUserData(Content.TAB_DND_TARGET_KEY, myDnDTarget);
     }
 
-    @Override
-    public void drop(DnDEvent event) {
-      super.drop(event);
-      Object attachedObject = event.getAttachedObject();
-      if (attachedObject instanceof ChangeListDragBean) {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
-        myShelveChangesManager.shelveSilentlyUnderProgress(changes);
+    private class MyDnDTarget extends VcsToolwindowDnDTarget {
+      private MyDnDTarget(@NotNull Project project, @NotNull Content content) {
+        super(project, content);
       }
-    }
 
-    @Override
-    public boolean isDropPossible(@NotNull DnDEvent event) {
-      Object attachedObject = event.getAttachedObject();
-      return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
+      @Override
+      public void drop(DnDEvent event) {
+        super.drop(event);
+        Object attachedObject = event.getAttachedObject();
+        if (attachedObject instanceof ChangeListDragBean) {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+          myShelveChangesManager.shelveSilentlyUnderProgress(changes);
+        }
+      }
+
+      @Override
+      public boolean isDropPossible(@NotNull DnDEvent event) {
+        Object attachedObject = event.getAttachedObject();
+        return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
+      }
     }
   }
 

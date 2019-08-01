@@ -17,26 +17,15 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDTarget;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.TOOLWINDOW_ID;
-
-public abstract class DnDActivateOnHoldTargetContent extends ContentImpl implements DnDTarget {
+public abstract class DnDActivateOnHoldTarget implements DnDTarget {
   private final SingleAlarm myAlarm;
-  @NotNull private final Project myProject;
 
-  protected DnDActivateOnHoldTargetContent(@NotNull Project project, JComponent component, @NotNull String displayName, boolean isLockable) {
-    super(component, displayName, isLockable);
-    myProject = project;
+  protected DnDActivateOnHoldTarget() {
     myAlarm = new SingleAlarm(() -> activateContent(), 700);
   }
 
@@ -64,13 +53,7 @@ public abstract class DnDActivateOnHoldTargetContent extends ContentImpl impleme
   public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
   }
 
-  private void activateContent() {
-    ChangesViewContentManager.getInstance(myProject).setSelectedContent(this);
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (toolWindow!=null && !toolWindow.isVisible()) {
-      toolWindow.activate(null);
-    }
-  }
+  protected abstract void activateContent();
 
   public abstract boolean isDropPossible(@NotNull DnDEvent event);
 

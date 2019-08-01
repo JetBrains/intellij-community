@@ -33,6 +33,8 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,7 +105,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private final TreeSelectionListener myTsl;
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
-  private MyChangeViewContent myContent;
+  private Content myContent;
   private boolean myModelUpdateInProgress;
   private final MyTreeExpander myTreeExpander;
 
@@ -151,9 +153,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
     myToolWindowPanel = createChangeViewComponent();
-    myContent = new MyChangeViewContent(myToolWindowPanel, ChangesViewContentManager.LOCAL_CHANGES, false);
+    myContent = ContentFactory.SERVICE.getInstance().createContent(myToolWindowPanel, ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
+    myContent.putUserData(Content.TAB_DND_TARGET_KEY, new MyDnDTarget(myContent));
     myContentManager.addContent(myContent);
 
     CommitWorkflowManager.install(myProject);
@@ -595,10 +598,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
-
-    private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
-      super(myProject, component, displayName, isLockable);
+  private class MyDnDTarget extends VcsToolwindowDnDTarget {
+    private MyDnDTarget(@NotNull Content content) {
+      super(myProject, content);
     }
 
     @Override

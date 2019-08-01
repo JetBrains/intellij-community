@@ -18,6 +18,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import org.jetbrains.annotations.NotNull;
@@ -332,14 +333,22 @@ class TabContentLayout extends ContentLayout {
     }
     myTabs.add(event.getIndex(), tab);
     myContent2Tabs.put(content, tab);
-    if (content instanceof DnDTarget) {
-      DnDTarget target = (DnDTarget)content;
+
+    DnDTarget target = getDnDTarget(content);
+    if (target != null) {
       DnDSupport.createBuilder(tab)
                 .setDropHandler(target)
                 .setTargetChecker(target)
                 .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
                 .install();
     }
+  }
+
+  @Nullable
+  private static DnDTarget getDnDTarget(Content content) {
+    DnDTarget target = content.getUserData(Content.TAB_DND_TARGET_KEY);
+    if (target != null) return target;
+    return ObjectUtils.tryCast(content, DnDTarget.class);
   }
 
   @Override
