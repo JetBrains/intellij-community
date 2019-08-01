@@ -6,11 +6,10 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,20 +53,10 @@ public class BinaryMergeTool implements MergeTool {
       myMergeRequest = request;
 
       myDiffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-      myDiffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
-                                            getDiffContents(myMergeRequest),
-                                            getDiffContentTitles(myMergeRequest)) {
-        @Nullable
-        @Override
-        public <T> T getUserData(@NotNull Key<T> key) {
-          return myMergeRequest.getUserData(key);
-        }
-
-        @Override
-        public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-          myMergeRequest.putUserData(key, value);
-        }
-      };
+      myDiffRequest = new ProxySimpleDiffRequest(myMergeRequest.getTitle(),
+                                                 getDiffContents(myMergeRequest),
+                                                 getDiffContentTitles(myMergeRequest),
+                                                 myMergeRequest);
 
       myViewer = new MyThreesideViewer(myDiffContext, myDiffRequest);
     }

@@ -14,6 +14,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -49,7 +50,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,20 +89,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myMergeRequest = request;
 
     DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
-                                                           getDiffContents(myMergeRequest),
-                                                           getDiffContentTitles(myMergeRequest)) {
-      @Nullable
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        return myMergeRequest.getUserData(key);
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-        myMergeRequest.putUserData(key, value);
-      }
-    };
+    ContentDiffRequest diffRequest = new ProxySimpleDiffRequest(myMergeRequest.getTitle(),
+                                                                getDiffContents(myMergeRequest),
+                                                                getDiffContentTitles(myMergeRequest),
+                                                                myMergeRequest);
     diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
     myViewer = new MyThreesideViewer(diffContext, diffRequest);
