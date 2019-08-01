@@ -258,7 +258,8 @@ public class StructureFilterPopupComponent
     @NotNull private final VirtualFile myRoot;
 
     private SelectVisibleRootAction(@NotNull VirtualFile root) {
-      super(root.getName(), root.getPresentableUrl(), null);
+      super(null, root.getPresentableUrl(), null);
+      getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myIcon = JBUI.scale(new CheckboxColorIcon(CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
       getTemplatePresentation().setIcon(JBUI.scale(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
