@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -37,6 +38,7 @@ public final class SyntaxMatchUtils {
     .build(CacheLoader.from(
       key -> matchFirstUncached(Objects.requireNonNull(key).descriptor, key.string, key.byteOffset, key.priority, key.currentScope)));
   private final static Joiner MY_OPEN_TAGS_JOINER = Joiner.on(" ").skipNulls();
+  private final static Map<List<String>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   @NotNull
@@ -216,7 +218,7 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   public static String selectorsToScope(@NotNull List<String> selectors) {
-    return MY_OPEN_TAGS_JOINER.join(selectors);
+    return MY_SCOPES_INTERNER.computeIfAbsent(selectors, MY_OPEN_TAGS_JOINER::join);
   }
 
   private static class MatchKey {
