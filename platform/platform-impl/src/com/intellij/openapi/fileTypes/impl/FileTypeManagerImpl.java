@@ -708,7 +708,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
     FileType fileType = getByFile(file);
-    if ((fileType == null || fileType instanceof PlainTextLikeFileType) && file instanceof StubVirtualFile) {
+    if ((fileType == null || fileType instanceof PlainTextLikeFileType) && !(file instanceof StubVirtualFile)) {
       return getOrDetectFromContent(file, content);
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
