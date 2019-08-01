@@ -69,7 +69,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view changes";
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
