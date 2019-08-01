@@ -21,6 +21,8 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.impl.SystemShortcuts
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
@@ -451,6 +453,10 @@ open class IdeStarter : ApplicationStarter {
         TouchBarsManager.onApplicationInitialized()
         if (TouchBarsManager.isTouchBarAvailable())
           CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
+
+        var keymap = KeymapManager.getInstance().activeKeymap
+        val sysConflictChecker = SystemShortcuts()
+        sysConflictChecker.checkConflictsAndNotify(keymap)
       }
     }
 

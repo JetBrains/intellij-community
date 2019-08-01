@@ -9,10 +9,13 @@ import javax.swing.*;
 public class EditKeymapsDialog extends SingleConfigurableEditor {
   private final String myActionToSelect;
 
-  public EditKeymapsDialog(Project project, String actionToSelect) {
-    super(project, new KeymapPanel());
+  public EditKeymapsDialog(Project project, String actionToSelect, boolean showOnlyConflicts) {
+    super(project, new KeymapPanel(showOnlyConflicts));
     myActionToSelect = actionToSelect;
   }
+
+  public EditKeymapsDialog(Project project, String actionToSelect) { this(project, actionToSelect, false); }
+
 
   @Override
   public void show() {

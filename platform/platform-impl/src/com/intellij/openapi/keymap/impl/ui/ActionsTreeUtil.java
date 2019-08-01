@@ -576,15 +576,19 @@ public class ActionsTreeUtil {
   public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
                                                      final Keymap keymap,
                                                      final Shortcut shortcut) {
+    return isActionFiltered(actionManager, keymap, sc -> sc != null && sc.startsWith(shortcut));
+  }
+
+  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
+                                                     final Keymap keymap,
+                                                     final Condition<? super Shortcut> predicat) {
     return action -> {
-      if (shortcut == null) return true;
       if (action == null) return false;
       final Shortcut[] actionShortcuts =
         keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
-        if (actionShortcut != null && actionShortcut.startsWith(shortcut)) {
+        if (predicat.value(actionShortcut))
           return true;
-        }
       }
       return false;
     };
