@@ -60,7 +60,7 @@ public class MavenRunnerPanel {
     c.anchor = GridBagConstraints.WEST;
     c.insets.bottom = 5;
 
-    myDelegateToMavenCheckbox = new JCheckBox("Delegate IDE build/run actions to maven");
+    myDelegateToMavenCheckbox = new JCheckBox("Delegate IDE build/run actions to Maven");
     myDelegateToMavenCheckbox.setMnemonic('d');
 
     myRunInBackgroundCheckbox = new JCheckBox("Run in background");
