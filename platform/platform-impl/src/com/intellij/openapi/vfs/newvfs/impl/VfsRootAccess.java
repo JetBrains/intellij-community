@@ -111,7 +111,7 @@ public class VfsRootAccess {
         allowed.add(FileUtil.toSystemIndependentName(output));
       }
     }
-    catch (URISyntaxException ignored) { }
+    catch (URISyntaxException|IllegalArgumentException ignored) { }
 
     try {
       String javaHome = SystemProperties.getJavaHome();
