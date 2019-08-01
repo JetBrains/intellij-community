@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
+import static java.util.Collections.*;
 
 /**
  * @author Maxim.Mossienko
@@ -51,7 +52,6 @@ public class FileReferenceSet {
   private final String myPathString;
 
   private Collection<PsiFileSystemItem> myDefaultContexts;
-  private Collection<FileTargetContext> myTargetContexts;
 
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
@@ -114,7 +114,7 @@ public class FileReferenceSet {
    */
   @Deprecated
   protected Collection<PsiFileSystemItem> getExtraContexts() {
-    return Collections.emptyList();
+    return emptyList();
   }
 
   public static FileReferenceSet createSet(@NotNull PsiElement element,
@@ -307,7 +307,7 @@ public class FileReferenceSet {
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final PsiFile file = getContainingFile();
-    if (file == null) return Collections.emptyList();
+    if (file == null) return emptyList();
 
     Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
     if (contexts != null) {
@@ -369,7 +369,7 @@ public class FileReferenceSet {
       }
       return getParentDirectoryContext();
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 
   @Nullable
@@ -383,7 +383,7 @@ public class FileReferenceSet {
         }
         PsiFile contextFile = contextProvider.getContextFile(file);
         if (contextFile != null && contextFile.getParent() != null) {
-          return Collections.singletonList(contextFile.getParent());
+          return singletonList(contextFile.getParent());
         }
       }
     }
@@ -396,29 +396,21 @@ public class FileReferenceSet {
     VirtualFile virtualFile = file == null ? null : file.getOriginalFile().getVirtualFile();
     final VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
     final PsiDirectory directory = parent == null ? null :file.getManager().findDirectory(parent);
-    return directory != null ? Collections.singleton(directory) : Collections.emptyList();
+    return directory != null ? singleton(directory) : emptyList();
   }
 
+  /**
+   * Finds file target contexts, locations where users can create a file. Includes only local file directory items.
+   */
   public Collection<FileTargetContext> getTargetContexts() {
-    if (myTargetContexts == null) {
-      myTargetContexts = computeTargetContexts();
-    }
-    return myTargetContexts;
-  }
-
-  @NotNull
-  private Collection<FileTargetContext> computeTargetContexts() {
     PsiFile file = getContainingFile();
-    if (file == null) return Collections.emptyList();
-
-    Collection<FileTargetContext> targetContexts;
+    if (file == null) return emptyList();
 
     Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
+
+    Collection<FileTargetContext> targetContexts;
     if (contexts != null) {
       targetContexts = toTargetContexts(contexts);
-    } else if (isAbsolutePathReference()) {
-      Collection<PsiFileSystemItem> locations = getAbsoluteTopLevelDirLocations(file);
-      targetContexts = toTargetContexts(locations);
     } else {
       targetContexts = getTargetContextByFile(file);
     }
@@ -430,10 +422,7 @@ public class FileReferenceSet {
   private static Collection<FileTargetContext> filterLocalFsContexts(Collection<FileTargetContext> contexts) {
     return ContainerUtil.filter(contexts, c -> {
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
-      if (file == null || !file.isInLocalFileSystem()) {
-        return false;
-      }
-      return c.getFileSystemItem().isDirectory();
+      return file != null && c.getFileSystemItem().isDirectory() && file.isInLocalFileSystem();
     });
   }
 
@@ -458,48 +447,55 @@ public class FileReferenceSet {
 
   @NotNull
   private Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
-    PsiElement context = file.getContext();
-    if (context != null) file = context.getContainingFile();
+    boolean absolutePathReference = isAbsolutePathReference();
 
-    Collection<PsiFileSystemItem> folders = getIncludingFileContexts(file);
-    if (folders != null) return toTargetContexts(folders);
+    if (!absolutePathReference) {
+      PsiElement context = file.getContext();
+      if (context != null) file = context.getContainingFile();
 
-    return getTargetContextByFileSystemItem(file.getOriginalFile());
-  }
-
-  @NotNull
-  protected Collection<FileTargetContext> getTargetContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-      FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
-      List<FileTargetContext> list = new ArrayList<>();
-      Project project = file.getProject();
-      boolean hasRealContexts = false;
-
-      for (FileReferenceHelper helper : helpers) {
-        if (helper.isMine(project, virtualFile)) {
-          if (!list.isEmpty() && helper.isFallback()) {
-            continue;
-          }
-          Collection<FileTargetContext> contexts = helper.getTargetContexts(project, virtualFile);
-          for (FileTargetContext context : contexts) {
-            list.add(context);
-            hasRealContexts |= !(context.getFileSystemItem() instanceof FileReferenceResolver);
-          }
-        }
-      }
-
-      if (!list.isEmpty()) {
-        if (!hasRealContexts) {
-          for (PsiFileSystemItem item : getParentDirectoryContext()) {
-            list.add(new FileTargetContext(item));
-          }
-        }
-        return list;
-      }
-      return toTargetContexts(getParentDirectoryContext());
+      Collection<PsiFileSystemItem> folders = getIncludingFileContexts(file);
+      if (folders != null) return toTargetContexts(folders);
     }
-    return Collections.emptyList();
+
+    PsiDirectory parent = file.getParent();
+    Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
+    if (absolutePathReference && module == null) return emptyList();
+
+    PsiFileSystemItem originalFile = file.getOriginalFile();
+    VirtualFile virtualFile = originalFile.getVirtualFile();
+    if (virtualFile == null) return emptyList();
+
+    // reference helpers may provide non-unique results, use LinkedHashSet to collapse them preserving the order
+    Set<FileTargetContext> list = new LinkedHashSet<>();
+
+    Project project = originalFile.getProject();
+    boolean hasRealContexts = false;
+
+    FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
+    for (FileReferenceHelper helper : helpers) {
+      if (helper.isMine(project, virtualFile)) {
+        if (!list.isEmpty() && helper.isFallback()) {
+          continue;
+        }
+
+        Collection<FileTargetContext> contexts = helper.getTargetContexts(project, virtualFile, absolutePathReference);
+
+        for (FileTargetContext context : contexts) {
+          list.add(context);
+          hasRealContexts |= !(context.getFileSystemItem() instanceof FileReferenceResolver);
+        }
+      }
+    }
+
+    if (!list.isEmpty()) {
+      if (!hasRealContexts) {
+        for (PsiFileSystemItem item : getParentDirectoryContext()) {
+          list.add(new FileTargetContext(item));
+        }
+      }
+      return list;
+    }
+    return toTargetContexts(getParentDirectoryContext());
   }
 
   public String getPathString() {
@@ -528,11 +524,11 @@ public class FileReferenceSet {
   @NotNull
   public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
+    if (virtualFile == null) return emptyList();
 
     final PsiDirectory parent = file.getParent();
     final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
-    if (module == null) return Collections.emptyList();
+    if (module == null) return emptyList();
 
     final List<PsiFileSystemItem> list = new ArrayList<>();
     final Project project = file.getProject();
@@ -541,7 +537,7 @@ public class FileReferenceSet {
         if (helper.isFallback() && !list.isEmpty()) {
           continue;
         }
-        Collection<PsiFileSystemItem> roots = helper.getRoots(module, virtualFile);
+        Collection<PsiFileSystemItem> roots = helper.getRoots(module);
         for (PsiFileSystemItem root : roots) {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);
