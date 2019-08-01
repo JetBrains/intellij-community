@@ -5,9 +5,8 @@ import textwrap
 import unittest
 
 import generator3
-import six
 from generator3 import GenerationStatus
-from generator3_tests import GeneratorTestCase
+from generator3_tests import GeneratorTestCase, python3_only, python2_only
 from pycharm_generator_utils.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
@@ -251,11 +250,11 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
 
-    @unittest.skipUnless(six.PY3, "Python 3 version of the test")
+    @python3_only
     def test_inaccessible_class_attribute_py3(self):
         self.check_generator_output('mod', mod_path='mod.py', success=False)
 
-    @unittest.skipUnless(six.PY2, "Python 2 version of the test")
+    @python2_only
     def test_inaccessible_class_attribute_py2(self):
         self.check_generator_output('mod', mod_path='mod.py', success=False)
 
@@ -304,14 +303,14 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
-    @unittest.skipUnless(six.PY3, 'Python 3 only test')
+    @python3_only
     def test_introspecting_submodule_modifies_sys_modules(self):
         self.check_generator_output('mod', 'mod.py')
 
     # PY-37241
     # Python 2 version of the skeleton differs significantly
     # TODO investigate why
-    @unittest.skipUnless(six.PY3, 'Python 3 only test')
+    @python3_only
     def test_non_string_dunder_module(self):
         self.check_generator_output('mod', 'mod.py')
 
