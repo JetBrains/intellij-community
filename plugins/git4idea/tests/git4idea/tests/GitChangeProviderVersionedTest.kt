@@ -77,7 +77,8 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     edit(atxt, oldContent)
     assertProviderChanges(atxt, null)
 
-    assertNoChanges()
+    assertChanges {
+    }
   }
 
   fun testRevertedStagedAddition() {
@@ -87,7 +88,8 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     rm("new.txt")
     assertProviderChanges(atxt, null)
 
-    assertNoChanges()
+    assertChanges {
+    }
   }
 
   fun testDeleteFile() {
