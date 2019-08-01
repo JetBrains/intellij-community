@@ -88,7 +88,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myIsInternal;
   private final String myName;
 
-  private final Stack<Class> myWriteActionsStack = new Stack<>(); // contents modified in write action, read in read action
+  // contents modified in write action, read in read action
+  private final Stack<Class<?>> myWriteActionsStack = new Stack<>();
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
@@ -381,32 +382,31 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable final String configPath) {
+  public final void load(@Nullable String configPath) {
     registerComponents(PluginManagerCore.getLoadedPlugins());
-    load(configPath, null, false);
+
+    IdeaApplication.initConfigurationStore(this, configPath);
+
+    MutablePicoContainer picoContainer = getPicoContainer();
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
+      for (ServiceDescriptor service : ((IdeaPluginDescriptorImpl)plugin).getApp().getServices()) {
+        if (service.preload) {
+          picoContainer.getComponentInstance(service.getInterface());
+        }
+      }
+    }
+
+    loadComponents(null);
   }
 
   @Override
-  public void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
+  public final void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
     super.registerComponents(plugins);
   }
 
-  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator, boolean isServicePreloaded) {
+  public final void loadComponents(@Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      if (!isServicePreloaded) {
-        IdeaApplication.initConfigurationStore(this, configPath);
-
-        MutablePicoContainer picoContainer = getPicoContainer();
-        for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
-          for (ServiceDescriptor service : ((IdeaPluginDescriptorImpl)plugin).getApp().getServices()) {
-            if (service.preload) {
-              picoContainer.getComponentInstance(service.getInterface());
-            }
-          }
-        }
-      }
-
       if (indicator == null) {
         // no splash, no need to to use progress manager
         createComponents(null);
@@ -997,15 +997,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public <T> T runWriteAction(@NotNull final Computable<T> computation) {
-    Class<? extends Computable> clazz = computation.getClass();
-    return runWriteActionWithClass(clazz, () -> computation.compute());
+  public <T> T runWriteAction(@NotNull Computable<T> computation) {
+    return runWriteActionWithClass(computation.getClass(), () -> computation.compute());
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    Class<? extends ThrowableComputable> clazz = computation.getClass();
-    return runWriteActionWithClass(clazz, computation);
+    return runWriteActionWithClass(computation.getClass(), computation);
   }
 
   @Override
@@ -1013,8 +1011,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertReadAccessAllowed();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
-      Class action = myWriteActionsStack.get(i);
-      if (actionClass == action || ReflectionUtil.isAssignable(actionClass, action)) return true;
+      Class<?> action = myWriteActionsStack.get(i);
+      if (actionClass == action || ReflectionUtil.isAssignable(actionClass, action)) {
+        return true;
+      }
     }
     return false;
   }
@@ -1143,7 +1143,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     private static final PausesStat WRITE = new PausesStat("Write action");
   }
 
-  private void startWrite(@NotNull Class clazz) {
+  private void startWrite(@NotNull Class<?> clazz) {
     if (!isWriteAccessAllowed()) {
       assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     }
@@ -1183,7 +1183,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(@NotNull Class clazz) {
+  private void endWrite(@NotNull Class<?> clazz) {
     try {
       fireWriteActionFinished(clazz);
       // fire listeners before popping stack because if somebody starts write action in a listener,
@@ -1210,9 +1210,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private class WriteAccessToken extends AccessToken {
-    @NotNull private final Class clazz;
+    @NotNull private final Class<?> clazz;
 
-    WriteAccessToken(@NotNull Class clazz) {
+    WriteAccessToken(@NotNull Class<?> clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1249,7 +1249,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     private String id() {
-      Class aClass = getClass();
+      Class<?> aClass = getClass();
       String name = aClass.getName();
       while (name == null) {
         aClass = aClass.getSuperclass();
@@ -1341,19 +1341,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void fireApplicationExiting() {
     myDispatcher.getMulticaster().applicationExiting();
   }
-  private void fireBeforeWriteActionStart(@NotNull Class action) {
+  private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(@NotNull Class action) {
+  private void fireWriteActionStarted(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(@NotNull Class action) {
+  private void fireWriteActionFinished(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
-  private void fireAfterWriteActionFinished(@NotNull Class action) {
+  private void fireAfterWriteActionFinished(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().afterWriteActionFinished(action);
   }
 

@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ExceptionUtil;
@@ -23,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -95,30 +94,27 @@ public final class IdeaTestApplication implements Disposable {
     PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
+    CompletableFuture<List<IdeaPluginDescriptor>> loadedPluginFuture = CompletableFuture.supplyAsync(() -> {
       //noinspection CodeBlock2Expr
       return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
-    });
+    }, AppExecutorUtil.getAppExecutorService());
+
     ApplicationImpl.patchSystem();
     ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
     IconManager.activate();
-    List<IdeaPluginDescriptor> loadedPlugins = null;
     try {
-      loadedPlugins = loadedPluginFuture.get(10, TimeUnit.SECONDS);
+      IdeaApplicationKt.registerRegistryAndContainerAndInitStore(loadedPluginFuture, app, null)
+        .thenCompose(aVoid -> IdeaApplicationKt.preloadServices(app))
+        .get(20, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {
-      throw new RuntimeException("Cannot load plugin descriptors in 10 seconds: " + ThreadDumper.dumpThreadsToString(), e);
+      throw new RuntimeException("Cannot load plugin descriptors in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException | InterruptedException e) {
       ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
     }
-    catch (Exception e) {
-      ExceptionUtil.rethrow(e);
-    }
-    app.registerComponents(loadedPlugins);
-    app.registerMessageBusListeners(loadedPlugins, true);
-    RegistryKeyBean.addKeysFromPlugins();
-    app.load(configPath, null, false);
+
+    app.loadComponents(null);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();

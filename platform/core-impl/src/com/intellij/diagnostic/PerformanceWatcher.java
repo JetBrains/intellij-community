@@ -38,10 +38,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author yole
- */
-public class PerformanceWatcher implements Disposable {
+public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
@@ -63,17 +60,14 @@ public class PerformanceWatcher implements Disposable {
   private long myLastEdtAlive = System.currentTimeMillis();
 
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
-  private Future myCurrentEDTEventChecker;
+  private Future<?> myCurrentEDTEventChecker;
 
   private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
 
+  @NotNull
   public static PerformanceWatcher getInstance() {
-    if (LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete()) {
-      return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
-    }
-    else {
-      return null;
-    }
+    LoadingPhase.assertAtLeast(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
+    return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
   }
 
   public PerformanceWatcher() {
