@@ -3,9 +3,16 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
+
+  lateinit var projectsInReactor: List<String>
+  val startedProjects = CopyOnWriteArrayList<String>()
+
+  /*init {
+    startedProjects = CopyOnWriteArrayList()
+  }*/
 
   private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0
@@ -32,9 +39,18 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
 
     if (currentProject == null && create) {
       currentProject = ProjectExecutionEntry(id ?: "", threadId)
+      startedProjects.add(removeVersion(currentProject))
       add(threadId, currentProject)
     }
     return currentProject
+  }
+
+  private fun removeVersion(currentProject: ProjectExecutionEntry): String {
+    val splitted = currentProject.name.split(":")
+    if (splitted.size < 3) {
+      return currentProject.name
+    }
+    return "${splitted[0]}:${splitted[1]}"
   }
 
   fun getProject(threadId: Int, parameters: Map<String, String>, create: Boolean): ProjectExecutionEntry? {

@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -74,6 +71,11 @@ public class MavenSpyOutputParser {
                        Map<String, String> parameters,
                        Consumer<? super BuildEvent> messageConsumer) {
     switch (type) {
+      case "SessionStarted": {
+        List<String> projectsInReactor = getProjectsInReactor(parameters);
+        myContext.setProjectsInReactor(projectsInReactor);
+        return;
+      }
       case "ProjectStarted": {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
         if(execution == null){
@@ -144,6 +146,22 @@ public class MavenSpyOutputParser {
         artifactDownloaded(threadId, parameters, messageConsumer);
       }
     }
+  }
+
+  private static List<String> getProjectsInReactor(Map<String, String> parameters) {
+    String joined = parameters.get("projects");
+    if (StringUtil.isEmptyOrSpaces(joined)) {
+      return Collections.emptyList();
+    }
+
+    List<String> result = new ArrayList<>();
+    for (String project : joined.split("&&")) {
+      if (StringUtil.isEmptyOrSpaces(project)) {
+        continue;
+      }
+      result.add(project);
+    }
+    return result;
   }
 
   private void artifactDownloaded(int threadId, Map<String, String> parameters, Consumer<? super BuildEvent> messageConsumer) {
