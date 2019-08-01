@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MessageBusTest extends LightPlatformTestCase {
-  private MessageBus myBus;
+  private MessageBusImpl myBus;
   private List<String> myLog;
 
   public interface T1Listener {
@@ -77,12 +77,11 @@ public class MessageBusTest extends LightPlatformTestCase {
     }
   }
 
-
   private Disposable myParentDisposable = Disposer.newDisposable();
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myBus = MessageBusFactory.newMessageBus(this);
+    myBus = (MessageBusImpl)MessageBusFactory.newMessageBus(this);
     Disposer.register(myParentDisposable, myBus);
     myLog = new ArrayList<>();
   }
@@ -269,7 +268,7 @@ public class MessageBusTest extends LightPlatformTestCase {
     final int threadsNumber = 10;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
-    final MessageBus parentBus = MessageBusFactory.newMessageBus("parent");
+    MessageBusImpl parentBus = (MessageBusImpl)MessageBusFactory.newMessageBus("parent");
     Disposer.register(myParentDisposable, parentBus);
     List<Thread> threads = new ArrayList<>();
     final int iterationsNumber = 100;

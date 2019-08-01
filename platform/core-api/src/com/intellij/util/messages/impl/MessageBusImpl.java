@@ -65,17 +65,21 @@ public class MessageBusImpl implements MessageBus {
   private final Disposable myConnectionDisposable;
   private MessageDeliveryListener myMessageDeliveryListener;
 
-  public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
+  private final MessageBusConnectionImpl myLazyConnection;
+
+  public MessageBusImpl(@NotNull Object owner, @NotNull MessageBusImpl parentBus) {
     myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
-    myParentBus = (MessageBusImpl)parentBus;
-    myRootBus = myParentBus.myRootBus;
-    synchronized (myParentBus.myChildBuses) {
-      myOrder = myParentBus.nextOrder();
-      myParentBus.myChildBuses.add(this);
+    myParentBus = parentBus;
+    myRootBus = parentBus.myRootBus;
+    synchronized (parentBus.myChildBuses) {
+      myOrder = parentBus.nextOrder();
+      parentBus.myChildBuses.add(this);
     }
-    LOG.assertTrue(myParentBus.myChildBuses.contains(this));
+    LOG.assertTrue(parentBus.myChildBuses.contains(this));
     myRootBus.clearSubscriberCache();
+    // only for project
+    myLazyConnection = parentBus.myParentBus == null ? connect() : null;
   }
 
   // root message bus constructor
@@ -84,6 +88,7 @@ public class MessageBusImpl implements MessageBus {
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
+    myLazyConnection = connect();
   }
 
   /**
@@ -130,7 +135,7 @@ public class MessageBusImpl implements MessageBus {
     LOG.assertTrue(removed);
   }
 
-  private static class DeliveryJob {
+  private static final class DeliveryJob {
     DeliveryJob(@NotNull MessageBusConnectionImpl connection, @NotNull Message message) {
       this.connection = connection;
       this.message = message;
@@ -159,11 +164,6 @@ public class MessageBusImpl implements MessageBus {
     MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
     return connection;
-  }
-
-  @NotNull
-  protected MessageBusConnectionImpl createConnectionForLazyListeners() {
-    return connect();
   }
 
   @Override
@@ -204,7 +204,6 @@ public class MessageBusImpl implements MessageBus {
 
     List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
     if (listenerDescriptors != null) {
-      MessageBusConnectionImpl connection = createConnectionForLazyListeners();
       List<Object> listeners = new SmartList<>();
       for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
         ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
@@ -217,7 +216,7 @@ public class MessageBusImpl implements MessageBus {
       }
 
       if (!listeners.isEmpty()) {
-        connection.subscribe(topic, listeners);
+        myLazyConnection.subscribe(topic, listeners);
       }
     }
 
@@ -531,15 +530,7 @@ public class MessageBusImpl implements MessageBus {
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<>();
 
-    private final MessageBusConnectionImpl myLazyConnection = connect();
-
     private volatile boolean myClearedSubscribersCache;
-
-    @NotNull
-    @Override
-    protected MessageBusConnectionImpl createConnectionForLazyListeners() {
-      return myLazyConnection;
-    }
 
     @Override
     void clearSubscriberCache() {

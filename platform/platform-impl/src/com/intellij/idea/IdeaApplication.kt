@@ -40,8 +40,12 @@ import com.intellij.ui.CustomProtocolHandler
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.exists
+import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
 import net.miginfocom.layout.PlatformDefaults
@@ -184,7 +188,7 @@ fun registerRegistryAndContainerAndInitStore(pluginDescriptorsFuture: Completabl
         app.registerComponents(pluginDescriptors)
       }
       initAppActivity.runChild("add message bus listeners") {
-        app.registerMessageBusListeners(pluginDescriptors, false)
+        registerMessageBusListeners(pluginDescriptors, app)
       }
 
       // yes, at this moment initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used.
@@ -525,4 +529,25 @@ fun preloadServices(app: ApplicationImpl): CompletableFuture<Void?> {
       }
     }, appExecutorService)
   })
+}
+
+private fun registerMessageBusListeners(pluginDescriptors: List<IdeaPluginDescriptor>, app: ApplicationImpl) {
+  val map = ContainerUtil.newConcurrentMap<String, MutableList<ListenerDescriptor>>()
+  val isHeadlessMode = app.isHeadlessEnvironment
+  val isUnitTestMode = app.isUnitTestMode
+  for (descriptor in pluginDescriptors) {
+    val listeners = (descriptor as IdeaPluginDescriptorImpl).app.listeners
+    for (listener in listeners) {
+      if (isUnitTestMode && !listener.activeInTestMode) {
+        continue
+      }
+      if (isHeadlessMode && !listener.activeInHeadlessMode) {
+        continue
+      }
+
+      map.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
+    }
+  }
+
+  (app.messageBus as MessageBusImpl).setLazyListeners(map)
 }

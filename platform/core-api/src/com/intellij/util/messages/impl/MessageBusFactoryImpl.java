@@ -15,6 +15,6 @@ public class MessageBusFactoryImpl extends MessageBusFactory {
   @NotNull
   @Override
   public MessageBus createMessageBus(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    return new MessageBusImpl(owner, parentBus);
+    return new MessageBusImpl(owner, (MessageBusImpl)parentBus);
   }
 }
