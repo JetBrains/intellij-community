@@ -37,7 +37,6 @@ class JavaPluginLayout {
         "intellij.java.indexing",
         "intellij.java.psi",
         "intellij.java",
-        "intellij.jsp.base",
         "intellij.jsp",
         "intellij.platform.uast"
       ].each {
