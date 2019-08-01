@@ -22,6 +22,9 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
 
+internal fun Project.getNonModalCommitWorkflowHandler() =
+  (ChangesViewManager.getInstance(this) as? ChangesViewManager)?.commitWorkflowHandler
+
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
     val project = vcsContext.project
@@ -96,7 +99,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
+    val workflowHandler = project.getNonModalCommitWorkflowHandler()
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
         setCommitState(included, isForceUpdateCommitStateFromContext())
