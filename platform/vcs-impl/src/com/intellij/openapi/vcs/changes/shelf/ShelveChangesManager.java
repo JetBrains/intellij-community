@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -687,17 +689,16 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
-        new PatchApplier<>(myProject, myProject.getBaseDir(),
-                           patches, targetChangeList, commitContext, reverse, leftConflictTitle,
-                           rightConflictTitle);
-      patchApplier.execute(showSuccessNotification, systemOperation);
-      if (removeFilesFromShelf) {
-        remainingPatches.addAll(patchApplier.getRemainingPatches());
-        updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
-      }
-    });
+    final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
+      new PatchApplier<>(myProject, myProject.getBaseDir(),
+                         patches, targetChangeList, commitContext, reverse, leftConflictTitle,
+                         rightConflictTitle);
+    patchApplier.execute(showSuccessNotification, systemOperation);
+    if (removeFilesFromShelf) {
+      remainingPatches.addAll(patchApplier.getRemainingPatches());
+      GuiUtils.invokeLaterIfNeeded(() -> updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext),
+                                   ModalityState.NON_MODAL, myProject.getDisposed());
+    }
   }
 
   @NotNull

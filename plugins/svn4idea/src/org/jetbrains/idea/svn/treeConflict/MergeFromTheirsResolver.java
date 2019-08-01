@@ -10,6 +10,8 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
@@ -57,6 +59,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.partitioningBy;
 import static java.util.stream.Collectors.toMap;
@@ -181,22 +184,27 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
                       @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-      List<FilePatch> patches = null;
-      VcsException exception = null;
-      try {
-        patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
-      }
-      catch (IOException e) {
-        exception = new VcsException(e);
-      }
+      new Task.Backgroundable(myVcs.getProject(), VcsBundle.getString("patch.apply.progress.title")) {
+        VcsException myException = null;
 
-      if (patches != null) {
-        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null).execute(false, true);
-        myThereAreCreations =
-          patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
-      }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
+            new PatchApplier<BinaryFilePatch>(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
+            myThereAreCreations =
+              patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
+          }
+          catch (IOException e) {
+            myException = new VcsException(e);
+          }
+        }
 
-      myPromise.setResult(exception);
+        @Override
+        public void onFinished() {
+          myPromise.setResult(myException);
+        }
+      }.queue();
     }
   }
 

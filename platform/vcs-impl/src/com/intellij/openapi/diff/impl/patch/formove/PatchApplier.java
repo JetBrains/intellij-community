@@ -133,12 +133,10 @@ public class PatchApplier<Unused> {
                                     patchInfo -> patchInfo.getApplyPatch().getPatch());
   }
 
-  @CalledInAwt
   public void execute() {
     execute(true, false);
   }
 
-  @CalledInAwt
   public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
     return executePatchGroup(Collections.singletonList(this), myTargetChangeList, showSuccessNotification, silentAddDelete);
   }
@@ -166,14 +164,12 @@ public class PatchApplier<Unused> {
     }
   }
 
-  @CalledInAwt
   public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList) {
     return executePatchGroup(group, localChangeList, true, false);
   }
 
-  @CalledInAwt
-  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
-                                                   boolean showSuccessNotification, boolean silentAddDelete) {
+  static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
+                                            boolean showSuccessNotification, boolean silentAddDelete) {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
@@ -187,34 +183,36 @@ public class PatchApplier<Unused> {
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
-      try {
-        runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-            applier.addSkippedItems(trigger);
-          }
-          trigger.prepare();
-          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-            refStatus.set(null);
-          }
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-          }
-        }, VcsBundle.message("patch.apply.command"), null));
-      }
-      finally {
-        VcsFileListenerContextHelper.getInstance(project).clearContext();
-        LocalHistory.getInstance().putSystemLabel(project, "After patch");
-      }
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+              applier.addSkippedItems(trigger);
+            }
+            trigger.prepare();
+            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+              refStatus.set(null);
+            }
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+            }
+          }, VcsBundle.message("patch.apply.command"), null));
+        }
+        finally {
+          VcsFileListenerContextHelper.getInstance(project).clearContext();
+          LocalHistory.getInstance().putSystemLabel(project, "After patch");
+        }
+      });
       result = refStatus.get();
       result = result == null ? ApplyPatchStatus.FAILURE : result;
 
       trigger.processIt();
 
       if (result == ApplyPatchStatus.FAILURE) {
-        suggestRollback(project, group, beforeLabel);
+        ApplicationManager.getApplication().invokeAndWait(() -> suggestRollback(project, group, beforeLabel));
       }
       else if (result == ApplyPatchStatus.ABORT) {
         rollbackUnderProgress(project, beforeLabel);

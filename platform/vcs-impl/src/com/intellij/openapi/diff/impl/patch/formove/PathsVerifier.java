@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,8 +111,7 @@ public class PathsVerifier {
     }
   }
 
-  @CalledInAwt
-  List<FilePatch> nonWriteActionPreCheck() {
+   List<FilePatch> nonWriteActionPreCheck() {
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
@@ -629,24 +627,26 @@ public class PathsVerifier {
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
       final List<FilePatch> result = new ArrayList<>();
-      if (! myOverrideExisting.isEmpty()) {
-        final String title = "Overwrite Existing Files";
-        List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
-        Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          files, title,
-          "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
-          "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
-          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
-          "Overwrite", "Cancel");
-        if (selected != null) {
-          for (FilePath path : selected) {
-            myOverrideExisting.remove(path);
+      if (!myOverrideExisting.isEmpty()) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          final String title = "Overwrite Existing Files";
+          List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+          Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+            files, title,
+            "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
+            "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
+            VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
+            "Overwrite", "Cancel");
+          if (selected != null) {
+            for (FilePath path : selected) {
+              myOverrideExisting.remove(path);
+            }
           }
-        }
-        result.addAll(myOverrideExisting.values());
-        if (selected != null) {
-          myOverridenPaths.addAll(selected);
-        }
+          result.addAll(myOverrideExisting.values());
+          if (selected != null) {
+            myOverridenPaths.addAll(selected);
+          }
+        });
       }
       result.addAll(mySkipDeleted.values());
       return result;

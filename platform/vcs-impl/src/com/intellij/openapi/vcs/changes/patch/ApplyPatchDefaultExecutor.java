@@ -6,9 +6,12 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -43,7 +46,12 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    PatchApplier.executePatchGroup(appliers, localList);
+    new Task.Backgroundable(myProject, VcsBundle.getString("patch.apply.progress.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        PatchApplier.executePatchGroup(appliers, localList);
+      }
+    }.queue();
   }
 
   @NotNull

@@ -69,23 +69,20 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       return;
     }
 
-    final List<FilePatch> patches = new ArrayList<>();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
-          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
+          List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
+          List<FilePatch> patches =
+            new ArrayList<>(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
+          new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
         }
         catch (final VcsException ex) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title), null, myProject);
+          WaitForProgressToShow
+            .runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title), null, project);
           indicator.cancel();
         }
-      }
-
-      @Override
-      public void onSuccess() {
-        new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
       }
     });
   }
