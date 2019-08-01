@@ -16,6 +16,7 @@ _override_test_data = False
 
 class GeneratorTestCase(unittest.TestCase):
     longMessage = True
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
