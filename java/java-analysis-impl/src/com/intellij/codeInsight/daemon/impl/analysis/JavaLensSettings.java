@@ -7,7 +7,8 @@ import com.intellij.util.messages.Topic;
 import java.util.function.Consumer;
 
 public class JavaLensSettings {
-  public static final Topic<Consumer<JavaLensSettings>> JAVA_LENS_SETTINGS_CHANGED = new Topic<>("JAVA_LENS_SETTINGS_CHANGED", (Class<Consumer<JavaLensSettings>>)(Class)Consumer.class);
+  public static final Topic<Consumer<JavaLensSettings>> JAVA_LENS_SETTINGS_CHANGED =
+    new Topic<>("JAVA_LENS_SETTINGS_CHANGED", (Class<Consumer<JavaLensSettings>>)(Class<?>)Consumer.class);
   private boolean showUsages;
   private boolean showImplementations;
 

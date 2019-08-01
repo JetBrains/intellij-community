@@ -130,7 +130,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  private static LineMarkerInfo createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon) {
+  private static LineMarkerInfo<PsiElement> createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon) {
     ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(name, icon, MarkerType.OVERRIDING_METHOD);
     return NavigateAction.setNavigateAction(info, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
   }
@@ -155,7 +155,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    List<Computable<List<LineMarkerInfo>>> tasks = new ArrayList<>();
+    List<Computable<List<LineMarkerInfo<PsiElement>>>> tasks = new ArrayList<>();
 
     MultiMap<PsiClass, PsiMethod> canBeOverridden = MultiMap.createSet();
     MultiMap<PsiClass, PsiMethod> canHaveSiblings = MultiMap.create();
@@ -203,7 +203,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     Object lock = new Object();
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
-      List<LineMarkerInfo> infos = computable.compute();
+      List<LineMarkerInfo<PsiElement>> infos = computable.compute();
       synchronized (lock) {
         result.addAll(infos);
       }
@@ -212,7 +212,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  private static List<LineMarkerInfo> collectSiblingInheritedMethods(@NotNull final Collection<? extends PsiMethod> methods) {
+  private static List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull final Collection<? extends PsiMethod> methods) {
     Map<PsiMethod, FindSuperElementsHelper.SiblingInfo> map = FindSuperElementsHelper.getSiblingInheritanceInfos(methods);
     return ContainerUtil.map(map.keySet(), method -> {
       PsiElement range = getMethodRange(method);
@@ -241,7 +241,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  protected List<LineMarkerInfo> collectInheritingClasses(@NotNull PsiClass aClass) {
+  protected List<LineMarkerInfo<PsiElement>> collectInheritingClasses(@NotNull PsiClass aClass) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       return Collections.emptyList();
     }
@@ -276,7 +276,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  private List<LineMarkerInfo> collectOverridingMethods(@NotNull final Set<PsiMethod> methodSet, @NotNull PsiClass containingClass) {
+  private List<LineMarkerInfo<PsiElement>> collectOverridingMethods(@NotNull final Set<PsiMethod> methodSet, @NotNull PsiClass containingClass) {
     if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return Collections.emptyList();
     final Set<PsiMethod> overridden = new HashSet<>();
 
@@ -299,7 +299,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    List<LineMarkerInfo> result = new ArrayList<>(overridden.size());
+    List<LineMarkerInfo<PsiElement>> result = new ArrayList<>(overridden.size());
     for (PsiMethod method : overridden) {
       ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);

@@ -35,19 +35,19 @@ class JavaServiceUtil {
   }
 
   @NotNull
-  static List<LineMarkerInfo> collectServiceProviderMethod(@NotNull PsiMethod method) {
+  static List<LineMarkerInfo<PsiElement>> collectServiceProviderMethod(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     PsiClass resultClass = PsiUtil.resolveClassInType(method.getReturnType());
     return createJavaServiceLineMarkerInfo(method.getNameIdentifier(), containingClass, resultClass);
   }
 
   @NotNull
-  static List<LineMarkerInfo> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
+  static List<LineMarkerInfo<PsiElement>> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
     return createJavaServiceLineMarkerInfo(psiClass.getNameIdentifier(), psiClass, psiClass);
   }
 
   @NotNull
-  private static List<LineMarkerInfo> createJavaServiceLineMarkerInfo(@Nullable PsiIdentifier identifier,
+  private static List<LineMarkerInfo<PsiElement>> createJavaServiceLineMarkerInfo(@Nullable PsiIdentifier identifier,
                                                                       @Nullable PsiClass implementerClass,
                                                                       @Nullable PsiClass resultClass) {
     if (identifier != null && implementerClass != null && resultClass != null) {
@@ -85,7 +85,7 @@ class JavaServiceUtil {
     return Collections.emptyList();
   }
 
-  static List<LineMarkerInfo> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
+  static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
                                                            @NotNull PsiMethodCallExpression methodCall) {
     if (PsiUtil.isLanguageLevel9OrHigher(methodCall)) {
       PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();

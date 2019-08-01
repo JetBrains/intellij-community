@@ -212,7 +212,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   @Nullable
-  public QuickFix getQuickFix(final String hint) {
+  public QuickFix<ProblemDescriptor> getQuickFix(final String hint) {
     return new AcceptSuggested(null);
   }
 

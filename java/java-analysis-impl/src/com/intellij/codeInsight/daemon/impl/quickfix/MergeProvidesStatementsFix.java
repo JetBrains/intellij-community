@@ -67,7 +67,7 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
   }
 
   @Nullable
-  public static MergeModuleStatementsFix createFix(@Nullable PsiProvidesStatement statement) {
+  public static MergeModuleStatementsFix<?> createFix(@Nullable PsiProvidesStatement statement) {
     if (statement != null) {
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiJavaModule) {

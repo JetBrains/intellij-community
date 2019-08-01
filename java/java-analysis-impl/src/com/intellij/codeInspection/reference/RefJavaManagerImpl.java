@@ -145,7 +145,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
     GlobalInspectionContextBase contextBase = (GlobalInspectionContextBase)myRefManager.getContext();
     Tools tools = contextBase.getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
-    InspectionToolWrapper toolWrapper;
+    InspectionToolWrapper<?,?> toolWrapper;
     if (tools != null) {
       toolWrapper = tools.getEnabledTool(file);
     }

@@ -80,7 +80,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
   }
 
   @Nullable
-  public static MergeModuleStatementsFix createFix(@Nullable PsiElement statement) {
+  public static MergeModuleStatementsFix<?> createFix(@Nullable PsiElement statement) {
     if (statement instanceof PsiPackageAccessibilityStatement) {
       return MergePackageAccessibilityStatementsFix.createFix((PsiPackageAccessibilityStatement)statement);
     }

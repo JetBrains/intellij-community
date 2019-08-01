@@ -113,9 +113,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         convert(entryPointsElement, myPersistentEntryPoints);
       }
       else {
-        List content = entryPointsElement.getChildren();
-        for (final Object aContent : content) {
-          Element entryElement = (Element)aContent;
+        List<Element> content = entryPointsElement.getChildren();
+        for (final Element entryElement : content) {
           if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
             SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(entryElement);
             myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
@@ -432,9 +431,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   static void convert(Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
-    List content = element.getChildren();
-    for (final Object aContent : content) {
-      Element entryElement = (Element)aContent;
+    List<Element> content = element.getChildren();
+    for (final Element entryElement : content) {
       if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
         String fqName = entryElement.getAttributeValue(SmartRefElementPointerImpl.FQNAME_ATTR);
         final String type = entryElement.getAttributeValue(SmartRefElementPointerImpl.TYPE_ATTR);
