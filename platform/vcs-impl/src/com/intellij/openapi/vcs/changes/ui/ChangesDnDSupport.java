@@ -101,7 +101,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     aEvent.setDropPossible(false, "");
 
     Object attached = aEvent.getAttachedObject();
-    ChangesBrowserNode dropNode = getDropRootNode(myTree, aEvent);
+    ChangesBrowserNode<?> dropNode = getDropRootNode(myTree, aEvent);
 
     if (attached instanceof ChangeListDragBean) {
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
@@ -123,9 +123,9 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     return false;
   }
 
-  private void highlightDropNode(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode dropNode) {
+  private void highlightDropNode(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode<?> dropNode) {
     final Rectangle tableCellRect = myTree.getPathBounds(new TreePath(dropNode.getPath()));
-    if (fitsInBounds(tableCellRect)) {
+    if (tableCellRect != null && fitsInBounds(tableCellRect)) {
       aEvent.setHighlighting(new RelativeRectangle(myTree, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     }
   }
@@ -138,7 +138,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     }
     else if (attached instanceof ChangeListDragBean) {
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      final ChangesBrowserNode changesBrowserNode = dragBean.getTargetNode();
+      final ChangesBrowserNode<?> changesBrowserNode = dragBean.getTargetNode();
       if (changesBrowserNode != null) {
         changesBrowserNode.acceptDrop(myChangeListManager, dragBean);
       }
@@ -166,10 +166,10 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
   private int getSelectionCount() {
     final TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
     int count = 0;
-    final List<ChangesBrowserNode> nodes = new ArrayList<>();
+    final List<ChangesBrowserNode<?>> nodes = new ArrayList<>();
 
     for (final TreePath path : paths) {
-      final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+      final ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)path.getLastPathComponent();
       if (!node.isLeaf()) {
         nodes.add(node);
         count += node.getFileCount();
@@ -177,9 +177,9 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     }
 
     for (TreePath path : paths) {
-      final ChangesBrowserNode element = (ChangesBrowserNode)path.getLastPathComponent();
+      final ChangesBrowserNode<?> element = (ChangesBrowserNode<?>)path.getLastPathComponent();
       boolean child = false;
-      for (final ChangesBrowserNode node : nodes) {
+      for (final ChangesBrowserNode<?> node : nodes) {
         if (node.isNodeChild(element)) {
           child = true;
           break;

@@ -474,14 +474,14 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Nullable
-  public static ChangesBrowserNode getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
+  public static ChangesBrowserNode<?> getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
     RelativePoint dropPoint = event.getRelativePoint();
     Point onTree = dropPoint.getPoint(tree);
     final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
 
     if (dropPath == null) return null;
 
-    ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
+    ChangesBrowserNode<?> dropNode = (ChangesBrowserNode<?>)dropPath.getLastPathComponent();
     while (!dropNode.getParent().isRoot()) {
       dropNode = dropNode.getParent();
     }

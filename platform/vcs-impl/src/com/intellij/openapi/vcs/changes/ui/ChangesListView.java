@@ -86,9 +86,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    ChangesBrowserNode oldRoot = getRoot();
+    ChangesBrowserNode<?> oldRoot = getRoot();
     setModel(newModel);
-    ChangesBrowserNode newRoot = getRoot();
+    ChangesBrowserNode<?> newRoot = getRoot();
     state.applyTo(this, newRoot);
 
     initTreeStateIfNeeded(oldRoot, newRoot);
@@ -99,8 +99,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     // currently not used in ChangesListView code flow
   }
 
-  private void initTreeStateIfNeeded(ChangesBrowserNode oldRoot, ChangesBrowserNode newRoot) {
-    ChangesBrowserNode defaultListNode = getDefaultChangelistNode(newRoot);
+  private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {
+    ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
     if (defaultListNode == null) return;
 
     if (getSelectionCount() == 0) {
@@ -116,9 +116,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @Nullable
-  private static ChangesBrowserNode getDefaultChangelistNode(@NotNull ChangesBrowserNode root) {
+  private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
     //noinspection unchecked
-    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.<ChangesBrowserNode<?>>iterate(root.children());
     return ContainerUtil.find(nodes, node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
@@ -198,7 +198,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NotNull
   public Stream<FilePath> getUnversionedFiles() {
     //noinspection unchecked
-    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    Enumeration<ChangesBrowserNode<?>> nodes = getRoot().children();
     ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
                                                                          ChangesBrowserUnversionedFilesNode.class);
     if (node == null) return Stream.empty();
@@ -287,7 +287,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     boolean result = true;
 
     if (tag != null) {
-      result = path.getPathCount() > 1 && ((ChangesBrowserNode)path.getPathComponent(1)).getUserObject() == tag;
+      result = path.getPathCount() > 1 && ((ChangesBrowserNode<?>)path.getPathComponent(1)).getUserObject() == tag;
     }
 
     return result;
