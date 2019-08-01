@@ -60,6 +60,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     mySegment = segment;
     myId = id;
     myParent = parent;
+    if (id <= 0) {
+      throw new IllegalArgumentException("id must be positive but got: "+id);
+    }
   }
 
   // for NULL_FILE
