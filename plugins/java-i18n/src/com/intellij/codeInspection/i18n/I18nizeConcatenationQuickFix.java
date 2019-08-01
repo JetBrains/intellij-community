@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,6 +7,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,6 +36,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @Override
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    assert concatenation != null;
     PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
     if (literalExpression == null) return null;
     return createDialog(project, psiFile, literalExpression);
@@ -66,6 +54,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
                                            @Nullable PsiLiteralExpression literalExpression,
                                            String i18nizedText) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    assert concatenation != null;
     PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
     return concatenation.replace(expression);
   }
@@ -77,16 +66,16 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   @Override
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
-    StringBuilder formatString = new StringBuilder();
+    String formatString = "";
     final List<PsiExpression> args = new ArrayList<>();
     try {
-      PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
+      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildFormatString(concatenation, false, args));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
 
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString.toString(), null, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, null, true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {

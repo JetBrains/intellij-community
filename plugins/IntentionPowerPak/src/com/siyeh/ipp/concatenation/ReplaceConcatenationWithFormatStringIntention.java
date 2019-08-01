@@ -1,20 +1,7 @@
-/*
- * Copyright 2008-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
@@ -45,9 +32,8 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
     }
-    final StringBuilder formatString = new StringBuilder();
     final List<PsiExpression> formatParameters = new ArrayList<>();
-    PsiConcatenationUtil.buildFormatString(expression, formatString, formatParameters, true);
+    final String formatString = PsiConcatenationUtil.buildFormatString(expression, true, formatParameters);
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
@@ -96,7 +82,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     }
     final String qualifiedName = containingClass.getQualifiedName();
     if (!"java.io.PrintStream".equals(qualifiedName) &&
-        !"java.io.Printwriter".equals(qualifiedName)) {
+        !"java.io.PrintWriter".equals(qualifiedName)) {
       return false;
     }
     CommentTracker commentTracker = new CommentTracker();
@@ -106,9 +92,9 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       newExpression.append(commentTracker.text(qualifier)).append('.');
     }
     newExpression.append("printf(");
-    appendFormatString(expression, formatString, insertNewline, newExpression);
+    appendFormatString(expression, formatString.toString(), insertNewline, newExpression);
     for (PsiExpression formatParameter : formatParameters) {
-      newExpression.append(", ").append(commentTracker.text(formatParameter));
+      newExpression.append(",").append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
     PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
@@ -116,17 +102,26 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
   }
 
   private static void appendFormatString(PsiPolyadicExpression expression,
-                                         CharSequence formatString,
+                                         String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
     boolean textBlocks = Arrays.stream(expression.getOperands())
       .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
-    newExpression.append(textBlocks ? "\"\"\"\n" : '\"');
-    newExpression.append(formatString);
-    if (insertNewline) {
-      newExpression.append("%n");
+    if (textBlocks) {
+      newExpression.append("\"\"\"\n");
+      newExpression.append(StringUtil.escapeTextBlockCharacters(formatString));
+      if (insertNewline) {
+        newExpression.append('\n');
+      }
+      newExpression.append("\"\"\"");
+    } else {
+      newExpression.append('\"');
+      newExpression.append(StringUtil.escapeStringCharacters(formatString));
+      if (insertNewline) {
+        newExpression.append("%n");
+      }
+      newExpression.append('\"');
     }
-    newExpression.append(textBlocks ? "\"\"\"" : '\"');
   }
 }

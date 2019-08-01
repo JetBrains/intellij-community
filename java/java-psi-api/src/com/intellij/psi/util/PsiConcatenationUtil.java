@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
@@ -28,17 +13,29 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class PsiConcatenationUtil {
 
+  /**
+   * @param formatParameters  output parameter, will contain the format parameters found in the concatenation
+   * @return unescaped (!) format string produced from the concatenation
+   */
+  public static String buildFormatString(PsiExpression concatenation, boolean printfFormat,
+                                         List<? super PsiExpression> formatParameters) {
+    final StringBuilder result = new StringBuilder();
+    buildFormatString(concatenation, result, formatParameters, printfFormat);
+    return result.toString();
+  }
+
+  // externally used
   public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
                                        List<? super PsiExpression> formatParameters, boolean printfFormat) {
     if (expression instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
-      TextRange range = ElementManipulators.getValueTextRange(expression);
-      String formatText = range.substring(literalExpression.getText());
+      final String text = String.valueOf(literalExpression.getValue());
+      String formatText;
       if (printfFormat) {
-        formatText = formatText.replace("%", "%%").replace("\\'", "'");
+        formatText = text.replace("%", "%%").replace("\\'", "'");
       }
       else {
-        formatText = formatText.replace("'", "''").replaceAll("((\\{|})+)", "'$1'");
+        formatText = text.replace("'", "''").replaceAll("([{}]+)", "'$1'");
       }
       formatString.append(formatText);
     } else if (expression instanceof PsiPolyadicExpression) {
@@ -46,18 +43,21 @@ public class PsiConcatenationUtil {
       if (type != null && type.equalsToText(JAVA_LANG_STRING)) {
         final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression) expression;
         PsiExpression[] operands = binaryExpression.getOperands();
-        PsiType left = operands[0].getType();
-        boolean stringStarted = left != null && left.equalsToText(JAVA_LANG_STRING);
+        PsiType first = operands[0].getType();
+        PsiType second = operands[1].getType();
+        boolean stringStarted = first != null && first.equalsToText(JAVA_LANG_STRING) ||
+                                second != null && second.equalsToText(JAVA_LANG_STRING);
         if (stringStarted) {
           buildFormatString(operands[0], formatString, formatParameters, printfFormat);
         }
         for (int i = 1; i < operands.length; i++) {
           PsiExpression op = operands[i];
           PsiType optype = op.getType();
-          PsiType r = TypeConversionUtil.calcTypeForBinaryExpression(left, optype, binaryExpression.getOperationTokenType(), true);
+          PsiType r = TypeConversionUtil.calcTypeForBinaryExpression(first, optype, binaryExpression.getOperationTokenType(), true);
           if (r != null && r.equalsToText(JAVA_LANG_STRING) && !stringStarted) {
             stringStarted = true;
             PsiElement element = binaryExpression.getTokenBeforeOperand(op);
+            assert element != null;
             if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
             String text = binaryExpression.getText().substring(0, element.getStartOffsetInParent());
             PsiExpression subExpression = JavaPsiFacade.getElementFactory(binaryExpression.getProject())
@@ -72,7 +72,7 @@ public class PsiConcatenationUtil {
               addFormatParameter(op, formatString, formatParameters, printfFormat);
             }
           }
-          left = r;
+          first = r;
         }
       }
       else {
