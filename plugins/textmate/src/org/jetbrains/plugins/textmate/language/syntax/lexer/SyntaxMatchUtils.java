@@ -210,7 +210,7 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   public static String selectorsToScope(@NotNull List<CharSequence> selectors) {
-    return MY_SCOPES_INTERNER.computeIfAbsent(selectors, MY_OPEN_TAGS_JOINER::join);
+    return MY_SCOPES_INTERNER.computeIfAbsent(new ArrayList<>(selectors), MY_OPEN_TAGS_JOINER::join);
   }
 
   private static class MatchKey {
