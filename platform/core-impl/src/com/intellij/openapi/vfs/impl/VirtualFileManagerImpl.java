@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
