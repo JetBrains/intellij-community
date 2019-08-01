@@ -15,6 +15,8 @@ import java.util.Collection;
  * Implementations should be registered at {@code com.intellij.searcher} extension point.
  * <p/>
  * It's highly advised to use {@link SearchService} methods to build additional queries.
+ *
+ * @see SymbolReferenceSearcher
  */
 public interface Searcher<P extends SearchParameters<R>, R> {
 
