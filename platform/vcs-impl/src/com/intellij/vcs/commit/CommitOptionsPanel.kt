@@ -16,7 +16,7 @@ import kotlin.collections.set
 
 class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
-  private val vcsOptionsPanel = simplePanel()
+  private val vcsOptionsPanel = verticalPanel()
   private val beforeOptionsPanel = simplePanel()
   private val afterOptionsPanel = simplePanel()
 
@@ -96,6 +96,8 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
   }
 
   companion object {
+    private fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
+
     fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
     }
