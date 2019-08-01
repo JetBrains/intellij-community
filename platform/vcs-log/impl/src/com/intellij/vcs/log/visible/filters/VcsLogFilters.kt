@@ -136,7 +136,6 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromDates(after: Date?, before: Date?): VcsLogDateFilter {
-    @Suppress("DEPRECATION")
     return VcsLogDateFilterImpl(after, before)
   }
 
