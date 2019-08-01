@@ -41,8 +41,11 @@ public class VSCBundle extends Bundle {
 
   @Override
   public Collection<String> getExtensions(File file, Plist plist) {
+    HashSet<String> result = new HashSet<>(super.getExtensions(file, plist));
     loadExtensions();
-    return grammarToExtensions.getOrDefault(FileUtil.toSystemIndependentName(Objects.requireNonNull(FileUtil.getRelativePath(bundleFile, file))), emptyList());
+    result.addAll(grammarToExtensions.getOrDefault(FileUtil.toSystemIndependentName(
+      Objects.requireNonNull(FileUtil.getRelativePath(bundleFile, file))), emptyList()));
+    return result;
   }
 
   private void loadExtensions() {
