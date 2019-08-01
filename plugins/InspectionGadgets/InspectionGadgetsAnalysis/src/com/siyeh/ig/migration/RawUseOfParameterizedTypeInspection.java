@@ -37,7 +37,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreTypeCasts = false;
 
-  @SuppressWarnings("PublicField") public boolean ignoreUncompilable = false;
+  @SuppressWarnings("PublicField") public boolean ignoreUncompilable = true;
 
   @SuppressWarnings("PublicField") public boolean ignoreParametersOfOverridingMethods = false;
 
