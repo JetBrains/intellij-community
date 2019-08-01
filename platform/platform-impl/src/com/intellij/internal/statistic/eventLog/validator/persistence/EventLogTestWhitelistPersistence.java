@@ -86,7 +86,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   }
 
   @NotNull
-  public static WLGroups loadTestWhitelist(@NotNull EventLogTestWhitelistPersistence persistence) {
+  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
     final String existing = persistence.getCachedWhitelist();
     if (StringUtil.isNotEmpty(existing)) {
       final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
