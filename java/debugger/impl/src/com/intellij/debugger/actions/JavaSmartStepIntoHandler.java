@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
@@ -366,7 +367,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                 .select(MethodSmartStepTarget.class)
                 .filter(target -> !target.needsBreakpointRequest())
                 .toList();
-            visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf, ordinal) -> {
+            visitLinesInstructions(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf, ordinal) -> {
               if (name.startsWith("access$")) { // bridge method
                 ReferenceType cls = ContainerUtil.getFirstItem(virtualMachine.classesByName(owner));
                 if (cls != null) {
@@ -397,28 +398,18 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
 
           try {
-            List<MethodSmartStepTarget> removed = new ArrayList<>();
-
             // remove already executed
-            JumpsAndInsnVisitor visitor = new JumpsAndInsnVisitor(targets, debugProcess, removed);
-            visitLinesMethods(frameProxy.location(), false, lines, visitor);
-            int lastJump = visitor.myJumpCounter;
+            JumpsAndInsnVisitor visitor = new JumpsAndInsnVisitor(targets, debugProcess);
+            visitLinesInstructions(frameProxy.location(), false, lines, visitor);
 
             if (!smart) {
               // remove after jumps
-              visitor = new JumpsAndInsnVisitor(targets, debugProcess, removed) {
-                @Override
-                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal) {
-                  if (myJumpCounter > lastJump) {
-                    super.visitMethodInsn(opcode, owner, name, desc, itf, ordinal);
-                  }
-                }
-              };
-              visitLinesMethods(frameProxy.location(), true, lines, visitor);
+              visitor.setJumpsToIgnore(visitor.getJumpCounter() + 1);
+              visitLinesInstructions(frameProxy.location(), true, lines, visitor);
             }
 
             // fix ordinals
-            for (MethodSmartStepTarget target : removed) {
+            for (MethodSmartStepTarget target : visitor.getRemoved()) {
               existingMethodCalls(targets, target.getMethod())
                 .forEach(t -> {
                   int ordinal = t.getOrdinal();
@@ -459,9 +450,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private interface MethodInsnVisitor {
     void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal);
     default void visitJumpInsn(int opcode, Label label) {}
+    default void visitCode() {}
   }
 
-  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+  private static void visitLinesInstructions(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
     TObjectIntHashMap<String> myCounter = new TObjectIntHashMap<>();
 
     MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
@@ -472,6 +464,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         if (myLineMatch) {
           visitor.visitJumpInsn(opcode, label);
         }
+      }
+
+      @Override
+      public void visitCode() {
+        visitor.visitCode();
       }
 
       @Override
@@ -501,34 +498,52 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static class JumpsAndInsnVisitor implements MethodInsnVisitor {
     private final List<SmartStepTarget> myTargets;
     private final DebugProcessImpl myDebugProcess;
-    private final List<MethodSmartStepTarget> myToRemove;
-    int myJumpCounter;
+    private final List<MethodSmartStepTarget> myRemoved = new SmartList<>();
+    private int myJumpCounter;
+    private int myJumpsToIgnore;
 
-    JumpsAndInsnVisitor(List<SmartStepTarget> targets, DebugProcessImpl debugProcess, List<MethodSmartStepTarget> removed) {
+    JumpsAndInsnVisitor(List<SmartStepTarget> targets, DebugProcessImpl debugProcess) {
       myTargets = targets;
       myDebugProcess = debugProcess;
-      myToRemove = removed;
-      myJumpCounter = 0;
     }
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal) {
-      Iterator<SmartStepTarget> iterator = myTargets.iterator();
-      while (iterator.hasNext()) {
-        SmartStepTarget e = iterator.next();
-        if (e instanceof MethodSmartStepTarget &&
-            DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(), owner.replace("/", "."), name, desc, myDebugProcess) &&
-            ((MethodSmartStepTarget)e).getOrdinal() == ordinal) {
-          iterator.remove();
-          myToRemove.add((MethodSmartStepTarget)e);
-          break;
+      if (myJumpCounter >= myJumpsToIgnore) {
+        Iterator<SmartStepTarget> iterator = myTargets.iterator();
+        while (iterator.hasNext()) {
+          SmartStepTarget e = iterator.next();
+          if (e instanceof MethodSmartStepTarget &&
+              DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(), owner.replace("/", "."), name, desc, myDebugProcess) &&
+              ((MethodSmartStepTarget)e).getOrdinal() == ordinal) {
+            iterator.remove();
+            myRemoved.add((MethodSmartStepTarget)e);
+            break;
+          }
         }
       }
     }
 
     @Override
+    public void visitCode() {
+      myJumpCounter = 0;
+    }
+
+    @Override
     public void visitJumpInsn(int opcode, Label label) {
       myJumpCounter++;
+    }
+
+    int getJumpCounter() {
+      return myJumpCounter;
+    }
+
+    void setJumpsToIgnore(int jumpsToIgnore) {
+      myJumpsToIgnore = jumpsToIgnore;
+    }
+
+    List<MethodSmartStepTarget> getRemoved() {
+      return myRemoved;
     }
   }
 }
