@@ -69,9 +69,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public final class IdeEventQueue extends EventQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
-  private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
-  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
+  private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
+  private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".typeahead");
+  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".runnables");
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
@@ -1023,8 +1023,8 @@ public final class IdeEventQueue extends EventQueue {
     public void run() {
       myRunnable.run();
       synchronized (myLock) {
-        if (myIdleListeners.contains(myRunnable)) // do not reschedule if not interested anymore
-        {
+        // do not reschedule if not interested anymore
+        if (myIdleListeners.contains(myRunnable)) {
           myIdleRequestsAlarm.addRequest(this, myTimeout, ModalityState.NON_MODAL);
         }
       }

@@ -43,7 +43,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   @Nullable
   public VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
-    return entry.getFileSystem() != this ? null : VfsUtil.getRootFile(entry);
+    return entry.getFileSystem() != this ? null : VfsUtilCore.getRootFile(entry);
   }
 
   /**
@@ -126,7 +126,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   protected String getRelativePath(@NotNull VirtualFile file) {
     String path = file.getPath();
     String relativePath = path.substring(extractRootPath(path).length());
-    return StringUtil.startsWithChar(relativePath, '/') ? relativePath.substring(1) : relativePath;
+    return StringUtil.trimLeading(relativePath, '/');
   }
 
   @Nullable
@@ -146,9 +146,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     if (file.getParent() == null) {
       return getLocalByEntry(file) != null;
     }
-    else {
-      return getAttributes(file) != null;
-    }
+    return getAttributes(file) != null;
   }
 
   @Override
