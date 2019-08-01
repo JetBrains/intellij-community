@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -206,10 +207,8 @@ class FilePointerPartNode {
     if (fileAndUrl != null && fileAndUrl.second != null) {
       String url = fileAndUrl.second;
       if (!endsWith(url, part)) {
-        if (!part.toString().contains("~")) {
-          // Do not trigger in case of DOS path, e.g. "~2/MICROS~1/2017/PROFES~1/DIASDK~1/include"
-          assert false: "part is: '" + part + "' but url is: '" + url + "'";
-        }
+        // Do not fail if it's the WIndows relative short path, e.g. "~2/MICROS~1/2017/PROFES~1/DIASDK~1/include".
+        assert FileUtil.containsWindowsShortName(part.toString()) : "part is: '" + part + "' but url is: '" + url + "'";
       }
     }
     boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
