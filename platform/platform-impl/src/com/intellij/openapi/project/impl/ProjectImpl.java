@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
+import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -180,8 +181,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   @Override
-  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getProjectServices();
+  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+    return pluginDescriptor.getProject();
   }
 
   @Nullable

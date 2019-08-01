@@ -105,11 +105,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       registerServices(plugin);
     }
     myComponentConfigCount = componentConfigCount;
-    Level level = DefaultPicoContainer.getActivityLevel(getPicoContainer());
-    if (level == Level.APPLICATION) {
+
+    // app - phase must be set before getMessageBus()
+    if (getPicoContainer().getParent() == null) {
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED);
     }
-    getMessageBus(); //register message bus in pico container
+
+    //register message bus in pico container
+    getMessageBus();
   }
 
   protected final void createComponents(@Nullable ProgressIndicator indicator) {

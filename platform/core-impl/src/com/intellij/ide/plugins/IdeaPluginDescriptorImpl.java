@@ -106,6 +106,24 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myBundled = bundled;
   }
 
+  @NotNull
+  @ApiStatus.Internal
+  public ContainerDescriptor getApp() {
+    return myAppContainerDescriptor;
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public ContainerDescriptor getProject() {
+    return myProjectContainerDescriptor;
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public ContainerDescriptor getModule() {
+    return myModuleContainerDescriptor;
+  }
+
   @Override
   public File getPath() {
     return myPath;
@@ -377,6 +395,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     descriptor.serviceImplementation = element.getAttributeValue("serviceImplementation");
     descriptor.testServiceImplementation = element.getAttributeValue("testServiceImplementation");
     descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
+    descriptor.preload = Boolean.parseBoolean(element.getAttributeValue("preload"));
     descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
     return descriptor;
   }
@@ -636,26 +655,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @NotNull
   public List<ComponentConfig> getModuleComponents() {
     return ContainerUtil.notNullize(myModuleContainerDescriptor.components);
-  }
-
-  @NotNull
-  public List<ServiceDescriptor> getAppServices() {
-    return ContainerUtil.notNullize(myAppContainerDescriptor.services);
-  }
-
-  @NotNull
-  public List<ListenerDescriptor> getListeners() {
-    return ContainerUtil.notNullize(myAppContainerDescriptor.listeners);
-  }
-
-  @NotNull
-  public List<ServiceDescriptor> getProjectServices() {
-    return ContainerUtil.notNullize(myProjectContainerDescriptor.services);
-  }
-
-  @NotNull
-  public List<ServiceDescriptor> getModuleServices() {
-    return ContainerUtil.notNullize(myModuleContainerDescriptor.services);
   }
 
   @Override

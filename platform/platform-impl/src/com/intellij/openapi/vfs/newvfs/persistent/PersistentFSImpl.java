@@ -31,10 +31,12 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +52,7 @@ import java.util.function.Function;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements Disposable {
+public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
@@ -65,10 +67,10 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
   private final BulkFileListener myPublisher;
   private final VfsData myVfsData = new VfsData();
 
-  public PersistentFSImpl(@NotNull MessageBus bus) {
+  public PersistentFSImpl() {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
-    myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+    myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
 
     AsyncEventSupport.startListening();
 

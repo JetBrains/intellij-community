@@ -12,6 +12,10 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
+    <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>
+    <applicationService serviceInterface="com.intellij.history.LocalHistory"
+                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
@@ -26,6 +30,8 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.util.registry.RegistryState" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>

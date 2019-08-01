@@ -10,9 +10,11 @@ import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -21,7 +23,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.*;
@@ -175,7 +175,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
     boolean isHeadlessMode = isHeadlessEnvironment();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
-      List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
+      List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getApp().getListeners();
       if (!listeners.isEmpty()) {
         for (ListenerDescriptor listener : listeners) {
           if (isUnitTestMode && !listener.activeInTestMode) {
@@ -383,7 +383,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void load(@Nullable final String configPath) {
     registerComponents(PluginManagerCore.getLoadedPlugins());
-    load(configPath, null);
+    load(configPath, null, false);
   }
 
   @Override
@@ -391,29 +391,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     super.registerComponents(plugins);
   }
 
-  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {
+  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator, boolean isServicePreloaded) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      Activity beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded");
-      String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-      for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getIterable()) {
-        try {
-          listener.beforeApplicationLoaded(this, effectiveConfigPath);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+      if (!isServicePreloaded) {
+        IdeaApplication.initConfigurationStore(this, configPath);
+
+        MutablePicoContainer picoContainer = getPicoContainer();
+        for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
+          for (ServiceDescriptor service : ((IdeaPluginDescriptorImpl)plugin).getApp().getServices()) {
+            if (service.preload) {
+              picoContainer.getComponentInstance(service.getInterface());
+            }
+          }
         }
       }
-      Activity initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store");
-
-      // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-      ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
-      LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
-
-      initStoreActivity.end();
 
       if (indicator == null) {
         // no splash, no need to to use progress manager
@@ -748,7 +740,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       doExit(force, exitConfirmed, restart, elevate, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart, elevate, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> {
+        doExit(force, exitConfirmed, restart, elevate, beforeRestart);
+      }, ModalityState.NON_MODAL);
     }
   }
 
@@ -1424,8 +1418,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
+  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+    return pluginDescriptor.getApp();
   }
 
   @Override

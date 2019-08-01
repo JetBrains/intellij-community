@@ -18,16 +18,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
-* @author Irina.Chernushina
-*/
-public class IdeaWideProxySelector extends ProxySelector {
+public final class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
 
-  public IdeaWideProxySelector(HttpConfigurable configurable) {
+  public IdeaWideProxySelector(@NotNull HttpConfigurable configurable) {
     myHttpConfigurable = configurable;
   }
 

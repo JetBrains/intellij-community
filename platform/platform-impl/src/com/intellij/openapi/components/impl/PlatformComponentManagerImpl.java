@@ -2,7 +2,9 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -13,8 +15,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl {
   private boolean myHandlingInitComponentError;
@@ -55,9 +55,9 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
 
   @Override
   protected final void registerServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    ServiceManagerImpl.registerServices(getServices(pluginDescriptor), pluginDescriptor, this);
+    ServiceManagerImpl.registerServices(getContainerDescriptor((IdeaPluginDescriptorImpl)pluginDescriptor).getServices(), pluginDescriptor, this);
   }
 
   @NotNull
-  protected abstract List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor);
+  protected abstract ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor);
 }

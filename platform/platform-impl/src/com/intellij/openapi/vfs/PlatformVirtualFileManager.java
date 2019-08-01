@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
+public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull private final ManagingFS myManagingFS;
 
   public PlatformVirtualFileManager() {

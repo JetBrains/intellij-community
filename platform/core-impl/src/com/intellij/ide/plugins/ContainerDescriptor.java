@@ -6,13 +6,15 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-final class ContainerDescriptor {
+@ApiStatus.Internal
+public final class ContainerDescriptor {
   @Nullable
   List<ServiceDescriptor> services;
   @Nullable
@@ -22,7 +24,22 @@ final class ContainerDescriptor {
   @Nullable
   List<Element> extensionsPoints;
 
-  public void addService(@NotNull ServiceDescriptor serviceDescriptor) {
+  @NotNull
+  public List<ServiceDescriptor> getServices() {
+    return ContainerUtil.notNullize(services);
+  }
+
+  @NotNull
+  public List<ComponentConfig> getComponents() {
+    return ContainerUtil.notNullize(components);
+  }
+
+  @NotNull
+  public List<ListenerDescriptor> getListeners() {
+    return ContainerUtil.notNullize(listeners);
+  }
+
+  void addService(@NotNull ServiceDescriptor serviceDescriptor) {
     if (services == null) {
       services = new ArrayList<>();
     }
@@ -30,7 +47,7 @@ final class ContainerDescriptor {
   }
 
   @NotNull
-  public List<ComponentConfig> getComponentListToAdd(int size) {
+  List<ComponentConfig> getComponentListToAdd(int size) {
     List<ComponentConfig> result = components;
     if (result == null) {
       result = new ArrayList<>(size);
@@ -42,7 +59,7 @@ final class ContainerDescriptor {
     return result;
   }
 
-  public void merge(@NotNull ContainerDescriptor another) {
+  void merge(@NotNull ContainerDescriptor another) {
     components = concatOrNull(components, another.components);
     services = concatOrNull(services, another.services);
     extensionsPoints = concatOrNull(extensionsPoints, another.extensionsPoints);

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +103,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<>(null);
 
   public static HttpConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(HttpConfigurable.class);
+    return ServiceManager.getService(HttpConfigurable.class);
   }
 
   public static boolean editConfigurable(@Nullable JComponent parent) {
@@ -123,31 +124,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void initializeComponent() {
-    final HttpConfigurable currentState = getState();
-    if (currentState != null) {
-      final Element serialized = XmlSerializer.serialize(currentState);
-      if (serialized == null) {
-        // all settings are defaults
-        // trying user's proxy configuration entered while obtaining the license
-        final SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
-        if (cfg != null) {
-          SharedProxyConfig.clear();
-          if (cfg.host != null) {
-            USE_HTTP_PROXY = true;
-            PROXY_HOST = cfg.host;
-            PROXY_PORT = cfg.port;
-            if (cfg.login != null) {
-              setPlainProxyPassword(new String(cfg.password));
-              storeSecure("proxy.login", cfg.login);
-              PROXY_AUTHENTICATION = true;
-              KEEP_PROXY_PASSWORD = true;
-            }
-          }
-        }
-      }
+  public void noStateLoaded() {
+    // all settings are defaults
+    // trying user's proxy configuration entered while obtaining the license
+    SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
+    if (cfg == null) {
+      return;
     }
 
+    SharedProxyConfig.clear();
+    if (cfg.host == null) {
+      return;
+    }
+
+    USE_HTTP_PROXY = true;
+    PROXY_HOST = cfg.host;
+    PROXY_PORT = cfg.port;
+    if (cfg.login != null) {
+      setPlainProxyPassword(new String(cfg.password));
+      storeSecure("proxy.login", cfg.login);
+      PROXY_AUTHENTICATION = true;
+      KEEP_PROXY_PASSWORD = true;
+    }
+  }
+
+  @Override
+  public void initializeComponent() {
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);

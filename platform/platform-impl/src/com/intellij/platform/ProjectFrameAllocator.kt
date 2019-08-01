@@ -40,16 +40,15 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
     var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
       val frame = createFrame(file)
-      completed = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(
-          {
-            ApplicationManager.getApplication().invokeLater {
-              runActivity("init frame") {
-                initFrame(frame)
-              }
+      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        {
+          ApplicationManager.getApplication().invokeLater {
+            runActivity("init frame") {
+              initFrame(frame)
             }
-            task.run()
-          }, "Loading Project...", true, null, frame.component)
+          }
+          task.run()
+        }, "Loading Project...", true, null, frame.component)
     }
     return completed
   }

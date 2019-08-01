@@ -3,6 +3,9 @@ package com.intellij.openapi.vfs;
 
 import java.util.EventListener;
 
+/**
+ * Message bus cannot be used because before / after events are not supported - order of events maybe changed by message bus.
+ */
 public interface VirtualFileManagerListener extends EventListener {
   default void beforeRefreshStart(boolean asynchronous) {
   }

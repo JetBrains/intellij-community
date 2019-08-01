@@ -34,8 +34,6 @@ public final class StartUpMeasurer {
 
     public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";
 
-    public static final String WAIT_PLUGIN_INIT = "wait plugin initialization";
-
     // actually, now it is also registers services, not only components,but it doesn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";

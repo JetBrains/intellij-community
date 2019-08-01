@@ -65,13 +65,13 @@ internal fun writeServiceStats(writer: JsonGenerator) {
 
   val plugins = PluginManagerCore.getLoadedPlugins()
   for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
-    service.project += plugin.projectServices.size
-    service.module += plugin.moduleServices.size
+    service.app += (plugin as IdeaPluginDescriptorImpl).app.services.size
+    service.project += plugin.project.services.size
+    service.module += plugin.module.services.size
 
-    component.app += plugin.appComponents.size
-    component.project += plugin.projectComponents.size
-    component.module += plugin.moduleComponents.size
+    component.app += plugin.app.components.size
+    component.project += plugin.project.components.size
+    component.module += plugin.module.components.size
   }
 
   writer.obj("stats") {

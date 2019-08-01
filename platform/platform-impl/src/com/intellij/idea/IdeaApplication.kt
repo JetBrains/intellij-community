@@ -10,21 +10,21 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.MainRunner
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -78,14 +78,30 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
 
   starter.premain(args)
 
-  val futures = mutableListOf<Future<*>>()
-  futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app, initAppActivity))
+  // this code is here for one simple reason - here we have application,
+  // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
+  // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
+  // and do not place any time-consuming code in between (e.g. showLicenseeInfoOnSplash)
+  var future = registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app, initAppActivity)
 
   if (!headless) {
-    // todo investigate why in test mode dummy icon manager is not suitable
-    IconLoader.activate()
-    IconLoader.setStrictGlobally(app.isInternal)
+    initAppActivity.runChild("icon loader activation") {
+      // todo investigate why in test mode dummy icon manager is not suitable
+      IconLoader.activate()
+      IconLoader.setStrictGlobally(app.isInternal)
+    }
+  }
 
+  // preload services only after icon activation
+  future = future.thenCompose<Void?> {
+    val preloadServiceActivity = StartUpMeasurer.start("preload services")
+    preloadServices(app)
+      .thenRun(Runnable {
+        preloadServiceActivity.end()
+      })
+  }
+
+  if (!headless) {
     if (SystemInfo.isMac) {
       initAppActivity.runChild("mac app init") {
         MacOSApplicationProvider.initApplication()
@@ -100,7 +116,10 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
       }
     }
 
-    SplashManager.showLicenseeInfoOnSplash(LOG)
+    // disabled due to https://youtrack.jetbrains.com/issue/JBR-1399
+    //initAppActivity.runChild("showLicenseeInfoOnSplash") {
+    //  SplashManager.showLicenseeInfoOnSplash(LOG)
+    //}
 
     AppExecutorUtil.getAppExecutorService().execute {
       AsyncProcessIcon("")
@@ -110,44 +129,42 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
       AllIcons.Ide.Shadow.Top.iconHeight
     }
 
-    //IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
-
+    initAppActivity.runChild("migLayout") {
+      //IDEA-170295
+      PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+    }
     WeakFocusStackManager.getInstance()
   }
 
-  // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
-  val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
-  EventQueue.invokeLater {
-    placeOnEventQueueActivity.end()
-    StartupUtil.installExceptionHandler()
-    initAppActivity.runChild(Phases.WAIT_PLUGIN_INIT) {
-      for (future in futures) {
-        future.get()
+  future.thenRun(Runnable {
+    // this invokeLater() call is needed not only because current thread maybe not EDT, but to place the app starting code on a freshly minted IdeEventQueue instance
+    val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
+    EventQueue.invokeLater {
+      placeOnEventQueueActivity.end()
+      StartupUtil.installExceptionHandler()
+      initAppActivity.end()
+
+      app.load(null, SplashManager.getProgressIndicator(), true)
+      if (!headless) {
+        addActivateAndWindowsCliListeners(app)
+      }
+
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(args)
+      }
+
+      if (PluginManagerCore.isRunningFromSources()) {
+        AppExecutorUtil.getAppExecutorService().execute {
+          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+        }
       }
     }
-    initAppActivity.end()
-
-    app.load(null, SplashManager.getProgressIndicator())
-    if (!headless) {
-      addActivateAndWindowsCliListeners(app)
-    }
-
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-      starter.main(args)
-    }
-
-    if (PluginManagerCore.isRunningFromSources()) {
-      AppExecutorUtil.getAppExecutorService().execute {
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-      }
-    }
-  }
+  })
 }
 
 private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
                                                       app: ApplicationImpl,
-                                                      initAppActivity: Activity): CompletableFuture<Void> {
+                                                      initAppActivity: Activity): CompletableFuture<Void?> {
   return pluginDescriptorsFuture
     .thenCompose { pluginDescriptors ->
       val future = CompletableFuture.runAsync(Runnable {
@@ -166,6 +183,9 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
       initAppActivity.runChild("add message bus listeners") {
         app.registerMessageBusListeners(pluginDescriptors, false)
       }
+
+      // yes, at this moment initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used.
+      IdeaApplication.initConfigurationStore(app, null)
 
       future
     }
@@ -274,6 +294,30 @@ object IdeaApplication {
   @JvmStatic
   fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
     wizardStepProvider = provider
+  }
+
+  @JvmStatic
+  fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
+    val beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded")
+    val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
+    for (listener in ApplicationLoadListener.EP_NAME.iterable) {
+      try {
+        (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+
+    val initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store")
+
+    // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+    app.stateStore.setPath(effectiveConfigPath)
+    LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
+    initStoreActivity.end()
   }
 }
 
@@ -447,4 +491,34 @@ private fun processProgramArguments(args: Array<String>): Array<String> {
     arguments.add(arg)
   }
   return ArrayUtilRt.toStringArray(arguments)
+}
+
+private fun preloadServices(app: ApplicationImpl): CompletableFuture<Void?> {
+  val toPreload = mutableListOf<String>()
+  val picoContainer = app.picoContainer
+  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+    for (service in (plugin as IdeaPluginDescriptorImpl).app.services) {
+      if (service.preload) {
+        toPreload.add(service.getInterface())
+      }
+    }
+  }
+
+  if (toPreload.isEmpty()) {
+    return CompletableFuture.completedFuture(null)
+  }
+
+  val appExecutorService = AppExecutorUtil.getAppExecutorService()
+
+  val maxThreads = Runtime.getRuntime().availableProcessors()
+  val bucketSize = Math.max(toPreload.size / maxThreads, 1)
+  return CompletableFuture.allOf(*Array(Math.min(toPreload.size, maxThreads)) {
+    val startIndex = it * bucketSize
+    val list = toPreload.subList(startIndex, Math.min(startIndex + bucketSize, toPreload.size))
+    CompletableFuture.runAsync(Runnable {
+      for (key in list) {
+        picoContainer.getComponentInstance(key)
+      }
+    }, appExecutorService)
+  })
 }

@@ -27,6 +27,15 @@ public final class ServiceDescriptor {
   @Nullable
   public String configurationSchemaKey;
 
+  /**
+   * Preload service (before component creation). Applicable for application level only.
+   *
+   * Loading order and thread are not guaranteed, service should be decoupled as much as possible.
+   */
+  @Attribute
+  @ApiStatus.Experimental
+  public boolean preload;
+
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();
   }

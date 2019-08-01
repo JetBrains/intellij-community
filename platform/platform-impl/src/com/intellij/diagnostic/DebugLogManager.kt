@@ -2,7 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ContainerUtil
 import org.apache.log4j.Level
@@ -21,7 +21,7 @@ class DebugLogManager {
 
   companion object {
     @JvmStatic
-    fun getInstance(): DebugLogManager = ApplicationManager.getApplication().getComponent(DebugLogManager::class.java)
+    fun getInstance() = service<DebugLogManager>()
   }
 
   init {

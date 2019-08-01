@@ -118,7 +118,7 @@ public final class IdeaTestApplication implements Disposable {
     app.registerComponents(loadedPlugins);
     app.registerMessageBusListeners(loadedPlugins, true);
     RegistryKeyBean.addKeysFromPlugins();
-    app.load(configPath, null);
+    app.load(configPath, null, false);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();

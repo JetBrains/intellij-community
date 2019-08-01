@@ -2,12 +2,6 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
-
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>

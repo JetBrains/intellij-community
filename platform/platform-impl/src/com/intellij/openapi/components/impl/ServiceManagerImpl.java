@@ -5,10 +5,7 @@ import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -71,25 +68,25 @@ public final class ServiceManagerImpl implements Disposable {
   public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
-      List<ServiceDescriptor> serviceDescriptors;
+      ContainerDescriptor containerDescriptor;
       if (componentManager instanceof Application) {
-        serviceDescriptors = pluginDescriptor.getAppServices();
+        containerDescriptor = pluginDescriptor.getApp();
       }
       else if (componentManager instanceof Project) {
-        serviceDescriptors = pluginDescriptor.getProjectServices();
+        containerDescriptor = pluginDescriptor.getProject();
       }
       else {
-        serviceDescriptors = pluginDescriptor.getModuleServices();
+        containerDescriptor = pluginDescriptor.getModule();
       }
 
-      serviceDescriptors.forEach(consumer);
+      containerDescriptor.getServices().forEach(consumer);
     }
   }
 
   @ApiStatus.Internal
   public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, ? super PluginDescriptor> consumer) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
-      for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
+      for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProject().getServices()) {
         consumer.accept(serviceDescriptor, plugin);
       }
     }
