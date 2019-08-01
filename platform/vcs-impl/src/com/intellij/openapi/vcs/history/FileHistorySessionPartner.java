@@ -133,7 +133,6 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
                                                          exception.getMessage(), MessageType.ERROR);
   }
 
-  @Override
   public void beforeRefresh() {
     myLimitHistoryCheck.reset();
   }

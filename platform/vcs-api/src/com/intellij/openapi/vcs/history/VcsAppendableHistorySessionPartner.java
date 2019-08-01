@@ -24,10 +24,4 @@ public interface VcsAppendableHistorySessionPartner {
 
   @Deprecated
   default void finished() {}
-
-  @Deprecated
-  default void beforeRefresh() {}
-
-  @Deprecated
-  default void forceRefresh() {}
 }
