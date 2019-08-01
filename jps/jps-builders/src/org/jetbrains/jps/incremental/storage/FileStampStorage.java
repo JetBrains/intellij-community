@@ -132,21 +132,19 @@ public class FileStampStorage extends AbstractStateStorage<String, FileStampStor
   }
 
   @Override
-  public boolean isDirtyStamp(@NotNull Stamp stamp, File file) throws IOException {
+  public boolean isDirtyStamp(@NotNull Stamp stamp, File file) {
     if (!(stamp instanceof FileStamp)) return true;
     FileStamp filesStamp = (FileStamp) stamp;
     long lastModified = FSOperations.lastModified(file);
-    if (filesStamp.myTimestamp != lastModified) return true;
-    return !Arrays.equals(filesStamp.myBytes, getFileHash(file));
+    return filesStamp.myTimestamp != lastModified;
   }
 
   @Override
-  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) throws IOException {
+  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
     if (!(stamp instanceof FileStamp)) return true;
     FileStamp filesStamp = (FileStamp) stamp;
     if (attrs.isRegularFile()) {
-      if (filesStamp.myTimestamp != attrs.lastModifiedTime().toMillis()) return true;
-      return !Arrays.equals(filesStamp.myBytes, getFileHash(file));
+      return filesStamp.myTimestamp != attrs.lastModifiedTime().toMillis();
     }
     return isDirtyStamp(stamp,file);
   }
