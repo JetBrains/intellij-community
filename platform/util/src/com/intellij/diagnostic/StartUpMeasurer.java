@@ -97,6 +97,14 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
+  /**
+   * Since start in ms.
+   */
+  public static long sinceStart() {
+    ActivityImpl first = items.iterator().next();
+    return (getCurrentTime() - first.getStart()) / 1_000_000;
+  }
+
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
     return new ActivityImpl(name, description, null, null);
