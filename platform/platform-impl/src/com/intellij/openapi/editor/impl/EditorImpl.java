@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -122,7 +121,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
   private static final int MIN_FONT_SIZE = 8;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
+  private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   /**
    * @deprecated Use {@link EditorMouseHoverPopupControl} instead. To be removed in 2020.1.
@@ -4443,7 +4442,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
         UIUtil.drawImage(g, scaledImage, x, y, null);
-        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
+        EdtExecutorService.getScheduledExecutorInstance().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;

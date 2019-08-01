@@ -54,6 +54,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
@@ -585,16 +586,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     if (!changed.isEmpty()) {
-      reparseLater(changed);
+      ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
     }
     if (!crashed.isEmpty()) {
       // do not re-scan locked or invalid files too often to avoid constant disk thrashing if that condition is permanent
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> reparseLater(crashed), 10, TimeUnit.SECONDS);
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> FileContentUtilCore.reparseFiles(crashed), 10, TimeUnit.SECONDS);
     }
-  }
-
-  private static void reparseLater(@NotNull List<? extends VirtualFile> changed) {
-    ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
   }
 
   private boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
