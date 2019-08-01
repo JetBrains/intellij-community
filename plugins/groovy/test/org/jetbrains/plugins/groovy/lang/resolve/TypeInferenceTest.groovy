@@ -1164,4 +1164,21 @@ def test() {
   void 'test spread list of classes'() {
     doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<? extends java.lang.Class>>'
   }
+
+  void 'test reassigned local CS'() {
+    doTest '''
+def aa = "1"
+a<caret>a.toUpperCase()
+if (false) {
+    aa = new Object()
+    aa
+}
+aa
+''', JAVA_LANG_STRING
+
+    myFixture.getDocument(file).getTextLength()
+    def ref = file.findReferenceAt(myFixture.getDocument(file).getTextLength() - 2) as GrReferenceExpression
+    def actual = ref.type
+    assertType(JAVA_LANG_OBJECT, actual)
+  }
 }
