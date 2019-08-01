@@ -1,4 +1,4 @@
-def <T0 extends Integer> Object foo(Predicate<T0> a) {
+Object foo(Predicate<? super Integer> a) {
   a.call(1)
 }
 

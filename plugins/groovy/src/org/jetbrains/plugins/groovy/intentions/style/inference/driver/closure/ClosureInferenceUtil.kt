@@ -6,12 +6,13 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_ABSTRACT_TYPE_METHODS
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_STRING
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.MAP_ENTRY_OR_KEY_VALUE
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.SIMPLE_TYPE
-import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -110,7 +111,9 @@ private fun extractArgumentExpressions(method: GrMethod,
 
 fun collectClosureParamsDependencies(constraintCollector: MutableList<ConstraintFormula>,
                                      closureParameter: ParameterizedClosure,
-                                     usages: List<ReadWriteVariableInstruction>) {
+                                     usages: List<ReadWriteVariableInstruction>,
+                                     dependentTypes: MutableList<PsiTypeParameter>,
+                                     requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
   val parameter = closureParameter.parameter
   val parameterType = parameter.type
   parameter.setType(PsiType.getTypeByName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, parameter.project, parameter.resolveScope))
@@ -142,6 +145,13 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
     val signatures = hint.inferExpectedSignatures(gdkGuard!!, substitutor, options)
     signatures.first().zip(closureParameter.typeParameters).forEach { (type, typeParameter) ->
       constraintCollector.add(TypeConstraint(typeParameter.type(), type, outerMethod))
+      if (type.isTypeParameter()) {
+        dependentTypes.add(typeParameter)
+        dependentTypes.add(type.typeParameter()!!)
+      }
+      else {
+        requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(BoundConstraint(type.resolve()!!, LOWER))
+      }
     }
   }
   parameter.setType(parameterType)

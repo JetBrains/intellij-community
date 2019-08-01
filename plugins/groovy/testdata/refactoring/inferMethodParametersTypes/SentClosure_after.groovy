@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 
-static void foo(@ClosureParams(value = SimpleType, options = ['java.lang.Object']) Closure<?> script) {
+static void foo(@ClosureParams(value = SimpleType, options = ['?']) Closure<?> script) {
   bar(script, 1)
 }
 

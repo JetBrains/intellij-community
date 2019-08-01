@@ -1,4 +1,4 @@
-static <V0, T1 extends V0> void foo(List<V0> x, T1[] t) {
+static <V0> void foo(List<V0> x, V0[] t) {
   x.add(t[0])
 }
 

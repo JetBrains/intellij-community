@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
@@ -15,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>) : InferenceDriver {
@@ -131,30 +130,84 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         val newUsageInformation = usageInformation.run {
           TypeUsageInformation(contravariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
                                requiredClassTypes.map { (param, list) -> mapping.getValue(param) to list }.toMap(),
-                               constraints)
+                               constraints, covariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
+                               dependentTypes.map { mapping.getValue(it) }.toSet(),
+                               inhabitedTypes.map { mapping.getValue(it.key) to it.value }.toMap())
         }
         newUsageInformation
       }
     }
     val closureBodyAnalysisResult = TypeUsageInformation.merge(typeInformation)
     val constraintCollector = mutableListOf<ConstraintFormula>()
+    val inhabitedTypes = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
+    val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
+    val dependentTypes = mutableListOf<PsiTypeParameter>()
     method.forEachParameterUsage { parameter, instructions ->
       if (parameter in closureParameters.keys) {
-        collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions)
+        collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
+                                         requiredTypesCollector)
+      }
+      for (usage in instructions) {
+        val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
+        if (nearestCall != usage.element?.parent && nearestCall != usage.element?.parent?.parent) {
+          continue
+        }
+        if (nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
+          val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
+          val candidate = resolveResult.candidate ?: continue
+          val argumentCorrespondence =
+            closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
+          argumentCorrespondence.forEach { (type, argument) ->
+            setConstraints(type, argument.type!!, inhabitedTypes, dependentTypes, requiredTypesCollector)
+          }
+        }
       }
     }
     val closureParamsTypeInformation = TypeUsageInformation(
       closureParameters.flatMap { it.value.types }.toSet(),
-      emptyMap(),
-      constraintCollector)
+      requiredTypesCollector,
+      constraintCollector,
+      emptySet(),
+      dependentTypes.toSet(),
+      inhabitedTypes)
     return TypeUsageInformation.merge(listOf(closureParamsTypeInformation, closureBodyAnalysisResult))
+  }
+
+  private fun setConstraints(leftType: PsiType,
+                             rightType: PsiType,
+                             inhabitedTypes: MutableMap<PsiTypeParameter, MutableList<PsiClass>>,
+                             dependentTypes: MutableList<PsiTypeParameter>,
+                             requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
+    var newLeftType = leftType
+    if (leftType.isTypeParameter()) {
+      val constraint = BoundConstraint(rightType.resolve()!!, BoundConstraint.ContainMarker.LOWER)
+      val typeParameter = leftType.typeParameter()!!
+      if (!constraint.clazz.qualifiedName.equals(GroovyCommonClassNames.GROOVY_OBJECT)) {
+        if (constraint.clazz !in method.typeParameters) {
+          requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(constraint)
+        }
+        else {
+          dependentTypes.add(typeParameter)
+          dependentTypes.add(constraint.clazz as PsiTypeParameter)
+        }
+      }
+      newLeftType = leftType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
+      inhabitedTypes.computeIfAbsent(leftType.typeParameter()!!) { mutableListOf() }.add(rightType.resolve()!!)
+    }
+    if (leftType is PsiArrayType && rightType is PsiArrayType) {
+      setConstraints(leftType.componentType, rightType.componentType, inhabitedTypes, dependentTypes, requiredTypesCollector)
+    }
+    (newLeftType as? PsiClassType)?.parameters?.zip((rightType as? PsiClassType)?.parameters ?: return)?.forEach {
+      setConstraints(it.first ?: return, it.second ?: return, inhabitedTypes, dependentTypes, requiredTypesCollector)
+    }
   }
 
   private fun createMethodFromClosureBlock(body: GrClosableBlock,
                                            param: ParameterizedClosure): GrMethod {
+    val enrichedBodyParameters = if (param.types.size == 1 && body.parameters.isEmpty()) listOf("it") else body.parameters.map { it.name }
     val parameters = param.types
-      .zip(body.parameters)
-      .joinToString { (type, name) -> type.canonicalText + " " + name.text }
+      .zip(enrichedBodyParameters)
+      .joinToString { (type, name) -> type.canonicalText + " " + name }
     val statements = body.statements.joinToString("\n") { it.text }
     return GroovyPsiElementFactory
       .getInstance(method.project)

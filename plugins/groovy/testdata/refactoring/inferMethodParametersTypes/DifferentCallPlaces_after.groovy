@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-static <T1 extends List<? extends Integer>> void foo(T1 self, @ClosureParams(value = FromString, options = ["T1,java.lang.Integer"]) Closure<?> closure) {
+static <U0 extends List<? extends Integer>> void foo(U0 self, @ClosureParams(value = FromString, options = ["U0,? super java.lang.Integer"]) Closure<?> closure) {
   closure(self, 0)
 }
 

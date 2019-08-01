@@ -185,6 +185,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val typeUsageInformation = closureDriver.collectInnerConstraints()
     val analyzer = RecursiveMethodAnalyzer(method)
     method.accept(analyzer)
+    analyzer.visitOuterCalls(originalMethod)
     return analyzer.buildUsageInformation() + typeUsageInformation
   }
 
@@ -194,11 +195,14 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     }
     val parameterMapping = setUpParameterMapping(method, resultMethod)
     parameterMapping.forEach { (param, actualParameter) ->
-      actualParameter.setType(resultSubstitutor.substitute(param.type))
-      if (param.type is PsiArrayType) {
-        actualParameter.setType(
-          resultSubstitutor.substitute((param.type as PsiArrayType).componentType).createArrayType())
+      val newParam = if (param.type is PsiArrayType) {
+        val substituted = resultSubstitutor.substitute((param.type as PsiArrayType).componentType)
+        (if (substituted is PsiWildcardType) substituted.bound else substituted)?.createArrayType()
       }
+      else {
+        resultSubstitutor.substitute(param.type)
+      }
+      actualParameter.setType(newParam)
     }
     closureDriver.instantiate(resultMethod, resultSubstitutor)
   }

@@ -393,11 +393,15 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
-  void testDeepEquality() {
+//  void testDeepEquality() {
+//    doTest(true)
+//  }
+
+  void testClosureAndSamInterface() {
     doTest(true)
   }
 
-  void testClosureAndSamInterface() {
+  void testSuperWildcard() {
     doTest(true)
   }
 

@@ -4,15 +4,17 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
  */
 data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
 
-  fun dependsOnNode(type: PsiType) : Boolean {
+  fun dependsOnNode(type: PsiType): Boolean {
     return type in units.map { it.core.type }
   }
 
@@ -181,7 +183,8 @@ private fun collectParents(unit: InferenceUnitNode?,
                            parentMap: Map<InferenceUnitNode, InferenceUnitNode>): MutableSet<InferenceUnitNode> {
   return if (unit == null) {
     mutableSetOf()
-  } else {
+  }
+  else {
     collectParents(parentMap[unit], parentMap).apply { add(unit) }
   }
 }
@@ -208,64 +211,24 @@ private tailrec fun merge(anchorUnit: InferenceUnitNode,
  * Tree branches may be shortened for nodes representing covariant types
  */
 private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
-  val internalNodeMap = LinkedHashMap<InferenceUnitNode, InternalNode>()
-  val collapsedNodesMap = mutableMapOf<InferenceUnit, InferenceUnit>()
-  val propagatedTypes = unitGraph.units.filter { !it.direct }.mapNotNull {
-    if (unitGraph.dependsOnNode(it.typeInstantiation) || it.typeInstantiation == PsiType.NULL) {
-      null
-    }
-    else {
-      it.core to it.typeInstantiation
-    }
-  }.toMap().toMutableMap()
-  unitGraph.units.forEach { internalNodeMap[it] = InternalNode(it) }
-  unitGraph.units.map { internalNodeMap[it]!! }.forEach { internalNodeMap[it.parent]?.children?.add(it) }
-  for (unit in unitGraph.units.filter { !it.forbiddenToInstantiate }) {
-    val node = internalNodeMap[unit]!!
-    if (node.parent != null) {
-      val parentNode = internalNodeMap[node.parent!!]!!
-      parentNode.children.remove(node)
-      node.children.forEach {
-        parentNode.children.add(it)
-        it.parent = node.parent
-      }
-      propagateConnections(node, parentNode, propagatedTypes, collapsedNodesMap)
-    }
-    else if (node.children.size == 1) {
-      val childNode = node.children.single()
-      childNode.parent = null
-      propagateConnections(node, childNode, propagatedTypes, collapsedNodesMap)
-    }
-  }
   val builder = InferenceUnitGraphBuilder()
-  internalNodeMap.values.filter { it.core() !in collapsedNodesMap.keys }.forEach { node ->
-    builder.register(node.unitNode)
-    if (node.parent != null) {
-      builder.addRelation(internalNodeMap[node.parent!!]!!.unitNode.core, node.unitNode.core)
+  val instantiations = mutableMapOf<InferenceUnit, PsiType>()
+
+  for (unit in unitGraph.units) {
+    if (unit.typeInstantiation != PsiType.NULL && unit.typeInstantiation.resolve() !is PsiTypeParameter) {
+      var currentUnit: InferenceUnitNode? = unit
+      while (currentUnit?.parent != null) {
+        currentUnit = currentUnit.parent
+      }
+      instantiations[currentUnit!!.core] = unit.typeInstantiation
     }
   }
-  propagatedTypes.forEach { (unit, type) -> builder.setType(unit, type) }
-  collapsedNodesMap.forEach { (unit, representative) ->
-    builder.register(unit).setType(unit, representative.type).addRelation(representative, unit)
+  for (unit in unitGraph.units) {
+    builder.register(unit)
+    unit.supertypes.forEach { builder.addRelation(it.core, unit.core) }
+    run {
+      builder.setType(unit.core, instantiations[unit.core] ?: return@run)
+    }
   }
   return builder.build()
-}
-
-private fun propagateConnections(removed: InternalNode,
-                                 replacing: InternalNode,
-                                 propagatedTypes: MutableMap<InferenceUnit, PsiType>,
-                                 collapsedNodesMap: MutableMap<InferenceUnit, InferenceUnit>) {
-  val removedCore = removed.core()
-  if (propagatedTypes[removedCore] != null) {
-    propagatedTypes[replacing.core()] = propagatedTypes[removedCore]!!
-    propagatedTypes.remove(removedCore)
-  }
-  collapsedNodesMap[removedCore] = replacing.unitNode.core
-  collapsedNodesMap.entries.filter { it.value == removedCore }.forEach { it.setValue(replacing.core()) }
-}
-
-data class InternalNode(val unitNode: InferenceUnitNode) {
-  var parent = unitNode.parent
-  val children = mutableSetOf<InternalNode>()
-  fun core(): InferenceUnit = unitNode.core
 }

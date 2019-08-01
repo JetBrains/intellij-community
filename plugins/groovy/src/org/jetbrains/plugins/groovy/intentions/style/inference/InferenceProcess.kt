@@ -4,9 +4,11 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.PsiIntersectionType.flatten
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
@@ -33,8 +35,8 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethod = createVirtualMethod(method)
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
-  val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList())
-  return inferTypeParameters(parameterizedDriver, graph, method)
+  val (graph, usage) = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList())
+  return inferTypeParameters(parameterizedDriver, graph.first, method, usage, graph.second)
 }
 
 private fun createDriver(method: GrMethod): InferenceDriver {
@@ -43,25 +45,38 @@ private fun createDriver(method: GrMethod): InferenceDriver {
   return CommonDriver.createFromMethod(method, virtualMethod, generator)
 }
 
-private fun setUpGraph(driver: InferenceDriver, virtualMethod: GrMethod, constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
+private fun setUpGraph(driver: InferenceDriver,
+                       virtualMethod: GrMethod,
+                       constantTypes: List<PsiTypeParameter>): Pair<Pair<InferenceUnitGraph, List<PsiType>>, TypeUsageInformation> {
   val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
   val typeUsage = driver.collectInnerConstraints()
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  val forbiddingTypes = typeUsage.contravariantTypes +
+  val forbiddingTypes = typeUsage.contravariantTypes.filter { it in typeUsage.dependentTypes.map { deptype -> deptype.type() } } +
                         virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
                         driver.forbiddingTypes()
-  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, forbiddingTypes, typeUsage, constantTypes)
+  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, forbiddingTypes, typeUsage, constantTypes) to typeUsage
 }
 
 private fun inferTypeParameters(driver: InferenceDriver,
-                                initialGraph: InferenceUnitGraph, method: GrMethod): GrMethod {
+                                initialGraph: InferenceUnitGraph,
+                                method: GrMethod,
+                                usage: TypeUsageInformation,
+                                setTypes: List<PsiType>): GrMethod {
   val inferredGraph = determineDependencies(initialGraph)
   var resultSubstitutor = PsiSubstitutor.EMPTY
   val endpoints = mutableSetOf<InferenceUnitNode>()
   val collector = TypeParameterCollector(method)
+  val equivalenceClasses = inferredGraph.units.groupBy {
+    if (it.direct && it.typeInstantiation.resolve() is PsiTypeParameter) {
+      it.typeInstantiation
+    }
+    else {
+      it.type
+    }
+  }
   for (unit in inferredGraph.resolveOrder()) {
-    val (instantiation, hint) = unit.smartTypeInstantiation()
+    val (instantiation, hint) = unit.smartTypeInstantiation(usage, setTypes, equivalenceClasses)
     val transformedType = when (hint) {
       InstantiationHint.NEW_TYPE_PARAMETER -> collector.createBoundedTypeParameter(unit.type.name, resultSubstitutor,
                                                                                    resultSubstitutor.substitute(instantiation)).type()
@@ -74,8 +89,9 @@ private fun inferTypeParameters(driver: InferenceDriver,
         collector.typeParameterList.add(unit.core.initialTypeParameter)
         instantiation
       }
-      InstantiationHint.WILDCARD -> {
-        if (instantiation == PsiType.NULL) {
+      InstantiationHint.EXTENDS_WILDCARD -> {
+        if (instantiation == PsiType.NULL || instantiation == PsiType.getJavaLangObject(method.manager,
+                                                                                        GlobalSearchScope.allScope(method.project))) {
           resultSubstitutor.substitute(PsiWildcardType.createUnbounded(method.manager))
         }
         else {

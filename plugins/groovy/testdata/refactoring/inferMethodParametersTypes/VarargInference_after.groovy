@@ -1,4 +1,4 @@
-def <V0, T1 extends V0> void foo(List<V0> x, T1[] a) {
+def <V0> void foo(List<V0> x, V0[] a) {
   x.add(a[0])
 }
 

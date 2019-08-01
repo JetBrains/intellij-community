@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 /**
@@ -24,7 +25,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       REIFIED_AS_PROPER_TYPE,
       ENDPOINT_TYPE_PARAMETER,
       NEW_TYPE_PARAMETER,
-      WILDCARD
+      EXTENDS_WILDCARD
     }
   }
 
@@ -40,36 +41,68 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
 
   val type = core.type
 
-  fun smartTypeInstantiation(): Pair<PsiType, InstantiationHint> {
+  fun smartTypeInstantiation(usage: TypeUsageInformation,
+                             setTypes: List<PsiType>,
+                             equivalenceClasses: Map<out PsiType, List<InferenceUnitNode>>): Pair<PsiType, InstantiationHint> {
 
     if (core.constant) {
       return if (core.initialTypeParameter.extendsListTypes.isEmpty()) {
-        typeInstantiation to InstantiationHint.NEW_TYPE_PARAMETER
+        typeInstantiation to NEW_TYPE_PARAMETER
       }
       else {
-        type to InstantiationHint.REIFIED_AS_TYPE_PARAMETER
+        type to REIFIED_AS_TYPE_PARAMETER
       }
     }
 
-    if ((core.flexible && typeInstantiation is PsiIntersectionType) || forbiddenToInstantiate) {
-      val advice = parent?.type ?: typeInstantiation
-      return if (advice == typeInstantiation) {
-        advice to InstantiationHint.ENDPOINT_TYPE_PARAMETER
+    if (core.flexible) {
+      when {
+        parent != null -> return parent!!.type to REIFIED_AS_PROPER_TYPE
+        subtypes.isNotEmpty() || typeInstantiation is PsiIntersectionType -> return typeInstantiation to NEW_TYPE_PARAMETER
+        else -> return typeInstantiation to REIFIED_AS_PROPER_TYPE
+      }
+    }
+
+    if (parent != null) {
+      if (!usage.contravariantTypes.contains(core.initialTypeParameter.type())) {
+        return parent!!.type to EXTENDS_WILDCARD
       }
       else {
-        advice to InstantiationHint.NEW_TYPE_PARAMETER
+        return parent!!.type to NEW_TYPE_PARAMETER
+      }
+    }
+
+    if (equivalenceClasses[type]?.all { it.core.initialTypeParameter !in usage.dependentTypes } == true) {
+      if (core.initialTypeParameter.type() in setTypes) {
+        return typeInstantiation to EXTENDS_WILDCARD
+      }
+      else {
+        return typeInstantiation to REIFIED_AS_PROPER_TYPE
+      }
+    }
+
+    if (equivalenceClasses[type]?.any { usage.contravariantTypes.contains(it.type) } == true) {
+      val advice = parent?.type ?: typeInstantiation
+      return if (advice == typeInstantiation) {
+        (if (advice == PsiType.NULL) type else advice) to ENDPOINT_TYPE_PARAMETER
+      }
+      else {
+        advice to NEW_TYPE_PARAMETER
       }
     }
 
     if ((core.flexible && typeInstantiation !is PsiIntersectionType) || direct) {
-      return typeInstantiation to InstantiationHint.REIFIED_AS_PROPER_TYPE
+      return typeInstantiation to REIFIED_AS_PROPER_TYPE
+    }
+    if (typeInstantiation == PsiType.NULL) {
+      return type to NEW_TYPE_PARAMETER
+    }
+    return if (subtypes.isNotEmpty()) {
+      type to REIFIED_AS_TYPE_PARAMETER
+    }
+    else {
+      typeInstantiation to REIFIED_AS_PROPER_TYPE
     }
 
-    return when {
-      typeInstantiation == type || typeInstantiation == PsiType.NULL || typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
-        PsiType.NULL to InstantiationHint.WILDCARD
-      else -> typeInstantiation to InstantiationHint.WILDCARD
-    }
   }
 
   /**

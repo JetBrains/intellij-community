@@ -2,7 +2,7 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 import groovy.transform.stc.SimpleType
 
-Object fo<caret>o(@ClosureParams(value = FromString, options = ["java.lang.Integer,java.lang.String"]) Closure<? extends String> a) {
+Object fo<caret>o(@ClosureParams(value = FromString, options = ["? super java.lang.Integer,? super java.lang.String"]) Closure<String> a) {
   bar(a)
 }
 

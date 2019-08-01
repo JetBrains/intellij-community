@@ -21,31 +21,44 @@ tailrec fun extractEndpointType(type: PsiClassType, typeParameters: List<PsiType
   }
 
 
-data class UpperBoundConstraint(val clazz: PsiClass, val marker: ContainMarker) {
+data class BoundConstraint(val clazz: PsiClass, val marker: ContainMarker) {
   // containing means the same as in jls-4.5.1
   enum class ContainMarker {
     EQUAL,
-    CONTAINS
+    CONTAINS,
+    LOWER
   }
 }
 
 data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
-                                val requiredClassTypes: Map<PsiTypeParameter, List<UpperBoundConstraint>>,
-                                val constraints: Collection<ConstraintFormula>) {
+                                val requiredClassTypes: Map<PsiTypeParameter, List<BoundConstraint>>,
+                                val constraints: Collection<ConstraintFormula>,
+                                val covariantTypes: Set<PsiType> = emptySet(),
+                                val dependentTypes: Set<PsiTypeParameter> = emptySet(),
+                                val inhabitedTypes: Map<PsiTypeParameter, List<PsiClass>> = emptyMap()) {
   operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
     return merge(listOf(this, typeUsageInformation))
   }
 
   companion object {
+
+    private fun <K, V> flattenMap(data: Iterable<Map<out K, List<V>>>): Map<K, List<V>> =
+      data
+        .flatMap { it.entries }
+        .groupBy { it.key }
+        .map { (key, values) -> key to values.flatMap { it.value } }
+        .toMap()
+
+
     fun merge(data: Collection<TypeUsageInformation>): TypeUsageInformation {
       val contravariantTypes = data.flatMap { it.contravariantTypes }.toSet()
-      val requiredClassTypes = data.flatMap {
-        it.requiredClassTypes.entries.map { entry ->
-          entry.key to entry.value
-        }
-      }
+      val requiredClassTypes = flattenMap(data.map { it.requiredClassTypes })
       val constraints = data.flatMap { it.constraints }
-      return TypeUsageInformation(contravariantTypes, requiredClassTypes.toMap(), constraints)
+      val covariantTypes = data.flatMap { it.covariantTypes }.toSet()
+      val dependentTypes = data.flatMap { it.dependentTypes }.toSet()
+      val inhabitedTypes = flattenMap(data.map { it.inhabitedTypes })
+      return TypeUsageInformation(contravariantTypes, requiredClassTypes, constraints, covariantTypes, dependentTypes,
+                                  inhabitedTypes)
     }
   }
 }
