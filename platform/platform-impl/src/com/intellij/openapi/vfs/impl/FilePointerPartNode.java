@@ -205,7 +205,12 @@ class FilePointerPartNode {
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
     if (fileAndUrl != null && fileAndUrl.second != null) {
       String url = fileAndUrl.second;
-      assert endsWith(url, part) : "part is: '" + part + "' but url is: '" + url + "'";
+      if (!endsWith(url, part)) {
+        if (!part.toString().contains("~")) {
+          // Do not trigger in case of DOS path, e.g. "~2/MICROS~1/2017/PROFES~1/DIASDK~1/include"
+          assert false: "part is: '" + part + "' but url is: '" + url + "'";
+        }
+      }
     }
     boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
 
