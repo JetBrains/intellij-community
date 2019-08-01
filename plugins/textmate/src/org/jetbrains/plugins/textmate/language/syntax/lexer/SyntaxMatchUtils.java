@@ -92,7 +92,7 @@ public final class SyntaxMatchUtils {
       if (selectorWeigh.weigh <= 0) {
         continue;
       }
-      TextMateLexerState injectionState = matchFirst(injection.getSyntaxNodeDescriptor(), string, byteOffset, selectorWeigh.priority, currentScope);
+      TextMateLexerState injectionState = matchFirstUncached(injection.getSyntaxNodeDescriptor(), string, byteOffset, selectorWeigh.priority, currentScope);
       resultState = moreImportantState(resultState, injectionState);
     }
     return resultState;
@@ -136,7 +136,7 @@ public final class SyntaxMatchUtils {
     if (syntaxNodeDescriptor.getStringAttribute(Constants.END_KEY) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);
     }
-    return matchFirst(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
+    return matchFirstUncached(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
   }
 
   public static List<CaptureMatchData> matchCaptures(@NotNull Plist captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
