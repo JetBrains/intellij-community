@@ -116,7 +116,7 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
     final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
 
-    final Topic topic = message.getTopic();
+    Topic<?> topic = message.getTopic();
     Object handler = mySubscriptions.get(topic);
     try {
       if (handler == myDefaultHandler) {
@@ -154,7 +154,7 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
     myPendingMessages.get().offer(message);
   }
 
-  boolean containsMessage(@NotNull Topic topic) {
+  boolean containsMessage(@NotNull Topic<?> topic) {
     Queue<Message> pendingMessages = myPendingMessages.get();
     if (pendingMessages.isEmpty()) return false;
 

@@ -38,17 +38,17 @@ public class MessageBusImpl implements MessageBus {
    */
   private final int[] myOrder;
 
-  private final ConcurrentMap<Topic, Object> myPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic<?>, Object> myPublishers = ContainerUtil.newConcurrentMap();
 
   /**
    * This bus's subscribers
    */
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic<?>, List<MessageBusConnectionImpl>> mySubscribers = ContainerUtil.newConcurrentMap();
 
   /**
    * Caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
    */
-  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
+  private final Map<Topic<?>, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull
@@ -296,7 +296,7 @@ public class MessageBusImpl implements MessageBus {
     return myOwner;
   }
 
-  private void calcSubscribers(@NotNull Topic topic, @NotNull List<? super MessageBusConnectionImpl> result) {
+  private void calcSubscribers(@NotNull Topic<?> topic, @NotNull List<? super MessageBusConnectionImpl> result) {
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
       result.addAll(topicSubscribers);
@@ -328,7 +328,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @NotNull
-  private List<MessageBusConnectionImpl> getTopicSubscribers(@NotNull Topic topic) {
+  private List<MessageBusConnectionImpl> getTopicSubscribers(@NotNull Topic<?> topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new SmartList<>();
