@@ -579,6 +579,10 @@ bool LoadVMOptions()
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
+  char curDir[_MAX_PATH];
+  GetCurrentDirectoryA(_MAX_PATH - 1, curDir);
+  vmOptionLines.push_back(std::string("-Dide.launcher.initialWorkingDir=\"") + curDir + "\"");
+
   vmOptionCount = vmOptionLines.size() + 1;
   vmOptions = (JavaVMOption*)malloc(vmOptionCount * sizeof(JavaVMOption));
 
@@ -608,17 +612,13 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
-  // Call SetDllDirectory to allow jvm.dll to load the corresponding runtime libraries.
-  SetDllDirectoryA(binDir.c_str());
+  // Call SetCurrentDirectory to allow jvm.dll to load the corresponding runtime libraries.
+  SetCurrentDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
-
-  // Now clean up the SetDllDirectory context, because otherwise it will pollute the child processes (and that is
-  // often unwanted for any user programs started from IDE).
-  SetDllDirectoryA(nullptr);
 
   if (!pCreateJavaVM)
   {
