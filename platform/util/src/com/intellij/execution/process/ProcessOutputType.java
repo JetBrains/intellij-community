@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.execution.process.ColoredOutputTypeRegistry
  * @see com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType
  */
-public class ProcessOutputType extends Key {
+public class ProcessOutputType extends Key<Object> {
   public static final ProcessOutputType SYSTEM = new ProcessOutputType("system");
 
   /**
@@ -72,21 +72,21 @@ public class ProcessOutputType extends Key {
     return getBaseOutputType() == STDERR;
   }
 
-  public static boolean isStderr(@NotNull Key key) {
+  public static boolean isStderr(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStderr();
   }
 
-  public static boolean isStdout(@NotNull Key key) {
+  public static boolean isStdout(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
   @NotNull
-  public static String getKeyNameForLogging(@NotNull Key key) {
+  public static String getKeyNameForLogging(@NotNull Key<?> key) {
     return key.toString().replace("\u001B", "ESC");
   }
 
   @Nullable
-  public static ProcessOutputType tryCast(@NotNull Key key) {
+  public static ProcessOutputType tryCast(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType ? (ProcessOutputType)key : null;
   }
 }
