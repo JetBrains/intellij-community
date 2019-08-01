@@ -311,8 +311,15 @@ public class JiraRepository extends BaseRepositoryImpl {
         JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
         if (object.has("errorMessages")) {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
-          // something meaningful to user, e.g. invalid field name in JQL query
+          // If anonymous access is enabled on server, it might reply only with a cryptic 400 error about inaccessible issue fields,
+          // e.g. "Field 'assignee' does not exist or this field cannot be viewed by anonymous users."
+          // Unfortunately, there is no better way to indicate such errors other than by matching by the error message itself.
           LOG.warn(reason);
+          if (statusCode ==  HttpStatus.SC_BAD_REQUEST && reason.contains("cannot be viewed by anonymous users")) {
+            // Oddly enough, in case of JIRA Cloud issues are access anonymously only if API Token is correct, but email is wrong.
+            throw new Exception(isInCloud() ? TaskBundle.message("jira.failure.email.address") : TaskBundle.message("failure.login"));
+          }
+          // something meaningful to user, e.g. invalid field name in JQL query
           throw new Exception(TaskBundle.message("failure.server.message", reason));
         }
       }
