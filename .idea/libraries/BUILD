@@ -254,17 +254,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.31:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.50:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.31:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.50:jar",
     ],
 )
 
@@ -272,8 +272,8 @@ java_library(
 java_library(
     name = "kotlin-reflect",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.31:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.31:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.50:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.50:jar"],
 )
 
 # managed by go/iml_to_build
@@ -734,13 +734,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.31:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.50:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.31:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.31:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.50:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.50:jar",
     ],
 )
 
@@ -1223,6 +1223,7 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/allopen-ide-plugin",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/annotations-13.0",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-2.0.6",
@@ -1230,11 +1231,16 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javax.inject-1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kapt3-idea",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-allopen-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-compiler-client-embeddable",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon-client-new",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon-client",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-noarg-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-reflect",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-script-runtime",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-script-util",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-scripting-common",
@@ -1245,9 +1251,11 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib-jdk7",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib-jdk8",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.1.1",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-common-1.1.1",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.1.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-io",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.2.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.2.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-serialization-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/markdown-0.1.25",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/noarg-ide-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/sam-with-receiver-ide-plugin",
@@ -1255,6 +1263,7 @@ java_library(
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/allopen-ide-plugin",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/annotations-13.0",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-2.0.6",
@@ -1262,11 +1271,16 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javax.inject-1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kapt3-idea",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-allopen-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-compiler-client-embeddable",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon-client-new",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon-client",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-daemon",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-noarg-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-reflect",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-script-runtime",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-script-util",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-scripting-common",
@@ -1277,9 +1291,11 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib-jdk7",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib-jdk8",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.1.1",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-common-1.1.1",
-        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.1.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-io",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.2.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.2.1",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-serialization-compiler-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/markdown-0.1.25",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/noarg-ide-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/sam-with-receiver-ide-plugin",
@@ -1426,19 +1442,19 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-gradle-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-test-framework-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-tests",
+        "//prebuilts/tools/common/android-kotlin:tests-common-tests",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-gradle-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:idea-test-framework-1.2.70-tests",
-        "//prebuilts/tools/common/android-kotlin:tests-common-1.2.70-tests",
+        "//prebuilts/tools/common/android-kotlin:android-extensions-compiler-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-gradle-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-test-framework-tests",
+        "//prebuilts/tools/common/android-kotlin:idea-tests",
+        "//prebuilts/tools/common/android-kotlin:tests-common-tests",
     ],
 )
 
@@ -1534,8 +1550,8 @@ java_library(
 java_library(
     name = "kotlin-gradle-plugin-model",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.50:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.50:jar"],
 )
 
 # managed by go/iml_to_build
