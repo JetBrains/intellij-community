@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.PluginType;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,10 +22,7 @@ public class ClassNameRuleValidator extends CustomWhiteListRule {
     if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(data);
-    if (StringUtil.equals(context.eventId, data)) {
-      // set plugin info only if it's coming from event id otherwise behavior might be non-deterministic
-      context.setPluginInfo(info);
-    }
+    context.setPluginInfo(info);
 
     if (info.getType() == PluginType.UNKNOWN) {
       // if we can't detect a plugin then probably it's not a class name
