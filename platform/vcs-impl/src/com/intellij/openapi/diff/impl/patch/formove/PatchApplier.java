@@ -53,7 +53,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
@@ -211,11 +213,14 @@ public class PatchApplier<Unused> {
 
       trigger.processIt();
 
+      AtomicBoolean doRollback = new AtomicBoolean();
       if (result == ApplyPatchStatus.FAILURE) {
-        ApplicationManager.getApplication().invokeAndWait(() -> suggestRollback(project, group, beforeLabel));
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+         doRollback.set(askToRollback(project, group));
+        });
       }
-      else if (result == ApplyPatchStatus.ABORT) {
-        rollbackUnderProgress(project, beforeLabel);
+      if (result == ApplyPatchStatus.ABORT || doRollback.get()) {
+        rollbackUnderProgressIfNeeded(project, beforeLabel);
       }
 
       if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(result)) {
@@ -236,20 +241,18 @@ public class PatchApplier<Unused> {
   }
 
   @CalledInAwt
-  private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
+  private static boolean askToRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, PatchApplier::getFailedPatches);
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
+    List<FilePath> filePaths =
+      ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
-    if (undoApplyPatchDialog.showAndGet()) {
-      rollbackUnderProgress(project, beforeLabel);
-    }
+    return undoApplyPatchDialog.showAndGet();
   }
 
-  private static void rollbackUnderProgress(@NotNull final Project project,
-                                            @NotNull final Label labelToRevert) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+  private static void rollbackUnderProgressIfNeeded(@NotNull final Project project, @NotNull final Label labelToRevert) {
+    Runnable rollback = () -> {
       try {
         labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
@@ -259,7 +262,14 @@ public class PatchApplier<Unused> {
         VcsNotifier.getInstance(project)
           .notifyImportantWarning("Rollback Failed", "Try using 'Local History' dialog to perform revert manually.");
       }
-    }, "Rollback Applied Changes...", true, project);
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollback, "Rollback Applied Changes...", true, project);
+    }
+    else {
+      progress("Rollback Applied Changes...");
+      rollback.run();
+    }
   }
 
 
