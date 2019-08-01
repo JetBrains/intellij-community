@@ -51,14 +51,13 @@ import java.util.stream.Stream;
 
 /**
  * Creates new project for each test.
- * @author mike
  */
 @SuppressWarnings("TestOnlyProblems")
 final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
   private final Set<Path> myFilesToDelete = new HashSet<>();
   private IdeaTestApplication myApplication;
-  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<>();
+  private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
@@ -70,7 +69,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
-  void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
+  void addModuleFixtureBuilder(ModuleFixtureBuilder<?> builder) {
     myModuleFixtureBuilders.add(builder);
   }
 
@@ -89,14 +88,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     RunAll runAll = new RunAll();
 
     if (myProject != null) {
       runAll = runAll
         .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
         .append(() -> {
-          for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+          for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
             moduleFixtureBuilder.getFixture().tearDown();
           }
         })
@@ -163,7 +162,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     EdtTestUtil.runInEdtAndWait(() -> {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
-      for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+      for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
       }
 
@@ -173,7 +172,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   @NotNull
-  protected Path generateProjectPath(@NotNull Path tempDirectory) {
+  private Path generateProjectPath(@NotNull Path tempDirectory) {
     String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
     return tempDirectory.resolve(myName + suffix);
   }

@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,8 +178,6 @@ public abstract class PsiDocumentManager {
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
    */
   public interface Listener extends EventListener {
-    Topic<Listener> TOPIC = new Topic<>("PsiDocumentManager.Listener", Listener.class);
-
     /**
      * Called when a document instance is created for a file.
      *

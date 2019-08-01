@@ -186,7 +186,7 @@ public final class ServiceManagerImpl implements Disposable {
     }
 
     @Override
-    public Class getComponentImplementation() {
+    public Class<?> getComponentImplementation() {
       return getDelegate().getComponentImplementation();
     }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -302,24 +301,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   @Nullable
   public List<Element> getAndClearActionDescriptionElements() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getAppComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getProjectComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getModuleComponents() {
-    throw new IllegalStateException();
   }
 
   @Override

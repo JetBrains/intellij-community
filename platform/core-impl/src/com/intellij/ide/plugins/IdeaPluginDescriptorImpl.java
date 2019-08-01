@@ -348,6 +348,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "applicationListeners":
           readListeners(child, myAppContainerDescriptor);
           break;
+
+        case "projectListeners":
+          readListeners(child, myProjectContainerDescriptor);
+          break;
       }
 
       child.getContent().clear();
@@ -511,7 +515,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myExtensions == null) {
       return;
     }
-    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, area.getPicoContainer());
+    ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, area.getPicoContainer());
   }
 
   @Override
@@ -640,24 +644,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  @NotNull
-  public List<ComponentConfig> getAppComponents() {
-    return ContainerUtil.notNullize(myAppContainerDescriptor.components);
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getProjectComponents() {
-    return ContainerUtil.notNullize(myProjectContainerDescriptor.components);
-  }
-
-  @Override
-  @NotNull
-  public List<ComponentConfig> getModuleComponents() {
-    return ContainerUtil.notNullize(myModuleContainerDescriptor.components);
-  }
-
-  @Override
   public String getVendorEmail() {
     return myVendorEmail;
   }
@@ -691,14 +677,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public PluginId getPluginId() {
     return myId;
-  }
-
-  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  @Override
-  @Deprecated
-  public String getDownloads() {
-    return null;
   }
 
   @Override

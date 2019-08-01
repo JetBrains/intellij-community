@@ -4,10 +4,8 @@ package com.intellij.openapi.components.impl;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
@@ -61,7 +59,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final Map<String, BaseComponent> myNameToComponent = new THashMap<>(); // contents guarded by this
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private int myComponentConfigCount;
+  protected int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myInstantiatedComponentCount;
   private boolean myComponentsCreated;
@@ -83,36 +81,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Nullable
   protected String activityNamePrefix() {
     return null;
-  }
-
-  protected void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    Application app = ApplicationManager.getApplication();
-    boolean headless = app == null || app.isHeadlessEnvironment();
-
-    int componentConfigCount = 0;
-    for (IdeaPluginDescriptor plugin : plugins) {
-      for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
-        if (!config.prepareClasses(headless)) {
-          continue;
-        }
-
-        if (isComponentSuitable(config)) {
-          registerComponents(config, plugin);
-          componentConfigCount++;
-        }
-      }
-
-      registerServices(plugin);
-    }
-    myComponentConfigCount = componentConfigCount;
-
-    // app - phase must be set before getMessageBus()
-    if (getPicoContainer().getParent() == null) {
-      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED);
-    }
-
-    //register message bus in pico container
-    getMessageBus();
   }
 
   protected final void createComponents(@Nullable ProgressIndicator indicator) {
@@ -139,9 +107,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsCreated = true;
   }
 
-  protected void registerServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-  }
-
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     indicator.setFraction(getPercentageOfComponentsLoaded());
   }
@@ -152,16 +117,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   @Override
-  public MessageBus getMessageBus() {
+  public final MessageBus getMessageBus() {
     if (myDisposed) {
       throwAlreadyDisposed();
     }
+
     MessageBus messageBus = myMessageBus;
     if (messageBus == null) {
+      //noinspection SynchronizeOnThis
       synchronized (this) {
         messageBus = myMessageBus;
         if (messageBus == null) {
-          myMessageBus = messageBus = createMessageBus();
+          messageBus = createMessageBus();
+          myMessageBus = messageBus;
         }
       }
     }
@@ -343,17 +311,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 
-  // used in upsource
-  @NotNull
-  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.getAppComponents();
-  }
-
   protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
     return createPicoContainer();
   }
 
-  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+  protected void logMessageBusDelivery(Topic<?> topic, String messageName, Object handler, long durationNanos) {
     if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       ((MessageBusImpl) myMessageBus).setMessageDeliveryListener(null);
       return;
@@ -402,7 +364,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component.getClass().getName();
   }
 
-  private void registerComponents(@NotNull ComponentConfig config, @NotNull PluginDescriptor pluginDescriptor) {
+  protected final void registerComponents(@NotNull ComponentConfig config, @NotNull PluginDescriptor pluginDescriptor) {
     ClassLoader loader = pluginDescriptor.getPluginClassLoader();
     try {
       Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
@@ -541,7 +503,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         throw e;
       }
       catch (Throwable t) {
-        handleInitComponentError(t, ((Class)getComponentKey()).getName(), myPluginId);
+        handleInitComponentError(t, ((Class<?>)getComponentKey()).getName(), myPluginId);
       }
 
       return instance;

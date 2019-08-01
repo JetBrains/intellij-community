@@ -66,12 +66,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           return null;
         }
 
-        @NotNull
-        @Override
-        public synchronized MessageBus getMessageBus() {
-          return super.getMessageBus();
-        }
-
         @Override
         protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
           return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();

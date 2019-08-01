@@ -6,7 +6,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.ContainerDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -14,7 +13,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -49,7 +51,6 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.List;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -171,12 +172,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public boolean isInitialized() {
     return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
-  }
-
-  @NotNull
-  @Override
-  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.getProjectComponents();
   }
 
   @NotNull

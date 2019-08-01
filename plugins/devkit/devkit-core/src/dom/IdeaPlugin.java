@@ -146,6 +146,13 @@ public interface IdeaPlugin extends DomElement {
   List<Listeners> getApplicationListeners();
 
   /**
+   * Available since 192.
+   */
+  @NotNull
+  @SubTagList("projectListeners")
+  List<Listeners> getProjectListeners();
+
+  /**
    * @deprecated not used anymore
    */
   @Deprecated

@@ -676,14 +676,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   void fireDocumentCreated(@NotNull Document document, PsiFile file) {
-    myProject.getMessageBus().syncPublisher(Listener.TOPIC).documentCreated(document, file);
+    myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).documentCreated(document, file, myProject);
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }
   }
 
   private void fireFileCreated(@NotNull Document document, @NotNull PsiFile file) {
-    myProject.getMessageBus().syncPublisher(Listener.TOPIC).fileCreated(file, document);
+    myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).fileCreated(file, document);
     for (Listener listener : myListeners) {
       listener.fileCreated(file, document);
     }

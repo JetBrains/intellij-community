@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
@@ -52,15 +51,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   @Nullable
   List<Element> getAndClearActionDescriptionElements();
 
-  @NotNull
-  List<ComponentConfig> getAppComponents();
-
-  @NotNull
-  List<ComponentConfig> getProjectComponents();
-
-  @NotNull
-  List<ComponentConfig> getModuleComponents();
-
   String getVendorEmail();
 
   String getVendorUrl();
@@ -74,7 +64,9 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
-  String getDownloads();
+  default String getDownloads() {
+    return null;
+  }
 
   String getSinceBuild();
 

@@ -368,10 +368,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  @ApiStatus.Internal
   public final void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
     super.registerComponents(plugins);
   }
 
+  @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
