@@ -52,6 +52,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private String myContentEntryPath;
 
   @NotNull
+  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<>();
     for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {

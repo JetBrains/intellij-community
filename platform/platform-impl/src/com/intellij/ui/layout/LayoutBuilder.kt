@@ -9,17 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder {
-  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.rootRow.createChildRow(label, isSeparated, noGrid, title)
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    return builder.rootRow.createNoteOrCommentRow(component)
-  }
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)

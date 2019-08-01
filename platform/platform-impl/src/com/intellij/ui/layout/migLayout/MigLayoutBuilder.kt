@@ -15,7 +15,8 @@ import javax.swing.JComponent
 
 internal class MigLayoutBuilder(
   val spacing: SpacingConfiguration,
-  val isUseMagic: Boolean = true
+  val isUseMagic: Boolean = true,
+  val indent: Int = 0
 ) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
@@ -52,7 +53,7 @@ internal class MigLayoutBuilder(
    * Map of component to constraints shared among rows (since components are unique)
    */
   internal val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
-  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
+  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = indent)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
@@ -233,6 +234,14 @@ internal class MigLayoutBuilder(
     for (i in startColumnIndexToApplyHorizontalGap until rootRow.columnIndexIncludingSubRows) {
       columnConstraints.gap(gapAfter, i)
     }
+  }
+
+  internal fun setTo(builder: MigLayoutBuilder) {
+    builder.preferredFocusedComponent = preferredFocusedComponent
+    builder.validateCallbacks = validateCallbacks.toMutableList()
+    builder.applyCallbacks = applyCallbacks.toMutableList()
+    builder.resetCallbacks = resetCallbacks.toMutableList()
+    builder.isModifiedCallbacks = isModifiedCallbacks.toMutableList()
   }
 }
 

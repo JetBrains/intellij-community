@@ -70,7 +70,9 @@ public final class ValidationInfo {
 
   public ValidationInfo forComponent(@Nullable JComponent component) {
     ValidationInfo result = new ValidationInfo(message, component);
-    return warning ? result.asWarning() : result;
+    result.warning = warning;
+    result.okEnabled = okEnabled;
+    return result;
   }
 
   @Override

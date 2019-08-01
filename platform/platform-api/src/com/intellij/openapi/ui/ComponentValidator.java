@@ -203,6 +203,11 @@ public class ComponentValidator {
     validationInfo = null;
   }
 
+  @Nullable
+  public ValidationInfo getValidationInfo() {
+    return validationInfo;
+  }
+
   public void updateInfo(@Nullable ValidationInfo info) {
     if (disableValidation) return;
 

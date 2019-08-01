@@ -262,7 +262,7 @@ abstract class Cell : BaseBuilder {
   fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
 
   fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(binding.get(),columns ?: 0)
+    val component = JTextField(binding.get(), columns ?: 0)
     val builder = component()
     return builder.withTextBinding(binding)
   }
@@ -331,9 +331,8 @@ abstract class Cell : BaseBuilder {
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
     growPolicy: GrowPolicy? = null
   ): CellBuilder<TextFieldWithBrowseButton> {
-    val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    component.text = prop.get()
-    return component(growX, growPolicy = growPolicy).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop.toBinding())
+    val modelBinding = prop.toBinding()
+    return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen, growPolicy)
   }
 
   fun textFieldWithBrowseButton(
@@ -345,9 +344,22 @@ abstract class Cell : BaseBuilder {
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
     growPolicy: GrowPolicy? = null
   ): CellBuilder<TextFieldWithBrowseButton> {
+    val modelBinding = PropertyBinding(getter, setter)
+    return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen, growPolicy)
+  }
+
+  fun textFieldWithBrowseButton(
+    modelBinding: PropertyBinding<String>,
+    browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+    growPolicy: GrowPolicy? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
     val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    component.text = getter()
-    return component(growX, growPolicy = growPolicy).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(getter, setter))
+    component.text = modelBinding.get()
+    return component(growX, growPolicy = growPolicy)
+      .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, modelBinding)
   }
 
   fun gearButton(vararg actions: AnAction) {

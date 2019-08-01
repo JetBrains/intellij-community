@@ -6,8 +6,10 @@ import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
@@ -44,19 +46,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as static method to ensure that members of current row are not used
     private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
-      val cc = CC()
-      val spacing = row.spacing
-      cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
-      if (title == null) {
-        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
-        row.isTrailingSeparator = true
-      }
-      else {
-        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
-        cc.growX()
-      }
-      row.addComponent(separatorComponent, lazyOf(cc))
+      row.addTitleComponent(separatorComponent, isEmpty = title == null)
     }
   }
 
@@ -156,6 +146,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
+    return createChildRow(indent, label, isSeparated, noGrid, title)
+  }
+
+  private fun createChildRow(indent: Int,
+                             label: JLabel? = null,
+                             isSeparated: Boolean = false,
+                             noGrid: Boolean = false,
+                             title: String? = null): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, builder,
@@ -188,6 +186,52 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     return row
+  }
+
+  private fun <T : JComponent> addTitleComponent(titleComponent: T, isEmpty: Boolean) {
+    val cc = CC().apply {
+      vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
+      if (isEmpty) {
+        vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        isTrailingSeparator = true
+      }
+      else {
+        vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
+        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
+        growX()
+      }
+    }
+    addComponent(titleComponent, lazyOf(cc))
+  }
+
+  private fun panelRow(indent: Int, init: MigLayoutRow.(JPanel) -> Unit): Row {
+    val panel = DialogPanel(layout = null)
+    val spacing = createIntelliJSpacingConfiguration()
+    val layoutBuilder = MigLayoutBuilder(spacing, builder.isUseMagic, indent)
+    builder.setTo(layoutBuilder)
+    layoutBuilder.rootRow.createChildRow().init(panel)
+    layoutBuilder.build(panel, arrayOf())
+    layoutBuilder.setTo(builder)
+    val childRow = createChildRow(indent = 0)
+    with(childRow) { panel(growX) }
+    return childRow
+  }
+
+  override fun hideableRow(title: String, init: Row.() -> Unit): Row {
+    val titledSeparator = HideableTitledSeparator(title)
+    val separatorRow = createChildRow()
+    separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
+    val panelRow = panelRow(indent + spacing.indentLevel) { init() }
+    titledSeparator.row = panelRow
+    titledSeparator.collapse()
+    return panelRow
+  }
+
+  override fun boundedRow(bounds: Int, init: Row.() -> Unit): Row {
+    return panelRow(indent) {
+      init()
+      it.maximumSize = it.maximumSize.copy(width = bounds)
+    }
   }
 
   private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
