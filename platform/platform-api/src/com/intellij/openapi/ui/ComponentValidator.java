@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -242,8 +243,8 @@ public class ComponentValidator {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
     String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
-                  String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), info.message) :
-                  String.format("<html><div>%s</div></html>", info.message);
+                  String.format("<html><body><div width=%d>%s</div><body></html>", MAX_WIDTH.get(), trimMessage(info.message, tipComponent)) :
+                  String.format("<html><body><div>%s</div></body></html>", info.message);
 
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
@@ -279,6 +280,18 @@ public class ComponentValidator {
       setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
       setShowShadow(true);
+  }
+
+  private static String trimMessage(String message, JComponent c) {
+    String[] words = message.split("\\s+");
+    StringBuilder result = new StringBuilder();
+
+    for(String word : words) {
+      word = SwingUtilities2.clipStringIfNecessary(c, c.getFontMetrics(c.getFont()), word, MAX_WIDTH.get());
+      result.append(word).append(" ");
+    }
+
+    return result.toString();
   }
 
   public static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
