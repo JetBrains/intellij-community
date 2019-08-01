@@ -82,7 +82,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   }
 
   @NotNull
-  private <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
+  public <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
     InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
     //noinspection unchecked
     return (T)ObjectUtils.notNull(tool).getTool();
