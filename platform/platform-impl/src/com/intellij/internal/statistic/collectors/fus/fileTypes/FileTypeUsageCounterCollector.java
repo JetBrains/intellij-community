@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LazyInstance;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,10 +30,8 @@ public class FileTypeUsageCounterCollector {
 
   private static void trigger(@NotNull Project project,
                               @NotNull VirtualFile file,
-                              @NotNull String type) {
-    final FeatureUsageData data = new FeatureUsageData().addData("type", type);
-    FileType fileType = file.getFileType();
-
+                              @NotNull String event) {
+    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType());
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
@@ -48,8 +45,7 @@ public class FileTypeUsageCounterCollector {
       }
     }
 
-    final String id = FileTypeUsagesCollector.toReportedId(fileType, data);
-    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", id, data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", event, data);
   }
 
   public static class FileTypeUsageSchemaDescriptorEP<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {

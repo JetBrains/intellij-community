@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -33,15 +33,20 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return "file.types";
   }
 
+  @Override
+  public int getVersion() {
+    return 2;
+  }
+
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@NotNull final Project project) {
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
     return getDescriptors(project);
   }
 
   @NotNull
-  public static Set<UsageDescriptor> getDescriptors(@NotNull Project project) {
-    final Set<UsageDescriptor> descriptors = new HashSet<>();
+  public static Set<MetricEvent> getDescriptors(@NotNull Project project) {
+    final Set<MetricEvent> events = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
       return Collections.emptySet();
@@ -52,27 +57,27 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
         return Collections.emptySet();
       }
 
-      final FeatureUsageData data = new FeatureUsageData();
-      final String id = toReportedId(fileType, data);
       ApplicationManager.getApplication().runReadAction(() -> {
         FileTypeIndex.processFiles(fileType, file -> {
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
           if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
-            descriptors.add(new UsageDescriptor(id, 1, data));
+            events.add(new MetricEvent("file.in.project", newFeatureUsageData(fileType)));
             return false;
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
       });
     }
-    return descriptors;
+    return events;
   }
 
   @NotNull
-  public static String toReportedId(@NotNull FileType type, @NotNull FeatureUsageData data) {
+  public static FeatureUsageData newFeatureUsageData(@NotNull FileType type) {
+    final FeatureUsageData data = new FeatureUsageData();
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
     data.addPluginInfo(info);
-    return info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID;
+    data.addData("file_type", info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID);
+    return data;
   }
 
   public static class ValidationRule extends CustomWhiteListRule {
@@ -84,12 +89,15 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      FileType fileType = FileTypeManager.getInstance().findFileTypeByName(data);
-      if (fileType != null && StringUtil.equals(fileType.getName(), data) &&
-          PluginInfoDetectorKt.getPluginInfo(fileType.getClass()).isDevelopedByJetBrains()) {
-        return ValidationResultType.ACCEPTED;
+      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+
+      final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(data);
+      if (fileType == null || !StringUtil.equals(fileType.getName(), data)) {
+        return ValidationResultType.REJECTED;
       }
-      return ValidationResultType.REJECTED;
+
+      final boolean isDevelopedByJB = PluginInfoDetectorKt.getPluginInfo(fileType.getClass()).isDevelopedByJetBrains();
+      return isDevelopedByJB ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 }
