@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
 
 public final class SyntaxMatchUtils {
-  private static final LoadingCache<MatchKey, TextMateLexerState> CACHE = CacheBuilder.newBuilder().maximumSize(32768).weakValues()
+  private static final LoadingCache<MatchKey, TextMateLexerState> CACHE = CacheBuilder.newBuilder().maximumSize(32768).softValues()
     .build(CacheLoader.from(
       key -> matchFirstUncached(Objects.requireNonNull(key).descriptor, key.string, key.byteOffset, key.priority, key.currentScope)));
   private final static Joiner MY_OPEN_TAGS_JOINER = Joiner.on(" ").skipNulls();
