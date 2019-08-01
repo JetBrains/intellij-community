@@ -59,7 +59,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
       add(myPushTagsMode);
     }
     if (myRunHooks.isVisible()) {
-      add(Box.createHorizontalStrut(calcStrutWidth(40, myPushTagsMode, myRunHooks)));
+      add(Box.createHorizontalStrut(calcStrutWidth(16, myPushTagsMode, myRunHooks)));
       add(myRunHooks);
     }
   }

@@ -110,11 +110,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   protected JPanel createOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
+    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %dpx 0 0, flowx, gapx %dpx", JBUI.scale(20), JBUI.scale(16))));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    optionsPanel.setBorder(JBUI.Borders.emptyLeft(20));
     return optionsPanel;
   }
 
