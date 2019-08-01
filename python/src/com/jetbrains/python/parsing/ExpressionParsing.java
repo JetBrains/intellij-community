@@ -776,15 +776,12 @@ public class ExpressionParsing extends Parsing {
 
       myBuilder.advanceLexer();
 
-      if (parseTestExpression(stopOnIn, isTargetExpression)) {
-        expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
-        return true;
-      }
-      else {
-        expr.drop();
+      if (!parseTestExpression(stopOnIn, isTargetExpression)) {
         myBuilder.error(message("PARSE.expected.expression"));
-        return false;
       }
+
+      expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
+      return true;
     }
     else if (parseTestExpression(stopOnIn, isTargetExpression)) {
       if (!atToken(PyTokenTypes.COLONEQ)) {
@@ -792,7 +789,18 @@ public class ExpressionParsing extends Parsing {
         return true;
       }
       else {
-        expr.error(message("PARSE.expected.identifier"));
+        // we intentionally allow syntactically illegal assignment expressions like `self.attr := 42` or `xs[0] := 42` for user convenience
+        // but don't parse qualified references in LHS as target expressions (unlike in assignment statements)
+
+        myBuilder.error(message("PARSE.expected.identifier"));
+
+        myBuilder.advanceLexer();
+
+        if (!parseTestExpression(stopOnIn, isTargetExpression)) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+
+        expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
         return false;
       }
     }

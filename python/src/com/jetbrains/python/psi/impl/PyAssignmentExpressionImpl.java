@@ -20,10 +20,10 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
     super(astNode);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public PyTargetExpression getTarget() {
-    return notNullChild(ObjectUtils.tryCast(getFirstChild(), PyTargetExpression.class));
+    return ObjectUtils.tryCast(getFirstChild(), PyTargetExpression.class);
   }
 
   @Nullable
@@ -35,7 +35,8 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
   @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return context.getType(getTarget());
+    final PyTargetExpression target = getTarget();
+    return target == null ? null : context.getType(target);
   }
 
   @Override
