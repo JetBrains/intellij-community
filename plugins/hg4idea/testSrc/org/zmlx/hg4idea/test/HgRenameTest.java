@@ -24,7 +24,9 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
+    myChangeListManager.ensureUpToDate();
     renameFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.removed("a.txt"));
   }
 
@@ -33,8 +35,10 @@ public class HgRenameTest extends HgSingleUserTest {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     VcsTestUtil.editFileInCommand(myProject, file, "modified new file content");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     renameFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.removed("a.txt"));
   }
 
@@ -42,6 +46,7 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameNewFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     renameFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"));
   }
 
@@ -49,8 +54,11 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameRenamedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
+    myChangeListManager.ensureUpToDate();
     renameFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     renameFileInCommand(file, "c.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("c.txt"), HgTestOutputParser.removed("a.txt"));
   }
 
@@ -58,8 +66,11 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameVersionedFolder() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
+    myChangeListManager.ensureUpToDate();
     renameFileInCommand(parent, "org");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
   }
 
@@ -69,9 +80,10 @@ public class HgRenameTest extends HgSingleUserTest {
 
     File unversionedFile = new File(parent.getPath(), "a.txt");
     makeFile(unversionedFile);
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.unknown("com", "a.txt"));
-
     renameFileInCommand(parent, "org");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.unknown("org", "a.txt"));
   }
 
@@ -79,10 +91,10 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameUnversionedFile() throws Exception {
     File unversionedFile = new File(myWorkingCopyDir.getPath(), "a.txt");
     VirtualFile file = makeFile(unversionedFile);
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.unknown("a.txt"));
-
     renameFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.unknown("b.txt"));
   }
-
 }
