@@ -38,6 +38,9 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   GenericAttributeValue<String> getUrl();
 
+  /**
+   * @deprecated Unused.
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
