@@ -61,15 +61,19 @@ final class Preloader implements ApplicationInitializedListener {
   @Override
   public void componentsInitialized() {
     ProgressManager progressManager = ProgressManager.getInstance();
-    for (PreloadingActivity activity : PreloadingActivity.EP_NAME.getIterable()) {
+    PreloadingActivity.EP_NAME.processWithPluginDescriptor((activity, descriptor) -> {
       myExecutor.execute(() -> {
-        if (myIndicator.isCanceled()) return;
+        if (myIndicator.isCanceled()) {
+          return;
+        }
 
         checkHeavyProcessRunning();
-        if (myIndicator.isCanceled()) return;
+        if (myIndicator.isCanceled()) {
+          return;
+        }
 
         progressManager.runProcess(() -> {
-          Activity measureActivity = ParallelActivity.PRELOAD_ACTIVITY.start(activity.getClass().getName());
+          Activity measureActivity = ParallelActivity.PRELOAD_ACTIVITY.start(activity.getClass().getName(), null, descriptor.getPluginId().getIdString());
           try {
             activity.preload(myWrappingIndicator);
           }
@@ -82,6 +86,6 @@ final class Preloader implements ApplicationInitializedListener {
           }
         }, myIndicator);
       });
-    }
+    });
   }
 }

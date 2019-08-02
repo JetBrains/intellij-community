@@ -45,7 +45,7 @@ public enum ParallelActivity {
   }
 
   @NotNull
-  public Activity start(@NotNull String name, @NotNull StartUpMeasurer.Level level, @Nullable String pluginId) {
+  public Activity start(@NotNull String name, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
     return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
   }
 

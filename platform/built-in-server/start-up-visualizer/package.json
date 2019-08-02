@@ -7,7 +7,7 @@
     "build": "vue-cli-service build && unlink dist/js/pdfmake.*.js && unlink dist/js/pdfmake.*.js.map"
   },
   "dependencies": {
-    "@amcharts/amcharts4": "4.5.10",
+    "@amcharts/amcharts4": "4.5.11",
     "element-ui": "^2.11.1",
     "semver": "^6.3.0",
     "vue": "^2.6.10",

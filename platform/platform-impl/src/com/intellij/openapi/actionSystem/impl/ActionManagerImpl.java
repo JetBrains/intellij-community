@@ -231,7 +231,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (iconPath == null) return;
 
     try {
-      final Class actionClass = Class.forName(className, true, loader);
+      Class<?> actionClass = Class.forName(className, true, loader);
       setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
     }
     catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -240,7 +240,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass,
+  private static void setIconFromClass(@NotNull Class<?> actionClass,
                                        @NotNull final ClassLoader classLoader,
                                        @NotNull final String iconPath,
                                        @NotNull Presentation presentation,
@@ -696,7 +696,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group = new DefaultCompactActionGroup();
       }
       else if (id == null) {
-        Class aClass = Class.forName(className, true, loader);
+        Class<?> aClass = Class.forName(className, true, loader);
         Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
         if (!(obj instanceof ActionGroup)) {
@@ -1198,7 +1198,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
     replaceAction(actionId, newAction, pluginId);
   }
@@ -1320,7 +1320,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public void preloadActions(ProgressIndicator indicator) {
+  public void preloadActions(@NotNull ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
 
     for (String id : getActionIds()) {
