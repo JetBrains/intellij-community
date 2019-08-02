@@ -281,8 +281,7 @@ class TabContentLayout extends ContentLayout {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered(),
-                                    myTabs.size() == 1);
+        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
       }
       else {
         tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());

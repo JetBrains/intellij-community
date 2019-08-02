@@ -37,10 +37,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBEditorTabPainter;
-import com.intellij.ui.tabs.impl.JBEditorTabsBorder;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -602,7 +599,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private static final class EditorTabs extends SingleHeightTabs {
+  private static final class EditorTabs extends JBEditorTabs {
     @NotNull
     private final EditorWindow myWindow;
 
@@ -631,8 +628,31 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     @Override
-    protected JBEditorTabPainter createTabPainter() {
-      return JBTabPainter.getEDITOR();
+    protected void paintChildren(final Graphics g) {
+      super.paintChildren(g);
+      drawBorder(g);
+    }
+
+    @NotNull
+    @Override
+    protected TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new TabLabel(this, info) {
+        @Override
+        protected int getPreferredHeight() {
+          Insets insets = getInsets();
+          Insets layoutInsets = getLayoutInsets();
+
+          insets.top += layoutInsets.top;
+          insets.bottom += layoutInsets.bottom;
+
+          return super.getPreferredHeight() - insets.top - insets.bottom;
+        }
+      };
+    }
+
+    @Override
+    protected TabPainterAdapter createTabPainterAdapter() {
+      return new EditorTabPainterAdapter();
     }
 
     @Override

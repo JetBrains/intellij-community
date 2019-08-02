@@ -164,15 +164,12 @@ public class JBTabsImpl extends JComponent
   private Runnable myDeferredFocusRequest;
   private int myFirstTabOffset;
 
-  protected final JBTabPainter myTabPainter = createTabPainter();
+  protected final TabPainterAdapter myTabPainterAdapter = createTabPainterAdapter();
+  protected final JBTabPainter myTabPainter = myTabPainterAdapter.getTabPainter();
   private boolean myAlphabeticalMode = false;
   private boolean mySupportsCompression = false;
   private String myEmptyText = null;
   private boolean myMouseInsideTabsArea = false;
-
-  protected JBTabPainter createTabPainter() {
-    return JBTabPainter.getDEFAULT();
-  }
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -180,6 +177,14 @@ public class JBTabsImpl extends JComponent
 
   public JBTabPainter getTabPainter() {
     return myTabPainter;
+  }
+
+  public TabPainterAdapter getTabPainterAdapter() {
+    return myTabPainterAdapter;
+  }
+
+  protected TabPainterAdapter createTabPainterAdapter() {
+    return new DefaultTabPainterAdapter(JBTabPainter.getDEFAULT());
   }
 
   private TabLabel tabLabelAtMouse;
@@ -1706,7 +1711,7 @@ public class JBTabsImpl extends JComponent
     }
 
     myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
-    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+    drawBorder(g);
   }
 
   protected TabLabel getSelectedLabel() {
@@ -1751,8 +1756,11 @@ public class JBTabsImpl extends JComponent
   @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
-
     mySingleRowLayout.myMoreIcon.paintIcon(this, g);
+  }
+
+  protected void drawBorder(Graphics g) {
+    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
   }
 
   private Max computeMaxSize() {
@@ -2579,6 +2587,7 @@ public class JBTabsImpl extends JComponent
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
     }
+    c.revalidate();
     c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
 
     return bounds;
@@ -2751,7 +2760,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public int getTabHGap() {
-    return 0;
+    return -myBorder.getThickness();
   }
 
   @Override

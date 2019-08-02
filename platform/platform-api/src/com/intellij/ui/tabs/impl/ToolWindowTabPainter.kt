@@ -30,11 +30,10 @@ class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
                                 borderThickness: Int,
                                 tabColor: Color?,
                                 active: Boolean,
-                                hovered: Boolean,
-                                singleTab : Boolean) {
+                                hovered: Boolean) {
     rect.y += borderThickness
     rect.height -= borderThickness
 
-    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered, singleTab)
+    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 }

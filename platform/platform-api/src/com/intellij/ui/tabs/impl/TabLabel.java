@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -30,6 +29,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class TabLabel extends JPanel implements Accessible, Disposable {
+  public static final int UNSCALED_PREF_HEIGHT = 28;
+
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -150,6 +151,17 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    return new Dimension(size.width, getPreferredHeight());
+  }
+
+  protected int getPreferredHeight() {
+    return JBUI.scale(UNSCALED_PREF_HEIGHT);
+  }
+
   @Override
   public void dispose() {
   }
@@ -191,8 +203,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
 
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
-        JBTabPainter painter = myTabs.getTabPainter();
-        TabTheme theme = painter.getTabTheme();
+        TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
+        TabTheme theme = painterAdapter.getTabTheme();
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
                myTabs.isActiveTabs(myInfo) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground()
                                                    : super.getActiveTextColor(attributesColor);
@@ -490,20 +502,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   }
 
   private void paintBackground(Graphics g) {
-    JBTabPainter painter = myTabs.getTabPainter();
-    boolean isSelected = myInfo == myTabs.getSelectedInfo();
-
-    Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
-
-    Graphics2D g2d = (Graphics2D)g;
-    if (isSelected) {
-      painter
-        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo),
-                          myTabs.isHoveredTab(this), myTabs.getVisibleInfos().size() == 1);
-    }
-    else {
-      painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));
-    }
+    TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
+    painterAdapter.paintBackground(this, g, myTabs);
   }
 
   @Override
@@ -549,12 +549,25 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
 
   public void setActionPanelVisible(boolean visible) {
     if (myActionPanel != null) {
-      add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+      if(visible == myActionPanel.isVisible()) return;
+
       myActionPanel.setVisible(visible);
       if (visible) {
         myActionPanel.update();
       }
     }
+  }
+
+  @Override
+  public void doLayout() {
+    if (myActionPanel != null) {
+      if(!myActionPanel.isVisible()) {
+        remove(myActionPanel);
+      } else {
+        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+      }
+    }
+    super.doLayout();
   }
 
   @Override
