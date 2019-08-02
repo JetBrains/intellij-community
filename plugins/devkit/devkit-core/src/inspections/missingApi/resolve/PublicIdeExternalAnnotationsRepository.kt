@@ -31,22 +31,15 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
       SNAPSHOTS_REPO_URL
     )
 
-    private val allProductCodes = listOf("IU", "IC", "RM", "PY", "PC", "PE", "PS", "WS", "OC", "CL", "DB", "RD", "GO", "MPS", "AI")
+  }
 
-    private val ideaIUAnnotationsCoordinates = "com.jetbrains.intellij.idea" to "ideaIU"
-
+  private fun getAnnotationsCoordinates(): Pair<String, String>? {
     //Currently, for any IDE download ideaIU's annotations.
-    private val productCodeToAnnotationsCoordinates = allProductCodes.associate {
-      it to ideaIUAnnotationsCoordinates
-    }
-
-    fun hasAnnotationsForProduct(productCode: String): Boolean =
-      productCode in productCodeToAnnotationsCoordinates
+    return "com.jetbrains.intellij.idea" to "ideaIU"
   }
 
   override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
-    val productCode = ideBuildNumber.productCode.takeIf { it.isNotEmpty() } ?: "IU"
-    val (groupId, artifactId) = productCodeToAnnotationsCoordinates[productCode] ?: return null
+    val (groupId, artifactId) = getAnnotationsCoordinates() ?: return null
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
     val lastReleaseAnnotations = tryDownload(groupId, artifactId, lastReleaseVersion, listOf(RELEASES_REPO_DESCRIPTION))
