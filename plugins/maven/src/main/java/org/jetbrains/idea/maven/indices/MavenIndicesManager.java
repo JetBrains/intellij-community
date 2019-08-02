@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -59,6 +61,7 @@ public class MavenIndicesManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenSearchIndex myUpdatingIndex;
+  private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
@@ -202,6 +205,13 @@ public class MavenIndicesManager implements Disposable {
     MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
+    }
+  }
+
+  public void fixArtifactIndex(File artifactFile, File localRepository) {
+    MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
+    if (index != null) {
+      myIndexFixer.fixIndex(artifactFile, index);
     }
   }
 
@@ -418,5 +428,20 @@ public class MavenIndicesManager implements Disposable {
   @NotNull
   private Path getUserArchetypesFile() {
     return getIndicesDir().resolve("UserArchetypes.xml");
+  }
+
+
+  private static class IndexFixer {
+    private final MergingUpdateQueue myMergingUpdateQueue =
+      new MergingUpdateQueue(this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, null, null, false);
+
+    public void fixIndex(File file, MavenIndex index) {
+      myMergingUpdateQueue.queue(new Update(file.getPath()) {
+        @Override
+        public void run() {
+          index.addArtifact(file);
+        }
+      });
+    }
   }
 }
