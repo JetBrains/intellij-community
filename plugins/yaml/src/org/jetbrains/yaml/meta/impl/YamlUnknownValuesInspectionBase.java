@@ -5,6 +5,7 @@ package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
@@ -67,7 +68,8 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
             continue;
           }
           myProblemsHolder.registerProblem(next.getValue(),
-                                           YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.not.allowed", new Object[]{}));
+                                           YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.not.allowed",
+                                                              ArrayUtil.EMPTY_OBJECT_ARRAY));
         }
       }
     }
@@ -75,18 +77,19 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
     protected void requireMultiplicityMany(@NotNull YAMLValue value) {
       if (value instanceof YAMLScalar) {
         myProblemsHolder.registerProblem(value,
-                                         YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.is.required", new Object[]{}));
+                                         YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.is.required",
+                                                            ArrayUtil.EMPTY_OBJECT_ARRAY));
       }
     }
 
     protected void validateEmptyValue(@NotNull Field feature, @NotNull YAMLKeyValue withoutValue) {
       assert withoutValue.getKey() != null; //would not be able to find `this` as a type
 
-      if (!feature.isEmptyValueAllowed() && !feature.isAnyValueAllowed()) {
+      if (!feature.isEmptyValueAllowed()) {
         InspectionManager manager = myProblemsHolder.getManager();
         ProblemDescriptor eolError = manager.createProblemDescriptor(
           withoutValue.getKey(),
-          YAMLBundle.message("YamlUnknownValuesInspectionBase.error.value.is.required", new Object[]{}),
+          YAMLBundle.message("YamlUnknownValuesInspectionBase.error.value.is.required", ArrayUtil.EMPTY_OBJECT_ARRAY),
           LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           myProblemsHolder.isOnTheFly(), true);
