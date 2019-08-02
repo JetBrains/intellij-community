@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.setConstraints
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -130,18 +133,17 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         val newUsageInformation = usageInformation.run {
           TypeUsageInformation(contravariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
                                requiredClassTypes.map { (param, list) -> mapping.getValue(param) to list }.toMap(),
-                               constraints, covariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
-                               dependentTypes.map { mapping.getValue(it) }.toSet(),
-                               inhabitedTypes.map { mapping.getValue(it.key) to it.value }.toMap())
+                               constraints,
+                               covariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
+                               dependentTypes.map { mapping.getValue(it) }.toSet())
         }
         newUsageInformation
       }
     }
     val closureBodyAnalysisResult = TypeUsageInformation.merge(typeInformation)
     val constraintCollector = mutableListOf<ConstraintFormula>()
-    val inhabitedTypes = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
     val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
-    val dependentTypes = mutableListOf<PsiTypeParameter>()
+    val dependentTypes = mutableSetOf<PsiTypeParameter>()
     method.forEachParameterUsage { parameter, instructions ->
       if (parameter in closureParameters.keys) {
         collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
@@ -158,7 +160,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           val argumentCorrespondence =
             closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
           argumentCorrespondence.forEach { (type, argument) ->
-            setConstraints(type, argument.type!!, inhabitedTypes, dependentTypes, requiredTypesCollector)
+            setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet())
           }
         }
       }
@@ -168,38 +170,8 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       requiredTypesCollector,
       constraintCollector,
       emptySet(),
-      dependentTypes.toSet(),
-      inhabitedTypes)
+      dependentTypes)
     return TypeUsageInformation.merge(listOf(closureParamsTypeInformation, closureBodyAnalysisResult))
-  }
-
-  private fun setConstraints(leftType: PsiType,
-                             rightType: PsiType,
-                             inhabitedTypes: MutableMap<PsiTypeParameter, MutableList<PsiClass>>,
-                             dependentTypes: MutableList<PsiTypeParameter>,
-                             requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
-    var newLeftType = leftType
-    if (leftType.isTypeParameter()) {
-      val constraint = BoundConstraint(rightType.resolve()!!, BoundConstraint.ContainMarker.LOWER)
-      val typeParameter = leftType.typeParameter()!!
-      if (!constraint.clazz.qualifiedName.equals(GroovyCommonClassNames.GROOVY_OBJECT)) {
-        if (constraint.clazz !in method.typeParameters) {
-          requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(constraint)
-        }
-        else {
-          dependentTypes.add(typeParameter)
-          dependentTypes.add(constraint.clazz as PsiTypeParameter)
-        }
-      }
-      newLeftType = leftType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
-      inhabitedTypes.computeIfAbsent(leftType.typeParameter()!!) { mutableListOf() }.add(rightType.resolve()!!)
-    }
-    if (leftType is PsiArrayType && rightType is PsiArrayType) {
-      setConstraints(leftType.componentType, rightType.componentType, inhabitedTypes, dependentTypes, requiredTypesCollector)
-    }
-    (newLeftType as? PsiClassType)?.parameters?.zip((rightType as? PsiClassType)?.parameters ?: return)?.forEach {
-      setConstraints(it.first ?: return, it.second ?: return, inhabitedTypes, dependentTypes, requiredTypesCollector)
-    }
   }
 
   private fun createMethodFromClosureBlock(body: GrClosableBlock,
@@ -220,8 +192,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
 
   override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {
     val mapping = setUpParameterMapping(method, resultMethod)
-    val gatheredTypeParameters = collectDependencies(method.typeParameterList!!,
-                                                     resultSubstitutor)
+    val gatheredTypeParameters = collectDependencies(method.typeParameterList!!, resultSubstitutor)
     for ((parameter, closureParameter) in closureParameters) {
       closureParameter.substituteTypes(resultSubstitutor, gatheredTypeParameters)
       mapping.getValue(parameter).modifierList.addAnnotation(closureParameter.renderTypes(method.parameterList).substring(1))

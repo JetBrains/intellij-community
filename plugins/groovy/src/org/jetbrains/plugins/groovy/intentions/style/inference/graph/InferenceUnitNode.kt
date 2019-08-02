@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -73,7 +74,8 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     }
 
     val inhabitedByUniqueType = lazy(NONE) {
-      usage.inhabitedTypes[core.initialTypeParameter]?.run { isNotEmpty() && all { first() == it } } ?: false
+      usage.requiredClassTypes[core.initialTypeParameter]?.filter { it.marker == INHABIT }?.run { isNotEmpty() && all { first().clazz == it.clazz } }
+      ?: false
     }
     if (equivalenceClasses[type]?.all { it.core.initialTypeParameter !in usage.dependentTypes } == true) {
       if (direct || typeInstantiation is PsiWildcardType || inhabitedByUniqueType.value) {

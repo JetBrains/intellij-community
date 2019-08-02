@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 
-void foo(@ClosureParams(value = SimpleType, options = ['java.lang.Number']) @Anno @AnnoWithValueAndOptions(options = @Anno) @AnnoWithOptions(options = 1) Closure<?> a) {
+void foo(@ClosureParams(value = SimpleType, options = ['? super java.lang.Integer']) @Anno @AnnoWithValueAndOptions(options = @Anno) @AnnoWithOptions(options = 1) Closure<?> a) {
   a(2)
 }
 

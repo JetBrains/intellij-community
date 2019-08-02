@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
@@ -94,17 +95,14 @@ fun inferType(parameter: PsiTypeParameter, usage: TypeUsageInformation): Pair<Ps
     return (signatureTypes.find { it.resolve() == strictClass } ?: strictClass.type()) to true
   }
   else {
-    val superTypes = constraints[CONTAINS]?.map { it.clazz } ?: emptyList()
-    val subTypes = constraints[LOWER]?.map { it.clazz } ?: emptyList()
-    return completeInstantiation(parameter, usage, superTypes, subTypes, signatureTypes) to false
+    return completeInstantiation(parameter, usage, constraints, signatureTypes) to false
   }
 
 }
 
 private fun completeInstantiation(parameter: PsiTypeParameter,
                                   usageInformation: TypeUsageInformation,
-                                  superClasses: List<PsiClass>,
-                                  subClasses: List<PsiClass>,
+                                  constraints: Map<ContainMarker, List<BoundConstraint>>,
                                   signatureTypes: List<PsiClassType>): PsiType {
   val context = parameter.context!!
   val typeLattice = TypeLattice(context)
@@ -116,16 +114,18 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
   val covariantTypes = usageInformation.run {
     covariantTypes.subtract(this.contravariantTypes).subtract(dependentTypes.map { it.type() })
   }
+  val superClasses = constraints[UPPER]?.map { it.clazz } ?: emptyList()
+  val subClasses = constraints[LOWER]?.map { it.clazz } ?: emptyList()
+  val inhabitingClasses = constraints[INHABIT]?.map { it.clazz } ?: emptyList()
   return when (parameterType) {
 
     in contravariantTypes -> {
-      val lowerBound = when (parameter) {
-        in usageInformation.inhabitedTypes -> typeLattice.meet(usageInformation.inhabitedTypes.getValue(parameter))
+      val lowerBound = when {
+        superClasses.isNotEmpty() -> typeLattice.meet(superClasses)
+        inhabitingClasses.isNotEmpty() -> typeLattice.meet(inhabitingClasses)
         else -> typeLattice.join(subClasses)
-      }.mapConjuncts { lowerType -> signatureTypes.find { it.resolve() == lowerType.resolve() } ?: lowerType }
+      }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
-        superClasses.isNotEmpty() ->
-          createIntersection(superClasses.map { upperType -> signatureTypes.find { it.resolve() == upperType } ?: upperType.type() })
         lowerBound != PsiType.NULL -> PsiWildcardType.createSuper(context.manager, lowerBound)
         else -> PsiWildcardType.createUnbounded(context.manager)
       }
@@ -133,11 +133,11 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 
     in covariantTypes -> {
       val upperBound = when {
-        (superClasses.all { it.name == "Object" } || superClasses.isEmpty()) && parameter in usageInformation.inhabitedTypes -> {
-          typeLattice.join(usageInformation.inhabitedTypes.getValue(parameter))
+        (superClasses.all { it.name == "Object" } || superClasses.isEmpty()) && inhabitingClasses.isNotEmpty() -> {
+          typeLattice.join(inhabitingClasses)
         }
         else -> typeLattice.meet(superClasses)
-      }.mapConjuncts { upperType -> signatureTypes.find { it.resolve() == upperType.resolve() } ?: upperType }
+      }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
         (upperBound != javaLangObject) -> PsiWildcardType.createExtends(context.manager, upperBound)
         else -> PsiWildcardType.createUnbounded(context.manager)
@@ -148,20 +148,18 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
       val upperBound = typeLattice.meet(superClasses)
       val lowerBound = typeLattice.join(subClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
       val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
-      val invariantUpperBound = adjustedBound.mapConjuncts { invariantType ->
-        signatureTypes.findTypeWithCorrespondingErasure(invariantType.resolve()) ?: invariantType
-      }.filterImplementedInterfaces()
+      val invariantUpperBound = adjustedBound.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       if (invariantUpperBound.equalsToText(JAVA_LANG_VOID)) PsiWildcardType.createUnbounded(context.manager) else invariantUpperBound
     }
   }
 }
 
-fun List<PsiClassType>.findTypeWithCorrespondingErasure(erasure: PsiClass?): PsiType? {
-  erasure ?: return null
+fun List<PsiClassType>.findTypeWithCorrespondingSupertype(pattern: PsiType): PsiType {
+  val patternClazz = pattern.resolve()
   return find {
     val supers = (it.resolve()?.allSupers() ?: emptySet()) + it.resolve()
-    supers.filter { clazz -> clazz?.name != "Object" }.contains(erasure)
-  }
+    supers.filter { clazz -> clazz?.name != "Object" }.contains(patternClazz)
+  } ?: pattern
 }
 
 private fun PsiType.isGroovyLangObject(): Boolean = equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
@@ -187,14 +185,6 @@ private class TypeLattice(val context: PsiElement) {
   }
 }
 
-private fun PsiType.filterImplementedInterfaces(): PsiType {
-  if (this !is PsiIntersectionType) {
-    return this
-  }
-  val resolvedClasses = this.conjuncts.map { it.resolve()!! }
-  val remainedInterfaces = resolvedClasses.filter { clazz -> !(clazz.isInterface && resolvedClasses.any { it.supers.contains(clazz) }) }
-  return createIntersection(this.conjuncts.filter { it.resolve() in remainedInterfaces })
-}
 
 private fun PsiClass.allSupers(): Set<PsiClass> {
   return supers.flatMap { it.allSupers() }.union(supers.asList()).toSet()

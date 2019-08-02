@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 
-void foo(@ClosureParams(value = SimpleType, options = ['? extends X']) Closure<?> c) {
+void foo(@ClosureParams(value = SimpleType, options = ['? super X']) Closure<?> c) {
   c(new A())
   c(new B())
 }

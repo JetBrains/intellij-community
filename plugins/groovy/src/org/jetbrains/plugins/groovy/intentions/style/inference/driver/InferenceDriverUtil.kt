@@ -2,31 +2,31 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-
-/**
- * Reaches type parameter that does not extend other type parameter
- * @param type should be a type parameter
- */
-tailrec fun extractEndpointType(type: PsiClassType, typeParameters: List<PsiType>): PsiClassType =
-  if (type.superTypes.size == 1 && type.superTypes.single() in typeParameters) {
-    extractEndpointType(type.superTypes.single() as PsiClassType, typeParameters)
-  }
-  else {
-    type
-  }
 
 
 data class BoundConstraint(val clazz: PsiClass, val marker: ContainMarker) {
-  // containing means the same as in jls-4.5.1
+  /**
+  Marker represents relation between [clazz] and some type parameter
+  Aside from intuitive relations [EQUAL], [UPPER] and [LOWER], here is also an [INHABIT] one.
+
+  Example:
+  `def <T> void foo(List<T> list) { list.add(1 as Integer) }`
+  `foo([1] as List<Number>)`
+  `foo([1] as List<Serializable>)`
+
+  So [Number] and [Serializable] are types that can inhabit `T` (and also its lower bounds) and [Integer] is a type that only a lower bound.
+  It allows us to let `T` be a `? super Number`
+   */
   enum class ContainMarker {
     EQUAL,
-    CONTAINS,
-    LOWER
+    UPPER,
+    LOWER,
+    INHABIT
   }
 }
 
@@ -34,8 +34,7 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
                                 val requiredClassTypes: Map<PsiTypeParameter, List<BoundConstraint>>,
                                 val constraints: Collection<ConstraintFormula>,
                                 val covariantTypes: Set<PsiType> = emptySet(),
-                                val dependentTypes: Set<PsiTypeParameter> = emptySet(),
-                                val inhabitedTypes: Map<PsiTypeParameter, List<PsiClass>> = emptyMap()) {
+                                val dependentTypes: Set<PsiTypeParameter> = emptySet()) {
   operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
     return merge(listOf(this, typeUsageInformation))
   }
@@ -56,9 +55,7 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
       val constraints = data.flatMap { it.constraints }
       val covariantTypes = data.flatMap { it.covariantTypes }.toSet()
       val dependentTypes = data.flatMap { it.dependentTypes }.toSet()
-      val inhabitedTypes = flattenMap(data.map { it.inhabitedTypes })
-      return TypeUsageInformation(contravariantTypes, requiredClassTypes, constraints, covariantTypes, dependentTypes,
-                                  inhabitedTypes)
+      return TypeUsageInformation(contravariantTypes, requiredClassTypes, constraints, covariantTypes, dependentTypes)
     }
   }
 }

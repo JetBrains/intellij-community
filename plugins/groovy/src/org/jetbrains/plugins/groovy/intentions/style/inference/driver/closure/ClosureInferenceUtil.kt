@@ -112,7 +112,7 @@ private fun extractArgumentExpressions(method: GrMethod,
 fun collectClosureParamsDependencies(constraintCollector: MutableList<ConstraintFormula>,
                                      closureParameter: ParameterizedClosure,
                                      usages: List<ReadWriteVariableInstruction>,
-                                     dependentTypes: MutableList<PsiTypeParameter>,
+                                     dependentTypes: MutableSet<PsiTypeParameter>,
                                      requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
   val parameter = closureParameter.parameter
   val parameterType = parameter.type
