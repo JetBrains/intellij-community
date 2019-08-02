@@ -109,7 +109,7 @@ class InvokeQuickListAction(private val myQuickList: QuickList) : QuickSwitchSch
   }
 }
 
-internal class QuickListPreloaded : PreloadingActivity() {
+internal class QuickListPreloader : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
     QuickListsManager.instance
   }
