@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ public class YamlMetaClass extends YamlMetaType {
     super.validateKeyValue(keyValue, problemsHolder);
     if (keyValue.getValue() instanceof YAMLScalar) {
       problemsHolder.registerProblem(keyValue.getValue(),
-                                     YAMLBundle.message("YamlMetaClass.error.scalar.value", new Object[]{}));
+                                     YAMLBundle.message("YamlMetaClass.error.scalar.value", ArrayUtil.EMPTY_OBJECT_ARRAY));
     }
   }
 
