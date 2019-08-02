@@ -1,4 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("ApplicationLoader")
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
@@ -185,7 +186,7 @@ fun registerRegistryAndContainerAndInitStore(pluginDescriptorsFuture: Completabl
       }
 
       // yes, at this moment initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used.
-      IdeaApplication.initConfigurationStore(app, null)
+      initConfigurationStore(app, null)
 
       future
     }
@@ -241,7 +242,7 @@ private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): App
 
   pluginsLoaded.get()
 
-  val starter = IdeaApplication.findStarter(args[0]) ?: IdeStarter()
+  val starter = findStarter(args[0]) ?: IdeStarter()
   if (Main.isHeadless() && !starter.isHeadless) {
     Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
     exitProcess(Main.NO_GRAPHICS)
@@ -249,76 +250,68 @@ private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): App
   return starter
 }
 
-@ApiStatus.Internal
-object IdeaApplication {
-  @JvmStatic
-  fun initApplication(rawArgs: Array<String>) {
-    val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
-    val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
-    EventQueue.invokeLater {
-      executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
+fun initApplication(rawArgs: Array<String>) {
+  val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
+  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
+  EventQueue.invokeLater {
+    executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
+  }
+
+  val plugins = try {
+    initAppActivity.runChild("plugin descriptors loading") {
+      PluginManagerCore.getLoadedPlugins(MainRunner::class.java.classLoader)
+    }
+  }
+  catch (e: Throwable) {
+    pluginDescriptorsFuture.completeExceptionally(e)
+    return
+  }
+
+  pluginDescriptorsFuture.complete(plugins)
+}
+
+fun findStarter(key: String?): ApplicationStarter? {
+  for (starter in ApplicationStarter.EP_NAME.iterable) {
+    if (starter == null) {
+      break
     }
 
-    val plugins = try {
-      initAppActivity.runChild("plugin descriptors loading") {
-        PluginManagerCore.getLoadedPlugins(IdeaApplication.javaClass.classLoader)
-      }
+    if (starter.commandName == key) {
+      return starter
+    }
+  }
+  return null
+}
+
+fun openFilesOnLoading(files: List<File>) {
+  filesToLoad = files
+}
+
+fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
+  wizardStepProvider = provider
+}
+
+fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
+  val beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded")
+  val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
+  for (listener in ApplicationLoadListener.EP_NAME.iterable) {
+    try {
+      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Throwable) {
-      pluginDescriptorsFuture.completeExceptionally(e)
-      return
+      LOG.error(e)
     }
-
-    pluginDescriptorsFuture.complete(plugins)
   }
 
-  @JvmStatic
-  fun findStarter(key: String?): ApplicationStarter? {
-    for (starter in ApplicationStarter.EP_NAME.iterable) {
-      if (starter == null) {
-        break
-      }
+  val initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store")
 
-      if (starter.commandName == key) {
-        return starter
-      }
-    }
-    return null
-  }
-
-  @JvmStatic
-  fun openFilesOnLoading(files: List<File>) {
-    filesToLoad = files
-  }
-
-  @JvmStatic
-  fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-    wizardStepProvider = provider
-  }
-
-  @JvmStatic
-  fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
-    val beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded")
-    val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
-    for (listener in ApplicationLoadListener.EP_NAME.iterable) {
-      try {
-        (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-
-    val initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store")
-
-    // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-    app.stateStore.setPath(effectiveConfigPath)
-    LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
-    initStoreActivity.end()
-  }
+  // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+  app.stateStore.setPath(effectiveConfigPath)
+  LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
+  initStoreActivity.end()
 }
 
 open class IdeStarter : ApplicationStarter {

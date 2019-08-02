@@ -164,7 +164,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance(null);
+    ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
 
     if (firstTime) {

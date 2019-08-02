@@ -7,7 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -74,7 +74,7 @@ public final class MacOSApplicationProvider {
           submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
         }
         else {
-          IdeaApplication.openFilesOnLoading(files);
+          ApplicationLoader.openFilesOnLoading(files);
         }
       });
 

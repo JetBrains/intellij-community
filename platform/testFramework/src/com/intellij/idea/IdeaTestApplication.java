@@ -51,14 +51,10 @@ public final class IdeaTestApplication implements Disposable {
   }
 
   public static IdeaTestApplication getInstance() {
-    return getInstance(null);
-  }
-
-  public static IdeaTestApplication getInstance(@Nullable String configPath) {
     IdeaTestApplication instance = ourInstance;
     if (instance == null) {
       try {
-        instance = createInstance(configPath);
+        instance = createInstance();
       }
       catch (RuntimeException e) {
         bootstrapError = e;
@@ -70,7 +66,7 @@ public final class IdeaTestApplication implements Disposable {
   }
 
   @NotNull
-  private static synchronized IdeaTestApplication createInstance(@Nullable String configPath) {
+  private static synchronized IdeaTestApplication createInstance() {
     if (ourInstance != null) {
       return ourInstance;
     }
@@ -78,7 +74,6 @@ public final class IdeaTestApplication implements Disposable {
     if (bootstrapError != null) {
       throw bootstrapError;
     }
-
 
     if (isBootstrappingAppNow) {
       throw new IllegalStateException("App bootstrap is already in process");
@@ -95,7 +90,6 @@ public final class IdeaTestApplication implements Disposable {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
     CompletableFuture<List<IdeaPluginDescriptor>> loadedPluginFuture = CompletableFuture.supplyAsync(() -> {
-      //noinspection CodeBlock2Expr
       return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
     }, AppExecutorUtil.getAppExecutorService());
 
@@ -103,8 +97,8 @@ public final class IdeaTestApplication implements Disposable {
     ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
     IconManager.activate();
     try {
-      IdeaApplicationKt.registerRegistryAndContainerAndInitStore(loadedPluginFuture, app, null)
-        .thenCompose(aVoid -> IdeaApplicationKt.preloadServices(app))
+      ApplicationLoader.registerRegistryAndContainerAndInitStore(loadedPluginFuture, app, null)
+        .thenCompose(aVoid -> ApplicationLoader.preloadServices(app))
         .get(20, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {
@@ -130,7 +124,8 @@ public final class IdeaTestApplication implements Disposable {
     if (ourInstance != null) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
-        Disposer.dispose(application);  // `ApplicationManager#ourApplication` will be automatically set to `null`
+        // `ApplicationManager#ourApplication` will be automatically set to `null`
+        Disposer.dispose(application);
       }
       ourInstance = null;
     }

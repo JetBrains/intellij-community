@@ -14,7 +14,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.idea.Main;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -353,7 +353,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public final void load(@Nullable String configPath) {
     registerComponents(PluginManagerCore.getLoadedPlugins());
 
-    IdeaApplication.initConfigurationStore(this, configPath);
+    ApplicationLoader.initConfigurationStore(this, configPath);
 
     MutablePicoContainer picoContainer = getPicoContainer();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
