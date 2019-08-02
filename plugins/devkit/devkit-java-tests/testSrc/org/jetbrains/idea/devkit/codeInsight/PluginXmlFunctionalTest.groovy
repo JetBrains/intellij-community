@@ -97,25 +97,25 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("coreImpl", coreImpl)
   }
 
-  void testApplicationListeners() {
-    doHighlightingTest("ApplicationListeners.xml")
+  void testListeners() {
+    doHighlightingTest("Listeners.xml")
   }
 
-  void testApplicationListenersNoSinceBuild() {
-    doHighlightingTest("ApplicationListenersNoSinceBuild.xml")
+  void testListenersNoSinceBuild() {
+    doHighlightingTest("ListenersNoSinceBuild.xml")
   }
 
-  void testApplicationListenersPre193() {
-    doHighlightingTest("ApplicationListenersPre193.xml")
+  void testListenersPre193() {
+    doHighlightingTest("ListenersPre193.xml")
   }
 
-  void testApplicationListenersDepends() {
+  void testListenersDepends() {
     myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml")
-    doHighlightingTest("ApplicationListenersDepends-dependency.xml")
+    doHighlightingTest("ListenersDepends-dependency.xml")
   }
 
-  void testApplicationListenersNoPluginIdStandalone() {
-    doHighlightingTest("ApplicationListenersNoPluginIdStandalone.xml")
+  void testListenersNoPluginIdStandalone() {
+    doHighlightingTest("ListenersNoPluginIdStandalone.xml")
   }
 
   void testExtensionI18n() {
