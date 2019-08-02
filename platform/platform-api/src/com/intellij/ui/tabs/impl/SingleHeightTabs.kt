@@ -21,7 +21,7 @@ open class SingleHeightTabs(project: Project?,
     var height: Int? = null
 
     init {
-      TabsHeightController.registerAdjective(this, {
+      TabsHeightController.addListener({
         height = it
       }, this)
     }

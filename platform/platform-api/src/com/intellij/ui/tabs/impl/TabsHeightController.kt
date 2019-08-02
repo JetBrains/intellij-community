@@ -5,70 +5,46 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.ui.JBUI
-import com.jetbrains.rd.swing.sizeProperty
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.ViewableMap
-import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.rd.createNestedDisposable
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 
-class TabsHeightController {
-  companion object {
-    private val heightMap = ViewableMap<JComponent, Int>()
-    private val adjectives = ViewableMap<JComponent, (Int) -> Unit>()
+object TabsHeightController {
+  private val watchedComponents = mutableListOf<JComponent>()
+  private val listeners = mutableListOf<(Int) -> Unit>()
+  private var toolWindowHeight = TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding())
 
-    private var ld = LifetimeDefinition()
-    private val toolWindowHeightProperty = Property(TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()))
+  private fun recalcHeight() {
+    val height = (watchedComponents.map { it.height }.max() ?: 0).coerceAtLeast(TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()))
+    if (height != toolWindowHeight) {
+      toolWindowHeight = height
+      listeners.forEach { it(height) }
+    }
+  }
 
-    init {
-      heightMap.advise(ld) {
-        val value = heightMap.maxBy { it.value }?.value
-        value?.let {
-          toolWindowHeightProperty.set(if(it > 0) it else TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()))
-        }
-      }
-
-      toolWindowHeightProperty.advise(ld) {
-        for (entry in adjectives) {
-          entry.value(it)
-        }
+  @JvmStatic
+  fun registerActive(comp: JComponent, parentDisposable: Disposable) {
+    val listener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        recalcHeight()
       }
     }
 
-    @JvmStatic
-    fun registerActive(comp: JComponent, parentDisposable: Disposable) {
-      val lifetime = createNestedLifeTime(parentDisposable)
+    watchedComponents.add(comp)
+    recalcHeight()
+    comp.addComponentListener(listener)
 
-      lifetime.bracket({
-                         comp.sizeProperty().advise(lifetime) {
-                           heightMap[comp] = it.height
-                         }
-                         if (comp.height > 0)
-                           heightMap[comp] = comp.height
-                       },
-                       { heightMap.remove(comp) })
+    Disposer.register(parentDisposable, Disposable {
+      watchedComponents.remove(comp)
+      recalcHeight()
+      comp.removeComponentListener(listener)
+    })
+  }
 
-    }
-
-    @JvmStatic
-    fun registerAdjective(comp: JComponent, update: (Int) -> Unit, parentDisposable: Disposable) {
-      val lifetime = createNestedLifeTime(parentDisposable)
-
-      lifetime.bracket({
-                         adjectives[comp] = update
-                         update(toolWindowHeightProperty.value)
-                       },
-                       { adjectives.remove(comp) })
-    }
-
-    private fun createNestedLifeTime(parentDisposable: Disposable): Lifetime {
-      val ds = Disposer.newDisposable()
-      val nestedDisposable = ld.createNestedDisposable()
-      Disposer.register(nestedDisposable, ds)
-      Disposer.register(parentDisposable, nestedDisposable)
-      return ds.createLifetime()
-    }
+  @JvmStatic
+  fun addListener(update: (Int) -> Unit, parentDisposable: Disposable) {
+    listeners.add(update)
+    Disposer.register(parentDisposable, Disposable { listeners.remove(update) })
+    update(toolWindowHeight)
   }
 }

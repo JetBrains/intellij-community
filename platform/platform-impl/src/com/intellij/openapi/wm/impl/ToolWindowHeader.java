@@ -270,7 +270,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   @Override
   public void addNotify() {
     super.addNotify();
-    TabsHeightController.registerAdjective(this, height -> {
+    TabsHeightController.addListener(height -> {
       updateHeight(height);
       return Unit.INSTANCE;
     }, this);
