@@ -21,43 +21,7 @@ public final class EditorLastActionTrackerImpl implements EditorLastActionTracke
   private Editor myLastEditor;
 
   EditorLastActionTrackerImpl() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    // to prevent leaks
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        EditorImpl killedEditor = (EditorImpl)event.getEditor();
-        if (is(myCurrentEditor, killedEditor)) {
-          myCurrentEditor = null;
-        }
-        if (is(myLastEditor, killedEditor)) {
-          myLastEditor = null;
-        }
-      }
-    }, ApplicationManager.getApplication());
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
-        if (myCurrentEditor != myLastEditor) {
-          resetLastAction();
-        }
-      }
-
-      @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        myLastActionId = getActionId(action);
-        myLastEditor = myCurrentEditor;
-        myCurrentEditor = null;
-      }
-
-      @Override
-      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
-        resetLastAction();
-      }
-    });
-    editorFactory.getEventMulticaster().addEditorMouseListener(new EditorMouseListener() {
+    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(new EditorMouseListener() {
       @Override
       public void mousePressed(@NotNull EditorMouseEvent e) {
         resetLastAction();
@@ -92,5 +56,48 @@ public final class EditorLastActionTrackerImpl implements EditorLastActionTracke
   private void resetLastAction() {
     myLastActionId = null;
     myLastEditor = null;
+  }
+
+  @NotNull
+  private static EditorLastActionTrackerImpl getTracker() {
+    return (EditorLastActionTrackerImpl)EditorLastActionTracker.getInstance();
+  }
+
+  final static class MyEditorFactoryListener implements EditorFactoryListener {
+    @Override
+    public void editorReleased(@NotNull EditorFactoryEvent event) {
+      EditorLastActionTrackerImpl tracker = getTracker();
+      EditorImpl killedEditor = (EditorImpl)event.getEditor();
+      if (is(tracker.myCurrentEditor, killedEditor)) {
+        tracker.myCurrentEditor = null;
+      }
+      if (is(tracker.myLastEditor, killedEditor)) {
+        tracker.myLastEditor = null;
+      }
+    }
+  }
+
+  final static class MyAnActionListener implements AnActionListener {
+    @Override
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      EditorLastActionTrackerImpl tracker = getTracker();
+      tracker.myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
+      if (tracker.myCurrentEditor != tracker.myLastEditor) {
+        tracker.resetLastAction();
+      }
+    }
+
+    @Override
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      EditorLastActionTrackerImpl tracker = getTracker();
+      tracker.myLastActionId = getActionId(action);
+      tracker.myLastEditor = tracker.myCurrentEditor;
+      tracker.myCurrentEditor = null;
+    }
+
+    @Override
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+      getTracker().resetLastAction();
+    }
   }
 }

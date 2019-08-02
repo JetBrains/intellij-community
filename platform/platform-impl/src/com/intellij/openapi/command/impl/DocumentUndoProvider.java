@@ -19,15 +19,20 @@ import com.intellij.psi.AbstractFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocumentUndoProvider implements Disposable {
+public class DocumentUndoProvider implements Disposable, DocumentListener {
   private static final Key<Boolean> UNDOING_EDITOR_CHANGE = Key.create("DocumentUndoProvider.UNDOING_EDITOR_CHANGE");
 
   private final Project myProject;
 
-  DocumentUndoProvider(@Nullable Project project) {
+  @SuppressWarnings("unused")
+  private DocumentUndoProvider() {
+    myProject = null;
+  }
+
+  DocumentUndoProvider(@NotNull Project project) {
     myProject = project;
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyEditorDocumentListener(), this);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(this, this);
   }
 
   @Override
@@ -46,69 +51,67 @@ public class DocumentUndoProvider implements Disposable {
     if (doc != null) doc.putUserData(UNDOING_EDITOR_CHANGE, null);
   }
 
-  private class MyEditorDocumentListener implements DocumentListener {
-    @Override
-    public void beforeDocumentChange(@NotNull DocumentEvent e) {
-      Document document = e.getDocument();
-      if (!shouldProcess(document)) return;
+  @Override
+  public void beforeDocumentChange(@NotNull DocumentEvent e) {
+    Document document = e.getDocument();
+    if (!shouldProcess(document)) return;
 
-      UndoManagerImpl undoManager = getUndoManager();
-      if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
-          document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
-        throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
-      }
+    UndoManagerImpl undoManager = getUndoManager();
+    if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
+        document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
+      throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
     }
+  }
 
-    @Override
-    public void documentChanged(@NotNull final DocumentEvent e) {
-      Document document = e.getDocument();
-      if (!shouldProcess(document)) return;
+  @Override
+  public void documentChanged(@NotNull final DocumentEvent e) {
+    Document document = e.getDocument();
+    if (!shouldProcess(document)) return;
 
-      UndoManagerImpl undoManager = getUndoManager();
-      if (undoManager.isActive() && isUndoable(document)) {
-        registerUndoableAction(e);
-      }
-      else {
-        registerNonUndoableAction(document);
-      }
+    UndoManagerImpl undoManager = getUndoManager();
+    if (undoManager.isActive() && isUndoable(document)) {
+      registerUndoableAction(e);
     }
-
-    private boolean shouldProcess(Document document) {
-      if (myProject != null && myProject.isDisposed()) return false;
-      if (!ApplicationManager.getApplication().isDispatchThread()) return false; // some light document
-      return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
-             // for the same event twice (from original document too)
-             // and undo will work incorrectly
-             && shouldRecordActions(document);
+    else {
+      registerNonUndoableAction(document);
     }
+  }
 
-    private boolean shouldRecordActions(final Document document) {
-      if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
+  private boolean shouldProcess(Document document) {
+    if (myProject != null && myProject.isDisposed()) return false;
+    if (!ApplicationManager.getApplication().isDispatchThread()) return false; // some light document
+    return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
+           // for the same event twice (from original document too)
+           // and undo will work incorrectly
+           && shouldRecordActions(document);
+  }
 
-      VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      if (vFile == null) return true;
-      return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE &&
-             vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
+  private static boolean shouldRecordActions(final Document document) {
+    if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
+
+    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    if (vFile == null) return true;
+    return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE &&
+           vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
+  }
+
+  private void registerUndoableAction(DocumentEvent e) {
+    getUndoManager().undoableActionPerformed(new EditorChangeAction(e));
+  }
+
+  private void registerNonUndoableAction(final Document document) {
+    DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+    getUndoManager().nonundoableActionPerformed(ref, false);
+  }
+
+  private boolean isUndoable(Document document) {
+    DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+    VirtualFile file = ref.getFile();
+
+    // Allow undo even from refresh if requested
+    if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+      return true;
     }
-
-    private void registerUndoableAction(DocumentEvent e) {
-      getUndoManager().undoableActionPerformed(new EditorChangeAction(e));
-    }
-
-    private void registerNonUndoableAction(final Document document) {
-      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
-      getUndoManager().nonundoableActionPerformed(ref, false);
-    }
-
-    private boolean isUndoable(Document document) {
-      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
-      VirtualFile file = ref.getFile();
-
-      // Allow undo even from refresh if requested
-      if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
-        return true;
-      }
-      return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);
-    }
+    return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);
   }
 }
