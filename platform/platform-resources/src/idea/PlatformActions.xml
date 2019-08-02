@@ -26,10 +26,10 @@
     <group id="ListActions" text="List Actions">
       <action id="List-selectFirstRow" text="Select First Row"
               description="Selects the first row."
-              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorLineStart"/>
+              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="List-selectFirstRowExtendSelection" text="Extend Selection to First Row"
               description="Scrolls to the first row and adds corresponding rows to selection."
-              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
+              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
       <action id="List-selectLastRow" text="Select Last Row"
               description="Selects the last row."
               class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd"/>
@@ -130,10 +130,10 @@
     <group id="TreeActions" text="Tree Actions">
       <action id="Tree-selectFirst" text="Select First Node"
               description="Selects the first node."
-              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorLineStart"/>
+              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="Tree-selectFirstExtendSelection" text="Extend Selection to First Node"
               description="Scrolls to the first node and adds corresponding nodes to selection."
-              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
+              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
       <action id="Tree-selectLast" text="Select Last Node"
               description="Selects the last node."
               class="com.intellij.ui.TreeActions$End" use-shortcut-of="EditorTextEnd"/>
