@@ -12,14 +12,7 @@
     <xi:fallback/>
   </xi:include>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
-    </component>
-  </application-components>
-
   <extensionPoints>
-
     <extensionPoint name="html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
     </extensionPoint>
@@ -614,6 +607,8 @@
     <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
+
+    <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
