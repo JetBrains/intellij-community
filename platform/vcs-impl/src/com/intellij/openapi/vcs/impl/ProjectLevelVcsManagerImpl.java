@@ -146,15 +146,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myAnnotationLocalChangesListener = new VcsAnnotationLocalChangesListenerImpl(myProject, this);
   }
 
-  public void registerVcs(AbstractVcs vcs) {
+  public void registerVcs(AbstractVcs<?> vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
 
   @Override
   @Nullable
-  public AbstractVcs findVcsByName(String name) {
+  public AbstractVcs<?> findVcsByName(String name) {
     if (name == null) return null;
-    AbstractVcs result = myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
+    AbstractVcs<?> result = myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
     ProgressManager.checkCanceled();
     return result;
   }
@@ -234,7 +234,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public AbstractVcs getVcsFor(@NotNull VirtualFile file) {
+  public AbstractVcs<?> getVcsFor(@NotNull VirtualFile file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -243,7 +243,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public AbstractVcs getVcsFor(@NotNull FilePath file) {
+  public AbstractVcs<?> getVcsFor(@NotNull FilePath file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -285,7 +285,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
-  public void unregisterVcs(@NotNull AbstractVcs vcs) {
+  public void unregisterVcs(@NotNull AbstractVcs<?> vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
       LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
@@ -302,7 +302,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public boolean checkVcsIsActive(AbstractVcs vcs) {
+  public boolean checkVcsIsActive(AbstractVcs<?> vcs) {
     return checkVcsIsActive(vcs.getName());
   }
 
@@ -313,7 +313,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @NotNull
   @Override
-  public AbstractVcs[] getAllActiveVcss() {
+  public AbstractVcs<?>[] getAllActiveVcss() {
     return myMappings.getActiveVcses();
   }
 
@@ -614,8 +614,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public VirtualFile[] getAllVersionedRoots() {
     List<VirtualFile> vFiles = new ArrayList<>();
-    final AbstractVcs[] vcses = myMappings.getActiveVcses();
-    for (AbstractVcs vcs : vcses) {
+    final AbstractVcs<?>[] vcses = myMappings.getActiveVcses();
+    for (AbstractVcs<?> vcs : vcses) {
       Collections.addAll(vFiles, getRootsUnderVcs(vcs));
     }
     return VfsUtilCore.toVirtualFileArray(vFiles);
@@ -625,8 +625,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NotNull
   public VcsRoot[] getAllVcsRoots() {
     List<VcsRoot> vcsRoots = new ArrayList<>();
-    final AbstractVcs[] vcses = myMappings.getActiveVcses();
-    for (AbstractVcs vcs : vcses) {
+    final AbstractVcs<?>[] vcses = myMappings.getActiveVcses();
+    for (AbstractVcs<?> vcs : vcses) {
       final VirtualFile[] roots = getRootsUnderVcs(vcs);
       for (VirtualFile root : roots) {
         vcsRoots.add(new VcsRoot(vcs, root));
@@ -652,7 +652,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
       if (rootSettingsElement != null) {
         String className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS);
-        AbstractVcs vcsInstance = findVcsByName(vcs);
+        AbstractVcs<?> vcsInstance = findVcsByName(vcs);
         if (vcsInstance != null && className != null) {
           rootSettings = vcsInstance.createEmptyVcsRootSettings();
           if (rootSettings != null) {
@@ -716,7 +716,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
    */
   @Override
   @Nullable
-  public AbstractVcs findVersioningVcs(VirtualFile file) {
+  public AbstractVcs<?> findVersioningVcs(VirtualFile file) {
     final VcsDescriptor[] vcsDescriptors = getAllVcss();
     VcsDescriptor probableVcs = null;
     for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
