@@ -63,6 +63,11 @@ public abstract class PluginsTab {
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
+    int key = mySearchPanel.getPanel() == panel ? 1 : 0;
+    if (myCardPanel.getKey() != key) {
+      return;
+    }
+
     List<CellPluginComponent> selection = panel.getSelection();
     int size = selection.size();
     myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
