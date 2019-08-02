@@ -31,14 +31,12 @@ public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Dis
     }
     settings.loadState(state);
     if (myBundlesListPanel.isModified(state.getBundles())) {
-      final TextMateService textMateService = TextMateService.getInstance();
       state.setBundles(myBundlesListPanel.getState());
       ProgressManager.getInstance().run(new Task.Backgroundable(null, "Loading TextMate Bundles", false,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          textMateService.unregisterAllBundles();
-          textMateService.registerEnabledBundles();
+          TextMateService.getInstance().reloadEnabledBundles();
         }
       });
     }

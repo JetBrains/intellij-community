@@ -74,11 +74,12 @@ public class TextMateServiceImpl extends TextMateService {
   private final Interner<CharSequence> myInterner = new WeakInterner<>();
 
   @Override
-  public void registerEnabledBundles() {
-    doRegisterEnabledBundles();
+  public void reloadEnabledBundles() {
+    unregisterAllBundles();
+    registerEnabledBundles();
   }
 
-  private void doRegisterEnabledBundles() {
+  private void registerEnabledBundles() {
     TextMateSettings settings = TextMateSettings.getInstance();
     if (settings == null) {
       return;
@@ -145,9 +146,7 @@ public class TextMateServiceImpl extends TextMateService {
     settings.loadState(state);
   }
 
-
-  @Override
-  public void unregisterAllBundles() {
+  private void unregisterAllBundles() {
     myExtensionsMapping.clear();
     myPreferencesRegistry.clear();
     myCustomHighlightingColors.clear();
@@ -226,7 +225,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   private void ensureInitialized() {
     if (myInitialized.compareAndSet(false, true)) {
-      doRegisterEnabledBundles();
+      registerEnabledBundles();
     }
   }
 
@@ -301,12 +300,10 @@ public class TextMateServiceImpl extends TextMateService {
   @TestOnly
   public static void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
-    TextMateService.getInstance().unregisterAllBundles();
-    TextMateService.getInstance().registerEnabledBundles();
+    TextMateService.getInstance().reloadEnabledBundles();
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
-      TextMateService.getInstance().unregisterAllBundles();
-      TextMateService.getInstance().registerEnabledBundles();
+      TextMateService.getInstance().reloadEnabledBundles();
     });
   }
 }

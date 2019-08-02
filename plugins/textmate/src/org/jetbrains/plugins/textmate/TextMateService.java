@@ -35,25 +35,13 @@ public abstract class TextMateService {
   public abstract Bundle createBundle(@NotNull VirtualFile directory);
 
   /**
-   * Register all enabled bundles in IDE {@link org.jetbrains.plugins.textmate.configuration.TextMateSettings.TextMateSettingsState#getBundles()}
+   * Unregister all and register all enabled bundles in IDE {@link org.jetbrains.plugins.textmate.configuration.TextMateSettings.TextMateSettingsState#getBundles()}
    * 1. read all enabled bundles
    * 2. prepare syntax table of supported languages
    * 3. prepare preferences table of enabled bundles
    * 4. fill the extensions mapping for {@link org.jetbrains.plugins.textmate.language.TextMateFileType}
    */
-  public abstract void registerEnabledBundles();
-
-  /**
-   * Unregister bundles scenario:
-   * <ul>
-   * <li>clear textmate syntax table</li>
-   * <li>clear preferences table</li>
-   * <li>clear extensions mapping</li>
-   * </ul>
-   * <p/>
-   * <p/>
-   */
-  public abstract void unregisterAllBundles();
+  public abstract void reloadEnabledBundles();
 
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
