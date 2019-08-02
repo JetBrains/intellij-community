@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.psi.PsiElement;
@@ -36,17 +36,16 @@ import org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection;
 import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineMetaData;
+import org.jetbrains.annotations.NotNull;
 
-public class ApplicationLoader implements MetaDataContributor, ApplicationInitializedListener {
+import java.util.Arrays;
+import java.util.List;
+
+public final class RelaxNgMetaDataContributor implements MetaDataContributor {
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @Override
-  public void componentsInitialized() {
-    contributeMetaData(MetaDataRegistrar.getInstance());
-  }
-
-  @Override
-  public void contributeMetaData(MetaDataRegistrar registrar) {
+  public void contributeMetaData(@NotNull MetaDataRegistrar registrar) {
     registrar.registerMetaData(
       new AndFilter(
         new NamespaceFilter(RNG_NAMESPACE),
@@ -76,14 +75,12 @@ public class ApplicationLoader implements MetaDataContributor, ApplicationInitia
     }, RngDefineMetaData.class);
   }
 
-  public static Class[] getInspectionClasses() {
-    return new Class[]{
-            RngDomInspection.class,
-            UnusedDefineInspection.class
-    };
+  @NotNull
+  public static List<Class<? extends LocalInspectionTool>> getInspectionClasses() {
+    return Arrays.asList(RngDomInspection.class, UnusedDefineInspection.class);
   }
 
-  public static class ResourceProvider implements StandardResourceProvider {
+  public static final class ResourceProvider implements StandardResourceProvider {
     @Override
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());

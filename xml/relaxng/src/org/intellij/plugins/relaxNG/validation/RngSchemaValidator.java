@@ -34,7 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
@@ -69,7 +69,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       if (rootTag == null) {
         return null;
       }
-      if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
+      if (!RelaxNgMetaDataContributor.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
         return null;
       }
     } else {
@@ -118,7 +118,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         public void onMessage(PsiElement context, String message) {
           errors.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     ValidationMessageConsumer warning() {
       return new ValidationMessageConsumer() {
@@ -126,7 +126,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         public void onMessage(PsiElement context, String message) {
           warnings.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     void apply(AnnotationHolder holder) {
       MessageConsumerImpl errorc = new ErrorMessageConsumer(holder);

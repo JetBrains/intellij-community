@@ -5,7 +5,7 @@
     <fileType name="RNG Compact" language="RELAX-NG" extensions="rnc"
               implementationClass="org.intellij.plugins.relaxNG.compact.RncFileType" fieldName="INSTANCE"/>
     <completion.contributor language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RncCompletionContributor" />
-    <standardResourceProvider implementation="org.intellij.plugins.relaxNG.ApplicationLoader$ResourceProvider" />
+    <standardResourceProvider implementation="org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor$ResourceProvider" />
 
     <annotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.ReferenceAnnotator" />
     <annotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.model.annotation.ModelAnnotator" />
@@ -49,7 +49,7 @@
     <localInspection shortName="UnusedDefine" displayName="Unused Define" groupName="RELAX NG" enabledByDefault="false" level="WARNING"
                      implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"/>
     <xml.validateHandler implementation="org.intellij.plugins.relaxNG.validation.RngValidateHandler"/>
-    <metaDataContributor implementation="org.intellij.plugins.relaxNG.ApplicationLoader" order="first"/>
+    <metaDataContributor implementation="org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor" order="first"/>
   </extensions>
 
   <actions>

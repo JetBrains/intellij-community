@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 /**
  * @author max
  */
-public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
+public final class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
   private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
 
   @NotNull
@@ -79,8 +79,7 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
   private static void registerTools(@NotNull Collection<? extends InspectionToolProvider> providers,
                                     @NotNull List<Supplier<InspectionToolWrapper>> factories) {
     for (InspectionToolProvider provider : providers) {
-      //noinspection unchecked
-      for (Class<InspectionProfileEntry> aClass : provider.getInspectionClasses()) {
+      for (Class<? extends LocalInspectionTool> aClass : provider.getInspectionClasses()) {
         factories.add(() -> {
           InspectionProfileEntry entry = InspectionToolsRegistrarCore.instantiateTool(aClass);
           return entry == null ? null : wrapTool(entry);
