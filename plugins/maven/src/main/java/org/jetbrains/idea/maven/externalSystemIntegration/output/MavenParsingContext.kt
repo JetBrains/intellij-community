@@ -10,10 +10,6 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
 
-  /*init {
-    startedProjects = CopyOnWriteArrayList()
-  }*/
-
   private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0
 
