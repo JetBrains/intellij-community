@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface ListComponentUpdater extends GenericListComponentUpdater<PsiElement> {
+public interface ListComponentUpdater {
+  void replaceModel(@NotNull List<? extends PsiElement> data);
+  void paintBusy(boolean paintBusy);
 }
-
