@@ -107,7 +107,7 @@ private fun updateIgnoreBlock(psiParserFacade: PsiParserFacade,
 
 private fun addNewElements(ignoreFilePsi: PsiFile, newEntries: List<PsiElement>) {
   with(ignoreFilePsi) {
-    if (!lastChild.isNewLine()) {
+    if (lastChild != null && !lastChild.isNewLine()) {
       add(createNewline())
     }
     newEntries.forEach { add(it); add(createNewline()) }
