@@ -13,6 +13,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.UIUtil
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -35,6 +37,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
       row("URL:") { urlEditor(CCFlags.growX) }
       row("Directory:") { directoryField(CCFlags.growX) }
     }
+    val insets = UIUtil.PANEL_REGULAR_INSETS
+    mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
 
     urlEditor.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {

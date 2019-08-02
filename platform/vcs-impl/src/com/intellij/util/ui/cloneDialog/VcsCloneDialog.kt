@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.ui.*
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
@@ -53,8 +52,6 @@ internal class VcsCloneDialog private constructor(private val project: Project,
       rootPane.minimumSize = it
       rootPane.preferredSize = it
     }
-
-    mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Dialog.mainComponentParentInsets)
 
     VcsCloneDialogExtension.EP_NAME.findExtension(initialExtensionClass)?.let {
       ScrollingUtil.selectItem(extensionList, it)

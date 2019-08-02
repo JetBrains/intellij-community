@@ -11,15 +11,16 @@ import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.event.ItemEvent
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
+import javax.swing.JTextField
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
@@ -52,15 +53,13 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     }
 
     init {
-      mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Components.rightInsets)
       val northPanel = panel {
-        row {
-          cell {
-            label("Version control:")
-            Wrapper(comboBox)()
-          }
+        row ("Version control:") {
+            comboBox()
         }
       }
+      val insets = UIUtil.PANEL_REGULAR_INSETS
+      northPanel.border = JBEmptyBorder(insets.top, insets.left, 0, insets.right)
       mainPanel.add(northPanel, BorderLayout.NORTH)
 
       val centerPanel = JPanel(cardLayout)
