@@ -3,10 +3,12 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -149,6 +151,9 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         }
       });
     }
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, (settings) -> {
+      setActionPanelVisible(UISettings.getShadowInstance().getShowCloseButton());
+    });
   }
 
 
