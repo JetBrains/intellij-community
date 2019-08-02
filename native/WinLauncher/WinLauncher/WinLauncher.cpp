@@ -579,10 +579,6 @@ bool LoadVMOptions()
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
-  char curDir[_MAX_PATH];
-  GetCurrentDirectoryA(_MAX_PATH - 1, curDir);
-  vmOptionLines.push_back(std::string("-Dide.launcher.initialWorkingDir=\"") + curDir + "\"");
-
   vmOptionCount = vmOptionLines.size() + 1;
   vmOptions = (JavaVMOption*)malloc(vmOptionCount * sizeof(JavaVMOption));
 
@@ -1161,6 +1157,19 @@ void StartSplashProcess()
   }
 }
 
+std::wstring GetCurrentDirectoryAsString()
+{
+  std::vector<wchar_t> buffer(_MAX_PATH);
+  DWORD sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  if (sizeWithoutTerminatingZero >= buffer.size())
+  {
+    buffer.resize(sizeWithoutTerminatingZero + 1);
+    sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  }
+
+  return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1186,6 +1195,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   //it's OK to return 0 here, because the control is transferred to the first instance
   int exitCode = CheckSingleInstance();
   if (exitCode != -1) return exitCode;
+
+  // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
+  // in LoadJVMLibrary.
+  std::wstring currentDirectory = GetCurrentDirectoryAsString();
+  SetEnvironmentVariableW(L"IDEA_INITIAL_DIRECTORY", currentDirectory.c_str());
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 

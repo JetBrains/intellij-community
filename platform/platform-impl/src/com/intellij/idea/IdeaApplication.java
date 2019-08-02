@@ -351,8 +351,8 @@ public final class IdeaApplication {
       Project project = null;
       if (!commandLineArgs.isEmpty() && commandLineArgs.get(0) != null) {
         LOG.info("IdeaApplication.loadProject");
-        String currentDirectory = System.getProperty("ide.launcher.initialWorkingDir");
-        LOG.info("ide.launcher.initialWorkingDir: " + currentDirectory);
+        String currentDirectory = System.getenv("IDEA_INITIAL_DIRECTORY");
+        LOG.info("IDEA_INITIAL_DIRECTORY: " + currentDirectory);
         project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst();
       }
       return project;
