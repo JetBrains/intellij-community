@@ -133,7 +133,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     long timeCheck = PropertiesComponent.getInstance().getOrInitLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
     if (latestVersion == null || TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timeCheck) >= 1) {
       ModalityState modalityState = ModalityState.defaultModalityState();
-      Lazy.EXECUTOR.submit(() -> {
+      Lazy.EXECUTOR.execute(() -> {
         try {
           // sadly plugins.gradle.org has no API and doesn't support meta-versions like latest.
           // Let's parse HTML with REGEXPs muhahaha
