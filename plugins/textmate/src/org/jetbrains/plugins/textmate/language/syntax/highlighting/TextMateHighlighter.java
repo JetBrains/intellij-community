@@ -43,11 +43,10 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   @Override
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     if (!(tokenType instanceof TextMateElementType)) return PLAIN_SYNTAX_HIGHLIGHTER.getTokenHighlights(tokenType);
-    final TextMateService service = TextMateService.getInstance();
-    final Map<CharSequence, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();
-    final TextMateTheme theme = service.getCurrentTheme();
+    TextMateService service = TextMateService.getInstance();
+    Map<CharSequence, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();
     List<HighlightingRule> highlightingRules = ContainerUtil.newSmartList(new HighlightingRule(TextMateTheme.DEFAULT_ATTRIBUTES_NAME, TextMateWeigh.ZERO));
-    for (CharSequence currentRule : ContainerUtil.union(customHighlightingColors.keySet(), theme.getRules())) {
+    for (CharSequence currentRule : ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules())) {
       final TextMateWeigh weigh = mySelectorWeigher.weigh(currentRule, tokenType.toString());
       if (weigh.weigh > 0) {
         highlightingRules.add(new HighlightingRule(currentRule, weigh));
@@ -62,19 +61,17 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
 
         final Color backgroundColor = textAttributes.getBackgroundColor();
         if (backgroundColor != null) {
-          final Color defaultBackground = theme.getDefaultBackground();
-          if (defaultBackground != null) {
-            final double backgroundAlpha = customTextAttributes.getBackgroundAlpha();
-            if (backgroundAlpha > -1) {
-              textAttributes.setBackgroundColor(ColorUtil.mix(defaultBackground, backgroundColor, backgroundAlpha));
-              return TextAttributesKey.createTextAttributesKey("TextMateCustomRule_" + theme.getName() + rule.myName, textAttributes);
-            }
+          Color defaultBackground = TextMateTheme.INSTANCE.getDefaultBackground();
+          double backgroundAlpha = customTextAttributes.getBackgroundAlpha();
+          if (backgroundAlpha > -1) {
+            textAttributes.setBackgroundColor(ColorUtil.mix(defaultBackground, backgroundColor, backgroundAlpha));
+            return TextAttributesKey.createTextAttributesKey("TextMateCustomRule_" + TextMateTheme.INSTANCE.getName() + rule.myName, textAttributes);
           }
         }
 
         return TextAttributesKey.createTextAttributesKey("TextMateCustomRule_" + rule.myName, textAttributes);
       }
-      return theme.getTextAttributesKey(rule.myName);
+      return TextMateTheme.INSTANCE.getTextAttributesKey(rule.myName);
     });
   }
 

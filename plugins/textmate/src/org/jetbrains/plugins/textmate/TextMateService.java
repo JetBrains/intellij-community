@@ -12,7 +12,6 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTheme;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
 
@@ -26,8 +25,6 @@ public abstract class TextMateService {
     return ServiceManager.getService(TextMateService.class);
   }
 
-  public abstract void reloadThemesFromDisk();
-
   /**
    * Create bundle object from given directory.
    *
@@ -36,20 +33,6 @@ public abstract class TextMateService {
    */
   @Nullable
   public abstract Bundle createBundle(@NotNull VirtualFile directory);
-
-  /**
-   * Register new TextMate theme in IDE from given file.
-   * On this method invocation the theme also will be mapped to IDE native theme with the same name (if it exists)
-   *
-   * @param themeFile
-   * @return true on success registration and false otherwise
-   */
-  public abstract boolean registerTheme(@Nullable VirtualFile themeFile);
-
-  /**
-   * @return current textmate theme (defining based on current native theme and configured mapping)
-   */
-  public abstract TextMateTheme getCurrentTheme();
 
   /**
    * Register all enabled bundles in IDE {@link org.jetbrains.plugins.textmate.configuration.TextMateSettings.TextMateSettingsState#getBundles()}
@@ -85,11 +68,6 @@ public abstract class TextMateService {
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
   /**
-   * @return names of all registered TextMate themes {@link this#registerTheme(VirtualFile)}
-   */
-  public abstract String[] getThemeNames();
-
-  /**
    * @param selector scope of current context
    * @return preferences that matched to current context.
    *         Sorted by weigh matching {@link TextMateSelectorWeigher}
@@ -105,12 +83,4 @@ public abstract class TextMateService {
   public abstract Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors();
 
   public abstract PlistReader getPlistReader();
-  
-  public abstract void addListener(@NotNull TextMateBundleListener listener);
-  public abstract void removeListener(@NotNull TextMateBundleListener listener);
-  public abstract void clearListeners();
-
-  public interface TextMateBundleListener {
-    void colorSchemeChanged();
-  }
 }

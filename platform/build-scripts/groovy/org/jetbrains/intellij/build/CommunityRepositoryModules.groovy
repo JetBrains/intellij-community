@@ -232,7 +232,6 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.textmate") {
       withResource("lib/bundles", "lib/bundles")
-      withResource("lib/themes", "lib/themes")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
