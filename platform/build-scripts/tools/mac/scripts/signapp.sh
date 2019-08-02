@@ -38,15 +38,6 @@ APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
 if [ $# -eq 9 ] && [ -f "$9" ]; then
   archiveJDK="$9"
-  log "Preparing jdk $archiveJDK..."
-  log "Modifying Info.plist"
-  sed -i -e 's/1.6\*/1.6\+/' "$APPLICATION_PATH/Contents/Info.plist"
-  jdk="jdk-bundled"
-  if [[ $1 == *custom-jdk-bundled* ]]; then
-    jdk="custom-$jdk"
-  fi
-  rm -f "$APPLICATION_PATH/Contents/Info.plist-e"
-  log "Info.plist has been modified"
   log "Copying JDK: $archiveJDK to $APPLICATION_PATH/Contents"
   tar xvf "$archiveJDK" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
   find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
