@@ -101,7 +101,12 @@ public class YAMLUtil {
         return null;
       }
 
-      final YAMLKeyValue keyValue = mapping.getKeyValueByKey(key.get(i));
+      YAMLKeyValue keyValue = mapping.getKeyValueByKey(String.join(".", key.subList(i, key.size())));
+      if (keyValue != null) {
+        return keyValue;
+      }
+
+      keyValue = mapping.getKeyValueByKey(key.get(i));
       if (keyValue == null || i + 1 == key.size()) {
         return keyValue;
       }
