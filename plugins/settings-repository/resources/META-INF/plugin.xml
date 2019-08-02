@@ -16,6 +16,8 @@
 
     <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="ics"
                              key="ics.settings" bundle="messages.IcsBundle"/>
+
+    <statistics.counterUsagesCollector groupId="settings.repository" version="1"/>
   </extensions>
 
   <actions>

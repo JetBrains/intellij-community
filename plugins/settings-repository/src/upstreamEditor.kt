@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.ide.actions.ActionsCollector
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -12,6 +11,7 @@ import com.intellij.ui.components.DialogManager
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
+import org.jetbrains.settingsRepository.org.jetbrains.settingsRepository.IcsActionsLogger
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -58,7 +58,7 @@ private class SyncAction(private val syncType: SyncType,
 
   private suspend fun doSync(): List<ValidationInfo>? {
     val icsManager = icsManager
-    ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}", IcsManager::class.java)
+    IcsActionsLogger.logSettingsSync(project, syncType)
     val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
     var upstreamSet = false
     try {

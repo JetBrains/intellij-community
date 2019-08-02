@@ -44,7 +44,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
     "tooltip.actions.execute", "tooltip.actions.show.all", "tooltip.actions.show.description.gear",
     "tooltip.actions.show.description.shortcut", "tooltip.actions.show.description.morelink",
     "regexp.help", "ShowUsagesPopup.showSettings",
-    "Ics.action.MergeSettings.text", "Ics.action.MergeSettings.text", "Ics.action.ResetToMySettings.text",
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 

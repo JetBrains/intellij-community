@@ -92,7 +92,7 @@ public class FUCounterUsageLogger {
    *
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    */
-  public void logEvent(@NotNull Project project,
+  public void logEvent(@Nullable Project project,
                        @NotNull String groupId,
                        @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
@@ -114,7 +114,7 @@ public class FUCounterUsageLogger {
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
    * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
    */
-  public void logEvent(@NotNull Project project,
+  public void logEvent(@Nullable Project project,
                        @NotNull String groupId,
                        @NotNull String eventId,
                        @NotNull FeatureUsageData data) {
