@@ -197,6 +197,10 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addDependency(myModule, dep);
     ModuleRootModificationUtil.setModuleSdk(dep, getMockJdk17WithRtJarOnly());
     ModuleRootModificationUtil.setModuleSdk(myModule, getMockJdk18WithRtJarOnly());
+
+    registerTestProjectJdk(getMockJdk17WithRtJarOnly());
+    registerTestProjectJdk(getMockJdk18WithRtJarOnly());
+
     assertClassRoots(orderEntries(dep), getRtJarJdk17());
     assertClassRoots(orderEntries(myModule).recursively(), getRtJarJdk18());
   }

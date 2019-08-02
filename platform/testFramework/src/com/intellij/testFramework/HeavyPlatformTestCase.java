@@ -643,7 +643,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     resetClassFields(aClass.getSuperclass());
   }
 
-  private void registerTestProjectJdk(Sdk jdk) {
+  protected void registerTestProjectJdk(Sdk jdk) {
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
     for (Sdk existingSdk : jdkTable.getAllJdks()) {
