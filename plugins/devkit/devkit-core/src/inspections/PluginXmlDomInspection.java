@@ -261,7 +261,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static final int LISTENERS_PLATFORM_VERSION = 192;
+  private static final int LISTENERS_PLATFORM_VERSION = 193;
 
   private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
     final Module module = listeners.getModule();

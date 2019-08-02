@@ -3,9 +3,9 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <idea-version since-build="191"/>
+  <idea-version since-build="192"/>
 
-  <error descr="Feature available in platform version 192 or later only, but specified 'since-build' platform is '191'"><applicationListeners>
+  <error descr="Feature available in platform version 193 or later only, but specified 'since-build' platform is '192'"><applicationListeners>
     <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners></error>

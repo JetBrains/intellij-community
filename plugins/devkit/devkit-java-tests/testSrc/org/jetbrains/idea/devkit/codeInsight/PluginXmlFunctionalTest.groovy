@@ -105,8 +105,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("ApplicationListenersNoSinceBuild.xml")
   }
 
-  void testApplicationListenersPre192() {
-    doHighlightingTest("ApplicationListenersPre192.xml")
+  void testApplicationListenersPre193() {
+    doHighlightingTest("ApplicationListenersPre193.xml")
   }
 
   void testApplicationListenersDepends() {

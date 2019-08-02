@@ -3,7 +3,7 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <idea-version since-build="192.*"/>
+  <idea-version since-build="193.*"/>
 
   <applicationListeners>
     <listener class="java.util.ArrayList" topic="java.util.Collection"

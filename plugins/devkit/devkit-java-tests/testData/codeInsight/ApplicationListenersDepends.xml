@@ -3,7 +3,7 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <idea-version since-build="191.*"/>
+  <idea-version since-build="192.*"/>
 
   <depends config-file="dependency.xml">com.intellij.modules.vcs</depends>
 </idea-plugin>
