@@ -380,7 +380,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     else:
         xml_value = ''
 
-    if is_numeric_container(typeName):
+    if is_numeric_container(typeName) and hasattr(v, 'shape'):
         xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
     else:
         xml_shape = ''
