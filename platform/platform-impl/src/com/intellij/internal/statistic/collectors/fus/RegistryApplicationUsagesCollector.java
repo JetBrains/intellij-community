@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -23,31 +25,36 @@ import java.util.stream.Collectors;
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
-    return getChangedValuesUsages();
+  public String getGroupId() {
+    return "platform.registry";
   }
 
-  @NotNull
-  static Set<UsageDescriptor> getChangedValuesUsages() {
-    Set<UsageDescriptor> registry = Registry.getAll().stream()
-      .filter(key -> key.isChangedFromDefault())
-      .map(key -> new UsageDescriptor(key.getKey()))
-      .collect(Collectors.toSet());
-
-    Set<UsageDescriptor> experiments = Experiments.EP_NAME.extensions()
-      .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
-      .map(f -> new UsageDescriptor(f.id))
-      .collect(Collectors.toSet());
-
-    HashSet<UsageDescriptor> result = new HashSet<>(registry);
-    result.addAll(experiments);
-    return result;
+  @Override
+  public int getVersion() {
+    return 1;
   }
 
   @NotNull
   @Override
-  public String getGroupId() {
-    return "platform.registry.application";
+  public Set<MetricEvent> getMetrics() {
+    return getChangedValuesUsages();
+  }
+
+  @NotNull
+  static Set<MetricEvent> getChangedValuesUsages() {
+    final Set<MetricEvent> registry = Registry.getAll().stream()
+      .filter(key -> key.isChangedFromDefault())
+      .map(key -> MetricEventFactoryKt.newMetric("registry", new FeatureUsageData().addData("id", key.getKey())))
+      .collect(Collectors.toSet());
+
+    final Set<MetricEvent> experiments = Experiments.EP_NAME.extensions()
+      .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
+      .map(f -> MetricEventFactoryKt.newMetric("experiment", new FeatureUsageData().addData("id", f.id)))
+      .collect(Collectors.toSet());
+
+    final Set<MetricEvent> result = new HashSet<>(registry);
+    result.addAll(experiments);
+    return result;
   }
 
   public static class RegistryUtilValidator extends CustomWhiteListRule {
@@ -62,12 +69,9 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
       final ExperimentalFeature feature = findFeatureById(data);
       if (feature != null) {
         final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(feature.getClass());
-        if (StringUtil.equals(data, context.eventId)) {
-          context.setPluginInfo(info);
-        }
+        context.setPluginInfo(info);
         return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }
-
 
       final RegistryValue value = Registry.get(data);
       return !value.isContributedByThirdPartyPlugin() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
