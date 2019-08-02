@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +15,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EditorLastActionTrackerImpl implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker {
+public final class EditorLastActionTrackerImpl implements EditorMouseListener, EditorLastActionTracker {
   private String myLastActionId;
   private Editor myCurrentEditor;
   private Editor myLastEditor;
@@ -35,10 +34,30 @@ public final class EditorLastActionTrackerImpl implements AnActionListener, Edit
           myLastEditor = null;
         }
       }
-    }, this);
+    }, ApplicationManager.getApplication());
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
-    editorFactory.getEventMulticaster().addEditorMouseListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
+        if (myCurrentEditor != myLastEditor) {
+          resetLastAction();
+        }
+      }
+
+      @Override
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        myLastActionId = getActionId(action);
+        myLastEditor = myCurrentEditor;
+        myCurrentEditor = null;
+      }
+
+      @Override
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+        resetLastAction();
+      }
+    });
+    editorFactory.getEventMulticaster().addEditorMouseListener(this, ApplicationManager.getApplication());
   }
 
   private static boolean is(Editor currentEditor, EditorImpl killedEditor) {
@@ -46,33 +65,9 @@ public final class EditorLastActionTrackerImpl implements AnActionListener, Edit
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   @Nullable
   public String getLastActionId() {
     return myLastActionId;
-  }
-
-  @Override
-  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-    myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (myCurrentEditor != myLastEditor) {
-      resetLastAction();
-    }
-  }
-
-  @Override
-  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-    myLastActionId = getActionId(action);
-    myLastEditor = myCurrentEditor;
-    myCurrentEditor = null;
-  }
-
-  @Override
-  public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
-    resetLastAction();
   }
 
   @Override
