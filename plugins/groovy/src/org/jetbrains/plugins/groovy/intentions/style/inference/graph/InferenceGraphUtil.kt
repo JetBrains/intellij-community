@@ -74,15 +74,15 @@ private fun deepConnect(session: GroovyInferenceSession,
   }
 }
 
-private fun findStrictClass(constraints: Collection<BoundConstraint>): PsiClass? {
+private fun findStrictClass(constraints: Collection<BoundConstraint>): PsiType? {
   val strictTypes = constraints.mapNotNull {
     when (it.marker) {
-      EQUAL -> it.clazz
+      EQUAL -> it.type
       else -> null
     }
   }
   return strictTypes.maxWith(Comparator { left, right ->
-    if (TypesUtil.canAssign(left.type(), right.type(), left, METHOD_PARAMETER) == OK) 1 else -1
+    if (TypesUtil.canAssign(left, right, left.resolve()!!.context!!, METHOD_PARAMETER) == OK) 1 else -1
   })
 }
 
@@ -92,7 +92,7 @@ fun inferType(parameter: PsiTypeParameter, usage: TypeUsageInformation): Pair<Ps
   val signatureTypes = parameter.extendsList.referencedTypes.toList()
   val strictClass = findStrictClass(constraints[EQUAL] ?: emptyList())
   if (strictClass != null) {
-    return (signatureTypes.find { it.resolve() == strictClass } ?: strictClass.type()) to true
+    return (signatureTypes.find { it.resolve() == strictClass } ?: strictClass) to true
   }
   else {
     return completeInstantiation(parameter, usage, constraints, signatureTypes) to false
@@ -114,9 +114,9 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
   val covariantTypes = usageInformation.run {
     covariantTypes.subtract(this.contravariantTypes).subtract(dependentTypes.map { it.type() })
   }
-  val superClasses = constraints[UPPER]?.map { it.clazz } ?: emptyList()
-  val subClasses = constraints[LOWER]?.map { it.clazz } ?: emptyList()
-  val inhabitingClasses = constraints[INHABIT]?.map { it.clazz } ?: emptyList()
+  val superClasses = constraints[UPPER]?.map { it.type } ?: emptyList()
+  val subClasses = constraints[LOWER]?.map { it.type } ?: emptyList()
+  val inhabitingClasses = constraints[INHABIT]?.map { it.type } ?: emptyList()
   return when (parameterType) {
 
     in contravariantTypes -> {
@@ -133,7 +133,9 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 
     in covariantTypes -> {
       val upperBound = when {
-        (superClasses.all { it.name == "Object" } || superClasses.isEmpty()) && inhabitingClasses.isNotEmpty() -> {
+        (superClasses.all {
+          it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+        } || superClasses.isEmpty()) && inhabitingClasses.isNotEmpty() -> {
           typeLattice.join(inhabitingClasses)
         }
         else -> typeLattice.meet(superClasses)
@@ -176,12 +178,12 @@ private class TypeLattice(val context: PsiElement) {
   private val top = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(context.project)) as PsiType
   private val bottom = PsiType.NULL as PsiType
 
-  fun join(types: Iterable<PsiClass>): PsiType = types.fold(bottom) { accum, type ->
-    GenericsUtil.getLeastUpperBound(accum, type.type(), manager)!!
+  fun join(types: Iterable<PsiType>): PsiType = types.fold(bottom) { accum, type ->
+    GenericsUtil.getLeastUpperBound(accum, type, manager)!!
   }
 
-  fun meet(types: Iterable<PsiClass>): PsiType = types.fold(top) { accum, type ->
-    GenericsUtil.getGreatestLowerBound(accum, type.type())
+  fun meet(types: Iterable<PsiType>): PsiType = types.fold(top) { accum, type ->
+    GenericsUtil.getGreatestLowerBound(accum, type)
   }
 }
 

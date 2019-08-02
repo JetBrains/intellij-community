@@ -405,4 +405,12 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testCapturedWildcard() {
+    doTest(true)
+  }
+
+  void testCapturedWildcard2() {
+    doTest(true)
+  }
+
 }

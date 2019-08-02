@@ -37,10 +37,14 @@ private class Parameterizer(val context: PsiElement,
     }
   }
 
-  override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiClassType? {
+  override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
     wildcardType ?: return null
     val upperBound = if (wildcardType.isExtends && !wildcardType.extendsBound.equalsToText(JAVA_LANG_OBJECT)) {
-      wildcardType.extendsBound.accept(this)
+      val bound = wildcardType.extendsBound
+      if (bound is PsiCapturedWildcardType) {
+        return bound.accept(this)
+      }
+      bound.accept(this)
     }
     else {
       null

@@ -74,7 +74,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     }
 
     val inhabitedByUniqueType = lazy(NONE) {
-      usage.requiredClassTypes[core.initialTypeParameter]?.filter { it.marker == INHABIT }?.run { isNotEmpty() && all { first().clazz == it.clazz } }
+      usage.requiredClassTypes[core.initialTypeParameter]?.filter { it.marker == INHABIT }?.run { isNotEmpty() && all { first().type == it.type } }
       ?: false
     }
     if (equivalenceClasses[type]?.all { it.core.initialTypeParameter !in usage.dependentTypes } == true) {

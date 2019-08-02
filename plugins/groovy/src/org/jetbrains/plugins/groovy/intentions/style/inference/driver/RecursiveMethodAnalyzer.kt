@@ -4,9 +4,9 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -38,14 +38,19 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private val typeParameters = method.typeParameters.map { it.type() }
   private val dependentTypes = mutableSetOf<PsiTypeParameter>()
 
+  private fun generateRequiredTypes(typeParameter: PsiTypeParameter, type: PsiType, marker: ContainMarker) {
+    val bindingTypes = expandWildcards(type, typeParameter)
+    bindingTypes.forEach { addRequiredType(typeParameter, BoundConstraint(it, marker)) }
+  }
+
   private fun addRequiredType(typeParameter: PsiTypeParameter, constraint: BoundConstraint) {
-    if (typeParameter.type() in typeParameters && !constraint.clazz.qualifiedName.equals(GROOVY_OBJECT)) {
-      if (constraint.clazz !in typeParameters.map { it.resolve() }) {
-        requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(constraint)
+    if (typeParameter.type() in typeParameters && !constraint.type.equalsToText(GROOVY_OBJECT)) {
+      if (constraint.type.typeParameter() !in typeParameters.map { it.resolve() }) {
+        requiredTypesCollector.safePut(typeParameter, constraint)
       }
       else {
         dependentTypes.add(typeParameter)
-        dependentTypes.add(constraint.clazz as PsiTypeParameter)
+        dependentTypes.add(constraint.type.typeParameter()!!)
       }
     }
   }
@@ -56,7 +61,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
       // todo: receiver might be null because of gdk method
-      addRequiredType(typeParameter() ?: return@run, BoundConstraint(candidate.method.containingClass ?: return@run, UPPER))
+      generateRequiredTypes(typeParameter() ?: return@run, candidate.method.containingClass?.type() ?: return@run, UPPER)
     }
     val invokedMethod = when (val method = methodResult?.element) {
       is GrGdkMethod -> method.staticMethod
@@ -73,8 +78,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
       val typeParameter = methodResult.substitutor.substitute(type).typeParameter() ?: continue
       argumentTypes.forEach { argtype ->
-        addRequiredType(typeParameter, BoundConstraint(methodResult.substitutor.substitute(argtype)?.resolve() ?: return@forEach,
-                                                       LOWER))
+        generateRequiredTypes(typeParameter, methodResult.substitutor.substitute(argtype) ?: return@forEach, LOWER)
       }
       methodResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }
@@ -107,7 +111,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         // firstVisit is necessary because parameters can accept their subtypes, while type arguments (without wildcard) are not
         firstVisit = false
         run {
-          addRequiredType(currentRestrictedTypeParameter, BoundConstraint(classType.resolve() ?: return@run, primaryConstraint))
+          generateRequiredTypes(currentRestrictedTypeParameter, classType, primaryConstraint)
         }
         visitClassParameters(classType)
         super.visitClassType(classType)
@@ -117,7 +121,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         wildcardType ?: return
         val extendsBound = wildcardType.extendsBound as PsiClassType
         run {
-          addRequiredType(currentRestrictedTypeParameter, BoundConstraint(extendsBound.resolve() ?: return@run, UPPER))
+          generateRequiredTypes(currentRestrictedTypeParameter, extendsBound, UPPER)
         }
         visitClassParameters(extendsBound)
         super.visitWildcardType(wildcardType)
@@ -214,6 +218,16 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     private fun <K, V> MutableMap<K, MutableList<V>>.safePut(key: K, value: V) = computeIfAbsent(key) { mutableListOf() }.add(value)
 
 
+    private fun expandWildcards(type: PsiType, context: PsiElement): List<PsiType> = when (type) {
+      is PsiWildcardType -> when {
+        type.isSuper -> listOf(type.superBound, getJavaLangObject(context))
+        type.isExtends -> listOf(type.extendsBound, PsiType.NULL)
+        else -> listOf(getJavaLangObject(context), PsiType.NULL)
+      }
+      else -> listOf(type)
+    }
+
+
     fun setConstraints(leftType: PsiType, rightType: PsiType,
                        dependentTypes: MutableSet<PsiTypeParameter>,
                        requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
@@ -228,9 +242,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
           dependentTypes.add(rightType.typeParameter()!!)
           rightType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
         }
-        requiredTypesCollector.safePut(typeParameter, BoundConstraint(correctRightType.resolve()!!, LOWER))
+        val typeSet = expandWildcards(correctRightType, typeParameter)
+        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, LOWER)) }
+        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, INHABIT)) }
         val newLeftType = leftType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
-        requiredTypesCollector.safePut(typeParameter, BoundConstraint(correctRightType.resolve()!!, INHABIT))
         newLeftType
       }
       else {
