@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import java.awt.BorderLayout
@@ -53,7 +54,12 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     init {
       mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Components.rightInsets)
       val northPanel = panel {
-        row("Version control:") { comboBox() }
+        row {
+          cell {
+            label("Version control:")
+            Wrapper(comboBox)()
+          }
+        }
       }
       mainPanel.add(northPanel, BorderLayout.NORTH)
 
