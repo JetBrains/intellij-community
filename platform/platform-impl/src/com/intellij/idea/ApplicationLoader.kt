@@ -351,8 +351,8 @@ open class IdeStarter : ApplicationStarter {
     var project: Project? = null
     if (commandLineArgs.firstOrNull() != null) {
       LOG.info("ApplicationLoader.loadProject")
-      val currentDirectory = System.getProperty("ide.launcher.initialWorkingDir")
-      LOG.info("ide.launcher.initialWorkingDir: $currentDirectory")
+      val currentDirectory: String? = System.getenv("IDEA_INITIAL_DIRECTORY")
+      LOG.info("IDEA_INITIAL_DIRECTORY: $currentDirectory")
       project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst()
     }
     return project
