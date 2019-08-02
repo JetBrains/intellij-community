@@ -256,29 +256,8 @@ public class YAMLUtil {
     throw new IncorrectOperationException(YAMLBundle.message("new.name.conflicts.with", builder.toString()));
   }
 
-  //public static void removeI18nRecord(final YAMLFile file, final String[] key){
-  //  PsiElement element = getQualifiedKeyInFile(file, key);
-  //  while (element != null){
-  //    final PsiElement parent = element.getParent();
-  //    if (parent instanceof YAMLDocument) {
-  //      ((YAMLKeyValue)element).getValue().delete();
-  //      return;
-  //    }
-  //    if (parent instanceof YAMLCompoundValue) {
-  //      if (((YAMLCompoundValue)parent).getYAMLElements().size() > 1) {
-  //        element.delete();
-  //        return;
-  //      }
-  //    }
-  //    element = parent;
-  //  }
-  //}
-
   public static PsiElement rename(final YAMLKeyValue element, final String newName) {
-    if (newName.contains(".")){
-      throw new IncorrectOperationException(YAMLBundle.message("rename.wrong.name"));
-    }
-    if (newName.equals(element.getName())){
+    if (newName.equals(element.getName())) {
       throw new IncorrectOperationException(YAMLBundle.message("rename.same.name"));
     }
     final YAMLKeyValue topKeyValue = YAMLElementGenerator.getInstance(element.getProject()).createYamlKeyValue(newName, "Foo");
