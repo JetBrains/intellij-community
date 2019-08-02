@@ -5,6 +5,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,7 +15,9 @@ import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -49,7 +52,7 @@ public class EditorFactoryImpl extends EditorFactory {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
-      public void beforeProjectLoaded(@NotNull final Project project) {
+      public void beforeProjectLoaded(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
         Disposer.register(project, () -> {
           final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -58,11 +61,19 @@ public class EditorFactoryImpl extends EditorFactory {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+        refreshAllEditors();
+      }
+    });
 
-    LaterInvocator.addModalityStateListener(entering -> {
-      for (Editor editor : myEditors) {
-        ((EditorImpl)editor).beforeModalityStateChanged();
+    LaterInvocator.addModalityStateListener(new ModalityStateListener() {
+      @Override
+      public void beforeModalityStateChanged(boolean entering) {
+        for (Editor editor : myEditors) {
+          ((EditorImpl)editor).beforeModalityStateChanged();
+        }
       }
     }, ApplicationManager.getApplication());
   }
@@ -258,6 +269,7 @@ public class EditorFactoryImpl extends EditorFactory {
   public static class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
+    @SuppressWarnings("NonDefaultConstructor")
     public MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
