@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import kotlin.LazyThreadSafetyMode.NONE
 
 /**
  * An analogue for inference variable.
@@ -42,7 +44,6 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
   val type = core.type
 
   fun smartTypeInstantiation(usage: TypeUsageInformation,
-                             setTypes: List<PsiType>,
                              equivalenceClasses: Map<out PsiType, List<InferenceUnitNode>>): Pair<PsiType, InstantiationHint> {
 
     if (core.constant) {
@@ -71,12 +72,15 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       }
     }
 
+    val inhabitedByUniqueType = lazy(NONE) {
+      usage.inhabitedTypes[core.initialTypeParameter]?.run { isNotEmpty() && all { first() == it } } ?: false
+    }
     if (equivalenceClasses[type]?.all { it.core.initialTypeParameter !in usage.dependentTypes } == true) {
-      if (core.initialTypeParameter.type() in setTypes) {
-        return typeInstantiation to EXTENDS_WILDCARD
+      if (direct || typeInstantiation is PsiWildcardType || inhabitedByUniqueType.value) {
+        return typeInstantiation to REIFIED_AS_PROPER_TYPE
       }
       else {
-        return typeInstantiation to REIFIED_AS_PROPER_TYPE
+        return typeInstantiation to EXTENDS_WILDCARD
       }
     }
 

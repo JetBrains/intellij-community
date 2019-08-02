@@ -4,10 +4,8 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
-import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
@@ -215,7 +213,7 @@ private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph
   val instantiations = mutableMapOf<InferenceUnit, PsiType>()
 
   for (unit in unitGraph.units) {
-    if (unit.typeInstantiation != PsiType.NULL && unit.typeInstantiation.resolve() !is PsiTypeParameter) {
+    if (unit.typeInstantiation != PsiType.NULL && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
       var currentUnit: InferenceUnitNode? = unit
       while (currentUnit?.parent != null) {
         currentUnit = currentUnit.parent

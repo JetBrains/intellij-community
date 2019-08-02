@@ -35,8 +35,9 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethod = createVirtualMethod(method)
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
-  val (graph, usage) = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList())
-  return inferTypeParameters(parameterizedDriver, graph.first, method, usage, graph.second)
+  val typeUsage = parameterizedDriver.collectInnerConstraints()
+  val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList(), typeUsage)
+  return inferTypeParameters(parameterizedDriver, graph, method, typeUsage)
 }
 
 private fun createDriver(method: GrMethod): InferenceDriver {
@@ -47,22 +48,21 @@ private fun createDriver(method: GrMethod): InferenceDriver {
 
 private fun setUpGraph(driver: InferenceDriver,
                        virtualMethod: GrMethod,
-                       constantTypes: List<PsiTypeParameter>): Pair<Pair<InferenceUnitGraph, List<PsiType>>, TypeUsageInformation> {
+                       constantTypes: List<PsiTypeParameter>,
+                       typeUsage: TypeUsageInformation): InferenceUnitGraph {
   val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
-  val typeUsage = driver.collectInnerConstraints()
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
   val forbiddingTypes = typeUsage.contravariantTypes.filter { it in typeUsage.dependentTypes.map { deptype -> deptype.type() } } +
                         virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
                         driver.forbiddingTypes()
-  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, forbiddingTypes, typeUsage, constantTypes) to typeUsage
+  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, forbiddingTypes, typeUsage, constantTypes)
 }
 
 private fun inferTypeParameters(driver: InferenceDriver,
                                 initialGraph: InferenceUnitGraph,
                                 method: GrMethod,
-                                usage: TypeUsageInformation,
-                                setTypes: List<PsiType>): GrMethod {
+                                usage: TypeUsageInformation): GrMethod {
   val inferredGraph = determineDependencies(initialGraph)
   var resultSubstitutor = PsiSubstitutor.EMPTY
   val endpoints = mutableSetOf<InferenceUnitNode>()
@@ -76,7 +76,7 @@ private fun inferTypeParameters(driver: InferenceDriver,
     }
   }
   for (unit in inferredGraph.resolveOrder()) {
-    val (instantiation, hint) = unit.smartTypeInstantiation(usage, setTypes, equivalenceClasses)
+    val (instantiation, hint) = unit.smartTypeInstantiation(usage, equivalenceClasses)
     val transformedType = when (hint) {
       InstantiationHint.NEW_TYPE_PARAMETER -> collector.createBoundedTypeParameter(unit.type.name, resultSubstitutor,
                                                                                    resultSubstitutor.substitute(instantiation)).type()

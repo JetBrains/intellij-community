@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageI
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -28,31 +27,15 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
                                       virtualMethod: GrMethod,
                                       forbiddingTypes: Collection<PsiType>,
                                       usageInformation: TypeUsageInformation,
-                                      constantTypes: List<PsiTypeParameter>): Pair<InferenceUnitGraph, List<PsiType>> {
+                                      constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
-  val constantNames = constantTypes.map { it.name }.toMutableList()
+  val constantNames = constantTypes.mapNotNull { it.name }.toMutableList()
   val flexibleTypes = virtualMethod.parameters.map { it.type }
   val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
-  val strictInstantiations = mutableMapOf<InferenceVariable, PsiClass>()
-  for (variable in variables) {
-    val requiredTypes = usageInformation.requiredClassTypes[variable.parameter.type().typeParameter()] ?: emptyList()
-    val strictInstantiation = findStrictInstantiation(requiredTypes) ?: continue
-    val extendingVariables = variables.filter { it.delegate.extendsListTypes.singleOrNull()?.resolve() == variable.delegate }
-    extendingVariables.forEach {
-      strictInstantiations[it] = strictInstantiation
-    }
-    strictInstantiations[variable] = strictInstantiation
-  }
-  val setTypes = mutableListOf<PsiClassType>()
   for (variable in variables) {
     val variableType = variable.parameter.type()
-    val superTypes = usageInformation.requiredClassTypes[variableType.typeParameter()]?.filter { it.marker == CONTAINS }?.map { it.clazz }
-                     ?: emptyList()
-    val subTypes = usageInformation.requiredClassTypes[variableType.typeParameter()]?.filter { it.marker == LOWER }?.map { it.clazz }
-                   ?: emptyList()
-    val signatureTypes = variable.delegate.extendsList.referencedTypes.toList()
-    val instantiation = completeInstantiation(variable, session, usageInformation, superTypes, subTypes, signatureTypes, setTypes)
+    val (instantiation, isStrict) = inferType(variable.parameter, usageInformation)
     val core = InferenceUnit(variable.parameter,
                              flexible = variableType in flexibleTypes,
                              constant = variableType.name in constantNames)
@@ -65,10 +48,8 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
     if (variableType in forbiddingTypes) {
       builder.forbidInstantiation(core)
     }
-    if (strictInstantiations.containsKey(variable)) {
-      // todo: this block cancels almost all computations above, it should be places higher for faster computing
+    if (isStrict) {
       builder.setDirect(core)
-      builder.setType(core, strictInstantiations[variable]!!.type())
     }
     variableMap[core] = variable
   }
@@ -78,7 +59,7 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
     val lowerBounds = variable.getBounds(InferenceBound.LOWER) + variable.getBounds(InferenceBound.EQ)
     deepConnect(session, variableMap, lowerBounds) { builder.addRelation(unit, it) }
   }
-  return builder.build() to setTypes
+  return builder.build()
 }
 
 private fun deepConnect(session: GroovyInferenceSession,
@@ -92,7 +73,7 @@ private fun deepConnect(session: GroovyInferenceSession,
   }
 }
 
-fun findStrictInstantiation(constraints: Collection<BoundConstraint>): PsiClass? {
+private fun findStrictClass(constraints: Collection<BoundConstraint>): PsiClass? {
   val strictTypes = constraints.mapNotNull {
     when (it.marker) {
       EQUAL -> it.clazz
@@ -105,98 +86,105 @@ fun findStrictInstantiation(constraints: Collection<BoundConstraint>): PsiClass?
 }
 
 
-fun completeInstantiation(variable: InferenceVariable,
-                          session: GroovyInferenceSession,
-                          usageInformation: TypeUsageInformation,
-                          superTypes: List<PsiClass>,
-                          subTypes: List<PsiClass>,
-                          signatureTypes: List<PsiClassType>,
-                          setTypes: MutableList<PsiClassType>): PsiType {
-  val javaLangObject = PsiType.getJavaLangObject(session.context.manager, GlobalSearchScope.allScope(session.context.project)) as PsiType
-  val variableType = variable.delegate.type()
+fun inferType(parameter: PsiTypeParameter, usage: TypeUsageInformation): Pair<PsiType, Boolean> {
+  val constraints = usage.requiredClassTypes[parameter]?.groupBy { it.marker } ?: emptyMap()
+  val signatureTypes = parameter.extendsList.referencedTypes.toList()
+  val strictClass = findStrictClass(constraints[EQUAL] ?: emptyList())
+  if (strictClass != null) {
+    return (signatureTypes.find { it.resolve() == strictClass } ?: strictClass.type()) to true
+  }
+  else {
+    val superTypes = constraints[CONTAINS]?.map { it.clazz } ?: emptyList()
+    val subTypes = constraints[LOWER]?.map { it.clazz } ?: emptyList()
+    return completeInstantiation(parameter, usage, superTypes, subTypes, signatureTypes) to false
+  }
+
+}
+
+private fun completeInstantiation(parameter: PsiTypeParameter,
+                                  usageInformation: TypeUsageInformation,
+                                  superClasses: List<PsiClass>,
+                                  subClasses: List<PsiClass>,
+                                  signatureTypes: List<PsiClassType>): PsiType {
+  val context = parameter.context!!
+  val typeLattice = TypeLattice(context)
+  val javaLangObject = PsiType.getJavaLangObject(context.manager, GlobalSearchScope.allScope(context.project)) as PsiType
+  val parameterType = parameter.type()
   val contravariantTypes = usageInformation.run {
     contravariantTypes.subtract(this.covariantTypes).subtract(dependentTypes.map { it.type() })
   }
   val covariantTypes = usageInformation.run {
     covariantTypes.subtract(this.contravariantTypes).subtract(dependentTypes.map { it.type() })
   }
-  return when (variableType) {
-    in contravariantTypes -> {
-      val lowerBound = when {
-        variable.parameter in usageInformation.inhabitedTypes -> usageInformation.inhabitedTypes.getValue(variable.parameter).fold(
-          javaLangObject) { acc, clazz ->
-          greatestLowerBound(acc, clazz.type())
-        }
-        else -> subTypes.foldRight(PsiType.NULL as PsiType) { clazz, acc ->
-          GenericsUtil.getLeastUpperBound(acc, clazz.type(), session.context.manager)!!
-        }
-      }
+  return when (parameterType) {
 
-      val directLowerBound = when (lowerBound) {
-        is PsiIntersectionType -> createIntersection(
-          lowerBound.conjuncts.map { lowerType -> signatureTypes.find { it.resolve() == lowerType.resolve() } ?: lowerType })
-        else -> signatureTypes.find { it.resolve() == lowerBound.resolve() } ?: lowerBound
-      }
+    in contravariantTypes -> {
+      val lowerBound = when (parameter) {
+        in usageInformation.inhabitedTypes -> typeLattice.meet(usageInformation.inhabitedTypes.getValue(parameter))
+        else -> typeLattice.join(subClasses)
+      }.mapConjuncts { lowerType -> signatureTypes.find { it.resolve() == lowerType.resolve() } ?: lowerType }
       when {
-        superTypes.isNotEmpty() -> createIntersection(
-          superTypes.map { upperType -> signatureTypes.find { it.resolve() == upperType } ?: upperType.type() })
-        directLowerBound != PsiType.NULL -> PsiWildcardType.createSuper(session.context.manager, directLowerBound)
-        else -> PsiWildcardType.createUnbounded(session.context.manager)
+        superClasses.isNotEmpty() ->
+          createIntersection(superClasses.map { upperType -> signatureTypes.find { it.resolve() == upperType } ?: upperType.type() })
+        lowerBound != PsiType.NULL -> PsiWildcardType.createSuper(context.manager, lowerBound)
+        else -> PsiWildcardType.createUnbounded(context.manager)
       }
     }
+
     in covariantTypes -> {
-      val upperBound = superTypes
-        .foldRight(javaLangObject) { clazz, acc -> greatestLowerBound(clazz.type(), acc) }
-      val fixedUpperBound = if (upperBound == javaLangObject && usageInformation.inhabitedTypes[variable.parameter]?.isNotEmpty() == true) {
-        usageInformation.inhabitedTypes.getValue(variable.parameter).foldRight(
-          PsiType.NULL as PsiType) { clazz, acc -> GenericsUtil.getLeastUpperBound(clazz.type(), acc, session.context.manager)!! }
-      }
-      else upperBound
-      val directUpperBound = when (fixedUpperBound) {
-        is PsiIntersectionType -> createIntersection(
-          fixedUpperBound.conjuncts.map { llb -> signatureTypes.find { it.resolve() == llb.resolve() } ?: llb })
-        else -> signatureTypes.find { it.resolve() == fixedUpperBound.resolve() } ?: fixedUpperBound
-      }
-      if (directUpperBound != javaLangObject) PsiWildcardType.createExtends(session.context.manager, directUpperBound)
-      else PsiWildcardType.createUnbounded(session.context.manager)
-    }
-    else -> {
-      val lowerBound = superTypes.foldRight(javaLangObject) { clazz, acc -> greatestLowerBound(acc, clazz.type()) }
-      val upperBound = subTypes.foldRight(PsiType.NULL as PsiType)
-      { clazz, acc -> GenericsUtil.getLeastUpperBound(clazz.type(), acc, session.context.manager)!! }
-        .run {
-          when (this) {
-            is PsiIntersectionType -> createIntersection(conjuncts.filter { !it.isGroovyLangObject() })
-            else -> if (isGroovyLangObject()) javaLangObject else this
-          }
+      val upperBound = when {
+        (superClasses.all { it.name == "Object" } || superClasses.isEmpty()) && parameter in usageInformation.inhabitedTypes -> {
+          typeLattice.join(usageInformation.inhabitedTypes.getValue(parameter))
         }
-      val invariantUpperBound = if (lowerBound == javaLangObject && upperBound !is PsiIntersectionType) upperBound else lowerBound
-      val accepted = when (invariantUpperBound) {
-        is PsiIntersectionType -> createIntersection(
-          invariantUpperBound.conjuncts.map { invariantType ->
-            signatureTypes.find {
-              ((it.resolve()?.allSupers() ?: emptySet()) + it.resolve()).subtract(listOf(javaLangObject.resolve())).contains(
-                invariantType.resolve())
-            } ?: invariantType
-          })
-        else -> signatureTypes.find {
-          ((it.resolve()?.allSupers() ?: emptySet()) + it.resolve()).subtract(listOf(javaLangObject.resolve())).contains(
-            invariantUpperBound.resolve())
-        } ?: invariantUpperBound
-      }.filterImplementedInterfaces()
-      if (superTypes.union(subTypes).run { any { it != first() } }) {
-        setTypes.add(variableType)
+        else -> typeLattice.meet(superClasses)
+      }.mapConjuncts { upperType -> signatureTypes.find { it.resolve() == upperType.resolve() } ?: upperType }
+      when {
+        (upperBound != javaLangObject) -> PsiWildcardType.createExtends(context.manager, upperBound)
+        else -> PsiWildcardType.createUnbounded(context.manager)
       }
-      if (accepted.equalsToText(JAVA_LANG_VOID)) PsiWildcardType.createUnbounded(session.manager) else accepted
+    }
+
+    else -> {
+      val upperBound = typeLattice.meet(superClasses)
+      val lowerBound = typeLattice.join(subClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
+      val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
+      val invariantUpperBound = adjustedBound.mapConjuncts { invariantType ->
+        signatureTypes.findTypeWithCorrespondingErasure(invariantType.resolve()) ?: invariantType
+      }.filterImplementedInterfaces()
+      if (invariantUpperBound.equalsToText(JAVA_LANG_VOID)) PsiWildcardType.createUnbounded(context.manager) else invariantUpperBound
     }
   }
 }
 
+fun List<PsiClassType>.findTypeWithCorrespondingErasure(erasure: PsiClass?): PsiType? {
+  erasure ?: return null
+  return find {
+    val supers = (it.resolve()?.allSupers() ?: emptySet()) + it.resolve()
+    supers.filter { clazz -> clazz?.name != "Object" }.contains(erasure)
+  }
+}
 
 private fun PsiType.isGroovyLangObject(): Boolean = equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
 
-fun greatestLowerBound(typeA: PsiType, typeB: PsiType): PsiType {
-  return GenericsUtil.getGreatestLowerBound(typeA, typeB)
+private fun PsiType.mapConjuncts(action: (PsiType) -> PsiType): PsiType {
+  return when (this) {
+    is PsiIntersectionType -> createIntersection(conjuncts.map(action))
+    else -> action(this)
+  }
+}
+
+private class TypeLattice(val context: PsiElement) {
+  private val manager = context.manager
+  private val top = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(context.project)) as PsiType
+  private val bottom = PsiType.NULL as PsiType
+
+  fun join(types: Iterable<PsiClass>): PsiType = types.fold(bottom) { accum, type ->
+    GenericsUtil.getLeastUpperBound(accum, type.type(), manager)!!
+  }
+
+  fun meet(types: Iterable<PsiClass>): PsiType = types.fold(top) { accum, type ->
+    GenericsUtil.getGreatestLowerBound(accum, type.type())
+  }
 }
 
 private fun PsiType.filterImplementedInterfaces(): PsiType {
