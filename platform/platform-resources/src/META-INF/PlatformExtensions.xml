@@ -430,9 +430,6 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorFactory"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.EditorLastActionTracker"
-                        serviceImplementation="com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl"/>
-
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
 
@@ -718,7 +715,13 @@
                  description="Shows recent files or code locations last visited timestamps"/>
 
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
-    <editorFactoryListener implementation="com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl$MyEditorFactoryListener"/>
+
+    <editorFactoryListener implementation="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyEditorFactoryListener"/>
+    <editorFactoryMouseListener implementation="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyEditorMouseListener"/>
+
+    <editorFactoryMouseListener implementation="com.intellij.openapi.editor.EditorMouseHoverPopupManager$MyEditorMouseEventListener"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.openapi.editor.EditorMouseHoverPopupManager$MyEditorMouseMotionEventListener"/>
+
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
   </extensions>
 </idea-plugin>

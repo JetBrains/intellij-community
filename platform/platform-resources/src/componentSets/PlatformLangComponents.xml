@@ -28,7 +28,7 @@
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
 
-    <listener class="com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener" activeInTestMode="false"/>
+    <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>

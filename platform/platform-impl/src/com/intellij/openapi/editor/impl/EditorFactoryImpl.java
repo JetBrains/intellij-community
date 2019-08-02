@@ -18,7 +18,9 @@ import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -42,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
-  private static final ExtensionPointName<DocumentListener> DOCUMENT_EP = new ExtensionPointName<>("com.intellij.editorFactoryDocumentListener");
   private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
 
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
@@ -78,30 +79,6 @@ public class EditorFactoryImpl extends EditorFactory {
         }
       }
     }, ApplicationManager.getApplication());
-
-    myEditorEventMulticaster.addDocumentListener(new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        DOCUMENT_EP.forEachExtensionSafe(it -> it.beforeDocumentChange(event));
-      }
-
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        DOCUMENT_EP.forEachExtensionSafe(it -> it.documentChanged(event));
-      }
-    });
-
-    myEditorFactoryEventDispatcher.addListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        EP.forEachExtensionSafe(it -> it.editorCreated(event));
-      }
-
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        EP.forEachExtensionSafe(it -> it.editorReleased(event));
-      }
-    });
   }
 
   public void validateEditorsAreReleased(Project project, boolean isLastProjectClosed) {
@@ -223,7 +200,10 @@ public class EditorFactoryImpl extends EditorFactory {
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
-    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
+
+    EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(event);
+    EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -235,7 +215,9 @@ public class EditorFactoryImpl extends EditorFactory {
   @Override
   public void releaseEditor(@NotNull Editor editor) {
     try {
-      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
+      EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);
+      EP.forEachExtensionSafe(it -> it.editorReleased(event));
     }
     finally {
       try {
