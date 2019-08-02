@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,19 +64,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
-  private final BulkFileListener myPublisher;
+  private BulkFileListener myPublisher;
   private final VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl() {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
-    myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
 
     AsyncEventSupport.startListening();
 
-    Activity activity = StartUpMeasurer.start("PersistentFS#FSRecords.connect");
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("PersistentFS#FSRecords.connect");
     FSRecords.connect();
     activity.end();
+  }
+
+  @NotNull
+  private BulkFileListener getPublisher() {
+    BulkFileListener publisher = myPublisher;
+    if (publisher == null) {
+      // cannot be in constructor, to ensure that lazy listeners will be not created too early
+      publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+      myPublisher = publisher;
+    }
+    return publisher;
   }
 
   @Override
@@ -637,7 +647,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
-        myPublisher.before(events);
+        getPublisher().before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
         // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
@@ -656,7 +666,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                          attributes != null ? attributes.length : DEFAULT_LENGTH,
                          // due to fs rounding timestamp of written file can be significantly different from current time
                          attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP);
-            myPublisher.after(events);
+            getPublisher().after(events);
           }
         }
       }
@@ -689,11 +699,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // optimisation: skip all groupings
     if (event.isValid()) {
       List<VFileEvent> events = Collections.singletonList(event);
-      myPublisher.before(events);
+      getPublisher().before(events);
 
       applyEvent(event);
 
-      myPublisher.after(events);
+      getPublisher().after(events);
     }
   }
 
@@ -973,11 +983,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (!validated.isEmpty()) {
         // do defensive copy to cope with ill-written listeners that save passed list for later processing
         List<VFileEvent> toSend = ContainerUtil.immutableList(validated.toArray(new VFileEvent[0]));
-        myPublisher.before(toSend);
+        getPublisher().before(toSend);
 
         applyEvents.forEach(Runnable::run);
 
-        myPublisher.after(toSend);
+        getPublisher().after(toSend);
       }
     }
   }

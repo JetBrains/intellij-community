@@ -107,8 +107,13 @@ export class ActivityChartManager extends XYChartManager {
 
   protected getTooltipText() {
     let result = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
-    if (this.descriptor.sourceHasPluginInformation !== false) {
+    const descriptor = this.descriptor
+    if (descriptor.sourceHasPluginInformation !== false) {
       result += "\nplugin: {plugin}"
+    }
+
+    if (this.isShowTotalDuration()) {
+      result += "\ntotal duration: {totalDuration} ms"
     }
     return result
   }
@@ -210,12 +215,18 @@ export class ActivityChartManager extends XYChartManager {
 
   protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
     const nameTransformer = this.descriptor.shortNameProducer
-    return {
+    const result: any = {
       ...item,
       shortName: nameTransformer == null ? item.name : nameTransformer(item),
       chartConfig,
       sourceName,
     }
+
+    if (this.isShowTotalDuration()) {
+      result.totalDuration = item.end - item.start
+    }
+
+    return result
   }
 
   private sourceNameToLegendName(sourceName: string, itemCount: number): string {
@@ -244,6 +255,10 @@ export class ActivityChartManager extends XYChartManager {
         range.label.rotation = 0
       }
     }
+  }
+
+  private isShowTotalDuration() {
+    return this.descriptor.id === "components" || this.descriptor.id === "services"
   }
 }
 

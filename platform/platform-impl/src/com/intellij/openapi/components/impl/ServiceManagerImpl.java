@@ -246,7 +246,7 @@ public final class ServiceManagerImpl implements Disposable {
       }
 
       myComponentManager.initializeComponent(instance, myDescriptor);
-      ParallelActivity.SERVICE.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(container));
+      ParallelActivity.SERVICE.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(container), myPluginDescriptor.getPluginId().getIdString());
       return instance;
     }
 

@@ -1,3 +1,6 @@
+## 8
+* compute own time for services.
+
 ## 7
 * add `icons`.
 * split post-startup activities into dumb-aware and edt.

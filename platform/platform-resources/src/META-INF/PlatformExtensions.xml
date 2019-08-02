@@ -13,8 +13,14 @@
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
+                        serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl" preload="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileManager"
+                        serviceImplementation="com.intellij.openapi.vfs.PlatformVirtualFileManager" preload="true"/>
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>

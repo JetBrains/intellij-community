@@ -124,7 +124,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "7")
+        writer.writeStringField("version", "8")
         writeServiceStats(writer)
         writeIcons(writer)
 
@@ -226,7 +226,7 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
     val list = activities.getValue(name)
     StartUpPerformanceReporter.sortItems(list)
 
-    if (name.endsWith("Component")) {
+    if (name.endsWith("Component") || name.endsWith("Service")) {
       computeOwnTime(list, ownDurations)
     }
 

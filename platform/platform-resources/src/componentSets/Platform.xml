@@ -5,16 +5,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.vfs.VirtualFileManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.PlatformVirtualFileManager</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>
