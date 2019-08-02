@@ -69,7 +69,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     String formatString = "";
     final List<PsiExpression> args = new ArrayList<>();
     try {
-      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildFormatString(concatenation, false, args));
+      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
