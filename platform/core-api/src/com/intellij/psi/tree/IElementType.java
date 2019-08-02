@@ -79,10 +79,9 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_LOADED);
+      LoadingPhase.COMPONENT_LOADED.assertAtLeast();
     }
   }
-
 
   /**
    * Allows to construct element types for some temporary purposes without registering them.

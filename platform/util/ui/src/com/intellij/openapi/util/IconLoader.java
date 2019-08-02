@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
@@ -826,7 +825,9 @@ public final class IconLoader {
         myClass = clazz;
         myClassLoader = classLoader;
         myHandleNotFound = handleNotFound;
-        if (!Registry.is("ide.icons.deferUrlResolve")) resolve();
+        if (!SystemProperties.getBooleanProperty("ide.icons.deferUrlResolve", true)) {
+          resolve();
+        }
       }
 
       boolean isResolved() {

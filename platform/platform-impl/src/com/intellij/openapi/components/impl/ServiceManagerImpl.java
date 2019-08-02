@@ -202,7 +202,7 @@ public final class ServiceManagerImpl implements Disposable {
         return instance;
       }
 
-      LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+      LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
 
       //noinspection SynchronizeOnThis
       synchronized (this) {

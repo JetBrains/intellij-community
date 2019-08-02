@@ -20,7 +20,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   @Override
-  public final void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public final void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 

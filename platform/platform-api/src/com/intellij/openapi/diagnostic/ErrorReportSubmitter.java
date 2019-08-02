@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -21,7 +21,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * Called by the framework. Allows to identify the plugin that provided this extension.
    */
   @Override
-  public void setPluginDescriptor(PluginDescriptor plugin) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor plugin) {
     myPlugin = plugin;
   }
 

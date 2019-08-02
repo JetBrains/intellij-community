@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -27,7 +28,7 @@ public final class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
+  private final THashMap<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -111,6 +112,7 @@ public final class Registry  {
 
   @NotNull
   public static Registry getInstance() {
+    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
     return ourInstance;
   }
 
@@ -202,7 +204,9 @@ public final class Registry  {
   }
 
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
-    Map<String, RegistryKeyDescriptor> map = getInstance().myContributedKeys;
+    // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
+    THashMap<String, RegistryKeyDescriptor> map = ourInstance.myContributedKeys;
+    map.ensureCapacity(descriptors.size());
     for (RegistryKeyDescriptor descriptor : descriptors) {
       map.put(descriptor.getName(), descriptor);
     }

@@ -39,7 +39,7 @@ class RegistryKeyBean : PluginAware {
   private var descriptor: PluginDescriptor? = null
 
   @Transient
-  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor?) {
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.descriptor = pluginDescriptor
   }
 }

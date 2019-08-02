@@ -453,7 +453,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         return instance;
       }
 
-      LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+      LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
 
       try {
         //noinspection SynchronizeOnThis

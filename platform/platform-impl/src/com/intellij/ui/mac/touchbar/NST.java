@@ -7,8 +7,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -39,8 +39,8 @@ public class NST {
       else if (GraphicsEnvironment.isHeadless()) {
         LOG.info("The graphics environment is headless, skip nst loading");
       }
-      else if (!Registry.is(ourRegistryKeyTouchbar, false)) {
-        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+      else if (!SystemProperties.getBooleanProperty(ourRegistryKeyTouchbar, true)) {
+        LOG.info("system property '" + ourRegistryKeyTouchbar + "' is set to false, skip nst loading");
       }
       else if (!JnaLoader.isLoaded()) {
         LOG.info("JNA library is unavailable, skip nst loading");

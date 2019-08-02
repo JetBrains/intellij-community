@@ -5,8 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,7 +39,7 @@ public final class UIThemeProvider implements PluginAware {
   }
 
   @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myDescriptor = pluginDescriptor;
   }
 }

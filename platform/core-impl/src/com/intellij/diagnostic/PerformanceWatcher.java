@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -66,8 +67,8 @@ public final class PerformanceWatcher implements Disposable {
 
   @NotNull
   public static PerformanceWatcher getInstance() {
-    LoadingPhase.assertAtLeast(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
-    return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
+    LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast();
+    return ServiceManager.getService(PerformanceWatcher.class);
   }
 
   public PerformanceWatcher() {

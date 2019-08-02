@@ -162,6 +162,12 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
         }
       }
     }
+
+    // execute in parallel to loading components - this functionality should be used only by plugin functionality,
+    // that used after start-up
+    ParallelActivity.PREPARE_APP_INIT.run("init system properties") {
+      SystemPropertyBean.initSystemProperties()
+    }
   })
 }
 
@@ -172,10 +178,6 @@ fun registerRegistryAndContainerAndInitStore(pluginDescriptorsFuture: Completabl
   return pluginDescriptorsFuture
     .thenCompose { pluginDescriptors ->
       val future = CompletableFuture.runAsync(Runnable {
-        ParallelActivity.PREPARE_APP_INIT.run("init system properties") {
-          SystemPropertyBean.initSystemProperties()
-        }
-
         ParallelActivity.PREPARE_APP_INIT.run("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
         }

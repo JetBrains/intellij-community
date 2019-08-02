@@ -78,7 +78,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil extends StartupUiUtil {
   static {
-    LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";

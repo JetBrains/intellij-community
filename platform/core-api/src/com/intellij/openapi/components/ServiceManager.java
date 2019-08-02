@@ -123,7 +123,7 @@ public final class ServiceManager {
       return instance;
     }
 
-    LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
 
     //noinspection SynchronizeOnThis
     synchronized (serviceClass) {

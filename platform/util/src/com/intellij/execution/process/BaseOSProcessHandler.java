@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
@@ -58,7 +57,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    */
   @NotNull
   protected Options readerOptions() {
-    if (Registry.is("output.reader.blocking.mode", false)) {
+    if (Boolean.getBoolean("output.reader.blocking.mode")) {
       return Options.BLOCKING;
     }
     else {

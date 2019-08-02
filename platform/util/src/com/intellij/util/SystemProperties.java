@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly;
  * @see SystemInfo
  * @author yole
  */
-public class SystemProperties {
+public final class SystemProperties {
   private static String ourTestUserName;
 
   private SystemProperties() { }

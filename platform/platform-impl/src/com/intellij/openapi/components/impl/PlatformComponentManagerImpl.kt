@@ -101,7 +101,7 @@ abstract class PlatformComponentManagerImpl : ComponentManagerImpl {
 
   override fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
-      LoadingPhase.assertAtLeast(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
+      LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
       componentStore.initComponent(component, serviceDescriptor)
     }
   }

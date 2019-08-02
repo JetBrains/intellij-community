@@ -35,7 +35,7 @@ public class ChangesViewContentEP implements PluginAware {
   private ChangesViewContentProvider myInstance;
 
   @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 

@@ -77,13 +77,13 @@ public enum LoadingPhase {
     }
   }
 
-  public static void assertAtLeast(@NotNull LoadingPhase phase) {
+  public void assertAtLeast() {
     if (!CHECK_LOADING_PHASE) {
       return;
     }
 
     LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
-    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) {
+    if (currentPhase.ordinal() >= ordinal() || isKnownViolator()) {
       return;
     }
 
@@ -93,7 +93,7 @@ public enum LoadingPhase {
         return;
       }
 
-      getLogger().warn("Should be called at least at the phase " + phase + ", the current phase is: " + currentPhase + "\n" +
+      getLogger().error("Should be called at least at the phase " + this + ", the current phase is: " + currentPhase + "\n" +
                        "Current violators count: " + stackTraces.size() + "\n\n",
                        t);
     }
