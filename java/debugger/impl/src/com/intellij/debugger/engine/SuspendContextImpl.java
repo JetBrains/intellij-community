@@ -14,9 +14,11 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -66,6 +68,25 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
     LOG.assertTrue(myThread == null || myThread == threadProxy);
     myThread = threadProxy;
+  }
+
+  @Nullable
+  public Location getLocation() {
+    // getting location from the event set is much faster than obtaining the frame and getting it from there
+    if (myEventSet != null) {
+      LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
+      if (event != null) {
+        return event.location();
+      }
+    }
+    try {
+      StackFrameProxyImpl frameProxy = getFrameProxy();
+      return frameProxy != null ? frameProxy.location() : null;
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
+    return null;
   }
 
   protected abstract void resumeImpl();

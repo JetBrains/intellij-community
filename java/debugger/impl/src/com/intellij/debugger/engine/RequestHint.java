@@ -194,17 +194,7 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
-      Location location;
-      // getting location from the event set is much faster than obtaining the frame and getting it from there
-      LocatableEvent event =
-        StreamEx.of(ContainerUtil.notNullize(context.getEventSet())).select(LocatableEvent.class).findFirst().orElse(null);
-      if (event != null) {
-        location = event.location();
-      }
-      else {
-        StackFrameProxyImpl frameProxy = context.getFrameProxy();
-        location = frameProxy != null ? frameProxy.location() : null;
-      }
+      Location location = context.getLocation();
 
       // smart step feature stop check
       if (myMethodFilter != null &&
