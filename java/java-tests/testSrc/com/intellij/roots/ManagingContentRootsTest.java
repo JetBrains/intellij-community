@@ -122,7 +122,7 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     File dir = createTempDir("module");
     String dirUrl = VfsUtilCore.fileToUrl(dir);
 
-    File iml = new File("module.iml");
+    File iml = new File(dir, "module.iml");
     FileUtil.writeToFile(
       iml,
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
