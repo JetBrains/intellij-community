@@ -3,10 +3,7 @@
  */
 package org.jetbrains.yaml.meta.model;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 /**
  * Like {@link YamlDictionaryClass} but allows arbitrary level of unstructured nesting
@@ -20,6 +17,8 @@ public class YamlUnstructuredClass extends YamlMetaClass {
       ourInstance = new YamlUnstructuredClass();
       ourInstance.addFeature(new Field("anything:<any-key>", ourInstance))
         .withAnyName()
+        .withRelationSpecificType(Field.Relation.SEQUENCE_ITEM, ourInstance)
+        .withRelationSpecificType(Field.Relation.SCALAR_VALUE, YamlAnyScalarType.getInstance())
         .withEmptyValueAllowed(true);
     }
     return ourInstance;
@@ -27,10 +26,5 @@ public class YamlUnstructuredClass extends YamlMetaClass {
 
   public YamlUnstructuredClass() {
     super("yaml:anything");
-  }
-
-  @Override
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    // allow everything
   }
 }
