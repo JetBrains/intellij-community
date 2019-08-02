@@ -14,6 +14,7 @@ CODESIGN_STRING=$5
 HELP_DIR_NAME=$6
 NOTARIZE=$7
 BUNDLE_ID=$8
+JDK_ARCHIVE="$9"
 
 cd "$(dirname "$0")"
 
@@ -36,13 +37,12 @@ log "$INPUT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
-if [ $# -eq 9 ] && [ -f "$9" ]; then
-  archiveJDK="$9"
-  log "Copying JDK: $archiveJDK to $APPLICATION_PATH/Contents"
-  tar xvf "$archiveJDK" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
+if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
+  log "Copying JDK: $JDK_ARCHIVE to $APPLICATION_PATH/Contents"
+  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
   find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
   log "JDK has been copied"
-  rm -f "$archiveJDK"
+  rm -f "$JDK_ARCHIVE"
 fi
 
 if [ "$HELP_DIR_NAME" != "no-help" ]; then
