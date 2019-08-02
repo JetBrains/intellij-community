@@ -649,6 +649,11 @@
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
 
+    <obsoleteStorage file="menu.item.text.update.xml">
+      <components>
+        <component>ActionMenuItemUpdateCollector</component>
+      </components>
+    </obsoleteStorage>
     <obsoleteStorage file="statistics.toolbar.clicks.xml">
       <components>
         <component>ToolbarClicksCollector</component>
