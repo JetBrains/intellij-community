@@ -110,13 +110,13 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     for (OutPair option : context.getOptions()) {
       final String optionKey = option.getKey();
       String intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey);
-      CodeStylePropertyAccessor accessor = findAccessor(mapper, intellijName, langPrefix);
+      CodeStylePropertyAccessor<?> accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
         final String val = preprocessValue(context, optionKey, option.getVal());
         if (DEPENDENCIES.containsKey(optionKey)) {
           for (String dependency : DEPENDENCIES.get(optionKey)) {
             if (!processed.contains(dependency)) {
-              CodeStylePropertyAccessor dependencyAccessor = findAccessor(mapper, dependency, null);
+              CodeStylePropertyAccessor<?> dependencyAccessor = findAccessor(mapper, dependency, null);
               if (dependencyAccessor != null) {
                 isModified |= dependencyAccessor.setFromString(val);
               }
@@ -138,7 +138,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   }
 
   @Nullable
-  private static CodeStylePropertyAccessor findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
+  private static CodeStylePropertyAccessor<?> findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
                                                         @NotNull String propertyName,
                                                         @Nullable String langPrefix) {
     if (langPrefix != null) {
