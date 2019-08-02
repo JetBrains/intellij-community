@@ -19,7 +19,7 @@ public final class StartUpMeasurer {
   public static final class Phases {
     public static final String LOAD_MAIN_CLASS = "load main class";
 
-    // this phase name is not fully clear - it is time from `PluginManager.start` to `IdeaApplication.initApplication`
+    // this phase name is not fully clear - it is time from `PluginManager.start` to `ApplicationLoader.initApplication`
     public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
     public static final String CHECK_SYSTEM_DIR = "check system dirs";
     public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
@@ -29,7 +29,7 @@ public final class StartUpMeasurer {
 
     public static final String CONFIGURE_LOGGING = "configure logging";
 
-    // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
+    // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
     public static final String INIT_APP = "app initialization";
 
     public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";

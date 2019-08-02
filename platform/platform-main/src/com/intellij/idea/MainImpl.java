@@ -18,12 +18,12 @@ public final class MainImpl {
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override
       public void start() {
-        IdeaApplication.initApplication(args);
+        ApplicationLoader.initApplication(args);
       }
 
       @Override
       public void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {
-        IdeaApplication.setWizardStepsProvider(provider);
+        ApplicationLoader.setWizardStepsProvider(provider);
       }
     });
   }

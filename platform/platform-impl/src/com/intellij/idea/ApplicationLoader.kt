@@ -348,7 +348,7 @@ open class IdeStarter : ApplicationStarter {
   private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
     var project: Project? = null
     if (commandLineArgs.firstOrNull() != null) {
-      LOG.info("IdeaApplication.loadProject")
+      LOG.info("ApplicationLoader.loadProject")
       project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null).getFirst()
     }
     return project
