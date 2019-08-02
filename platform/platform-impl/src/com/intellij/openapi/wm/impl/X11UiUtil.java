@@ -5,10 +5,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -244,7 +244,9 @@ public class X11UiUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   public static void patchDetectedWm(String wmName) {
-    if (X11 == null || !Registry.is("ide.x11.override.wm")) return;
+    if (X11 == null || !SystemProperties.getBooleanProperty("ide.x11.override.wm", true)) {
+      return;
+    }
 
     try {
       if ("Muffin".equals(wmName)) {
