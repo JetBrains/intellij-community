@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EditorLastActionTrackerImpl implements EditorMouseListener, EditorLastActionTracker {
+public final class EditorLastActionTrackerImpl implements EditorLastActionTracker {
   private String myLastActionId;
   private Editor myCurrentEditor;
   private Editor myLastEditor;
@@ -57,7 +57,22 @@ public final class EditorLastActionTrackerImpl implements EditorMouseListener, E
         resetLastAction();
       }
     });
-    editorFactory.getEventMulticaster().addEditorMouseListener(this, ApplicationManager.getApplication());
+    editorFactory.getEventMulticaster().addEditorMouseListener(new EditorMouseListener() {
+      @Override
+      public void mousePressed(@NotNull EditorMouseEvent e) {
+        resetLastAction();
+      }
+
+      @Override
+      public void mouseClicked(@NotNull EditorMouseEvent e) {
+        resetLastAction();
+      }
+
+      @Override
+      public void mouseReleased(@NotNull EditorMouseEvent e) {
+        resetLastAction();
+      }
+    }, ApplicationManager.getApplication());
   }
 
   private static boolean is(Editor currentEditor, EditorImpl killedEditor) {
@@ -68,21 +83,6 @@ public final class EditorLastActionTrackerImpl implements EditorMouseListener, E
   @Nullable
   public String getLastActionId() {
     return myLastActionId;
-  }
-
-  @Override
-  public void mousePressed(@NotNull EditorMouseEvent e) {
-    resetLastAction();
-  }
-
-  @Override
-  public void mouseClicked(@NotNull EditorMouseEvent e) {
-    resetLastAction();
-  }
-
-  @Override
-  public void mouseReleased(@NotNull EditorMouseEvent e) {
-    resetLastAction();
   }
 
   private static String getActionId(AnAction action) {
