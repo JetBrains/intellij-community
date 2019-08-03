@@ -113,6 +113,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       content.setHelpId(ChangesListView.HELP_ID);
       content.setComponent(panel);
+      content.setPreferredFocusableComponent(panel.myView);
       content.putUserData(Content.TAB_DND_TARGET_KEY, panel.createContentDnDTarget(content));
     }
   }
