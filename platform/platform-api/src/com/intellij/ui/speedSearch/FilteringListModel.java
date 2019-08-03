@@ -128,7 +128,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   public void replaceAll(List<? extends T> elements) {
-    myData.clear();
     ListUtil.removeAllItems(myOriginalModel);
     ListUtil.addAllItems(myOriginalModel, elements);
   }
