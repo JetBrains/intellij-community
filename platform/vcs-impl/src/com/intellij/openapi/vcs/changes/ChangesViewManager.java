@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -249,7 +250,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
     private final VcsConfiguration myVcsConfiguration;
-    private final JPanel myProgressLabel;
+    private final Wrapper myProgressLabel = new Wrapper();
 
     private final Alarm myTreeUpdateAlarm;
     private final Object myTreeUpdateIndicatorLock = new Object();
@@ -310,7 +311,6 @@ public class ChangesViewManager implements ChangesViewEx,
         scheduleRefresh();
       });
 
-      myProgressLabel = simplePanel();
       setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
       registerShortcuts(this);
 
@@ -414,15 +414,13 @@ public class ChangesViewManager implements ChangesViewEx,
       return actions;
     }
 
-    private void updateProgressComponent(@NotNull final Factory<? extends JComponent> progress) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (myProgressLabel != null) {
-          myProgressLabel.removeAll();
-          myProgressLabel.add(progress.create());
-          myProgressLabel.setMinimumSize(JBUI.emptySize());
-        }
-      });
+    private void updateProgressComponent(@Nullable Factory<? extends JComponent> progress) {
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (myDisposed) return;
+        JComponent component = progress != null ? progress.create() : null;
+        myProgressLabel.setContent(component);
+        myProgressLabel.setMinimumSize(JBUI.emptySize());
+      }, ModalityState.any());
     }
 
     public void updateProgressText(String text, boolean isError) {
@@ -565,14 +563,7 @@ public class ChangesViewManager implements ChangesViewEx,
         VcsException updateException = changeListManager.getUpdateException();
         setBusy(false);
         if (updateException == null) {
-          Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
-
-          if (additionalUpdateInfo != null) {
-            updateProgressComponent(additionalUpdateInfo);
-          }
-          else {
-            updateProgressText("", false);
-          }
+          updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
         }
         else {
           updateProgressText(VcsBundle.message("error.updating.changes", updateException.getMessage()), true);
