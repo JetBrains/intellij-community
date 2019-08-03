@@ -63,13 +63,32 @@ public class CommitCompletionContributor extends CompletionContributor {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
         ProgressManager.checkCanceled();
-        ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
-        if (revision != null) {
-          FilePath filePath = revision.getFile();
-          LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
-              withIcon(filePath.getFileType().getIcon());
-          insensitive.addElement(element);
-          addLanguageSpecificElements(project, count, prefixed, filePath);
+        if (change.getAfterRevision() == null) {
+          ContentRevision revision = change.getBeforeRevision();
+          if (revision != null) {
+            FilePath filePath = revision.getFile();
+            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
+              .withStrikeoutness(true).withIcon(filePath.getFileType().getIcon());
+            insensitive.addElement(element);
+          }
+        }
+        else {
+          ContentRevision revision = change.getAfterRevision();
+          if (revision != null) {
+            FilePath filePath = revision.getFile();
+            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
+              .withIcon(filePath.getFileType().getIcon());
+            insensitive.addElement(element);
+            ContentRevision beforeRevision = change.getBeforeRevision();
+            if (beforeRevision != null) {
+              FilePath beforeFile = beforeRevision.getFile();
+              if (!beforeFile.getName().equals(filePath.getName())) {
+                insensitive.addElement(LookupElementBuilder.create(beforeFile.getName())
+                  .withStrikeoutness(true).withIcon(beforeFile.getFileType().getIcon()));
+              }
+            }
+            addLanguageSpecificElements(project, count, prefixed, filePath);
+          }
         }
       }
     }
