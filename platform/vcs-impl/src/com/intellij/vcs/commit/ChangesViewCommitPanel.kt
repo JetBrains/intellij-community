@@ -226,7 +226,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
-  override fun refreshData() = (ChangesViewManager.getInstance(project) as ChangesViewManager).refreshImmediately()
+  override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)

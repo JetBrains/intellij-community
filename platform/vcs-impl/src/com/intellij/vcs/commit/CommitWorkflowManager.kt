@@ -22,7 +22,7 @@ private val isNonModalCommit = Registry.get("vcs.non.modal.commit")
 private val appSettings = VcsApplicationSettings.getInstance()
 
 internal class CommitWorkflowManager(private val project: Project) {
-  private val changesViewManager = ChangesViewManager.getInstance(project) as ChangesViewManager
+  private val changesViewManager = ChangesViewManager.getInstanceEx(project)
   private val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
   init {

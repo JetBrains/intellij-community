@@ -23,7 +23,7 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
 }
 
 internal fun Project.getNonModalCommitWorkflowHandler() =
-  (ChangesViewManager.getInstance(this) as? ChangesViewManager)?.commitWorkflowHandler
+  ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {

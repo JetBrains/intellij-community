@@ -76,7 +76,7 @@ import static java.util.stream.Collectors.toList;
   name = "ChangesViewManager",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
+public class ChangesViewManager implements ChangesViewEx, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
@@ -112,6 +112,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
     return project.getComponent(ChangesViewI.class);
+  }
+
+  @NotNull
+  public static ChangesViewEx getInstanceEx(@NotNull Project project) {
+    return (ChangesViewEx)getInstance(project);
   }
 
   public ChangesViewManager(@NotNull Project project, @NotNull ChangesViewContentManager contentManager) {
@@ -185,10 +190,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Nullable
+  @Override
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     return myCommitWorkflowHandler;
   }
 
+  @Override
   public void updateCommitWorkflow(boolean isNonModal) {
     if (isNonModal) {
       if (myCommitPanel == null) {
@@ -210,6 +217,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
+  @Override
   public boolean isAllowExcludeFromCommit() {
     return myCommitWorkflowHandler != null;
   }
@@ -341,6 +349,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
+  @Override
   public void refreshImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myTreeUpdateAlarm.cancelAllRequests();
