@@ -25,19 +25,16 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -50,13 +47,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -265,8 +259,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
     private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
 
-    @NotNull private final TreeSelectionListener myTsl;
-    @NotNull private final PropertyChangeListener myGroupingChangeListener;
     private boolean myModelUpdateInProgress;
     private final MyTreeExpander myTreeExpander;
     private final List<AnAction> myToolbarActions;
@@ -281,29 +273,6 @@ public class ChangesViewManager implements ChangesViewEx,
       myTreeExpander = new MyTreeExpander();
       myView.setTreeExpander(myTreeExpander);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-      myTsl = new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          if (LOG.isDebugEnabled()) {
-            TreePath[] paths = myView.getSelectionPaths();
-            String joinedPaths = paths != null ? StringUtil.join(paths, FunctionUtil.string(), ", ") : null;
-            String message = "selection changed. selected:  " + joinedPaths;
-
-            if (LOG.isTraceEnabled()) {
-              LOG.trace(message + " from: " + DebugUtil.currentStackTrace());
-            }
-            else {
-              LOG.debug(message);
-            }
-          }
-          boolean fromModelRefresh = myModelUpdateInProgress;
-          ApplicationManager.getApplication().invokeLater(() -> updatePreview(fromModelRefresh));
-        }
-      };
-      myGroupingChangeListener = e -> {
-        myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
-        scheduleRefresh();
-      };
 
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
@@ -332,8 +301,14 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       ChangesDnDSupport.install(myProject, myView);
-      myView.addTreeSelectionListener(myTsl);
-      myView.addGroupingChangeListener(myGroupingChangeListener);
+      myView.addTreeSelectionListener(e -> {
+        boolean fromModelRefresh = myModelUpdateInProgress;
+        ApplicationManager.getApplication().invokeLater(() -> updatePreview(fromModelRefresh));
+      });
+      myView.addGroupingChangeListener(e -> {
+        myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
+        scheduleRefresh();
+      });
 
       myProgressLabel = simplePanel();
       setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
@@ -347,8 +322,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public void dispose() {
-      myView.removeTreeSelectionListener(myTsl);
-      myView.removeGroupingChangeListener(myGroupingChangeListener);
       myDisposed = true;
       myTreeUpdateAlarm.cancelAllRequests();
 
