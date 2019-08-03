@@ -432,14 +432,9 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void scheduleRefresh() {
-      if (myProject.isDisposed()) return;
-      int was = myTreeUpdateAlarm.cancelAllRequests();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("schedule refresh, was " + was);
-      }
-      if (!myTreeUpdateAlarm.isDisposed()) {
-        myTreeUpdateAlarm.addRequest(() -> refreshView(), 100);
-      }
+      if (myDisposed) return;
+      myTreeUpdateAlarm.cancelAllRequests();
+      myTreeUpdateAlarm.addRequest(() -> refreshView(), 100);
     }
 
     public void refreshImmediately() {
