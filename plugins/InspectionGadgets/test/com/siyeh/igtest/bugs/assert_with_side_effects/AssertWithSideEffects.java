@@ -11,6 +11,7 @@ public class AssertWithSideEffects {
 
     void bar(int i) {
         <warning descr="'assert' has side effects: i++">assert</warning> i++ < 10;
+        <warning descr="'assert' has side effects: i += ...">assert</warning> (i+=2) < 10;
     }
 
     void abc() {
