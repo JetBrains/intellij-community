@@ -124,7 +124,7 @@ public class VcsProjectLog implements Disposable {
       if (logManager != null) {
         Disposer.dispose(logManager);
       }
-      if (myProject.isDisposed() || !recreate) return;
+      if (!recreate) return;
       createLog(false);
     });
   }
@@ -221,7 +221,7 @@ public class VcsProjectLog implements Disposable {
                                                 VcsProjectLog.this::recreateOnError);
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
+          myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, ModalityState.any());
       }
       return myValue;
