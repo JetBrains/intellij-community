@@ -312,10 +312,32 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ && assignmentExpression.getLExpression() == expression) {
           final PsiExpression rhs = assignmentExpression.getRExpression();
           if (rhs != null) {
+            final PsiType expressionType = expression.getType();
+            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
+              return;
+            }
             final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
             checkTypes(expression, expressionType, promotedType);
           }
         }
+      }
+      if (ignoreWideningConversions) return;
+      if (ignoreConstantConversions) {
+        PsiExpression rootExpression = expression;
+        while (rootExpression instanceof PsiParenthesizedExpression) {
+          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rootExpression;
+          rootExpression = parenthesizedExpression.getExpression();
+        }
+        if (rootExpression instanceof PsiLiteralExpression || PsiUtil.isConstantExpression(rootExpression)) {
+          return;
+        }
+      }
+      final PsiType expressionType = expression.getType();
+      if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
+        return;
+      }
+      if (PsiType.CHAR.equals(expressionType) && (ignoreCharConversions || isArgumentOfStringIndexOf(parent))) {
+        return;
       }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
