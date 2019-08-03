@@ -80,8 +80,8 @@ public class CommitCompletionContributor extends CompletionContributor {
     if (vFile == null) return;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(vFile);
     if (psiFile == null) return;
-    TopLevelCompletionContributor contributor = TopLevelCompletionContributorEP.forLanguage(psiFile.getLanguage());
+    SymbolNameCompletionContributor contributor = SymbolNameCompletionContributorEP.forLanguage(psiFile.getLanguage());
     if (contributor == null) return;
-    contributor.addLookupElements(psiFile, count, prefixed);
+    prefixed.addAllElements(contributor.getLookupElements(psiFile, count, prefixed.getPrefixMatcher().getPrefix()));
   }
 }
