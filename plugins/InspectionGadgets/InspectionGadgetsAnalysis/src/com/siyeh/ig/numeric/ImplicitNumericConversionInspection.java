@@ -290,23 +290,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (ignoreConstantConversions) {
-        PsiExpression rootExpression = expression;
-        while (rootExpression instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rootExpression;
-          rootExpression = parenthesizedExpression.getExpression();
-        }
-        if (rootExpression instanceof PsiLiteralExpression || PsiUtil.isConstantExpression(rootExpression)) {
-          return;
-        }
-      }
-      final PsiType expressionType = expression.getType();
-      if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
-        return;
-      }
-      if (PsiType.CHAR.equals(expressionType) && (ignoreCharConversions || isArgumentOfStringIndexOf(parent))) {
-        return;
-      }
       if (parent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ && assignmentExpression.getLExpression() == expression) {
