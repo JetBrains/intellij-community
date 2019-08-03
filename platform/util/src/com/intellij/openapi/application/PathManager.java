@@ -242,7 +242,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultConfigPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
+    return platformPath(selector, "Library/Preferences", null, "XDG_CONFIG_HOME", ".config", CONFIG_FOLDER);
   }
 
   public static void ensureConfigFolderExists() {
@@ -266,8 +266,8 @@ public class PathManager {
     if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
-    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
+    else if ((SystemInfo.isMac || SystemInfo.hasXdgOpen()) && PATHS_SELECTOR != null) {
+      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", null, "XDG_DATA_HOME", ".local/share", "");
     }
     else {
       ourPluginsPath = getConfigPath() + "/" + PLUGINS_FOLDER;
@@ -278,8 +278,8 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    if (SystemInfo.isMac) {
-      return platformPath(selector, "Library/Application Support", "");
+    if (SystemInfo.isMac || SystemInfo.hasXdgOpen()) {
+      return platformPath(selector, "Library/Application Support", null, "XDG_DATA_HOME", ".local/share", "");
     }
     else {
       return getDefaultConfigPathFor(selector) + "/" + PLUGINS_FOLDER;
@@ -314,7 +314,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Caches", SYSTEM_FOLDER);
+    return platformPath(selector, "Library/Caches", null, "XDG_CACHE_HOME", ".cache", SYSTEM_FOLDER);
   }
 
   @NotNull
@@ -572,14 +572,8 @@ public class PathManager {
     return path;
   }
 
-  // todo[r.sh] XDG directories, Windows folders
-  // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  // todo[r.sh] Windows folders
   // http://www.microsoft.com/security/portal/mmpc/shared/variables.aspx
-  @NotNull
-  private static String platformPath(@NotNull String selector, @Nullable String macPart, @NotNull String fallback) {
-    return platformPath(selector, macPart, null, null, null, fallback);
-  }
-
   @SuppressWarnings("SameParameterValue")
   @NotNull
   private static String platformPath(@NotNull String selector,

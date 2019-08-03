@@ -68,8 +68,15 @@ public final class ConfigImportHelper {
   public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
+    boolean withBaseDirs = SystemInfo.isMac || SystemInfo.hasXdgOpen();
+    boolean isLegacyDir = false;
     ConfigImportSettings settings = getConfigImportSettings();
-    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
+    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, withBaseDirs, true);
+    if (guessedOldConfigDirs.isEmpty() && SystemInfo.hasXdgOpen()) {
+      // Check for legacy directories
+      isLegacyDir = true;
+      guessedOldConfigDirs = findConfigDirectories(newConfigDir, false, true);
+    }
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -83,7 +90,7 @@ public final class ConfigImportHelper {
     });
 
     if (!result.isNull()) {
-      doImport(result.get().first, newConfigDir, result.get().second, log);
+      doImport(result.get().first, isLegacyDir, newConfigDir, result.get().second, log);
       if (settings != null) {
         settings.importFinished(newConfigDir);
       }
@@ -142,20 +149,21 @@ public final class ConfigImportHelper {
   }
 
   @NotNull
-  public static List<Path> findConfigDirectories(@NotNull Path newConfigDir, boolean isMacOs, boolean checkDefaultLocation) {
+  public static List<Path> findConfigDirectories(@NotNull Path newConfigDir, boolean withBaseDirs, boolean checkDefaultLocation) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
+    // ("~/<config_base>/<selector_prefix><selector_version>" on macOS & XDG based systems,
+    //  "~/.<selector_prefix><selector_version>/config" on other OSes & legacy installations)
 
     List<Path> homes = new ArrayList<>(2);
-    homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
-    String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, isMacOs));
-    String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
+    homes.add((withBaseDirs ? newConfigDir : newConfigDir.getParent()).getParent());
+    String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, withBaseDirs));
+    String prefix = getPrefixFromSelector(nameWithSelector, withBaseDirs);
 
     String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
       ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
     if (checkDefaultLocation) {
       Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
-      Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
+      Path configHome = (withBaseDirs ? configDir : configDir.getParent()).getParent();
       if (!homes.contains(configHome)) homes.add(configHome);
     }
 
@@ -168,7 +176,7 @@ public final class ConfigImportHelper {
         if ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
             !startsWithIgnoreCase(fileName, defaultPrefix)) return false;
         if (!Files.isDirectory(it)) return false;
-        return !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
+        return !it.equals(withBaseDirs ? newConfigDir : newConfigDir.getParent());
       })) {
         for (Path path : stream) {
           candidates.add(path);
@@ -184,7 +192,7 @@ public final class ConfigImportHelper {
 
     Map<Path, FileTime> lastModified = new THashMap<>();
     for (Path child : candidates) {
-      Path candidate = isMacOs ? child : child.resolve(CONFIG);
+      Path candidate = withBaseDirs ? child : child.resolve(CONFIG);
       FileTime max = null;
       for (String name : OPTIONS) {
         try {
@@ -211,15 +219,15 @@ public final class ConfigImportHelper {
   }
 
   @NotNull
-  private static String getNameWithVersion(@NotNull Path configDir, boolean isMacOs) {
-    return (isMacOs ? configDir : configDir.getParent()).getFileName().toString();
+  private static String getNameWithVersion(@NotNull Path configDir, boolean withBaseDirs) {
+    return (withBaseDirs ? configDir : configDir.getParent()).getFileName().toString();
   }
 
   @Nullable
-  private static String getPrefixFromSelector(@NotNull String nameWithSelector, boolean isMacOs) {
+  private static String getPrefixFromSelector(@NotNull String nameWithSelector, boolean withBaseDirs) {
     Matcher m = Pattern.compile("\\.?([^\\d]+)\\d+(\\.\\d+)?").matcher(nameWithSelector);
     String selector = m.matches() ? m.group(1) : null;
-    return StringUtil.isEmpty(selector) ? null : isMacOs ? selector : '.' + selector;
+    return StringUtil.isEmpty(selector) ? null : withBaseDirs ? selector : '.' + selector;
   }
 
   @Nullable
@@ -364,7 +372,7 @@ public final class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
+  private static void doImport(@NotNull Path oldConfigDir, boolean isLegacyDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
       return;
     }
@@ -383,9 +391,10 @@ public final class ConfigImportHelper {
         setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
       }
 
-      // on macOS, plugins are normally not under the config directory
+      // on macOS & XDG based systens, plugins are normally not under the config directory
+      boolean withBaseDirs = SystemInfo.isMac || SystemInfo.hasXdgOpen();
       Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
-      if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
+      if (withBaseDirs && !Files.isDirectory(oldPluginsDir)) {
         oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
@@ -398,6 +407,14 @@ public final class ConfigImportHelper {
           FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
         }
       }
+      // Move plugins from the config into the plugins directory
+      else if (withBaseDirs && isLegacyDir) {
+        Path legacyPluginsDir = newConfigDir.resolve(PLUGINS);
+        Path newPluginsDir = Paths.get(PathManager.getPluginsPath());
+        if (!legacyPluginsDir.equals(newPluginsDir) && Files.isDirectory(legacyPluginsDir)) {
+          FileUtil.moveDirWithContent(legacyPluginsDir.toFile(), newPluginsDir.toFile());
+        }
+      }
 
       // apply stale plugin updates
       if (Files.isDirectory(oldPluginsDir)) {
@@ -406,7 +423,7 @@ public final class ConfigImportHelper {
           oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
         }
         if (oldSystemDir == null) {
-          String selector = SystemInfo.isMac ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
+          String selector = withBaseDirs ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
           oldSystemDir = Paths.get(PathManager.getDefaultSystemPathFor(selector));
         }
         Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
