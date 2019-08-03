@@ -17,8 +17,6 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
         addMarkdownPlugin(featuredPlugins);
-        featuredPlugins.put("BashSupport", "Languages:Bash language support:BashSupport");
-        featuredPlugins.put("R Language Support", "Languages:R language support:R4Intellij");
       }
     };
 

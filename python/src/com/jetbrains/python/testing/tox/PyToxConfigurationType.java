@@ -47,4 +47,9 @@ public final class PyToxConfigurationType implements ConfigurationType {
   public String getId() {
     return ID;
   }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
 }

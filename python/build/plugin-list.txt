@@ -14,7 +14,6 @@ intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
 intellij.textmate
-intellij.vcs.changeReminder
 intellij.vcs.git
 intellij.vcs.github
 intellij.vcs.hg

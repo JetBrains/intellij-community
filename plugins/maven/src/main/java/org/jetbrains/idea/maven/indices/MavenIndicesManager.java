@@ -188,7 +188,10 @@ public class MavenIndicesManager implements Disposable {
     LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
     for (Pair<String, String> eachIdAndUrl : remoteRepositoriesIdsAndUrls) {
-      result.add(ensureRemoteIndexExist(project, eachIdAndUrl));
+      MavenIndex index = ensureRemoteIndexExist(project, eachIdAndUrl);
+      if (index != null) {
+        result.add(index);
+      }
     }
     return new ArrayList<>(result);
   }

@@ -50,6 +50,7 @@
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -120,6 +121,8 @@
     <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
     <externalSystem.runConfigurationImporter
         implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
+
+    <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"
                  description="Enables some deprecated setting in the Gradle settings dialog for troubleshooting"/>

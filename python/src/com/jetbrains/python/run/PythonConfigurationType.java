@@ -71,4 +71,9 @@ public final class PythonConfigurationType implements ConfigurationType {
   public String getId() {
     return "PythonConfigurationType";
   }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
 }

@@ -56,6 +56,22 @@
                 "regexp_ref": "(.+)\\s*/\\s*(.*)"
               }
             }
+          },
+          {
+            "id": "my.simple.regexp.with.underscore",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp#regexp_ref}"
+              ],
+              "regexps": {
+                "regexp_ref": "[AB]_(.*)"
+              }
+            }
           }
         ]
       }

@@ -5,13 +5,11 @@ import org.joni.Option;
 
 public class Searcher {
   private final Matcher myMatcher;
-  private final String myString;
   private int currentPosition = 0;
   private int currentCharPosition = 0;
   private final byte[] myStringBytes;
 
-  Searcher(String string, byte[] stringBytes, Matcher matcher) {
-    myString = string;
+  Searcher(byte[] stringBytes, Matcher matcher) {
     myStringBytes = stringBytes;
     myMatcher = matcher;
   }
@@ -42,6 +40,6 @@ public class Searcher {
   }
 
   public MatchData getCurrentMatchData() {
-    return MatchData.fromRegion(myString, myStringBytes, myMatcher.getEagerRegion());
+    return MatchData.fromRegion(myMatcher.getEagerRegion());
   }
 }

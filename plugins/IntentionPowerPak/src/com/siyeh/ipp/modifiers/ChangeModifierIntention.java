@@ -2,6 +2,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -86,6 +87,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     PsiMember member = findMember(element);
     if (!(member instanceof PsiNameIdentifierOwner)) return false;
     PsiElement identifier = ((PsiNameIdentifierOwner)member).getNameIdentifier();

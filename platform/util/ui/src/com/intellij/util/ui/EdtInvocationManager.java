@@ -3,8 +3,9 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Encapsulates EDT-related checks and processing. The general idea is that intellij threading model is tightly bound with EDT
@@ -16,8 +17,7 @@ import java.lang.reflect.InvocationTargetException;
  * processing or custom EDT processing as well. This interface covers EDT part.
  */
 public abstract class EdtInvocationManager {
-
-  @NotNull private static EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
+  private static final AtomicReference<EdtInvocationManager> ourInstance = new AtomicReference<>();
 
   public abstract boolean isEventDispatchThread();
 
@@ -27,32 +27,50 @@ public abstract class EdtInvocationManager {
 
   @NotNull
   public static EdtInvocationManager getInstance() {
-    return ourInstance;
+    EdtInvocationManager result = ourInstance.get();
+    if (result == null) {
+      result = new SwingEdtInvocationManager();
+      if (!ourInstance.compareAndSet(null, result)) {
+        result = ourInstance.get();
+      }
+    }
+    return result;
   }
 
   @SuppressWarnings("unused") // Used in upsource
   public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
-    ourInstance = edtInvocationManager;
+    ourInstance.set(edtInvocationManager);
+  }
+
+  public static void executeWithCustomManager(@NotNull EdtInvocationManager manager, @NotNull Runnable runnable) {
+    EdtInvocationManager old = null;
+    try {
+      old = ourInstance.getAndSet(manager);
+      runnable.run();
+    }
+    finally {
+      ourInstance.compareAndSet(manager, old);
+    }
   }
 
   /**
    * The default {@link EdtInvocationManager} implementation which works with the EDT via SwingUtilities.
    */
-  private static class SwingEdtInvocationManager extends EdtInvocationManager {
+  public static class SwingEdtInvocationManager extends EdtInvocationManager {
     @Override
     public boolean isEventDispatchThread() {
-      return SwingUtilities.isEventDispatchThread();
+      return EventQueue.isDispatchThread();
     }
 
     @Override
     public void invokeLater(@NotNull Runnable task) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(task);
+      EventQueue.invokeLater(task);
     }
 
     @Override
     public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
-      SwingUtilities.invokeAndWait(task);
+      EventQueue.invokeAndWait(task);
     }
   }
 }

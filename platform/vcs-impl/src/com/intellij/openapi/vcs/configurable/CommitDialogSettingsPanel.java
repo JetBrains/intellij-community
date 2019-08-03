@@ -102,7 +102,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   }
 
   private void createUIComponents() {
-    myCommitFromLocalChanges = new JBCheckBox("Commit from the Local Changes without showing a dialog");
+    myCommitFromLocalChanges = new JBCheckBox("Commit from Local Changes without showing the Commit dialog");
     myCommitFromLocalChangesPanel =
       UI.PanelFactory.panel(myCommitFromLocalChanges).
         withComment("Applies to projects under Git and Mercurial").

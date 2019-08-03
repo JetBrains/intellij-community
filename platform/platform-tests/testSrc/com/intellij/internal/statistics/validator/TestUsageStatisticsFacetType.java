@@ -27,6 +27,16 @@ public class TestUsageStatisticsFacetType extends FacetType {
     ep.registerExtension(facetType, disposable);
   }
 
+  public static void registerTestFacetTypeWithSpace(Disposable disposable) {
+    final ExtensionPoint<FacetType> ep = Extensions.getRootArea().getExtensionPoint(FacetType.EP_NAME);
+    TestCase.assertNotNull(ep);
+
+    final FacetTypeId id = new FacetTypeId("DebugUsageStatisticsFacet");
+    final TestUsageStatisticsFacetType facetType =
+      new TestUsageStatisticsFacetType(id, "Test Usage Statistics Facet", "Mock Facet for Testing");
+    ep.registerExtension(facetType, disposable);
+  }
+
   public TestUsageStatisticsFacetType(@NotNull FacetTypeId id,
                                       @NotNull String stringId,
                                       @NotNull String presentableName) {

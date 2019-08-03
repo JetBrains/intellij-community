@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate.regex;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joni.Region;
 
 import java.util.ArrayList;
@@ -10,48 +12,48 @@ import java.util.List;
 import java.util.Objects;
 
 public class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData("", false, Collections.emptyList());
+  public static final MatchData NOT_MATCHED = new MatchData(false, Collections.emptyList());
 
   private final boolean matched;
   private final List<TextRange> offsets;
-  private final CharSequence text;
 
-  private MatchData(CharSequence text, boolean matched, List<TextRange> offsets) {
-    this.text = text;
+  private MatchData(boolean matched, List<TextRange> offsets) {
     this.matched = matched;
     this.offsets = offsets;
   }
 
-  public static MatchData fromRegion(CharSequence text, byte[] bytes, Region matchedRegion) {
-    List<TextRange> offsets;
+  public static MatchData fromRegion(@Nullable Region matchedRegion) {
     if (matchedRegion != null) {
-      offsets = new ArrayList<>(matchedRegion.numRegs);
+      List<TextRange> offsets = new ArrayList<>(matchedRegion.numRegs);
       for (int i = 0; i < matchedRegion.numRegs; i++) {
-        int startOffset = RegexUtil.charOffsetByByteOffset(bytes, matchedRegion.beg[i]);
-        int endOffset = RegexUtil.charOffsetByByteOffset(bytes, matchedRegion.end[i]);
-        offsets.add(i, TextRange.create(startOffset, endOffset));
+        offsets.add(i, TextRange.create(Math.max(matchedRegion.beg[i], 0), Math.max(matchedRegion.end[i], 0)));
       }
-      return new MatchData(text, true, offsets);
+      return new MatchData(true, offsets);
     }
     return NOT_MATCHED;
-  }
-
-  public CharSequence capture(int group) {
-    TextRange textRange = offset(group);
-    return text.subSequence(textRange.getStartOffset(), textRange.getEndOffset());
-  }
-
-  public TextRange offset() {
-    return offset(0);
   }
 
   public int count() {
     return offsets.size();
   }
 
-  public TextRange offset(int group) {
+  public TextRange byteOffset() {
+    return byteOffset(0);
+  }
+
+  @NotNull
+  public TextRange byteOffset(int group) {
     Preconditions.checkElementIndex(group, offsets.size());
     return offsets.get(group);
+  }
+
+  public TextRange charOffset(byte[] stringBytes) {
+    return charOffset(stringBytes, 0);
+  }
+
+  @NotNull
+  public TextRange charOffset(byte[] stringBytes, int group) {
+    return RegexUtil.charRangeByByteRange(stringBytes, byteOffset(group));
   }
 
   public boolean matched() {
@@ -67,7 +69,6 @@ public class MatchData {
 
     if (matched != matchData.matched) return false;
     if (!Objects.equals(offsets, matchData.offsets)) return false;
-    if (!Objects.equals(text, matchData.text)) return false;
 
     return true;
   }
@@ -76,7 +77,6 @@ public class MatchData {
   public int hashCode() {
     int result = (matched ? 1 : 0);
     result = 31 * result + (offsets != null ? offsets.hashCode() : 0);
-    result = 31 * result + (text != null ? text.hashCode() : 0);
     return result;
   }
 
@@ -84,7 +84,6 @@ public class MatchData {
   public String toString() {
     return "{ matched=" + matched +
            ", offsets=" + offsets +
-           ", text=" + text +
            '}';
   }
 }

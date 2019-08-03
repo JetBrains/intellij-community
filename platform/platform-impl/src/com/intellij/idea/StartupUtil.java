@@ -43,6 +43,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -68,6 +69,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -81,7 +83,7 @@ public class StartupUtil {
   @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
-  private static boolean ourSystemPatched;
+  private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
 
@@ -224,11 +226,17 @@ public class StartupUtil {
 
       if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper
+        // event queue and icons already initialized as part of old config import
         EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
       }
     }
 
-    appStarter.start();
+    EdtInvocationManager.executeWithCustomManager(new EdtInvocationManager.SwingEdtInvocationManager() {
+      @Override
+      public void invokeAndWait(@NotNull Runnable task) {
+        runInEdtAndWait(log, task);
+      }
+    }, () -> appStarter.start());
   }
 
   @NotNull
@@ -617,12 +625,10 @@ public class StartupUtil {
     appStarter.startupWizardFinished();
   }
 
-  public static void patchSystem(@NotNull Logger log) {
-    if (ourSystemPatched) {
-      return;
+  public static boolean patchSystem(@NotNull Logger log) {
+    if (!ourSystemPatched.compareAndSet(false, true)) {
+      return false;
     }
-
-    ourSystemPatched = true;
 
     Activity patchActivity = StartUpMeasurer.start("patch system");
     ApplicationImpl.patchSystem();
@@ -630,6 +636,7 @@ public class StartupUtil {
       patchSystemForUi(log);
     }
     patchActivity.end();
+    return true;
   }
 
   private static void patchSystemForUi(@NotNull Logger log) {
@@ -674,9 +681,12 @@ public class StartupUtil {
 
   private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable) {
     try {
-      if (!ourSystemPatched) {
+      if (!ourSystemPatched.get()) {
         EventQueue.invokeAndWait(() -> {
-          patchSystem(log);
+          if (!patchSystem(log)) {
+            return;
+          }
+
           try {
             UIManager.setLookAndFeel(IntelliJLaf.class.getName());
             IconManager.activate();

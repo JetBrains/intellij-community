@@ -32,6 +32,11 @@ public interface ServiceViewDescriptor {
     return getPresentation();
   }
 
+  @NotNull
+  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options) {
+    return getPresentation();
+  }
+
   @Nullable
   default ActionGroup getToolbarActions() {
     return null;

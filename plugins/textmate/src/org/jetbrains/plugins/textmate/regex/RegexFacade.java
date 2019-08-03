@@ -14,6 +14,7 @@ import org.joni.Regex;
 import org.joni.exception.JOniException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class RegexFacade {
@@ -24,29 +25,35 @@ public class RegexFacade {
   private byte[] myRegexBytes;
   private Regex myRegex = null;
 
+  private Object lastId = null;
+  private int lastOffset = Integer.MAX_VALUE;
+  private MatchData lastMatch = MatchData.NOT_MATCHED;
+
   private RegexFacade(@NotNull byte[] regexBytes) {
     myRegexBytes = regexBytes;
   }
 
-  public MatchData match(String string) {
+  public MatchData match(StringWithId string) {
     return match(string, 0);
   }
 
-  public MatchData match(String string, int at) {
+  public MatchData match(@NotNull StringWithId string, int byteOffset) {
+    if (lastId == string.id && lastOffset <= byteOffset) {
+      if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
+        return lastMatch;
+      }
+    }
     ProgressManager.checkCanceled();
-    byte[] stringBytes = string.getBytes(StandardCharsets.UTF_8);
-    int byteOffset = RegexUtil.byteOffsetByCharOffset(string, at);
-
-    final Matcher matcher = getRegex().matcher(stringBytes);
-    int matchIndex = matcher.search(byteOffset, stringBytes.length, Option.CAPTURE_GROUP);
-    return matchIndex > -1
-           ? MatchData.fromRegion(string, stringBytes, matcher.getEagerRegion())
-           : MatchData.NOT_MATCHED;
+    lastId = string.id;
+    lastOffset = byteOffset;
+    final Matcher matcher = getRegex().matcher(string.bytes);
+    int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
+    lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    return lastMatch;
   }
 
-  public Searcher searcher(String string) {
-    byte[] stringBytes = string.getBytes(StandardCharsets.UTF_8);
-    return new Searcher(string, stringBytes, getRegex().matcher(stringBytes, 0, stringBytes.length));
+  public Searcher searcher(byte[] stringBytes) {
+    return new Searcher(stringBytes, getRegex().matcher(stringBytes, 0, stringBytes.length));
   }
 
   @NotNull
@@ -65,7 +72,7 @@ public class RegexFacade {
   }
 
   private static final LoadingCache<String, RegexFacade> REGEX_CACHE = CacheBuilder.newBuilder().maximumSize(2048).build(
-    CacheLoader.from((String regexString) -> new RegexFacade(regexString.getBytes(StandardCharsets.UTF_8))));
+    CacheLoader.from((String regexString) -> new RegexFacade(Objects.requireNonNull(regexString).getBytes(StandardCharsets.UTF_8))));
 
   @NotNull
   public static RegexFacade regex(@NotNull String regexString) {

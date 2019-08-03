@@ -128,7 +128,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     abstract fun createButtonsPane(): CustomFrameTitleButtons
 
     open fun windowStateChanged() {
-
+      updateCustomDecorationHitTestSpots()
     }
 
     override fun addNotify() {

@@ -59,6 +59,11 @@ public final class RestRunConfigurationType implements ConfigurationType {
     return "reference.dialogs.rundebug.docs";
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final String myName;
 

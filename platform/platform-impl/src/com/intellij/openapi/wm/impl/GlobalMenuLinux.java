@@ -698,7 +698,11 @@ Android Studio: b/67589184 */
     }
   }
 
+  // return true when native library was loaded (and dependent packages like glib-dbusmenu were installed)
   public static boolean isAvailable() { return ourLib != null; }
+
+  // return true when corresponding dbus-service is alive
+  public static boolean isPresented() { return ourLib != null && ourIsServiceAvailable; }
 
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line

@@ -156,7 +156,8 @@ public final class ReplacementBuilder {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
       final List<String> variableNames =
         ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
-      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames);
+      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames,
+                                        options.getMatchOptions());
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);

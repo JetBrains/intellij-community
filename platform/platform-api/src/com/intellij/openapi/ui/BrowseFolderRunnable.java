@@ -71,8 +71,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
       }
     }
 
-    FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(),
-                           vf -> myAccessor.setText(myTextComponent, chosenFileToResultingText(vf)));
+    FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
   }
 
   @Nullable

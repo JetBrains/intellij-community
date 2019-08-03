@@ -72,7 +72,7 @@ class CustomDecorationTitle(val frame: JFrame) {
     title.setProject(it)
 
     pane.remove(titleLabel)
-    pane.add(title.getView(), "growx")
+    pane.add(title.getView(), "growx, wmin 0")
     mySelectedEditorFilePath = title
     title.setActive(active)
 

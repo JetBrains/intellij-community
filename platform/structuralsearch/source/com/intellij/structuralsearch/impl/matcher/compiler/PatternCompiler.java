@@ -510,7 +510,7 @@ public class PatternCompiler {
         }
 
         addExtensionPredicates(options, constraint, handler);
-        addScriptConstraint(project, name, constraint, handler, variableNames);
+        addScriptConstraint(project, name, constraint, handler, variableNames, options);
 
         if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
           MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
@@ -547,7 +547,7 @@ public class PatternCompiler {
       }
 
       addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames);
+      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options);
     }
 
     buf.append(text.substring(prevOffset));
@@ -590,15 +590,15 @@ public class PatternCompiler {
   }
 
   private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint,
-                                          SubstitutionHandler handler, Set<String> variableNames)
+                                          SubstitutionHandler handler, Set<String> variableNames, MatchOptions matchOptions)
     throws MalformedPatternException {
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
-      final String problem = ScriptSupport.checkValidScript(script);
+      final String problem = ScriptSupport.checkValidScript(script, matchOptions);
       if (problem != null) {
         throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
+      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames, matchOptions));
     }
   }
 

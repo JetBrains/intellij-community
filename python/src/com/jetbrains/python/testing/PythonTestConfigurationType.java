@@ -75,6 +75,11 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     return "pythonTest";
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   private static class PythonLegacyUnitTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonLegacyUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);

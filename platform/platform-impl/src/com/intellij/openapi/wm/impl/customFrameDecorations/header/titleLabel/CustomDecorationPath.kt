@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.Rectangle
 import java.beans.PropertyChangeListener
-import java.util.ArrayList
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 
@@ -17,8 +16,10 @@ class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
 
   fun setActive(value: Boolean) {
     val color = if (value) CustomFrameDecorations.titlePaneInfoForeground() else CustomFrameDecorations.titlePaneInactiveInfoForeground()
-    projectLabel.foreground = color
-    classTitle.foreground = color
+
+    components.forEach {
+      it.component.foreground = color
+    }
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
@@ -27,10 +28,7 @@ class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
     }
     else {
       val hitTestSpots = ArrayList<RelativeRectangle>()
-
-      hitTestSpots.addAll(getMouseInsetList(projectLabel))
-      hitTestSpots.addAll(getMouseInsetList(classTitle))
-
+      hitTestSpots.addAll(getMouseInsetList(getView()))
       hitTestSpots
     }
   }

@@ -1022,7 +1022,9 @@
       "key": "StatusBar.borderColor"
     },
     {
-      "key": "StatusBar.hoverBackground"
+      "key": "StatusBar.hoverBackground",
+      "since": "2019.2",
+      "description": "Appears under widgets in status bar"
     },
     {
       "key": "StatusBar.bottomColor",
@@ -1103,6 +1105,9 @@
       "deprecated": true
     },
     {
+      "key": "TabbedPane.tabSelectionHeight"
+    },
+    {
       "key": "TabbedPane.underlineColor",
       "description": "The blue line under the selected tab"
     },
@@ -1146,10 +1151,18 @@
       "key": "TableHeader.background"
     },
     {
+      "key": "TableHeader.bottomSeparatorColor",
+      "since": "2019.2"
+    },
+    {
       "key": "TableHeader.focusCellBackground"
     },
     {
       "key": "TableHeader.foreground"
+    },
+    {
+      "key": "TableHeader.separatorColor",
+      "since": "2019.2"
     },
     {
       "key": "text",
@@ -1180,7 +1193,8 @@
       "key": "TextComponent.selectionBackgroundInactive"
     },
     {
-      "key": "TextField.background"
+      "key": "TextField.background",
+      "description": "Also applies to non-editable combo box"
     },
     {
       "key": "TextField.caretForeground"
