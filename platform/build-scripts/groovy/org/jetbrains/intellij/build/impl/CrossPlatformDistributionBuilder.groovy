@@ -141,10 +141,6 @@ class CrossPlatformDistributionBuilder {
           buildContext.macDistributionCustomizer.extraExecutables.each {
             exclude(name: it)
           }
-
-          if (buildContext.macDistributionCustomizer.helpId) {
-            exclude(name: "Resources/${buildContext.macDistributionCustomizer.helpId}.help/**")
-          }
         }
         if (!buildContext.macDistributionCustomizer.extraExecutables.isEmpty()) {
           zipfileset(dir: "$macDistPath", filemode: "775") {

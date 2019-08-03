@@ -125,20 +125,6 @@ abstract class MacDistributionCustomizer {
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
 
   /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
-   * If this field has non-null value, {@link #getPathToHelpZip} must be overriden to specify path to archive with help files.
-   */
-  String helpId = null
-
-  /**
-   * Override this method if you need to bundle help with macOS distribution of the product.
-   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
-   */
-  String getPathToHelpZip(BuildContext context) {
-    null
-  }
-
-  /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory

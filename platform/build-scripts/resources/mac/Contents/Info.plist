@@ -46,7 +46,6 @@
     <string>@@build@@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-    @@bundled_help_attributes@@
 
     <key>NSHighResolutionCapable</key>
     <true/>
