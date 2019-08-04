@@ -5,10 +5,13 @@ import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.function.Consumer;
 
 public abstract class TerminalHandlerBase extends LoggingHandlerBase implements TerminalHandler {
-
   private boolean myClosed = false;
+  private Consumer<Dimension> myResizeHandler = size -> {
+  };
 
   public TerminalHandlerBase(@NotNull String presentableName) {
     super(presentableName);
@@ -25,5 +28,14 @@ public abstract class TerminalHandlerBase extends LoggingHandlerBase implements 
   @Override
   public void close() {
     myClosed = true;
+  }
+
+  public void setResizeHandler(@NotNull Consumer<Dimension> resizeHandler) {
+    myResizeHandler = resizeHandler;
+  }
+
+  @NotNull
+  protected Consumer<Dimension> getResizeHandler() {
+    return myResizeHandler;
   }
 }
