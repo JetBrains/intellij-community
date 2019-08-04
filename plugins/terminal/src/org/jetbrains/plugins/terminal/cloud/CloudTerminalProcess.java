@@ -1,37 +1,32 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.cloud;
 
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 
 public class CloudTerminalProcess extends Process {
 
   private final OutputStream myOutputStream;
   private final InputStream myInputStream;
-
+  private final Consumer<Dimension> myTtyResizeHandler;
   private final Semaphore mySemaphore;
 
-  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput) {
+  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput, @Nullable Consumer<Dimension> ttyResizeHandler) {
     myOutputStream = terminalInput;
     myInputStream = terminalOutput;
+    myTtyResizeHandler = ttyResizeHandler;
     mySemaphore = new Semaphore();
     mySemaphore.down();
+  }
+
+  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput) {
+    this(terminalInput, terminalOutput, null);
   }
 
   @Override
@@ -63,5 +58,11 @@ public class CloudTerminalProcess extends Process {
   @Override
   public void destroy() {
     mySemaphore.up();
+  }
+
+  void resizeTty(@NotNull Dimension termSize) {
+    if (myTtyResizeHandler != null) {
+      myTtyResizeHandler.accept(termSize);
+    }
   }
 }
