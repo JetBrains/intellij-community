@@ -30,7 +30,7 @@ class CompressorTest {
   @Test fun simpleZipWithFilters() {
     val zip = tempDir.newFile("test.zip")
     val set = mutableSetOf<String>()
-    Compressor.Zip(zip).filter { entryName, _ -> set.add(entryName) && entryName != "d1" }.use {
+    Compressor.Zip(zip).filter { entryName, _ -> set.add(entryName) && !entryName.startsWith("d1/") }.use {
       it.addFile("file1.txt", "123".toByteArray())
       it.addFile("file2.txt", "456".toByteArray())
       it.addFile("file1.txt", "789".toByteArray())

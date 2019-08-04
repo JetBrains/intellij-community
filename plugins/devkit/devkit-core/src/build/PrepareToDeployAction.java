@@ -242,7 +242,7 @@ public class PrepareToDeployAction extends AnAction {
     try {
       try (Compressor tempZip = new Compressor.Zip(tempFile)) {
         FileTypeManager manager = FileTypeManager.getInstance();
-        tempZip.filter((entryName, isDir) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)));
+        tempZip.filter((entryName, file) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)));
         tempZip.addDirectory(VfsUtilCore.virtualToIoFile(root));
       }
       String jarName = getLibraryJarName(root.getName() + JAR_EXTENSION, usedJarNames, preferredName == null ? null : preferredName + JAR_EXTENSION);
@@ -288,7 +288,7 @@ public class PrepareToDeployAction extends AnAction {
     try (Compressor.Jar jar = new Compressor.Jar(tempFile)) {
       FileTypeManager manager = FileTypeManager.getInstance();
       Set<String> uniqueEntries = new HashSet<>();
-      jar.filter((entryName, isDir) -> isDir || !manager.isFileIgnored(PathUtil.getFileName(entryName)) && uniqueEntries.add(entryName));
+      jar.filter((entryName, file) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)) && uniqueEntries.add(entryName));
 
       if (manifest != null) {
         jar.addManifest(manifest);
