@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -37,6 +38,8 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.merge.MergeChangeCollector;
+import git4idea.rebase.GitHandlerRebaseEditorManager;
+import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateInfoAsLog;
@@ -120,9 +123,20 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         String beforeRevision = repository.getCurrentRevision();
 
+        boolean setupRebaseEditor = shouldSetupRebaseEditor(project, selectedRoot);
+        Ref<GitHandlerRebaseEditorManager> rebaseEditorManager = Ref.create();
         try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.compute();
+
+            if (setupRebaseEditor) {
+              if (!rebaseEditorManager.isNull()) {
+                rebaseEditorManager.get().close();
+              }
+              GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, selectedRoot);
+              rebaseEditorManager.set(GitHandlerRebaseEditorManager.prepareEditor(handler, editor));
+            }
+
             handler.addLineListener(localChangesDetector);
             handler.addLineListener(untrackedFilesDetector);
             handler.addLineListener(mergeConflict);
@@ -135,8 +149,17 @@ abstract class GitMergeAction extends GitRepositoryAction {
                          updatedRanges);
           }
         }
+        finally {
+          if (!rebaseEditorManager.isNull()) {
+            rebaseEditorManager.get().close();
+          }
+        }
       }
     }.queue();
+  }
+
+  protected boolean shouldSetupRebaseEditor(@NotNull Project project, VirtualFile selectedRoot) {
+    return false;
   }
 
   private void handleResult(@NotNull GitCommandResult result,
