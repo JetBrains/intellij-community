@@ -3,10 +3,14 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.1
+@file:Suppress("DEPRECATION")
+
 package org.toml.ide
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
+// BACKCOMPAT: 2019.1. Use BasePlatformTestCase instead
 class TomlAnnotatorTest : LightPlatformCodeInsightFixtureTestCase() {
     fun `test inline tables`() = doTest("""
         a = {something = "", another = ""}
