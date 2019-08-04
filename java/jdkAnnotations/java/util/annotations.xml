@@ -2341,12 +2341,6 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
-  <item name='java.util.Deque E pollFirst()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='java.util.Deque E pollLast()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
