@@ -686,7 +686,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
-    RelationType relationType = RelationType.fromElementType(opSign);
+    RelationType relationType =
+      RelationType.fromElementType(opSign == BinopInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
     if (relationType != null) {
       DfaInstructionState[] states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
       if (states != null) {
@@ -757,8 +758,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaConstValue) &&
-       isComparedByEquals(instruction.getExpression()) && !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
+       instruction.getOperationSign() != BinopInstruction.STRING_EQUALITY_BY_CONTENT &&
+       memState.shouldCompareByEquals(dfaLeft, dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
       if (equality.applyCondition(factory.createCondition(dfaLeft, RelationType.EQ, dfaRight))) {
@@ -799,15 +800,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
-
-  private static boolean isComparedByEquals(PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
-      PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (DfaUtil.isComparedByEquals(left.getType()) && DfaUtil.isComparedByEquals(right.getType()));
-    }
-    return false;
   }
 
   @NotNull

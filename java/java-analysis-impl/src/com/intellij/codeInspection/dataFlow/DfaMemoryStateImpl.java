@@ -231,12 +231,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
-      // Like Object x = "foo" or Object x = 5;
-      TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
-      DfaFactMap facts = filterFactsOnAssignment(var, getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint));
-      setVariableState(var, createVariableState(var).withFacts(facts));
-    }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULL) : state);
       DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, RelationType.EQ, value);
@@ -375,6 +369,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     return thisToThat;
+  }
+
+  @Override
+  public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaBoxedValue) && !(dfaLeft instanceof DfaConstValue)) {
+      return false;
+    }
+    return !isNull(dfaLeft) && !isNull(dfaRight) &&
+           DfaUtil.isComparedByEquals(getPsiType(dfaLeft)) && DfaUtil.isComparedByEquals(getPsiType(dfaRight));
   }
 
   private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
@@ -1215,10 +1218,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Nullable
-  private static PsiType getPsiType(@NotNull DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      TypeConstraint constraint = ((DfaFactMapValue)value).get(DfaFactType.TYPE_CONSTRAINT);
-      return constraint == null ? null : constraint.getPsiType();
+  private PsiType getPsiType(@NotNull DfaValue value) {
+    TypeConstraint constraint = getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
+    if (constraint != null) {
+      PsiType type = constraint.getPsiType();
+      if (type != null) {
+        return type;
+      }
     }
     return value.getType();
   }
@@ -1323,7 +1329,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static boolean isPrimitive(DfaValue value) {
-    return value instanceof DfaVariableValue && value.getType() instanceof PsiPrimitiveType;
+    return value instanceof DfaVariableValue &&
+           value.getType() instanceof PsiPrimitiveType &&
+           !PsiType.VOID.equals(value.getType()); // void is used for temporary variables sometimes
   }
 
   private static boolean preserveConstantDistinction(final Object c1, final Object c2) {

@@ -32,7 +32,7 @@ import static com.intellij.psi.JavaTokenType.*;
 
 public class BinopInstruction extends BranchingInstruction implements ExpressionPushingInstruction {
   private static final TokenSet ourSignificantOperations =
-    TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
+    TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
 
   /**
    * A placeholder operation to model string concatenation inside loop:
@@ -41,6 +41,11 @@ public class BinopInstruction extends BranchingInstruction implements Expression
    * so we use special operation for this case.
    */
   public static final IElementType STRING_CONCAT_IN_LOOP = ASTERISK;
+  /**
+   * A special operation to express string comparison by content (like equals() method does).
+   * Used to desugar switch statements
+   */
+  public static final IElementType STRING_EQUALITY_BY_CONTENT = EQ;
 
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;

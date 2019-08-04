@@ -954,7 +954,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   if (caseValue != null && expressionValue != null) {
                     addInstruction(new PushInstruction(expressionValue, null));
                     caseValue.accept(this);
-                    addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+                    addInstruction(new BinopInstruction(
+                      TypeUtils.isJavaLangString(expressionValue.getType()) ? BinopInstruction.STRING_EQUALITY_BY_CONTENT :
+                      JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
                   }
                   else {
                     pushUnknown();
