@@ -19,11 +19,11 @@ import javax.swing.*;
  * The dialog used for the unstructured information from git rebase,
  * usually the commit message after choosing reword or squash interactive rebase actions.
  */
-class GitRebaseUnstructuredEditor extends DialogWrapper {
+class GitUnstructuredEditor extends DialogWrapper {
   @NotNull private final JBLabel myRootLabel;
   @NotNull private final CommitMessage myTextEditor;
 
-  GitRebaseUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String initialText) {
+  GitUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String initialText) {
     super(project, true);
     setTitle(GitBundle.message("rebase.unstructured.editor.title"));
     setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));

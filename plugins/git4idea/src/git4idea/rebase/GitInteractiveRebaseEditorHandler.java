@@ -103,7 +103,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   private String showUnstructuredEditor(@NotNull String initialText) {
     Ref<String> newText = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, initialText);
+      GitUnstructuredEditor editor = new GitUnstructuredEditor(myProject, myRoot, initialText);
       DialogManager.show(editor);
       if (editor.isOK()) {
         newText.set(editor.getText());
