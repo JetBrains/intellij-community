@@ -106,7 +106,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       }
 
       @Override
-      public void setTtyResizeHandler(TtyResizeHandler ttyResizeHandler) {
+      public void setTtyResizeHandler(@Nullable TtyResizeHandler ttyResizeHandler) {
         if (terminalHandler instanceof TerminalHandlerBase && ttyResizeHandler != null) {
           ((TerminalHandlerBase)terminalHandler).setResizeHandler(size -> ttyResizeHandler.onTtyResizeRequest(size.width, size.height));
         }
