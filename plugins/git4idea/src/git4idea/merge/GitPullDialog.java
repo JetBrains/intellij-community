@@ -38,6 +38,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
+
 public class GitPullDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitPullDialog.class);
@@ -160,7 +162,7 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL, REBASE_CONFIG_PARAMS);
     h.setUrls(urls);
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {

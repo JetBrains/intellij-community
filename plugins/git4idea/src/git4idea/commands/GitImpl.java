@@ -41,7 +41,7 @@ import static java.util.Collections.*;
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
-  private static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
+  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
 
   public GitImpl() {
   }
