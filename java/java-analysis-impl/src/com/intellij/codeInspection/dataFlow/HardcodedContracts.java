@@ -55,7 +55,10 @@ public class HardcodedContracts {
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
   );
 
-  private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
+  private static final CallMatcher QUEUE_POLL = anyOf(
+    instanceCall("java.util.Queue", "poll").parameterCount(0),
+    instanceCall("java.util.Deque", "pollFirst", "pollLast").parameterCount(0)
+    );
 
   @FunctionalInterface
   interface ContractProvider {
@@ -116,7 +119,9 @@ public class HardcodedContracts {
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
               ContractProvider.of(new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
-    .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
+    .register(anyOf(
+      instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
+      instanceCall("java.util.Deque", "peekFirst", "peekLast", "pollFirst", "pollLast").parameterCount(0)),
               (call, paramCount) -> Arrays.asList(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), returnNull()), trivialContract(returnAny())))
