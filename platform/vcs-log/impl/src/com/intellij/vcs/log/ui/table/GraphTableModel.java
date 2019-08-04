@@ -1,5 +1,8 @@
 package com.intellij.vcs.log.ui.table;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -7,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
@@ -15,14 +19,14 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class GraphTableModel extends AbstractTableModel {
   public static final int ROOT_COLUMN = 0;
@@ -39,6 +43,9 @@ public class GraphTableModel extends AbstractTableModel {
 
   public static final int COMMIT_NOT_FOUND = -1;
   public static final int COMMIT_DOES_NOT_MATCH = -2;
+
+  private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
+  private static final FrequentErrorLogger ERROR_LOG = FrequentErrorLogger.newInstance(LOG);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<? super Runnable> myRequestMore;
@@ -125,23 +132,59 @@ public class GraphTableModel extends AbstractTableModel {
     VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
-        return myDataPack.getFilePath(rowIndex);
+        return getRootSafely(rowIndex);
       case COMMIT_COLUMN:
-        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
-                                   myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
+        return getCommitCellSafely(rowIndex, data);
       case AUTHOR_COLUMN:
-        return CommitPresentationUtil.getAuthorPresentation(data);
+        return getAuthorSafely(data);
       case DATE_COLUMN:
-        if (data.getAuthorTime() < 0) {
-          return "";
-        }
-        else {
-          return DateFormatUtil.formatDateTime(data.getAuthorTime());
-        }
+        return getDateSafely(data);
       case HASH_COLUMN:
-        return data.getId().toShortString();
+        return getHashSafely(data);
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (getColumnCount() - 1));
+    }
+  }
+
+  @NotNull
+  private FilePath getRootSafely(int rowIndex) {
+    return getOrLogAndReturnStub(() -> myDataPack.getFilePath(rowIndex), VcsUtil.getFilePath(getFirstItem(myLogData.getRoots())));
+  }
+
+  @NotNull
+  private GraphCommitCell getCommitCellSafely(int rowIndex, @NotNull VcsShortCommitDetails data) {
+    return getOrLogAndReturnStub(() -> {
+      return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
+                                 myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
+    }, new GraphCommitCell("", Collections.emptyList(), Collections.emptyList()));
+  }
+
+  @NotNull
+  private static String getAuthorSafely(@NotNull VcsShortCommitDetails data) {
+    return getOrLogAndReturnStub(() -> CommitPresentationUtil.getAuthorPresentation(data), "");
+  }
+
+  @NotNull
+  private static String getDateSafely(@NotNull VcsShortCommitDetails data) {
+    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" : DateFormatUtil.formatDateTime(data.getAuthorTime()), "");
+  }
+
+  @NotNull
+  private static String getHashSafely(@NotNull VcsShortCommitDetails data) {
+    return getOrLogAndReturnStub(() -> data.getId().toShortString(), "");
+  }
+
+  @NotNull
+  private static <T> T getOrLogAndReturnStub(@NotNull Computable<T> computable, @NotNull T stub) {
+    try {
+      return computable.compute();
+    }
+    catch (ProcessCanceledException ignore) {
+      return stub;
+    }
+    catch (Throwable t) {
+      ERROR_LOG.error("Failed to get information for the log table", t);
+      return stub;
     }
   }
 
