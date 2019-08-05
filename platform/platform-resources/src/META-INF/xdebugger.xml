@@ -92,7 +92,7 @@
     </group>
 
     <action id="XDebugger.Reveal" class="com.intellij.xdebugger.impl.reveal.actions.XDebuggerRevealAction" icon="AllIcons.Debugger.Reveal.RevealOn"
-            text="Reveal">
+            text="Pin to top">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </action>
   </actions>
