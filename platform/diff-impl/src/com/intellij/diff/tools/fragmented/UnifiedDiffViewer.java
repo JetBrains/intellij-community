@@ -273,7 +273,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       LineNumberConvertor convertor1 = builder.getConvertor1();
       LineNumberConvertor convertor2 = builder.getConvertor2();
       List<LineRange> changedLines = builder.getChangedLines();
-      boolean isContentsEqual = builder.isEqual();
+      boolean isContentsEqual = changedLines.isEmpty() && StringUtil.equals(texts[0], texts[1]);
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, rangeHighlighter,
                                                              convertor1.createConvertor(), convertor2.createConvertor());

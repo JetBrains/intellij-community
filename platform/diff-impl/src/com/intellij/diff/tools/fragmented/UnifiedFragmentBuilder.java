@@ -48,8 +48,6 @@ class UnifiedFragmentBuilder {
     myMasterSide = masterSide;
   }
 
-  private boolean myEqual = false;
-
   private int lastProcessedLine1 = -1;
   private int lastProcessedLine2 = -1;
   private int totalLines = 0;
@@ -61,7 +59,6 @@ class UnifiedFragmentBuilder {
 
   public UnifiedFragmentBuilder exec() {
     if (myFragments.isEmpty()) {
-      myEqual = true;
       appendTextMaster(0, 0, getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
       return this;
     }
@@ -173,11 +170,6 @@ class UnifiedFragmentBuilder {
   //
   // Result
   //
-
-
-  public boolean isEqual() {
-    return myEqual;
-  }
 
   @NotNull
   public CharSequence getText() {
