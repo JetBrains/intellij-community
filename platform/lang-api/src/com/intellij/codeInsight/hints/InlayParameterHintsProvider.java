@@ -99,6 +99,9 @@ public interface InlayParameterHintsProvider {
    */
   default String getSettingsPreview() { return null; }
 
+  /**
+   * @return true iff set of options is complete and if all options are off, provider will collect no hints
+   */
   default boolean isExhaustive() {
     return false;
   }
