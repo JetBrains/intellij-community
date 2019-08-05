@@ -237,6 +237,10 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
         ActionManagerEx ex = ActionManagerEx.getInstanceEx();
         AnAction action = ex.getAction(myActionId);
         if (action == null) return false;
+
+        Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focusedWindow != null && IdeKeyEventDispatcher.isModalContext(focusedWindow)) return false;
+
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
         action.update(anActionEvent);
