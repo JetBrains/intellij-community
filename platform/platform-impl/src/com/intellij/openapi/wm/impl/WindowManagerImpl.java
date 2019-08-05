@@ -495,13 +495,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
 
     IdeFrameImpl frame = new IdeFrameImpl();
-    if (options.getSendFrameBack()) {
+    if (options.sendFrameBack) {
       frame.setAutoRequestFocus(false);
     }
 
-    if (options.getProjectWorkspaceId() != null && Registry.is("ide.project.loading.show.last.state")) {
+    if (options.projectWorkspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
       try {
-        frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
+        frame.setProjectWorkspaceId(options.projectWorkspaceId);
       }
       catch (IOException e) {
         if (!(e.getCause() instanceof EOFException)) {

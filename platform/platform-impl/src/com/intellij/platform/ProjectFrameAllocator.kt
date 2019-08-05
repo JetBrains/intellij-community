@@ -62,7 +62,6 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
     if (frameInfo?.bounds == null) {
       frameInfo = windowManager.defaultFrameInfo
     }
-
     if (frameInfo != null) {
       windowManager.restoreFrameState(frame, frameInfo)
     }
@@ -81,7 +80,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       if (recentProjectManager is RecentProjectsManagerBase) {
         val info = recentProjectManager.getProjectMetaInfo(file)
         if (info != null) {
-          options = options.copy(frame = info.frame, projectWorkspaceId = info.projectWorkspaceId)
+          options.frame = info.frame
+          options.projectWorkspaceId = info.projectWorkspaceId
         }
       }
     }

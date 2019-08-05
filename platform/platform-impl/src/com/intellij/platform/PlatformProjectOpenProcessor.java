@@ -89,7 +89,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // doesn't make sense to use default project in tests for heavy projects
-      options.setUseDefaultProjectAsTemplate(false);
+      options.useDefaultProjectAsTemplate = false;
     }
     return doOpenProject(Paths.get(virtualFile.getPath()), options, -1);
   }
@@ -118,7 +118,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @Nullable ProjectOpenedCallback callback,
                                       @SuppressWarnings("unused") boolean isReopen) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
-    openProjectOptions.setCallback(callback);
+    openProjectOptions.callback = callback;
     return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
@@ -133,7 +133,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
-    openProjectOptions.setCallback(callback);
+    openProjectOptions.callback = callback;
     return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
@@ -149,7 +149,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       throw new RuntimeException(e);
     }
 
-    Project project = openExistingProject(file, baseDir, options.withNewProject(true), dummyProjectName);
+    OpenProjectTask copy = options.copy();
+    copy.isNewProject = true;
+    Project project = openExistingProject(file, baseDir, copy, dummyProjectName);
     if (project != null) {
       openFileFromCommandLine(project, file, line);
     }
@@ -173,7 +175,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         }
 
         baseDir = file.getParent();
-        options = options.withNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
+        options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
       }
     }
 
@@ -190,10 +192,10 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             @NotNull Path baseDir,
                                             @NotNull OpenProjectTask options,
                                             @Nullable String dummyProjectName) {
-    if (!options.getForceOpenInNewFrame()) {
+    if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
-        Project projectToClose = options.getProjectToClose();
+        Project projectToClose = options.projectToClose;
         if (projectToClose == null) {
           // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
           IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -203,7 +205,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
           }
         }
 
-        if (checkExistingProjectOnOpen(projectToClose, options.getCallback(), baseDir)) {
+        if (checkExistingProjectOnOpen(projectToClose, options.callback, baseDir)) {
           return null;
         }
       }
@@ -235,18 +237,18 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     Project project = refResult.get().first;
     if (project == null) {
-      if (options.getShowWelcomeScreenIfNoProjectOpened()) {
+      if (options.showWelcomeScreen) {
         WelcomeFrame.showIfNoProjectOpened();
       }
       return null;
     }
 
-    if (options.getCallback() != null) {
+    if (options.callback != null) {
       Module module = refResult.get().second;
       if (module == null) {
         module = ModuleManager.getInstance(project).getModules()[0];
       }
-      options.getCallback().projectOpened(project, module);
+      options.callback.projectOpened(project, module);
     }
     return project;
   }
@@ -258,10 +260,10 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                                       @Nullable String dummyProjectName) {
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
-    boolean isNewProject = options.isNewProject();
+    boolean isNewProject = options.isNewProject;
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, !options.getUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
+      project = projectManager.newProject(baseDir, projectName, !options.useDefaultProjectAsTemplate, true);
     }
     else {
       try {

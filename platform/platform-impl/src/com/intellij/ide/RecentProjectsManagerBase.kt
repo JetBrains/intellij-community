@@ -438,13 +438,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {
-      // https://youtrack.jetbrains.com/issue/IDEA-166321
-      val options = OpenProjectTask(forceOpenInNewFrame = true,
-                                    projectToClose = null,
-                                    frame = value.frame,
-                                    projectWorkspaceId = value.projectWorkspaceId,
-                                    showWelcomeScreenIfNoProjectOpened = false,
-                                    sendFrameBack = someProjectWasOpened)
+      val options = OpenProjectTask(forceOpenInNewFrame = true, projectToClose = null)
+      options.frame = value.frame
+      options.projectWorkspaceId = value.projectWorkspaceId
+      options.showWelcomeScreen = false
+      options.sendFrameBack = someProjectWasOpened
       val project = doOpenProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
