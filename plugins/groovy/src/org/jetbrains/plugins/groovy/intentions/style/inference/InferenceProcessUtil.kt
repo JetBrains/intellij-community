@@ -283,11 +283,3 @@ fun compress(types: List<PsiType>?): PsiType? {
     else -> PsiIntersectionType.createIntersection(types)
   }
 }
-
-inline fun <T> T?.ensure(predicate: (T) -> Boolean): T? =
-  if (this != null && predicate(this)) {
-    this
-  }
-  else {
-    null
-  }

@@ -413,4 +413,12 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDelegatingClosure() {
+    doTest(true)
+  }
+
+  void testDelegateViaRehydrate() {
+    doTest(true)
+  }
+
 }

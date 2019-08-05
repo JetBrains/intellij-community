@@ -12,8 +12,10 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveM
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
@@ -145,22 +147,30 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
     val dependentTypes = mutableSetOf<PsiTypeParameter>()
     method.forEachParameterUsage { parameter, instructions ->
-      if (parameter in closureParameters.keys) {
-        collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
-                                         requiredTypesCollector)
+      if (parameter !in closureParameters.keys) {
+        return@forEachParameterUsage
       }
+      collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
+                                       requiredTypesCollector)
+      val delegatesToCombiner = closureParameters.getValue(parameter).combiner
       for (usage in instructions) {
-        val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
+        val nearestCall = usage.element!!.parentOfType<GrCall>()
         if (nearestCall != usage.element?.parent && nearestCall != usage.element?.parent?.parent) {
-          continue
+          val reference = (usage.element!!.parentOfType<GrAssignmentExpression>()?.lValue as? GrReferenceExpression)?.lValueReference
+          val accessorResult = (reference?.advancedResolve() as? GroovyMethodResult) ?: continue
+          delegatesToCombiner.acceptResolveResult(accessorResult)
         }
+        nearestCall ?: continue
         if (nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
           val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
-          val candidate = resolveResult.candidate ?: continue
-          val argumentCorrespondence =
-            closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
-          argumentCorrespondence.forEach { (type, argument) ->
-            setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet())
+          delegatesToCombiner.acceptResolveResult(resolveResult)
+          if (nearestCall.resolveMethod()?.name == "call") {
+            val candidate = resolveResult.candidate ?: continue
+            val argumentCorrespondence =
+              closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
+            argumentCorrespondence.forEach { (type, argument) ->
+              setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet())
+            }
           }
         }
       }
@@ -195,7 +205,12 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     val gatheredTypeParameters = collectDependencies(method.typeParameterList!!, resultSubstitutor)
     for ((parameter, closureParameter) in closureParameters) {
       closureParameter.substituteTypes(resultSubstitutor, gatheredTypeParameters)
-      mapping.getValue(parameter).modifierList.addAnnotation(closureParameter.renderTypes(method.parameterList).substring(1))
+      closureParameter.renderTypes(method.parameterList).forEach {
+        if (it.isEmpty()) {
+          return@forEach
+        }
+        mapping.getValue(parameter).modifierList.addAnnotation(it.substring(1))
+      }
     }
   }
 

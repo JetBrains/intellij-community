@@ -16,6 +16,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
   val types: MutableList<PsiType> = ArrayList()
   val typeParameters: MutableList<PsiTypeParameter> = ArrayList()
   val closureArguments: MutableList<GrClosableBlock> = mutableListOf()
+  val combiner: DelegatesToCombiner = DelegatesToCombiner()
 
   companion object {
     private const val CLOSURE_PARAMS = "ClosureParams"
@@ -93,7 +94,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
     "${typeParameters.joinToString(prefix = "<", postfix = ">") { it.text }} Closure ${types.joinToString(prefix = "(", postfix = ")")}"
 
 
-  fun renderTypes(outerParameters: PsiParameterList): String {
+  private fun instantiateClosureParamsAnnotation(outerParameters: PsiParameterList): String {
     if (typeParameters.size == 1) {
       val indexedAnnotation = typeHintChooser.mapNotNull { it(outerParameters, types.first()) }.firstOrNull()
       val resultAnnotation = indexedAnnotation ?: run {
@@ -110,6 +111,12 @@ class ParameterizedClosure(val parameter: GrParameter) {
       }
     }
     return """@$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=["${types.joinToString(",") { it.canonicalText }}"])"""
+  }
+
+  fun renderTypes(outerParameters: PsiParameterList): List<String> {
+    val closureParamsAnnotation = instantiateClosureParamsAnnotation(outerParameters)
+    val delegatesToAnno = combiner.instantiateAnnotation(parameter)?.text ?: ""
+    return listOf(delegatesToAnno, closureParamsAnnotation)
   }
 
   private fun createSimpleType(type: PsiType): PsiAnnotation =

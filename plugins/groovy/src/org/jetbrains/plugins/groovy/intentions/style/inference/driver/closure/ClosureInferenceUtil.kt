@@ -40,7 +40,11 @@ fun collectClosureParametersConstraints(collector: MutableList<ConstraintFormula
                                         instructions: List<ReadWriteVariableInstruction>) {
   for (call in instructions) {
     val nearestCall = call.element?.parentOfType<GrCall>() ?: continue
-    if ((nearestCall.advancedResolve() as? GroovyMethodResult)?.candidate?.receiver == closureParameter.parameter.type) {
+    val isClosureCall =
+      (nearestCall.advancedResolve() as? GroovyMethodResult)?.candidate?.run {
+        receiver == closureParameter.parameter.type && method.name == "call"
+      } ?: false
+    if (isClosureCall) {
       for (index in nearestCall.expressionArguments.indices) {
         collector.add(ExpressionConstraint(closureParameter.typeParameters[index].type(), nearestCall.expressionArguments[index]))
       }

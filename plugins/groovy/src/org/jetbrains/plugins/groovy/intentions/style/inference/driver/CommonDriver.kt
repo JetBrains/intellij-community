@@ -142,7 +142,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         val resolveResult = methodCallExpression.advancedResolve() as? GroovyMethodResult
         val argumentMapping = resolveResult?.candidate?.argumentMapping ?: return
         argumentMapping.expectedTypes.forEach { (type, argument) ->
-          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).ensure { it in typeParameters } ?: return@forEach
+          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters } ?: return@forEach
           constraintCollector.add(TypeConstraint(type, typeParameter.type(), method))
         }
       }
@@ -157,7 +157,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
                                 mapping: Map<GrParameter, GrParameter>) {
     val argumentMapping = ((call as? GrMethodCall)?.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: return
     argumentMapping.expectedTypes.forEach { (_, argument) ->
-      val virtualParameter = mapping[argumentMapping.targetParameter(argument)]?.ensure { it in samCandidates.keys } ?: return@forEach
+      val virtualParameter = mapping[argumentMapping.targetParameter(argument)]?.takeIf { it in samCandidates.keys } ?: return@forEach
       val argumentType = argument.type as? PsiClassType ?: return@forEach
       if (virtualParameter in samCandidates.keys) {
         if (argument.type.isClosureTypeDeep()) {
