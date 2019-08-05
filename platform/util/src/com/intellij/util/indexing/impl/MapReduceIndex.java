@@ -266,7 +266,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @NotNull
   protected UpdateData<Key, Value> calculateUpdateData(final int inputId, @Nullable Input content) {
     final InputData<Key, Value> data = mapInput(content);
-    return createUpdateData(data.getKeyValues(),
+    return createUpdateData(inputId,
+                            data.getKeyValues(),
                             () -> getKeysDiffBuilder(inputId),
                             () -> updateForwardIndex(inputId, data));
   }
@@ -294,10 +295,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  private UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
+  private UpdateData<Key, Value> createUpdateData(int inputId,
+                                                  @NotNull Map<Key, Value> data,
                                                   @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
                                                   @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
-    return new UpdateData<>(data, keys, myIndexId, forwardIndexUpdate);
+    return new UpdateData<>(inputId, data, keys, myIndexId, forwardIndexUpdate);
   }
 
   @NotNull
