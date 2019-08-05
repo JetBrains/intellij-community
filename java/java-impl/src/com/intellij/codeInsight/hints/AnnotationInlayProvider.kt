@@ -196,6 +196,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         showExternalCheckBox.isSelected = settings.showExternal
         showInferredCheckBox.isSelected = settings.showInferred
       }
+
+      override val mainCheckboxText: String
+        get() = "Show hints for:"
     }
   }
 
