@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -161,6 +162,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     checkAvailability();
+    if (myProject.isDefault()) return Collections.emptyList();
     return getRootIndex().getOrderEntries(info);
   }
 
