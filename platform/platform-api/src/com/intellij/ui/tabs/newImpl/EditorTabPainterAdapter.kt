@@ -43,11 +43,11 @@ class EditorTabPainterAdapter : TabPainterAdapter {
     val headerRectangle = tabs.lastLayoutPass.headerRectangle
 
     val bounds = label.bounds
-    if (bounds.x > headerRectangle.x + magicOffset) {
+    if (bounds.x > magicOffset) {
       painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
     }
 
-    if (bounds.x + bounds.width < headerRectangle.x + headerRectangle.width || tabs.isSingleRow) {
+    if (bounds.x + bounds.width < headerRectangle.width || tabs.isSingleRow) {
       painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
     }
   }
