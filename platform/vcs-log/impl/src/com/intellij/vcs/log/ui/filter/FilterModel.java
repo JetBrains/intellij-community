@@ -141,6 +141,10 @@ abstract class FilterModel<Filter> {
       super.setFilter(filter);
     }
 
+    public void updateFilterFromProperties() {
+      setFilter(getFilterFromProperties());
+    }
+
     @Override
     protected void saveFilterToProperties(@Nullable FilterPair<Filter1, Filter2> filter) {
       if (filter == null || filter.getFilter1() == null) {
