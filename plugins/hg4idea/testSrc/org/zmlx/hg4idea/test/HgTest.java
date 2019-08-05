@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -35,7 +36,8 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertTrue;
@@ -205,7 +207,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
     return processOutput;
   }
 
-  protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
+  protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws IOException {
     File parentDir = aParentDir;
     for (int i = 0; i < filePath.length - 1; i++) {
       File current = new File(parentDir, filePath[i]);
@@ -215,11 +217,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
       parentDir = current;
     }
     File outputFile = new File(parentDir, filePath[filePath.length - 1]);
-
-    //noinspection ImplicitDefaultCharsetUsage
-    try (PrintStream printer = new PrintStream(new FileOutputStream(outputFile))) {
-      printer.print(fileContents);
-    }
+    FileUtil.writeToFile(outputFile, fileContents);
 
     return outputFile;
   }
