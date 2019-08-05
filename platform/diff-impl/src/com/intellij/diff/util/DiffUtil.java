@@ -37,6 +37,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -84,10 +85,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.LineSeparator;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
@@ -670,6 +668,16 @@ public class DiffUtil {
     }
 
     return panel;
+  }
+
+  @NotNull
+  public static String getStatusText(int totalCount, int excludedCount, @NotNull ThreeState isContentsEqual) {
+    if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
+      return DiffBundle.message("diff.all.differences.ignored.text");
+    }
+    String message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount);
+    if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount);
+    return message;
   }
 
   //

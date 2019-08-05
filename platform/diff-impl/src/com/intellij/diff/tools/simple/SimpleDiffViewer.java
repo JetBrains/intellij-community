@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -747,14 +746,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return DiffBundle.message("diff.highlighting.disabled.text");
       }
       List<SimpleDiffChange> allChanges = myModel.getAllChanges();
-      int excludedChanges = ContainerUtil.count(allChanges, it -> it.isExcluded());
-      int changesCount = allChanges.size();
-      if (changesCount == 0 && myModel.isContentsEqual() == ThreeState.NO) {
-        return DiffBundle.message("diff.all.differences.ignored.text");
-      }
-      String message = DiffBundle.message("diff.count.differences.status.text", changesCount - excludedChanges);
-      if (excludedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedChanges);
-      return message;
+      return DiffUtil.getStatusText(allChanges.size(),
+                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                    myModel.isContentsEqual());
     }
   }
 
