@@ -1,10 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.compiler.server.BuildManager</implementation-class>
-    </component>
-  </application-components>
-  
   <project-components>
     <component>
       <interface-class>com.intellij.packaging.artifacts.ArtifactManager</interface-class>
@@ -25,6 +19,7 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
     <javaCompilerConfigurationProxy implementation="com.intellij.compiler.JavaCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
