@@ -259,31 +259,35 @@ internal class GitVcsPanel(private val project: Project,
     }
 
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      row {
-        cell {
-          val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
-          val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-          val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
-          val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
-            override fun shouldDrawLabel(): Boolean = false
-            override fun shouldIndicateHovering(): Boolean = false
-            override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
-          }.initUi()
+      updateProjectInfoFilter()
+    }
+  }
 
-          label("Filter Update Project information by paths: ")
+  private fun LayoutBuilder.updateProjectInfoFilter() {
+    row {
+      cell {
+        val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
+        val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
+        val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+        val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
+          override fun shouldDrawLabel(): Boolean = false
+          override fun shouldIndicateHovering(): Boolean = false
+          override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+        }.initUi()
 
-          component()
-            .onIsModified {
-              storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
-            }
-            .onApply {
-              storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
-            }
-            .onReset {
-              currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
-              model.updateFilterFromProperties()
-            }
-        }
+        label("Filter Update Project information by paths: ")
+
+        component()
+          .onIsModified {
+            storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
+          }
+          .onApply {
+            storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
+          }
+          .onReset {
+            currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
+            model.updateFilterFromProperties()
+          }
       }
     }
   }
