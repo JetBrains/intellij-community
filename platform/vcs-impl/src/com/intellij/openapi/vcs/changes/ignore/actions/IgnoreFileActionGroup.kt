@@ -96,7 +96,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     if (projectRoot == null || projectRoot.findChild(filename) != null) return null
     if (selectedFiles.any { !VfsUtil.isAncestor(projectRoot, it, true) }) return null //trying to ignore some parent file of the root ignore file
     val rootVcs = VcsUtil.getVcsFor(project, projectRoot) ?: return null
-    val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(rootVcs) ?: return null
+    val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, rootVcs) ?: return null
     if (ignoredFileContentProvider.fileName != filename) return null
 
     return CreateNewIgnoreFileAction(filename, projectRoot).apply {
