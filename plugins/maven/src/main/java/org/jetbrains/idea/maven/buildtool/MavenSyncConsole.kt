@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool
 
+import com.intellij.build.BuildContentDescriptor
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.FilePosition
@@ -18,6 +19,7 @@ import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
+import javax.swing.JComponent
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
@@ -39,9 +41,15 @@ class MavenSyncConsole(private val myProject: Project) {
     hasErrors = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
-    descriptor.isActivateToolWindowWhenFailed = !fromAutoImport
     mySyncView = syncView
-    mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
+    val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, "Sync")
+    runDescr.isActivateToolWindowWhenFailed = !fromAutoImport
+    runDescr.isActivateToolWindowWhenAdded = !fromAutoImport
+    mySyncView.onEvent(mySyncId,
+                       StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
+                         .withContentDescriptorSupplier {
+                           runDescr
+                         })
     debugLog("maven sync: started importing $myProject")
   }
 
