@@ -33,8 +33,6 @@ internal open class ProjectFrameAllocator {
 }
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
-  init { options = options.copy()  /* cloning options to guard the original from modifications performed in `#createFrame` */ }
-
   // volatile not required because created in run (before executing run task)
   private var ideFrame: IdeFrameImpl? = null
 
@@ -82,6 +80,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       if (recentProjectManager is RecentProjectsManagerBase) {
         val info = recentProjectManager.getProjectMetaInfo(file)
         if (info != null) {
+          options = options.copy()
           options.frame = info.frame
           options.projectWorkspaceId = info.projectWorkspaceId
         }
