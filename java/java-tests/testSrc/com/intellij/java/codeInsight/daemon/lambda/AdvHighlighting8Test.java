@@ -75,6 +75,16 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testPackagePrivateAndSuperMethodReference() {
+    myFixture.addClass("package a;\n" +
+                       "public class A {\n" +
+                       "    protected void foo(int a) {\n" +
+                       "        System.out.println(a);\n" +
+                       "    }\n" +
+                       "}");
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
