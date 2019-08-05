@@ -33,6 +33,8 @@ internal open class ProjectFrameAllocator {
 }
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
+  init { options = options.copy()  /* cloning options to guard the original from modifications performed in `#createFrame` */ }
+
   // volatile not required because created in run (before executing run task)
   private var ideFrame: IdeFrameImpl? = null
 
