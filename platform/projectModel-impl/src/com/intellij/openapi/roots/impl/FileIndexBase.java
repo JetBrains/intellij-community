@@ -55,7 +55,7 @@ abstract class FileIndexBase implements FileIndex {
   public boolean iterateContentUnderDirectory(@NotNull final VirtualFile dir,
                                               @NotNull final ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
-    final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+    final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

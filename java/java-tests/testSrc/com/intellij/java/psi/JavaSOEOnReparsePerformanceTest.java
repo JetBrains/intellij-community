@@ -21,6 +21,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import org.intellij.lang.annotations.Language;
 
 @SkipSlowTestLocally
 public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase {
@@ -52,12 +53,16 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
   }
 
   public void testOnHugeBinaryExprInFile() {
-    configureFromFileText("a.java", "class A { String s = \"\"; }");
+    @Language("JAVA")
+    String text = "class A { String s = \"\"; }";
+    configureFromFileText("a.java", text);
     doTest();
   }
 
   public void testOnHugeBinaryExprInCodeBlock() {
-    configureFromFileText("a.java", "class A { void m() { String s = \"\"; } }");
+    @Language("JAVA")
+    String text = "class A { void m() { String s = \"\"; } }";
+    configureFromFileText("a.java", text);
     doTest();
   }
 

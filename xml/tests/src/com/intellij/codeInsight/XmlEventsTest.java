@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.DocumentUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlEventsTest extends LightJavaCodeInsightTestCase {
@@ -78,7 +79,9 @@ public class XmlEventsTest extends LightJavaCodeInsightTestCase {
 
   public void testTagDelete() {
     final Listener listener = addPomListener();
-    configureFromFileText("x.xml", "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>");
+    @Language("XML")
+    String text = "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>";
+    configureFromFileText("x.xml", text);
     final XmlTag x = ((XmlFile)getFile()).getRootTag().findSubTags("x")[0];
     WriteCommandAction.runWriteCommandAction(null, () -> {
       TextRange range = x.getTextRange();
@@ -91,7 +94,9 @@ public class XmlEventsTest extends LightJavaCodeInsightTestCase {
 
   public void testTagInsert() {
     final Listener listener = addPomListener();
-    configureFromFileText("x.xml", "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>");
+    @Language("XML")
+    String text = "<a>aaa\n<x>xxx</x>\n<y>yyy</y></a>";
+    configureFromFileText("x.xml", text);
     final XmlTag x = ((XmlFile)getFile()).getRootTag().findSubTags("x")[0];
     WriteCommandAction.runWriteCommandAction(null, () -> {
       TextRange range = x.getTextRange();

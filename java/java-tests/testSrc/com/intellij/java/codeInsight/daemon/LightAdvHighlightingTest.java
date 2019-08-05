@@ -362,7 +362,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSOEForTypeOfHugeBinaryExpression() {
-    configureFromFileText("a.java", "class A { String s = \"\"; }");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A { String s = \"\"; }";
+    configureFromFileText("a.java", text);
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -385,7 +387,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSOEForCyclicInheritance() {
-    configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ";
+    configureFromFileText("a.java", text);
     doHighlighting();
   }
 

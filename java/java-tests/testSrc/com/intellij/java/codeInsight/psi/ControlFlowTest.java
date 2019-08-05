@@ -8,12 +8,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.IntArrayList;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -43,9 +43,8 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     }
 
     final int offset = getEditor().getCaretModel().getOffset();
-    PsiElement element = getFile().findElementAt(offset);
-    element = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, false);
-    assertTrue("Selected element: "+element, element instanceof PsiCodeBlock);
+    PsiCodeBlock element = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiCodeBlock.class, false);
+    assertNotNull("Selected element: " + element, element);
 
     ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(element, policy);
     String result = controlFlow.toString().trim();
@@ -61,25 +60,27 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     final String testDirPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + BASE_PATH;
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles((dir, name) -> name.endsWith(".java"));
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       doTestFor(file);
 
-      System.out.print((i+1)+" ");
+      System.out.print(file.getName() + " ");
     }
+    System.out.println();
   }
 
   public void test() throws Exception { doAllTests(); }
 
   public void testMethodWithOnlyDoWhileStatementHasExitPoints() throws Exception {
-    configureFromFileText("a.java", "public class Foo {\n" +
-                                    "  public void foo() {\n" +
-                                    "    boolean f;\n" +
-                                    "    do {\n" +
-                                    "      f = something();\n" +
-                                    "    } while (f);\n" +
-                                    "  }\n" +
-                                    "}");
+    @Language("JAVA")
+    String text = "public class Foo {\n" +
+                  "  public void foo() {\n" +
+                  "    boolean f;\n" +
+                  "    do {\n" +
+                  "      f = something();\n" +
+                  "    } while (f);\n" +
+                  "  }\n" +
+                  "}";
+    configureFromFileText("a.java", text);
     final PsiCodeBlock body = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0].getBody();
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
     IntArrayList exitPoints = new IntArrayList();
