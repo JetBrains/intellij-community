@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -195,11 +194,13 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   @Override
   protected String getNewAbsolutePath(@NotNull PsiFileSystemItem root, @NotNull String relativePath) {
     PsiFile ignoreFile = getContainingFile();
-    if (root.getVirtualFile() != null &&
+    VirtualFile rootVF = root.getVirtualFile();
+    if (rootVF != null &&
         ignoreFile != null &&
         ignoreFile.getVirtualFile() != null &&
-        ignoreFile.getVirtualFile().getParent() != null) {
-      VirtualFile relativeFile = VfsUtil.findRelativeFile(root.getVirtualFile(), relativePath.split(getSeparatorString()));
+        ignoreFile.getVirtualFile().getParent() != null &&
+        !rootVF.equals(ignoreFile.getVirtualFile().getParent())) {
+      VirtualFile relativeFile = rootVF.findFileByRelativePath(relativePath);
       if (relativeFile != null) {
         String relativeToIgnoreFileParent = VfsUtilCore.getRelativePath(relativeFile, ignoreFile.getVirtualFile().getParent());
         if (relativeToIgnoreFileParent != null) {
@@ -258,8 +259,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
           VirtualFile root = parent != null ? parent.getVirtualFile() : null;
           PsiManager psiManager = getElement().getManager();
 
-          List<VirtualFile> files = new ArrayList<>();
-          files.addAll(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
+          List<VirtualFile> files = new ArrayList<>(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
           if (files.isEmpty()) {
             files.addAll(ContainerUtil.filter(
               context.getVirtualFile().getChildren(),
