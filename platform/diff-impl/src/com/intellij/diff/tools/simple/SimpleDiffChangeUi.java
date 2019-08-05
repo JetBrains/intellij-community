@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,16 +36,19 @@ public class SimpleDiffChangeUi {
   }
 
   public void installHighlighter(@Nullable SimpleDiffChange previousChange) {
-    assert myHighlighters.isEmpty();
+    assert myHighlighters.isEmpty() && myOperations.isEmpty();
+
+    createHighlighter(Side.LEFT);
+    createHighlighter(Side.RIGHT);
 
     List<DiffFragment> innerFragments = myChange.getFragment().getInnerFragments();
-    if (innerFragments != null) {
-      doInstallHighlighterWithInner(innerFragments);
+    for (DiffFragment fragment : ContainerUtil.notNullize(innerFragments)) {
+      createInlineHighlighter(fragment, Side.LEFT);
+      createInlineHighlighter(fragment, Side.RIGHT);
     }
-    else {
-      doInstallHighlighterSimple();
-    }
-    doInstallNonSquashedChangesSeparator(previousChange);
+
+    createNonSquashedChangesSeparator(previousChange, Side.LEFT);
+    createNonSquashedChangesSeparator(previousChange, Side.RIGHT);
 
     doInstallActionHighlighters();
   }
@@ -61,26 +65,6 @@ public class SimpleDiffChangeUi {
     myOperations.clear();
   }
 
-  private void doInstallHighlighterSimple() {
-    createHighlighter(Side.LEFT, false);
-    createHighlighter(Side.RIGHT, false);
-  }
-
-  private void doInstallHighlighterWithInner(@NotNull List<DiffFragment> innerFragments) {
-    createHighlighter(Side.LEFT, true);
-    createHighlighter(Side.RIGHT, true);
-
-    for (DiffFragment fragment : innerFragments) {
-      createInlineHighlighter(fragment, Side.LEFT);
-      createInlineHighlighter(fragment, Side.RIGHT);
-    }
-  }
-
-  private void doInstallNonSquashedChangesSeparator(@Nullable SimpleDiffChange previousChange) {
-    createNonSquashedChangesSeparator(previousChange, Side.LEFT);
-    createNonSquashedChangesSeparator(previousChange, Side.RIGHT);
-  }
-
   protected void doInstallActionHighlighters() {
     if (myChange.isSkipped()) return;
 
@@ -88,12 +72,13 @@ public class SimpleDiffChangeUi {
     myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
 
-  private void createHighlighter(@NotNull Side side, boolean ignored) {
+  private void createHighlighter(@NotNull Side side) {
     Editor editor = myViewer.getEditor(side);
 
     TextDiffType type = myChange.getDiffType();
     int startLine = myChange.getStartLine(side);
     int endLine = myChange.getEndLine(side);
+    boolean ignored = myChange.getFragment().getInnerFragments() != null;
 
     myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
                             .withIgnored(ignored)
