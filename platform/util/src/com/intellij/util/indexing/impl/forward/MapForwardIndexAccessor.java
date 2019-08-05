@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class MapForwardIndexAccessor<Key, Value, Input> extends AbstractMapForwardIndexAccessor<Key, Value, Map<Key, Value>> {
+public class MapForwardIndexAccessor<Key, Value> extends AbstractMapForwardIndexAccessor<Key, Value, Map<Key, Value>> {
   public MapForwardIndexAccessor(@NotNull DataExternalizer<Map<Key, Value>> externalizer) {
     super(externalizer);
   }

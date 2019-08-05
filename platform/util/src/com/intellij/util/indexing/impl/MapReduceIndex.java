@@ -238,7 +238,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
     final UpdateData<Key, Value> updateData = calculateUpdateData(inputId, content);
+    return createIndexUpdateComputation(updateData);
+  }
 
+  @NotNull
+  protected Computable<Boolean> createIndexUpdateComputation(@NotNull UpdateData<Key, Value> updateData) {
     return () -> {
       try {
         updateWithMap(updateData);
