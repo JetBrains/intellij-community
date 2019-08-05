@@ -16,6 +16,7 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +46,7 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
@@ -348,9 +350,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         sibling.accept(methodCollector);
       }
 
-      Range<Integer> lines =
+      Range<Integer> sourceLines =
         new Range<>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
-      targets.forEach(t -> t.setCallingExpressionLines(lines));
+      targets.forEach(t -> t.setCallingExpressionLines(sourceLines));
+
+      Set<Integer> lines = new HashSet<>();
+      IntStream.rangeClosed(sourceLines.getFrom(), sourceLines.getTo()).forEach(lines::add);
+      LineNumbersMapping mapping = vFile.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        lines = StreamEx.of(lines).map(l -> mapping.sourceToBytecode(l + 1) - 1).filter(l -> l >= 0).toSet();
+      }
 
       if (!targets.isEmpty()) {
         StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
@@ -453,7 +462,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     default void visitCode() {}
   }
 
-  private static void visitLinesInstructions(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+  private static void visitLinesInstructions(Location location, boolean full, Set<Integer> lines, MethodInsnVisitor visitor) {
     TObjectIntHashMap<String> myCounter = new TObjectIntHashMap<>();
 
     MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
@@ -473,7 +482,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       @Override
       public void visitLineNumber(int line, Label start) {
-        myLineMatch = lines.isWithin(line - 1);
+        myLineMatch = lines.contains(line - 1);
       }
 
       @Override
