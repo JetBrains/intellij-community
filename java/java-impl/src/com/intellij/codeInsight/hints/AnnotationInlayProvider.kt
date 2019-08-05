@@ -133,7 +133,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         when (val attrName = attribute.name) {
           null -> attrValuePresentation(attribute)
           else -> seq(
-            psiSingleReference(smallText(attrName ?: ""), resolve = { attribute.reference?.resolve() }),
+            psiSingleReference(smallText(attrName), resolve = { attribute.reference?.resolve() }),
             smallText(" = "),
             attrValuePresentation(attribute)
           )
@@ -162,27 +162,33 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
+      val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"))
+      val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"))
       override fun createComponent(listener: ChangeListener): JComponent {
+        reset()
+        fun onUiChanged() {
+          settings.showInferred = showInferredCheckBox.isSelected
+          settings.showExternal = showExternalCheckBox.isSelected
+          listener.settingsChanged()
+          if (!settings.showExternal && !settings.showInferred) {
+            listener.didDeactivated()
+          }
+        }
         return panel {
           row {
-            val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"),
-                                                 settings.showExternal)
-            showExternalCheckBox.addChangeListener {
-              settings.showExternal = showExternalCheckBox.isSelected
-              listener.settingsChanged()
-            }
+            showExternalCheckBox.addChangeListener { onUiChanged() }
             showExternalCheckBox()
           }
           row {
-            val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"),
-                                                 settings.showInferred)
-            showInferredCheckBox.addChangeListener {
-              settings.showInferred = showInferredCheckBox.isSelected
-              listener.settingsChanged()
-            }
+            showInferredCheckBox.addChangeListener { onUiChanged() }
             showInferredCheckBox()
           }
         }
+      }
+
+      override fun reset() {
+        showExternalCheckBox.isSelected = settings.showExternal
+        showInferredCheckBox.isSelected = settings.showInferred
       }
     }
   }
