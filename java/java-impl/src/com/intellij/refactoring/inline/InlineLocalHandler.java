@@ -18,7 +18,10 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
@@ -29,6 +32,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -177,7 +183,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final Ref<Boolean> inlineAll = new Ref<>(true);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int occurrencesCount = refsToInlineList.size();
-      if (refExpr != null && (occurrencesCount > 1 || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog())) {
+      if (refExpr != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
         final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
         if (!inlineLocalDialog.showAndGet()) {
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -199,7 +205,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       // TODO : check if initializer uses fieldNames that possibly will be hidden by other
-      // locals with the same names after inlining
+      //       locals with the same names after inlining
       highlightManager.addOccurrenceHighlights(
         editor,
         refsToInline,
@@ -301,6 +307,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
           highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length],
                                                                                  pointer -> pointer.getElement()), attributes, true, null);
+          if (exprs.length > 1) {
+            Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+            Shortcut[] shortcuts = keymap.getShortcuts("FindNext");
+            String message;
+            if (shortcuts.length > 0) {
+              message = "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to go through " + exprs.length + " inlined occurrences";
+            }
+            else {
+              message = exprs.length + " occurrences were inlined";
+            }
+            HintManagerImpl.getInstanceImpl().showInformationHint(editor, message, HintManager.UNDER);
+          }
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }
 
