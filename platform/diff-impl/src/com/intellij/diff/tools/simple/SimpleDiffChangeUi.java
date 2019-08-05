@@ -159,14 +159,11 @@ public class SimpleDiffChangeUi {
     }
 
     public void update(boolean force) {
-      if (!force && !areModifiersChanged()) {
-        return;
+      boolean isCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
+      if (force || myCtrlPressed != isCtrlPressed) {
+        myCtrlPressed = isCtrlPressed;
+        if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
       }
-      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-    }
-
-    private boolean areModifiersChanged() {
-      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed();
     }
 
     @Nullable
@@ -181,8 +178,6 @@ public class SimpleDiffChangeUi {
     @Nullable
     @Override
     public GutterIconRenderer createRenderer() {
-      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-
       boolean isOtherEditable = DiffUtil.isEditable(myViewer.getEditor(mySide.other()));
       boolean isAppendable = myChange.getDiffType() == TextDiffType.MODIFIED;
 
