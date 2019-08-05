@@ -464,6 +464,9 @@
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
               text="List Static Field Initializers"/>
 
+      <action id="DumpIndex" internal="true" class="com.intellij.internal.DumpIndexAction"
+              text="Dump Index"/>
+
       <add-to-group group-id="Internal"/>
     </group>
 
