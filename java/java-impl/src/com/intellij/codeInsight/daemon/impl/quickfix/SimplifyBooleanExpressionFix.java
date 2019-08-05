@@ -521,10 +521,20 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
       if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
-        resultExpression = lConstBoolean.booleanValue() ? rOperand : falseExpression;
+        if (lConstBoolean.booleanValue()) {
+          resultExpression = rOperand;
+        }
+        else if (!SideEffectChecker.mayHaveSideEffects(rOperand)) {
+          resultExpression = falseExpression;
+        }
       }
       else if (JavaTokenType.OROR == tokenType || JavaTokenType.OR == tokenType) {
-        resultExpression = lConstBoolean.booleanValue() ? trueExpression : rOperand;
+        if (!lConstBoolean.booleanValue()) {
+          resultExpression = rOperand;
+        }
+        else if (!SideEffectChecker.mayHaveSideEffects(rOperand)) {
+          resultExpression = trueExpression;
+        }
       }
       else if (JavaTokenType.EQEQ == tokenType) {
         simplifyEquation(lConstBoolean, rOperand);
