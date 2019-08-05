@@ -2,6 +2,7 @@
 package hg4idea.test.log;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
@@ -14,12 +15,12 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.log.HgLogProvider;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.overwrite;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgUserFilterTest extends HgPlatformTest {
@@ -35,9 +36,12 @@ public class HgUserFilterTest extends HgPlatformTest {
       @NotNull
       protected String commit(@NotNull VcsUser user) throws IOException {
         String file = "file.txt";
-        overwrite(file, "content" + Math.random());
+        File fileToModify = child(file);
+        String prevContent = fileToModify.exists() ? cat(file) : null;
+        overwrite(fileToModify, "content" + Math.random());
         myProject.getBaseDir().refresh(false, true);
         hg("add " + file);
+        assertFalse(StringUtil.equals(prevContent, cat(file)));
         hg("commit -m ' Commit by " + user.getName() + "' --user '" + VcsUserUtil.toExactString(user) + "'");
         return new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset();
       }
