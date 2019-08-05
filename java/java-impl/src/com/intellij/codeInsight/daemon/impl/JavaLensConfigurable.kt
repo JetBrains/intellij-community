@@ -8,8 +8,8 @@ import com.intellij.ui.components.CheckBox
 import com.intellij.util.ui.JBUI
 
 class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurable {
-  private val usagesCB = CheckBox("Show Usages")
-  private val inheritCB = CheckBox("Show Inheritors")
+  private val usagesCB = CheckBox("Usages")
+  private val inheritCB = CheckBox("Inheritors")
 
   override fun createComponent(listener: ChangeListener): javax.swing.JPanel {
     usagesCB.isSelected = settings.isShowUsages
@@ -27,6 +27,9 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
     panel.border = JBUI.Borders.empty(0, 20, 0, 0)
     return panel
   }
+
+  override val mainCheckboxText: String
+    get() = "Show hints for:"
 
   private fun handleChange(listener: ChangeListener) {
     settings.isShowUsages = usagesCB.isSelected
