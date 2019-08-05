@@ -488,6 +488,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     addExceptionBreakpoint(fixture, properties);
   }
 
+  private static void createDefaultExceptionBreakpoint(IdeaProjectTestFixture fixture) {
+    XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+    XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, true);
+  }
+
   @Test
   public void testExceptionBreakpointOnFirstRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
@@ -2189,6 +2194,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
         outputContains("PYDEV DEBUGGER WARNING:\nsys.settrace() should not be used when the debugger is being used.");
+      }
+    });
+  }
+
+  @Test
+  public void testStopsOnSyntaxError() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_syntax_error.py") {
+      @Override
+      public void before() {
+        createDefaultExceptionBreakpoint(myFixture);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        try {
+          resume();
+          waitForTerminate();
+        }
+        catch (AssertionError e) {
+          if (!e.getMessage().contains("SyntaxError: invalid syntax")) throw e;
+        }
       }
     });
   }
