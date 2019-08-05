@@ -4,6 +4,13 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Provides a language that will be used to fetch arrangement and code style settings instead of the file's language
+ * when arranging this entry and its' children.<p>
+ * 
+ * Implement this, for example, if entries are expected to be present in HTML 'script' or 'style' tags 
+ * and should be arranged according to {@link #getLanguage()} settings.
+ */
 public interface LanguageAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
