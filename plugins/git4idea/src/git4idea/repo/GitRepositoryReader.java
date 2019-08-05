@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
@@ -75,8 +76,32 @@ class GitRepositoryReader {
     }
     if (currentBranch == null && currentRevision == null) {
       LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+      if (LOG.isDebugEnabled()) {
+        logDebugAllFilesIn(myRefsHeadsDir);
+        logDebugAllFilesIn(myRefsRemotesDir);
+        if (myPackedRefsFile.exists()) {
+          try {
+            LOG.debug("packed-refs file content: [\n" + FileUtil.loadFile(myPackedRefsFile) + "\n]");
+          }
+          catch (IOException e) {
+            LOG.debug("Couldn't load the file " + myPackedRefsFile, e);
+          }
+        }
+        else {
+          LOG.debug("The file " + myPackedRefsFile + " doesn't exist.");
+        }
+      }
     }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
+  }
+
+  private static void logDebugAllFilesIn(@NotNull File dir) {
+    List<String> paths = new ArrayList<>();
+    FileUtil.processFilesRecursively(dir, (file) -> {
+      if (!file.isDirectory()) paths.add(FileUtil.getRelativePath(dir, file));
+      return true;
+    });
+    LOG.debug("Files in " + dir + ": " + paths);
   }
 
   @NotNull
