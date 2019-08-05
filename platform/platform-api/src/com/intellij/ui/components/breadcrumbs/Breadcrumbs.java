@@ -125,7 +125,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    return hovered == null ? null : hovered.getTooltip();
+    return hovered == null ? null : hovered.getTooltipLazy();
   }
 
   @Override

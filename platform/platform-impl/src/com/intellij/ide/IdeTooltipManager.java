@@ -30,6 +30,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +183,10 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   private void maybeShowFor(Component c, MouseEvent me) {
+    showForComponent(c, me, false);
+  }
+
+  private void showForComponent(Component c, MouseEvent me, boolean now) {
     if (!(c instanceof JComponent)) return;
 
     JComponent comp = (JComponent)c;
@@ -219,14 +224,21 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
       shift += me.getY() - rowBounds.y - 4;
     }
 
-    queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
+    showTooltipForEvent(comp, me, centerStrict || centerDefault, shift, -shift, -shift, now);
   }
 
   private boolean isTooltipDefined(JComponent comp, MouseEvent me) {
     return !StringUtil.isEmpty(comp.getToolTipText(me)) || getCustomTooltip(comp) != null;
   }
 
-  private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
+
+  private void showTooltipForEvent(final JComponent c,
+                                   final MouseEvent me,
+                                   final boolean toCenter,
+                                   final int shift,
+                                   final int posChangeX,
+                                   final int posChangeY,
+                                   final boolean now) {
     IdeTooltip tooltip = getCustomTooltip(c);
     if (tooltip == null) {
       if (myHelpTooltipManager != null) {
@@ -261,7 +273,44 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
       }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
     }
 
-    show(tooltip, false);
+    show(tooltip, now);
+  }
+
+  /**
+   * Updates shown tooltip pop-up in current position with actual tooltip text if it is already visible.
+   * The action is useful for background-calculated tooltip (ex. crumbs tooltips).
+   * Does nothing in other cases.
+   */
+  @ApiStatus.Experimental
+  public void updateShownTooltip() {
+     if (!hasCurrent() || myCurrentComponent == null)
+       return;
+
+    try {
+      MouseEvent reposition;
+      if (GraphicsEnvironment.isHeadless()) {
+        reposition = myCurrentEvent;
+      }
+      else {
+        Point topLeftComponent = myCurrentComponent.getLocationOnScreen();
+        Point screenLocation = MouseInfo.getPointerInfo().getLocation();
+        reposition = new MouseEvent(
+          myCurrentEvent.getComponent(),
+          myCurrentEvent.getID(),
+          myCurrentEvent.getWhen(),
+          myCurrentEvent.getModifiers(),
+          screenLocation.x - topLeftComponent.x,
+          screenLocation.y - topLeftComponent.y,
+          screenLocation.x,
+          screenLocation.y,
+          myCurrentEvent.getClickCount(),
+          myCurrentEvent.isPopupTrigger(),
+          myCurrentEvent.getButton());
+      }
+      showForComponent(myCurrentComponent, reposition, true);
+    }
+    catch (IllegalComponentStateException ignore) {
+    }
   }
 
   public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {

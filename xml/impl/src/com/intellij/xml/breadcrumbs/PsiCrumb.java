@@ -1,13 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   private final PsiAnchor anchor;
-  private BreadcrumbsProvider provider;
-  private String tooltip;
+  private volatile BreadcrumbsProvider provider;
+  private volatile String tooltip;
   final CrumbPresentation presentation;
 
   PsiCrumb(PsiElement element, BreadcrumbsProvider provider, CrumbPresentation presentation) {
@@ -29,12 +34,36 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
 
   @Override
   public String getTooltip() {
-    if (tooltip == null && provider != null) {
+    if (provider != null
+        && (tooltip == null || getLazyTooltipText().equals(tooltip))) {
       PsiElement element = getElement(this);
-      if (element != null) tooltip = provider.getElementTooltip(element);
+      tooltip = element == null ? null
+                                : provider.getElementTooltip(element);
       provider = null; // do not try recalculate tooltip
     }
     return tooltip;
+  }
+
+  @Override
+  public String getTooltipLazy() {
+    if (tooltip == null && provider != null) {
+      tooltip = getLazyTooltipText();
+      ReadAction
+        .nonBlocking(() -> getTooltip())
+        .coalesceBy(this)
+        .expireWith(anchor.getFile().getProject())
+        .finishOnUiThread(ModalityState.any(), toolTipText -> {
+          IdeTooltipManager.getInstance().updateShownTooltip();
+        })
+        .submit(NonUrgentExecutor.getInstance())
+        .onError(anyError -> tooltip = null);
+    }
+    return tooltip;
+  }
+
+  @NotNull
+  private static String getLazyTooltipText() {
+    return UIBundle.message("crumbs.calculating.tooltip");
   }
 
   @Override

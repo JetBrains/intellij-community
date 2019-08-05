@@ -20,6 +20,8 @@ public interface Crumb {
 
   default String getTooltip() { return null; }
 
+  default String getTooltipLazy() { return getTooltip(); }
+
   /**
    * @return a list of actions for context menu
    */
