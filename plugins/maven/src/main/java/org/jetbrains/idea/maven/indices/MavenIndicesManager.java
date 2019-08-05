@@ -13,8 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -432,14 +430,19 @@ public class MavenIndicesManager implements Disposable {
 
 
   private static class IndexFixer {
-    private final MergingUpdateQueue myMergingUpdateQueue =
-      new MergingUpdateQueue(this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, null, null, false);
+    private final static Set<String> INDEXED = Collections.newSetFromMap(new WeakHashMap<>());
 
     public void fixIndex(File file, MavenIndex index) {
-      myMergingUpdateQueue.queue(new Update(file.getPath()) {
-        @Override
-        public void run() {
-          index.addArtifact(file);
+      synchronized (INDEXED) {
+        if (INDEXED.contains(file.getName())) {
+          return;
+        }
+      }
+
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        index.addArtifact(file);
+        synchronized (INDEXED) {
+          INDEXED.add(file.getName());
         }
       });
     }
