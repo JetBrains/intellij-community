@@ -1181,4 +1181,124 @@ aa
     def actual = ref.type
     assertType(JAVA_LANG_OBJECT, actual)
   }
+
+  void 'test field with call constraint'() {
+    doTest '''
+class T {
+    def foo(Object o) {}
+
+    def field = ""
+
+    def m() {
+        foo(field)
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test reassign field'() {
+    doTest '''
+class T {
+    def field = ""
+
+    def m() {
+        field = 1
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test field with call constraint CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+class T {
+    def foo(Object o) {}
+
+    def field = ""
+
+    def m() {
+        foo(field)
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_OBJECT
+  }
+
+  void 'test reassign field CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+class T {
+    def field = ""
+
+    def m() {
+        field = 1
+        fie<caret>ld
+    }
+}
+''', JAVA_LANG_OBJECT
+  }
+
+  void 'test closure local with instanceof constraint'() {
+    doTest '''
+def m() {
+        def aa = "1"
+        1.with {
+            aa
+            if (aa instanceof Object) {
+                a<caret>a
+            }
+        }
+    }
+''', JAVA_LANG_STRING
+  }
+
+  void 'test closure local with instanceof constraint CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+def m() {
+        def aa = "1"
+        1.with {
+            aa
+            if (aa instanceof Object) {
+                a<caret>a
+            }
+        }
+    }
+''', JAVA_LANG_STRING
+  }
+
+  void 'test nested closure local'() {
+    doTest '''
+def m() {
+        def aa = "1"
+        1.with {
+            aa = 2
+            2.with {
+                if (aa instanceof Object) {
+                    a<caret>a
+                }
+            }
+        }
+    }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test nested closure local CS'() {
+    doTest '''
+@groovy.transform.CompileStatic
+def m() {
+        def aa = 1
+        1.with {
+            aa = ""
+            2.with {
+                if (aa instanceof Object) {
+                    a<caret>a
+                }
+            }
+        }
+    }
+''', "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]"
+  }
 }

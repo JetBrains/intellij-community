@@ -26,18 +26,23 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final Set<Instruction> myInteresting;
   private final Set<Instruction> myAcyclicInstructions;
   private final InferenceCache myCache;
+  private final InitialTypeProvider myInitialTypeProvider;
 
-  TypeDfaInstance(@NotNull Instruction[] flow, @NotNull Couple<Set<Instruction>> interesting, @NotNull InferenceCache cache) {
+  TypeDfaInstance(@NotNull Instruction[] flow,
+                  @NotNull Couple<Set<Instruction>> interesting,
+                  @NotNull InferenceCache cache,
+                  @NotNull InitialTypeProvider initialTypeProvider) {
     myFlow = flow;
     myInteresting = interesting.first;
     myAcyclicInstructions = interesting.second;
     myCache = cache;
+    myInitialTypeProvider = initialTypeProvider;
   }
 
   @Override
   public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
     if (instruction instanceof ReadWriteVariableInstruction) {
-      handleVariableWrite(state, (ReadWriteVariableInstruction)instruction);
+      handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
     }
     else if (instruction instanceof MixinTypeInstruction) {
       handleMixin(state, (MixinTypeInstruction)instruction);
@@ -64,13 +69,27 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     });
   }
 
-  private void handleVariableWrite(TypeDfaState state, ReadWriteVariableInstruction instruction) {
+  private void handleReadWriteVariable(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
     final PsiElement element = instruction.getElement();
-    if (element != null && instruction.isWrite()) {
+    if (element == null) return;
+    VariableDescriptor descriptor = instruction.getDescriptor();
+    if (instruction.isWrite()) {
       updateVariableType(
-        state, instruction, instruction.getDescriptor(),
+        state, instruction, descriptor,
         () -> DFAType.create(TypeInferenceHelper.getInitializerType(element))
       );
+    }
+    else {
+      DFAType type = state.getVariableType(descriptor);
+      if (type == null) handleReadWithoutWrite(state, instruction);
+    }
+  }
+
+  private void handleReadWithoutWrite(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
+    VariableDescriptor descriptor = instruction.getDescriptor();
+    PsiType initialType = myInitialTypeProvider.initialType(descriptor);
+    if (initialType != null) {
+      updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
     }
   }
 
