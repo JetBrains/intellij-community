@@ -17,8 +17,8 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
 
     companion object {
 
-        const val REVEAL_NAME = "Reveal"
-        const val CONCEAL_NAME = "Conceal"
+        const val REVEAL_NAME = "Pin to top"
+        const val CONCEAL_NAME = "Unpin"
 
         fun revealField(event: MouseEvent?, node: XValueNodeImpl) {
             ActionManager.getInstance().getAction("XDebugger.Reveal").actionPerformed(
