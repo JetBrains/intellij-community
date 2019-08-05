@@ -54,6 +54,8 @@ public class UnifiedDiffChangeUi {
   }
 
   private void doInstallActionHighlighters() {
+    if (myChange.isSkipped()) return;
+
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
@@ -70,6 +72,8 @@ public class UnifiedDiffChangeUi {
     myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(myEditor,
                                                                       myChange.getDeletedRange(),
                                                                       myChange.getInsertedRange(),
+                                                                      myChange.isExcluded(),
+                                                                      myChange.isSkipped(),
                                                                       myChange.getLineFragment().getInnerFragments()));
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff.lst
 
 import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 import com.intellij.diff.util.Range
 import com.intellij.openapi.application.runReadAction
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 object LocalTrackerDiffUtil {
   @JvmStatic
@@ -72,13 +74,14 @@ object LocalTrackerDiffUtil {
 
     val ranges = diffData.ranges
     val isContentsEqual = ranges.isEmpty()
+    val texts = arrayOf(diffData.vcsText, diffData.localText)
 
     if (!StringUtil.equals(diffData.vcsText, diffData.trackerVcsText)) {
       return handler.error() // DiffRequest is out of date
     }
 
     if (textDiffProvider.isHighlightingDisabled) {
-      return handler.done(isContentsEqual, emptyList(), emptyList())
+      return handler.done(isContentsEqual, texts, emptyList(), emptyList())
     }
 
 
@@ -99,11 +102,12 @@ object LocalTrackerDiffUtil {
       repeat(rangeFragments.size) { fragmentsData.add(fragmentData) }
     }
 
-    return handler.done(isContentsEqual, fragments, fragmentsData)
+    return handler.done(isContentsEqual, texts, fragments, fragmentsData)
   }
 
   interface LocalTrackerDiffHandler {
     fun done(isContentsEqual: Boolean,
+             texts: Array<CharSequence>,
              fragments: List<LineFragment>,
              fragmentsData: List<LineFragmentData>): Runnable
 
@@ -130,4 +134,45 @@ object LocalTrackerDiffUtil {
                                      val localText: CharSequence,
                                      val vcsText: CharSequence,
                                      val trackerVcsText: CharSequence)
+
+
+  @JvmStatic
+  fun installTrackerListener(viewer: DiffViewerBase, localRequest: LocalChangeListDiffRequest) {
+    val trackerListener = MyTrackerListener(viewer)
+    val lstmListener = MyLineStatusTrackerManagerListener(viewer, localRequest, trackerListener)
+
+    LineStatusTrackerManager.getInstanceImpl(localRequest.project).addTrackerListener(lstmListener, viewer)
+
+    val tracker = localRequest.lineStatusTracker as? PartialLocalLineStatusTracker
+    if (tracker != null) tracker.addListener(trackerListener, viewer)
+  }
+
+  private class MyTrackerListener(private val viewer: DiffViewerBase)
+    : PartialLocalLineStatusTracker.ListenerAdapter() {
+
+    override fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {
+      viewer.scheduleRediff()
+    }
+
+    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {
+      viewer.scheduleRediff()
+    }
+
+    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {
+      viewer.scheduleRediff()
+    }
+  }
+
+  private class MyLineStatusTrackerManagerListener(private val viewer: DiffViewerBase,
+                                                   private val localRequest: LocalChangeListDiffRequest,
+                                                   private val trackerListener: PartialLocalLineStatusTracker.Listener)
+    : LineStatusTrackerManager.ListenerAdapter() {
+
+    override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
+      if (tracker is PartialLocalLineStatusTracker && tracker.virtualFile == localRequest.virtualFile) {
+        tracker.addListener(trackerListener, viewer)
+        viewer.scheduleRediff()
+      }
+    }
+  }
 }

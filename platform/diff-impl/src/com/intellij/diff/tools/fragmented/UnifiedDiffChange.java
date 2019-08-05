@@ -30,15 +30,29 @@ public class UnifiedDiffChange {
   @NotNull private final LineRange myInsertedRange;
   @NotNull private final LineFragment myLineFragment;
 
+  private final boolean myIsExcluded;
+  private final boolean myIsSkipped;
+
   public UnifiedDiffChange(int blockStart,
                            int insertedStart,
                            int blockEnd,
                            @NotNull LineFragment lineFragment) {
+    this(blockStart, insertedStart, blockEnd, lineFragment, false, false);
+  }
+
+  public UnifiedDiffChange(int blockStart,
+                           int insertedStart,
+                           int blockEnd,
+                           @NotNull LineFragment lineFragment,
+                           boolean isExcluded,
+                           boolean isSkipped) {
     myLine1 = blockStart;
     myLine2 = blockEnd;
     myDeletedRange = new LineRange(blockStart, insertedStart);
     myInsertedRange = new LineRange(insertedStart, blockEnd);
     myLineFragment = lineFragment;
+    myIsExcluded = isExcluded;
+    myIsSkipped = isSkipped;
   }
 
   public int getLine1() {
@@ -65,6 +79,14 @@ public class UnifiedDiffChange {
   @NotNull
   public LineRange getInsertedRange() {
     return myInsertedRange;
+  }
+
+  public boolean isExcluded() {
+    return myIsExcluded;
+  }
+
+  public boolean isSkipped() {
+    return myIsSkipped;
   }
 
   public void processChange(int oldLine1, int oldLine2, int shift) {

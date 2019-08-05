@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -45,7 +44,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -67,7 +65,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull private final TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
+  @NotNull protected final TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
 
   @NotNull protected Side myMasterSide = Side.RIGHT;
 
@@ -253,15 +251,20 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
     catch (Throwable e) {
       LOG.error(e);
-      return () -> {
-        clearDiffPresentation();
-        myPanel.setErrorContent();
-      };
+      return applyErrorNotification();
     }
   }
 
   @NotNull
-  private Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
+  protected Runnable applyErrorNotification() {
+    return () -> {
+      clearDiffPresentation();
+      myPanel.setErrorContent();
+    };
+  }
+
+  @NotNull
+  protected Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
     final Document document1 = getContent1().getDocument();
     final Document document2 = getContent2().getDocument();
 
@@ -320,9 +323,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @NotNull
-  private Runnable apply(@NotNull UnifiedFragmentBuilder builder,
-                         @NotNull CharSequence[] texts,
-                         @NotNull ProgressIndicator indicator) {
+  protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
+                           @NotNull CharSequence[] texts,
+                           @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
 
@@ -823,7 +826,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   @Override
-  protected JComponent getStatusPanel() {
+  protected StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 
@@ -1026,13 +1029,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected String getMessage() {
       ChangedBlockData blockData = myModel.getData();
-
       if (blockData == null) return null;
-      int changesCount = blockData.getDiffChanges().size();
-      if (changesCount == 0 && myModel.isContentsEqual() == ThreeState.NO) {
-        return DiffBundle.message("diff.all.differences.ignored.text");
-      }
-      return DiffBundle.message("diff.count.differences.status.text", changesCount);
+
+      List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
+      return DiffUtil.getStatusText(allChanges.size(),
+                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                    myModel.isContentsEqual());
     }
   }
 
@@ -1104,7 +1106,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       List<UnifiedDiffChange> changes = myModel.getDiffChanges();
       if (changes == null) return false;
 
-      UnifiedDiffChange targetChange = scrollToChangePolicy.select(changes);
+      UnifiedDiffChange targetChange = scrollToChangePolicy.select(ContainerUtil.filter(changes, it -> !it.isSkipped()));
+      if (targetChange == null) targetChange = scrollToChangePolicy.select(changes);
       if (targetChange == null) return false;
 
       DiffUtil.scrollEditor(myEditor, targetChange.getLine1(), false);

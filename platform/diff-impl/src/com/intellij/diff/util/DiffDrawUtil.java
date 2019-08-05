@@ -299,21 +299,31 @@ public class DiffDrawUtil {
                                                                       @NotNull LineRange deleted,
                                                                       @NotNull LineRange inserted,
                                                                       @Nullable List<? extends DiffFragment> innerFragments) {
+    return createUnifiedChunkHighlighters(editor, deleted, inserted, false, false, innerFragments);
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
+                                                                      @NotNull LineRange deleted,
+                                                                      @NotNull LineRange inserted,
+                                                                      boolean excluded,
+                                                                      boolean skipped,
+                                                                      @Nullable List<? extends DiffFragment> innerFragments) {
     boolean ignored = innerFragments != null;
 
     List<RangeHighlighter> list = new ArrayList<>();
     if (!inserted.isEmpty() && !deleted.isEmpty()) {
-      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
-      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored, skipped, excluded));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored, skipped, excluded));
     }
     else if (!inserted.isEmpty()) {
-      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored, skipped, excluded));
     }
     else if (!deleted.isEmpty()) {
-      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored, skipped, excluded));
     }
 
-    if (innerFragments != null) {
+    if (innerFragments != null && !skipped) {
       int deletedStartOffset = editor.getDocument().getLineStartOffset(deleted.start);
       int insertedStartOffset = editor.getDocument().getLineStartOffset(inserted.start);
 
@@ -329,6 +339,16 @@ public class DiffDrawUtil {
     }
 
     return list;
+  }
+
+  @NotNull
+  private static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
+                                                          boolean ignored, boolean excludedInEditor, boolean excludedInGutter) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type)
+      .withIgnored(ignored)
+      .withExcludedInEditor(excludedInEditor)
+      .withExcludedInGutter(excludedInGutter)
+      .done();
   }
 
   @NotNull

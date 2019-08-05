@@ -29,8 +29,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.ex.*;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.ex.ExclusionState;
+import com.intellij.openapi.vcs.ex.LocalRange;
+import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -63,15 +65,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     myChangelistId = localRequest.getChangelistId();
     myChangelistName = localRequest.getChangelistName();
 
-    MyTrackerListener trackerListener = new MyTrackerListener();
-    MyLineStatusTrackerManagerListener lstmListener = new MyLineStatusTrackerManagerListener(trackerListener);
+    myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
 
-    LineStatusTrackerManager.getInstanceImpl(getProject()).addTrackerListener(lstmListener, this);
-
-    PartialLocalLineStatusTracker tracker = getPartialTracker();
-    if (tracker != null) tracker.addListener(trackerListener, this);
-
-    myAllowExcludeChangesFromCommit = Boolean.TRUE.equals(context.getUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT));
+    LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
   }
 
   @NotNull
@@ -146,6 +142,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull
     @Override
     public Runnable done(boolean isContentsEqual,
+                         @NotNull CharSequence[] texts,
                          @NotNull List<? extends LineFragment> fragments,
                          @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
       List<SimpleDiffChange> changes = new ArrayList<>();
@@ -288,40 +285,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
   }
 
-
-  private class MyTrackerListener extends PartialLocalLineStatusTracker.ListenerAdapter {
-    @Override
-    public void onBecomingValid(@NotNull PartialLocalLineStatusTracker tracker) {
-      scheduleRediff();
-    }
-
-    @Override
-    public void onChangeListMarkerChange(@NotNull PartialLocalLineStatusTracker tracker) {
-      scheduleRediff();
-    }
-
-    @Override
-    public void onExcludedFromCommitChange(@NotNull PartialLocalLineStatusTracker tracker) {
-      scheduleRediff();
-    }
-  }
-
-  private class MyLineStatusTrackerManagerListener extends LineStatusTrackerManager.ListenerAdapter {
-    @NotNull private final PartialLocalLineStatusTracker.Listener myListener;
-
-    MyLineStatusTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener trackerListener) {
-      myListener = trackerListener;
-    }
-
-    @Override
-    public void onTrackerAdded(@NotNull LineStatusTracker<?> tracker) {
-      if (tracker instanceof PartialLocalLineStatusTracker &&
-          tracker.getVirtualFile().equals(myLocalRequest.getVirtualFile())) {
-        ((PartialLocalLineStatusTracker)tracker).addListener(myListener, SimpleLocalChangeListDiffViewer.this);
-        scheduleRediff();
-      }
-    }
-  }
 
   private class MoveSelectedChangesToAnotherChangelistAction extends MySelectedChangesActionBase {
     MoveSelectedChangesToAnotherChangelistAction() {
