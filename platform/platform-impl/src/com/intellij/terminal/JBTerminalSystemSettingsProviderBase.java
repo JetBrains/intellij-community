@@ -434,15 +434,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public Font getTerminalFont() {
-    Font normalFont = Font.decode(getFontName());
-
-    if (normalFont == null) {
-      normalFont = super.getTerminalFont();
-    }
-
-    normalFont = normalFont.deriveFont(getTerminalFontSize());
-
-    return normalFont;
+    return new Font(getFontName(), Font.PLAIN, (int)getTerminalFontSize());
   }
 
   public String getFontName() {
