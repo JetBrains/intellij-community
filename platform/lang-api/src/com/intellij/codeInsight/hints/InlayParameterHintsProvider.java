@@ -105,4 +105,11 @@ public interface InlayParameterHintsProvider {
   default boolean isExhaustive() {
     return false;
   }
+
+  /**
+   * @return text of main checkbox in hints settings
+   */
+  default String getMainCheckboxText() {
+    return "Show parameter hints";
+  }
 }
