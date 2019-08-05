@@ -124,8 +124,9 @@ public class VcsProjectLog implements Disposable {
       if (logManager != null) {
         Disposer.dispose(logManager);
       }
-      if (!recreate) return;
-      createLog(false);
+      if (recreate) {
+        createLog(false);
+      }
     });
   }
 
