@@ -1,22 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
 class DelegatesToCombiner {
   private var delegateType: PsiType = PsiType.NULL
   private var delegationStrategy: GrExpression? = null
+  private var delegateParameter: GrParameter? = null
 
   companion object {
     const val DELEGATES_TO = "DelegatesTo"
+    const val TARGET = "Target"
   }
 
   fun acceptResolveResult(methodResult: GroovyMethodResult) {
@@ -28,9 +30,18 @@ class DelegatesToCombiner {
     }
   }
 
+  private fun setDelegateByArgument(arg: Argument) {
+    arg.type?.run { delegateType = this; delegateParameter = null }
+    (arg as? ExpressionArgument)?.run {
+      val parameter = expression.reference?.resolve() as? GrParameter
+      if (parameter != null) {
+        delegateParameter = parameter
+      }
+    }
+  }
 
   private fun setDelegate(candidate: GroovyMethodCandidate) {
-    delegateType = candidate.argumentMapping?.arguments?.singleOrNull()?.type ?: return
+    setDelegateByArgument(candidate.argumentMapping?.arguments?.singleOrNull() ?: return)
   }
 
   private fun setStrategy(candidate: GroovyMethodCandidate) {
@@ -38,27 +49,37 @@ class DelegatesToCombiner {
   }
 
   private fun processRehydrate(candidate: GroovyMethodCandidate) {
-    delegateType = candidate.argumentMapping?.arguments?.firstOrNull()?.type ?: return
+    setDelegateByArgument(candidate.argumentMapping?.arguments?.firstOrNull() ?: return)
   }
 
 
-  fun instantiateAnnotation(context: PsiElement): GrAnnotation? {
-    if (delegateType != PsiType.NULL) {
-      // todo: delegating to parameters and generic types
-      val strategy = delegationStrategy?.run { "strategy = ${text}" } ?: ""
-      val delegateTypeRepresentation = delegateType.takeIf { it != PsiType.NULL }?.canonicalText ?: ""
-      val type = when {
-        delegateTypeRepresentation.isEmpty() -> ""
-        else -> when {
-                  delegateType.isTypeParameter() -> "type = "
-                  strategy.isNotEmpty() -> "value = "
-                  else -> ""
-                } + delegateTypeRepresentation
-      }
-      return GroovyPsiElementFactory.getInstance(context.project).createAnnotationFromText(
-        "@$DELEGATES_TO(${listOf(type, strategy).filter { it.isNotEmpty() }.joinToString()})", context
-      )
+  fun instantiateAnnotation(outerParameters: PsiParameterList): Pair<String?, List<AnnotatingResult>> {
+    val parameter = delegateParameter
+    if (delegationStrategy == null && delegateType == PsiType.NULL) {
+      return null to emptyList()
     }
-    return null
+    val additionalParameter = instantiateAnnotationForParameter(outerParameters)
+    val strategy = delegationStrategy?.run { "strategy = ${text}" } ?: ""
+    val delegateTypeRepresentation = delegateType.takeIf { it != PsiType.NULL }?.canonicalText ?: ""
+    val type = when {
+      parameter != null -> "target = '${parameter.name}'"
+      delegateTypeRepresentation.isEmpty() -> ""
+      else -> when {
+                delegateType.isTypeParameter() -> "type = "
+                strategy.isNotEmpty() -> "value = "
+                else -> ""
+              } + delegateTypeRepresentation
+    }
+    return "@$DELEGATES_TO(${listOf(type, strategy).filter { it.isNotEmpty() }.joinToString()})" to additionalParameter
+  }
+
+  private fun instantiateAnnotationForParameter(outerParameters: PsiParameterList): List<AnnotatingResult> {
+    val parameter = delegateParameter
+    if (parameter == null) {
+      return emptyList()
+    }
+    val realParameter = outerParameters.parameters.find { it.name == parameter.name } ?: return emptyList()
+    return listOf(AnnotatingResult(realParameter as? GrParameter ?: return emptyList(),
+                                   "@$DELEGATES_TO.$TARGET('${parameter.name}')"))
   }
 }

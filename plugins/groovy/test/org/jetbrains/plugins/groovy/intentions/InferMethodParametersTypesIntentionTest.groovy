@@ -421,4 +421,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDelegateToParameter() {
+    doTest(true)
+  }
+
 }

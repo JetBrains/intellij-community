@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
@@ -30,16 +31,22 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator): InferenceDriver {
       val closureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
       val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
+
+      val produceParameterizedClosure =
+        { parameter: GrParameter, parametersAmount: Int, closureArguments: List<GrClosableBlock> ->
+          val typeParameters = mutableListOf<PsiTypeParameter>()
+          repeat(parametersAmount) {
+            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
+            virtualMethod.typeParameterList!!.add(newTypeParameter)
+            typeParameters.add(newTypeParameter)
+          }
+          val parameterizedClosure = ParameterizedClosure(parameter, typeParameters, closureArguments, emptyList())
+          closureParameters[parameter] = parameterizedClosure
+        }
+
       collectClosureArguments(method, virtualMethod).forEach { (parameter, calls) ->
         // todo: default-valued parameters
-        val parameterizedClosure = ParameterizedClosure(parameter)
-        parameterizedClosure.closureArguments.addAll(calls.map { it as GrClosableBlock })
-        closureParameters[parameter] = parameterizedClosure
-        repeat((calls.first() as GrClosableBlock).allParameters.size) {
-          val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
-          virtualMethod.typeParameterList!!.add(newTypeParameter)
-          parameterizedClosure.typeParameters.add(newTypeParameter)
-        }
+        produceParameterizedClosure(parameter, (calls.first() as GrClosableBlock).allParameters.size, calls.map { it as GrClosableBlock })
       }
       val alreadyCreatedClosureParameters = closureParameters.keys
       virtualMethod.forEachParameterUsage { parameter, instructions ->
@@ -51,13 +58,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           (it.advancedResolve() as? GroovyMethodResult)?.candidate?.receiver == parameter.type
         }
         if (directClosureCall != null) {
-          val parameterizedClosure = ParameterizedClosure(parameter)
-          closureParameters[parameter] = parameterizedClosure
-          repeat(directClosureCall.expressionArguments.size) {
-            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
-            virtualMethod.typeParameterList!!.add(newTypeParameter)
-            parameterizedClosure.typeParameters.add(newTypeParameter)
-          }
+          produceParameterizedClosure(parameter, directClosureCall.expressionArguments.size, emptyList())
         }
         else {
           callUsages.find { call ->
@@ -65,15 +66,9 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
             val parameterIndex = call.argumentList?.getExpressionArgumentIndex(argument as? GrExpression) ?: return@find false
             val targetParameter = call.resolveMethod()?.parameters?.get(parameterIndex) as? GrParameter ?: return@find false
             val closureParamsAnno = targetParameter.modifierList.annotations.find {
-              it.qualifiedName == ParameterizedClosure.CLOSURE_PARAMS_FQ
+              it.qualifiedName == ClosureParamsCombiner.CLOSURE_PARAMS_FQ
             } ?: return@find false
-            val parameterizedClosure = ParameterizedClosure(parameter)
-            closureParameters[parameter] = parameterizedClosure
-            repeat(availableParameterNumber(closureParamsAnno)) {
-              val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
-              virtualMethod.typeParameterList!!.add(newTypeParameter)
-              parameterizedClosure.typeParameters.add(newTypeParameter)
-            }
+            produceParameterizedClosure(parameter, availableParameterNumber(closureParamsAnno), emptyList())
             return@find true
           }
         }
@@ -95,15 +90,16 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     val newClosureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
     for ((parameter, closureParameter) in closureParameters) {
       val newParameter = parameterMapping.getValue(parameter)
-      val newClosureParameter = ParameterizedClosure(newParameter)
-      newClosureParameter.closureArguments.addAll(closureParameter.closureArguments)
+      val newTypes = mutableListOf<PsiType>()
+      val newTypeParameters = mutableListOf<PsiTypeParameter>()
       closureParameter.typeParameters.forEach { directInnerParameter ->
         val innerParameterType = manager.createDeeplyParameterizedType(
           substitutor.substitute(directInnerParameter)!!)
-        newClosureParameter.types.add(innerParameterType.type)
-        newClosureParameter.typeParameters.addAll(innerParameterType.typeParameters)
+        newTypes.add(innerParameterType.type)
+        newTypeParameters.addAll(innerParameterType.typeParameters)
         innerParameterType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       }
+      val newClosureParameter = ParameterizedClosure(newParameter, newTypeParameters, closureParameter.closureArguments, newTypes)
       newClosureParameters[newParameter] = newClosureParameter
     }
     return ClosureDriver(newClosureParameters)
@@ -152,7 +148,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       }
       collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
                                        requiredTypesCollector)
-      val delegatesToCombiner = closureParameters.getValue(parameter).combiner
+      val delegatesToCombiner = closureParameters.getValue(parameter).delegatesToCombiner
       for (usage in instructions) {
         val nearestCall = usage.element!!.parentOfType<GrCall>()
         if (nearestCall != usage.element?.parent && nearestCall != usage.element?.parent?.parent) {
@@ -203,13 +199,12 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {
     val mapping = setUpParameterMapping(method, resultMethod)
     val gatheredTypeParameters = collectDependencies(method.typeParameterList!!, resultSubstitutor)
-    for ((parameter, closureParameter) in closureParameters) {
-      closureParameter.substituteTypes(resultSubstitutor, gatheredTypeParameters)
-      closureParameter.renderTypes(method.parameterList).forEach {
-        if (it.isEmpty()) {
+    for ((_, closureParameter) in closureParameters) {
+      closureParameter.renderTypes(method.parameterList, resultSubstitutor, gatheredTypeParameters).forEach { (parameter, anno) ->
+        if (anno.isEmpty()) {
           return@forEach
         }
-        mapping.getValue(parameter).modifierList.addAnnotation(it.substring(1))
+        mapping.getValue(parameter).modifierList.addAnnotation(anno.substring(1))
       }
     }
   }

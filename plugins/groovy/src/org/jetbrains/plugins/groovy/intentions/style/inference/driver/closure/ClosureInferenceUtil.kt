@@ -9,10 +9,10 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_ABSTRACT_TYPE_METHODS
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.FROM_STRING
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.MAP_ENTRY_OR_KEY_VALUE
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ParameterizedClosure.Companion.SIMPLE_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_ABSTRACT_TYPE_METHODS
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
@@ -187,7 +187,7 @@ fun availableParameterNumber(annotation: GrAnnotation): Int {
   return when (value.name) {
     SIMPLE_TYPE -> parseSimpleType(options.value ?: return 0)
     FROM_STRING -> parseFromString(options.value ?: return 0)
-    in ParameterizedClosure.availableHints -> return 1
+    in ClosureParamsCombiner.availableHints -> return 1
     FROM_ABSTRACT_TYPE_METHODS -> /*todo*/ return 0
     MAP_ENTRY_OR_KEY_VALUE -> /*todo*/ return 2
     else -> unreachable()
@@ -203,4 +203,6 @@ private fun parseSimpleType(parameterTypes: GrAnnotationArrayInitializer): Int {
   return parameterTypes.initializers.size
 }
 
+
+data class AnnotatingResult(val parameter: GrParameter, val annotationText: String)
 

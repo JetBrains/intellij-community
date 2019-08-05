@@ -63,7 +63,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
         else -> method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
       }
     }
-    method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
+    for ((actual, inferred) in method.parameters.zip(virtualMethod.parameters)) {
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
       if (actual.isVarArgs && !inferred.isVarArgs) {
@@ -74,7 +74,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
         if (it.text !in currentAnnotations) {
           val anno = actual.modifierList.addAnnotation(it.text.substring(1))
           GrReferenceAdjuster.shortenAllReferencesIn((anno as GrAnnotation).originalElement as GroovyPsiElement)
-          GrReferenceAdjuster.shortenReference(anno.findAttributeValue("value")?.reference as? GrQualifiedReference<*> ?: return)
+          GrReferenceAdjuster.shortenReference(anno.findAttributeValue("value")?.reference as? GrQualifiedReference<*> ?: return@forEach)
         }
       }
     }
