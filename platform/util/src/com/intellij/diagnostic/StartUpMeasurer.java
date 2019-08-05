@@ -31,7 +31,7 @@ public final class StartUpMeasurer {
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
     public static final String INIT_APP = "app initialization";
-    public static final String INIT_LICENSE = "license initialization";
+    public static final String STARTUPUTIL_APPSTARTER = "StartupUtil.appStarter";
 
     public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";
 
