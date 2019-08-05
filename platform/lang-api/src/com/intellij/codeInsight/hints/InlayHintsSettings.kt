@@ -18,6 +18,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var disabledHintProviderIds: MutableSet<String> = hashSetOf()
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement = Element("settingsMapElement")
+
+    var lastViewedProviderKeyId: String? = null
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -29,6 +31,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     } else {
       myState.disabledHintProviderIds.add(id)
     }
+  }
+
+  fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
+    state.lastViewedProviderKeyId = providerId
+  }
+
+  fun getLastViewedProviderId() : String? {
+    return state.lastViewedProviderKeyId
   }
 
   fun invertHintTypeStatus(key: SettingsKey<*>, language: Language) = synchronized(lock) {

@@ -39,9 +39,9 @@ interface InlayHintsProvider<T : Any> {
 
   @get:Nls(capitalization = Nls.Capitalization.Sentence)
     /**
-   * Name of this kind of hints. It will be used in settings and in context menu.
-   * Please, do not use word "hints" to avoid duplication
-   */
+     * Name of this kind of hints. It will be used in settings and in context menu.
+     * Please, do not use word "hints" to avoid duplication
+     */
   val name: String
 
   /**
@@ -77,6 +77,19 @@ interface ImmediateConfigurable {
    * This is required to make preview in settings works instantly
    */
   fun createComponent(listener: ChangeListener): JComponent
+
+  /**
+   * Loads state from its configurable
+   */
+  @JvmDefault
+  fun reset() {}
+
+  /**
+   * Text, that will be used in settings for checkbox to enable/disable hints
+   */
+  @JvmDefault
+  val mainCheckboxText: String
+    get() = "Show hints"
 }
 
 interface ChangeListener {
@@ -84,6 +97,11 @@ interface ChangeListener {
    * This method should be called on any change of corresponding settings
    */
   fun settingsChanged()
+
+  /**
+   * Called when settings are in the state, when provider do nothing (e. g. all checkboxes are unchecked)
+   */
+  fun didDeactivated() {}
 }
 
 /**
@@ -103,5 +121,5 @@ class NoSettings {
  */
 @Suppress("unused")
 data class SettingsKey<T>(val id: String) {
-  fun getFullId(language: Language) : String = language.id + "." + id
+  fun getFullId(language: Language): String = language.id + "." + id
 }

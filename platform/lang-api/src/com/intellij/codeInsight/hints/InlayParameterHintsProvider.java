@@ -98,4 +98,8 @@ public interface InlayParameterHintsProvider {
    * @return text of preview, will be used in settings
    */
   default String getSettingsPreview() { return null; }
+
+  default boolean isExhaustive() {
+    return false;
+  }
 }
