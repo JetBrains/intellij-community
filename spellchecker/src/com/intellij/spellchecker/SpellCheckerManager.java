@@ -469,7 +469,7 @@ public class SpellCheckerManager implements Disposable {
       final String path = toSystemDependentName(file.getPath());
       if (!affectCustomDicts(path)) return;
 
-      visitChildrenRecursively(file, new VirtualFileVisitor() {
+      visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           final boolean isDirectory = file.isDirectory();

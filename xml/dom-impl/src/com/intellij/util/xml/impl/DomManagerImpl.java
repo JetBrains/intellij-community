@@ -152,7 +152,7 @@ public final class DomManagerImpl extends DomManager {
     FileManager fileManager = PsiManagerEx.getInstanceEx(myProject).getFileManager();
 
     final List<DomEvent> events = new ArrayList<>();
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {

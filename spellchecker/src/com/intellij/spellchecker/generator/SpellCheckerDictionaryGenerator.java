@@ -140,7 +140,7 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   protected void processFolder(final HashSet<String> seenNames, final PsiManager manager, final VirtualFile folder) {
-    VfsUtilCore.visitChildrenRecursively(folder, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(folder, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         ProgressIndicatorProvider.checkCanceled();

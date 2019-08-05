@@ -45,7 +45,7 @@ public class FixLineSeparatorsAction extends AnAction {
   }
 
   private static void fixSeparators(VirtualFile vFile) {
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && !file.getFileType().isBinary()) {

@@ -104,7 +104,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
 
     private static void collectJavadocRoots(VirtualFile file, final List<? super VirtualFile> result, final ProgressIndicator progressIndicator) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           progressIndicator.checkCanceled();

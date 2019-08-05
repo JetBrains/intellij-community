@@ -40,7 +40,7 @@ public class PruneEmptyDirectoriesAction extends AnAction {
   }
 
   private static void pruneEmptiesIn(VirtualFile file, final FileTypeManager ftManager) throws IOException {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (file.isDirectory()) {

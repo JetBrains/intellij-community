@@ -1097,7 +1097,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void refreshRecursively(@NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         file.getChildren();

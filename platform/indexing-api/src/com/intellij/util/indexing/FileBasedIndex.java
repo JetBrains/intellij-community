@@ -162,7 +162,7 @@ public abstract class FileBasedIndex {
       return;
     }
 
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!acceptsFile(file)) return false;

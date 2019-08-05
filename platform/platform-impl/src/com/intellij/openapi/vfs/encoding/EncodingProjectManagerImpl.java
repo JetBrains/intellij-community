@@ -321,7 +321,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       return true;
     }
 
-    return VirtualFileVisitor.CONTINUE == VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    return VirtualFileVisitor.CONTINUE == VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull final VirtualFile file) {
         return processor.process(file);

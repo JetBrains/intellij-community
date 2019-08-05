@@ -338,7 +338,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
 
-      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return ReadAction.compute(() -> {

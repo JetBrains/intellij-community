@@ -233,7 +233,7 @@ public class AnalysisScope {
       case VIRTUAL_FILES:
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         for (final VirtualFile vFile : myVFiles) {
-          VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+          VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
             @NotNull
             @Override
             public Result visitFileEx(@NotNull VirtualFile file) {

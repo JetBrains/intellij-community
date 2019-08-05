@@ -139,7 +139,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   }
 
   private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<? super VirtualFile> result) {
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getBOM() != null) {

@@ -384,7 +384,7 @@ public class VcsUtil {
     }
 
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (file.isDirectory()) {

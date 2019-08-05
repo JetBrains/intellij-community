@@ -781,7 +781,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         boolean visitFile(@NotNull VirtualFile visitedFile) {
           iterator.processFile(visitedFile)

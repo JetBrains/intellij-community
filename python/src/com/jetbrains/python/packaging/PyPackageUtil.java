@@ -310,7 +310,7 @@ public class PyPackageUtil {
                                           @NotNull final VirtualFile root,
                                           @NotNull final List<String> results) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (file.equals(root)) {

@@ -81,7 +81,7 @@ public class ConflictCreator {
       }
     }
 
-    VfsUtilCore.visitChildrenRecursively(myTheirsDir, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(myTheirsDir, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

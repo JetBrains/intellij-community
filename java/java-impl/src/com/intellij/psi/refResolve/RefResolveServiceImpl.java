@@ -575,7 +575,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   private void countAndMarkUnresolved(@NotNull VirtualFile file, @NotNull final Set<VirtualFile> result, final boolean inDbOnly) {
     if (file.isDirectory()) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return doCountAndMarkUnresolved(file, result);

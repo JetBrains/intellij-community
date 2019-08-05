@@ -433,7 +433,7 @@ public class FileManagerImpl implements FileManager {
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
     DebugUtil.performPsiModification("removeFilesAndDirsRecursively", () -> {
-      VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (file.isDirectory()) {

@@ -131,7 +131,7 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
   protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<? super Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
-    VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
