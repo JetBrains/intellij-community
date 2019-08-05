@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +25,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Anton Katilin
@@ -250,9 +253,16 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    ActionManager.getInstance().addTimerListener(1000, new WeakTimerListener(myTimerListener));
+    doWithLazyActionManager(actionManager -> actionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
+  }
+
+  private static void doWithLazyActionManager(@NotNull Consumer<ActionManager> whatToDo) {
+    ReadAction
+      .nonBlocking(() -> ActionManager.getInstance())
+      .finishOnUiThread(ModalityState.any(), whatToDo)
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   @Override
@@ -319,11 +329,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   void updateMenuActions(boolean forceRebuild) {
+    doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
+  }
+
+  private void doUpdateMenuActions(boolean forceRebuild, ActionManager manager) {
     myNewVisibleActions.clear();
 
     if (!myDisabled) {
       DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(this);
-      expandActionGroup(dataContext, myNewVisibleActions, ActionManager.getInstance());
+      expandActionGroup(dataContext, myNewVisibleActions, manager);
     }
 
     if (forceRebuild || !myNewVisibleActions.equals(myVisibleActions)) {
