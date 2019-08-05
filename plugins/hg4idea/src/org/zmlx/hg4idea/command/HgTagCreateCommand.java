@@ -51,9 +51,8 @@ public class HgTagCreateCommand {
       arguments.add("--rev");
       arguments.add(revisionNumberOrHash);
     }
-    HgCommandExecutor executor = new HgCommandExecutor(project);
     BackgroundTaskUtil.executeOnPooledThread(project, () -> {
-      HgCommandResult result = executor.executeInCurrentThread(repo, "tag", arguments);
+      HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "tag", arguments);
       if (resultHandler != null) {
         resultHandler.process(result);
       }
