@@ -23,7 +23,7 @@ import javax.swing.event.ListSelectionListener
 /**
  * Top-level UI-component for new clone/checkout dialog
  */
-internal class VcsCloneDialog private constructor(private val project: Project,
+class VcsCloneDialog private constructor(private val project: Project,
                                                   initialExtensionClass: Class<out VcsCloneDialogExtension>,
                                                   private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
   private lateinit var extensionList: VcsCloneDialogExtensionList
