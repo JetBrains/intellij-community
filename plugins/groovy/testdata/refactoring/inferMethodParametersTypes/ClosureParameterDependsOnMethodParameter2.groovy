@@ -4,3 +4,4 @@ static void foo(self, closure ) {
 
 
 foo(1, {a, ind -> println(a)})
+foo('q', {a, ind -> println(a)})

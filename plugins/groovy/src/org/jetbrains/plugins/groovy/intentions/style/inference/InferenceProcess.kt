@@ -4,11 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.PsiIntersectionType.flatten
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
@@ -90,8 +86,7 @@ private fun inferTypeParameters(driver: InferenceDriver,
         instantiation
       }
       InstantiationHint.EXTENDS_WILDCARD -> {
-        if (instantiation == PsiType.NULL || instantiation == PsiType.getJavaLangObject(method.manager,
-                                                                                        GlobalSearchScope.allScope(method.project))) {
+        if (instantiation == PsiType.NULL || instantiation == getJavaLangObject(method)) {
           resultSubstitutor.substitute(PsiWildcardType.createUnbounded(method.manager))
         }
         else {

@@ -141,6 +141,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
         else -> typeLattice.meet(superClasses)
       }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
+        upperBound.resolve()?.modifierList?.hasModifierProperty("final") ?: false -> upperBound
         (upperBound != javaLangObject) -> PsiWildcardType.createExtends(context.manager, upperBound)
         else -> PsiWildcardType.createUnbounded(context.manager)
       }

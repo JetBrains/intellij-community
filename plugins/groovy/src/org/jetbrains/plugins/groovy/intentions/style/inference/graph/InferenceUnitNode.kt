@@ -7,6 +7,7 @@ import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -56,6 +57,10 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       }
     }
 
+    if (parent == null && typeInstantiation.resolve()?.hasModifierProperty("final") == true) {
+      return typeInstantiation to REIFIED_AS_PROPER_TYPE
+    }
+
     if (core.flexible) {
       when {
         parent != null -> return parent!!.type to REIFIED_AS_PROPER_TYPE
@@ -96,7 +101,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       }
     }
 
-    if ((core.flexible && typeInstantiation !is PsiIntersectionType) || direct) {
+    if (direct) {
       return typeInstantiation to REIFIED_AS_PROPER_TYPE
     }
     if (typeInstantiation == PsiType.NULL) {
