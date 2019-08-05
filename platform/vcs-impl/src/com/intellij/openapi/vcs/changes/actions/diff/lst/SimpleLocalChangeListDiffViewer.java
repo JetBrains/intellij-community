@@ -154,11 +154,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         LineFragment fragment = fragments.get(i);
         LocalTrackerDiffUtil.LineFragmentData data = fragmentsData.get(i);
 
-        boolean isExcludedFromCommit = data.isExcluded();
-        boolean isFromActiveChangelist = data.getChangelistId().equals(myChangelistId);
-        boolean isSkipped = !isFromActiveChangelist;
-        boolean isExcluded = !isFromActiveChangelist ||
-                             (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
+        boolean isExcludedFromCommit = data.isExcludedFromCommit();
+        boolean isFromActiveChangelist = data.isFromActiveChangelist();
+        boolean isSkipped = data.isSkipped();
+        boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
 
         changes.add(new MySimpleDiffChange(changes.size(), fragment, isExcluded, isSkipped,
                                            data.getChangelistId(), isFromActiveChangelist,

@@ -18,7 +18,7 @@ object LocalTrackerDiffUtil {
   fun computeDifferences(tracker: LineStatusTracker<*>?,
                          document1: Document,
                          document2: Document,
-                         changelistId: String,
+                         activeChangelistId: String,
                          textDiffProvider: TwosideTextDiffProvider,
                          indicator: ProgressIndicator,
                          handler: LocalTrackerDiffHandler): Runnable {
@@ -61,7 +61,7 @@ object LocalTrackerDiffUtil {
 
     val diffData = data.diffData
     if (diffData?.ranges == null) {
-      if (data.affectedChangelist.size == 1 && data.affectedChangelist.contains(changelistId)) {
+      if (data.affectedChangelist.size == 1 && data.affectedChangelist.contains(activeChangelistId)) {
         // tracker is waiting for initialisation
         // there are only one changelist, so it's safe to fallback to default logic
         return handler.fallbackWithProgress()
@@ -95,7 +95,7 @@ object LocalTrackerDiffUtil {
 
       fragments.addAll(rangeFragments)
 
-      val fragmentData = LineFragmentData(localRange.isExcludedFromCommit, localRange.changelistId)
+      val fragmentData = LineFragmentData(activeChangelistId, localRange.isExcludedFromCommit, localRange.changelistId)
       repeat(rangeFragments.size) { fragmentsData.add(fragmentData) }
     }
 
@@ -113,8 +113,14 @@ object LocalTrackerDiffUtil {
     fun error(): Runnable
   }
 
-  data class LineFragmentData(val isExcluded: Boolean,
-                              val changelistId: String)
+  data class LineFragmentData(val activeChangelistId: String,
+                              val isExcludedFromCommit: Boolean,
+                              val changelistId: String) {
+    fun isFromActiveChangelist() = changelistId == activeChangelistId
+    fun isSkipped() = !isFromActiveChangelist()
+    fun isExcluded(allowExcludeChangesFromCommit: Boolean) = !isFromActiveChangelist() ||
+                                                             allowExcludeChangesFromCommit && isExcludedFromCommit
+  }
 
   private data class TrackerData(val isReleased: Boolean,
                                  val affectedChangelist: List<String>,
