@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -306,7 +307,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       return null;
     }
 
-    return new XDebuggerTreeNodeHyperlink(XDebuggerRevealAction.REVEAL_NAME) {
+    return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.reveal.action")) {
       @Override
       public void onClick(MouseEvent event) {
         XDebuggerRevealAction.Companion.revealField(event, XValueNodeImpl.this);

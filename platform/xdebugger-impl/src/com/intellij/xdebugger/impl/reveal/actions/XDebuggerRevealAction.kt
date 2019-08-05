@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.reveal.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.reveal.RevealMemberValue
 import com.intellij.xdebugger.impl.reveal.RevealParentValue
@@ -16,9 +17,6 @@ import java.awt.event.MouseEvent
 class XDebuggerRevealAction : XDebuggerTreeActionBase() {
 
     companion object {
-
-        const val REVEAL_NAME = "Pin to top"
-        const val CONCEAL_NAME = "Unpin"
 
         fun revealField(event: MouseEvent?, node: XValueNodeImpl) {
             ActionManager.getInstance().getAction("XDebugger.Reveal").actionPerformed(
@@ -61,7 +59,7 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
         presentation.isVisible = true
         presentation.isEnabled = valueContainer.canBeRevealed()
         presentation.icon = if (revealManager.isItemRevealed(node)) AllIcons.Debugger.Reveal.RevealOff else AllIcons.Debugger.Reveal.RevealOn
-        presentation.text = if (revealManager.isItemRevealed(node)) CONCEAL_NAME else REVEAL_NAME
+        presentation.text = if (revealManager.isItemRevealed(node)) XDebuggerBundle.message("xdebugger.conceal.action") else XDebuggerBundle.message("xdebugger.reveal.action")
 
     }
 
