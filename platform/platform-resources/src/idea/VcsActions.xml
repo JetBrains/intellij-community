@@ -30,6 +30,8 @@
             text="Compare Before with Local" description="Compare version before selected revision with current version"/>
     <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffAfterWithLocalAction"
             text="Compare with Local" description="Compare version in selected revision with current version"/>
+    <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.RunVcsCloneDialogAction"
+            text="Get from Version Control"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 
@@ -76,6 +78,7 @@
 
       <separator/>
       <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
+      <reference id="Vcs.VcsClone"/>
       <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
       <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
 
@@ -346,11 +349,9 @@
             icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
-    <action id="WelcomeScreen.NewGetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.RunVcsCloneDialogAction"
-            icon="AllIcons.Vcs.Clone"
-            internal="true">
+    <reference ref="Vcs.VcsClone">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
-    </action>
+    </reference>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
@@ -447,6 +448,7 @@
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
+      <reference ref="Vcs.VcsClone"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>
 

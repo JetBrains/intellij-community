@@ -37,7 +37,7 @@ public class GetFromVcsAction extends WelcomePopupAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(!Registry.is("vcs.use.new.clone.dialog"));
-    e.getPresentation().setEnabled(CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions());
+    boolean isEnabled = !Registry.is("vcs.use.new.clone.dialog") && CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions();
+    e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 }
