@@ -55,6 +55,7 @@ public final class PerformanceWatcher implements Disposable {
   private volatile long myLastSampling = System.currentTimeMillis();
   private long myLastDumpTime;
   private long myFreezeStart;
+  private boolean myFreezeDuringStartup;
   private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
   private static final long ourIdeStart = System.currentTimeMillis();
@@ -223,6 +224,7 @@ public final class PerformanceWatcher implements Disposable {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
+        myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
         myPublisher.uiFreezeStarted();
       }
       dumpThreads();
@@ -237,8 +239,8 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   @NotNull
-  private static String getFreezeFolderName(long freezeStartMs) {
-    return THREAD_DUMPS_PREFIX + "freeze-" + formatTime(freezeStartMs) + "-" + buildName();
+  private String getFreezeFolderName(long freezeStartMs) {
+    return THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(freezeStartMs) + "-" + buildName();
   }
 
   private static String buildName() {
