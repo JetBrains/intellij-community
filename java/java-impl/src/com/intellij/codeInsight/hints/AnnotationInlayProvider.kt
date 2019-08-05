@@ -22,8 +22,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.ui.JBUI
+import java.awt.GridLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty0
 
 class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
@@ -174,7 +177,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             listener.didDeactivated()
           }
         }
-        return panel {
+        val panel = JPanel(GridLayout(1, 1))
+        panel.add(panel {
           row {
             showExternalCheckBox.addChangeListener { onUiChanged() }
             showExternalCheckBox()
@@ -183,7 +187,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             showInferredCheckBox.addChangeListener { onUiChanged() }
             showInferredCheckBox()
           }
-        }
+        })
+        panel.border = JBUI.Borders.empty(0, 20, 0, 0)
+        return panel
       }
 
       override fun reset() {

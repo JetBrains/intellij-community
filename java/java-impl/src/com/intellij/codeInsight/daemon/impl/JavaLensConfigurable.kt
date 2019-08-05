@@ -24,7 +24,7 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
         inheritCB(pushX)
       }
     }
-    panel.border = JBUI.Borders.empty(5)
+    panel.border = JBUI.Borders.empty(0, 20, 0, 0)
     return panel
   }
 
