@@ -59,7 +59,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = "Unique type count"
+    val uniqueTypeCountName = "Minimal unique type count to show hints"
 
     private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
