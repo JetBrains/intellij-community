@@ -6,11 +6,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +20,7 @@ public class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
 
   @Override
   @Nullable
-  public Navigatable getNavigatable(@NotNull RunDashboardRunConfigurationNode node) {
+  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     RunConfiguration runConfiguration = node.getConfigurationSettings().getConfiguration();
     if (!(runConfiguration instanceof JUnitConfiguration)) return null;
 
@@ -34,31 +32,13 @@ public class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
     PsiClass runClass = jUnitConfiguration.getConfigurationModule().findClass(runClassName);
     if (runClass == null) return null;
 
-    PsiElement psiElement = runClass;
     String testMethod = jUnitConfiguration.getPersistentData().getMethodName();
     if (testMethod != null) {
       PsiMethod[] methods = runClass.findMethodsByName(testMethod, false);
       if (methods.length > 0) {
-        psiElement = methods[0];
+        return methods[0];
       }
     }
-
-    PsiElement elementToNavigate = psiElement;
-    return new Navigatable() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        PsiNavigateUtil.navigate(elementToNavigate, requestFocus);
-      }
-
-      @Override
-      public boolean canNavigate() {
-        return true;
-      }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return true;
-      }
-    };
+    return runClass;
   }
 }
