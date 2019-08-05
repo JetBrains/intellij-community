@@ -111,6 +111,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the file containing the PSI element.
+   * <p></p>
+   * Note: this method might need to traverse the whole AST up, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the file instance, or null if the PSI element is not contained in a file (for example,
    *         the element represents a package or directory).
@@ -122,6 +124,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the text range in the document occupied by the PSI element.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the text range.
    */
@@ -186,8 +190,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the text of the PSI element.
+   * <p></p>
+   * Note: This call requires traversing whole subtree, so it can be expensive for composite elements, and should be avoided if possible.
    *
    * @return the element text.
+   * @see #textMatches
+   * @see #textContains
    */
   @NonNls
   @Contract(pure=true)
