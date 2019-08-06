@@ -249,13 +249,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   protected void setPlaceholderContent(boolean toCenter, JComponent component) {
     myLabelPlaceholder.removeAll();
 
-    if (toCenter /*&& !Registry.is("ide.new.editor.tabs.selection")*/) {
-      final Centerizer center = new Centerizer(component);
-      myLabelPlaceholder.setContent(center);
-    }
-    else {
-      myLabelPlaceholder.setContent(component);
-    }
+    JComponent content = toCenter ? new Centerizer(component, Centerizer.TYPE.BOTH) : new Centerizer(component, Centerizer.TYPE.VERTICAL);
+    myLabelPlaceholder.setContent(content);
 
     myCentered = toCenter;
   }
