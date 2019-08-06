@@ -1,61 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.dgm;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.dgm
 
-import com.intellij.lang.properties.PropertiesFileType;
-import com.intellij.lang.properties.PropertiesLanguage;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.properties.PropertiesFileType
+import com.intellij.lang.properties.PropertiesLanguage
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.groovy.dgm.DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE
+import javax.swing.Icon
 
-import javax.swing.*;
+object DGMFileType : LanguageFileType(PropertiesLanguage.INSTANCE, true), FileTypeIdentifiableByVirtualFile {
 
-public class DGMFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-  public static final DGMFileType INSTANCE = new DGMFileType();
-  private DGMFileType() {
-    super(PropertiesLanguage.INSTANCE, true);
-  }
+  override fun getName(): String = "DGM File Type"
+  override fun getDefaultExtension(): String = ""
+  override fun getDescription(): String = "Groovy extension module descriptor file"
+  override fun getIcon(): Icon? = PropertiesFileType.INSTANCE.icon
 
-  @NotNull
-  @Override
-  public String getName() {
-    return "DGM File Type";
-  }
-
-  @NotNull
-  @Override
-  public String getDescription() {
-    return "Groovy extension module descriptor file";
-  }
-
-  @NotNull
-  @Override
-  public String getDefaultExtension() {
-    return "";
-  }
-
-  @Nullable
-  @Override
-  public Icon getIcon() {
-    return PropertiesFileType.INSTANCE.getIcon();
-  }
-
-  @Override
-  public boolean isMyFileType(@NotNull VirtualFile file) {
-    final VirtualFile parent = file.getParent();
-    if (parent == null) {
-      return false;
+  override fun isMyFileType(file: VirtualFile): Boolean {
+    if (!Comparing.equal(ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE, file.nameSequence)) {
+      return false
     }
-    final CharSequence parentName = parent.getNameSequence();
-    if (Comparing.equal("services", parentName) || Comparing.equal("groovy", parentName)) {
-      final VirtualFile gParent = parent.getParent();
-      if (gParent != null && Comparing.equal("META-INF", gParent.getNameSequence())) {
-        final String fileName = file.getName();
-        return fileName.equals(DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
-      }
+    val parent = file.parent ?: return false
+    val parentName = parent.nameSequence
+    if (!Comparing.equal("services", parentName) && !Comparing.equal("groovy", parentName)) {
+      return false
     }
-    return false;
+    val gParent = parent.parent ?: return false
+    return Comparing.equal("META-INF", gParent.nameSequence)
   }
 }
