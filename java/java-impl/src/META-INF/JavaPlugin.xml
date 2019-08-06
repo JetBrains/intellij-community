@@ -854,7 +854,7 @@
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
-    <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
+    <fileType name="SPI" implementationClass="com.intellij.spi.SPIFileType" fieldName="INSTANCE" language="SPI"/>
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
     <implicitUsageProvider implementation="com.intellij.psi.impl.source.resolve.reference.impl.AtomicReferenceImplicitUsageProvider"/>
