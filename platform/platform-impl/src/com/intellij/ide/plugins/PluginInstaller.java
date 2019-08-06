@@ -13,21 +13,28 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -288,6 +295,37 @@ public class PluginInstaller {
     StartupActionScriptManager.addActionCommands(commands);
 
     fireState(descriptor, true);
+  }
+
+  @Nullable
+  public static File installWithoutRestart(File sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
+    Ref<IOException> ref = new Ref<>();
+    Ref<File> refTarget = new Ref<>();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      String pluginsPath = PathManager.getPluginsPath();
+      try {
+        File target;
+        if (sourceFile.getName().endsWith(".jar")) {
+          target = new File(pluginsPath, sourceFile.getName());
+          FileUtilRt.copy(sourceFile, target);
+        }
+        else {
+          target = new File(pluginsPath, rootEntryName(sourceFile));
+          FileUtil.delete(target);
+          new Decompressor.Zip(sourceFile).extract(new File(pluginsPath));
+        }
+        refTarget.set(target);
+      }
+      catch (IOException e) {
+        ref.set(e);
+      }
+    }, "Installing Plugin...", false, null, parent instanceof JComponent ? (JComponent)parent : null);
+    IOException exception = ref.get();
+    if (exception != null) {
+      Messages.showErrorDialog(parent, "Plugin installation failed: " + exception.getMessage());
+    }
+    fireState(descriptor, true);
+    return exception != null ? null : refTarget.get();
   }
 
   private static String rootEntryName(File zip) throws IOException {

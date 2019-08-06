@@ -218,7 +218,7 @@ public class PluginDownloader {
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
-      state.onPluginInstall(myDescriptor);
+      state.onPluginInstall(myDescriptor, true);
     }
   }
 

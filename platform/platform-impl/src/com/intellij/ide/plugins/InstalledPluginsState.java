@@ -32,6 +32,7 @@ public final class InstalledPluginsState {
 
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
+  private final Map<PluginId, IdeaPluginDescriptor> myInstalledWithoutRestartPlugins = ContainerUtil.newIdentityHashMap();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
 
@@ -88,7 +89,7 @@ public final class InstalledPluginsState {
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
-  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor) {
+  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     boolean existing = PluginManager.isPluginInstalled(id);
 
@@ -97,8 +98,11 @@ public final class InstalledPluginsState {
       if (existing) {
         myUpdatedPlugins.put(id, descriptor);
       }
-      else {
+      else if (restartNeeded) {
         myInstalledPlugins.put(id, descriptor);
+      }
+      else {
+        myInstalledWithoutRestartPlugins.put(id, descriptor);
       }
     }
   }

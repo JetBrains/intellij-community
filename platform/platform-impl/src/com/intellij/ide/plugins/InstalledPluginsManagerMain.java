@@ -145,10 +145,23 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         oldFile = installedPlugin.getPath();
       }
 
-      PluginInstaller.installAfterRestart(file, false, oldFile, pluginDescriptor);
-      ourState.onPluginInstall(pluginDescriptor);
+      boolean installWithoutRestart = oldFile == null && DynamicPlugins.isUnloadSafe(pluginDescriptor);
+      if (installWithoutRestart) {
+        File targetFile = PluginInstaller.installWithoutRestart(file, pluginDescriptor, parent);
+        if (targetFile != null) {
+          IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+          if (targetDescriptor != null) {
+            DynamicPlugins.loadPlugin(targetDescriptor);
+          }
+        }
+      }
+      else {
+        PluginInstaller.installAfterRestart(file, false, oldFile, pluginDescriptor);
+      }
+
+      ourState.onPluginInstall(pluginDescriptor, !installWithoutRestart);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, true));
+      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
       return true;
     }
     catch (IOException ex) {
