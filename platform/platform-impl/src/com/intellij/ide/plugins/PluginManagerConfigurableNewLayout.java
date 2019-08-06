@@ -1439,10 +1439,22 @@ public class PluginManagerConfigurableNewLayout
                                        " won't be able to load.</body></html>");
     }
 
+    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
+
     int rowCount = myPluginModel.getRowCount();
     for (int i = 0; i < rowCount; i++) {
       IdeaPluginDescriptor descriptor = myPluginModel.getObjectAt(i);
-      descriptor.setEnabled(myPluginModel.isEnabled(descriptor.getPluginId()));
+      boolean enabled = myPluginModel.isEnabled(descriptor.getPluginId());
+      if (enabled != descriptor.isEnabled()) {
+        if (!enabled) {
+          pluginDescriptorsToDisable.add(descriptor);
+        }
+        else {
+          pluginDescriptorsToEnable.add(descriptor);
+        }
+      }
+      descriptor.setEnabled(enabled);
     }
 
     List<String> disableIds = new ArrayList<>();
@@ -1458,6 +1470,17 @@ public class PluginManagerConfigurableNewLayout
     }
     catch (IOException e) {
       PluginManagerMain.LOG.error(e);
+    }
+
+    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin)) &&
+        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin))) {
+      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
+        DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl) descriptor);
+      }
+      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
+        DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl) descriptor);
+      }
+      return;
     }
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {

@@ -93,7 +93,7 @@ public interface ExtensionPoint<T> {
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   /**
-   * Unregisters an extension of the specified type.
+   * Unregisters extensions for which the specified predicate returns false.
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
@@ -116,6 +116,8 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   String getClassName();
+
+  boolean isUnloadSafe();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

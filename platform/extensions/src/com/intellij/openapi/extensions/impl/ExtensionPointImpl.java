@@ -67,14 +67,17 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @Nullable
   Class<T> myExtensionClass;
 
+  private final boolean myUnloadSafe;
+
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
                      @NotNull MutablePicoContainer picoContainer,
-                     @NotNull PluginDescriptor pluginDescriptor) {
+                     @NotNull PluginDescriptor pluginDescriptor, boolean unloadSafe) {
     myName = name;
     myClassName = className;
     myPicoContainer = picoContainer;
     myDescriptor = pluginDescriptor;
+    myUnloadSafe = unloadSafe;
   }
 
   @TestOnly
@@ -101,6 +104,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @Override
   public String getClassName() {
     return myClassName;
+  }
+
+  @Override
+  public boolean isUnloadSafe() {
+    return myUnloadSafe;
   }
 
   @Override

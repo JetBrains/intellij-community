@@ -81,9 +81,11 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       throw new ExtensionInstantiationException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
     }
 
+    boolean unloadSafe = Boolean.parseBoolean(extensionPointElement.getAttributeValue("unloadSafe"));
+
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, picoContainer, pluginDescriptor);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, picoContainer, pluginDescriptor, unloadSafe);
     }
     else {
       boolean registerInPicoContainer;
@@ -102,7 +104,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor);
       }
       else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor);
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor, unloadSafe);
       }
     }
     registerExtensionPoint(point);
@@ -167,7 +169,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       point = new PicoContainerAwareInterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
+      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor, false);
     }
     registerExtensionPoint(point);
   }
@@ -181,7 +183,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       point = new PicoContainerAwareInterfaceExtensionPoint<>(name, extensionClass.getName(), myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myPicoContainer, pluginDescriptor);
+      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myPicoContainer, pluginDescriptor, false);
     }
     registerExtensionPoint(point);
     return point;
@@ -194,7 +196,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @TestOnly
   public <T> ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
     // any object name can be used, because EP must not create any instance
-    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myPicoContainer, pluginDescriptor);
+    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myPicoContainer, pluginDescriptor, false);
     registerExtensionPoint(point);
     return point;
   }

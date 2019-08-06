@@ -90,10 +90,12 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
       }
     }
 
-    myComponentConfigCount = componentConfigCount
+    if (myComponentConfigCount <= 0) {
+      myComponentConfigCount = componentConfigCount
+    }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null) {
+    if (picoContainer.parent == null && !LoadingPhase.isStartupComplete() /* loading plugin on the fly */) {
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED)
     }
 

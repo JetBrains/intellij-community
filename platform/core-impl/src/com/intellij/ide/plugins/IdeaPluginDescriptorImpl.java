@@ -508,6 +508,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
+  public ContainerDescriptor getAppContainerDescriptor() {
+    return myAppContainerDescriptor;
+  }
+
+  public ContainerDescriptor getProjectContainerDescriptor() {
+    return myProjectContainerDescriptor;
+  }
+
+  public ContainerDescriptor getModuleContainerDescriptor() {
+    return myModuleContainerDescriptor;
+  }
+
   void registerExtensions(@NotNull ExtensionPointImpl<?>[] extensionPoints, @NotNull MutablePicoContainer picoContainer) {
     if (myExtensions == null) {
       return;
@@ -637,10 +649,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getAndClearActionDescriptionElements() {
-    List<Element> result = myActionElements;
-    myActionElements = null;
-    return result;
+  public List<Element> getActionDescriptionElements() {
+    return myActionElements;
   }
 
   @Override

@@ -12,7 +12,7 @@ import org.picocontainer.MutablePicoContainer;
 
 public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull MutablePicoContainer picoContainer) {
-    super(name, clazz.getName(), picoContainer, new UndefinedPluginDescriptor());
+    super(name, clazz.getName(), picoContainer, new UndefinedPluginDescriptor(), false);
 
     myExtensionClass = clazz;
   }
@@ -20,8 +20,9 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   InterfaceExtensionPoint(@NotNull String name,
                           @NotNull String className,
                           @NotNull MutablePicoContainer picoContainer,
-                          @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, className, picoContainer, pluginDescriptor);
+                          @NotNull PluginDescriptor pluginDescriptor,
+                          boolean unloadSafe) {
+    super(name, className, picoContainer, pluginDescriptor, unloadSafe);
   }
 
   protected boolean isUsePicoComponentAdapter() {
@@ -67,7 +68,7 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
                                               @NotNull String className,
                                               @NotNull MutablePicoContainer picoContainer,
                                               @NotNull PluginDescriptor pluginDescriptor) {
-      super(name, className, picoContainer, pluginDescriptor);
+      super(name, className, picoContainer, pluginDescriptor, false);
     }
 
     @Override

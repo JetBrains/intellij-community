@@ -49,7 +49,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getCategory();
 
   @Nullable
-  List<Element> getAndClearActionDescriptionElements();
+  List<Element> getActionDescriptionElements();
 
   String getVendorEmail();
 

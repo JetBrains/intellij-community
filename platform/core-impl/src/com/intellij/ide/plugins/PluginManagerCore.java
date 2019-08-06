@@ -159,7 +159,11 @@ public class PluginManagerCore {
 
   public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
     ourPlugins.set(descriptors);
-    ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(descriptors, (p) -> !shouldSkipPlugin(p)));
+    updateLoadedPlugins();
+  }
+
+  public static synchronized void updateLoadedPlugins() {
+    ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(ourPlugins.get(), (p) -> !shouldSkipPlugin(p)));
   }
 
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
@@ -1334,7 +1338,16 @@ public class PluginManagerCore {
     }
   }
 
-  public static void initClassLoader(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
+  public static void initClassLoader(@NotNull ClassLoader coreLoader,
+                                     Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
+                                     IdeaPluginDescriptorImpl pluginDescriptor) {
+    File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
+    ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor);
+    if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
+    pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
+  }
+
+  public static void initClassLoaderForDisabledPlugin(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
     List<File> classPath = descriptor.getClassPath();
     ClassLoader loader = createPluginClassLoader(classPath.toArray(ArrayUtilRt.EMPTY_FILE_ARRAY), new ClassLoader[]{parentLoader}, descriptor);
     descriptor.setLoader(loader);
@@ -1525,10 +1538,7 @@ public class PluginManagerCore {
         pluginDescriptor.setLoader(coreLoader);
       }
       else {
-        File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-        ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor);
-        if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
-        pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
+        initClassLoader(coreLoader, idToDescriptorMap, pluginDescriptor);
       }
     }
 
@@ -1586,7 +1596,7 @@ public class PluginManagerCore {
           getLogger().info("Plugin '" + descriptor.getName() + "' can't be loaded because: " + toNotLoadReason);
         }
         disabledPluginNames.put(descriptor.getPluginId().getIdString(), descriptor.getName());
-        initClassLoader(parentLoader, descriptor);
+        initClassLoaderForDisabledPlugin(parentLoader, descriptor);
       }
     }
   }

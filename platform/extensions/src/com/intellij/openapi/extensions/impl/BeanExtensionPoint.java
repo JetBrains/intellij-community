@@ -12,8 +12,9 @@ final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   BeanExtensionPoint(@NotNull String name,
                      @NotNull String className,
                      @NotNull MutablePicoContainer picoContainer,
-                     @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, className, picoContainer, pluginDescriptor);
+                     @NotNull PluginDescriptor pluginDescriptor,
+                     boolean unloadSafe) {
+    super(name, className, picoContainer, pluginDescriptor, unloadSafe);
   }
 
   @Override
