@@ -43,6 +43,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import static org.junit.Assume.assumeTrue;
+
 public class PersistentFsTest extends PlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
@@ -640,5 +642,20 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals("d1", vd1.getName());
     assertFalse(((VirtualDirectoryImpl)vd1).allChildrenLoaded());
     UsefulTestCase.assertEmpty(((VirtualDirectoryImpl)vd1).getCachedChildren());
+  }
+
+  public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
+    assumeTrue("Windows is required", SystemInfo.isWindows);
+    File temp = createTempDir("", false);
+    File file = new File(temp, "rename.txt");
+    FileUtil.createParentDirs(file);
+    FileUtil.writeToFile(file, "x");
+    VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vtemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vtemp);
+    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
+    VirtualFile[] newChildren = vtemp.getChildren();
+    assertOneElement(newChildren);
   }
 }

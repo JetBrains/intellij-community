@@ -155,7 +155,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
       return current;
     }
 
-    Set<String> toAdd = new THashSet<>(Arrays.asList(delegateNames));
+    Set<String> toAdd = new THashSet<>(Arrays.asList(delegateNames), FileUtil.PATH_HASHING_STRATEGY);
     for (FSRecords.NameId nameId : current) {
       toAdd.remove(nameId.name.toString());
     }
