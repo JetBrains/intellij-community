@@ -38,6 +38,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testLambdaParameterTypeDetection() {
+    configure();
+    PsiReferenceExpression referenceExpression =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiReferenceExpression.class);
+
+    PsiType type = referenceExpression.getType();
+    assertTrue(type.getCanonicalText(), type.equalsToText(CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testAvoidClassRefCachingDuringInference() {
     doTestAllMethodCallExpressions();
   }

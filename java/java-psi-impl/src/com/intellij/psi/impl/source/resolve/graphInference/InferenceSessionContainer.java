@@ -121,7 +121,9 @@ public class InferenceSessionContainer {
                                             @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
-    if (errorMessages != null) {
+    if (errorMessages != null && !MethodCandidateInfo.isOverloadCheck()) {
+      //for lambda parameter type calculation, the parent inference may contain errors due to skipping that lambda constraints
+      //but the type of the lambda parameter should not depend on the lambda body, thus the nested inference may still provide valid results
       return null;
     }
 
