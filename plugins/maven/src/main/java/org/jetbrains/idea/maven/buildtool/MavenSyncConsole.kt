@@ -54,14 +54,12 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun addText(text: String) {
-    if (!started || finished) return
+  fun addText(text: String) = doIfImportInProcess {
     addText(mySyncId, text, true)
   }
 
   @Synchronized
-  fun addText(parentId: Any, text: String, stdout: Boolean) {
-    if (!started || finished) return
+  fun addText(parentId: Any, text: String, stdout: Boolean) = doIfImportInProcess {
     if (StringUtil.isEmpty(text)) {
       return
     }
@@ -76,9 +74,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun terminated(exitCode: Int) {
-    if (!started || finished) return
-
+  fun terminated(exitCode: Int) = doIfImportInProcess {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
     tasks.forEach { completeTask(it.first, it.second, FailureResultImpl("Terminated with exit code = $exitCode")) }
@@ -91,7 +87,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun notifyReadingProblems(file: VirtualFile) {
+  fun notifyReadingProblems(file: VirtualFile) = doIfImportInProcess {
     debugLog("reading problems in $file")
     hasErrors = true
     mySyncView.onEvent(mySyncId, FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", "Error reading ${file.path}",
@@ -118,7 +114,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun showError(keyPrefix: String, dependency: String) {
+  private fun showError(keyPrefix: String, dependency: String) = doIfImportInProcess {
     hasErrors = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
@@ -128,8 +124,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun startTask(parentId: Any, taskName: String) {
-    if (!started || finished) return
+  private fun startTask(parentId: Any, taskName: String) = doIfImportInProcess {
     debugLog("Maven sync: start $taskName")
     if (myStartedSet.add(parentId to taskName)) {
       mySyncView.onEvent(mySyncId, StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
@@ -138,8 +133,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
 
   @Synchronized
-  private fun completeTask(parentId: Any, taskName: String, result: EventResult) {
-    if (!started || finished) return
+  private fun completeTask(parentId: Any, taskName: String, result: EventResult) = doIfImportInProcess {
     hasErrors =  hasErrors || result is FailureResultImpl
 
     debugLog("Maven sync: complete $taskName with $result")
@@ -154,13 +148,13 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun completeUmbrellaEvents(keyPrefix: String) {
+  private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess{
     val taskName = SyncBundle.message("${keyPrefix}.resolve")
     completeTask(mySyncId, taskName, DerivedResultImpl())
   }
 
   @Synchronized
-  private fun downloadEventStarted(keyPrefix: String, dependency: String) {
+  private fun downloadEventStarted(keyPrefix: String, dependency: String) = doIfImportInProcess{
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
     startTask(mySyncId, downloadString)
@@ -168,7 +162,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun downloadEventCompleted(keyPrefix: String, dependency: String) {
+  private fun downloadEventCompleted(keyPrefix: String, dependency: String) = doIfImportInProcess{
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
     addText(downloadArtifactString, downloadArtifactString, true)
@@ -176,7 +170,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) {
+  private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) = doIfImportInProcess{
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
     if (stackTrace != null && Registry.`is`("maven.spy.events.debug")) {
@@ -186,6 +180,11 @@ class MavenSyncConsole(private val myProject: Project) {
       addText(downloadArtifactString, error, true)
     }
     completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
+  }
+
+  private inline fun doIfImportInProcess(action: () -> Unit) {
+    if (!started || finished) return
+    action.invoke()
   }
 
 
