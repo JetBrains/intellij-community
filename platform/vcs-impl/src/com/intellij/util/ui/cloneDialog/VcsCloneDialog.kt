@@ -17,7 +17,6 @@ import java.awt.CardLayout
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionListener
 
 /**
@@ -88,10 +87,7 @@ class VcsCloneDialog private constructor(private val project: Project,
     val extensionId = extension.javaClass.name
     val mainComponent = extensionComponents.getOrPut(extensionId, {
       val component = extension.createMainComponent(project)
-      val scrollableMainPanel = ScrollPaneFactory.createScrollPane(component.getView(), true)
-      scrollableMainPanel.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-      scrollableMainPanel.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-      mainPanel.add(scrollableMainPanel, extensionId)
+      mainPanel.add(component.getView(), extensionId)
       disposable.attachChild(component)
       component.addComponentStateListener(listener)
       component
