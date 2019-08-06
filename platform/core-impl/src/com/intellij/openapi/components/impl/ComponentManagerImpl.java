@@ -37,10 +37,7 @@ import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Disposable;
 import org.picocontainer.MutablePicoContainer;
@@ -209,6 +206,37 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @TestOnly
   public void registerComponentImplementation(@NotNull Class<?> componentKey, @NotNull Class<?> componentImplementation) {
     registerComponentImplementation(componentKey, componentImplementation, false);
+  }
+
+  /**
+   * Use only if approved by core team.
+   */
+  @ApiStatus.Internal
+  public void registerComponentImplementation(@NotNull Class<?> key,
+                                              @NotNull Class<?> implementation,
+                                              @NotNull PluginId pluginId,
+                                              boolean override) {
+    MutablePicoContainer picoContainer = getPicoContainer();
+    if (override && picoContainer.unregisterComponent(key) == null) {
+      throw new IllegalStateException("Component " + key + " must be already registered");
+    }
+    picoContainer.registerComponent(new ComponentConfigComponentAdapter(key, implementation, pluginId, false));
+  }
+
+  /**
+   * Use only if approved by core team.
+   */
+  @ApiStatus.Internal
+  public void registerServiceImplementation(@NotNull Class<?> serviceClass,
+                                            @NotNull Class<?> implementation,
+                                            @NotNull PluginId pluginId,
+                                            boolean override) {
+    MutablePicoContainer picoContainer = getPicoContainer();
+    String serviceKey = serviceClass.getName();
+    if (override && picoContainer.unregisterComponent(serviceKey) == null) {
+      throw new IllegalStateException("Service " + serviceKey + " must be already registered");
+    }
+    picoContainer.registerComponent(new ComponentConfigComponentAdapter(serviceKey, implementation, pluginId, false));
   }
 
   @TestOnly
@@ -437,11 +465,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     final boolean isWorkspaceComponent;
 
-    ComponentConfigComponentAdapter(@NotNull Class<?> interfaceClass,
+    ComponentConfigComponentAdapter(@NotNull Object key,
                                     @NotNull Class<?> implementationClass,
                                     @Nullable PluginId pluginId,
                                     boolean isWorkspaceComponent) {
-      super(interfaceClass, implementationClass, null, true);
+      super(key, implementationClass, null, true);
 
       myPluginId = pluginId;
       this.isWorkspaceComponent = isWorkspaceComponent;

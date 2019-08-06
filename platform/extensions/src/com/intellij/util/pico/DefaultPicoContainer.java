@@ -145,6 +145,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
+  @Nullable
   public ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
     componentAdapters.remove(adapter);
