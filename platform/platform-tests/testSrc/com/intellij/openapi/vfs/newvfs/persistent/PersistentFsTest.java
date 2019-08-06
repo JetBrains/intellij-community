@@ -22,8 +22,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -42,6 +42,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
+
+import static org.junit.Assume.assumeTrue;
 
 public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
@@ -640,5 +642,20 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     assertEquals("d1", vd1.getName());
     assertFalse(((VirtualDirectoryImpl)vd1).allChildrenLoaded());
     UsefulTestCase.assertEmpty(((VirtualDirectoryImpl)vd1).getCachedChildren());
+  }
+
+  public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
+    assumeTrue("Windows is required", SystemInfo.isWindows);
+    File temp = createTempDir("", false);
+    File file = new File(temp, "rename.txt");
+    FileUtil.createParentDirs(file);
+    FileUtil.writeToFile(file, "x");
+    VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vtemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vtemp);
+    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
+    VirtualFile[] newChildren = vtemp.getChildren();
+    assertOneElement(newChildren);
   }
 }
