@@ -655,6 +655,9 @@ class RootIndex {
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
+  /**
+   * @return list of all super-directories which are marked as some kind of root, or {@code null} if {@code deepDir} is under the ignored folder (with no nested roots)
+   */
   @Nullable("returns null only if dir is under ignored folder")
   private static List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = new ArrayList<>();

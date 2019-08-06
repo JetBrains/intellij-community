@@ -24,7 +24,7 @@ public abstract class DirectoryInfo {
 
   /**
    * Returns {@code true} if {@code file} located under this directory is excluded from the project. If {@code file} is a directory it means
-   * that all of its content is recursively excluded from the project.
+   * that all of its content is recursively excluded from the project (except the sub-directories which are explicitly included back, e.g. module roots)
    *
    * @param file a file under the directory described by this instance.
    */
