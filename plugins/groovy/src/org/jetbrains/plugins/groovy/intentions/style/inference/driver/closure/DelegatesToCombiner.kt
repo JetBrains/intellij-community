@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
@@ -10,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.rawType
 
 class DelegatesToCombiner {
   private var delegateType: PsiType = PsiType.NULL
@@ -42,6 +44,19 @@ class DelegatesToCombiner {
 
   private fun setDelegate(candidate: GroovyMethodCandidate) {
     setDelegateByArgument(candidate.argumentMapping?.arguments?.singleOrNull() ?: return)
+  }
+
+  fun setDelegate(clazz: PsiClass) {
+    delegateType = clazz.rawType()
+  }
+
+  fun setDelegate(expression: GrExpression) {
+    delegateType = expression.type ?: PsiType.NULL
+    (expression.reference?.resolve() as? GrParameter)?.run { delegateParameter = this }
+  }
+
+  fun setStrategyByExpression(expression: GrExpression) {
+    delegationStrategy = expression
   }
 
   private fun setStrategy(candidate: GroovyMethodCandidate) {

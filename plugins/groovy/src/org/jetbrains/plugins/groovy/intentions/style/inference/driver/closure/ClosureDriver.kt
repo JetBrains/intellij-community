@@ -148,6 +148,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       }
       collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
                                        requiredTypesCollector)
+      collectDelegatesToDependencies(closureParameters.getValue(parameter), instructions)
       val delegatesToCombiner = closureParameters.getValue(parameter).delegatesToCombiner
       for (usage in instructions) {
         val nearestCall = usage.element!!.parentOfType<GrCall>()

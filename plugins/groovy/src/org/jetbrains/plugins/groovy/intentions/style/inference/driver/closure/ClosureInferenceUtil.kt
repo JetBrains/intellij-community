@@ -6,16 +6,13 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_ABSTRACT_TYPE_METHODS
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
-import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -27,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -123,26 +121,22 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
                                      requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
   val parameter = closureParameter.parameter
   val parameterType = parameter.type
+  val outerMethod = parameter.parentOfType<GrMethod>()!!
   parameter.setType(PsiType.getTypeByName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, parameter.project, parameter.resolveScope))
-  for (usage in usages) {
-    val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
-    if (nearestCall == usage.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
-      continue
-    }
-    val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
-    val mapping = resolveResult.candidate?.argumentMapping ?: continue
+  usages.forEachClosureForwarding { resolveResult ->
+    val mapping = resolveResult.candidate?.argumentMapping ?: return@forEachClosureForwarding
     val innerParameter = mapping.targetParameter(
-      mapping.arguments.find { it is ExpressionArgument && it.expression.reference?.resolve() == parameter } ?: continue
-    ) ?: continue
+      mapping.arguments.find { it is ExpressionArgument && it.expression.reference?.resolve() == parameter }
+      ?: return@forEachClosureForwarding
+    ) ?: return@forEachClosureForwarding
     val hint = innerParameter.annotations.mapNotNull {
       GrAnnotationUtil.inferClassAttribute(it, "value")?.qualifiedName
-    }.mapNotNull { SignatureHintProcessor.getHintProcessor(it) }.firstOrNull() ?: continue
+    }.mapNotNull { SignatureHintProcessor.getHintProcessor(it) }.firstOrNull() ?: return@forEachClosureForwarding
     val options =
       AnnotationUtil.arrayAttributeValues(innerParameter.annotations.first().findAttributeValue("options")).mapNotNull {
         (it as? PsiLiteral)?.value as? String
       }.toTypedArray()
-    val outerMethod = usage.element!!.parentOfType<GrMethod>()!!
-    val innerMethod = nearestCall.resolveMethod()
+    val innerMethod = resolveResult.candidate?.method
     // We cannot use GroovyMethodResult#getSubstitutor because we need to leave type parameters of outerMethod among substitution variants
     val substitutor = collectGenericSubstitutor(resolveResult, outerMethod)
     val gdkGuard = when (innerMethod) {
@@ -176,6 +170,70 @@ private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMe
       resolveSession.substituteWithInferenceVariables(typeParameter.type()))?.instantiation = typeParameter.type()
   }
   return resolveSession.inferSubst(resolveResult)
+}
+
+
+fun collectDelegatesToDependencies(closureParameter: ParameterizedClosure,
+                                   usages: List<ReadWriteVariableInstruction>) {
+  val parameter = closureParameter.parameter
+  val combiner = closureParameter.delegatesToCombiner
+  usages.forEachClosureForwarding { resolveResult ->
+    val mapping = resolveResult.candidate?.argumentMapping ?: return@forEachClosureForwarding
+    val innerParameter = mapping.targetParameter(
+      mapping.arguments.find { it is ExpressionArgument && it.expression.reference?.resolve() == parameter }
+      ?: return@forEachClosureForwarding
+    ) ?: return@forEachClosureForwarding
+    val annotation = innerParameter.annotations.find { it.qualifiedName == "groovy.lang.DelegatesTo" } ?: return@forEachClosureForwarding
+    val valueAttribute = annotation.findDeclaredAttributeValue("value")?.reference?.resolve() as? PsiClass
+    val typeAttribute = annotation.findDeclaredAttributeValue("type")?.stringValue()
+    val strategyAttribute = (annotation.findDeclaredAttributeValue("strategy") as? GrExpression)
+    if (valueAttribute != null && valueAttribute.name != "DelegatesTo.Target") {
+      combiner.setDelegate(valueAttribute)
+    }
+    else if (typeAttribute != null) {
+      /*todo*/
+    }
+    else {
+      val delegateParameters = resolveResult.candidate?.method?.parameters?.mapNotNull { param ->
+        param.annotations.find { anno -> anno.qualifiedName == "groovy.lang.DelegatesTo.Target" }?.run { param to this }
+      } ?: return@forEachClosureForwarding
+      val targetLiteral = annotation.findDeclaredAttributeValue("target")
+      val targetParameter = if (targetLiteral != null) {
+        delegateParameters.find { (_, anno) ->
+          if (anno !is GrAnnotation) return@find false
+          anno.parameterList.attributes.find { it.name == "value" || it.name == null }?.value?.stringValue() == targetLiteral.stringValue()
+        }
+      }
+      else {
+        delegateParameters.firstOrNull()
+      }?.first
+      val argument = mapping.arguments.find { mapping.targetParameter(it) == targetParameter } ?: return@forEachClosureForwarding
+      val argumentExpression = (argument as? ExpressionArgument)?.expression
+      if (argumentExpression != null) {
+        combiner.setDelegate(argumentExpression)
+      }
+      else {
+        combiner.setDelegate(argument.type.resolve() ?: return@forEachClosureForwarding)
+      }
+    }
+    if (strategyAttribute != null) {
+      combiner.setStrategyByExpression(strategyAttribute)
+    }
+  }
+
+}
+
+
+private fun List<ReadWriteVariableInstruction>.forEachClosureForwarding(action: (GroovyMethodResult) -> Unit) {
+  for (usage in this) {
+    val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
+    if (nearestCall == usage.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
+      continue
+    }
+    val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
+    action(resolveResult)
+  }
+
 }
 
 

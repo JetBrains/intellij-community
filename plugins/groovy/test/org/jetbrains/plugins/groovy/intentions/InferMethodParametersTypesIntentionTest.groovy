@@ -425,4 +425,15 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDelegatesToNamedTarget() {
+    doTest(true)
+  }
+
+  void testDelegatesToWithStrategy() {
+    doTest(true)
+  }
+
+  void testDelegateInferenceFromInnerMethod() {
+    doTest(true)
+  }
 }
