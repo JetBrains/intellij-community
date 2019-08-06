@@ -62,9 +62,16 @@ public final class ServiceManagerImpl implements Disposable {
 
       // empty serviceImplementation means we want to unregister service
       if (!StringUtil.isEmpty(descriptor.getImplementation())) {
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, componentManager));
+        picoContainer.registerComponent(createServiceAdapter(descriptor, pluginDescriptor, componentManager));
       }
     }
+  }
+
+  @NotNull
+  static ComponentAdapter createServiceAdapter(@NotNull ServiceDescriptor descriptor,
+                                               @NotNull IdeaPluginDescriptor pluginDescriptor,
+                                               @NotNull ComponentManager componentManager) {
+    return new MyComponentAdapter(descriptor, pluginDescriptor, componentManager);
   }
 
   @ApiStatus.Internal

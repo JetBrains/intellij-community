@@ -14,7 +14,6 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
@@ -24,6 +23,7 @@ import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.ConcurrentMap
 
@@ -36,7 +36,7 @@ private fun createPicoContainer(parent: ComponentManager?): DefaultPicoContainer
   }
 }
 
-abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent, createPicoContainer(parent)), AreaInstance {
+abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent, createPicoContainer(parent)) {
   private var handlingInitComponentError = false
 
   private val componentStore: IComponentStore
@@ -161,5 +161,34 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
       }
     }
     return result
+  }
+
+  /**
+   * Use only if approved by core team.
+   */
+  @Internal
+  fun registerComponent(key: Class<*>, implementation: Class<*>, pluginId: PluginId, override: Boolean) {
+    val picoContainer = picoContainer
+    if (override && picoContainer.unregisterComponent(key) == null) {
+      throw IllegalStateException("Component $key must be already registered")
+    }
+    picoContainer.registerComponent(ComponentConfigComponentAdapter(key, implementation, pluginId, false))
+  }
+
+  /**
+   * Use only if approved by core team.
+   */
+  @Internal
+  fun registerService(serviceClass: Class<*>, implementation: Class<*>, pluginDescriptor: IdeaPluginDescriptor, override: Boolean) {
+    val picoContainer = picoContainer
+    val serviceKey = serviceClass.name
+    if (override && picoContainer.unregisterComponent(serviceKey) == null) {
+      throw IllegalStateException("Service $serviceKey must be already registered")
+    }
+
+    val descriptor = ServiceDescriptor()
+    descriptor.serviceInterface = serviceClass.name
+    descriptor.serviceImplementation = implementation.name
+    picoContainer.registerComponent(ServiceManagerImpl.createServiceAdapter(descriptor, pluginDescriptor, this))
   }
 }

@@ -208,37 +208,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     registerComponentImplementation(componentKey, componentImplementation, false);
   }
 
-  /**
-   * Use only if approved by core team.
-   */
-  @ApiStatus.Internal
-  public void registerComponentImplementation(@NotNull Class<?> key,
-                                              @NotNull Class<?> implementation,
-                                              @NotNull PluginId pluginId,
-                                              boolean override) {
-    MutablePicoContainer picoContainer = getPicoContainer();
-    if (override && picoContainer.unregisterComponent(key) == null) {
-      throw new IllegalStateException("Component " + key + " must be already registered");
-    }
-    picoContainer.registerComponent(new ComponentConfigComponentAdapter(key, implementation, pluginId, false));
-  }
-
-  /**
-   * Use only if approved by core team.
-   */
-  @ApiStatus.Internal
-  public void registerServiceImplementation(@NotNull Class<?> serviceClass,
-                                            @NotNull Class<?> implementation,
-                                            @NotNull PluginId pluginId,
-                                            boolean override) {
-    MutablePicoContainer picoContainer = getPicoContainer();
-    String serviceKey = serviceClass.getName();
-    if (override && picoContainer.unregisterComponent(serviceKey) == null) {
-      throw new IllegalStateException("Service " + serviceKey + " must be already registered");
-    }
-    picoContainer.registerComponent(new ComponentConfigComponentAdapter(serviceKey, implementation, pluginId, false));
-  }
-
   @TestOnly
   public void registerComponentImplementation(@NotNull Class<?> componentKey,
                                               @NotNull Class<?> componentImplementation,
@@ -459,17 +428,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myNameToComponent.get(name);
   }
 
-  private final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {
+  protected final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {
     private final PluginId myPluginId;
     private volatile Object myInitializedComponentInstance;
     private boolean myInitializing;
 
     final boolean isWorkspaceComponent;
 
-    ComponentConfigComponentAdapter(@NotNull Object key,
-                                    @NotNull Class<?> implementationClass,
-                                    @Nullable PluginId pluginId,
-                                    boolean isWorkspaceComponent) {
+    public ComponentConfigComponentAdapter(@NotNull Class<?> key,
+                                           @NotNull Class<?> implementationClass,
+                                           @Nullable PluginId pluginId,
+                                           boolean isWorkspaceComponent) {
       super(key, implementationClass, null, true);
 
       myPluginId = pluginId;
