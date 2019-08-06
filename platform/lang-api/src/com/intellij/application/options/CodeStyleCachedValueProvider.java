@@ -97,11 +97,12 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
     private void start() {
       final Application application = ApplicationManager.getApplication();
+      Runnable computeSettingsInRA = () -> application.runReadAction(() -> computeSettings());
       if (!application.isUnitTestMode()) {
-        application.executeOnPooledThread(() -> computeSettings());
+        application.executeOnPooledThread(computeSettingsInRA);
       }
       else {
-        computeSettings();
+        computeSettingsInRA.run();
       }
     }
 
