@@ -122,7 +122,9 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     UIUtil.setCustomTitleBar(frame, this, runnable -> Disposer.register(this, () -> runnable.run()));
 
     updateMainMenuVisibility();
+  }
 
+  public void init(@NotNull IdeFrameImpl frame) {
     createStatusBar(frame);
   }
 

@@ -63,6 +63,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
     if (frameInfo != null) {
       windowManager.restoreFrameState(frame, frameInfo)
     }
+
+    frame.preInit()
     frame.isVisible = true
     frame.init()
   }

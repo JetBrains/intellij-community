@@ -108,16 +108,19 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setupCloseAction();
   }
 
-  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
-  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
-  public void init() {
+  public void preInit() {
     updateTitle();
 
     myRootPane = new IdeRootPane(this);
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
+  }
+
+  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
+  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
+  public void init() {
+    myRootPane.init(this);
 
     MnemonicHelper.init(this);
 

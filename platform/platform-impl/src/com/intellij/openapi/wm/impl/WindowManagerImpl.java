@@ -552,6 +552,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     FrameInfo frameInfo = null;
     if (isNewFrame) {
       frame = new IdeFrameImpl();
+      frame.preInit();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();
