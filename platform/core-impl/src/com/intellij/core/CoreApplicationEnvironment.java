@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -86,13 +84,11 @@ public class CoreApplicationEnvironment {
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
-                                      new StaticGetter<>(myFileTypeRegistry),
+                                      () -> myFileTypeRegistry,
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
-
-    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(

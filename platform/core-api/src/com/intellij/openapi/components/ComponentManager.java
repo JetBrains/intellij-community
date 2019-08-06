@@ -4,9 +4,11 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -19,7 +21,7 @@ import org.picocontainer.PicoContainer;
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
-public interface ComponentManager extends UserDataHolder, Disposable {
+public interface ComponentManager extends UserDataHolder, Disposable, AreaInstance {
   /**
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
@@ -51,7 +53,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @return {@code true} if there is a component with the specified interface class;
    * {@code false} otherwise
    */
-  boolean hasComponent(@NotNull Class interfaceClass);
+  boolean hasComponent(@NotNull Class<?> interfaceClass);
 
   /**
    * Gets all components whose implementation class is derived from {@code baseClass}.
@@ -83,7 +85,9 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    */
   @NotNull
   @Deprecated
-  <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName);
+  default <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+    return getExtensionArea().getExtensionPoint(extensionPointName).getExtensions();
+  }
 
   /**
    * @return condition for this component being disposed.
@@ -93,5 +97,19 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   Condition<?> getDisposed();
 
   default void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
+  }
+
+  @ApiStatus.Internal
+  default <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+    // default impl to keep backward compatibility
+    //noinspection unchecked
+    return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
+  }
+
+  @NotNull
+  @Override
+  default ExtensionsArea getExtensionArea() {
+    // default impl to keep backward compatibility
+    throw new AbstractMethodError();
   }
 }

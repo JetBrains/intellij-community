@@ -13,17 +13,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -47,7 +42,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.nio.file.Path;
@@ -77,7 +71,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath.toString() : projectName));
+    super(ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
@@ -93,7 +87,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   // default project constructor
   ProjectImpl() {
-    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
+    super(ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -142,14 +136,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
       });
     }
-  }
-
-  @Override
-  protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
-    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    MutablePicoContainer container = super.bootstrapPicoContainer(name);
-    container.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
-    return container;
   }
 
   // do not call for default project
@@ -323,7 +309,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     // we use super here, because temporarilyDisposed will be true if project closed
     LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
     disposeComponents();
-    Extensions.disposeArea(this);
 
     super.dispose();
 
@@ -334,18 +319,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  @NotNull
-  @Override
-  protected MutablePicoContainer createPicoContainer() {
-    return Extensions.getArea(this).getPicoContainer();
   }
 
   @Override

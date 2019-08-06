@@ -3,7 +3,6 @@ package com.intellij.json;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +42,7 @@ public class JsonSpellcheckerTest extends JsonTestCase {
     PsiFile[] files = myFixture.configureByFiles(getTestName(false) + ".json", "Schema.json");
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(files[1].getVirtualFile(),
                                                                      getAvailabilityPredicate()));
-    MutablePicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+    MutablePicoContainer container = (MutablePicoContainer)getProject().getPicoContainer();
     String key = JsonSchemaService.class.getName();
     container.unregisterComponent(key);
     container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);

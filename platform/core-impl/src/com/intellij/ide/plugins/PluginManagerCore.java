@@ -13,9 +13,11 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
@@ -41,6 +43,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -406,7 +409,7 @@ public class PluginManagerCore {
   @ApiStatus.Internal
   @NotNull
   public static PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause,
-                                                      @NotNull Class pluginClass) {
+                                                      @NotNull Class<?> pluginClass) {
     ClassLoader classLoader = pluginClass.getClassLoader();
     PluginId pluginId = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginId()
                                                                  : getPluginByClassName(pluginClass.getName());
@@ -530,11 +533,6 @@ public class PluginManagerCore {
     }
     String loadPlugins = System.getProperty("idea.load.plugins");
     return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
-  }
-
-  public static void configureExtensions() {
-    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
-    Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
   @Nullable
@@ -1496,7 +1494,6 @@ public class PluginManagerCore {
   @NotNull
   private static IdeaPluginDescriptorImpl[] initializePlugins(@NotNull ClassLoader coreLoader) {
     Activity loadPluginsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
-    configureExtensions();
 
     List<String> errors = new ArrayList<>();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);
@@ -1536,16 +1533,6 @@ public class PluginManagerCore {
     }
 
     loadPluginsActivity.end("plugin count: " + pluginDescriptors.length);
-    Activity registerExtensionsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_EXTENSIONS);
-    registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getRootArea(), result);
-    //noinspection deprecation
-    Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
-      @Override
-      public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
-        registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getArea(areaInstance), result);
-      }
-    });
-    registerExtensionsActivity.end();
 
     ourLoadedPlugins = Collections.unmodifiableList(result);
     ourPlugins.set(pluginDescriptors);
@@ -1634,15 +1621,17 @@ public class PluginManagerCore {
     }
   }
 
-  private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area,
-                                                           @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins) {
+  @ApiStatus.Internal
+  public static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area,
+                                                          @NotNull MutablePicoContainer container,
+                                                          @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins) {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      descriptor.registerExtensionPoints(area);
+      descriptor.registerExtensionPoints(area, container);
     }
 
-    ExtensionPointImpl[] extensionPoints = area.getExtensionPoints();
+    ExtensionPointImpl<?>[] extensionPoints = area.getExtensionPoints();
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      descriptor.registerExtensions(extensionPoints, area.getPicoContainer());
+      descriptor.registerExtensions(extensionPoints, container);
     }
 
     // to avoid clearing cache for each plugin on registration, cache is cleared only now
@@ -1673,7 +1662,8 @@ public class PluginManagerCore {
     }
 
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions((ExtensionsAreaImpl)area, Collections.singletonList(descriptor));
+      registerExtensionPointsAndExtensions((ExtensionsAreaImpl)area,
+                                           (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer(), Collections.singletonList(descriptor));
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
@@ -1683,7 +1673,7 @@ public class PluginManagerCore {
   @NotNull
   private static synchronized IdeaPluginDescriptorImpl[] initPlugins(@Nullable ClassLoader coreLoader) {
     if (coreLoader == null) {
-      Class callerClass = ReflectionUtil.findCallerClass(1);
+      Class<?> callerClass = ReflectionUtil.findCallerClass(1);
       assert callerClass != null;
       coreLoader = callerClass.getClassLoader();
     }

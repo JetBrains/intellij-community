@@ -50,7 +50,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPointIfRegistered(getName());
+    ExtensionPoint<T> point = (areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea()).getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
@@ -89,7 +89,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
-    return Extensions.getArea(areaInstance).getExtensionPoint(getName());
+    ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
+    return area.getExtensionPoint(getName());
   }
 
   @Nullable

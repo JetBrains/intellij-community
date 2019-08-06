@@ -6,7 +6,6 @@ import com.intellij.dvcs.repo.VcsRepositoryCreator;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
@@ -55,7 +54,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
 
   @NotNull
   private ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
-    return Extensions.getArea(myProject).getExtensionPoint(VcsRepositoryCreator.EXTENSION_POINT_NAME);
+    return VcsRepositoryCreator.EXTENSION_POINT_NAME.getPoint(myProject);
   }
 
   @Override

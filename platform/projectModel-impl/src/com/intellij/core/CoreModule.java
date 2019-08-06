@@ -4,12 +4,9 @@ package com.intellij.core;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.openapi.project.Project;
@@ -43,13 +40,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     myProject = project;
     myPath = moduleFilePath;
 
-    Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        Extensions.disposeArea(CoreModule.this);
-      }
-    });
     initModuleExtensions();
 
     final ModuleRootManagerImpl moduleRootManager =
@@ -82,7 +72,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   // used by Upsource
   protected PathMacroManager createModulePathMacroManager(@SuppressWarnings("unused") @NotNull Project project) {
-    return new ModulePathMacroManager(PathMacros.getInstance(), this);
+    return new ModulePathMacroManager(this);
   }
 
   protected ModuleFileIndex createModuleFileIndex(@NotNull Project project) {

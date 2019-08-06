@@ -2,10 +2,12 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 /** @deprecated override {@link ApplicationStarter} instead */
@@ -14,8 +16,8 @@ import java.util.concurrent.Future;
 public abstract class ApplicationStarterEx implements ApplicationStarter {
   @NotNull
   @Override
-  public final Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
-    processExternalCommandLine(args, currentDirectory);
+  public final Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
+    processExternalCommandLine(ArrayUtilRt.toStringArray(args), currentDirectory);
     return CliResult.ok();
   }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
@@ -318,7 +317,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final Set<VirtualFile> requested = new LinkedHashSet<>();
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
+    PlatformTestUtil.registerExtension(getProject().getExtensionArea(), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
@@ -332,7 +331,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void registerAccessCheckExtension(Collection<VirtualFile> filesToAllow, Collection<VirtualFile> filesToDeny) {
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), NonProjectFileWritingAccessExtension.EP_NAME,
+    PlatformTestUtil.registerExtension(getProject().getExtensionArea(), NonProjectFileWritingAccessExtension.EP_NAME,
                                        new NonProjectFileWritingAccessExtension() {
                                          @Override
                                          public boolean isWritable(@NotNull VirtualFile file) {

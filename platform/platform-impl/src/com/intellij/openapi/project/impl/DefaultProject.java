@@ -7,7 +7,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -35,18 +35,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     Project compute() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
       return new ProjectImpl() {
-        private MutablePicoContainer myPicoContainer;
-        @Override
-        protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
-          return null;
-        }
-
-        @NotNull
-        @Override
-        public MutablePicoContainer getPicoContainer() {
-          return myPicoContainer;
-        }
-
         @Override
         public boolean isDefault() {
           return true;
@@ -73,7 +61,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
         @Override
         public void init(@Nullable ProgressIndicator indicator) {
-          myPicoContainer = super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
@@ -214,6 +201,11 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+    return getDelegate().getService(serviceClass, isCreate);
+  }
+
+  @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return getDelegate().getComponent(interfaceClass);
   }
@@ -241,6 +233,12 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     return getDelegate().getPicoContainer();
   }
 
+  @NotNull
+  @Override
+  public ExtensionsArea getExtensionArea() {
+    return getDelegate().getExtensionArea();
+  }
+
   @Override
   @NotNull
   public MessageBus getMessageBus() {
@@ -250,13 +248,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   @Override
   public boolean isDisposed() {
     return ApplicationManager.getApplication().isDisposed();
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getDelegate().getExtensions(extensionPointName);
   }
 
   @Override

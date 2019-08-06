@@ -5,9 +5,10 @@ import com.intellij.ide.CliResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
-public final class SaveStarter extends ApplicationStarterBase {
+final class SaveStarter extends ApplicationStarterBase {
   private SaveStarter() {
     super("save", 0);
   }
@@ -19,7 +20,7 @@ public final class SaveStarter extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) {
+  protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     saveAll();
     return CliResult.ok();
   }

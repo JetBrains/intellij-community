@@ -3,7 +3,6 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +13,8 @@ import javax.swing.*;
 public class MockApplicationEx extends MockApplication implements ApplicationEx {
   public MockApplicationEx(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
-  }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return "mock";
+    Extensions.setRootArea(getExtensionArea());
   }
 
   @Override
@@ -71,12 +66,6 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
                                                                  JComponent parentComponent,
                                                                  @NotNull Runnable process) {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
   @Override

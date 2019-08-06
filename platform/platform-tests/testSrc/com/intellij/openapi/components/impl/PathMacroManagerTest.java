@@ -4,16 +4,13 @@ package com.intellij.openapi.components.impl;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
@@ -21,12 +18,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import org.hamcrest.Description;
-import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
-import org.jmock.api.Action;
-import org.jmock.api.Invocation;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -37,9 +30,6 @@ import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author mike
- */
 @RunWith(JMock.class)
 public class PathMacroManagerTest {
   private static final String APP_HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
@@ -50,41 +40,16 @@ public class PathMacroManagerTest {
   private PathMacrosImpl myPathMacros;
   private Mockery context;
 
-  protected ApplicationEx myApplication;
+  protected MockApplication myApplication;
   private final Disposable myRootDisposable = Disposer.newDisposable();
 
   @Before
   public final void setupApplication() {
     context = new JUnit4Mockery();
     context.setImposteriser(ClassImposteriser.INSTANCE);
-    myApplication = context.mock(ApplicationEx.class, "application");
+    myApplication = MockApplication.setUp(myRootDisposable);
 
-    context.checking(new Expectations() {
-      {
-        allowing(myApplication).isUnitTestMode(); will(returnValue(false));
-        allowing(myApplication).getName(); will(returnValue("IDEA"));
-
-        // some tests leave invokeLater()'s after them
-        allowing(myApplication).invokeLater(with(any(Runnable.class)), with(any(ModalityState.class)));
-
-        allowing(myApplication).runReadAction(with(any(Runnable.class)));
-        will(new Action() {
-          @Override
-          public void describeTo(final Description description) {
-            description.appendText("runs runnable");
-          }
-
-          @Override
-          @Nullable
-          public Object invoke(final Invocation invocation) {
-            ((Runnable)invocation.getParameter(0)).run();
-            return null;
-          }
-        });
-      }
-    });
-
-    final ExtensionsArea area = Extensions.getRootArea();
+    ExtensionsAreaImpl area = myApplication.getExtensionArea();
     final ExtensionPointName<PathMacroFilter> epName = PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME;
     if (!area.hasExtensionPoint(epName)) {
       area.registerExtensionPoint(epName, "com.intellij.openapi.application.PathMacroFilter", ExtensionPoint.Kind.INTERFACE, myRootDisposable);
@@ -111,7 +76,6 @@ public class PathMacroManagerTest {
 
       final String moduleFilePath = projectPath + "/module/module.iml";
 
-      allowing(myApplication).getComponent(with(equal(PathMacros.class))); will(returnValue(myPathMacros));
       allowing(myPathMacros).addMacroReplacements(with(any(ReplacePathToMacroMap.class)));
       allowing(myPathMacros).getModificationCount();
 

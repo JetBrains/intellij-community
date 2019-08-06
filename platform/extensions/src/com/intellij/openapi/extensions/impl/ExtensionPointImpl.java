@@ -38,6 +38,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
+  private static volatile Predicate<Class<?>> TYPE_CHECKER;
+
   private final String myName;
   private final String myClassName;
 
@@ -73,6 +75,20 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     myClassName = className;
     myPicoContainer = picoContainer;
     myDescriptor = pluginDescriptor;
+  }
+
+  @TestOnly
+  public static boolean setTestTypeChecker(@NotNull Predicate<Class<?>> typeChecker, @NotNull Disposable parentDisposable) {
+    if (TYPE_CHECKER != null) {
+      return false;
+    }
+
+    TYPE_CHECKER = typeChecker;
+    Disposer.register(parentDisposable, () -> {
+      TYPE_CHECKER = null;
+    });
+
+    return true;
   }
 
   @NotNull
@@ -194,6 +210,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   private synchronized void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
+      Predicate<Class<?>> checker = TYPE_CHECKER;
+      if (checker != null && checker.test(extensionClass)) {
+        return;
+      }
+
       String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
       if (adapter != null) {
         message += ". It came from " + adapter;
@@ -686,7 +707,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private static final ArrayFactory<ExtensionPointListener> LISTENER_ARRAY_FACTORY =
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY =
     n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
   private static <T> ArrayFactory<ExtensionPointListener<T>> listenerArrayFactory() {
     //noinspection unchecked
@@ -883,7 +904,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
     for (final ExtensionPointListener<T> listener : myListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
-        ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
+        ((ExtensionPointAndAreaListener<?>)listener).areaReplaced(oldArea);
       }
     }
   }

@@ -1,15 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
-
-import java.util.List;
 
 public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull MutablePicoContainer picoContainer) {
@@ -61,32 +60,6 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       }
     }
     return false;
-  }
-
-  @Nullable
-  protected static <T> T findExtension(@NotNull BaseExtensionPointName pointName,
-                                       @NotNull Class<T> instanceOf,
-                                       @Nullable AreaInstance areaInstance,
-                                       boolean isRequired) {
-    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPoint(pointName.getName());
-
-    List<T> list = point.getExtensionList();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, size = list.size(); i < size; i++) {
-      T object = list.get(i);
-      if (instanceOf.isInstance(object)) {
-        return object;
-      }
-    }
-
-    if (isRequired) {
-      String message = "could not find extension implementation " + instanceOf;
-      if (((ExtensionPointImpl)point).isInReadOnlyMode()) {
-        message += " (point in read-only mode)";
-      }
-      throw new IllegalArgumentException(message);
-    }
-    return null;
   }
 
   static final class PicoContainerAwareInterfaceExtensionPoint<T> extends InterfaceExtensionPoint<T> {

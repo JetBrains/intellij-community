@@ -41,7 +41,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
     blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
     blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
+    blockUntil(getProject().getExtensionArea().getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff

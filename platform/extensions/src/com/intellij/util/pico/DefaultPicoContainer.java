@@ -39,7 +39,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return componentAdapters.getImmutableSet();
   }
 
-  private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<? super ComponentAdapter> result) {
+  private void appendNonAssignableAdaptersOfType(@NotNull Class<?> componentType, @NotNull List<? super ComponentAdapter> result) {
     List<ComponentAdapter> comp = new ArrayList<>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
@@ -69,7 +69,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     }
 
     if (componentKey instanceof Class) {
-      return componentKeyToAdapterCache.get(((Class)componentKey).getName());
+      return componentKeyToAdapterCache.get(((Class<?>)componentKey).getName());
     }
 
     return null;
@@ -92,7 +92,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       return parent == null ? null : parent.getComponentAdapterOfType(componentType);
     }
 
-    Class[] foundClasses = new Class[found.size()];
+    Class<?>[] foundClasses = new Class[found.size()];
     for (int i = 0; i < foundClasses.length; i++) {
       foundClasses[i] = found.get(i).getComponentImplementation();
     }
@@ -165,24 +165,13 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public List getComponentInstances() {
-    return getComponentInstancesOfType(Object.class);
+  public List<?> getComponentInstances() {
+    throw new UnsupportedOperationException("Do not use");
   }
 
   @Override
   public List<Object> getComponentInstancesOfType(@Nullable Class componentType) {
-    if (componentType == null) {
-      return Collections.emptyList();
-    }
-
-    List<Object> result = new ArrayList<>();
-    for (ComponentAdapter componentAdapter : getComponentAdapters()) {
-      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        // may be null in the case of the "implicit" adapter representing "this".
-        ContainerUtil.addIfNotNull(result, getInstance(componentAdapter));
-      }
-    }
-    return result;
+    throw new UnsupportedOperationException("use ComponentManagerImpl.getComponentInstancesOfType");
   }
 
   @FunctionalInterface
@@ -190,27 +179,12 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     boolean isComponentInstantiated();
   }
 
-  @Nullable
-  public <T> T getComponentInstanceIfInstantiated(@NotNull String componentKey) {
-    ComponentAdapter adapter = getFromCache(componentKey);
-    if (!(adapter instanceof LazyComponentAdapter)) {
-      //noinspection unchecked
-      return (T)getComponentInstance(componentKey);
-    }
-
-    if (((LazyComponentAdapter)adapter).isComponentInstantiated()) {
-      //noinspection unchecked
-      return (T)getLocalInstance(adapter);
-    }
-    return null;
-  }
-
   @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter != null) {
-      return getLocalInstance(adapter);
+      return adapter.getComponentInstance(this);
     }
     if (parent != null) {
       adapter = parent.getComponentAdapter(componentKey);
@@ -219,6 +193,22 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+    ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass.getName());
+    if (adapter == null) {
+      return null;
+    }
+
+    if (!isCreate && adapter instanceof LazyComponentAdapter && !((LazyComponentAdapter)adapter).isComponentInstantiated()) {
+      return null;
+    }
+    else {
+      //noinspection unchecked
+      return (T)adapter.getComponentInstance(this);
+    }
   }
 
   @Override
@@ -231,7 +221,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Nullable
   private Object getInstance(@NotNull ComponentAdapter componentAdapter) {
     if (getComponentAdapters().contains(componentAdapter)) {
-      return getLocalInstance(componentAdapter);
+      return componentAdapter.getComponentInstance(this);
     }
     if (parent != null) {
       return parent.getComponentInstance(componentAdapter.getComponentKey());
@@ -240,40 +230,23 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return null;
   }
 
-  private Object getLocalInstance(@NotNull ComponentAdapter componentAdapter) {
-    PicoException firstLevelException;
-    try {
-      return componentAdapter.getComponentInstance(this);
-    }
-    catch (PicoInitializationException | PicoIntrospectionException e) {
-      firstLevelException = e;
-    }
-
-    if (parent != null) {
-      Object instance = parent.getComponentInstance(componentAdapter.getComponentKey());
-      if (instance != null) {
-        return instance;
-      }
-    }
-
-    throw firstLevelException;
-  }
-
+  /**
+   * @deprecated Do not use.
+   */
   @Override
+  @Deprecated
   @Nullable
   public ComponentAdapter unregisterComponentByInstance(@NotNull Object componentInstance) {
-    for (ComponentAdapter adapter : getComponentAdapters()) {
-      Object o = getInstance(adapter);
-      if (componentInstance.equals(o)) {
-        return unregisterComponent(adapter.getComponentKey());
-      }
-    }
-    return null;
+    throw new UnsupportedOperationException("Do not use");
   }
 
+  /**
+   * @deprecated Do not use.
+   */
   @Override
+  @Deprecated
   public void verify() {
-    new VerifyingVisitor().traverse(this);
+    throw new UnsupportedOperationException("Do not use");
   }
 
   @Override
@@ -356,7 +329,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
    * A linked hash set that's copied on write operations.
    * @param <T>
    */
-  private static class LinkedHashSetWrapper<T> {
+  private static final class LinkedHashSetWrapper<T> {
     private final Object lock = new Object();
     private volatile Set<T> immutableSet;
     private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<>();

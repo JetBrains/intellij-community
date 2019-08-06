@@ -8,7 +8,6 @@ import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -97,7 +96,7 @@ public class CoreProjectEnvironment {
 
   public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
                                                 @NotNull Class<? extends T> aClass) {
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
+    CoreApplicationEnvironment.registerExtensionPoint(myProject.getExtensionArea(), extensionPointName, aClass);
   }
 
   public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {

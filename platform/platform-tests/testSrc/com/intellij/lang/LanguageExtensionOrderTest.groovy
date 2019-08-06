@@ -1,12 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import groovy.transform.CompileStatic
+import org.picocontainer.MutablePicoContainer
 
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
@@ -16,7 +21,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
 
   void setUp() {
     super.setUp()
-    myArea = Extensions.rootArea
+    myArea = ApplicationManager.getApplication().getExtensionArea()
     myLanguageExtension = new LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()
@@ -27,11 +32,11 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
   }
 
   private void registerLanguageEP() {
-    myArea.registerExtensionPoint myDescriptor, JDOMUtil.load('''\
+    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load('''\
 <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
   <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
 </extensionPoint>    
-''')
+'''), (MutablePicoContainer)ApplicationManager.getApplication().picoContainer)
     Disposer.register(testRootDisposable) {
       myArea.unregisterExtensionPoint("langExt")
     }

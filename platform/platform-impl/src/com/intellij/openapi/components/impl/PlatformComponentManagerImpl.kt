@@ -1,36 +1,55 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl
 
+import com.intellij.diagnostic.ActivitySubNames
 import com.intellij.diagnostic.LoadingPhase
-import com.intellij.ide.plugins.ContainerDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.run
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.serviceContainer.ServiceContainer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.pico.DefaultPicoContainer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentMap
 
-abstract class PlatformComponentManagerImpl : ComponentManagerImpl {
+private val LOG = logger<PlatformComponentManagerImpl>()
+
+private fun createPicoContainer(parent: ComponentManager?): DefaultPicoContainer {
+  return when (parent) {
+    null -> ServiceContainer(null)
+    else -> DefaultPicoContainer(parent.picoContainer)
+  }
+}
+
+abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent, createPicoContainer(parent)), AreaInstance {
   private var handlingInitComponentError = false
 
   private val componentStore: IComponentStore
     get() = this.stateStore
 
-  protected constructor(parent: ComponentManager?) : super(parent)
-
-  protected constructor(parent: ComponentManager?, name: String) : super(parent, name)
-
   protected open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
+    ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_EXTENSIONS) {
+      @Suppress("UNCHECKED_CAST")
+      PluginManagerCore.registerExtensionPointsAndExtensions(extensionArea as ExtensionsAreaImpl, picoContainer,
+                                                             plugins as MutableList<IdeaPluginDescriptorImpl>)
+    }
+
+
     val app = ApplicationManager.getApplication()
     val headless = app == null || app.isHeadlessEnvironment
 
@@ -107,4 +126,27 @@ abstract class PlatformComponentManagerImpl : ComponentManagerImpl {
   }
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
+
+  @ApiStatus.Internal
+  override fun <T> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
+    val componentKey = serviceClass.name
+    var instance = picoContainer.getService(serviceClass, isCreate)
+    if (instance == null && isCreate) {
+      ProgressManager.checkCanceled()
+
+      if (parentComponentManager != null) {
+        instance = parentComponentManager.getService(serviceClass, isCreate)
+        if (instance != null) {
+          LOG.error("$componentKey is registered as application service, but requested as project one")
+          return instance
+        }
+      }
+
+      instance = getComponent(serviceClass) ?: return null
+      LOG.error("$componentKey requested as a service, but it is a component - convert it to a service or " +
+                "change call to ${if (parentComponentManager == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}")
+      return instance
+    }
+    return instance
+  }
 }

@@ -13,8 +13,11 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,7 +53,9 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private final MutablePicoContainer myPicoContainer;
+  private final DefaultPicoContainer myPicoContainer;
+  private final ExtensionsAreaImpl myExtensionArea;
+
   private volatile boolean myDisposed;
   private volatile boolean myDisposeCompleted;
 
@@ -66,16 +71,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
-  private final ComponentManager myParentComponentManager;
+  private final ComponentManager myParent;
 
-  protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager) {
-    myParentComponentManager = parentComponentManager;
-    myPicoContainer = bootstrapPicoContainer(toString());
+  protected ComponentManagerImpl(@Nullable ComponentManager parent) {
+    this(parent, new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer()));
   }
 
-  protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager, @NotNull String name) {
-    myParentComponentManager = parentComponentManager;
-    myPicoContainer = bootstrapPicoContainer(name);
+  protected ComponentManagerImpl(@Nullable ComponentManager parent, @NotNull DefaultPicoContainer picoContainer) {
+    myParent = parent;
+    myPicoContainer = picoContainer;
+    myExtensionArea = new ExtensionsAreaImpl(myPicoContainer);
+    if (parent == null) {
+      Extensions.setRootArea(myExtensionArea);
+    }
   }
 
   @Nullable
@@ -93,7 +101,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     String activityNamePrefix = activityNamePrefix();
     Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX);
 
-    DefaultPicoContainer picoContainer = (DefaultPicoContainer)getPicoContainer();
+    DefaultPicoContainer picoContainer = getPicoContainer();
     for (ComponentAdapter componentAdapter : picoContainer.getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter) {
         ((ComponentConfigComponentAdapter)componentAdapter).getComponentInstance(picoContainer, indicator);
@@ -167,6 +175,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
     myBaseComponents.clear();
 
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
     myComponentConfigCount = -1;
   }
 
@@ -226,7 +235,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
+  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
     return getPicoContainer().getComponentAdapter(interfaceClass) != null;
   }
 
@@ -245,7 +254,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
-    for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
+    for (ComponentAdapter componentAdapter : getPicoContainer().getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter &&
           ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
         ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)componentAdapter;
@@ -264,12 +273,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public MutablePicoContainer getPicoContainer() {
-    MutablePicoContainer container = myPicoContainer;
+  public DefaultPicoContainer getPicoContainer() {
+    DefaultPicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
       throwAlreadyDisposed();
     }
     return container;
+  }
+
+  @NotNull
+  @Override
+  public ExtensionsArea getExtensionArea() {
+    return myExtensionArea;
   }
 
   @Contract("->fail")
@@ -278,11 +293,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       ProgressManager.checkCanceled();
       throw new AssertionError("Already disposed: " + this);
     });
-  }
-
-  @NotNull
-  protected MutablePicoContainer createPicoContainer() {
-    return myParentComponentManager == null ? new DefaultPicoContainer() : new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
   }
 
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
@@ -311,10 +321,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 
-  protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
-    return createPicoContainer();
-  }
-
   protected void logMessageBusDelivery(Topic<?> topic, String messageName, Object handler, long durationNanos) {
     if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       ((MessageBusImpl) myMessageBus).setMessageDeliveryListener(null);
@@ -327,7 +333,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final ComponentManager getParentComponentManager() {
-    return myParentComponentManager;
+    return myParent;
   }
 
   @Nullable
@@ -342,7 +348,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   private ComponentConfigComponentAdapter getComponentAdapter(@NotNull Class<?> componentImplementation) {
-    for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
+    for (ComponentAdapter componentAdapter : getPicoContainer().getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter && componentAdapter.getComponentImplementation() == componentImplementation) {
         return (ComponentConfigComponentAdapter)componentAdapter;
       }

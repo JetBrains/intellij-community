@@ -173,7 +173,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   private void initUserDictionaries() {
-    final CachedDictionaryState cachedDictionaryState = ServiceManager.getService(project, CachedDictionaryState.class);
+    CachedDictionaryState cachedDictionaryState = CachedDictionaryState.getInstance();
     cachedDictionaryState.addCachedDictListener((dict) -> restartInspections());
     if (cachedDictionaryState.getDictionary() == null) {
       cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));

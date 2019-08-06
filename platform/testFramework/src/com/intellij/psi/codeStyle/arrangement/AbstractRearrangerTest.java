@@ -4,7 +4,6 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileType;
@@ -131,9 +130,9 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     @SuppressWarnings("unchecked")
     List<StdArrangementRuleAliasToken> aliases =
       ObjectUtils.coalesce((List<StdArrangementRuleAliasToken>)args.get("aliases"), Collections.emptyList());
-    
+
     final StdArrangementSettings arrangementSettings = new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
-    
+
     String text = (String)args.get("initial");
     String expected = (String)args.get("expected");
     @SuppressWarnings("unchecked") List<TextRange> ranges = (List<TextRange>)args.get("ranges");
@@ -143,7 +142,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
 
   protected void doTestWithSettings(@NotNull String text,
                                     @NotNull String expected,
-                                    @Nullable ArrangementSettings arrangementSettings, 
+                                    @Nullable ArrangementSettings arrangementSettings,
                                     @Nullable List<TextRange> ranges) {
     Info info = parse(text);
     if (!isEmpty(ranges) && !isEmpty(info.ranges)) {
@@ -167,7 +166,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
       CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
       settings.setArrangementSettings(arrangementSettings);
     }
-    ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
+    ArrangementEngine engine = ArrangementEngine.getInstance();
     CommandProcessor.getInstance().executeCommand(getProject(), ()-> engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges), null, null);
 
 

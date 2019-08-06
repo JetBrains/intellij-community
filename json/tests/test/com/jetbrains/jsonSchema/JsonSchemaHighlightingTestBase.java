@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 
 public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestCase {
-
   protected abstract String getTestFileName();
   protected abstract InspectionProfileEntry getInspectionProfile();
   protected abstract Predicate<VirtualFile> getAvailabilityPredicate();
@@ -62,7 +60,7 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
     FileUtil.writeToFile(child, schema);
     VirtualFile schemaFile = getVirtualFile(child);
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile, getAvailabilityPredicate()));
-    MutablePicoContainer container = Extensions.getArea(project).getPicoContainer();
+    MutablePicoContainer container = (MutablePicoContainer)project.getPicoContainer();
     String key = JsonSchemaService.class.getName();
     container.unregisterComponent(key);
     container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);

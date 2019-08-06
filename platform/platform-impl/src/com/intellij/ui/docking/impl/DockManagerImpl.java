@@ -11,7 +11,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.*;
@@ -474,10 +473,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                               && !(myContainer instanceof DockContainer.Dialog)
                               && !UISettings.getInstance().getPresentationMode());
 
-      IdeRootPaneNorthExtension[] extensions =
-        Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
-      HashSet<String> processedKeys = new HashSet<>();
-      for (IdeRootPaneNorthExtension each : extensions) {
+      Set<String> processedKeys = new HashSet<>();
+      for (IdeRootPaneNorthExtension each : IdeRootPaneNorthExtension.EP_NAME.getExtensionList(myProject)) {
         processedKeys.add(each.getKey());
         if (myNorthExtensions.containsKey(each.getKey())) continue;
         IdeRootPaneNorthExtension toInstall = each.copy();

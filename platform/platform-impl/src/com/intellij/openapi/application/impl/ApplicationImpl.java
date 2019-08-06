@@ -27,7 +27,6 @@ import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.*;
@@ -83,7 +82,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myCommandLineMode;
 
   private final boolean myIsInternal;
-  private final String myName;
 
   // contents modified in write action, read in read action
   private final Stack<Class<?>> myWriteActionsStack = new Stack<>();
@@ -103,10 +101,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   public ApplicationImpl(boolean isInternal,
-                         boolean isUnitTestMode,
-                         boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull String appName) {
+                           boolean isUnitTestMode,
+                           boolean isHeadless,
+                           boolean isCommandLine) {
     super(null);
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
@@ -120,8 +117,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
-
-    myName = appName;
 
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
@@ -214,20 +209,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  @Override
   public boolean holdsReadLock() {
     return myLock.isReadLockedByThisThread();
-  }
-
-  @NotNull
-  @Override
-  protected MutablePicoContainer createPicoContainer() {
-    return Extensions.getRootArea().getPicoContainer();
   }
 
   @Override
@@ -1347,12 +1330,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isSaveAllowed() {
     return mySaveAllowed;
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
   @Override

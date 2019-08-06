@@ -8,7 +8,6 @@ import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -236,7 +235,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        MutablePicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+        MutablePicoContainer container = (MutablePicoContainer)getProject().getPicoContainer();
         final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
         container.unregisterComponent(key);
         container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);

@@ -38,9 +38,6 @@ public interface ApplicationEx extends Application {
     return LoadingPhase.COMPONENT_LOADED.isComplete();
   }
 
-  @NotNull
-  String getName();
-
   /**
    * @return true if this thread is inside read action.
    * @see #runReadAction(Runnable)

@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -94,10 +93,10 @@ public final class IdeaTestApplication implements Disposable {
     }, AppExecutorUtil.getAppExecutorService());
 
     ApplicationImpl.patchSystem();
-    ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
+    ApplicationImpl app = new ApplicationImpl(true, true, true, true);
     IconManager.activate();
     try {
-      ApplicationLoader.registerRegistryAndContainerAndInitStore(loadedPluginFuture, app, null)
+      ApplicationLoader.registerRegistryAndInitStore(loadedPluginFuture.thenAccept(it -> app.registerComponents(it)), app)
         .thenCompose(aVoid -> ApplicationLoader.preloadServices(app))
         .get(20, TimeUnit.SECONDS);
     }

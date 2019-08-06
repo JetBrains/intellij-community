@@ -2,17 +2,17 @@
 package com.intellij.lang
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import org.picocontainer.MutablePicoContainer
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
-
   private val myExtensionPointName = "testLangExt"
   private val myExtensionPointXML = """
 <extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -26,8 +26,8 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myArea = Extensions.getRootArea()
-    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load(myExtensionPointXML))
+    myArea = ApplicationManager.getApplication().extensionArea
+    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load(myExtensionPointXML), ApplicationManager.getApplication ().picoContainer as MutablePicoContainer)
     Disposer.register(testRootDisposable, Disposable {
       myArea.unregisterExtensionPoint(myExtensionPointName)
     })

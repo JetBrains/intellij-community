@@ -35,7 +35,7 @@ public final class LanguageUtil {
   public static Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
     Language language = getFileLanguage(file);
     if (language == null) return null;
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+    return LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
   }
 
   @Nullable

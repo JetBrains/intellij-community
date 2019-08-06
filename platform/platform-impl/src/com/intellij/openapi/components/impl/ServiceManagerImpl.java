@@ -268,8 +268,7 @@ public final class ServiceManagerImpl implements Disposable {
     }
 
     @Override
-    public void verify(final PicoContainer container) throws PicoIntrospectionException {
-      getDelegate().verify(container);
+    public void verify(PicoContainer container) {
     }
 
     @Override

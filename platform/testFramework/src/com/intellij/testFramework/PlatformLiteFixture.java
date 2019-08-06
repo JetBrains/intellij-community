@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -24,24 +26,19 @@ import java.lang.reflect.Modifier;
 public abstract class PlatformLiteFixture extends UsefulTestCase {
   protected MockProjectEx myProject;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Extensions.cleanRootArea(getTestRootDisposable());
-  }
-
   @NotNull
   public static MockApplicationEx getApplication() {
     return (MockApplicationEx)ApplicationManager.getApplication();
   }
 
-  public void initApplication() {
-    //if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
-    final MockApplicationEx instance = new MockApplicationEx(getTestRootDisposable());
-    ApplicationManager.setApplication(instance,
+  @NotNull
+  public MockApplication initApplication() {
+    MockApplicationEx app = new MockApplicationEx(getTestRootDisposable());
+    ApplicationManager.setApplication(app,
                                       () -> FileTypeManager.getInstance(),
                                       getTestRootDisposable());
-    getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
+    app.registerService(EncodingManager.class, EncodingManagerImpl.class);
+    return app;
   }
 
   @Override
@@ -74,7 +71,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
                                             @NotNull Class<? extends T> aClass) {
     if (!area.hasExtensionPoint(extensionPointName)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      area.registerExtensionPoint(extensionPointName, aClass.getName(), kind, getTestRootDisposable());
+      ((ExtensionsAreaImpl)area).registerExtensionPoint(extensionPointName, aClass.getName(), kind, getTestRootDisposable());
     }
   }
 

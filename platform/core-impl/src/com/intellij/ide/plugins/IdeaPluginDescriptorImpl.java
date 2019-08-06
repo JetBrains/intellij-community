@@ -10,8 +10,6 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -48,6 +46,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
+  public enum OS {
+    mac, linux, windows, unix, freebsd
+  }
+
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
@@ -470,16 +472,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  public void registerExtensionPoints(@NotNull ExtensionsArea area) {
-    ContainerDescriptor containerDescriptor = getContainerDescriptorByExtensionArea(area.getAreaClass());
-    if (containerDescriptor == null) {
-      throw new IllegalStateException("Unknown area: " + area);
+  public void registerExtensionPoints(@NotNull ExtensionsArea area, @NotNull MutablePicoContainer picoContainer) {
+    ContainerDescriptor containerDescriptor;
+    if (picoContainer.getParent() == null) {
+      containerDescriptor = myAppContainerDescriptor;
+    }
+    else if (picoContainer.getParent().getParent() == null) {
+      containerDescriptor = myProjectContainerDescriptor;
+    }
+    else {
+      containerDescriptor = myModuleContainerDescriptor;
     }
 
     List<Element> extensionsPoints = containerDescriptor.extensionsPoints;
     if (extensionsPoints != null) {
       for (Element element : extensionsPoints) {
-        area.registerExtensionPoint(this, element);
+        area.registerExtensionPoint(this, element, picoContainer);
       }
     }
   }
@@ -508,14 +516,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     for (ExtensionPointImpl<?> extensionPoint : extensionPoints) {
       extensionPoint.createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, picoContainer);
     }
-  }
-
-  // made public for Upsource
-  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull ExtensionPoint<?> extensionPoint) {
-    if (myExtensions == null) {
-      return;
-    }
-    ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, area.getPicoContainer());
   }
 
   @Override
@@ -841,19 +841,19 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return true;
     }
 
-    if (os.equals(Extensions.OS.mac.name())) {
+    if (os.equals(OS.mac.name())) {
       return SystemInfo.isMac;
     }
-    else if (os.equals(Extensions.OS.linux.name())) {
+    else if (os.equals(OS.linux.name())) {
       return SystemInfo.isLinux;
     }
-    else if (os.equals(Extensions.OS.windows.name())) {
+    else if (os.equals(OS.windows.name())) {
       return SystemInfo.isWindows;
     }
-    else if (os.equals(Extensions.OS.unix.name())) {
+    else if (os.equals(OS.unix.name())) {
       return SystemInfo.isUnix;
     }
-    else if (os.equals(Extensions.OS.freebsd.name())) {
+    else if (os.equals(OS.freebsd.name())) {
       return SystemInfo.isFreeBSD;
     }
     else {

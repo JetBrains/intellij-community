@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,11 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author mike
- */
 @SuppressWarnings("TestOnlyProblems")
-public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
+public final class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
   private SdkLeakTracker myOldSdks;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
@@ -100,7 +96,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     return myProject;
   }
 
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+  private CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyle.getSettings(getProject());
   }

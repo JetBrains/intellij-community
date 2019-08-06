@@ -17,11 +17,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author nik
  */
-public class JpsIdePluginManagerImpl extends JpsPluginManager {
+public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
+    if (rootArea == null) {
+      return;
+    }
+
     //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       JpsPluginBean.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {

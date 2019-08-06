@@ -10,16 +10,9 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 
 /**
- * @see Extensions#getArea(AreaInstance)
  * @see Extensions#getRootArea()
  */
 public interface ExtensionsArea  {
-  @TestOnly
-  void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
-                              @NotNull String extensionPointBeanClass,
-                              @NotNull ExtensionPoint.Kind kind,
-                              @NotNull Disposable parentDisposable);
-
   /**
    * @deprecated use {@link ExtensionsArea#registerExtensionPoint(BaseExtensionPointName, String, ExtensionPoint.Kind, Disposable)}
    */
@@ -48,28 +41,11 @@ public interface ExtensionsArea  {
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
 
   @NotNull
-  ExtensionPoint[] getExtensionPoints();
+  ExtensionPoint<?>[] getExtensionPoints();
 
-  void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener, @Nullable Disposable parentDisposable);
-
-  /**
-   * @deprecated use {@link #addAvailabilityListener(String, ExtensionPointAvailabilityListener, Disposable)}
-   */
-  @Deprecated
-  default void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
-    addAvailabilityListener(extensionPointName, listener, null);
-  }
-
-  /**
-   * @deprecated use {@link #addAvailabilityListener(String, ExtensionPointAvailabilityListener, Disposable)}
-   */
-  @Deprecated
-  void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
-
-  @NotNull
-  MutablePicoContainer getPicoContainer();
-
-  void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
+  void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
+                              @NotNull Element extensionPointElement,
+                              @NotNull MutablePicoContainer picoContainer);
 
   /**
    * Registers a new extension.
@@ -80,7 +56,5 @@ public interface ExtensionsArea  {
   @TestOnly
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
 
-  void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement);
-
-  String getAreaClass();
+  void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 }

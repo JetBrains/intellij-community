@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +104,7 @@ public final class CommandLineProcessor {
 
   @NotNull
   public static Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args,
-                                                                                      @Nullable String currentDirectory) {
+                                                                            @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
@@ -121,7 +120,7 @@ public final class CommandLineProcessor {
       if (command.equals(starter.getCommandName())) {
         if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          return pair(null, starter.processExternalCommandLineAsync(ArrayUtilRt.toStringArray(args), currentDirectory));
+          return pair(null, starter.processExternalCommandLineAsync(args, currentDirectory));
         }
         else {
           String title = "Cannot execute command '" + command + "'";

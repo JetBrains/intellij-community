@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.AnyModalityState;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -35,7 +25,36 @@ public class MockApplication extends MockComponentManager implements Application
 
   public MockApplication(@NotNull Disposable parentDisposable) {
     super(null, parentDisposable);
+
     INSTANCES_CREATED++;
+    //noinspection TestOnlyProblems
+    Extensions.setRootArea(getExtensionArea(), parentDisposable);
+  }
+
+  @NotNull
+  @TestOnly
+  public static MockApplication setUp(@NotNull Disposable parentDisposable) {
+    MockApplication app = new MockApplication(parentDisposable);
+    ApplicationManager.setApplication(app, parentDisposable);
+    return app;
+  }
+
+  @Override
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+    T service = super.getService(serviceClass, isCreate);
+    if (service == null && isCreate && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
+      //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (serviceClass) {
+        service = super.getService(serviceClass, true);
+        if (service != null) {
+          return service;
+        }
+
+        getPicoContainer().registerComponentImplementation(serviceClass.getName(), serviceClass);
+        return super.getService(serviceClass, true);
+      }
+    }
+    return service;
   }
 
   @Override

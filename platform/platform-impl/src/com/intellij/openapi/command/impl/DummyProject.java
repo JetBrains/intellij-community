@@ -2,17 +2,17 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.PicoContainer;
 
 /**
  * @author max
@@ -79,6 +79,11 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
+  @Override
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+    return null;
+  }
+
   @Nullable
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
@@ -99,8 +104,14 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   @NotNull
-  public PicoContainer getPicoContainer() {
+  public DefaultPicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
+  }
+
+  @NotNull
+  @Override
+  public ExtensionsArea getExtensionArea() {
+    throw new UnsupportedOperationException("getExtensionArea is not implement in : " + getClass());
   }
 
   @Override
@@ -142,10 +153,4 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   public void dispose() { }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    throw new UnsupportedOperationException("getExtensions()");
-  }
 }

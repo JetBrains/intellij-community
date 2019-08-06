@@ -15,7 +15,6 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -51,7 +50,6 @@ import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
@@ -72,21 +70,43 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
                                 pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
   val args = processProgramArguments(rawArgs)
   StartupUtil.patchSystem(LOG)
-  val starter = createAppStarter(args, pluginDescriptorsFuture)
   val headless = Main.isHeadless()
   val app = initAppActivity.runChild("create app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine(),
-                    ApplicationManagerEx.IDEA_APPLICATION)
+    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine())
   }
 
-  starter.premain(args)
+  val registerFuture = pluginDescriptorsFuture.thenAccept {
+    initAppActivity.runChild("app component registration") {
+      app.registerComponents(it)
+    }
+  }
 
+  if (args.isEmpty()) {
+    startApp(app, IdeStarter(), initAppActivity, registerFuture, args)
+    return
+  }
+
+  // ApplicationStarter it is extension, so, to find starter, extensions must be registered prior to that
+  registerFuture.thenRunOrHandleError {
+    val starter = findStarter(args.first()) ?: IdeStarter()
+    if (Main.isHeadless() && !starter.isHeadless) {
+      Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
+      exitProcess(Main.NO_GRAPHICS)
+    }
+
+    starter.premain(args)
+    startApp(app, starter, initAppActivity, registerFuture, args)
+  }
+}
+
+private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppActivity: Activity, registerFuture: CompletableFuture<Void?>, args: List<String>) {
   // this code is here for one simple reason - here we have application,
   // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
   // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
   // and do not place any time-consuming code in between (e.g. showLicenseeInfoOnSplash)
-  var future = registerRegistryAndContainerAndInitStore(pluginDescriptorsFuture, app, initAppActivity)
+  var future = registerRegistryAndInitStore(registerFuture, app)
 
+  val headless = app.isHeadlessEnvironment
   if (!headless) {
     initAppActivity.runChild("icon loader activation") {
       // todo investigate why in test mode dummy icon manager is not suitable
@@ -139,7 +159,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     WeakFocusStackManager.getInstance()
   }
 
-  future.thenRun(Runnable {
+  future.thenRunOrHandleError {
     // this invokeLater() call is needed not only because current thread maybe not EDT, but to place the app starting code on a freshly minted IdeEventQueue instance
     val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
     EventQueue.invokeLater {
@@ -153,7 +173,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
       }
 
       (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        starter.main(args)
+        starter.main(ArrayUtilRt.toStringArray(args))
       }
 
       if (PluginManagerCore.isRunningFromSources()) {
@@ -168,24 +188,18 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     ParallelActivity.PREPARE_APP_INIT.run("init system properties") {
       SystemPropertyBean.initSystemProperties()
     }
-  })
+  }
 }
 
 @ApiStatus.Internal
-fun registerRegistryAndContainerAndInitStore(pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
-                                             app: ApplicationImpl,
-                                             initAppActivity: Activity?): CompletableFuture<Void?> {
-  return pluginDescriptorsFuture
-    .thenCompose { pluginDescriptors ->
+fun registerRegistryAndInitStore(registerFuture: CompletableFuture<*>, app: ApplicationImpl): CompletableFuture<Void?> {
+  return registerFuture
+    .thenCompose {
       val future = CompletableFuture.runAsync(Runnable {
         ParallelActivity.PREPARE_APP_INIT.run("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
         }
       }, AppExecutorUtil.getAppExecutorService())
-
-      initAppActivity.runChild("app component registration") {
-        app.registerComponents(pluginDescriptors)
-      }
 
       // yes, at this moment initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used.
       initConfigurationStore(app, null)
@@ -237,21 +251,6 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   }
 }
 
-private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): ApplicationStarter {
-  if (args.isEmpty()) {
-    return IdeStarter()
-  }
-
-  pluginsLoaded.get()
-
-  val starter = findStarter(args[0]) ?: IdeStarter()
-  if (Main.isHeadless() && !starter.isHeadless) {
-    Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
-    exitProcess(Main.NO_GRAPHICS)
-  }
-  return starter
-}
-
 fun initApplication(rawArgs: Array<String>) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
   val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
@@ -272,7 +271,7 @@ fun initApplication(rawArgs: Array<String>) {
   pluginDescriptorsFuture.complete(plugins)
 }
 
-fun findStarter(key: String?): ApplicationStarter? {
+fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
     if (starter == null) {
       break
@@ -323,7 +322,7 @@ open class IdeStarter : ApplicationStarter {
 
   override fun canProcessExternalCommandLine() = true
 
-  override fun processExternalCommandLineAsync(args: Array<String>, currentDirectory: String?): Future<CliResult> {
+  override fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): Future<CliResult> {
     LOG.info("Request to open in $currentDirectory with parameters: ${args.joinToString(separator = ",")}")
     if (args.isEmpty()) {
       return CliResult.ok()
@@ -470,8 +469,12 @@ open class IdeStarter : ApplicationStarter {
  * @see SAFE_JAVA_ENV_PARAMETERS
  */
 @Suppress("SpellCheckingInspection")
-private fun processProgramArguments(args: Array<String>): Array<String> {
-  val arguments = ArrayList<String>()
+private fun processProgramArguments(args: Array<String>): List<String> {
+  if (args.isEmpty()) {
+    return emptyList()
+  }
+
+  val arguments = mutableListOf<String>()
   val safeKeys = SAFE_JAVA_ENV_PARAMETERS.toList()
   for (arg in args) {
     if (arg.startsWith("-D")) {
@@ -487,7 +490,7 @@ private fun processProgramArguments(args: Array<String>): Array<String> {
 
     arguments.add(arg)
   }
-  return ArrayUtilRt.toStringArray(arguments)
+  return arguments
 }
 
 @ApiStatus.Internal
@@ -519,4 +522,12 @@ fun preloadServices(app: ApplicationImpl): CompletableFuture<Void?> {
       }
     }, appExecutorService)
   })
+}
+
+private fun CompletableFuture<Void?>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {
+  return thenRun(handler)
+    .exceptionally {
+      MainRunner.processException(it)
+      null
+    }
 }

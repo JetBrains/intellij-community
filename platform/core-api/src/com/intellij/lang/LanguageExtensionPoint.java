@@ -3,7 +3,6 @@ package com.intellij.lang;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +13,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean implements KeyedLazyInstance<T> {
+  public LanguageExtensionPoint() {
+  }
+
+  public LanguageExtensionPoint(@NotNull T instance) {
+    myInstance = instance;
+  }
+
   // these must be public for scrambling compatibility
 
   /**
@@ -27,13 +33,28 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean i
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final NotNullLazyValue<T> myHandler =
-    NotNullLazyValue.createValue(() -> instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+  private volatile T myInstance;
 
   @NotNull
   @Override
   public T getInstance() {
-    return myHandler.getValue();
+    T result = myInstance;
+    if (result != null) {
+      return result;
+    }
+
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      result = myInstance;
+      if (result != null) {
+        return result;
+      }
+
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      result = instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+      myInstance = result;
+    }
+    return result;
   }
 
   @Override
