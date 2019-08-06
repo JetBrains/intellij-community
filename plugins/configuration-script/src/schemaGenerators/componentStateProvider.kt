@@ -7,9 +7,9 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 
@@ -18,7 +18,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
 
   // well, schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    ServiceManagerImpl.processProjectDescriptors(::processServiceDescriptor)
+    com.intellij.serviceContainer.ServiceManagerImpl.processProjectDescriptors(::processServiceDescriptor)
     doGenerate(rootBuilder, pathToStateClass)
   }
 

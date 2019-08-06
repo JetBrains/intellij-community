@@ -86,7 +86,7 @@ public class PluginManagerCore {
 
   static final String DISABLE = "disable";
   static final String ENABLE = "enable";
-  static final String EDIT = "edit";
+  public static final String EDIT = "edit";
 
   private static Set<String> ourDisabledPlugins;
   private static Reference<MultiMap<String, String>> ourBrokenPluginVersions;
@@ -101,7 +101,9 @@ public class PluginManagerCore {
 
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
 
-  static String myPluginError;
+  @SuppressWarnings("StaticNonFinalField") @ApiStatus.Internal
+  public static String myPluginError;
+
   static List<String> myPlugins2Disable;
   static LinkedHashSet<String> myPlugins2Enable;
 

@@ -13,6 +13,9 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -29,6 +32,7 @@ import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -414,7 +418,7 @@ open class IdeStarter : ApplicationStarter {
       }
 
       EventQueue.invokeLater {
-        PluginManager.reportPluginError()
+        reportPluginError()
       }
     })
 
@@ -530,4 +534,25 @@ private fun CompletableFuture<Void?>.thenRunOrHandleError(handler: () -> Unit): 
       MainRunner.processException(it)
       null
     }
+}
+
+private fun reportPluginError() {
+  if (PluginManagerCore.myPluginError == null) {
+    return
+  }
+
+  val title = IdeBundle.message("title.plugin.error")
+  Notifications.Bus.notify(Notification(title, title, PluginManagerCore.myPluginError, NotificationType.ERROR) { notification, event ->
+    notification.expire()
+
+    val description = event.description
+    if (PluginManagerCore.EDIT == description) {
+      val ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null)
+      PluginManagerConfigurableProxy.showPluginConfigurable(ideFrame as JFrame, null)
+      return@Notification
+    }
+
+    PluginManager.reportPluginError(description)
+  })
+  PluginManagerCore.myPluginError = null
 }

@@ -365,7 +365,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Nullable
-  static PluginId getConfig(@NotNull ComponentAdapter adapter) {
+  @ApiStatus.Internal
+  public static PluginId getConfig(@NotNull ComponentAdapter adapter) {
     return adapter instanceof ComponentConfigComponentAdapter ? ((ComponentConfigComponentAdapter)adapter).myPluginId : null;
   }
 
