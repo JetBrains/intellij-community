@@ -364,7 +364,7 @@
     />
 
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
-    <fileType name="DGM File Type"
+    <fileType name="DGM"
               implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="100" instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"

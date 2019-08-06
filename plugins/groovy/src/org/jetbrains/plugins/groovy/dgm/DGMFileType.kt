@@ -12,7 +12,7 @@ import javax.swing.Icon
 
 object DGMFileType : LanguageFileType(PropertiesLanguage.INSTANCE, true), FileTypeIdentifiableByVirtualFile {
 
-  override fun getName(): String = "DGM File Type"
+  override fun getName(): String = "DGM"
   override fun getDefaultExtension(): String = ""
   override fun getDescription(): String = "Groovy extension module descriptor file"
   override fun getIcon(): Icon? = PropertiesFileType.INSTANCE.icon
