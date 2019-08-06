@@ -13,11 +13,6 @@ import javax.swing.*;
 
 public class GroovyScriptUtil {
   public static final GroovyRunnableScriptType DEFAULT_TYPE = new GroovyRunnableScriptType("default") {
-    @Override
-    public boolean shouldBeCompiled(GroovyFile script) {
-      return true;
-    }
-
     @NotNull
     @Override
     public Icon getScriptIcon() {
