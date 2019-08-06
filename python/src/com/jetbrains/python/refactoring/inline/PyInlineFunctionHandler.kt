@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.inline
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -18,6 +20,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -66,7 +69,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       return
     }
     if (!ApplicationManager.getApplication().isUnitTestMode){
-      PyInlineFunctionDialog(project, editor, element, TargetElementUtil.findReference(editor)).show()
+      PyInlineFunctionDialog(project, editor, element, findReference(editor)).show()
     }
   }
 
@@ -153,5 +156,12 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
     @JvmStatic
     val REFACTORING_ID = "refactoring.inlineMethod"
+
+    @JvmStatic
+    @VisibleForTesting
+    fun findReference(editor: Editor): PsiReference? {
+      val reference = TargetElementUtil.findReference(editor)
+      return if (reference !is PyImportReference) reference else null
+    }
   }
 }
