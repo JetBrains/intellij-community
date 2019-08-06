@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -77,6 +76,11 @@ public class GitConfigUtil {
   @Nullable
   public static String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull String key) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
+    return getValue(h, key);
+  }
+
+  @Nullable
+  private static String getValue(@NotNull GitLineHandler h, @NotNull String key) throws VcsException {
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
@@ -155,7 +159,8 @@ public class GitConfigUtil {
    */
   public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
     try {
-      String value = getValue(project, VfsUtil.findFileByIoFile(workingDirectory, true), "credential.helper");
+      GitLineHandler handler = new GitLineHandler(project, workingDirectory, GitCommand.CONFIG);
+      String value = getValue(handler, "credential.helper");
       return StringUtil.isNotEmpty(value);
     }
     catch (VcsException ignored) {
