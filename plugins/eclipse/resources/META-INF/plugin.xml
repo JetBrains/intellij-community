@@ -23,7 +23,7 @@
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
-    <fileTypeFactory implementation="org.jetbrains.idea.eclipse.config.EclipseFileTypeFactory"/>
+    <fileType name="Eclipse" implementationClass="org.jetbrains.idea.eclipse.config.EclipseFileType" fileNames=".classpath;.project" fieldName="INSTANCE"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <schemeImporter 
         name="Eclipse XML Profile"
