@@ -20,7 +20,6 @@ import java.awt.event.ItemEvent
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
-import javax.swing.JTextField
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
@@ -73,7 +72,8 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         }
       }
 
-      for (checkoutProvider in CheckoutProvider.EXTENSION_POINT_NAME.extensions) {
+      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions.sortedArrayWith(CheckoutProvider.CheckoutProviderComparator())
+      for (checkoutProvider in providers) {
         comboBox.addItem(checkoutProvider)
         val vcsComponent = checkoutProvider.buildVcsCloneComponent(project)
         vcsComponents[checkoutProvider.vcsName] = vcsComponent
