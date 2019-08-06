@@ -231,14 +231,13 @@ public class PushLog extends JPanel implements DataProvider {
       @NotNull
       @Override
       protected Border createViewerBorder() {
-        return IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM);
+        return IdeBorderFactory.createBorder(SideBorder.TOP);
       }
     };
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setBorder(JBUI.Borders.emptyTop(2));
     setDefaultEmptyText();
 
     myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
@@ -277,10 +276,11 @@ public class PushLog extends JPanel implements DataProvider {
     if (syncStrategyPanel != null) {
       myScrollPane.add(syncStrategyPanel);
     }
-    myScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    myScrollPane.setBorder(JBUI.Borders.empty());
     splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(detailsSplitter);
 
+    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
     setLayout(new BorderLayout());
     add(splitter);
     myTree.setRowHeight(0);
