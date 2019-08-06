@@ -105,7 +105,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       return typeInstantiation to REIFIED_AS_PROPER_TYPE
     }
     if (typeInstantiation == PsiType.NULL) {
-      return type to NEW_TYPE_PARAMETER
+      return type to REIFIED_AS_TYPE_PARAMETER
     }
     return if (subtypes.isNotEmpty()) {
       type to REIFIED_AS_TYPE_PARAMETER

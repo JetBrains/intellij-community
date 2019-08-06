@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
 import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.JAVA_LANG_VOID
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
@@ -152,7 +151,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
       val lowerBound = typeLattice.join(subClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
       val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
       val invariantUpperBound = adjustedBound.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
-      if (invariantUpperBound.equalsToText(JAVA_LANG_VOID)) PsiWildcardType.createUnbounded(context.manager) else invariantUpperBound
+      invariantUpperBound
     }
   }
 }

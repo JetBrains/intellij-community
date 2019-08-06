@@ -6,13 +6,16 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_ABSTRACT_TYPE_METHODS
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -29,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcesso
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -136,14 +138,11 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
       AnnotationUtil.arrayAttributeValues(innerParameter.annotations.first().findAttributeValue("options")).mapNotNull {
         (it as? PsiLiteral)?.value as? String
       }.toTypedArray()
-    val innerMethod = resolveResult.candidate?.method
-    // We cannot use GroovyMethodResult#getSubstitutor because we need to leave type parameters of outerMethod among substitution variants
-    val substitutor = collectGenericSubstitutor(resolveResult, outerMethod)
-    val gdkGuard = when (innerMethod) {
+    val gdkGuard = when (val innerMethod = resolveResult.candidate?.method) {
       is GrGdkMethod -> innerMethod.staticMethod
       else -> innerMethod
     }
-    val signatures = hint.inferExpectedSignatures(gdkGuard!!, substitutor, options)
+    val signatures = hint.inferExpectedSignatures(gdkGuard!!, resolveResult.substitutor, options)
     signatures.first().zip(closureParameter.typeParameters).forEach { (type, typeParameter) ->
       constraintCollector.add(TypeConstraint(typeParameter.type(), type, outerMethod))
       if (type.isTypeParameter()) {
@@ -158,21 +157,6 @@ fun collectClosureParamsDependencies(constraintCollector: MutableList<Constraint
   parameter.setType(parameterType)
 }
 
-private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMethod: GrMethod): PsiSubstitutor {
-  val outerParameters = outerMethod.typeParameters.map { it.type() }.toSet()
-  val resolveSession = CollectingGroovyInferenceSession(
-    outerMethod.typeParameters.filter {
-      (it.extendsListTypes.run { isEmpty() || first() in outerParameters })
-    }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod)
-  resolveSession.addConstraint(MethodCallConstraint(null, resolveResult, outerMethod))
-  for (typeParameter in outerMethod.typeParameters) {
-    resolveSession.getInferenceVariable(
-      resolveSession.substituteWithInferenceVariables(typeParameter.type()))?.instantiation = typeParameter.type()
-  }
-  return resolveSession.inferSubst(resolveResult)
-}
-
-
 fun collectDelegatesToDependencies(closureParameter: ParameterizedClosure,
                                    usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
@@ -186,12 +170,14 @@ fun collectDelegatesToDependencies(closureParameter: ParameterizedClosure,
     val annotation = innerParameter.annotations.find { it.qualifiedName == "groovy.lang.DelegatesTo" } ?: return@forEachClosureForwarding
     val valueAttribute = annotation.findDeclaredAttributeValue("value")?.reference?.resolve() as? PsiClass
     val typeAttribute = annotation.findDeclaredAttributeValue("type")?.stringValue()
-    val strategyAttribute = (annotation.findDeclaredAttributeValue("strategy") as? GrExpression)
+    val strategyAttribute = annotation.findDeclaredAttributeValue("strategy")?.run(::extractIntValue)
     if (valueAttribute != null && valueAttribute.name != "DelegatesTo.Target") {
       combiner.setDelegate(valueAttribute)
     }
     else if (typeAttribute != null) {
-      /*todo*/
+      createTypeSignature(typeAttribute, resolveResult.substitutor, innerParameter)?.run {
+        combiner.setTypeDelegate(this)
+      }
     }
     else {
       val delegateParameters = resolveResult.candidate?.method?.parameters?.mapNotNull { param ->
@@ -217,10 +203,23 @@ fun collectDelegatesToDependencies(closureParameter: ParameterizedClosure,
       }
     }
     if (strategyAttribute != null) {
-      combiner.setStrategyByExpression(strategyAttribute)
+      combiner.setStrategy(strategyAttribute)
     }
   }
 
+}
+
+private fun extractIntValue(attribute: PsiAnnotationMemberValue): String? {
+  return when (attribute) {
+    is PsiLiteralValue -> (attribute.value as? Int).toString()
+    is GrExpression -> attribute.text
+    else -> null
+  }
+}
+
+fun createTypeSignature(signatureRepresentation: String, substitutor: PsiSubstitutor, context: PsiElement): PsiType? {
+  val newType = JavaPsiFacade.getElementFactory(context.project).createTypeFromText("UnknownType<$signatureRepresentation>", context)
+  return (newType as PsiClassType).parameters.map { substitutor.substitute(it) }.singleOrNull()
 }
 
 

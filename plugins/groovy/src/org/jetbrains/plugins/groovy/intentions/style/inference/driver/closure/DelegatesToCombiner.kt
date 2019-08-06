@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.rawType
 
 class DelegatesToCombiner {
   private var delegateType: PsiType = PsiType.NULL
-  private var delegationStrategy: GrExpression? = null
+  private var delegationStrategy: String? = null
   private var delegateParameter: GrParameter? = null
 
   companion object {
@@ -50,17 +50,21 @@ class DelegatesToCombiner {
     delegateType = clazz.rawType()
   }
 
+  fun setTypeDelegate(type: PsiType) {
+    delegateType = type
+  }
+
   fun setDelegate(expression: GrExpression) {
     delegateType = expression.type ?: PsiType.NULL
     (expression.reference?.resolve() as? GrParameter)?.run { delegateParameter = this }
   }
 
-  fun setStrategyByExpression(expression: GrExpression) {
-    delegationStrategy = expression
+  fun setStrategy(representation: String) {
+    delegationStrategy = representation
   }
 
   private fun setStrategy(candidate: GroovyMethodCandidate) {
-    delegationStrategy = (candidate.argumentMapping?.arguments?.singleOrNull() as? ExpressionArgument)?.expression ?: return
+    delegationStrategy = (candidate.argumentMapping?.arguments?.singleOrNull() as? ExpressionArgument)?.expression?.text ?: return
   }
 
   private fun processRehydrate(candidate: GroovyMethodCandidate) {
@@ -74,7 +78,7 @@ class DelegatesToCombiner {
       return null to emptyList()
     }
     val additionalParameter = instantiateAnnotationForParameter(outerParameters)
-    val strategy = delegationStrategy?.run { "strategy = ${text}" } ?: ""
+    val strategy = delegationStrategy?.run { "strategy = ${this}" } ?: ""
     val delegateTypeRepresentation = delegateType.takeIf { it != PsiType.NULL }?.canonicalText ?: ""
     val type = when {
       parameter != null -> "target = '${parameter.name}'"

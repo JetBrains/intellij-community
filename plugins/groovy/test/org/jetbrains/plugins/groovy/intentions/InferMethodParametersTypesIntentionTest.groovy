@@ -349,7 +349,7 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
-  void testClosurePassedToDGM() {
+  void testClosurePassedToDgm() {
     doTest(true)
   }
 
@@ -434,6 +434,14 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   }
 
   void testDelegateInferenceFromInnerMethod() {
+    doTest(true)
+  }
+
+  void testDelegationFromDgm() {
+    doTest(true)
+  }
+
+  void testDelegationFromType() {
     doTest(true)
   }
 }
