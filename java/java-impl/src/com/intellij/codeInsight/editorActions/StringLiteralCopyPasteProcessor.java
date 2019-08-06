@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +234,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
     for (int i = 0; i < lines.length; i++) {
-      buffer.append(StringUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
+      buffer.append(PsiLiteralUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
       if (i < lines.length - 1) {
         buffer.append("\n");
       }

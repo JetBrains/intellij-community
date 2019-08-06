@@ -269,12 +269,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testEscapeTextBlockCharacters() {
-    assertEquals("\\\"\"\"\\\"\"\"\\\"\\\"", StringUtil.escapeTextBlockCharacters("\"\"\"\"\"\"\"\"", false, true));
-    assertEquals("\\\\", StringUtil.escapeTextBlockCharacters("\\", false, true));
-  }
-
-  @Test
   public void testEscapeStringCharacters() {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());

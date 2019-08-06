@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -110,7 +111,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
-      newExpression.append(StringUtil.escapeTextBlockCharacters(formatString));
+      newExpression.append(PsiLiteralUtil.escapeTextBlockCharacters(formatString));
       if (insertNewline) {
         newExpression.append('\n');
       }
