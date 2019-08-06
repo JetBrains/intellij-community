@@ -76,7 +76,6 @@ public class PushLog extends JPanel implements DataProvider {
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
-    final AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
 
@@ -108,9 +107,8 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         if (node instanceof TooltipNode) {
-          return KeymapUtil.createTooltipText(
-            ((TooltipNode)node).getTooltip() +
-            "<p style='font-style:italic;color:gray;'>Show commit details", quickDocAction) + "</p>";
+          return ((TooltipNode)node).getTooltip() +
+                 "<p style='font-style:italic;color:gray;'>Select to show commit details </p>";
         }
         return "";
       }
@@ -223,8 +221,6 @@ public class PushLog extends JPanel implements DataProvider {
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "");
-    MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
-    showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
     ExpandAllAction expandAllAction = new ExpandAllAction(myTree);
     expandAllAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_EXPAND_ALL).getShortcutSet(), myTree);
     CollapseAllAction collapseAll = new CollapseAllAction(myTree);
@@ -303,18 +299,6 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.setSelectionPath(selectionPath);
     if (shouldScrollTo) {
       myTree.scrollPathToVisible(selectionPath);
-    }
-  }
-
-  private class MyShowCommitInfoAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myBalloon.showCommitDetails();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedCommitNodes().size() == 1);
     }
   }
 
