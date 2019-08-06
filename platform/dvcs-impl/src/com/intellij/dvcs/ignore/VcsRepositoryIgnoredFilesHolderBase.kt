@@ -113,19 +113,23 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
-    val removedIgnoredFiles = arrayListOf<FilePath>()
+    val removedIgnoredFilePaths = arrayListOf<FilePath>()
+    val removedIgnoredFiles = arrayListOf<VirtualFile>()
     val filePathsSet = filePaths.toHashSet()
-    SET_LOCK.write {
-      val iter = ignoredSet.iterator()
-      while (iter.hasNext()) {
-        val filePath = VcsUtil.getFilePath(iter.next())
-        if (isUnder(filePathsSet, filePath)) {
-          iter.remove()
-          removedIgnoredFiles.add(filePath)
-        }
+    val ignored = SET_LOCK.read { ignoredSet.toHashSet() }
+
+    for (ignore in ignored) {
+      val ignorePath = VcsUtil.getFilePath(ignore)
+      if (isUnder(filePathsSet, ignorePath)) {
+        removedIgnoredFiles.add(ignore)
+        removedIgnoredFilePaths.add(ignorePath)
       }
     }
-    return removedIgnoredFiles
+
+    SET_LOCK.write {
+      ignoredSet.removeAll(removedIgnoredFiles)
+    }
+    return removedIgnoredFilePaths
   }
 
   private fun checkIgnored(paths: Collection<FilePath>) {
