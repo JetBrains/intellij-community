@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,12 +21,12 @@ public class TempFiles {
     myFilesToDelete = filesToDelete;
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile createVFile(@NotNull String prefix) {
     return getVFileByFile(createTempFile(prefix));
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile createVFile(@NotNull String prefix, String postfix) {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
@@ -61,7 +60,6 @@ public class TempFiles {
     myFilesToDelete.add(tempFile);
   }
 
-  @Nullable
   public static VirtualFile getVFileByFile(@NotNull File tempFile) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
   }
@@ -84,12 +82,12 @@ public class TempFiles {
     }
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile createTempVDir() {
     return createTempVDir("dir");
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile createTempVDir(@NotNull String prefix) {
     return getVFileByFile(createTempDir(prefix));
   }
@@ -103,7 +101,8 @@ public class TempFiles {
     }
   }
 
-  public VirtualFile createVFile(@NotNull final VirtualFile parentDir, @NotNull final String name, @NotNull final String text) {
+  @NotNull
+  public VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
