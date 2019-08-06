@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -43,6 +47,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
@@ -54,13 +59,14 @@ public class PushLog extends JPanel implements DataProvider {
   private static final String START_EDITING = "startEditing";
   private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
   private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
+  private static final String SHOW_DETAILS_KEY = "Vcs.Push.Show.Details";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
   private final VcsCommitInfoBalloon myBalloon;
   private final CommitDetailsPanel myDetailsPanel;
-  private final BorderLayoutPanel myDetailsContentPanel;
+  private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private String mySyncRenderedText;
@@ -245,12 +251,18 @@ public class PushLog extends JPanel implements DataProvider {
       new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     detailsScrollPane.setBorder(JBUI.Borders.empty());
     detailsScrollPane.setViewportBorder(JBUI.Borders.empty());
-    myDetailsContentPanel = new BorderLayoutPanel();
-    myDetailsContentPanel.addToCenter(detailsScrollPane);
+    BorderLayoutPanel detailsContentPanel = new BorderLayoutPanel();
+    detailsContentPanel.addToCenter(detailsScrollPane);
 
     JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
     detailsSplitter.setFirstComponent(myChangesBrowser);
-    detailsSplitter.setSecondComponent(myDetailsContentPanel);
+
+    myShowDetailsAction = new MyShowDetailsAction(project, SHOW_DETAILS_KEY, (state) -> {
+      detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
+    });
+    myShowDetailsAction.setEnabled(false);
+    myChangesBrowser.addToolbarSeparator();
+    myChangesBrowser.addToolbarAction(myShowDetailsAction);
 
     JBSplitter splitter = new OnePixelSplitter(TREE_SPLITTER_PROPORTION, 0.5f);
     final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
@@ -418,10 +430,10 @@ public class PushLog extends JPanel implements DataProvider {
     myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
       myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
-      myDetailsContentPanel.setVisible(true);
+      myShowDetailsAction.setEnabled(true);
     }
     else {
-      myDetailsContentPanel.setVisible(false);
+      myShowDetailsAction.setEnabled(false);
     }
   }
 
@@ -752,6 +764,41 @@ public class PushLog extends JPanel implements DataProvider {
     public Dimension getExtentSize() {
       Dimension defaultSize = super.getExtentSize();
       return new Dimension(defaultSize.width, defaultSize.height - myHeightToReduce);
+    }
+  }
+
+  private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
+    private final static boolean DEFAULT_VALUE = true;
+    @NotNull private final String mySettingKey;
+    @NotNull private final Project myProject;
+    @NotNull private final Consumer<Boolean> myOnUpdate;
+
+    MyShowDetailsAction(@NotNull Project project, @NotNull String settingKey, @NotNull Consumer<Boolean> onUpdate) {
+      super("Show Details", AllIcons.Actions.PreviewDetailsVertically);
+      mySettingKey = settingKey;
+      myProject = project;
+      myOnUpdate = onUpdate;
+    }
+
+    private boolean getValue() {
+      return PropertiesComponent.getInstance(myProject).getBoolean(mySettingKey, DEFAULT_VALUE);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return getValue();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      PropertiesComponent.getInstance(myProject).setValue(mySettingKey, state, DEFAULT_VALUE);
+      myOnUpdate.accept(state);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      myOnUpdate.accept(enabled && getValue());
+      super.setEnabled(enabled);
     }
   }
 }
