@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.extensions.Extensions
@@ -24,7 +26,7 @@ object DynamicPlugins {
     return isUnloadSafe(pluginDescriptor.appContainerDescriptor) &&
            isUnloadSafe(pluginDescriptor.projectContainerDescriptor) &&
            isUnloadSafe(pluginDescriptor.moduleContainerDescriptor) &&
-           pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
+           (ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor)
   }
 
   private fun isUnloadSafe(containerDescriptor: ContainerDescriptor): Boolean {
@@ -42,6 +44,7 @@ object DynamicPlugins {
       }
     }
 
+    (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
     return pluginDescriptor.unloadClassLoader()
   }
 
@@ -52,5 +55,6 @@ object DynamicPlugins {
     PluginManagerCore.initClassLoader(coreLoader, idToDescriptorMap, pluginDescriptor)
 
     (ApplicationManager.getApplication() as ApplicationImpl).registerComponents(listOf(pluginDescriptor))
+    (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
   }
 }

@@ -475,14 +475,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void registerPluginActions() {
     final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      final List<Element> elementList = plugin.getActionDescriptionElements();
-      if (elementList != null) {
-        long startTime = StartUpMeasurer.getCurrentTime();
-        for (Element e : elementList) {
-          processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
-        }
-        StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
+      registerPluginActions(plugin);
+    }
+  }
+
+  public void registerPluginActions(IdeaPluginDescriptor plugin) {
+    final List<Element> elementList = plugin.getActionDescriptionElements();
+    if (elementList != null) {
+      long startTime = StartUpMeasurer.getCurrentTime();
+      for (Element e : elementList) {
+        processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
       }
+      StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
     }
   }
 
@@ -918,12 +922,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     AbbreviationManager.getInstance().removeAllAbbreviations(id);
-    for (AnAction anAction : myId2Action.values()) {
-      if (anAction instanceof DefaultActionGroup) {
-        ((DefaultActionGroup) anAction).remove(action, id);
-      }
-    }
-
     unregisterAction(id);
   }
 
@@ -1009,7 +1007,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     assertActionIsGroupOrStub(action);
     return action;
   }
-
   private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, @NotNull Element child) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
@@ -1032,6 +1029,30 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     else {
       reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
+    }
+  }
+
+
+  public boolean canUnloadActions(IdeaPluginDescriptor pluginDescriptor) {
+    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    if (elements == null) return true;
+    for (Element element : elements) {
+      if (!element.getName().equals(ACTION_ELEMENT_NAME)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void unloadActions(IdeaPluginDescriptor pluginDescriptor) {
+    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    if (elements == null) return;
+    for (Element element : elements) {
+      if (element.getName().equals(ACTION_ELEMENT_NAME)) {
+        String className = element.getAttributeValue(CLASS_ATTR_NAME);
+        String id = obtainActionId(element, className);
+        unregisterAction(id);
+      }
     }
   }
 
