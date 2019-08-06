@@ -97,8 +97,7 @@ public class CoreApplicationEnvironment {
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs);
-    registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
+    registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
     //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
