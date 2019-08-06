@@ -40,6 +40,7 @@ public class FileUtil extends FileUtilRt {
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
+  public static final TObjectHashingStrategy<CharSequence> PATH_CHAR_SEQUENCE_HASHING_STRATEGY = FilePathHashingStrategy.createForCharSequence();
 
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
@@ -54,7 +55,7 @@ public class FileUtil extends FileUtilRt {
       }
     };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
+  private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
   @NotNull
   public static String join(@NotNull final String... parts) {
