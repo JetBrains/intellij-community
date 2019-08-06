@@ -30,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FileNameCache {
-  
-  @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
+
+  @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
 
   static {
     final int protectedSize = 40000 / ourNameCache.length;
@@ -58,11 +58,10 @@ public class FileNameCache {
     }
 
     CharSequence rawName = ByteArrayCharSequence.convertToBytesIfPossible(name);
-    IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<>(id, rawName);
-    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      return cache.cacheEntry(entry);
+      return cache.cacheEntry(id, rawName);
     }
   }
 
@@ -80,6 +79,7 @@ public class FileNameCache {
 
   private static final boolean ourTrackStats = false;
   private static final int ourLOneSize = 1024;
+  @SuppressWarnings("unchecked")
   private static final IntObjectLinkedMap.MapEntry<CharSequence>[] ourArrayCache = new IntObjectLinkedMap.MapEntry[ourLOneSize];
 
   private static final AtomicInteger ourQueries = new AtomicInteger();
@@ -90,7 +90,7 @@ public class FileNameCache {
   public interface NameComputer {
     String compute(int id) throws IOException;
   }
-  
+
   @NotNull
   public static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
     assert nameId > 0 : nameId;
@@ -117,7 +117,7 @@ public class FileNameCache {
     }
 
     final int stripe = calcStripeIdFromNameId(nameId);
-    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
       entry = cache.getCachedEntry(nameId);
