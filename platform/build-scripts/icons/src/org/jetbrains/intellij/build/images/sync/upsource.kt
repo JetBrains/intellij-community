@@ -35,14 +35,13 @@ private fun <T> upsourceRetry(action: () -> T) = retry(action = action, secondsB
 
 internal object UpsourceUser {
   private fun String.systemProperty() = System.getProperty(this) ?: error("$this is undefined")
-  val name by lazy { "upsource.user.name".systemProperty() }
-  val password by lazy { "upsource.user.password".systemProperty() }
+  val token by lazy { "upsource.user.token".systemProperty() }
   val email by lazy { "upsource.user.email".systemProperty() }
 }
 
 private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
   log("Calling Upsource '$method' with '$args'")
-  basicAuth(UpsourceUser.name, UpsourceUser.password)
+  tokenAuth(UpsourceUser.token)
 }
 
 internal sealed class Review(val id: String, val projectId: String?, val url: String)
@@ -143,7 +142,7 @@ private val HUB by lazy { System.getProperty("hub.url") }
 private fun userId(email: String): String? {
   log("Calling Hub 'users' with '$email'")
   val response = get("$HUB/api/rest/users?fields=id&top=1&query=email:$email+and+has:verifiedEmail") {
-    basicAuth(UpsourceUser.name, UpsourceUser.password)
+    tokenAuth(UpsourceUser.token)
   }
   return extractOrNull(response, Regex(""""id":"([^,"]+)""""))
 }
