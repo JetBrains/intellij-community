@@ -25,7 +25,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,16 +46,10 @@ public class GitConfigUtil {
   private GitConfigUtil() {
   }
 
-  /**
-   * Get configuration values for the repository. Note that the method executes a git command.
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @param keyMask the keys to be queried
-   * @param result  the map to put results to
-   * @throws VcsException if there is a problem with running git
-   */
-  public static void getValues(Project project, VirtualFile root, String keyMask, Map<String, String> result) throws VcsException {
+  public static void getValues(@NotNull Project project,
+                               @NotNull VirtualFile root,
+                               @Nullable String keyMask,
+                               @NotNull Map<String, String> result) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null");
@@ -81,17 +74,8 @@ public class GitConfigUtil {
   }
 
 
-  /**
-   * Get configuration value for the repository. Note that the method executes a git command.
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @param key     the keys to be queried
-   * @return the value associated with the key or null if the value is not found
-   * @throws VcsException an exception
-   */
   @Nullable
-  public static String getValue(Project project, VirtualFile root, @NonNls String key) throws VcsException {
+  public static String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull String key) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
@@ -117,14 +101,11 @@ public class GitConfigUtil {
   }
 
   /**
-   * Get commit encoding for the specified root
-   *
-   * @param project the context project
-   * @param root    the project root
-   * @return the commit encoding or UTF-8 if the encoding is note explicitly specified
+   * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  public static String getCommitEncoding(final Project project, VirtualFile root) {
-    @NonNls String encoding = null;
+  @NotNull
+  public static String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+    String encoding = null;
     try {
       encoding = getValue(project, root, "i18n.commitencoding");
     }
@@ -138,14 +119,10 @@ public class GitConfigUtil {
   }
 
   /**
-   * Get log output encoding for the specified root
-   *
-   * @param project the context project
-   * @param root    the project root
-   * @return the log output encoding, the commit encoding, or UTF-8 if the encoding is note explicitly specified
+   * Get log output encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  public static String getLogEncoding(final Project project, VirtualFile root) {
-    @NonNls String encoding = null;
+  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+    String encoding = null;
     try {
       encoding = getValue(project, root, "i18n.logoutputencoding");
     }
@@ -160,24 +137,18 @@ public class GitConfigUtil {
 
   /**
    * Get encoding that GIT uses for file names.
-   *
-   * @return the encoding for file names
    */
+  @NotNull
   public static String getFileNameEncoding() {
     // TODO the best guess is that the default encoding is used.
     return Charset.defaultCharset().name();
   }
 
-  /**
-   * Set the value
-   *
-   * @param project the project
-   * @param root    the git root
-   * @param key     the key to set
-   * @param value   the value to set
-   * @throws VcsException if there is a problem with running git
-   */
-  public static void setValue(Project project, VirtualFile root, String key, String value, String... additionalParameters) throws VcsException {
+  public static void setValue(@NotNull Project project,
+                              @NotNull VirtualFile root,
+                              @NotNull String key,
+                              @NotNull String value,
+                              String... additionalParameters) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters(additionalParameters);
@@ -186,11 +157,9 @@ public class GitConfigUtil {
   }
 
   /**
-   * Checks that Credential helper is defined in git config
-   *
-   * @return {@code true} if Credential helper is defined, {@code false} otherwise
+   * Checks that Credential helper is defined in git config.
    */
-  public static boolean isCredentialHelperUsed(Project project, File workingDirectory) {
+  public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
     try {
       String value = getValue(project, VfsUtil.findFileByIoFile(workingDirectory, true), "credential.helper");
       return value != null && !value.isEmpty();
