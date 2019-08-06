@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,50 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       findInRegistry(candidates);
     }
   }
+
+  @Override
+  public boolean isValidSdkHome(@NotNull final String path) {
+    if (super.isValidSdkHome(path)) {
+      return true;
+    }
+
+    final File file = new File(path);
+    return mayBeAppXReparsePoint(file) && isValidSdkPath(file);
+  }
+
+  /**
+   * AppX packages installed to AppX volume (see <code>Get-AppxDefaultVolume</code>).
+   * At the same time, <strong>reparse point</strong> is created somewhere in <code>%LOCALAPPDATA%</code>.
+   * This point has tag <code>IO_REPARSE_TAG_APPEXECLINK</code> and it also added to <code>PATH</code>
+   * <br/>
+   * Such points can't be read. Their attributes are also inaccessible. {@link File#exists()} returns false.
+   * But when executed, they are processed by NTFS filter and redirected to their real location in AppX volume.
+   * They are also returned with parent's {@link File#listFiles()}
+   * <br/>
+   * There is no Java API to fetch reparse data, and its structure is undocumented (although pretty simple), so we workaround it
+   */
+  private static boolean mayBeAppXReparsePoint(@NotNull final File file) {
+    if (!SystemInfo.isWin10OrNewer) {
+      return false;
+    }
+
+    final String localAppData = System.getenv("LOCALAPPDATA");
+    if (localAppData == null) {
+      return false;
+    }
+    final File localAppDataFile = new File(localAppData);
+
+    if (!FileUtil.isAncestor(localAppDataFile, file, true)) {
+      return false;
+    }
+    final File parent = file.getParentFile();
+    if (parent == null) {
+      return false;
+    }
+    final File[] files = parent.listFiles();
+    return (files != null && ArrayUtil.contains(file, files));
+  }
+
 
   void findInRegistry(@NotNull final Collection<String> candidates) {
     fillRegistryCache(getWinRegistryService());
