@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -28,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 
 public class IdeaFreezeReporter {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
+  public static final String REPORT_PREFIX = "report";
+  public static final String DUMP_PREFIX = "dump";
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
@@ -84,7 +87,7 @@ public class IdeaFreezeReporter {
           int step = myCurrentDumps.size() / size;
           Attachment[] attachments = new Attachment[size];
           for (int i = 0; i < size; i++) {
-            Attachment attachment = new Attachment("dump-" + i + ".txt", myCurrentDumps.get(i*step).getRawDump());
+            Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
             attachment.setIncluded(true);
             attachments[i] = attachment;
           }
@@ -166,7 +169,7 @@ public class IdeaFreezeReporter {
           nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
         }
         String text = sb.toString();
-        String name = "report-" + lengthInSeconds + "s.txt";
+        String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
         Attachment attachment = new Attachment(name, text);
         attachment.setIncluded(true);
         attachments = ArrayUtil.append(attachments, attachment);
@@ -179,9 +182,12 @@ public class IdeaFreezeReporter {
 
         if (!ContainerUtil.isEmpty(commonStack)) {
           String edtNote = allInEdt ? "in EDT " : "";
-          return LogMessage.createEvent(new Freeze(commonStack),
-                                        "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
-                                        attachments);
+          long sampled = dumpTask.getSampledTime();
+          long gcTime = dumpTask.getGcTime();
+          String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
+                           "Sampled time: " + sampled + "ms\n" +
+                           "GC time: " + gcTime + "ms (" + gcTime*100/sampled + "%)";
+          return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
         }
         return null;
       }
@@ -288,20 +294,41 @@ public class IdeaFreezeReporter {
     private final ScheduledFuture<?> myFuture;
     private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
     private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
+    private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
+    private final long myStartTime;
+    private long myCurrentTime;
+    private final long myGcStartTime;
+    private long myGcCurrentTime;
 
     private DumpTask() {
       myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
       myMaxDumps = Registry.intValue("freeze.reporter.dump.duration.s") * 1000 / myDumpInterval;
+      myCurrentTime = myStartTime = System.currentTimeMillis();
+      myGcCurrentTime = myGcStartTime = currentGcTime();
       ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
       myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
     }
 
     void dumpThreads() {
+      myCurrentTime = System.currentTimeMillis();
+      myGcCurrentTime = currentGcTime();
       ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
       myThreadInfos.add(infos);
       if (myThreadInfos.size() >= myMaxDumps) {
         cancel();
       }
+    }
+
+    private static long currentGcTime() {
+      return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
+    }
+
+    long getSampledTime() {
+      return myCurrentTime - myStartTime;
+    }
+
+    long getGcTime() {
+      return myGcCurrentTime - myGcStartTime;
     }
 
     boolean isValid(long dumpingDuration) {
