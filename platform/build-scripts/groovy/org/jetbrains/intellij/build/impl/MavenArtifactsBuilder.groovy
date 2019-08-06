@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -176,23 +177,10 @@ class MavenArtifactsBuilder {
     return results
   }
 
-  private MavenArtifactData generateMavenArtifactData(JpsModule module, Map<JpsModule, MavenArtifactData> results, Set<JpsModule> nonMavenizableModules,
-                                                      Set<JpsModule> computationInProgress) {
-    if (results.containsKey(module)) return results[module]
-    if (nonMavenizableModules.contains(module)) return null
-    if (!module.name.startsWith("intellij.")) {
-      buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
-      return null
-    }
-    def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
-    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
-      buildContext.messages.debug("  module '$module.name' must be scrambled so it cannot be published")
-      return null
-    }
+  enum DependencyScope { COMPILE, RUNTIME }
 
-    boolean mavenizable = true
-    computationInProgress << module
-    List<MavenArtifactDependency> dependencies = []
+  static Map<JpsDependencyElement, DependencyScope> scopedDependencies(JpsModule module) {
+    Map<JpsDependencyElement, DependencyScope> result = [:]
     module.dependenciesList.dependencies.each { dependency ->
       def extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency)
       if (extension == null) return
@@ -213,7 +201,29 @@ class MavenArtifactsBuilder {
         default:
           return
       }
+      result[dependency] = scope
+    }
+    return result
+  }
 
+  private MavenArtifactData generateMavenArtifactData(JpsModule module, Map<JpsModule, MavenArtifactData> results, Set<JpsModule> nonMavenizableModules,
+                                                      Set<JpsModule> computationInProgress) {
+    if (results.containsKey(module)) return results[module]
+    if (nonMavenizableModules.contains(module)) return null
+    if (!module.name.startsWith("intellij.")) {
+      buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
+      return null
+    }
+    def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
+    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
+      buildContext.messages.debug("  module '$module.name' must be scrambled so it cannot be published")
+      return null
+    }
+
+    boolean mavenizable = true
+    computationInProgress << module
+    List<MavenArtifactDependency> dependencies = []
+    scopedDependencies(module).each { dependency, scope ->
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
         if (computationInProgress.contains(depModule)) {
@@ -280,8 +290,6 @@ class MavenArtifactsBuilder {
     MavenCoordinates coordinates
     List<MavenArtifactDependency> dependencies
   }
-
-  private enum DependencyScope { COMPILE, RUNTIME }
 
   @Immutable
   private static class MavenArtifactDependency {
