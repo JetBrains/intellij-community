@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
@@ -29,8 +30,13 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
                                         private val varargParameter: GrParameter?,
                                         private val closureDriver: InferenceDriver,
                                         private val originalMethod: GrMethod,
-                                        private val typeParameters: Collection<PsiTypeParameter>) : InferenceDriver {
+                                        private val typeParameters: Collection<PsiTypeParameter>,
+                                        searchScope: SearchScope? = null ) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
+  private val scope : SearchScope
+  init {
+    scope = searchScope ?: method.resolveScope
+  }
 
   companion object {
 
@@ -43,7 +49,10 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
       }
     }
 
-    fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator): InferenceDriver {
+    fun createFromMethod(method: GrMethod,
+                         virtualMethod: GrMethod,
+                         generator: NameGenerator,
+                         scope: SearchScope): InferenceDriver {
       val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
       val targetParameters = setUpParameterMapping(method, virtualMethod)
         .filter { it.key.typeElement == null }
@@ -62,7 +71,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         return EmptyDriver
       }
       else {
-        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters)
+        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, scope)
       }
     }
   }
@@ -125,7 +134,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
     val definitelySamParameters = mutableSetOf<GrParameter>()
     val mapping = setUpParameterMapping(originalMethod, method)
-    for (call in ReferencesSearch.search(originalMethod).findAll().mapNotNull { it.element.parent }) {
+    for (call in ReferencesSearch.search(originalMethod, scope).findAll().mapNotNull { it.element.parent }) {
       if (call is GrExpression) {
         constraintCollector.add(ExpressionConstraint(null, call))
         fetchSamCoercions(candidateSamParameters, definitelySamParameters, call, mapping)
@@ -195,14 +204,19 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     }
     val parameterMapping = setUpParameterMapping(method, resultMethod)
     parameterMapping.forEach { (param, actualParameter) ->
-      val newParam = if (param.type is PsiArrayType) {
-        val substituted = resultSubstitutor.substitute((param.type as PsiArrayType).componentType)
-        (if (substituted is PsiWildcardType) substituted.bound else substituted)?.createArrayType()
+      val newParam = when {
+        param.type is PsiArrayType -> {
+          val substituted = resultSubstitutor.substitute((param.type as PsiArrayType).componentType)
+          (if (substituted is PsiWildcardType) substituted.bound else substituted)?.createArrayType()
+        }
+        else -> resultSubstitutor.substitute(param.type)
       }
-      else {
-        resultSubstitutor.substitute(param.type)
+      val notNullParam = if (newParam == PsiType.NULL) {
+        getJavaLangObject(resultMethod)
+      } else {
+        newParam
       }
-      actualParameter.setType(newParam)
+      actualParameter.setType(notNullParam)
     }
     closureDriver.instantiate(resultMethod, resultSubstitutor)
   }

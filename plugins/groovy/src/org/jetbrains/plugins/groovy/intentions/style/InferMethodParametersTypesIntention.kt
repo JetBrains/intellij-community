@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
@@ -48,7 +49,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
       GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
       method.modifierList.setModifierProperty(DEF, false)
     }
-    val virtualMethod = runInferenceProcess(method)
+    val virtualMethod = runInferenceProcess(method, GlobalSearchScope.allScope(project))
     if (!method.isConstructor) {
       method.returnType = virtualMethod.returnType
       GrReferenceAdjuster.shortenAllReferencesIn(method.returnTypeElementGroovy)

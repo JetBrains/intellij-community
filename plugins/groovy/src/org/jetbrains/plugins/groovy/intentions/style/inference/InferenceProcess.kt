@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.PsiIntersectionType.flatten
+import com.intellij.psi.search.SearchScope
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
@@ -22,12 +23,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
  * 3. Inferring dependencies between new type parameters and instantiating them.
  */
-fun runInferenceProcess(method: GrMethod): GrMethod {
+fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   val overridableMethod = findOverridableMethod(method)
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod)
   }
-  val driver = createDriver(method)
+  val driver = createDriver(method, scope)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethod = createVirtualMethod(method)
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
@@ -36,10 +37,11 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   return inferTypeParameters(parameterizedDriver, graph, method, typeUsage)
 }
 
-private fun createDriver(method: GrMethod): InferenceDriver {
+private fun createDriver(method: GrMethod,
+                         scope: SearchScope): InferenceDriver {
   val virtualMethod = createVirtualMethod(method)
   val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name })
-  return CommonDriver.createFromMethod(method, virtualMethod, generator)
+  return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
 }
 
 private fun setUpGraph(driver: InferenceDriver,
