@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public class GitHandlerRebaseEditorManager implements AutoCloseable {
+public class GitHandlerRebaseEditorManager extends SafeAutoCloseable {
   @NotNull private final GitHandler myHandler;
   @NotNull private final GitRebaseEditorHandler myEditorHandler;
   @NotNull private final GitRebaseEditorService myService;
