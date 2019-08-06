@@ -59,7 +59,6 @@ public class EditorPainter implements TextDrawingCallback {
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
   private static final Key<TextAttributes> INNER_HIGHLIGHTING = Key.create("inner.highlighting");
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
-  private static final Object ourCachedBoldDot = ObjectUtils.sentinel("accented space symbol");
 
   private final EditorView myView;
   private final EditorImpl myEditor;
@@ -500,8 +499,7 @@ public class EditorPainter implements TextDrawingCallback {
               whitespacePaintingStrategy.update(text, myDocument.getLineStartOffset(logicalLine), myDocument.getLineEndOffset(logicalLine));
               currentLogicalLine[0] = logicalLine;
             }
-            paintWhitespace(g, text, xStart, y, start, end, fragment.getStartLogicalColumn(), whitespacePaintingStrategy, fragment,
-                            whiteSpaceStroke, whiteSpaceScale);
+            paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment, whiteSpaceStroke, whiteSpaceScale);
           }
         }
 
@@ -631,7 +629,7 @@ public class EditorPainter implements TextDrawingCallback {
     return Math.max(1, Math.round(scale * unscaledSize));
   }
 
-  private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end, int startLogicalColumn,
+  private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end,
                                LineWhitespacePaintingStrategy whitespacePaintingStrategy,
                                VisualLineFragmentsIterator.Fragment fragment, BasicStroke stroke, float scale) {
     if (!whitespacePaintingStrategy.showAnyWhitespace()) return;
@@ -654,16 +652,14 @@ public class EditorPainter implements TextDrawingCallback {
         if (c == ' ') {
           int lineHeight = myView.getLineHeight();
           int ascent = myView.getAscent();
-          int tabSize = myView.getTabSize();
-          boolean bold = whitespacePaintingStrategy.isAdvancedHighlighting(charOffset) && (startLogicalColumn + i + 1) % tabSize == 0;
-          float size = (bold ? 3 : 2) * scale;
+          float size = 2 * scale;
           // making center point lie exactly between pixels
           //noinspection IntegerDivisionInFloatingPointContext
           CachingPainter.paint(g, (startX + endX) / 2 - size / 2, y + 1 - ascent + lineHeight / 2 - size / 2, size, size, _g -> {
             _g.setColor(color);
             _g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             _g.fill(new Ellipse2D.Float(0, 0, size, size));
-          }, bold ? ourCachedBoldDot : ourCachedDot, color);
+          }, ourCachedDot, color);
         }
         else if (c == '\t') {
           int tabLineHeight = calcFeatureSize(4, scale);
@@ -1412,7 +1408,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
 
     private void update(CharSequence chars, int lineStart, int lineEnd) {
-      if (showAnyWhitespace()) {
+      if (showAnyWhitespace() && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
         currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
         currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
       }
@@ -1423,10 +1419,6 @@ public class EditorPainter implements TextDrawingCallback {
              && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
                  offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
                  myInnerWhitespaceShown);
-    }
-
-    private boolean isAdvancedHighlighting(int offset) {
-      return offset < currentLeadingEdge;
     }
   }
 
