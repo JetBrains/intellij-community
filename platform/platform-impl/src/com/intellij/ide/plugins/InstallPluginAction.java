@@ -113,7 +113,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
       try {
         Runnable onInstallRunnable = () -> {
           for (PluginNode node : list) {
-            installedModel.appendOrUpdateDescriptor(node);
+            installedModel.appendOrUpdateDescriptor(node, true);
           }
           if (!myInstalled.isDisposed()) {
             getPluginTable().updateUI();

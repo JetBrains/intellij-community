@@ -262,10 +262,10 @@ public class PluginInstaller {
     }
   }
 
-  public static void install(@NotNull File sourceFile,
-                             boolean deleteSourceFile,
-                             @Nullable File existingPlugin,
-                             @NotNull IdeaPluginDescriptor descriptor) throws IOException {
+  public static void installAfterRestart(@NotNull File sourceFile,
+                                         boolean deleteSourceFile,
+                                         @Nullable File existingPlugin,
+                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
     List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
 
     if (existingPlugin != null) {

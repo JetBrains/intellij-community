@@ -214,7 +214,7 @@ public class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.install(myFile, true, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile, true, myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {

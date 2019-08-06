@@ -288,7 +288,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         myDownloadedPanel.doLayout();
       }
       if (success) {
-        appendOrUpdateDescriptor(descriptor);
+        appendOrUpdateDescriptor(descriptor, true);
         appendDependsAfterInstall();
       }
     }
@@ -376,7 +376,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
 
-      appendOrUpdateDescriptor(descriptor);
+      appendOrUpdateDescriptor(descriptor, true);
 
       String id = descriptor.getPluginId().getIdString();
 
@@ -396,9 +396,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @Override
-  public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    super.appendOrUpdateDescriptor(descriptor);
-    needRestart = true;
+  public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+    super.appendOrUpdateDescriptor(descriptor, restartNeeded);
+    if (restartNeeded) {
+      needRestart = true;
+    }
     if (myDownloaded == null) {
       return;
     }

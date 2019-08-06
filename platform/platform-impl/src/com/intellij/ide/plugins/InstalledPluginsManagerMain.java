@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,8 +52,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author anna
@@ -84,10 +81,12 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     installFromDisk.setMnemonic('d');
     installFromDisk.addActionListener(e -> {
       final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
-      chooseAndInstall(model, myActionsPanel, pair -> {
-        model.appendOrUpdateDescriptor(pair.second);
-        setRequireShutdown(true);
-        select(pair.second);
+      chooseAndInstall(model, myActionsPanel, callbackData -> {
+        model.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), true);
+        if (callbackData.getRestartNeeded()) {
+          setRequireShutdown(true);
+        }
+        select(callbackData.getPluginDescriptor());
       });
     });
     myActionsPanel.add(installFromDisk);
@@ -98,7 +97,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   }
 
   static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                               @Nullable final Component parent, @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback) {
+                               @Nullable final Component parent, @NotNull final Consumer<? super PluginInstallCallbackData> callback) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -119,7 +118,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
   private static boolean install(@NotNull InstalledPluginsTableModel model,
                                  @NotNull File file,
-                                 @NotNull Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
+                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
                                  @Nullable Component parent) {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
@@ -146,10 +145,10 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         oldFile = installedPlugin.getPath();
       }
 
-      PluginInstaller.install(file, false, oldFile, pluginDescriptor);
+      PluginInstaller.installAfterRestart(file, false, oldFile, pluginDescriptor);
       ourState.onPluginInstall(pluginDescriptor);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-      callback.consume(pair(file, pluginDescriptor));
+      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, true));
       return true;
     }
     catch (IOException ex) {
@@ -491,7 +490,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      chooseAndInstall(new InstalledPluginsTableModel(), null, pair -> PluginManagerConfigurable.shutdownOrRestartApp());
+      chooseAndInstall(new InstalledPluginsTableModel(), null, callbackData -> {
+        if (callbackData.getRestartNeeded()) PluginManagerConfigurable.shutdownOrRestartApp();
+      });
     }
   }
 

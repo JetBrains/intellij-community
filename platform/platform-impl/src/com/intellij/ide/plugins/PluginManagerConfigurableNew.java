@@ -278,8 +278,8 @@ public class PluginManagerConfigurableNew
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, panel, pair -> {
-          myPluginsModel.appendOrUpdateDescriptor(pair.second);
+        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, panel, callbackData -> {
+          myPluginsModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
 
           boolean select = myInstalledPanel == null;
 
@@ -292,7 +292,7 @@ public class PluginManagerConfigurableNew
 
           if (select) {
             for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-              CellPluginComponent component = group.findComponent(pair.second);
+              CellPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
               if (component != null) {
                 myInstalledPanel.setSelection(component);
                 break;
