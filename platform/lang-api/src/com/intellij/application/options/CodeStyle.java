@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -70,6 +71,12 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    if (tempSettings != null) {
+      return tempSettings;
+    }
+
     for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getIterable()) {
       CodeStyleSettings fileSettings = provider.getSettings(file);
       if (fileSettings != null) {
@@ -78,9 +85,9 @@ public class CodeStyle {
     }
 
     if (!file.isPhysical()) {
-      return getSettings(file.getProject());
+      return getSettings(project);
     }
-    return CodeStyleCachingUtil.getCachedCodeStyle(file);
+    return CachedValuesManager.getCachedValue(file, CodeStyleCachedValueProvider.getInstance(file));
   }
 
 

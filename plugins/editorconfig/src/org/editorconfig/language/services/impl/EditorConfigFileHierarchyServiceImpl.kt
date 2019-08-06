@@ -59,7 +59,7 @@ class EditorConfigFileHierarchyServiceImpl(
 
   private fun updateHandlers(project: Project) {
     updateQueue.queue(Update.create("editorconfig hierarchy update") {
-      CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null)
+      CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
     })
   }
 
