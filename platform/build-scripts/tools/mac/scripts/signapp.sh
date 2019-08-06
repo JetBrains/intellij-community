@@ -119,7 +119,13 @@ if [ "$NOTARIZE" = "yes" ]; then
   # shellcheck disable=SC1090
   source "$HOME/.notarize_token"
   APP_NAME="${INPUT_FILE%.*}"
-  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID"
+  # Since notarization tool uses same file for upload token we have to trick it into using different folders, hence fake root
+  # Also it leaves copy of zip file in TMPDIR, so notarize.sh overrides it and uses FAKE_ROOT as location for temp TMPDIR
+  FAKE_ROOT="$(pwd)/fake-root"
+  mkdir -p "$FAKE_ROOT"
+  echo "Notarization will use fake root: $FAKE_ROOT"
+  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  rm -rf "$FAKE_ROOT"
 
   log "Stapling..."
   xcrun stapler staple "$APPLICATION_PATH"
