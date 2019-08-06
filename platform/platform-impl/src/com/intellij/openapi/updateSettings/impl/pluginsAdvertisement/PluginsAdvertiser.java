@@ -60,7 +60,7 @@ public final class PluginsAdvertiser {
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
 
   @Nullable
-  public static List<Plugin> retrieve(UnknownFeature unknownFeature) {
+  public static List<Plugin> retrieve(UnknownFeature unknownFeature) throws IOException {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
     final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
@@ -84,7 +84,7 @@ public final class PluginsAdvertiser {
       });
   }
 
-  static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
+  static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) throws IOException {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
@@ -131,14 +131,15 @@ public final class PluginsAdvertiser {
       });
   }
 
-  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor) {
+  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor)
+    throws IOException {
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     Url url = Urls.parseEncoded(baseUrl);
     if (url == null) {
       LOG.error("Cannot parse URL: " + baseUrl);
       return null;
     }
-    return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor, null, LOG);
+    return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor);
   }
 
   public static void ensureDeleted() {
