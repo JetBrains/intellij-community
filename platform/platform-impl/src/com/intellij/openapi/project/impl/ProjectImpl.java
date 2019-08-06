@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +38,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
@@ -49,7 +49,6 @@ import java.nio.file.Path;
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
-  public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   /**
@@ -105,6 +104,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return super.isDisposed() || temporarilyDisposed;
   }
 
+  @Override
   @TestOnly
   public boolean isLight() {
     return myLight;

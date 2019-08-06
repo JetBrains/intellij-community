@@ -605,6 +605,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/intellij.platform.scriptDebugger.backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/intellij.platform.scriptDebugger.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/intellij.platform.scriptDebugger.protocolReaderRuntime.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/intellij.platform.scriptDebugger.protocolReaderRuntime.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/intellij.platform.scriptDebugger.ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/intellij.platform.scriptDebugger.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" filepath="$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/intellij.platform.structuralSearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/intellij.platform.structuralSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/intellij.platform.structuralSearch.tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/intellij.platform.structuralSearch.tests.iml" />

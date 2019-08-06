@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -248,7 +248,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->
-            ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+            ((ApplicationEx)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
               COMMAND_TITLE, myProject, null,
               indicator -> createFiles(myProject, moduleInfos, indicator)), COMMAND_TITLE, null);
         }

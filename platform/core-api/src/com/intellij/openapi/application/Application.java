@@ -168,6 +168,10 @@ public interface Application extends ComponentManager {
    */
   void exit();
 
+  default void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    exit();
+  }
+
   /**
    * Checks if the write access is currently allowed.
    *

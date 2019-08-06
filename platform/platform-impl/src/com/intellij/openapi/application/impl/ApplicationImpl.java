@@ -23,12 +23,9 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -42,6 +39,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -370,8 +368,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       executeOnPooledThread(() -> createLocatorFile());
 
+      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
+
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getRootArea()).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
+      for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
           break;
         }
@@ -391,8 +391,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       token.finish();
     }
-
-    LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
   }
 
   @Override
@@ -674,6 +672,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  Note: there are possible scenarios when we get a quit notification at a moment when another
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
+  @Override
   public void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit(force, exitConfirmed, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
@@ -899,6 +898,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLock.readUnlock();
   }
 
+  @Override
   @ApiStatus.Experimental
   public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
                                                                           @Nullable Project project,
@@ -907,6 +907,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
+  @Override
   @ApiStatus.Experimental
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
                                                                        @Nullable Project project,
@@ -1342,6 +1343,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return Restarter.isSupported();
   }
 
+  @Override
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
     myDisposeInProgress = disposeInProgress;
@@ -1382,7 +1384,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
   }
-
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {

@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -69,7 +68,7 @@ public final class ServiceManagerImpl implements Disposable {
   }
 
   @ApiStatus.Internal
-  public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
+  public static void processAllDescriptors(@NotNull ComponentManager componentManager, @NotNull Consumer<? super ServiceDescriptor> consumer) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
       ContainerDescriptor containerDescriptor;
@@ -94,18 +93,6 @@ public final class ServiceManagerImpl implements Disposable {
         consumer.accept(serviceDescriptor, plugin);
       }
     }
-  }
-
-  @NotNull
-  public static List<String> getImplementationClassNames(@NotNull ComponentManager componentManager, @NotNull String prefix) {
-    List<String> result = new ArrayList<>();
-    processAllDescriptors(serviceDescriptor -> {
-      String implementation = serviceDescriptor.getImplementation();
-      if (!StringUtil.isEmpty(implementation) && implementation.startsWith(prefix)) {
-        result.add(implementation);
-      }
-    }, componentManager);
-    return result;
   }
 
   public static void processAllImplementationClasses(@NotNull ComponentManager componentManager,
@@ -159,7 +146,7 @@ public final class ServiceManagerImpl implements Disposable {
             continue;
           }
 
-          if (!processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId))) {
+          if (!processor.test(aClass, pluginId == null ? null : PluginManagerCore.getPlugin(pluginId))) {
             break;
           }
         }

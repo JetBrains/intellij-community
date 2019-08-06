@@ -1,6 +1,6 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
@@ -27,7 +27,7 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
 
     TipAndTrickBean tip = new TipAndTrickBean();
     tip.fileName = "TestTip.html";
-    tip.setPluginDescriptor(PluginManager.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)));
+    tip.setPluginDescriptor(PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)));
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), TipAndTrickBean.EP_NAME, tip, getTestRootDisposable());
   }
 

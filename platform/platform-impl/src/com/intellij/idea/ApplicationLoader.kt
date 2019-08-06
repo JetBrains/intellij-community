@@ -53,7 +53,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.io.File
+import java.io.IOException
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
@@ -552,7 +554,23 @@ private fun reportPluginError() {
       return@Notification
     }
 
-    PluginManager.reportPluginError(description)
+    val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
+    if (PluginManagerCore.myPlugins2Disable != null && PluginManagerCore.DISABLE == description) {
+      disabledPlugins.addAll(PluginManagerCore.myPlugins2Disable)
+    }
+    else if (PluginManagerCore.myPlugins2Enable != null && PluginManagerCore.ENABLE == description) {
+      disabledPlugins.removeAll(PluginManagerCore.myPlugins2Enable)
+      PluginManagerMain.notifyPluginsUpdated(null)
+    }
+
+    try {
+      PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
+    }
+    catch (ignore: IOException) {
+    }
+
+    PluginManagerCore.myPlugins2Enable = null
+    PluginManagerCore.myPlugins2Disable = null
   })
   PluginManagerCore.myPluginError = null
 }

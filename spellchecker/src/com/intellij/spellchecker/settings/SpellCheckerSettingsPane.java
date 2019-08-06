@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ConfigurationException;
@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
 import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
@@ -143,8 +142,8 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   private static String getHunspellDescription() {
     final PluginId hunspellId = getId("hunspell");
-    final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
-    if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
+    final IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(hunspellId);
+    if (PluginManagerCore.isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
       return ", " + SpellCheckerBundle.message("hunspell.description");
     }
     else {

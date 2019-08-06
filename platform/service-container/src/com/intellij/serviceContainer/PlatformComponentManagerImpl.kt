@@ -5,10 +5,7 @@ import com.intellij.diagnostic.ActivitySubNames
 import com.intellij.diagnostic.LoadingPhase
 import com.intellij.diagnostic.ParallelActivity
 import com.intellij.diagnostic.run
-import com.intellij.ide.plugins.ContainerDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
@@ -19,7 +16,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -28,6 +24,7 @@ import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 private val LOG = logger<PlatformComponentManagerImpl>()
@@ -48,7 +45,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
   protected open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
     ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_EXTENSIONS) {
       @Suppress("UNCHECKED_CAST")
-      PluginManagerCore.registerExtensionPointsAndExtensions(extensionArea as ExtensionsAreaImpl, picoContainer,
+      PluginManagerCore.registerExtensionPointsAndExtensions(extensionArea, picoContainer,
                                                              plugins as MutableList<IdeaPluginDescriptorImpl>)
     }
 
@@ -109,7 +106,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
   }
 
-  override fun handleInitComponentError(t: Throwable, componentClassName: String, pluginId: PluginId) {
+  final override fun handleInitComponentError(t: Throwable, componentClassName: String, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
     }
@@ -123,7 +120,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
   }
 
-  override fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
+  final override fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
       LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
       componentStore.initComponent(component, serviceDescriptor)
@@ -133,7 +130,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
   @ApiStatus.Internal
-  override fun <T> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
+  final override fun <T> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
     val componentKey = serviceClass.name
     var instance = picoContainer.getService(serviceClass, isCreate)
     if (instance == null && isCreate) {
@@ -153,5 +150,16 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
       return instance
     }
     return instance
+  }
+
+  final override fun getServiceImplementationClassNames(prefix: String): MutableList<String> {
+    val result = ArrayList<String>()
+    ServiceManagerImpl.processAllDescriptors(this) { serviceDescriptor ->
+      val implementation = serviceDescriptor.implementation ?: return@processAllDescriptors
+      if (implementation.startsWith(prefix)) {
+        result.add(implementation)
+      }
+    }
+    return result
   }
 }

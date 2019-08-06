@@ -150,6 +150,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.configurationStore.impl")
 
       withModule("intellij.platform.extensions")
+      withModule("intellij.platform.serviceContainer")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
       withModule("intellij.platform.icons")

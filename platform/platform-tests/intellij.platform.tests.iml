@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="batik-transcoder" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
   </component>
 </module>

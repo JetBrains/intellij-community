@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -126,7 +128,7 @@ public class IdeaLogger extends Log4jBasedLogger {
                    "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
 
-    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
+    IdeaPluginDescriptor plugin = t == null ? null : findPluginIfInitialized(t);
     if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
       myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
     }
@@ -146,5 +148,10 @@ public class IdeaLogger extends Log4jBasedLogger {
         }
       }
     }
+  }
+
+  // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
+  private static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
+    return PluginManagerCore.arePluginsInitialized() ? PluginManager.getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
   }
 }

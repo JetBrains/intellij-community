@@ -3,12 +3,11 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -147,5 +146,25 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default boolean isInImpatientReader() {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+                                                                        @Nullable Project project,
+                                                                        @Nullable JComponent parentComponent,
+                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Experimental
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+                                                                           @Nullable Project project,
+                                                                           @Nullable JComponent parentComponent,
+                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
+    throw new UnsupportedOperationException();
+  }
+
+  @TestOnly
+  default void setDisposeInProgress(boolean disposeInProgress) {
   }
 }

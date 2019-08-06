@@ -84,8 +84,8 @@ public class PluginManagerCore {
   private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
-  static final String DISABLE = "disable";
-  static final String ENABLE = "enable";
+  public static final String DISABLE = "disable";
+  public static final String ENABLE = "enable";
   public static final String EDIT = "edit";
 
   private static Set<String> ourDisabledPlugins;
@@ -104,8 +104,12 @@ public class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField") @ApiStatus.Internal
   public static String myPluginError;
 
-  static List<String> myPlugins2Disable;
-  static LinkedHashSet<String> myPlugins2Enable;
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static List<String> myPlugins2Disable;
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static LinkedHashSet<String> myPlugins2Enable;
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
@@ -155,7 +159,8 @@ public class PluginManagerCore {
     return ourLoadedPlugins;
   }
 
-  static boolean arePluginsInitialized() {
+  @ApiStatus.Internal
+  public static boolean arePluginsInitialized() {
     return ourPlugins.get() != null;
   }
 
@@ -1710,12 +1715,28 @@ public class PluginManagerCore {
     return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
-  static final class EssentialPluginMissingException extends RuntimeException {
-    final List<String> pluginIds;
+  public static final class EssentialPluginMissingException extends RuntimeException {
+    public final List<String> pluginIds;
 
     EssentialPluginMissingException(@NotNull List<String> ids) {
       super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       pluginIds = ids;
     }
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+    if (id != null) {
+      for (IdeaPluginDescriptor plugin : getPlugins()) {
+        if (id == plugin.getPluginId()) {
+          return plugin;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isPluginInstalled(PluginId id) {
+    return getPlugin(id) != null;
   }
 }

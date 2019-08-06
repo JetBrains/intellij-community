@@ -5,6 +5,7 @@ import com.intellij.diagnostic.*;
 import com.intellij.ide.WindowsCommandLineListener;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.idea.Main;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -94,9 +95,12 @@ public final class MainRunner {
       }
     }
 
-    ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
-    if (conflictException != null) {
-      PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
+    if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
+      if (conflictException != null) {
+        PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class, true);
+        pluginConflictReporter.reportConflictByClasses(conflictException.getConflictingClasses());
+      }
     }
 
     if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {

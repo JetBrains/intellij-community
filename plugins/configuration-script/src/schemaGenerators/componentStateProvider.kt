@@ -18,7 +18,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
 
   // well, schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    com.intellij.serviceContainer.ServiceManagerImpl.processProjectDescriptors(::processServiceDescriptor)
+    ServiceManagerImpl.processProjectDescriptors(::processServiceDescriptor)
     doGenerate(rootBuilder, pathToStateClass)
   }
 

@@ -121,6 +121,6 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
   override fun doOKAction() {
     super.doOKAction()
     val plugins = pluginsToDisable.map { PluginManager.getPlugin(PluginId.getId(it)) }
-    PluginManager.confirmDisablePlugins(project, plugins)
+    IdeErrorsDialog.confirmDisablePlugins(project, plugins)
   }
 }

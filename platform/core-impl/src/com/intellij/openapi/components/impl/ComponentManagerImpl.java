@@ -14,7 +14,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
@@ -44,6 +43,7 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -311,7 +311,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   @Override
-  public ExtensionsArea getExtensionArea() {
+  public ExtensionsAreaImpl getExtensionArea() {
     return myExtensionArea;
   }
 
@@ -557,5 +557,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     public String toString() {
       return "ComponentConfigAdapter[" + getComponentKey() + "]: implementation=" + getComponentImplementation() + ", plugin=" + myPluginId;
     }
+  }
+
+  @TestOnly
+  public List<String> getServiceImplementationClassNames(@NotNull String prefix) {
+    return Collections.emptyList();
   }
 }

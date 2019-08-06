@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
@@ -92,7 +92,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
         client?.send(TransportMessage(MessageType.RESPONSE, null, message.id)) ?: throw Exception(
           "Unable to handle transport message: \"$message\", because JUnitClient is accidentally null")
         val application = ApplicationManager.getApplication()
-        (application as ApplicationImpl).exit(true, true)
+        (application as ApplicationEx).exit(true, true)
       }
     }
   }
