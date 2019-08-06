@@ -125,43 +125,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
 
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      protected Component getDefaultComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getDefaultComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getFirstComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getFirstComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getLastComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getLastComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getComponentAfterImpl(Container focusCycleRoot, Component aComponent) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getComponentAfterImpl(focusCycleRoot, aComponent) : component;
-      }
-
-      @Override
-      public Component getInitialComponent(Window window) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getInitialComponent(window) : component;
-      }
-
-      @Override
-      protected Component getComponentBeforeImpl(Container focusCycleRoot, Component aComponent) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
-      }
-    });
+    setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -649,6 +613,44 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
 
       return builder.toString();
+    }
+  }
+
+  private class MyLayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicyExt {
+    @Override
+    protected Component getDefaultComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getDefaultComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getFirstComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getFirstComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getLastComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getLastComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getComponentAfterImpl(Container focusCycleRoot, Component aComponent) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getComponentAfterImpl(focusCycleRoot, aComponent) : component;
+    }
+
+    @Override
+    public Component getInitialComponent(Window window) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getInitialComponent(window) : component;
+    }
+
+    @Override
+    protected Component getComponentBeforeImpl(Container focusCycleRoot, Component aComponent) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
     }
   }
 }
