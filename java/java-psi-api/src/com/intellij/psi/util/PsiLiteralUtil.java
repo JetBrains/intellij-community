@@ -181,11 +181,7 @@ public class PsiLiteralUtil {
     int q = quotes;
     while (q > 0) {
       if (quotes >= 3) result.append('\\');
-      switch (q) {
-        default: result.append('"');
-        case 2: result.append('"');
-        case 1: result.append('"');
-      }
+      result.append(StringUtil.repeat("\"", Math.min(q, 3)));
       q -= 3;
     }
   }
