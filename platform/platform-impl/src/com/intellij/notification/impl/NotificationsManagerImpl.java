@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
@@ -303,8 +304,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     if (frame == null && project == null) {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      while (frame instanceof DialogWrapperDialog && ((DialogWrapperDialog)frame).getDialogWrapper().isModalProgress()) {
-        frame = frame.getOwner();
+      while (frame instanceof DialogWrapperDialog) {
+        DialogWrapper wrapper = ((DialogWrapperDialog)frame).getDialogWrapper();
+        if (wrapper == null || !wrapper.isModalProgress()) break;
+        frame = wrapper.getOwner();
       }
     }
     return frame;
