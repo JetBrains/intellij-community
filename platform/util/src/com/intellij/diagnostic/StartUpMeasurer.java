@@ -28,10 +28,10 @@ public final class StartUpMeasurer {
     public static final String WAIT_TASKS = "wait tasks";
 
     public static final String CONFIGURE_LOGGING = "configure logging";
+    public static final String APP_STARTER = "appStarter";
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
     public static final String INIT_APP = "app initialization";
-    public static final String STARTUPUTIL_APPSTARTER = "StartupUtil.appStarter";
 
     public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";
 
