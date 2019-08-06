@@ -12,23 +12,26 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * The dialog used for the unstructured information from git rebase,
- * usually the commit message after choosing reword or squash interactive rebase actions.
+ * The dialog used as a genera purpose editor requested by Git via the GIT_EDITOR environment variable.
+ * Usually it is shown to edit a commit message after choosing reword or squash interactive rebase actions.
  */
-class GitUnstructuredEditor extends DialogWrapper {
-  @NotNull private final JBLabel myRootLabel;
+public class GitUnstructuredEditor extends DialogWrapper {
+  @Nullable private final JBLabel myRootLabel;
   @NotNull private final CommitMessage myTextEditor;
 
-  GitUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String initialText) {
+  public GitUnstructuredEditor(@NotNull Project project,
+                               @Nullable VirtualFile root,
+                               @NotNull String initialText) {
     super(project, true);
     setTitle(GitBundle.message("rebase.unstructured.editor.title"));
     setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));
 
-    myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
+    myRootLabel = root == null ? null : new JBLabel("Git Root: " + root.getPresentableUrl());
 
     myTextEditor = new CommitMessage(project, false, false, false);
     Disposer.register(getDisposable(), myTextEditor);
@@ -41,7 +44,9 @@ class GitUnstructuredEditor extends DialogWrapper {
   @NotNull
   protected JComponent createCenterPanel() {
     BorderLayoutPanel rootPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
-    rootPanel.addToTop(myRootLabel);
+    if (myRootLabel != null) {
+      rootPanel.addToTop(myRootLabel);
+    }
     rootPanel.addToCenter(myTextEditor);
     return rootPanel;
   }
@@ -57,7 +62,7 @@ class GitUnstructuredEditor extends DialogWrapper {
   }
 
   @NotNull
-  String getText() {
+  public String getText() {
     return myTextEditor.getComment();
   }
 }
