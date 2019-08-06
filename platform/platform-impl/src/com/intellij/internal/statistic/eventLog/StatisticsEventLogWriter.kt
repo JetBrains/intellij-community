@@ -12,7 +12,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 interface StatisticsEventLogWriter {
-  fun log(message: String)
+  fun log(logEvent: LogEvent)
 
   fun getActiveFile(): File?
 
@@ -56,8 +56,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String, private val m
     }
   }
 
-  override fun log(message: String) {
-    eventLogger.info(message)
+  override fun log(logEvent: LogEvent) {
+    eventLogger.info(LogEventSerializer.toString(logEvent))
   }
 
   override fun getActiveFile(): File? {

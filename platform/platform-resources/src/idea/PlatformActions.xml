@@ -1131,6 +1131,10 @@
         <action internal="true" id="CleanupLocalWhitelistAction"
                 class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"
                 text="Clean Up Local Whitelist"/>
+        <action id="ShowStatisticsEventLogAction"
+                class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
+                text="Show Statistics Event Log">
+        </action>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">

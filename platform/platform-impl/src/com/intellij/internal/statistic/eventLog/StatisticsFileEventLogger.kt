@@ -63,7 +63,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         it.event.addData("last", lastEventTime)
       }
       it.event.addData("created", lastEventCreatedTime)
-      writer.log(LogEventSerializer.toString(it))
+      writer.log(it)
     }
     lastEvent = null
   }
