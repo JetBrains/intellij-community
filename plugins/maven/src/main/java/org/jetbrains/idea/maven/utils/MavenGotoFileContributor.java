@@ -47,8 +47,11 @@ public class MavenGotoFileContributor implements ChooseByNameContributorEx {
                                       @NotNull FindSymbolParameters parameters) {
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     for (MavenProject each : MavenProjectsManager.getInstance(parameters.getProject()).getProjects()) {
+      if (!name.equals(each.getMavenId().getArtifactId())) continue;
+
       VirtualFile file = each.getFile();
       if (!parameters.getSearchScope().contains(file)) continue;
+
       PsiFile psiFile = psiManager.findFile(file);
       if (psiFile != null && !processor.process(psiFile)) return;
     }

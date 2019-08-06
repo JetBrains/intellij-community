@@ -41,6 +41,10 @@ fun main(args: Array<String>) {
   try {
 
     val root = System.getenv(PYCHARM_PYTHONS)
+    val workingDir = System.getProperty("user.dir")
+
+    val cacheDir = File(workingDir, "cache")
+    println("Skeletons will share common cache at $cacheDir")
 
     for (python in File(root).listFiles()) {
 
@@ -48,10 +52,9 @@ fun main(args: Array<String>) {
 
       val executable = PythonSdkType.getPythonExecutable(python.absolutePath)!!
       val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!,
-                                         SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null)
+                                         SdkCreationType.SDK_PACKAGES_ONLY, null)
 
-      val skeletonsDir = File(System.getProperty("user.dir"),
-                              "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + Math.abs(sdk.homePath!!.hashCode()))
+      val skeletonsDir = File(workingDir, "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + Math.abs(sdk.homePath!!.hashCode()))
 
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
@@ -61,7 +64,9 @@ fun main(args: Array<String>) {
       refresher.regenerateSkeletons(SkeletonVersionChecker(SkeletonVersionChecker.PREGENERATED_VERSION))
 
 
-      val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))
+      val artifactName = DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true)
+      val dirPacked = File(skeletonsDir.parent, artifactName!!)
+      println("Creating artifact $dirPacked")
       ZipOutputStream(FileOutputStream(dirPacked)).use {
         ZipUtil.addDirToZipRecursively(it, dirPacked, skeletonsDir, "", null, null)
       }

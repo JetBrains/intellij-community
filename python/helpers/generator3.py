@@ -36,6 +36,11 @@ def is_standalone_mode():
     return ENV_STANDALONE_MODE_FLAG in os.environ
 
 
+@cached
+def is_pregeneration_mode():
+    return ENV_PREGENERATION_MODE_FLAG in os.environ
+
+
 _helpers_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -65,8 +70,9 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
         action("flushing")
         r.flush()
         delete_failed_version_stamp(cache_dir, module_name)
-        # Incrementally copy whatever we managed to successfully generate so far
-        copy_skeletons(cache_dir, sdk_dir, get_module_origin(module_file_name, module_name))
+        if sdk_dir:
+            # Incrementally copy whatever we managed to successfully generate so far
+            copy_skeletons(cache_dir, sdk_dir, get_module_origin(module_file_name, module_name))
     else:
         report("Failed to find imported module in sys.modules " + module_name)
 
@@ -548,7 +554,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         report("Ignored a regular Python file %r", name)
         return True
     if not quiet:
-        say(name)
+        say('%s (%r)', name, mod_file_name or 'built-in')
         sys.stdout.flush()
     action("doing nothing")
 
@@ -568,7 +574,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
-            note('Updating cache for %s at %r', name, mod_cache_dir)
+            say('Updating cache for %s at %r', name, mod_cache_dir)
             # All builtin modules go into the same directory
             if not doing_builtins:
                 delete(mod_cache_dir)
@@ -625,10 +631,11 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             action("closing %r", mod_cache_dir)
             return GenerationStatus.GENERATED
         elif cached_skeleton_status == SkeletonStatus.FAILING:
+            say('Cache entry for %s at %r indicates failed generation', name, mod_cache_dir)
             return GenerationStatus.FAILED
         else:
             # Copy entire skeletons directory if nothing needs to be updated
-            say('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            say('Copying cached stubs for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
             copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
             return GenerationStatus.COPIED
     except:
@@ -645,6 +652,14 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
 
 def get_module_origin(mod_path, mod_qname):
+    if mod_qname in sys.builtin_module_names:
+        return OriginType.BUILTIN
+
+    # Unless it's a builtin module all bundled skeletons should have
+    # file system independent "(pre-generated)" marker in their header
+    if is_pregeneration_mode():
+        return OriginType.PREGENERATED
+
     if not mod_path:
         return None
 

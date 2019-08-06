@@ -22,9 +22,9 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
-public class MavenArtifactInfoInsertionHandler implements InsertHandler<LookupElement> {
+public class MavenDependencyInsertionHandler implements InsertHandler<LookupElement> {
 
-  public static final InsertHandler<LookupElement> INSTANCE = new MavenArtifactInfoInsertionHandler();
+  public static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertionHandler();
 
   @Override
   public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
@@ -68,7 +68,7 @@ public class MavenArtifactInfoInsertionHandler implements InsertHandler<LookupEl
     return null;
   }
 
-  private static void setDependency(@NotNull InsertionContext context,
+  protected void setDependency(@NotNull InsertionContext context,
                                     MavenRepositoryArtifactInfo completionItem,
                                     XmlFile contextFile, MavenDomArtifactCoordinates domCoordinates) {
     if (completionItem.getGroupId() == null) {

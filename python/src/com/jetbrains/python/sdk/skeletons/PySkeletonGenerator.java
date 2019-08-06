@@ -148,10 +148,6 @@ public class PySkeletonGenerator {
     final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(binaryPath);
     final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
-    if (myPrebuilt) {
-      env.put("IS_PREGENERATED_SKELETONS", "1");
-    }
-
     return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), env, MINUTE * 10);
   }
 
@@ -188,6 +184,9 @@ public class PySkeletonGenerator {
                                            int timeout) throws InvalidSdkException {
     final Map<String, String> env = extraEnv != null ? new HashMap<>(extraEnv) : new HashMap<>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
+    if (myPrebuilt) {
+      env.put("IS_PREGENERATED_SKELETONS", "1");
+    }
     return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
   }
 

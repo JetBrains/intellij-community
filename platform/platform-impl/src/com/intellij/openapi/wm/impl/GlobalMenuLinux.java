@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -183,13 +184,16 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         // exec at glib-thread
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = false;
+        final boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
         for (GlobalMenuLinux gml: ourInstances.values()) {
           gml.myWindowHandle = null;
-          ApplicationManager.getApplication().invokeLater(()->{
-            final JMenuBar jmenubar = gml.myFrame.getJMenuBar();
-            if (jmenubar != null)
-              jmenubar.setVisible(true);
-          });
+          if (isMainMenuVisible) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              final JMenuBar jmenubar = gml.myFrame.getJMenuBar();
+              if (jmenubar != null)
+                jmenubar.setVisible(true);
+            });
+          }
         }
       };
 
@@ -414,9 +418,11 @@ Android Studio: b/67589184 */
         ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
       }
 
-      final JMenuBar frameMenu = myFrame.getJMenuBar();
-      if (frameMenu != null)
-        frameMenu.setVisible(true);
+      if (UISettings.getInstance().getShowMainMenu()) {
+        final JMenuBar frameMenu = myFrame.getJMenuBar();
+        if (frameMenu != null)
+          frameMenu.setVisible(true);
+      }
     }
   }
 

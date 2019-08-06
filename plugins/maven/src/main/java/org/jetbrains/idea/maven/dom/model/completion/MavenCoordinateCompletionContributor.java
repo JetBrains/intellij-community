@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactInfoInsertionHandler;
+import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -44,6 +44,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC) return;
     PlaceChecker placeChecker = new PlaceChecker(parameters).checkPlace();
 
     if (placeChecker.isCorrectPlace()) {
@@ -57,14 +58,20 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
         mdci -> cld.add(mdci)
       );
 
-      while (promise.getState() == PENDING || !cld.isEmpty()) {
-        ProgressManager.checkCanceled();
-        MavenRepositoryArtifactInfo item = cld.poll();
-        if (item != null) {
-          fillResult(coordinates, result, item);
-        }
-      }
+      fillResults(result, coordinates, cld, promise);
       fillAfter(result);
+    }
+  }
+
+  protected void fillResults(@NotNull CompletionResultSet result,
+                             @NotNull MavenDomShortArtifactCoordinates coordinates,
+                             @NotNull  ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld, @NotNull  Promise<Void> promise) {
+    while (promise.getState() == PENDING || !cld.isEmpty()) {
+      ProgressManager.checkCanceled();
+      MavenRepositoryArtifactInfo item = cld.poll();
+      if (item != null) {
+        fillResult(coordinates, result, item);
+      }
     }
   }
 
@@ -93,7 +100,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
                             @NotNull CompletionResultSet result,
                             @NotNull MavenRepositoryArtifactInfo item) {
     result
-      .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenArtifactInfoInsertionHandler.INSTANCE));
+      .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenDependencyInsertionHandler.INSTANCE));
   }
 
   @NotNull

@@ -68,6 +68,21 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  fun terminated(exitCode: Int) {
+    if (!started || finished) return
+
+    val tasks = myStartedSet.toList().asReversed()
+    debugLog("Tasks $tasks are not completed! Force complete")
+    tasks.forEach { completeTask(it.first, it.second, FailureResultImpl("Terminated with exit code = $exitCode")) }
+
+    mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
+                                                      FailureResultImpl("Terminated with exit code = $exitCode")))
+    finished = true
+    started = false
+
+  }
+
+  @Synchronized
   fun notifyReadingProblems(file: VirtualFile) {
     debugLog("reading problems in $file")
     hasErrors = true

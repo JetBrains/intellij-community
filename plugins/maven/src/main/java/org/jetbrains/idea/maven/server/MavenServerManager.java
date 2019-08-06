@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
@@ -16,6 +17,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -187,6 +189,26 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
         }
         catch (IOException e) {
           MavenLog.LOG.warn("Cannot send token to maven server", e);
+        }
+      }
+
+      @Override
+      protected void onProcessTerminated(ProcessEvent event) {
+        if (event.getExitCode() == 0) {
+          return;
+        }
+        Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+        for (Project p : openProjects) {
+          ReadAction.run(() -> {
+            if (p.isDisposed()) {
+              return;
+            }
+            MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
+            if (!manager.isMavenizedProject()) {
+              return;
+            }
+            manager.getSyncConsole().terminated(event.getExitCode());
+          });
         }
       }
     };

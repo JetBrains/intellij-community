@@ -204,6 +204,7 @@ public class PySkeletonRefresher {
   }
 
   private void indicate(String msg) {
+    LOG.debug("Progress message: " + msg);
     if (myIndicator != null) {
       myIndicator.checkCanceled();
       myIndicator.setText(msg);
@@ -212,6 +213,7 @@ public class PySkeletonRefresher {
   }
 
   private void indicateMinor(String msg) {
+    LOG.debug("Progress message (minor): " + msg);
     if (myIndicator != null) {
       myIndicator.setText2(msg);
     }
@@ -586,14 +588,16 @@ public class PySkeletonRefresher {
           continue;
         }
         final SkeletonHeader header = readSkeletonHeader(item);
+        String binaryFile = null;
         boolean canLive = header != null;
         if (canLive) {
-          final String binaryFile = header.getBinaryFile();
+          binaryFile = header.getBinaryFile();
           canLive = SkeletonVersionChecker.PREGENERATED.equals(binaryFile) ||
                     SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) ||
                     mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
+          LOG.debug("Cleaning up skeleton " + item + (binaryFile != null ? " for non existing binary " + binaryFile : ""));
           mySkeletonsGenerator.deleteOrLog(item);
         }
       }

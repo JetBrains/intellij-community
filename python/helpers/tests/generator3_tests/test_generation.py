@@ -15,8 +15,9 @@ from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
 )
-
 # Such version implies that skeletons are always regenerated
+from pycharm_generator_utils.util_methods import mkdir
+
 TEST_GENERATOR_VERSION = '1000.0'
 
 _run_generator_in_separate_process = True
@@ -29,12 +30,12 @@ class SkeletonCachingTest(GeneratorTestCase):
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
-    def run_generator(self, mod_qname=None, mod_path=None, builtins=False,
-                      extra_syspath_entry=None,
-                      gen_version=None,
-                      required_gen_version_file_path=None,
-                      extra_env=None):
-        output_dir = self.temp_skeletons_dir
+    def run_generator(self, mod_qname=None, mod_path=None, builtins=False, extra_syspath_entry=None, gen_version=None,
+                      required_gen_version_file_path=None, extra_env=None, extra_args=None, output_dir=None):
+        if output_dir is None:
+            output_dir = self.temp_skeletons_dir
+        else:
+            output_dir = os.path.join(self.temp_dir, output_dir)
 
         if not extra_syspath_entry:
             extra_syspath_entry = self.test_data_dir
@@ -63,6 +64,10 @@ class SkeletonCachingTest(GeneratorTestCase):
                 '-d', output_dir,
                 '-s', extra_syspath_entry,
             ]
+
+            if extra_args:
+                args.extend(extra_args)
+
             if builtins:
                 args.append('-b')
             else:
@@ -170,6 +175,27 @@ class SkeletonCachingTest(GeneratorTestCase):
                     mod.py
         """.format(hash=generator3.module_hash('mod', mod_path)))
 
+    # PY-36884
+    def test_pregenerated_skeletons_mode(self):
+        self.check_generator_output('mod', mod_path='mod.py', extra_env={
+            'IS_PREGENERATED_SKELETONS': '1'
+        })
+
+    # PY-36884
+    def test_pregenerated_skeletons_mode_for_builtin_module(self):
+        self.run_generator('sys', builtins=True, extra_env={
+            'IS_PREGENERATED_SKELETONS': '1'
+        })
+        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.module_hash('sys', None), 'sys.py')
+        self.assertTrue(os.path.exists(sys_cached_skeleton_path))
+        with open(sys_cached_skeleton_path, 'r') as f:
+            self.assertTrue('# from (pre-generated)\n' in f.read())
+
+        sys_skeleton_path = os.path.join(self.temp_skeletons_dir, 'sys.py')
+        self.assertTrue(os.path.exists(sys_skeleton_path))
+        with open(sys_skeleton_path, 'r') as f:
+            self.assertTrue('# from (built-in)\n' in f.read())
+
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_path='mod.py', mod_root='versions/v2')
 
@@ -241,6 +267,24 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     def test_origin_stamp_in_skeleton_header_is_updated_on_copying(self):
         self.check_generator_output('mod', mod_path='mod.py')
+
+    def test_origin_stamp_for_pregenerated_builtins_is_updated(self):
+        mod_hash = generator3.module_hash('_abc', None)
+        template = textwrap.dedent("""\
+        # encoding: utf-8
+        # module _abc
+        # from {origin}
+        # by generator 1000.0
+        """)
+
+        cache_entry_dir = os.path.join(self.temp_cache_dir, mod_hash)
+        mkdir(cache_entry_dir)
+        with open(os.path.join(cache_entry_dir, '_abc.py'), 'w') as f:
+            f.write(template.format(origin='(pre-generated)'))
+
+        self.run_generator('_abc', None, True)
+        with open(os.path.join(self.temp_skeletons_dir, '_abc.py')) as f:
+            self.assertEquals(template.format(origin='(built-in)'), f.read())
 
     def test_single_pyexpat_skeletons_layout(self):
         self.run_generator('pyexpat')
