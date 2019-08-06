@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -259,10 +259,16 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private static void doWithLazyActionManager(@NotNull Consumer<ActionManager> whatToDo) {
-    ReadAction
-      .nonBlocking(() -> ActionManager.getInstance())
-      .finishOnUiThread(ModalityState.any(), whatToDo)
-      .submit(NonUrgentExecutor.getInstance());
+    ActionManager created = ServiceManager.getServiceIfCreated(ActionManager.class);
+    if (created != null) {
+      whatToDo.accept(created);
+    }
+    else {
+      NonUrgentExecutor.getInstance().execute(() -> {
+        ActionManager actionManager = ActionManager.getInstance();
+        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager));
+      });
+    }
   }
 
   @Override
