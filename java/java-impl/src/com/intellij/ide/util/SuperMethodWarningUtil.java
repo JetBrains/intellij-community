@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SuperMethodWarningUtil {
-  public static Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
+  public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
   private SuperMethodWarningUtil() {}
 
   @NotNull
