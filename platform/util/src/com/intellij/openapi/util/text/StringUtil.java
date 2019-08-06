@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
+  private static final Logger LOG = Logger.getInstance(StringUtil.class);
 
   @SuppressWarnings("SpellCheckingInspection") private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
@@ -1843,6 +1843,18 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
     return StringUtilRt.endsWith(text, suffix);
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWith(@NotNull CharSequence text, int start, int end, @NotNull CharSequence suffix) {
+    int suffixLen = suffix.length();
+    if (end < suffixLen) return false;
+
+    for (int i = end - 1; i >= end - suffixLen && i >= start; i--) {
+      if (text.charAt(i) != suffix.charAt(i + suffixLen - end)) return false;
+    }
+
+    return true;
   }
 
   @NotNull
