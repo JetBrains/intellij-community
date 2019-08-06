@@ -1472,15 +1472,23 @@ public class PluginManagerConfigurableNewLayout
       PluginManagerMain.LOG.error(e);
     }
 
+
     if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin)) &&
         ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin))) {
+      boolean needRestart = false;
       for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
-        DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl) descriptor);
+        if (!DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)descriptor)) {
+          needRestart = true;
+          break;
+        }
       }
-      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-        DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl) descriptor);
+
+      if (!needRestart) {
+        for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
+          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl) descriptor);
+        }
+        return;
       }
-      return;
     }
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {

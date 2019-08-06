@@ -33,7 +33,7 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val extensions = pluginDescriptor.extensions
     if (extensions != null) {
       for (epName in extensions.keySet()) {
@@ -42,7 +42,7 @@ object DynamicPlugins {
       }
     }
 
-    pluginDescriptor.setLoader(null)
+    return pluginDescriptor.unloadClassLoader()
   }
 
   @JvmStatic

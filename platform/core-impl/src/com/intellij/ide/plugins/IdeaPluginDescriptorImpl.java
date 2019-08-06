@@ -36,6 +36,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -91,6 +92,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private List<String> myModules;
   private ClassLoader myLoader;
+  private WeakReference<ClassLoader> myLoaderRef;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
@@ -682,6 +684,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setLoader(ClassLoader loader) {
     myLoader = loader;
+    myLoaderRef = new WeakReference<>(loader);
+  }
+
+  public boolean unloadClassLoader() {
+    myLoader = null;
+    System.gc();
+    return myLoaderRef.get() == null;
   }
 
   @Override
