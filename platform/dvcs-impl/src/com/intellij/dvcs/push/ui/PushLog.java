@@ -49,7 +49,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
-  private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion";
+  private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion.v2";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;

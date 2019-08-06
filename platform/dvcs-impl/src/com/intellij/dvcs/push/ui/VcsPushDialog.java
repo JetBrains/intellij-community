@@ -40,7 +40,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
-  private static final String ID = "Vcs.Push.Dialog";
+  private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
+  private static final String HELP_ID = "Vcs.Push.Dialog";
   private static final int CENTER_PANEL_HEIGHT = 450;
   private static final int CENTER_PANEL_WIDTH = 800;
 
@@ -119,7 +120,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected String getDimensionServiceKey() {
-    return ID;
+    return DIMENSION_KEY;
   }
 
   @Nullable
@@ -176,7 +177,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected String getHelpId() {
-    return ID;
+    return HELP_ID;
   }
 
   @Override
