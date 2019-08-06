@@ -55,8 +55,6 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   @CalledInAwt
   private fun initFrame(frame: IdeFrameImpl) {
-    frame.init()
-
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
@@ -66,6 +64,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       windowManager.restoreFrameState(frame, frameInfo)
     }
     frame.isVisible = true
+    frame.init()
   }
 
   private fun createFrame(file: Path): IdeFrameImpl {
