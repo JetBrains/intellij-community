@@ -890,19 +890,31 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file = createFile("x.txt", "xx").getVirtualFile();
       assertNull(file.getBOM());
+      // internal files must never be BOMed
+      VirtualFile imlFile = createFile("x.iml", "<xx/>").getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
       VirtualFile file2 = createFile("x2.txt", "xx").getVirtualFile();
       assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x2.iml", "<xx/>").getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
       VirtualFile file3 = createFile("x3.txt", "xx").getVirtualFile();
       byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
       assertArrayEquals(expected, file3.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x3.iml", "<xx/>").getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file4 = createFile("x4.txt", "xx").getVirtualFile();
       assertNull(file4.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x4.iml", "<xx/>").getVirtualFile();
+      assertNull(imlFile.getBOM());
     }
     finally {
       manager.setBOMForNewUtf8Files(old);
