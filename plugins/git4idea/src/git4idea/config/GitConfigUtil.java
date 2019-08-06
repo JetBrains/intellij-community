@@ -112,10 +112,7 @@ public class GitConfigUtil {
     catch (VcsException e) {
       // ignore exception
     }
-    if (encoding == null || encoding.length() == 0) {
-      encoding = CharsetToolkit.UTF8;
-    }
-    return encoding;
+    return StringUtil.isEmpty(encoding) ? CharsetToolkit.UTF8 : encoding;
   }
 
   /**
@@ -129,10 +126,7 @@ public class GitConfigUtil {
     catch (VcsException e) {
       // ignore exception
     }
-    if (encoding == null || encoding.length() == 0) {
-      encoding = getCommitEncoding(project, root);
-    }
-    return encoding;
+    return StringUtil.isEmpty(encoding) ? getCommitEncoding(project, root) : encoding;
   }
 
   /**
@@ -162,7 +156,7 @@ public class GitConfigUtil {
   public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
     try {
       String value = getValue(project, VfsUtil.findFileByIoFile(workingDirectory, true), "credential.helper");
-      return value != null && !value.isEmpty();
+      return StringUtil.isNotEmpty(value);
     }
     catch (VcsException ignored) {
       return false;
