@@ -24,8 +24,8 @@ import javax.swing.event.ListSelectionListener
  * Top-level UI-component for new clone/checkout dialog
  */
 class VcsCloneDialog private constructor(private val project: Project,
-                                                  initialExtensionClass: Class<out VcsCloneDialogExtension>,
-                                                  private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
+                                         initialExtensionClass: Class<out VcsCloneDialogExtension>,
+                                         private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
   private lateinit var extensionList: VcsCloneDialogExtensionList
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
