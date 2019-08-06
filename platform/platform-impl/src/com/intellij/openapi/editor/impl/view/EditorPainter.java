@@ -178,7 +178,9 @@ public class EditorPainter implements TextDrawingCallback {
     if (visualGuidesColor != null) {
       g.setColor(visualGuidesColor);
       for (Integer marginX : myCorrector.softMarginsX()) {
-        LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
+        if (marginX != baseMarginX) {
+          LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
+        }
       }
     }
   }
