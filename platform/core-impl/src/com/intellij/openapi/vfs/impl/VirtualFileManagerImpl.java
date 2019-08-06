@@ -165,10 +165,9 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   }
 
   @Nullable
-  private VirtualFileSystem getFileSystemForUrl(String url) {
+  private VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
     String protocol = extractProtocol(url);
-    if (protocol == null) return null;
-    return getFileSystem(protocol);
+    return protocol == null ? null : getFileSystem(protocol);
   }
 
   @Override

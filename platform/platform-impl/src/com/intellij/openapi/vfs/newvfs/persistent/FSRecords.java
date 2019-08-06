@@ -45,7 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 public class FSRecords {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
+  private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
          static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");

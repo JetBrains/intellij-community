@@ -246,7 +246,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
-  private static final Class DELETE_ON_EXIT_HOOK_CLASS;
+  private static final Class<?> DELETE_ON_EXIT_HOOK_CLASS;
   static {
     Class<?> aClass;
     try {
@@ -880,14 +880,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected static void clearFields(@NotNull Object test) throws IllegalAccessException {
-    Class aClass = test.getClass();
+    Class<?> aClass = test.getClass();
     while (aClass != null) {
       clearDeclaredFields(test, aClass);
       aClass = aClass.getSuperclass();
     }
   }
 
-  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class aClass) throws IllegalAccessException {
+  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class<?> aClass) throws IllegalAccessException {
     for (final Field field : aClass.getDeclaredFields()) {
       final String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
@@ -959,7 +959,7 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected void assertException(@NotNull AbstractExceptionCase exceptionCase) {
+  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
     assertException(exceptionCase, null);
   }
 
@@ -1107,7 +1107,6 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
