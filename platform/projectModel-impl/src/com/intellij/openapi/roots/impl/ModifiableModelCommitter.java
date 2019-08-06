@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ public class ModifiableModelCommitter {
 
   public static void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels,
                                  @NotNull ModifiableModuleModel moduleModel) {
-    ModifiableModelCommitterService.getInstance().multiCommit(rootModels, moduleModel);
+    Project project = moduleModel.getProject();
+    ModifiableModelCommitterService.getInstance(project).multiCommit(rootModels, moduleModel);
   }
 }

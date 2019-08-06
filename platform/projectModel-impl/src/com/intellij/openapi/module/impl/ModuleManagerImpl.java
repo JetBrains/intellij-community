@@ -970,6 +970,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         myModuleGroupPath.put(module, groupPath);
       }
     }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myManager.myProject;
+    }
   }
 
   private void commitModel(@NotNull ModuleModelImpl moduleModel, @NotNull Runnable runnable) {
