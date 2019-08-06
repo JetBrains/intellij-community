@@ -101,7 +101,6 @@ private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangl
   if (isFullScreenSupportedInCurrentOs()) {
     frameInfo.fullScreen = isInFullScreen
   }
-  frameInfo.bounds = newBounds
   return frameInfo
 }
 
