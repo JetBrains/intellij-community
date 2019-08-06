@@ -12,9 +12,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.Component;
 
 /**
  * @author Sergey.Malenkov
@@ -25,7 +27,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   private volatile String tooltip;
   final CrumbPresentation presentation;
 
-  PsiCrumb(PsiElement element, BreadcrumbsProvider provider, CrumbPresentation presentation) {
+  PsiCrumb(@NotNull PsiElement element, @NotNull BreadcrumbsProvider provider, @Nullable CrumbPresentation presentation) {
     super(provider.getElementIcon(element), provider.getElementInfo(element), null, provider.getContextActions(element));
     anchor = PsiAnchor.create(element);
     this.provider = provider;
@@ -45,18 +47,24 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   }
 
   @Override
-  public String getTooltipLazy() {
+  public String getTooltipLazy(@Nullable Component tooltipOwner) {
     if (tooltip == null && provider != null) {
       tooltip = getLazyTooltipText();
+      final IdeTooltipManager tooltipManager = IdeTooltipManager.getInstance();
       ReadAction
         .nonBlocking(() -> getTooltip())
         .coalesceBy(this)
         .expireWith(anchor.getFile().getProject())
+        .expireWhen(()->!tooltipManager.isProcessing(tooltipOwner))
         .finishOnUiThread(ModalityState.any(), toolTipText -> {
-          IdeTooltipManager.getInstance().updateShownTooltip();
+          tooltipManager.updateShownTooltip(tooltipOwner);
         })
-        .submit(NonUrgentExecutor.getInstance())
-        .onError(anyError -> tooltip = null);
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .onError(anyError -> {
+          if (getLazyTooltipText().equals(tooltip)) {
+            tooltip = null;
+          }
+        });
     }
     return tooltip;
   }

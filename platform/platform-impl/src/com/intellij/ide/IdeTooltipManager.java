@@ -30,10 +30,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -59,8 +56,9 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
   private HelpTooltipManager myHelpTooltipManager;
   private boolean myHideHelpTooltip;
 
-  private Component myCurrentComponent;
-  private Component myQueuedComponent;
+  private volatile Component myCurrentComponent;
+  private volatile Component myQueuedComponent;
+  private volatile Component myProcessingComponent;
 
   private BalloonImpl myCurrentTipUi;
   private MouseEvent myCurrentEvent;
@@ -112,56 +110,67 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
     if (!myIsEnabled.asBoolean()) return;
 
     MouseEvent me = (MouseEvent)event;
-    Component c = me.getComponent();
-    if (me.getID() == MouseEvent.MOUSE_ENTERED) {
-      boolean canShow = true;
-      if (componentContextHasChanged(c)) {
-        canShow = hideCurrent(me, null, null);
-      }
-      if (canShow) {
-        maybeShowFor(c, me);
-      }
-    }
-    else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
-      if (c == myCurrentComponent && myCurrentTooltip != null && !myCurrentTooltip.isHint() && myCurrentTipUi != null) {
-        myCurrentTipUi.setAnimationEnabled(false);
-        hideCurrent(null, null, null, null, false);
-      }
-      else if (c == myCurrentComponent || c == myQueuedComponent) {
-        hideCurrent(me, null, null);
-      }
-    }
-    else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-      if (c == myCurrentComponent || c == myQueuedComponent) {
-        if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
-          maybeShowFor(c, me);
+    myProcessingComponent = me.getComponent();
+    try {
+      if (me.getID() == MouseEvent.MOUSE_ENTERED) {
+        boolean canShow = true;
+        if (componentContextHasChanged(myProcessingComponent)) {
+          canShow = hideCurrent(me, null, null);
         }
-        else {
-          if (!myCurrentTipIsCentered) {
-            myX = me.getX();
-            myY = me.getY();
-            if (c instanceof JComponent && !isTooltipDefined((JComponent)c, me) && (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
-              hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
-            }
-            else {
-              maybeShowFor(c, me);
+        if (canShow) {
+          maybeShowFor(myProcessingComponent, me);
+        }
+      }
+      else if (me.getID() == MouseEvent.MOUSE_EXITED) {
+        //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+        if (myProcessingComponent == myCurrentComponent &&
+            myCurrentTooltip != null &&
+            !myCurrentTooltip.isHint() &&
+            myCurrentTipUi != null) {
+          myCurrentTipUi.setAnimationEnabled(false);
+          hideCurrent(null, null, null, null, false);
+        }
+        else if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
+          hideCurrent(me, null, null);
+        }
+      }
+      else if (me.getID() == MouseEvent.MOUSE_MOVED) {
+        if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
+          if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
+            maybeShowFor(myProcessingComponent, me);
+          }
+          else {
+            if (!myCurrentTipIsCentered) {
+              myX = me.getX();
+              myY = me.getY();
+              if (myProcessingComponent instanceof JComponent &&
+                  !isTooltipDefined((JComponent)myProcessingComponent, me) &&
+                  (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
+                hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
+              }
+              else {
+                maybeShowFor(myProcessingComponent, me);
+              }
             }
           }
         }
+        else if (myCurrentComponent == null && myQueuedComponent == null) {
+          maybeShowFor(myProcessingComponent, me);
+        }
       }
-      else if (myCurrentComponent == null && myQueuedComponent == null) {
-        maybeShowFor(c, me);
+      else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
+        boolean clickOnTooltip = myCurrentTipUi != null &&
+                                 myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(myProcessingComponent);
+        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && !myCurrentTipUi.isClickProcessor())) {
+          hideCurrent(me, null, null, null, !clickOnTooltip);
+        }
+      }
+      else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
+        hideCurrent(me, null, null);
       }
     }
-    else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-      boolean clickOnTooltip = myCurrentTipUi != null && myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(c);
-      if (c == myCurrentComponent || (clickOnTooltip && !myCurrentTipUi.isClickProcessor())) {
-        hideCurrent(me, null, null, null, !clickOnTooltip);
-      }
-    }
-    else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
-      hideCurrent(me, null, null);
+    finally {
+      myProcessingComponent = null;
     }
   }
 
@@ -277,13 +286,29 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   /**
+   * Checks the component for tooltip visualization activities.
+   * Can be called from non-dispatch threads.
+   *
+   * @return true if the component is taken a part in any tooltip activity
+   */
+  @ApiStatus.Experimental
+  @Contract(value = "null -> false", pure = true)
+  public boolean isProcessing(@Nullable Component tooltipOwner) {
+    return tooltipOwner != null && (tooltipOwner == myCurrentComponent
+                                    || tooltipOwner == myQueuedComponent
+                                    || tooltipOwner == myProcessingComponent);
+  }
+
+  /**
    * Updates shown tooltip pop-up in current position with actual tooltip text if it is already visible.
    * The action is useful for background-calculated tooltip (ex. crumbs tooltips).
    * Does nothing in other cases.
+   *
+   * @param tooltipOwner for which the tooltip is updating
    */
   @ApiStatus.Experimental
-  public void updateShownTooltip() {
-     if (!hasCurrent() || myCurrentComponent == null)
+  public void updateShownTooltip(@Nullable Component tooltipOwner) {
+     if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner)
        return;
 
     try {
