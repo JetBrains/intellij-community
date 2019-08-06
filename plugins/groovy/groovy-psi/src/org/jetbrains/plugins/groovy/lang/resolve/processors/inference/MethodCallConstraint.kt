@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class MethodCallConstraint(
@@ -24,7 +25,7 @@ class MethodCallConstraint(
       if (leftType != null) {
         val left = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(leftType))
         if (left != null) {
-          val rt = PsiUtil.getSmartReturnType(method)
+          val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
           val right = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
           if (right != null && right != PsiType.VOID) {
             nested.addConstraint(TypeConstraint(left, right, context))

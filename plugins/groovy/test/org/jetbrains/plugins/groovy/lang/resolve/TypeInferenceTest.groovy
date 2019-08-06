@@ -1301,4 +1301,19 @@ def m() {
     }
 ''', "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]"
   }
+
+  void 'test spread call expression in chain call '() {
+    doTest '''
+[""]*.trim().las<caret>t()
+''', JAVA_LANG_STRING
+  }
+
+  void 'test spread field expression in chain call '() {
+    doTest '''
+class C {
+  public Integer field
+}
+[new C()]*.field.las<caret>t()
+''', JAVA_LANG_INTEGER
+  }
 }
