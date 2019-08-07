@@ -766,6 +766,6 @@ public class ExternalSystemApiUtil {
   @ApiStatus.Experimental
   @Deprecated
   public static boolean isJavaCompatibleIde() {
-    return isIdeaUltimate() || isIdeaCommunity() || "AndroidStudio".equals(getPlatformPrefix());
+    return isIntelliJ() || "AndroidStudio".equals(getPlatformPrefix());
   }
 }
