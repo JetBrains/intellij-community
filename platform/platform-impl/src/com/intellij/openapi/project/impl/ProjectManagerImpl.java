@@ -909,8 +909,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {
-    UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    NotificationsManager notificationManager = project.getService(NotificationsManager.class, false);
+    if (notificationManager == null) {
+      return true;
+    }
+
+    UnableToSaveProjectNotification[] notifications = notificationManager.getNotificationsOfType(UnableToSaveProjectNotification.class, project);
     if (notifications.length == 0) {
       return true;
     }
