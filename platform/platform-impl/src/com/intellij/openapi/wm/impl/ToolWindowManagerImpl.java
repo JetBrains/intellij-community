@@ -16,6 +16,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -2345,6 +2348,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           manager.execute(list);
           manager.flushCommands();
         });
+
+        Extensions.getRootArea().getExtensionPoint(ToolWindowEP.EP_NAME).addExtensionPointListener(
+          new ExtensionPointListener<ToolWindowEP>() {
+            @Override
+            public void extensionAdded(@NotNull ToolWindowEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+              manager.initToolWindow(extension);
+            }
+
+            @Override
+            public void extensionRemoved(@NotNull ToolWindowEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+              manager.unregisterToolWindow(extension.id);
+            }
+          }, false, project);
       }
     }
   }

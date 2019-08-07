@@ -163,7 +163,7 @@
     <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
     <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
-    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP">
+    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP" unloadSafe="true">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
