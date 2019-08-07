@@ -32,7 +32,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
   private final Icon[] myIcons;
   private final Dimension myPrefSize = new Dimension();
 
-  //no need to make it volatile, all r/w operations are from EDT
   private int myCurrentIconIndex;
 
   private final Icon myPassiveIcon;
@@ -44,8 +43,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
   protected final Animator myAnimator;
 
   private final String myName;
-
-  //private boolean myPaintingBgNow;
 
   public AnimatedIcon(final String name, Icon[] icons, Icon passiveIcon, int cycleLength) {
     myName = name;
@@ -71,7 +68,8 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
     if (icons.length > 0) {
       myEmptyPassiveIcon = EmptyIcon.create(icons[0]);
-    } else {
+    }
+    else {
       myEmptyPassiveIcon = EmptyIcon.ICON_0;
     }
 
@@ -101,7 +99,8 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
     if (running) {
       myAnimator.resume();
-    } else {
+    }
+    else {
       myAnimator.suspend();
     }
 
@@ -154,13 +153,14 @@ public class AnimatedIcon extends JComponent implements Disposable {
       Color bg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
       g.setColor(bg);
       g.fillRect(0, 0, getWidth(), getHeight());
-    } 
+    }
 
     Icon icon;
 
     if (myAnimator.isRunning()) {
       icon = myIcons[myCurrentIconIndex];
-    } else {
+    }
+    else {
       icon = getPassiveIcon();
     }
 
@@ -169,8 +169,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
     int y = (size.height - icon.getIconHeight()) / 2;
 
     paintIcon(g, icon, x, y);
-
-    //boolean lastPaintWasRunning = myAnimator.isRunning();
   }
 
   protected void paintIcon(Graphics g, Icon icon, int x, int y) {
