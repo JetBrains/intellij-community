@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 public class SymbolNameCompletionContributorEP extends LanguageExtensionPoint<SymbolNameCompletionContributor> {
-  private static final ExtensionPointName<SymbolNameCompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.toplevel");
+  private static final ExtensionPointName<SymbolNameCompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.symbols");
   private static final LanguageExtension<SymbolNameCompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
 
   public static SymbolNameCompletionContributor forLanguage(@NotNull Language language) {
