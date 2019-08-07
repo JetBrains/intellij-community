@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion
 
 
@@ -338,5 +338,13 @@ public class Foooo {}
 
 Foooo<caret>'''
     }
+  }
+
+  void 'test complete package name'() {
+    myFixture.addClass '''package com.foo.bar; class C {}'''
+    myFixture.configureByText '_.groovy', 'import com.<caret>\n'
+    myFixture.completeBasic()
+    myFixture.type '\t'
+    myFixture.checkResult 'import com.foo<caret>\n'
   }
 }

@@ -1238,7 +1238,7 @@ code_reference ::= code_reference_base
 private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
-left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
+left code_reference_tail ::= code_reference_dot <<mb_nl_group code_reference_part>> <<setRefWasQualified>>
 {
   pin = 1
   elementType = code_reference
@@ -1246,9 +1246,9 @@ left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQ
 }
 simple_reference ::= short_simple_reference simple_reference_tail* { elementType = code_reference }
 short_simple_reference ::= code_reference_identifier { elementType = code_reference }
-left simple_reference_tail ::= code_reference_dot code_reference_identifier { elementType = code_reference } // don't pin on dot
+left simple_reference_tail ::= code_reference_dot <<mb_nl_group code_reference_identifier>> { elementType = code_reference } // don't pin on dot
 
-private code_reference_dot ::= '.' !'*' mb_nl
+private code_reference_dot ::= '.' !'*'
 private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
 private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')

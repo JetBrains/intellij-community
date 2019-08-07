@@ -2611,7 +2611,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '.' !'*' mb_nl
+  // '.' !'*'
   static boolean code_reference_dot(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "code_reference_dot")) return false;
     if (!nextTokenIs(b, T_DOT)) return false;
@@ -2619,7 +2619,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, T_DOT);
     r = r && code_reference_dot_1(b, l + 1);
-    r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2729,7 +2728,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // code_reference_dot code_reference_part <<setRefWasQualified>>
+  // code_reference_dot <<mb_nl_group code_reference_part>> <<setRefWasQualified>>
   public static boolean code_reference_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "code_reference_tail")) return false;
     if (!nextTokenIsFast(b, T_DOT)) return false;
@@ -2737,7 +2736,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _LEFT_, CODE_REFERENCE, null);
     r = code_reference_dot(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, code_reference_part(b, l + 1));
+    r = r && report_error_(b, mb_nl_group(b, l + 1, GroovyGeneratedParser::code_reference_part));
     r = p && setRefWasQualified(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -6277,14 +6276,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // code_reference_dot code_reference_identifier
+  // code_reference_dot <<mb_nl_group code_reference_identifier>>
   public static boolean simple_reference_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_reference_tail")) return false;
     if (!nextTokenIs(b, T_DOT)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _LEFT_, CODE_REFERENCE, null);
     r = code_reference_dot(b, l + 1);
-    r = r && code_reference_identifier(b, l + 1);
+    r = r && mb_nl_group(b, l + 1, GroovyGeneratedParser::code_reference_identifier);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
