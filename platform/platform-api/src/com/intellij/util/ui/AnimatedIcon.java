@@ -30,11 +30,11 @@ import java.awt.*;
  */
 public class AnimatedIcon extends JComponent implements Disposable {
   private final Icon[] myIcons;
-  private final Dimension myPrefSize = new Dimension();
+  private final Dimension myPrefSize;
 
   private int myCurrentIconIndex;
 
-  private final Icon myPassiveIcon;
+  protected final Icon myPassiveIcon;
   private final Icon myEmptyPassiveIcon;
 
   private boolean myPaintPassive = true;
@@ -48,14 +48,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
     myName = name;
     myIcons = icons.length == 0 ? new Icon[]{passiveIcon} : icons;
     myPassiveIcon = passiveIcon;
-
-    for (Icon each : icons) {
-      myPrefSize.width = Math.max(each.getIconWidth(), myPrefSize.width);
-      myPrefSize.height = Math.max(each.getIconHeight(), myPrefSize.height);
-    }
-
-    myPrefSize.width = Math.max(passiveIcon.getIconWidth(), myPrefSize.width);
-    myPrefSize.height = Math.max(passiveIcon.getIconHeight(), myPrefSize.height);
+    myPrefSize = calcPreferredSize();
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true) {
       @Override
@@ -88,6 +81,19 @@ public class AnimatedIcon extends JComponent implements Disposable {
         ensureAnimation(false);
       }
     });
+  }
+
+  protected Dimension calcPreferredSize() {
+    Dimension dimension = new Dimension();
+
+    for (Icon each : myIcons) {
+      dimension.width = Math.max(each.getIconWidth(), dimension.width);
+      dimension.height = Math.max(each.getIconHeight(), dimension.height);
+    }
+
+    return new Dimension(
+      Math.max(myPassiveIcon.getIconWidth(), dimension.width),
+      Math.max(myPassiveIcon.getIconHeight(), dimension.height));
   }
 
   public void setPaintPassiveIcon(boolean paintPassive) {

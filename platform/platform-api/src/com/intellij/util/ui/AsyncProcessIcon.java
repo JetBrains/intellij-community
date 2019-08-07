@@ -38,6 +38,12 @@ public class AsyncProcessIcon extends AnimatedIcon {
     super(name, icons, passive, CYCLE_LENGTH);
   }
 
+  @Override
+  protected Dimension calcPreferredSize() {
+    return super.calcPreferredSize();
+    //return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
+  }
+
   /**
    * @deprecated no effect
    */
