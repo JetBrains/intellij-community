@@ -23,12 +23,13 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 class AndroidStudioLibraryLicenses {
   public static final List<LibraryLicense> LICENSES_LIST = (([
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
+    // for instantapps-api module library in intellij.android.core
+    new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api", license: "Apache 2.0"),
     // for jetifier-core module library in db-compilerCommon
     new LibraryLicense(name: "Android Jetifier Core", libraryName: "jetifier-core", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Studio Analytics Protos", libraryName: "studio-analytics-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
-    new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.5", license: "Apache 2.0"),
     // for commons-lang module library in db-compiler
     new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
