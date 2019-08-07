@@ -1285,6 +1285,22 @@ def m() {
 ''', JAVA_LANG_INTEGER
   }
 
+  void 'test nested closure local 2'() {
+    doTest '''
+def m() {
+        def aa = "1"
+        aa = 2
+        1.with {
+            2.with {
+                if (aa instanceof Object) {
+                    a<caret>a
+                }
+            }
+        }
+    }
+''', JAVA_LANG_INTEGER
+  }
+
   void 'test nested closure local CS'() {
     doTest '''
 @groovy.transform.CompileStatic

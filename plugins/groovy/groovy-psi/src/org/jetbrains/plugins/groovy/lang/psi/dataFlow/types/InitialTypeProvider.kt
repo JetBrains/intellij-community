@@ -10,21 +10,24 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 
 class InitialTypeProvider(val start: GrControlFlowOwner) {
 
+  private val parentFlow by lazy {
+    val parent = start.parent
+    if (parent != null) ControlFlowUtils.findControlFlowOwner(parent) else null
+  }
+
+  private val parentInstruction by lazy {
+    val flow = parentFlow
+    if (flow != null) ControlFlowUtils.findNearestInstruction(start, flow.controlFlow) else null
+  }
+
   fun initialType(descriptor: VariableDescriptor): PsiType? {
-    var prevPlace = start
-    val parent = start.parent ?: return null
-    var place: GrControlFlowOwner? = ControlFlowUtils.findControlFlowOwner(parent)
-    while(place != null) {
+    val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
 
-      val instruction = ControlFlowUtils.findNearestInstruction(prevPlace, place.controlFlow) ?: break
-      val type = TypeInferenceHelper.getInferredType(descriptor, instruction, place)
+    if (parentInstruction != null) {
+      val type = TypeInferenceHelper.getInferredType(descriptor, parentInstruction, parentFlow)
       if (type != null) return type
-
-      prevPlace = place
-      place = ControlFlowUtils.findControlFlowOwner(place)
     }
 
-    val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
     val field = resolvedDescriptor.variable as? GrField ?: return null
     return field.typeGroovy
   }
