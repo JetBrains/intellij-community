@@ -2792,6 +2792,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InvalidConfigurationLayer = load("/runConfigurations/invalidConfigurationLayer.svg");
     /** 16x16 */ public static final Icon Junit = load("/runConfigurations/junit.svg");
     /** 16x16 */ public static final Icon Remote = load("/runConfigurations/remote.svg");
+    /** 16x16 */ public static final Icon RemoteDebug = load("/runConfigurations/remoteDebug.svg");
     /** 16x16 */ public static final Icon RerunFailedTests = load("/runConfigurations/rerunFailedTests.svg");
     /** 16x16 */ public static final Icon Scroll_down = load("/runConfigurations/scroll_down.svg");
     /** 16x16 */ public static final Icon ShowIgnored = load("/runConfigurations/showIgnored.svg");
