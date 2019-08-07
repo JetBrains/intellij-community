@@ -223,6 +223,19 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
+      cell {
+        label("Clean working tree using:")
+        comboBox(
+          model = EnumComboBoxModel(GitVcsSettings.UpdateChangesPolicy::class.java),
+          getter = { projectSettings.updateChangesPolicy() },
+          setter = { projectSettings.setUpdateChangesPolicy(it) },
+          renderer = SimpleListCellRenderer.create<GitVcsSettings.UpdateChangesPolicy>("") { value ->
+            value.name.toLowerCase().capitalize()
+          }
+        )
+      }
+    }
+    row {
       checkBox("Auto-update if push of the current branch was rejected",
                { projectSettings.autoUpdateIfPushRejected() },
                { projectSettings.setAutoUpdateIfPushRejected(it) })
