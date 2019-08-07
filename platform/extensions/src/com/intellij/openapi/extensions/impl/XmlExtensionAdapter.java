@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -116,8 +115,6 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
-
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
@@ -147,10 +144,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                            "), please remove constructor parameters";
           PluginDescriptor pluginDescriptor = getPluginDescriptor();
           if (pluginDescriptor.isBundled() && !pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")) {
-            LOG.error(message, e);
+            ExtensionPointImpl.LOG.error(message, e);
           }
           else {
-            LOG.warn(message, e);
+            ExtensionPointImpl.LOG.warn(message, e);
           }
         }
       }

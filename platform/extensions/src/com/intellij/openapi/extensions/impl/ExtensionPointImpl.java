@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 
 @SuppressWarnings({"SynchronizeOnThis", "NonPrivateFieldAccessedInSynchronizedContext"})
 public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
@@ -43,7 +43,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private final String myName;
   private final String myClassName;
 
-  private volatile List<? extends T> myExtensionsCache;
+  private volatile List<T> myExtensionsCache;
   // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
   // but instead returns Object[], so, we cannot use toArray() anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
@@ -58,6 +58,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // guarded by this
   @NotNull
   List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
+  boolean myAdaptersIsSorted = true;
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -68,6 +69,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   Class<T> myExtensionClass;
 
   private final boolean myUnloadSafe;
+
+  // guarded by this
+  private boolean processingAdaptersNow;
 
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
@@ -188,6 +192,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     if (myAdapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       myAdapters = new ArrayList<>();
+      myAdaptersIsSorted = false;
     }
 
     int index = firstIndex;
@@ -248,7 +253,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @NotNull
   @Override
   public List<T> getExtensionList() {
-    List<? extends T> result = myExtensionsCache;
+    List<T> result = myExtensionsCache;
     if (result == null) {
       synchronized (this) {
         result = myExtensionsCache;
@@ -260,8 +265,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         }
       }
     }
-    //noinspection unchecked
-    return (List<T>)result;
+    return result;
   }
 
   @Override
@@ -309,23 +313,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @ApiStatus.Experimental
   @NotNull
   public final Iterator<T> iterator() {
-    List<? extends T> result = myExtensionsCache;
-    if (result == null) {
-      synchronized (this) {
-        result = myExtensionsCache;
-        if (result == null) {
-          return createIterator();
-        }
-      }
-    }
-    //noinspection unchecked
-    return (Iterator<T>)result.iterator();
+    List<T> result = myExtensionsCache;
+    return result == null ? createIterator() : result.iterator();
   }
 
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    synchronized (this) {
-      assertBeforeProcessing();
-    }
     CHECK_CANCELED.run();
 
     if (isInReadOnlyMode()) {
@@ -335,21 +327,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       return;
     }
 
-    List<ExtensionComponentAdapter> adapters;
-    synchronized (this) {
-      adapters = myAdapters;
-      int size = adapters.size();
-      if (size == 0) {
-        return;
-      }
-
-      LoadingOrder.sort(adapters);
-      adapters = new ArrayList<>(adapters); // for safe iteration outside lock
-      LOG.assertTrue(myListeners.length == 0);
-    }
-
-    for (ExtensionComponentAdapter adapter : adapters) {
-      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null, adapters);
+    for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList()) {
+      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null, null);
       if (extension == null) {
         break;
       }
@@ -358,20 +337,28 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @NotNull
-  private synchronized Iterator<T> createIterator() {
-    assertBeforeProcessing();
-    CHECK_CANCELED.run();
-
-    List<ExtensionComponentAdapter> adapters = myAdapters;
-    int size = adapters.size();
-    if (size == 0) {
-      return Collections.emptyIterator();
-    }
-
-    LoadingOrder.sort(adapters);
-
-    // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
+  private synchronized List<ExtensionComponentAdapter> getThreadSafeAdapterList() {
     LOG.assertTrue(myListeners.length == 0);
+    // copy for safe iteration outside lock
+    return ContainerUtil.copyList(getSortedAdapters());
+  }
+
+  @NotNull
+  private Iterator<T> createIterator() {
+    int size;
+    List<ExtensionComponentAdapter> adapters;
+    synchronized (this) {
+      CHECK_CANCELED.run();
+
+      adapters = getSortedAdapters();
+      size = adapters.size();
+      if (size == 0) {
+        return Collections.emptyIterator();
+      }
+
+      // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
+      LOG.assertTrue(myListeners.length == 0);
+    }
 
     return new Iterator<T>() {
       private int currentIndex;
@@ -385,7 +372,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       @Nullable
       public T next() {
         do {
-          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null, null, adapters);
+          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null, null, null);
           if (extension != null) {
             return extension;
           }
@@ -413,29 +400,38 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private boolean processingAdaptersNow; // guarded by this
+  @NotNull
+  private synchronized List<ExtensionComponentAdapter> getSortedAdapters() {
+    assertBeforeProcessing();
+
+    List<ExtensionComponentAdapter> adapters = myAdapters;
+    if (!myAdaptersIsSorted) {
+      LoadingOrder.sort(adapters);
+      myAdaptersIsSorted = true;
+    }
+    return adapters;
+  }
+
   @NotNull
   private synchronized T[] processAdapters() {
-    assertBeforeProcessing();
     assertNotReadOnlyMode();
+
+    // check before to avoid any "restore" work if already cancelled
+    CHECK_CANCELED.run();
 
     long startTime = StartUpMeasurer.getCurrentTime();
 
-    int totalSize = myAdapters.size();
+    List<ExtensionComponentAdapter> adapters = getSortedAdapters();
+    int totalSize = adapters.size();
     Class<T> extensionClass = getExtensionClass();
     T[] result = ArrayUtil.newArray(extensionClass, totalSize);
     if (totalSize == 0) {
       return result;
     }
 
-    // check before to avoid any "restore" work if already cancelled
-    CHECK_CANCELED.run();
     processingAdaptersNow = true;
     try {
-      List<ExtensionComponentAdapter> adapters = myAdapters;
-      LoadingOrder.sort(adapters);
-
-      OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(adapters.size());
+      OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(totalSize);
 
       ExtensionPointListener<T>[] listeners = myListeners;
       int extensionIndex = 0;
@@ -466,7 +462,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                            @Nullable T[] result,
                            @Nullable OpenTHashSet<T> duplicates,
                            @Nullable Class<T> extensionClassForCheck,
-                           List<? extends ExtensionComponentAdapter> adapters) {
+                           @Nullable List<? extends ExtensionComponentAdapter> adapters) {
     try {
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
@@ -534,19 +530,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  @Override
-  @Nullable
-  public T getExtension() {
-    List<T> extensions = getExtensionList();
-    return extensions.isEmpty() ? null : extensions.get(0);
-  }
-
-  @Override
-  public synchronized boolean hasExtension(@NotNull T extension) {
-    // method is deprecated and used only by one external plugin, ignore not efficient implementation
-    return ContainerUtil.containsIdentity(getExtensionList(), extension);
-  }
-
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
    * For tests this method is more preferable than {@link #registerExtension)} because makes registration more isolated and strict
@@ -555,7 +538,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
    */
   @TestOnly
-  public synchronized void maskAll(@NotNull List<? extends T> list, @NotNull Disposable parentDisposable) {
+  public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       POINTS_IN_READONLY_MODE = ContainerUtil.newIdentityTroveSet();
@@ -564,7 +547,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       assertNotReadOnlyMode();
     }
 
-    List<? extends T> oldList = myExtensionsCache;
+    List<T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
     // any read access will use supplied list, any write access can lead to unpredictable results - asserted in clearCache
     myExtensionsCache = list;
@@ -715,10 +698,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY =
-    n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> {
+    return n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
+  };
+
+  @NotNull
   private static <T> ArrayFactory<ExtensionPointListener<T>> listenerArrayFactory() {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (ArrayFactory)LISTENER_ARRAY_FACTORY;
   }
 
@@ -840,6 +826,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   synchronized void clearCache() {
     myExtensionsCache = null;
     myExtensionsCacheAsArray = null;
+    myAdaptersIsSorted = false;
 
     // asserted here because clearCache is called on any write action
     assertNotReadOnlyMode();
@@ -899,6 +886,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());
       myAdapters = adapters;
+      myAdaptersIsSorted = false;
     }
     else {
       ((ArrayList<ExtensionComponentAdapter>)adapters).ensureCapacity(adapters.size() + extensionElements.size());
@@ -932,17 +920,25 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Nullable
-  public synchronized T findExtension(@NotNull Class<T> instanceOf, boolean isRequired) {
-    Iterator<T> iterator = myListeners.length == 0 ? iterator() : getExtensionList().iterator();
-    while (iterator.hasNext()) {
-      T object = iterator.next();
-      if (instanceOf.isInstance(object)) {
-        return object;
+  public final T findExtension(@NotNull Class<T> aClass, boolean isRequired) {
+    List<? extends T> extensionsCache = myExtensionsCache;
+    if (extensionsCache == null) {
+      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList()) {
+        if (aClass.isAssignableFrom(adapter.getImplementationClass())) {
+          return processAdapter(adapter, null /* don't even pass it */, null, null, null, null);
+        }
+      }
+    }
+    else {
+      for (T extension : extensionsCache) {
+        if (aClass.isInstance(extension)) {
+          return extension;
+        }
       }
     }
 
     if (isRequired) {
-      String message = "could not find extension implementation " + instanceOf;
+      String message = "could not find extension implementation " + aClass;
       if (isInReadOnlyMode()) {
         message += " (point in read-only mode)";
       }

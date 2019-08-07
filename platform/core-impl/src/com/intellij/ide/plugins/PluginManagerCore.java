@@ -1651,11 +1651,6 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensions(extensionPoints, container, notifyListeners);
     }
-
-    // to avoid clearing cache for each plugin on registration, cache is cleared only now
-    // in general, on init extension point should be not initialized yet, but who knows
-    // (later maybe revisited, for now preserve old behaviour to be sure)
-    area.extensionsRegistered(extensionPoints);
   }
 
   /**

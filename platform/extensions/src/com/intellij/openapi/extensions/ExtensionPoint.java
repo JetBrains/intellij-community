@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -61,14 +62,24 @@ public interface ExtensionPoint<T> {
 
   boolean hasAnyExtensions();
 
+  /**
+   * @deprecated Use another solution, because this method instantiates all extensions.
+   */
   @Nullable
-  T getExtension();
+  @Deprecated
+  default T getExtension() {
+    // method is deprecated and not used, ignore not efficient implementation
+    return ContainerUtil.getFirstItem(getExtensionList());
+  }
 
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
-  boolean hasExtension(@NotNull T extension);
+  default boolean hasExtension(@NotNull T extension) {
+    // method is deprecated and used only by one external plugin, ignore not efficient implementation
+    return ContainerUtil.containsIdentity(getExtensionList(), extension);
+  }
 
   /**
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
