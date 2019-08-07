@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="layoutlib">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/layoutlib.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/jdk8/layoutlib.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
