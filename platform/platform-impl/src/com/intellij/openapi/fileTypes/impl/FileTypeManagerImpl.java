@@ -360,6 +360,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         for (Element e : defaultFileTypesElement.getChildren()) {
           if ("filetypes".equals(e.getName())) {
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
+              String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
+              if (myPendingFileTypes.get(fileTypeName) != null) continue;
               loadFileType(element, true);
             }
           }
