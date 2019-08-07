@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import com.intellij.psi.PsiType
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -10,13 +11,13 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 
 class InitialTypeProvider(val start: GrControlFlowOwner) {
 
-  private val parentFlow by lazy {
+  private val parentFlowOwner by lazyPub {
     val parent = start.parent
     if (parent != null) ControlFlowUtils.findControlFlowOwner(parent) else null
   }
 
-  private val parentInstruction by lazy {
-    val flow = parentFlow
+  private val parentInstruction by lazyPub {
+    val flow = parentFlowOwner
     if (flow != null) ControlFlowUtils.findNearestInstruction(start, flow.controlFlow) else null
   }
 
@@ -24,7 +25,7 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
     val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
 
     if (parentInstruction != null) {
-      val type = TypeInferenceHelper.getInferredType(descriptor, parentInstruction, parentFlow)
+      val type = TypeInferenceHelper.getInferredType(descriptor, parentInstruction, parentFlowOwner)
       if (type != null) return type
     }
 

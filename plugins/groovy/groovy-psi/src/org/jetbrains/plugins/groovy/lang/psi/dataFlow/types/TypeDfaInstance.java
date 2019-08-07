@@ -81,15 +81,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else {
       DFAType type = state.getVariableType(descriptor);
-      if (type == null) handleReadWithoutWrite(state, instruction);
-    }
-  }
-
-  private void handleReadWithoutWrite(@NotNull TypeDfaState state, @NotNull ReadWriteVariableInstruction instruction) {
-    VariableDescriptor descriptor = instruction.getDescriptor();
-    PsiType initialType = myInitialTypeProvider.initialType(descriptor);
-    if (initialType != null) {
-      updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
+      if (type == null) {
+        PsiType initialType = myInitialTypeProvider.initialType(descriptor);
+        if (initialType != null) {
+          updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
+        }
+      }
     }
   }
 
