@@ -57,7 +57,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @Override
   public void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull Element extensionPointElement,
                                      @NotNull MutablePicoContainer picoContainer) {

@@ -10,7 +10,6 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
@@ -474,7 +473,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  public void registerExtensionPoints(@NotNull ExtensionsArea area, @NotNull MutablePicoContainer picoContainer) {
+  public void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull MutablePicoContainer picoContainer) {
     ContainerDescriptor containerDescriptor;
     if (picoContainer.getParent() == null) {
       containerDescriptor = myAppContainerDescriptor;

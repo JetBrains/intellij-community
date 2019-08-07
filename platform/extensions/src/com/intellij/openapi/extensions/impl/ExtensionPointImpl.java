@@ -884,7 +884,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   /**
    * {@link #clearCache} is not called, use {@link ExtensionsAreaImpl#extensionsRegistered(ExtensionPointImpl[])} if needed.
    */
-  public final synchronized void createAndRegisterAdapters(@NotNull Collection<? extends Element> extensionElements,
+  public final synchronized void createAndRegisterAdapters(@NotNull Collection<Element> extensionElements,
                                                            @NotNull PluginDescriptor pluginDescriptor,
                                                            @NotNull MutablePicoContainer picoContainer,
                                                            boolean notifyListeners) {

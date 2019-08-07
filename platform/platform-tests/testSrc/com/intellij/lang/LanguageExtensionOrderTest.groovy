@@ -3,9 +3,9 @@ package com.intellij.lang
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -16,12 +16,12 @@ import org.picocontainer.MutablePicoContainer
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
   private PluginDescriptor myDescriptor = new DefaultPluginDescriptor(PluginId.getId(""), getClass().classLoader)
-  private ExtensionsArea myArea
+  private ExtensionsAreaImpl myArea
   private LanguageExtension myLanguageExtension
 
   void setUp() {
     super.setUp()
-    myArea = ApplicationManager.getApplication().getExtensionArea()
+    myArea = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
     myLanguageExtension = new LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 
 /**
  * @see Extensions#getRootArea()
@@ -42,10 +41,6 @@ public interface ExtensionsArea  {
 
   @NotNull
   ExtensionPoint<?>[] getExtensionPoints();
-
-  void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
-                              @NotNull Element extensionPointElement,
-                              @NotNull MutablePicoContainer picoContainer);
 
   /**
    * Registers a new extension.
