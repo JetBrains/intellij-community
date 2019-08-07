@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import org.jetbrains.annotations.NotNull;
@@ -63,16 +64,7 @@ public class ToggleFullScreenAction extends DumbAwareAction {
 
   @Nullable
   private static IdeFrameEx getFrame() {
-    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
-    if (focusOwner != null) {
-      Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window != null && !(window instanceof IdeFrameEx)) {
-        window = SwingUtilities.getWindowAncestor(window);
-      }
-      if (window instanceof IdeFrameEx) {
-        return (IdeFrameEx)window;
-      }
-    }
-    return null;
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    return frame instanceof IdeFrameEx ? ((IdeFrameEx)frame) : null;
   }
 }
