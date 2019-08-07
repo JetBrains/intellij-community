@@ -4,7 +4,7 @@ package com.intellij.pom.java;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -24,7 +24,10 @@ public class JavaLanguageLevelCollector extends ProjectUsagesCollector {
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
     Set<MetricEvent> usages = new HashSet<>();
 
-    usages.add(newMetric("PROJECT_LANGUAGE_LEVEL", PsiUtil.getLanguageLevel(project)));
+    LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
+    if (instance != null) {
+      usages.add(newMetric("PROJECT_LANGUAGE_LEVEL", instance.getLanguageLevel()));
+    }
 
     return usages;
   }
