@@ -272,7 +272,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -616,7 +616,7 @@ public class VfsUtilCore {
 
   public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<? super VirtualFile> processor) {
     final Ref<Boolean> result = Ref.create(true);
-    visitChildrenRecursively(root, new VirtualFileVisitor() {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

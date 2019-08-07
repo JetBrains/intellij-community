@@ -54,7 +54,7 @@ import java.util.function.Function;
  * @author max
  */
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
+  private static final Logger LOG = Logger.getInstance(PersistentFS.class);
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
     ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
@@ -797,7 +797,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // conflicting event found for (non-strict) descendant, stop
       return true;
     }
-    else if (middleDirs.contains(path)) {
+    if (middleDirs.contains(path)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
     }
@@ -1216,10 +1216,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static String normalizeRootUrl(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
     // need to protect against relative path of the form "/x/../y"
     String normalized = VfsImplUtil.normalize(fs, FileUtil.toCanonicalPath(basePath));
-    String protocol = fs.getProtocol();
-    StringBuilder result = new StringBuilder(protocol.length() + URLUtil.SCHEME_SEPARATOR.length() + normalized.length());
-    result.append(protocol).append(URLUtil.SCHEME_SEPARATOR).append(normalized);
-    return StringUtil.endsWithChar(result, '/') ? UriUtil.trimTrailingSlashes(result.toString()) : result.toString();
+    return VirtualFileManager.constructUrl(fs.getProtocol(), UriUtil.trimTrailingSlashes(normalized));
   }
 
   @Override
@@ -1605,7 +1602,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     @NotNull
     @Override
     public String getUrl() {
-      return getFileSystem().getProtocol() + "://" + getPath();
+      return getFileSystem().getProtocol() + URLUtil.SCHEME_SEPARATOR + getPath();
     }
   }
 
