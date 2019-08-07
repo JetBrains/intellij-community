@@ -71,6 +71,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -197,12 +198,13 @@ public class Switcher extends AnAction implements DumbAware {
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
                                                               QuickSearchComponent {
+    static final Object RECENT_LOCATIONS = new Object();
     final JBPopup myPopup;
-    final JBList<ToolWindow> toolWindows;
+    final JBList<Object> toolWindows;
     final JBList<FileInfo> files;
     final JPanel separator;
     final ToolWindowManager twManager;
-    final JBCheckBox myShowOnlyEditedFilesCheckBox;
+    JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel myTopPanel;
     final JPanel descriptions;
@@ -338,7 +340,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
-      CollectionListModel<ToolWindow> twModel = new CollectionListModel<>();
+      CollectionListModel<Object> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = new ArrayList<>();
       for (ActivateToolWindowAction action : actions) {
@@ -353,16 +355,19 @@ public class Switcher extends AnAction implements DumbAware {
       for (ToolWindow window : windows) {
         twModel.add(window);
       }
-      toolWindows = createList(twModel, ToolWindow::getStripeTitle, mySpeedSearch, pinned);
+      twModel.add(RECENT_LOCATIONS);
+
+      toolWindows = createList(twModel, getNamer(), mySpeedSearch, pinned);
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
+      toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned, showEdited()) {
         @NotNull
         @Override
-        public Component getListCellRendererComponent(@NotNull JList<? extends ToolWindow> list,
-                                                      ToolWindow value,
+        public Component getListCellRendererComponent(@NotNull JList<?> list,
+                                                      Object value,
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
@@ -499,6 +504,7 @@ public class Switcher extends AnAction implements DumbAware {
                                   pinned);
       if (isCheckboxMode()) {
         myShowOnlyEditedFilesCheckBox.addActionListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
+        myShowOnlyEditedFilesCheckBox.addActionListener(e -> toolWindows.repaint());
       }
       else {
         myShowOnlyEditedFilesCheckBox.setEnabled(false);
@@ -586,6 +592,29 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+    }
+
+    @NotNull
+    private Supplier<Boolean> showEdited() {
+      return () -> myShowOnlyEditedFilesCheckBox != null && myShowOnlyEditedFilesCheckBox.isSelected();
+    }
+
+    @NotNull
+    private Function<? super Object, String> getNamer() {
+      return value -> {
+        if (value instanceof ToolWindow) {
+          return ((ToolWindow)value).getStripeTitle();
+        }
+        if (value == RECENT_LOCATIONS) {
+          return getRecentLocationsLabel(showEdited());
+        }
+
+        throw new IllegalStateException();
+      };
+    }
+
+    static String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
+      return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
     private boolean keyEvent(KeyEvent event) {
@@ -1037,7 +1066,10 @@ public class Switcher extends AnAction implements DumbAware {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery);
       }
-      else if (values.get(0) instanceof ToolWindow) {
+      else if (values.get(0) == RECENT_LOCATIONS) {
+        RecentLocationsAction.showPopup(project, myShowOnlyEditedFilesCheckBox.isSelected());
+
+      } else if (values.get(0) instanceof ToolWindow) {
         ToolWindow toolWindow = (ToolWindow)values.get(0);
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
                                                                     ModalityState.current());

@@ -4,58 +4,77 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
+import java.util.function.Supplier;
+
+import static com.intellij.ide.actions.Switcher.SwitcherPanel.RECENT_LOCATIONS;
 
 /**
  * @author Konstantin Bulenkov
  */
-class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<ToolWindow> {
+class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
   private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> shortcuts;
   private final boolean myPinned;
+  private Supplier<Boolean> myShowEdited;
+
   private boolean hide = false;
 
   SwitcherToolWindowsListRenderer(SpeedSearchBase speedSearch,
-                                  Map<ToolWindow, String> shortcuts, boolean pinned) {
+                                  Map<ToolWindow, String> shortcuts,
+                                  boolean pinned,
+                                  @NotNull Supplier<Boolean> showEdited) {
     mySpeedSearch = speedSearch;
     this.shortcuts = shortcuts;
     myPinned = pinned;
+    myShowEdited = showEdited;
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull JList<? extends ToolWindow> list,
-                                       ToolWindow tw,
+  protected void customizeCellRenderer(@NotNull JList<?> list,
+                                       Object value,
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
-    hide = false;
-    setPaintFocusBorder(false);
-    setIcon(getIcon(tw));
-    final String name;
+    String name = "";
+    String nameToMatch = "";
+    if (value instanceof ToolWindow) {
+      ToolWindow tw = ((ToolWindow)value);
+      hide = false;
+      setPaintFocusBorder(false);
+      setIcon(getIcon(tw));
 
-    String stripeTitle = tw.getStripeTitle();
-    String shortcut = shortcuts.get(tw);
-    if (myPinned || shortcut == null) {
-      name = stripeTitle;
+      nameToMatch = tw.getStripeTitle();
+      String shortcut = shortcuts.get(tw);
+      if (myPinned || shortcut == null) {
+        name = nameToMatch;
+      }
+      else {
+        append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
+        name = ": " + nameToMatch;
+      }
     }
-    else {
-      append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
-      name = ": " + stripeTitle;
+    else if (value == RECENT_LOCATIONS) {
+      name = Switcher.SwitcherPanel.getRecentLocationsLabel(myShowEdited);
+      nameToMatch = name;
     }
+
+    setBorder(value == RECENT_LOCATIONS
+              ? JBUI.Borders.customLine(selected ? getBackground() : new JBColor(Gray._220, Gray._80), 1, 0, 0, 0)
+              : JBUI.Borders.empty());
 
     append(name);
     if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
-      hide = mySpeedSearch.matchingFragments(stripeTitle) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
+      hide = mySpeedSearch.matchingFragments(nameToMatch) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
     }
   }
 
