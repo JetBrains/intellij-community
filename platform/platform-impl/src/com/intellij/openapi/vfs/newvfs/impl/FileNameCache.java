@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
@@ -43,12 +44,18 @@ public class FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
   public static int storeName(@NotNull String name) {
-    if (name.length() > 1 && StringUtil.containsAnyChar(name, FS_SEPARATORS)) {
-      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
-    }
+    assertShortFileName(name);
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
+  }
+
+  private static void assertShortFileName(@NotNull String name) {
+    if (name.length() <= 1) return;
+    int start = SystemInfo.isWindows && name.startsWith("//") ? 2 : 0;
+    if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, name.length())) {
+      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
+    }
   }
 
   @NotNull
