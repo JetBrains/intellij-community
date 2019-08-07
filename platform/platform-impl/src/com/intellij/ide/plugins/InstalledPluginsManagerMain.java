@@ -205,7 +205,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
-      if (MessagesEx.showOkCancelDialog(parent, message, "Install Plugin", Messages.getWarningIcon()) == Messages.OK) {
+      if (Messages.showOkCancelDialog(message, "Install Plugin", "Install", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }

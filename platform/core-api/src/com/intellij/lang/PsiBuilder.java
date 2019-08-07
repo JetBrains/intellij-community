@@ -3,7 +3,6 @@ package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderUnprotected;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -18,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiParser
  * @see ASTNode
  */
-@SuppressWarnings("deprecation")
-public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
+public interface PsiBuilder extends UserDataHolder {
   /**
    * Returns a project for which PSI builder was created (see {@link PsiBuilderFactory}).
    * @return project.

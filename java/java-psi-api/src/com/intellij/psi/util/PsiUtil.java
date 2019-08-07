@@ -713,12 +713,6 @@ public final class PsiUtil extends PsiUtilCore {
     return containingClass1 == null && containingClass2 == null;
   }
 
-  /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
-  @Deprecated
-  public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
-    return isCompileTimeConstant((PsiVariable)field);
-  }
-
   /**
    * JLS 15.28
    */
@@ -992,13 +986,6 @@ public final class PsiUtil extends PsiUtilCore {
            !method.hasModifierProperty(PsiModifier.PRIVATE) &&
            !(parentClass instanceof PsiAnonymousClass) &&
            !parentClass.hasModifierProperty(PsiModifier.FINAL);
-  }
-
-  /** @deprecated Use {@link #canBeOverridden(PsiMethod)} instead */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  public static boolean canBeOverriden(@NotNull PsiMethod method) {
-    return canBeOverridden(method);
   }
 
   @NotNull

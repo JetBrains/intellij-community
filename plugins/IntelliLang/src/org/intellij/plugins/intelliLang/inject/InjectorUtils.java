@@ -230,17 +230,6 @@ public class InjectorUtils {
     }
   }
 
-  /**
-   * @deprecated use {@link InjectorUtils#registerSupport(LanguageInjectionSupport, boolean, PsiElement, Language)} instead
-   */
-  @Deprecated
-  public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
-    LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
-    putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
-    if (settingsAvailable) {
-      putInjectedFileUserData(registrar, LanguageInjectionSupport.SETTINGS_EDITOR, support);
-    }
-  }
 
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, @NotNull Key<T> key, @Nullable T value) {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);

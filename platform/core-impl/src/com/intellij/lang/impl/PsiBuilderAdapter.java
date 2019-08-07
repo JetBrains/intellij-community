@@ -142,15 +142,19 @@ public class PsiBuilderAdapter implements PsiBuilder {
     myDelegate.putUserData(key, value);
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
+  /**
+   * @deprecated Use {@link #getUserData(Key)} instead
+   */
+  @Deprecated
   public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
-    return myDelegate.getUserDataUnprotected(key);
+    return getUserData(key);
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
+  /**
+   * @deprecated Use {@link #putUserData(Key, Object)} instead
+   */
+  @Deprecated
   public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
-    myDelegate.putUserDataUnprotected(key, value);
+    putUserData(key, value);
   }
 }

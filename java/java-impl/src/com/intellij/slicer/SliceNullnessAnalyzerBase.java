@@ -17,7 +17,6 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ReadAction;
@@ -206,18 +205,6 @@ public abstract class SliceNullnessAnalyzerBase {
   }
 
   /**
-   * @param element element to find nullness for
-   * @return element nullness
-   * @deprecated for removal; call/override {@link #checkNullability(PsiElement)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @NotNull
-  protected Nullness checkNullness(@SuppressWarnings("unused") final PsiElement element) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
    * Implementors must override this method; default implementation just throws UnsupportedOperationException.
    *
    * @param element element to find nullability for
@@ -225,8 +212,7 @@ public abstract class SliceNullnessAnalyzerBase {
    */
   @NotNull
   protected Nullability checkNullability(final PsiElement element) {
-    //noinspection deprecation
-    return checkNullness(element).toNullability();
+    throw new UnsupportedOperationException();
   }
 
   public static class NullAnalysisResult {

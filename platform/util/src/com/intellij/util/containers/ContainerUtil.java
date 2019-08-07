@@ -93,16 +93,6 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
-   */
-  @NotNull
-  @Contract(pure=true)
-  @Deprecated
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
-    return new LinkedHashMap<>(capacity);
-  }
-
-  /**
    * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
    */
   @NotNull
@@ -2982,7 +2972,6 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftValueMap() {
-    //noinspection deprecation
     return new SoftValueHashMap<>(canonicalStrategy());
   }
 
