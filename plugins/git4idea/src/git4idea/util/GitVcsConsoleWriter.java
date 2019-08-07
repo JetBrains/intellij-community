@@ -20,10 +20,10 @@ public final class GitVcsConsoleWriter {
 
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
-  private final ProjectLevelVcsManager myVcsManager;
+  private final Project myProject;
 
-  public GitVcsConsoleWriter(@NotNull ProjectLevelVcsManager vcsManager) {
-    myVcsManager = vcsManager;
+  public GitVcsConsoleWriter(@NotNull Project project) {
+    myProject = project;
   }
 
   /**
@@ -55,7 +55,9 @@ public final class GitVcsConsoleWriter {
    * @param contentType a style to use
    */
   private void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
-    if (message.length() == 0) return;
-    myVcsManager.addMessageToConsoleWindow(StringUtil.shortenPathWithEllipsis(message, MAX_CONSOLE_OUTPUT_SIZE), contentType);
+    if (message.length() == 0) {
+      return;
+    }
+    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(StringUtil.shortenPathWithEllipsis(message, MAX_CONSOLE_OUTPUT_SIZE), contentType);
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -14,14 +15,12 @@ import java.util.List;
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T> {
 
-  @NotNull private final AbstractVcs myVcs;
+  @NotNull private final AbstractVcs<?> myVcs;
   @NotNull private final String myRepoDirName;
   @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
 
-  protected AbstractRepositoryManager(@NotNull VcsRepositoryManager globalRepositoryManager,
-                                      @NotNull AbstractVcs vcs,
-                                      @NotNull String repoDirName) {
-    myGlobalRepositoryManager = globalRepositoryManager;
+  protected AbstractRepositoryManager(@NotNull AbstractVcs<?> vcs, @NotNull String repoDirName) {
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(vcs.getProject());
     myVcs = vcs;
     myRepoDirName = repoDirName;
   }

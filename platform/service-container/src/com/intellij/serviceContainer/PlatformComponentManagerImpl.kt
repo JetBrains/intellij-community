@@ -289,11 +289,12 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
         throw e
       }
 
+      val message = "Cannot create class ${aClass.name}"
       if (pluginId == null) {
-        throw PluginException.createByClass(e, aClass)
+        throw PluginException.createByClass(message, e, aClass)
       }
       else {
-        throw PluginException(e, pluginId)
+        throw PluginException(message, e, pluginId)
       }
     }
   }
@@ -304,7 +305,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
       Class.forName(descriptor.listenerClassName, true, classLoader)
     }
     catch (e: Throwable) {
-      throw PluginException(e, descriptor.pluginDescriptor.pluginId)
+      throw PluginException("Cannot create listener " + descriptor.listenerClassName, e, descriptor.pluginDescriptor.pluginId)
     }
     return instantiate(aClass, descriptor.pluginDescriptor.pluginId)
   }
