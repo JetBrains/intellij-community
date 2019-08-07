@@ -61,7 +61,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -346,12 +345,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     loadComponents(null);
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public final void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    super.registerComponents(plugins);
   }
 
   @ApiStatus.Internal

@@ -1641,14 +1641,15 @@ public class PluginManagerCore {
   @ApiStatus.Internal
   public static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area,
                                                           @NotNull MutablePicoContainer container,
-                                                          @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins) {
+                                                          @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins,
+                                                          boolean notifyListeners) {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensionPoints(area, container);
     }
 
     ExtensionPointImpl<?>[] extensionPoints = area.getExtensionPoints();
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      descriptor.registerExtensions(extensionPoints, container);
+      descriptor.registerExtensions(extensionPoints, container, notifyListeners);
     }
 
     // to avoid clearing cache for each plugin on registration, cache is cleared only now
@@ -1680,7 +1681,8 @@ public class PluginManagerCore {
 
     if (descriptor != null) {
       registerExtensionPointsAndExtensions((ExtensionsAreaImpl)area,
-                                           (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer(), Collections.singletonList(descriptor));
+                                           (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer(), Collections.singletonList(descriptor),
+                                           false);
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);

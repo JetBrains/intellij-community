@@ -522,13 +522,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myModuleContainerDescriptor;
   }
 
-  void registerExtensions(@NotNull ExtensionPointImpl<?>[] extensionPoints, @NotNull MutablePicoContainer picoContainer) {
+  void registerExtensions(@NotNull ExtensionPointImpl<?>[] extensionPoints,
+                          @NotNull MutablePicoContainer picoContainer,
+                          boolean notifyListeners) {
     if (myExtensions == null) {
       return;
     }
 
     for (ExtensionPointImpl<?> extensionPoint : extensionPoints) {
-      extensionPoint.createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, picoContainer);
+      extensionPoint.createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, picoContainer, notifyListeners);
     }
   }
 

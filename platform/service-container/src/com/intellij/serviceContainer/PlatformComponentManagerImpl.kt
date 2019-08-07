@@ -38,11 +38,13 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
   private val componentStore: IComponentStore
     get() = this.stateStore
 
-  protected open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
+  @Internal
+  open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
     ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_EXTENSIONS) {
       @Suppress("UNCHECKED_CAST")
       PluginManagerCore.registerExtensionPointsAndExtensions(extensionArea, picoContainer,
-                                                             plugins as MutableList<IdeaPluginDescriptorImpl>)
+                                                             plugins as MutableList<IdeaPluginDescriptorImpl>,
+                                                             LoadingPhase.isStartupComplete())
     }
 
 

@@ -29,12 +29,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
       }
 
       @Override
-      public final void extensionRemoved(@NotNull final Extension extension, @NotNull final PluginDescriptor pluginDescriptor) {
-        dropCache();
-      }
-
-      @Override
-      public final void extensionAdded(@NotNull final Extension extension, @NotNull final PluginDescriptor pluginDescriptor) {
+      public void extensionListChanged() {
         dropCache();
       }
 

@@ -889,7 +889,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    */
   public final synchronized void createAndRegisterAdapters(@NotNull Collection<? extends Element> extensionElements,
                                                            @NotNull PluginDescriptor pluginDescriptor,
-                                                           @NotNull MutablePicoContainer picoContainer) {
+                                                           @NotNull MutablePicoContainer picoContainer,
+                                                           boolean notifyListeners) {
     if (extensionElements.isEmpty()) {
       return;
     }
@@ -905,6 +906,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
+      if (notifyListeners) {
+        // We don't want to instantiate the adapter, so we fire a generic "something changed" event
+        for (ExtensionPointListener<T> listener : myListeners) {
+          listener.extensionListChanged();
+        }
+      }
     }
   }
 
