@@ -130,6 +130,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
+  private boolean myPreloadComplete;
 
   ActionManagerImpl() {
     registerPluginActions();
@@ -355,7 +356,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     processRemoveAndReplace(element, actionId, keymap, shortcut);
   }
 
-  private static void assertActionIsGroupOrStub(final AnAction action) {
+  private void assertActionIsGroupOrStub(final AnAction action) {
+    if (myPreloadComplete) return;
+
     if (!(action instanceof ActionGroup || action instanceof ActionStub || action instanceof ChameleonAction)) {
       LOG.error("Action : " + action + "; class: " + action.getClass());
     }
@@ -1038,7 +1041,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     List<Element> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) return true;
     for (Element element : elements) {
-      if (!element.getName().equals(ACTION_ELEMENT_NAME)) {
+      if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
+          !(element.getName().equals(GROUP_ELEMENT_NAME) && element.getAttributeValue(ID_ATTR_NAME) != null)) {
         return false;
       }
     }
@@ -1052,6 +1056,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (element.getName().equals(ACTION_ELEMENT_NAME)) {
         String className = element.getAttributeValue(CLASS_ATTR_NAME);
         String id = obtainActionId(element, className);
+        unregisterAction(id);
+      }
+      else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
+        String id = element.getAttributeValue(ID_ATTR_NAME);
+        if (id == null) {
+          throw new IllegalStateException("Cannot unload groups with no ID");
+        }
         unregisterAction(id);
       }
     }
@@ -1358,6 +1369,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }
+    myPreloadComplete = true;
   }
 
   @NotNull
