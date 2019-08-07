@@ -14,7 +14,7 @@ import one.util.streamex.StreamEx;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class JavaSymbolNameCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
+public class JvmSymbolNameCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
   public void testBasics() {
     PsiFile file = myFixture.configureByText("Test.java", "class Foo {\n" +
                                                           "  void fooMethod() {}\n" +
