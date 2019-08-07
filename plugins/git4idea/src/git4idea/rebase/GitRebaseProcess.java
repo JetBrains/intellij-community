@@ -63,6 +63,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -89,12 +90,7 @@ public class GitRebaseProcess {
     notification.expire();
   });
 
-  private final NotificationAction VIEW_STASH_ACTION = new NotificationAction("View Stash...") {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      mySaver.showSavedChanges();
-    }
-  };
+  private final NotificationAction VIEW_STASH_ACTION;
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -120,6 +116,13 @@ public class GitRebaseProcess {
     myRepositoryManager = getRepositoryManager(myProject);
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    VIEW_STASH_ACTION = new NotificationAction("View " + capitalize(mySaver.getSaverName()) + "...") {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        mySaver.showSavedChanges();
+      }
+    };
   }
 
   public void rebase() {
