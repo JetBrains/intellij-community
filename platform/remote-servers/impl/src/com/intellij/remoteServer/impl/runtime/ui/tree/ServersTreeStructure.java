@@ -306,11 +306,11 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     private final RemoteServerNode myServerNode;
     private final DeploymentNodeProducer myNodeProducer;
 
-    protected DeploymentNodeImpl(Project project,
-                                 @NotNull ServerConnection<?> connection,
-                                 @NotNull RemoteServerNode serverNode,
-                                 @NotNull Deployment value,
-                                 @NotNull DeploymentNodeProducer nodeProducer) {
+    public DeploymentNodeImpl(Project project,
+                              @NotNull ServerConnection<?> connection,
+                              @NotNull RemoteServerNode serverNode,
+                              @NotNull Deployment value,
+                              @NotNull DeploymentNodeProducer nodeProducer) {
       super(project, value);
       myConnection = connection;
       myServerNode = serverNode;

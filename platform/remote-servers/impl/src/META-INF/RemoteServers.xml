@@ -38,6 +38,9 @@
                 factoryClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"
                 conditionClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"/>
     <applicationInitializedListener implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
+
+    <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
+    <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
   </extensions>
   <project-components>
     <component>
