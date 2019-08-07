@@ -21,6 +21,8 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesWordsScanner;
+import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +51,10 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   @Override
   @NotNull
   public String getDescriptiveName(@NotNull PsiElement element) {
-    return ((PsiNamedElement)element).getName();
+    if (element instanceof PsiNamedElement) {
+      return StringUtil.notNullize(((PsiNamedElement)element).getName());
+    }
+    return element.getText();
   }
 
   @Override
