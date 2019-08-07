@@ -944,6 +944,8 @@
              text="Move To Group" popup="true"/>
       <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction"
               text="Change Icon"/>
+      <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
+              text="Copy Path" use-shortcut-of="CopyPaths"/>
       <separator/>
       <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
               text="Remove Selected from Welcome Screen"/>
