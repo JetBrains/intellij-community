@@ -213,13 +213,19 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         }
         else -> resultSubstitutor.substitute(param.type)
       }
-      val notNullParam = if (newParam == PsiType.NULL) {
+      val notNullParam = if (newParam == PsiType.NULL || newParam == null) {
         getJavaLangObject(resultMethod)
       }
       else {
         newParam
       }
-      actualParameter.setType(notNullParam)
+      val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(notNullParam)
+      if (actualParameter.typeElementGroovy == null) {
+        actualParameter.addAfter(typeElement, actualParameter.modifierList)
+      }
+      else {
+        actualParameter.typeElementGroovy!!.replace(typeElement)
+      }
     }
     closureDriver.instantiate(resultMethod, resultSubstitutor)
   }
