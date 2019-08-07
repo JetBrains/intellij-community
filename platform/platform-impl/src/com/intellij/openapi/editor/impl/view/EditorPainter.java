@@ -154,6 +154,15 @@ public class EditorPainter implements TextDrawingCallback {
                                 Rectangle clip,
                                 MarginPositions marginWidths) {
     if (!isMarginShown()) return;
+
+    Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
+    if (visualGuidesColor != null) {
+      g.setColor(visualGuidesColor);
+      for (Integer marginX : myCorrector.softMarginsX()) {
+        LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
+      }
+    }
+
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
     float baseMarginWidth = getBaseMarginWidth(myView);
     int baseMarginX = myCorrector.marginX(baseMarginWidth);
@@ -174,15 +183,6 @@ public class EditorPainter implements TextDrawingCallback {
           float nextWidth = marginWidths.x[i + 1];
           int nextX = nextWidth == 0 ? baseMarginX : (int)nextWidth;
           if (nextX != x) g.fillRect(Math.min(x, nextX), y + lineHeight - 1, Math.abs(x - nextX) + 1, 1);
-        }
-      }
-    }
-    Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
-    if (visualGuidesColor != null) {
-      g.setColor(visualGuidesColor);
-      for (Integer marginX : myCorrector.softMarginsX()) {
-        if (marginX != baseMarginX) {
-          LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
         }
       }
     }
