@@ -23,12 +23,6 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
     val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
-
-    if (parentInstruction != null) {
-      val type = TypeInferenceHelper.getInferredType(descriptor, parentInstruction, parentFlowOwner)
-      if (type != null) return type
-    }
-
     val field = resolvedDescriptor.variable as? GrField ?: return null
     return field.typeGroovy
   }

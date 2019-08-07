@@ -1240,7 +1240,7 @@ class T {
 ''', JAVA_LANG_OBJECT
   }
 
-  void 'test closure local with instanceof constraint'() {
+  void '_test closure local with instanceof constraint'() {
     doTest '''
 def m() {
         def aa = "1"
@@ -1269,7 +1269,7 @@ def m() {
 ''', JAVA_LANG_STRING
   }
 
-  void 'test nested closure local'() {
+  void '_test nested closure local'() {
     doTest '''
 def m() {
         def aa = "1"
@@ -1285,7 +1285,7 @@ def m() {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test nested closure local 2'() {
+  void '_test nested closure local 2'() {
     doTest '''
 def m() {
         def aa = "1"
