@@ -376,28 +376,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                 .select(MethodSmartStepTarget.class)
                 .filter(target -> !target.needsBreakpointRequest())
                 .toList();
-            visitLinesInstructions(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf, ordinal) -> {
-              if (name.startsWith("access$")) { // bridge method
-                ReferenceType cls = ContainerUtil.getFirstItem(virtualMachine.classesByName(owner));
-                if (cls != null) {
-                  Method method = DebuggerUtils.findMethod(cls, name, desc);
-                  if (method != null) {
-                    MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-                      @Override
-                      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                        if ("java/lang/AbstractMethodError".equals(owner)) {
-                          return;
-                        }
-                        removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess);
-                      }
-                    }, false);
-                  }
-                }
-              }
-              else {
-                removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess);
-              }
-            });
+            visitLinesInstructions(frameProxy.location(), true, lines,
+                                   (opcode, owner, name, desc, itf, ordinal) ->
+                                     removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess));
             if (!methodTargets.isEmpty()) {
               return Collections.emptyList();
             }
@@ -491,7 +472,26 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           String key = owner + "." + name + desc;
           int currentCount = myCounter.get(key);
           myCounter.put(key, currentCount + 1);
-          visitor.visitMethodInsn(opcode, owner, name, desc, itf, currentCount);
+          if (name.startsWith("access$")) { // bridge method
+            ReferenceType cls = ContainerUtil.getFirstItem(location.virtualMachine().classesByName(owner));
+            if (cls != null) {
+              Method method = DebuggerUtils.findMethod(cls, name, desc);
+              if (method != null) {
+                MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+                  @Override
+                  public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                    if ("java/lang/AbstractMethodError".equals(owner)) {
+                      return;
+                    }
+                    visitor.visitMethodInsn(opcode, owner, name, desc, itf, currentCount);
+                  }
+                }, false);
+              }
+            }
+          }
+          else {
+            visitor.visitMethodInsn(opcode, owner, name, desc, itf, currentCount);
+          }
         }
       }
     }, true);
