@@ -103,7 +103,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     if (implementationClassOrName instanceof String) {
       return (String)implementationClassOrName;
     }
-    return ((Class)implementationClassOrName).getName();
+    return ((Class<?>)implementationClassOrName).getName();
   }
 
   @Override

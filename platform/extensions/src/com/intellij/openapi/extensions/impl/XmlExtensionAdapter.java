@@ -79,7 +79,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     }
 
     @Override
-    public final Class getComponentImplementation() {
+    public final Class<?> getComponentImplementation() {
       return getImplementationClass();
     }
 
