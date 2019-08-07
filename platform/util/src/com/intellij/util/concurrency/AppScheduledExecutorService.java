@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -55,7 +55,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
       Consumer<? super Thread> listener = newThreadListener;
       if (listener != null) {
-        listener.consume(thread);
+        listener.accept(thread);
       }
       return thread;
     }

@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
@@ -47,8 +47,6 @@ public final class PerformanceWatcher implements Disposable {
   private ScheduledFuture<?> myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
-  private final IdePerformanceListener myPublisher =
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -80,7 +78,7 @@ public final class PerformanceWatcher implements Disposable {
       private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
       @Override
-      public void consume(Thread thread) {
+      public void accept(Thread thread) {
         if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
             && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = dumpThreads("newPooledThread/", true);
@@ -101,6 +99,11 @@ public final class PerformanceWatcher implements Disposable {
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
+  }
+
+  @NotNull
+  private static IdePerformanceListener getPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
   }
 
   private static int getMaxAttempts() {
@@ -225,7 +228,7 @@ public final class PerformanceWatcher implements Disposable {
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
         myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
-        myPublisher.uiFreezeStarted();
+        getPublisher().uiFreezeStarted();
       }
       dumpThreads();
     }
@@ -233,7 +236,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private void edtFrozenPrecise(long start) {
     myFreezeStart = start;
-    myPublisher.uiFreezeStarted();
+    getPublisher().uiFreezeStarted();
     stopDumping();
     myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, 0, getDumpInterval(), TimeUnit.MILLISECONDS);
   }
@@ -270,7 +273,7 @@ public final class PerformanceWatcher implements Disposable {
           reportDir = null;
         }
       }
-      myPublisher.uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
+      getPublisher().uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
       myFreezeStart = 0;
 
       myStacktraceCommonPart = null;
@@ -352,7 +355,7 @@ public final class PerformanceWatcher implements Disposable {
         }
       }
 
-      myPublisher.dumpedThreads(file, threadDump);
+      getPublisher().dumpedThreads(file, threadDump);
     }
     catch (IOException e) {
       LOG.info("failed to write thread dump file: " + e.getMessage());
@@ -415,7 +418,7 @@ public final class PerformanceWatcher implements Disposable {
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
       final Application application = ApplicationManager.getApplication();
       if (application.isDisposed()) return;
-      application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC).uiResponded(latency);
+      getPublisher().uiResponded(latency);
     }
   }
 

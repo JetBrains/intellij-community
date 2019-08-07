@@ -8,26 +8,29 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
+import com.intellij.util.messages.LazyListenerCreator
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 private val LOG = logger<PlatformComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent) {
+abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent), LazyListenerCreator {
   private var handlingInitComponentError = false
 
   private val lightServices: ConcurrentMap<Class<*>, Any>? = if (parent == null || parent.picoContainer.parent == null) ContainerUtil.newConcurrentMap() else null
@@ -170,8 +173,9 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
 
     result = getComponent(serviceClass) ?: return null
-    LOG.error("$componentKey requested as a service, but it is a component - convert it to a service or " +
-              "change call to ${if (myParent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}")
+    PluginException.logPluginError(LOG, "$componentKey requested as a service, but it is a component - convert it to a service or " +
+                                        "change call to ${if (myParent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}",
+                                   null, serviceClass)
     return result
   }
 
@@ -243,29 +247,64 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
   private fun <T : Any> createLightService(serviceClass: Class<T>): T {
     val startTime = StartUpMeasurer.getCurrentTime()
 
-    val result: T
-    if (myParent == null) {
-      result = ReflectionUtil.newInstance(serviceClass, false)
-    }
-    else {
-      val constructors = serviceClass.declaredConstructors
-      constructors.sortBy { it.parameterCount }
-      val constructor = constructors.first()
-      constructor.isAccessible = true
-      @Suppress("UNCHECKED_CAST")
-      result = when (constructor.parameterCount) {
-        1 -> constructor.newInstance(this)
-        else -> constructor.newInstance()
-      } as T
-    }
-
+    val result = instantiate(serviceClass, null)
     if (result is Disposable) {
       Disposer.register(this, result)
     }
 
     initializeComponent(result, null)
-    ParallelActivity.SERVICE.record(startTime, result.javaClass, StartUpMeasurer.Level.APPLICATION)
+    ParallelActivity.SERVICE.record(startTime, result.javaClass, DefaultPicoContainer.getActivityLevel(myPicoContainer))
     return result
+  }
+
+  private fun <T : Any> instantiate(aClass: Class<T>, pluginId: PluginId?): T {
+    try {
+      if (myParent == null) {
+        val constructor = aClass.getDeclaredConstructor()
+        constructor.isAccessible = true
+        return constructor.newInstance()
+      }
+      else {
+        val constructors = aClass.declaredConstructors
+        constructors.sortBy { it.parameterCount }
+        val constructor = constructors.first()
+        constructor.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        return when (constructor.parameterCount) {
+          1 -> constructor.newInstance(this)
+          else -> constructor.newInstance()
+        } as T
+      }
+    }
+    catch (e: Throwable) {
+      if (e is InvocationTargetException) {
+        val targetException = e.targetException
+        if (targetException is ControlFlowException) {
+          throw targetException
+        }
+      }
+      else if (e is ControlFlowException) {
+        throw e
+      }
+
+      if (pluginId == null) {
+        throw PluginException.createByClass(e, aClass)
+      }
+      else {
+        throw PluginException(e, pluginId)
+      }
+    }
+  }
+
+  override fun createListener(descriptor: ListenerDescriptor): Any {
+    val classLoader = descriptor.pluginDescriptor.pluginClassLoader
+    val aClass = try {
+      Class.forName(descriptor.listenerClassName, true, classLoader)
+    }
+    catch (e: Throwable) {
+      throw PluginException(e, descriptor.pluginDescriptor.pluginId)
+    }
+    return instantiate(aClass, descriptor.pluginDescriptor.pluginId)
   }
 }
 

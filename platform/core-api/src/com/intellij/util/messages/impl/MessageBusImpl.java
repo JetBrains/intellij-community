@@ -2,8 +2,8 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
@@ -12,12 +12,16 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.messages.LazyListenerCreator;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -82,7 +86,7 @@ public class MessageBusImpl implements MessageBus {
 
   // root message bus constructor
   private MessageBusImpl(@NotNull Object owner) {
-    myOwner = owner + " of " + owner.getClass();
+    myOwner = owner;
     myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
@@ -203,32 +207,17 @@ public class MessageBusImpl implements MessageBus {
     List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
     if (listenerDescriptors != null) {
       List<Object> listeners = new SmartList<>();
+      LazyListenerCreator listenerCreator = ((LazyListenerCreator)myOwner);
       for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
-        ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
         try {
-          Class<?> aClass = Class.forName(listenerDescriptor.listenerClassName, true, classLoader);
-          Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-          if (constructors.length > 1) {
-            Arrays.sort(constructors, Comparator.comparingInt(Constructor::getParameterCount));
-          }
-          Constructor<?> constructor = constructors[0];
-          constructor.setAccessible(true);
-          if (constructor.getParameterCount() == 1) {
-            listeners.add(constructor.newInstance(myOwner));
-          }
-          else {
-            listeners.add(constructor.newInstance());
-          }
+          listeners.add(listenerCreator.createListener(listenerDescriptor));
+        }
+        catch (ExtensionNotApplicableException ignore) {
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable e) {
-          //noinspection InstanceofCatchParameter
-          if (e instanceof InvocationTargetException) {
-            Throwable targetException = ((InvocationTargetException)e).getTargetException();
-            if (targetException instanceof ControlFlowException && targetException instanceof RuntimeException) {
-              throw (RuntimeException)targetException;
-            }
-          }
-
           LOG.error("Cannot create listener", e);
         }
       }

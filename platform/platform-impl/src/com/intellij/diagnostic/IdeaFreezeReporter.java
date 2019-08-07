@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,171 +28,20 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class IdeaFreezeReporter {
+final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
-  public static final String REPORT_PREFIX = "report";
-  public static final String DUMP_PREFIX = "dump";
+  private static final String REPORT_PREFIX = "report";
+  private static final String DUMP_PREFIX = "dump";
 
-  public IdeaFreezeReporter() {
+  private volatile DumpTask myDumpTask;
+  final List<ThreadDump> myCurrentDumps = new ArrayList<>();
+  List<StackTraceElement> myStacktraceCommonPart = null;
+
+  IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || app.isUnitTestMode() || PluginManagerCore.isRunningFromSources()) {
-      return;
+    if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
+      throw ExtensionNotApplicableException.INSTANCE;
     }
-
-    app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-      private volatile DumpTask myDumpTask;
-      final List<ThreadDump> myCurrentDumps = new ArrayList<>();
-      List<StackTraceElement> myStacktraceCommonPart = null;
-
-      @Override
-      public void uiFreezeStarted() {
-        if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
-          if (myDumpTask != null) {
-            myDumpTask.cancel();
-          }
-          myDumpTask = new DumpTask();
-        }
-      }
-
-      @Override
-      public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
-        if (myDumpTask != null) {
-          myCurrentDumps.add(dump);
-          StackTraceElement[] edtStack = dump.getEDTStackTrace();
-          if (edtStack != null) {
-            if (myStacktraceCommonPart == null) {
-              myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
-            }
-            else {
-              myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-            }
-          }
-        }
-      }
-
-      @Override
-      public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
-        if (myDumpTask == null) {
-          return;
-        }
-        myDumpTask.cancel();
-        int lengthInSeconds = (int)(durationMs / 1000);
-        long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
-        if (lengthInSeconds > FREEZE_THRESHOLD &&
-            // check that we have at least half of the dumps required
-            (myDumpTask.isValid(dumpingDuration) ||
-             myCurrentDumps.size() >=
-             Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
-            !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
-          int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
-          int step = myCurrentDumps.size() / size;
-          Attachment[] attachments = new Attachment[size];
-          for (int i = 0; i < size; i++) {
-            Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
-            attachment.setIncluded(true);
-            attachments[i] = attachment;
-          }
-          IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
-          if (event != null) {
-            Throwable t = event.getThrowable();
-            if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
-              MessagePool.getInstance().addIdeFatalMessage(event);
-            }
-          }
-        }
-        myDumpTask = null;
-        myCurrentDumps.clear();
-        myStacktraceCommonPart = null;
-      }
-
-      @Nullable
-      private IdeaLoggingEvent createEvent(int lengthInSeconds, Attachment[] attachments, @NotNull DumpTask dumpTask, @Nullable File reportDir) {
-        List<ThreadInfo[]> infos = dumpTask.myThreadInfos;
-        long time = dumpTask.myDumpInterval;
-        if (infos.isEmpty()) {
-          infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
-          time = PerformanceWatcher.getDumpInterval();
-        }
-        boolean allInEdt = edts(infos)
-          .map(ThreadInfo::getThreadState)
-          .allMatch(Thread.State.RUNNABLE::equals);
-        List<StackTraceElement[]> reasonStacks;
-        if (allInEdt) {
-          reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList();
-        }
-        else {
-          reasonStacks = new ArrayList<>();
-          long causeThreadId = -1;
-          for (ThreadInfo[] threadInfos : infos) {
-            ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
-            if (causeThreadId == -1) {
-              // find probable cause thread
-              ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
-              if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
-                String lockName = edt.getLockName();
-                if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
-                  for (ThreadInfo info : threadInfos) {
-                    if (info.getThreadState() == Thread.State.RUNNABLE &&
-                        ContainerUtil.find(info.getStackTrace(), s ->
-                          "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
-                      causeThreadId = info.getThreadId();
-                      reasonStacks.add(info.getStackTrace());
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-            else {
-              long finalCauseThreadId = causeThreadId;
-              ThreadInfo causeThread = ContainerUtil.find(threadInfos, i -> i.getThreadId() == finalCauseThreadId);
-              if (causeThread != null) {
-                reasonStacks.add(causeThread.getStackTrace());
-              }
-            }
-          }
-        }
-        if (reasonStacks.isEmpty()) {
-          reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
-        }
-        CallTreeNode root = buildTree(reasonStacks, time);
-        List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() / 2);
-        if (ContainerUtil.isEmpty(commonStack)) {
-          commonStack = myStacktraceCommonPart; // fallback to simple EDT common
-        }
-
-        // dump tree
-        StringBuilder sb = new StringBuilder();
-        LinkedList<CallTreeNode> nodes = new LinkedList<>(root.myChildren);
-        while (!nodes.isEmpty()) {
-          CallTreeNode node = nodes.removeFirst();
-          node.appendIndentedString(sb);
-          nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
-        }
-        String text = sb.toString();
-        String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
-        Attachment attachment = new Attachment(name, text);
-        attachment.setIncluded(true);
-        attachments = ArrayUtil.append(attachments, attachment);
-
-        try {
-          FileUtil.writeToFile(new File(reportDir, name), text);
-        }
-        catch (IOException ignored) {
-        }
-
-        if (!ContainerUtil.isEmpty(commonStack)) {
-          String edtNote = allInEdt ? "in EDT " : "";
-          long sampled = dumpTask.getSampledTime();
-          long gcTime = dumpTask.getGcTime();
-          String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                           "Sampled time: " + sampled + "ms\n" +
-                           "GC time: " + gcTime + "ms (" + gcTime*100/sampled + "%)";
-          return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
-        }
-        return null;
-      }
-    });
   }
 
   private static StreamEx<ThreadInfo> edts(List<ThreadInfo[]> threadInfos) {
@@ -237,7 +87,7 @@ public class IdeaFreezeReporter {
     return root;
   }
 
-  private static class CallTreeNode {
+  private static final class CallTreeNode {
     final StackTraceElement myStackTraceElement;
     final CallTreeNode myParent;
     final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
@@ -288,7 +138,7 @@ public class IdeaFreezeReporter {
     }
   }
 
-  private static class DumpTask {
+  private static final class DumpTask {
     private final int myDumpInterval;
     private final int myMaxDumps;
     private final ScheduledFuture<?> myFuture;
@@ -338,5 +188,157 @@ public class IdeaFreezeReporter {
     void cancel() {
       myFuture.cancel(false);
     }
+  }
+
+  @Override
+  public void uiFreezeStarted() {
+    if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
+      if (myDumpTask != null) {
+        myDumpTask.cancel();
+      }
+      myDumpTask = new DumpTask();
+    }
+  }
+
+  @Override
+  public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
+    if (myDumpTask != null) {
+      myCurrentDumps.add(dump);
+      StackTraceElement[] edtStack = dump.getEDTStackTrace();
+      if (edtStack != null) {
+        if (myStacktraceCommonPart == null) {
+          myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+        }
+        else {
+          myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+    if (myDumpTask == null) {
+      return;
+    }
+    myDumpTask.cancel();
+    int lengthInSeconds = (int)(durationMs / 1000);
+    long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
+    if (lengthInSeconds > FREEZE_THRESHOLD &&
+        // check that we have at least half of the dumps required
+        (myDumpTask.isValid(dumpingDuration) ||
+         myCurrentDumps.size() >=
+         Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
+        !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+      int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
+      int step = myCurrentDumps.size() / size;
+      Attachment[] attachments = new Attachment[size];
+      for (int i = 0; i < size; i++) {
+        Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
+        attachment.setIncluded(true);
+        attachments[i] = attachment;
+      }
+      IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
+      if (event != null) {
+        Throwable t = event.getThrowable();
+        if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+          MessagePool.getInstance().addIdeFatalMessage(event);
+        }
+      }
+    }
+    myDumpTask = null;
+    myCurrentDumps.clear();
+    myStacktraceCommonPart = null;
+  }
+
+  @Nullable
+  private IdeaLoggingEvent createEvent(int lengthInSeconds,
+                                       Attachment[] attachments,
+                                       @NotNull DumpTask dumpTask,
+                                       @Nullable File reportDir) {
+    List<ThreadInfo[]> infos = dumpTask.myThreadInfos;
+    long time = dumpTask.myDumpInterval;
+    if (infos.isEmpty()) {
+      infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
+      time = PerformanceWatcher.getDumpInterval();
+    }
+    boolean allInEdt = edts(infos)
+      .map(ThreadInfo::getThreadState)
+      .allMatch(Thread.State.RUNNABLE::equals);
+    List<StackTraceElement[]> reasonStacks;
+    if (allInEdt) {
+      reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList();
+    }
+    else {
+      reasonStacks = new ArrayList<>();
+      long causeThreadId = -1;
+      for (ThreadInfo[] threadInfos : infos) {
+        ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
+        if (causeThreadId == -1) {
+          // find probable cause thread
+          ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
+          if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
+            String lockName = edt.getLockName();
+            if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
+              for (ThreadInfo info : threadInfos) {
+                if (info.getThreadState() == Thread.State.RUNNABLE &&
+                    ContainerUtil.find(info.getStackTrace(), s ->
+                      "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
+                  causeThreadId = info.getThreadId();
+                  reasonStacks.add(info.getStackTrace());
+                  break;
+                }
+              }
+            }
+          }
+        }
+        else {
+          long finalCauseThreadId = causeThreadId;
+          ThreadInfo causeThread = ContainerUtil.find(threadInfos, i -> i.getThreadId() == finalCauseThreadId);
+          if (causeThread != null) {
+            reasonStacks.add(causeThread.getStackTrace());
+          }
+        }
+      }
+    }
+    if (reasonStacks.isEmpty()) {
+      reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
+    }
+    CallTreeNode root = buildTree(reasonStacks, time);
+    List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() / 2);
+    if (ContainerUtil.isEmpty(commonStack)) {
+      commonStack = myStacktraceCommonPart; // fallback to simple EDT common
+    }
+
+    // dump tree
+    StringBuilder sb = new StringBuilder();
+    LinkedList<CallTreeNode> nodes = new LinkedList<>(root.myChildren);
+    while (!nodes.isEmpty()) {
+      CallTreeNode node = nodes.removeFirst();
+      node.appendIndentedString(sb);
+      nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
+    }
+    String text = sb.toString();
+    String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
+    Attachment attachment = new Attachment(name, text);
+    attachment.setIncluded(true);
+    attachments = ArrayUtil.append(attachments, attachment);
+
+    try {
+      FileUtil.writeToFile(new File(reportDir, name), text);
+    }
+    catch (IOException ignored) {
+    }
+
+    if (!ContainerUtil.isEmpty(commonStack)) {
+      String edtNote = allInEdt ? "in EDT " : "";
+      long sampled = dumpTask.getSampledTime();
+      long gcTime = dumpTask.getGcTime();
+      String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
+                       "Sampled time: " + sampled + "ms\n" +
+                       "GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+      return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
+    }
+    return null;
   }
 }
