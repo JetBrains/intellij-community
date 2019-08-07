@@ -6,7 +6,13 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Describes a service which is loaded on demand.
+ * 
+ * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
+ */
 public final class ServiceDescriptor {
+
   @Attribute()
   public String serviceInterface;
 
