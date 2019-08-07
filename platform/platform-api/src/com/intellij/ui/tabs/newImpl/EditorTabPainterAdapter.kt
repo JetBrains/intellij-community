@@ -9,7 +9,7 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 
 class EditorTabPainterAdapter : TabPainterAdapter {
-  private val magicOffset = 5
+  private val magicOffset = 1
   private val painter = JBEditorTabPainter()
 
   override val tabPainter: JBTabPainter
@@ -47,7 +47,7 @@ class EditorTabPainterAdapter : TabPainterAdapter {
       painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
     }
 
-    if (bounds.x + bounds.width < headerRectangle.width || tabs.isSingleRow) {
+    if (bounds.x + bounds.width < tabs.width - magicOffset) {
       painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
     }
   }
