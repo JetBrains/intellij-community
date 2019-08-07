@@ -251,24 +251,4 @@ public class ExtensionsImplTest {
       this.comp2 = comp2;
     }
   }
-
-  public static class MyListener implements ExtensionPointAvailabilityListener {
-    public static int regCount;
-    public static int remCount;
-
-    @Override
-    public void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint) {
-      regCount++;
-    }
-
-    @Override
-    public void extensionPointRemoved(@NotNull ExtensionPoint extensionPoint) {
-      remCount++;
-    }
-
-    public static void reset() {
-      regCount = 0;
-      remCount = 0;
-    }
-  }
 }
