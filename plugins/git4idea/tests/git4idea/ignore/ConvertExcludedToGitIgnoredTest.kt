@@ -2,6 +2,7 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveComponentManager
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleType
@@ -140,6 +141,9 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
 
   private fun refreshChanges() {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
+    if (gitIgnore.exists()) {
+      (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter().waitFor()
+    }
     changeListManager.ensureUpToDate()
     val exception = changeListManager.updateException
     if (exception != null) {
