@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
  * </p>
  */
 @CompileStatic
+@SuppressWarnings("unused")
 class IntellijModulesPreview {
   private final CompilationContext context
   private final File mavenSettings
@@ -23,6 +24,10 @@ class IntellijModulesPreview {
     this.context = context
     this.options = options
     this.mavenSettings = mavenSettings()
+  }
+
+  IntellijModulesPreview(CompilationContext context) {
+    this(context, new Options(version: context.options.buildNumber))
   }
 
   static class Options {
@@ -39,9 +44,9 @@ class IntellijModulesPreview {
      */
     File outputDir = property('intellij.modules.preview.prebuilt.artifacts.dir')?.with { new File(it) }
     Collection<String> modulesToPublish = property('intellij.modules.preview.list')
-      ?.split(',')?.toList()
-      ?.collect { it.trim() }
-      ?.findAll { !it.isEmpty() }
+                                            ?.split(',')?.toList()
+                                            ?.collect { it.trim() }
+                                            ?.findAll { !it.isEmpty() } ?: []
 
     private static String property(String property) {
       System.getProperty(property)
@@ -55,6 +60,7 @@ class IntellijModulesPreview {
       modules << module
       transitiveModuleDependencies(module, modules)
     }
+    if (modules.isEmpty()) context.messages.warning('Nothing to publish')
     modules.each {
       def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(it.name, context.messages, options.version)
       def dir = new File(options.outputDir, coordinates.directoryPath)
