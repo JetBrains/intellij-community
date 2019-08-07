@@ -25,28 +25,26 @@ class IntellijModulesPreview {
     this.mavenSettings = mavenSettings()
   }
 
-  class Options {
-    final int uploadRetryCount = 3
-    final String version = 'unknown'
-    final String repositoryUser = require('intellij.modules.preview.repository.user')
-    final String repositoryPassword = require('intellij.modules.preview.repository.password')
+  static class Options {
+    String version
+    int uploadRetryCount = 3
+    String repositoryUser = property('intellij.modules.preview.repository.user')
+    String repositoryPassword = property('intellij.modules.preview.repository.password')
     /**
      * URL where the artifacts will be deployed
      */
-    final String repositoryUrl = require('intellij.modules.preview.repository.url')
+    String repositoryUrl = property('intellij.modules.preview.repository.url')
     /**
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
-    final File outputDir = new File(require('intellij.modules.preview.prebuilt.artifacts.dir'))
-    final Collection<String> modulesToPublish = require('intellij.modules.preview.list')
+    File outputDir = property('intellij.modules.preview.prebuilt.artifacts.dir')?.with { new File(it) }
+    Collection<String> modulesToPublish = property('intellij.modules.preview.list')
       ?.split(',')?.toList()
       ?.collect { it.trim() }
       ?.findAll { !it.isEmpty() }
 
-    private String require(String property) {
-      System.getProperty(property) ?: {
-        throw new IllegalArgumentException("$property is not specifed")
-      }()
+    private static String property(String property) {
+      System.getProperty(property)
     }
   }
 
