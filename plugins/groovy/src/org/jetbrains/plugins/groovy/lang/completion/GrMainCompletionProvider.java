@@ -100,10 +100,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   @Nullable
-  private static GrReferenceElement findGroovyReference(@NotNull PsiElement position) {
+  private static GrReferenceElement<?> findGroovyReference(@NotNull PsiElement position) {
     final PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
-      return (GrReferenceElement)parent;
+      return (GrReferenceElement<?>)parent;
     }
     if (couldContainReference(position)) {
       return GroovyPsiElementFactory.getInstance(position.getProject()).createCodeReference("Foo", position);
@@ -136,7 +136,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   public static boolean isClassNamePossible(PsiElement position) {
     PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
-      return ((GrReferenceElement)parent).getQualifier() == null;
+      return ((GrReferenceElement<?>)parent).getQualifier() == null;
     }
     return couldContainReference(position);
   }
@@ -161,9 +161,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   @NotNull
   static Runnable completeReference(final CompletionParameters parameters,
-                                    final GrReferenceElement reference,
+                                    final GrReferenceElement<?> reference,
                                     final JavaCompletionSession inheritorsHolder,
                                     final PrefixMatcher matcher,
+                                    final @Nullable CompletionResultSet resultSet,
                                     final Consumer<? super LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
       final Set<LookupElement> added = new HashSet<>();
@@ -184,8 +185,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null && !canResolveToPackage(qualifier)) {
-        if (parameters.getInvocationCount() == 1) {
-          showInfo();
+        if (resultSet != null && parameters.getInvocationCount() == 1) {
+          resultSet.addLookupAdvertisement(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
         }
         return EmptyRunnable.INSTANCE;
       }
@@ -216,8 +217,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
       if (!(object instanceof PsiClass)) {
         int priority = assignPriority(lookupElement, qualifierType);
-        lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType,
-                                                             PrioritizedLookupElement.withPriority(lookupElement, priority), object, reference);
+        lookupElement = PrioritizedLookupElement.withPriority(lookupElement, priority);
+        if (object != null) {
+          lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType, lookupElement, object, reference);
+        }
       }
 
       if ((object instanceof PsiMethod || object instanceof PsiField) &&
@@ -227,8 +230,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         }
       }
 
-      PrioritizedLookupElement prio = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
-      if (prio == null || prio.getPriority() == 0) {
+      PrioritizedLookupElement<?> prioritized = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+      if (prioritized == null || prioritized.getPriority() == 0) {
         zeroPriority.add(lookupElement);
       } else {
         consumer.consume(lookupElement);
@@ -290,11 +293,6 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       });
     }
     return EmptyRunnable.INSTANCE;
-  }
-
-  private static void showInfo() {
-    CompletionService.getCompletionService()
-      .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
   }
 
   private static boolean checkForIterator(PsiMethod method) {
@@ -419,7 +417,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     suggestVariableNames(position, result);
 
-    GrReferenceElement reference = findGroovyReference(position);
+    GrReferenceElement<?> reference = findGroovyReference(position);
     if (reference == null) {
       if (parameters.getInvocationCount() >= 2) {
         result.stopHere();
@@ -437,8 +435,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors::addClassItem);
     }
 
-    Runnable addSlowVariants =
-      completeReference(parameters, reference, inheritors, result.getPrefixMatcher(), lookupElement -> result.addElement(lookupElement));
+    Runnable addSlowVariants = completeReference(
+      parameters, reference, inheritors, result.getPrefixMatcher(), result,
+      lookupElement -> result.addElement(lookupElement)
+    );
 
     if (reference.getQualifier() == null) {
       if (!GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
