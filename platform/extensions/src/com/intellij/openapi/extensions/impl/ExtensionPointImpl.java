@@ -905,11 +905,18 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
 
     for (Element extensionElement : extensionElements) {
-      adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
+      ExtensionComponentAdapter adapter = createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer);
+      adapters.add(adapter);
       if (notifyListeners) {
-        // We don't want to instantiate the adapter, so we fire a generic "something changed" event
         for (ExtensionPointListener<T> listener : myListeners) {
-          listener.extensionListChanged();
+          if (listener instanceof ExtensionPointAdapter) {
+            // We don't want to instantiate the adapter, so we fire a generic "something changed" event
+            ((ExtensionPointAdapter<T>)listener).extensionListChanged();
+          }
+          else {
+            // createInstance() actually does caching, so it's safe to call multiple times
+            listener.extensionAdded((T)adapter.createInstance(picoContainer), pluginDescriptor);
+          }
         }
       }
     }

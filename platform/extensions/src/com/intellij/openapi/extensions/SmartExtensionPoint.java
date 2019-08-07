@@ -22,7 +22,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
   protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
-    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+    myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
