@@ -299,8 +299,7 @@
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaSdk"
-                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+    <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
