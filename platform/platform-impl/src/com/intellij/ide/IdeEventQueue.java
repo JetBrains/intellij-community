@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
@@ -80,17 +81,11 @@ public final class IdeEventQueue extends EventQueue {
   private static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
-      if (!window.isVisible() || UIUtil.isMinimized(window) || isInFullscreen(window)) {
+      if (!window.isVisible() || UIUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
         iter.remove();
       }
     }
     // The list can be empty if all windows are in fullscreen or minimized state
-  }
-
-  private static boolean isInFullscreen (Window window) {
-    if (!(window instanceof IdeFrameEx)) return false;
-    IdeFrameEx ideFrameEx = (IdeFrameEx) window;
-    return ideFrameEx.isInFullScreen();
   }
 
   public Window nextWindowAfter (@NotNull Window w) {
