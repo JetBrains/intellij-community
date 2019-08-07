@@ -46,7 +46,8 @@
 
     <extensionPoint name="selectInTarget"
                     interface="com.intellij.ide.SelectInTarget"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    unloadSafe="true"/>
 
     <extensionPoint name="fileEditorProvider"
                     interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
