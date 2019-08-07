@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import org.jdom.Element
@@ -112,6 +113,13 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     settingsElementChildren.first().deserializeInto(settings)
     myCachedSettingsMap[id] = settings
     return settings
+  }
+
+  companion object {
+    @JvmStatic
+    fun instance(): InlayHintsSettings {
+      return ServiceManager.getService(InlayHintsSettings::class.java)
+    }
   }
 }
 

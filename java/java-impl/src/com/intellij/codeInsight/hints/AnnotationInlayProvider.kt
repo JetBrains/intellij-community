@@ -218,7 +218,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
     override fun actionPerformed(e: AnActionEvent) {
       prop.set(!prop.get())
-      val storage = ServiceManager.getService(InlayHintsSettings::class.java)
+      val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
       InlayHintsPassFactory.forceHintsUpdateOnNextPass()
     }
