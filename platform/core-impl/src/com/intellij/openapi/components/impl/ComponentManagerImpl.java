@@ -8,10 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -50,7 +47,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private final DefaultPicoContainer myPicoContainer;
+  protected final DefaultPicoContainer myPicoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
 
   private volatile boolean myDisposed;
@@ -68,15 +65,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
-  private final ComponentManager myParent;
+  protected final ComponentManager myParent;
 
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
-    this(parent, new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer()));
-  }
-
-  protected ComponentManagerImpl(@Nullable ComponentManager parent, @NotNull DefaultPicoContainer picoContainer) {
     myParent = parent;
-    myPicoContainer = picoContainer;
+    myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
     myExtensionArea = new ExtensionsAreaImpl(myPicoContainer);
     if (parent == null) {
       Extensions.setRootArea(myExtensionArea);
@@ -143,8 +136,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   private MessageBus createMessageBus() {
-    String name = toString();
-    MessageBus messageBus = MessageBusFactory.newMessageBus(name, getParentComponentManager() == null ? null : getParentComponentManager().getMessageBus());
+    MessageBus messageBus = MessageBusFactory.newMessageBus(this, myParent == null ? null : myParent.getMessageBus());
     if (messageBus instanceof MessageBusImpl) {
       ((MessageBusImpl) messageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
     }
@@ -329,10 +321,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
   }
 
-  protected final ComponentManager getParentComponentManager() {
-    return myParent;
-  }
-
   @Nullable
   @ApiStatus.Internal
   public static PluginId getConfig(@NotNull ComponentAdapter adapter) {
@@ -426,6 +414,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public synchronized BaseComponent getComponent(@NotNull String name) {
     return myNameToComponent.get(name);
+  }
+
+  protected void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
   }
 
   protected final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {

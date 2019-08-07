@@ -40,6 +40,7 @@ public final class ServiceDescriptor {
     return serviceInterface != null ? serviceInterface : getImplementation();
   }
 
+  @Nullable
   public String getImplementation() {
     return testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode() ? testServiceImplementation : serviceImplementation;
   }

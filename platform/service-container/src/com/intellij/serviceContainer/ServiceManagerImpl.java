@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
@@ -37,7 +36,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -45,32 +43,10 @@ import java.util.function.Consumer;
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  static void registerServices(@NotNull List<ServiceDescriptor> services,
-                               @NotNull IdeaPluginDescriptor pluginDescriptor,
-                               @NotNull ComponentManager componentManager) {
-    MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
-    for (ServiceDescriptor descriptor : services) {
-      // Allow to re-define service implementations in plugins.
-      // empty serviceImplementation means we want to unregister service
-      if (descriptor.overrides) {
-        // Allow to re-define service implementations in plugins.
-        ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
-        if (oldAdapter == null) {
-          throw new PluginException("Service: " + descriptor.getInterface() + " doesn't override anything", pluginDescriptor.getPluginId());
-        }
-      }
-
-      // empty serviceImplementation means we want to unregister service
-      if (!StringUtil.isEmpty(descriptor.getImplementation())) {
-        picoContainer.registerComponent(createServiceAdapter(descriptor, pluginDescriptor, componentManager));
-      }
-    }
-  }
-
   @NotNull
   static ComponentAdapter createServiceAdapter(@NotNull ServiceDescriptor descriptor,
                                                @NotNull IdeaPluginDescriptor pluginDescriptor,
-                                               @NotNull ComponentManager componentManager) {
+                                               @NotNull PlatformComponentManagerImpl componentManager) {
     return new MyComponentAdapter(descriptor, pluginDescriptor, componentManager);
   }
 
@@ -169,10 +145,10 @@ public final class ServiceManagerImpl implements Disposable {
     private ComponentAdapter myDelegate;
     private final PluginDescriptor myPluginDescriptor;
     private final ServiceDescriptor myDescriptor;
-    private final ComponentManager myComponentManager;
+    private final PlatformComponentManagerImpl myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
+    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull PlatformComponentManagerImpl componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;

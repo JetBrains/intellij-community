@@ -1,43 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ActivitySubNames
-import com.intellij.diagnostic.LoadingPhase
-import com.intellij.diagnostic.ParallelActivity
-import com.intellij.diagnostic.run
+import com.intellij.diagnostic.*
 import com.intellij.ide.plugins.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.pico.DefaultPicoContainer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 private val LOG = logger<PlatformComponentManagerImpl>()
 
-private fun createPicoContainer(parent: ComponentManager?): DefaultPicoContainer {
-  return when (parent) {
-    null -> ServiceContainer(null)
-    else -> DefaultPicoContainer(parent.picoContainer)
-  }
-}
-
-abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent, createPicoContainer(parent)) {
+abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : ComponentManagerImpl(parent) {
   private var handlingInitComponentError = false
+
+  private val lightServices: ConcurrentMap<Class<*>, Any>? = if (parent == null || parent.picoContainer.parent == null) ContainerUtil.newConcurrentMap() else null
 
   private val componentStore: IComponentStore
     get() = this.stateStore
@@ -72,7 +65,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
         }
       }
 
-      ServiceManagerImpl.registerServices(containerDescriptor.services, plugin, this)
+      registerServices(containerDescriptor.services, plugin)
 
       val listeners = containerDescriptor.listeners
       if (listeners.isNotEmpty()) {
@@ -106,6 +99,22 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
   }
 
+  private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
+    val picoContainer = myPicoContainer
+    for (descriptor in services) {
+      // Allow to re-define service implementations in plugins.
+      // Empty serviceImplementation means we want to unregister service.
+      if (descriptor.overrides && picoContainer.unregisterComponent(descriptor.getInterface()) == null) {
+        throw PluginException("Service: ${descriptor.getInterface()} doesn't override anything", pluginDescriptor.pluginId)
+      }
+
+      // empty serviceImplementation means we want to unregister service
+      if (descriptor.implementation != null) {
+        picoContainer.registerComponent(ServiceManagerImpl.createServiceAdapter(descriptor, pluginDescriptor, this))
+      }
+    }
+  }
+
   final override fun handleInitComponentError(t: Throwable, componentClassName: String, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
@@ -129,27 +138,41 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
-  @ApiStatus.Internal
-  final override fun <T> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
-    val componentKey = serviceClass.name
-    var instance = picoContainer.getService(serviceClass, isCreate)
-    if (instance == null && isCreate) {
-      ProgressManager.checkCanceled()
-
-      if (parentComponentManager != null) {
-        instance = parentComponentManager.getService(serviceClass, isCreate)
-        if (instance != null) {
-          LOG.error("$componentKey is registered as application service, but requested as project one")
-          return instance
+  final override fun <T : Any> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
+    val lightServices = lightServices
+    if (lightServices != null && isLightService(serviceClass)) {
+      @Suppress("UNCHECKED_CAST")
+      val result = lightServices.get(serviceClass) as T?
+      if (result != null || !isCreate) {
+        return result
+      }
+      else {
+        synchronized(serviceClass) {
+          return getOrCreateLightService(serviceClass, lightServices)
         }
       }
-
-      instance = getComponent(serviceClass) ?: return null
-      LOG.error("$componentKey requested as a service, but it is a component - convert it to a service or " +
-                "change call to ${if (parentComponentManager == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}")
-      return instance
     }
-    return instance
+
+    val componentKey = serviceClass.name
+    var result = picoContainer.getService(serviceClass, isCreate)
+    if (result != null || !isCreate) {
+      return result
+    }
+
+    ProgressManager.checkCanceled()
+
+    if (myParent != null) {
+      result = myParent.getService(serviceClass, isCreate)
+      if (result != null) {
+        LOG.error("$componentKey is registered as application service, but requested as project one")
+        return result
+      }
+    }
+
+    result = getComponent(serviceClass) ?: return null
+    LOG.error("$componentKey requested as a service, but it is a component - convert it to a service or " +
+              "change call to ${if (myParent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}")
+    return result
   }
 
   final override fun getServiceImplementationClassNames(prefix: String): MutableList<String> {
@@ -163,6 +186,31 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     return result
   }
 
+  private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>, cache: ConcurrentMap<Class<*>, Any>): T {
+    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+
+    @Suppress("UNCHECKED_CAST")
+    var result = cache.get(serviceClass) as T?
+    if (result != null) {
+      return result
+    }
+
+    HeavyProcessLatch.INSTANCE.processStarted("Creating service '${serviceClass.name}'").use {
+      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+        result = createLightService(serviceClass)
+      }
+      else {
+        ProgressManager.getInstance().executeNonCancelableSection {
+          result = createLightService(serviceClass)
+        }
+      }
+    }
+
+    val prevValue = cache.put(serviceClass, result)
+    LOG.assertTrue(prevValue == null)
+    return result!!
+  }
+
   /**
    * Use only if approved by core team.
    */
@@ -170,7 +218,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
   fun registerComponent(key: Class<*>, implementation: Class<*>, pluginId: PluginId, override: Boolean) {
     val picoContainer = picoContainer
     if (override && picoContainer.unregisterComponent(key) == null) {
-      throw IllegalStateException("Component $key must be already registered")
+      throw PluginException("Component $key doesn't override anything", pluginId)
     }
     picoContainer.registerComponent(ComponentConfigComponentAdapter(key, implementation, pluginId, false))
   }
@@ -183,7 +231,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     val picoContainer = picoContainer
     val serviceKey = serviceClass.name
     if (override && picoContainer.unregisterComponent(serviceKey) == null) {
-      throw IllegalStateException("Service $serviceKey must be already registered")
+      throw PluginException("Service $serviceKey doesn't override anything", pluginDescriptor.pluginId)
     }
 
     val descriptor = ServiceDescriptor()
@@ -191,4 +239,36 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     descriptor.serviceImplementation = implementation.name
     picoContainer.registerComponent(ServiceManagerImpl.createServiceAdapter(descriptor, pluginDescriptor, this))
   }
+
+  private fun <T : Any> createLightService(serviceClass: Class<T>): T {
+    val startTime = StartUpMeasurer.getCurrentTime()
+
+    val result: T
+    if (myParent == null) {
+      result = ReflectionUtil.newInstance(serviceClass, false)
+    }
+    else {
+      val constructors = serviceClass.declaredConstructors
+      constructors.sortBy { it.parameterCount }
+      val constructor = constructors.first()
+      constructor.isAccessible = true
+      @Suppress("UNCHECKED_CAST")
+      result = when (constructor.parameterCount) {
+        1 -> constructor.newInstance(this)
+        else -> constructor.newInstance()
+      } as T
+    }
+
+    if (result is Disposable) {
+      Disposer.register(this, result)
+    }
+
+    initializeComponent(result, null)
+    ParallelActivity.SERVICE.record(startTime, result.javaClass, StartUpMeasurer.Level.APPLICATION)
+    return result
+  }
+}
+
+private fun <T> isLightService(serviceClass: Class<T>): Boolean {
+  return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }
