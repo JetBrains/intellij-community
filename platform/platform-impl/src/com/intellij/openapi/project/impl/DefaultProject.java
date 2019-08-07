@@ -23,6 +23,8 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -32,7 +34,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
     @NotNull
     @Override
-    Project compute() {
+    ProjectEx compute() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
       return new ProjectImpl() {
         @Override
@@ -116,7 +118,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @NotNull
-  private Project getDelegate() {
+  private ProjectEx getDelegate() {
     return myDelegate.get();
   }
 
@@ -198,6 +200,12 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
+  }
+
+  @NotNull
+  @Override
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    return getDelegate().getComponentInstancesOfType(baseClass);
   }
 
   @Override

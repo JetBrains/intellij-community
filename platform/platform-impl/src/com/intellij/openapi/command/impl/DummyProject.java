@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -73,11 +72,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   public void save() { }
-
-  @Override
-  public BaseComponent getComponent(@NotNull String name) {
-    return null;
-  }
 
   @Override
   public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {

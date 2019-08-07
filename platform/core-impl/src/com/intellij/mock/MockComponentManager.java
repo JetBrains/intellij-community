@@ -2,7 +2,6 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Condition;
@@ -60,11 +59,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     if (o instanceof Disposable && o != this && !(o instanceof MessageBus) && myDisposableComponents.add(o)) {
       Disposer.register(this, (Disposable)o);
     }
-  }
-
-  @Override
-  public BaseComponent getComponent(@NotNull String name) {
-    return null;
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {

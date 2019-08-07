@@ -7,11 +7,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -96,9 +103,22 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
+  @NotNull
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
+    List<T> result = new ArrayList<>();
+    DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
+    for (ComponentAdapter componentAdapter : container.getComponentAdapters()) {
+      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+        // may be null in the case of the "implicit" adapter representing "this".
+        //noinspection unchecked
+        ContainerUtil.addIfNotNull(result, (T)componentAdapter.getComponentInstance(container));
+      }
+    }
+    return result;
+  }
+
   public void projectOpened() {
-    final ProjectComponent[] components = getComponents(ProjectComponent.class);
-    for (ProjectComponent component : components) {
+    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
       try {
         component.projectOpened();
       }
