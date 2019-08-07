@@ -44,7 +44,7 @@ public interface PersistentStateComponent<T> {
   }
 
   /**
-   * If class also is a component, then this method will be called after loading state (even if not state).
+   * If class also is a component, then this method will be called after loading state (even if not state) but only once throughout the life cycle
    */
   default void initializeComponent() {
   }
