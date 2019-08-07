@@ -33,6 +33,11 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
     this(element, element.getIcon(0));
   }
 
+  @NotNull
+  protected SmartPsiElementPointer<T> getElementPointer() {
+    return myElementPointer;
+  }
+
   @Override
   public Icon getIcon(boolean isOpen) {
     return myIcon;
