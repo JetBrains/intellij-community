@@ -40,10 +40,6 @@
 
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
-      <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
@@ -302,6 +298,10 @@
     <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaSdk"
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>

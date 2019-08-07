@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -20,6 +21,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -42,7 +48,7 @@ import java.util.stream.Stream;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaSdkImpl extends JavaSdk {
+public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
@@ -52,34 +58,34 @@ public class JavaSdkImpl extends JavaSdk {
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
-  public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
+  public JavaSdkImpl() {
     super("JavaSDK");
 
-    fileManager.addVirtualFileListener(new VirtualFileListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        updateCache(event);
-      }
-
-      @Override
-      public void contentsChanged(@NotNull VirtualFileEvent event) {
-        updateCache(event);
-      }
-
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        updateCache(event);
-      }
-
-      private void updateCache(VirtualFileEvent event) {
-        if (ArchiveFileType.INSTANCE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
-          String filePath = event.getFile().getPath();
-          if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
-            myCachedVersionStringToJdkVersion.clear();
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileContentChangeEvent || event instanceof VFileDeleteEvent) {
+            updateCache(event, PathUtil.getFileName(event.getPath()));
+            break;
+          }
+          else if (event instanceof VFileCreateEvent) {
+            updateCache(event, ((VFileCreateEvent)event).getChildName());
+            break;
           }
         }
+
       }
     });
+  }
+
+  private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
+    if (ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
+      String filePath = event.getPath();
+      if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
+        myCachedVersionStringToJdkVersion.clear();
+      }
+    }
   }
 
   @NotNull
@@ -126,7 +132,7 @@ public class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getDownloadSdkUrl() {
     return "https://www.oracle.com/technetwork/java/javase/downloads/index.html";
@@ -301,7 +307,7 @@ public class JavaSdkImpl extends JavaSdk {
     String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
     File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
-    VirtualFile root = null;
+    VirtualFile root;
     if (javaPluginClassesRoot.isFile()) {
       String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
       root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
