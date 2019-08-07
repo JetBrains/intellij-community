@@ -53,6 +53,7 @@
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor"/>
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.log.CustomLogProcessor"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
     <applicationService

@@ -54,4 +54,6 @@ public class LoggerTest extends AbstractLombokParsingTestCase {
   public void testLogger$LoggerFlogger() {
     doTest(true);
   }
+
+  // we cannot test CustomLog here because it requires config
 }

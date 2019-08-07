@@ -24,6 +24,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNam
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.log.CustomLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor;
@@ -65,6 +66,7 @@ public class LombokProcessorManager {
       ServiceManager.getService(CommonsLogProcessor.class),
       ServiceManager.getService(JBossLogProcessor.class),
       ServiceManager.getService(FloggerProcessor.class),
+      ServiceManager.getService(CustomLogProcessor.class),
 
       ServiceManager.getService(DataProcessor.class),
       ServiceManager.getService(EqualsAndHashCodeProcessor.class),

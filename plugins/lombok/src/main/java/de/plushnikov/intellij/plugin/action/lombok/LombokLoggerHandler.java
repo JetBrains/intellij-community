@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.rename.RenameProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.log.CustomLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor;
@@ -27,14 +28,17 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
       ServiceManager.getService(CommonsLogProcessor.class), ServiceManager.getService(JBossLogProcessor.class),
       ServiceManager.getService(Log4jProcessor.class), ServiceManager.getService(Log4j2Processor.class), ServiceManager.getService(LogProcessor.class),
-      ServiceManager.getService(Slf4jProcessor.class), ServiceManager.getService(XSlf4jProcessor.class), ServiceManager.getService(FloggerProcessor.class));
+      ServiceManager.getService(Slf4jProcessor.class), ServiceManager.getService(XSlf4jProcessor.class), ServiceManager.getService(FloggerProcessor.class),
+      ServiceManager.getService(CustomLogProcessor.class));
 
     final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);
 
     for (AbstractLogProcessor logProcessor : logProcessors) {
       for (PsiField psiField : psiClass.getFields()) {
-        if (psiField.getType().equalsToText(logProcessor.getLoggerType()) && checkLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
+        String loggerType = logProcessor.getLoggerType(psiClass); // null when the custom log's declaration is invalid
+        if (loggerType != null && psiField.getType().equalsToText(loggerType)
+          && checkLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
           processLoggerField(psiField, psiClass, logProcessor, lombokLoggerName);
         }
       }
@@ -55,8 +59,8 @@ public class LombokLoggerHandler extends BaseLombokHandler {
   private boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     if (!isValidLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
       int result = Messages.showOkCancelDialog(
-        String.format("Logger field: \"%s\" Is not private %s final field named \"%s\". Refactor anyway?",
-          psiField.getName(), lombokLoggerIsStatic ? "static" : "", lombokLoggerName),
+        String.format("Logger field: \"%s\" Is not private %sfinal field named \"%s\". Refactor anyway?",
+          psiField.getName(), lombokLoggerIsStatic ? "static " : "", lombokLoggerName),
         "Attention!", Messages.getQuestionIcon());
       return DialogWrapper.OK_EXIT_CODE == result;
     }
@@ -69,6 +73,6 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     boolean isFinal = psiField.hasModifierProperty(PsiModifier.FINAL);
     boolean isProperlyNamed = lombokLoggerName.equals(psiField.getName());
 
-    return isPrivate & isStatic & isFinal & isProperlyNamed;
+    return isPrivate && isStatic && isFinal && isProperlyNamed;
   }
 }

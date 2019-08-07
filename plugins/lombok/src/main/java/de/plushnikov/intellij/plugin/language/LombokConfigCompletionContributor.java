@@ -59,10 +59,11 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
 
     final Collection<String> otherOptions = new HashSet<>(Arrays.asList(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.COPYABLE_ANNOTATIONS.getConfigKey(),
-      ConfigKey.LOG_FIELDNAME.getConfigKey(), ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(),
-      ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_PREFIX.getConfigKey(),
-      ConfigKey.FIELD_NAME_CONSTANTS_SUFFIX.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey(),
-      ConfigKey.FIELD_NAME_CONSTANTS_UPPERCASE.getConfigKey(), ConfigKey.TOSTRING_CALL_SUPER.getConfigKey()));
+      ConfigKey.LOG_FIELDNAME.getConfigKey(), ConfigKey.LOG_CUSTOM_DECLARATION.getConfigKey(),
+      ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(),
+      ConfigKey.FIELD_NAME_CONSTANTS_PREFIX.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_SUFFIX.getConfigKey(),
+      ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_UPPERCASE.getConfigKey(),
+      ConfigKey.TOSTRING_CALL_SUPER.getConfigKey()));
 
     final Collection<String> allOptions = new HashSet<>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
@@ -72,7 +73,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
       new CompletionProvider<CompletionParameters>() {
-        public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
+        public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
           PsiElement psiElement = parameters.getPosition().getParent();
           if (psiElement instanceof LombokConfigProperty) {
             final String configPropertyKey = StringUtil.notNullize(LombokConfigPsiUtil.getKey((LombokConfigProperty) psiElement));
@@ -98,7 +99,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
       new CompletionProvider<CompletionParameters>() {
-        public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
+        public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
           for (String contribution : allOptions) {
             resultSet.addElement(LookupElementBuilder.create(contribution));
           }

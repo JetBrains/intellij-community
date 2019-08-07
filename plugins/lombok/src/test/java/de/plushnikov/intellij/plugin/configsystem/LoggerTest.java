@@ -68,4 +68,13 @@ public class LoggerTest extends AbstractLombokConfigSystemTestCase {
   public void testFieldName$JBossLogTest() throws IOException {
     doTest();
   }
+
+
+  public void testCustomSimple$CustomLogTest() throws IOException {
+    doTest();
+  }
+
+  public void testCustomComplex$CustomLogTest() throws IOException {
+    doTest();
+  }
 }

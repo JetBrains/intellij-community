@@ -8,6 +8,7 @@ public enum ConfigKey {
 
   LOG_FIELDNAME("lombok.log.fieldName", "log"),
   LOG_FIELD_IS_STATIC("lombok.log.fieldIsStatic", "true"),
+  LOG_CUSTOM_DECLARATION("lombok.log.custom.declaration", ""),
 
   EQUALSANDHASHCODE_CALL_SUPER("lombok.equalsAndHashCode.callSuper", "warn"),
   EQUALSANDHASHCODE_DO_NOT_USE_GETTERS("lombok.equalsAndHashCode.doNotUseGetters", "false"),
@@ -60,6 +61,7 @@ public enum ConfigKey {
     GETTER_FLAG_USAGE("lombok.getter.flagUsage", ""),
     GETTER_LAZY_FLAG_USAGE("lombok.getter.lazy.flagUsage", ""),
     LOG_APACHECOMMONS_FLAG_USAGE("lombok.log.apacheCommons.flagUsage", ""),
+    LOG_CUSTOM_USAGE("lombok.log.custom.flagUsage", ""),
     LOG_FLAG_USAGE("lombok.log.flagUsage", ""),
     LOG_JAVAUTILLOGGING_FLAG_USAGE("lombok.log.javaUtilLogging.flagUsage", ""),
     LOG_LOG4J_FLAG_USAGE("lombok.log.log4j.flagUsage", ""),

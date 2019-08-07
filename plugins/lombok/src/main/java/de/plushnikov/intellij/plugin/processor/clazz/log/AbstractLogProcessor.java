@@ -13,6 +13,7 @@ import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -24,17 +25,32 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public abstract class AbstractLogProcessor extends AbstractClassProcessor {
+  enum LoggerInitializerParameter {
+    TYPE,
+    NAME,
+    TOPIC,
+    NULL,
+    UNKNOWN;
 
-  private final String loggerType;
-  private final String loggerInitializer;
-  private final String loggerCategory;
+    @NotNull
+    static LoggerInitializerParameter find(@NotNull String parameter) {
+      switch (parameter) {
+        case "TYPE":
+          return TYPE;
+        case "NAME":
+          return NAME;
+        case "TOPIC":
+          return TOPIC;
+        case "NULL":
+          return NULL;
+        default:
+          return UNKNOWN;
+      }
+    }
+  }
 
-  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
-                       @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
+  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(PsiField.class, supportedAnnotationClass);
-    this.loggerType = loggerType;
-    this.loggerInitializer = loggerInitializer;
-    this.loggerCategory = loggerCategory;
   }
 
   @Override
@@ -51,16 +67,29 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.LOG_FIELD_IS_STATIC, psiClass);
   }
 
+  /**
+   * Nullable because it can be called before validation.
+   */
+  @Nullable
+  public abstract String getLoggerType(@NotNull PsiClass psiClass);
+
+  /**
+   * Call only after validation.
+   */
   @NotNull
-  public String getLoggerType() {
-    return loggerType;
-  }
+  abstract String getLoggerInitializer(@NotNull PsiClass psiClass);
+
+  /**
+   * Call only after validation.
+   */
+  @NotNull
+  abstract List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isInterface() || psiClass.isAnnotationType()) {
-      builder.addError("@Log is legal only on classes and enums");
+      builder.addError("@%s is legal only on classes and enums", getSupportedAnnotationClasses()[0].getSimpleName());
       result = false;
     }
     if (result) {
@@ -78,10 +107,16 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   }
 
   private LombokLightFieldBuilder createLoggerField(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    // called only after validation succeeded
+
     final Project project = psiClass.getProject();
     final PsiManager manager = psiClass.getContainingFile().getManager();
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
+    String loggerType = getLoggerType(psiClass);
+    if (loggerType == null ) {
+      throw new IllegalStateException("Invalid custom log declaration."); // validated
+    }
     final PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
 
     LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, getLoggerName(psiClass), psiLoggerType)
@@ -93,22 +128,46 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
       loggerField.withModifier(PsiModifier.STATIC);
     }
 
-    final String loggerInitializerParameter = createLoggerInitializeParameter(psiClass, psiAnnotation);
-    final PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, loggerInitializerParameter), psiClass);
+    final String loggerInitializerParameters = createLoggerInitializeParameters(psiClass, psiAnnotation);
+    final String initializerText = String.format(getLoggerInitializer(psiClass), loggerInitializerParameters);
+    final PsiExpression initializer = psiElementFactory.createExpressionFromText(initializerText, psiClass);
     loggerField.setInitializer(initializer);
     return loggerField;
   }
 
   @NotNull
-  private String createLoggerInitializeParameter(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final String loggerInitializerParameter;
+  private String createLoggerInitializeParameters(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final StringBuilder parametersBuilder = new StringBuilder();
     final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic");
-    if (StringUtil.isEmptyOrSpaces(topic)) {
-      loggerInitializerParameter = String.format(loggerCategory, psiClass.getName());
-    } else {
-      loggerInitializerParameter = '"' + topic + '"';
+    final boolean topicPresent = !StringUtil.isEmptyOrSpaces(topic);
+    final List<LoggerInitializerParameter> loggerInitializerParameters = getLoggerInitializerParameters(psiClass, topicPresent);
+    for (LoggerInitializerParameter loggerInitializerParameter : loggerInitializerParameters) {
+      if (parametersBuilder.length() > 0) {
+        parametersBuilder.append(", ");
+      }
+      switch (loggerInitializerParameter) {
+        case TYPE:
+          parametersBuilder.append(psiClass.getName()).append(".class");
+          break;
+        case NAME:
+          parametersBuilder.append(psiClass.getName()).append(".class.getName()");
+          break;
+        case TOPIC:
+          if (!topicPresent) {
+            // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
+            throw new IllegalStateException("Topic can never be a parameter when topic was not set.");
+          }
+          parametersBuilder.append('"').append(StringUtil.escapeStringCharacters(topic)).append('"');
+          break;
+        case NULL:
+          parametersBuilder.append("null");
+          break;
+        default:
+          // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
+          throw new IllegalStateException("Unexpected logger initializer parameter " + loggerInitializerParameter);
+      }
     }
-    return loggerInitializerParameter;
+    return parametersBuilder.toString();
   }
 
   private boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {

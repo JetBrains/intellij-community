@@ -129,6 +129,7 @@ Developed By
 - [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
 - [**@jeromewaibel** Jérôme Waibel](https://github.com/jeromewaibel)
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
+- [**@juriad** Adam Juraszek](https://github.com/juriad)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
 - [**@Lekanich** Aleksandr Lekanich](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)

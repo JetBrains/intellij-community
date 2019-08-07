@@ -107,6 +107,7 @@ copy {
     include 'lombok/AccessLevel.java'
     include 'lombok/*ArgsConstructor.java'
     include 'lombok/Cleanup.java'
+    include 'lombok/CustomLog.java'
     include 'lombok/Data.java'
     include 'lombok/Delegate.java'
     include 'lombok/Getter.java'
