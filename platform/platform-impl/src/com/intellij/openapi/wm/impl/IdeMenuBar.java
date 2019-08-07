@@ -266,7 +266,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     else {
       NonUrgentExecutor.getInstance().execute(() -> {
         ActionManager actionManager = ActionManager.getInstance();
-        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager));
+        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
       });
     }
   }
