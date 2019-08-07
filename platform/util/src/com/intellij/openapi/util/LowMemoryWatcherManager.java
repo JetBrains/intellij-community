@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -19,7 +18,7 @@ import java.lang.management.MemoryType;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class LowMemoryWatcherManager implements Disposable {
+public final class LowMemoryWatcherManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
@@ -79,7 +78,8 @@ public class LowMemoryWatcherManager implements Disposable {
       if (memoryThreshold || memoryCollectionThreshold) {
         final boolean afterGc = memoryCollectionThreshold;
 
-        if (Registry.is("low.memory.watcher.sync", true)) {
+        // whether LowMemoryWatcher runnables should be executed on the same thread that the low memory events come
+        if (SystemProperties.getBooleanProperty("low.memory.watcher.sync", true)) {
           handleEventImmediately(afterGc);
           return;
         }
