@@ -141,6 +141,13 @@ public final class ServiceManagerImpl implements Disposable {
   public void dispose() {
   }
 
+  public static void unloadServices(ContainerDescriptor containerDescriptor, ComponentManager componentManager) {
+    MutablePicoContainer picoContainer = (MutablePicoContainer) componentManager.getPicoContainer();
+    for (ServiceDescriptor service : containerDescriptor.getServices()) {
+      picoContainer.unregisterComponent(service.getInterface());
+    }
+  }
+
   private static class MyComponentAdapter implements AssignableToComponentAdapter, DefaultPicoContainer.LazyComponentAdapter {
     private ComponentAdapter myDelegate;
     private final PluginDescriptor myPluginDescriptor;
