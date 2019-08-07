@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
@@ -152,6 +153,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
           if (targetDescriptor != null) {
             DynamicPlugins.loadPlugin(targetDescriptor);
+            PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[] { targetDescriptor }));
           }
         }
       }
@@ -159,7 +161,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         PluginInstaller.installAfterRestart(file, false, oldFile, pluginDescriptor);
       }
 
-      ourState.onPluginInstall(pluginDescriptor, !installWithoutRestart);
+      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
       callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
       return true;

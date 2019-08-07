@@ -89,13 +89,11 @@ public final class InstalledPluginsState {
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
-  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean isUpdate, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
-    boolean existing = PluginManager.isPluginInstalled(id);
-
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
-      if (existing) {
+      if (isUpdate) {
         myUpdatedPlugins.put(id, descriptor);
       }
       else if (restartNeeded) {
