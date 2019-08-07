@@ -25,11 +25,9 @@ internal open class ProjectFrameAllocator {
   /**
    * Project is loaded and is initialized, project services and components can be accessed.
    */
-  open fun projectLoaded(project: Project) {
-  }
+  open fun projectLoaded(project: Project) { }
 
-  open fun projectOpened(project: Project) {
-  }
+  open fun projectOpened(project: Project) { }
 }
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
@@ -88,7 +86,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       }
     }
 
-    val frame = runActivity("create frame") {
+    val frame = runActivity("create a frame") {
       windowManager.createFrame(options)
     }
     ideFrame = frame
