@@ -43,9 +43,8 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -3834,5 +3833,30 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static Color getTooltipSeparatorColor() {
     return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+  }
+
+  /**
+   * This method (as opposed to {@link JEditorPane#scrollToReference}) supports also targets using {@code id} HTML attribute.
+   */
+  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull String reference) {
+    Document document = editor.getDocument();
+    if (document instanceof HTMLDocument) {
+      Element elementById = ((HTMLDocument) document).getElement(reference);
+      if (elementById != null) {
+        try {
+          int pos = elementById.getStartOffset();
+          Rectangle r = editor.modelToView(pos);
+          if (r != null) {
+            r.height = editor.getVisibleRect().height;
+            editor.scrollRectToVisible(r);
+            editor.setCaretPosition(pos);
+          }
+        } catch (BadLocationException e) {
+          getLogger().error(e);
+        }
+        return;
+      }
+    }
+    editor.scrollToReference(reference);
   }
 }
