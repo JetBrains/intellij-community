@@ -4,7 +4,6 @@ package com.intellij.tasks;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.PasswordUtil;
@@ -43,7 +42,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testNotifications() {
     final Ref<Notification> notificationRef = new Ref<>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new Notifications() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);

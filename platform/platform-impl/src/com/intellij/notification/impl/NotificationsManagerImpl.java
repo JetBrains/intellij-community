@@ -70,10 +70,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public class NotificationsManagerImpl extends NotificationsManager {
+public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
@@ -1038,14 +1035,14 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showPopup(@NotNull LinkLabel link, @NotNull DefaultActionGroup group) {
+  private static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
       ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
       menu.getComponent().show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
     }
   }
 
-  private static class MyNotificationListener extends NotificationsAdapter {
+  private static class MyNotificationListener implements Notifications {
     private final Project myProject;
 
     private MyNotificationListener(@Nullable Project project) {

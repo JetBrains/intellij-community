@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -63,7 +63,7 @@ public class EventLog {
   private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
 
   public EventLog() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
       @Override
       public void notify(@NotNull Notification notification) {
         final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -468,7 +468,7 @@ public class EventLog {
         printNotification(notification);
       }
 
-      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);

@@ -3,7 +3,6 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -18,7 +17,7 @@ import java.util.concurrent.Executor;
 class MacEventReader {
   private static final int MAX_MESSAGE_LENGTH = 100;
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.MacEventReader");
-  private static final NotificationsAdapter ourNotificationAdapter = new NotificationsAdapter() {
+  private static final Notifications ourNotificationAdapter = new Notifications() {
     @Override
     public void notify(@NotNull Notification notification) {
       process(notification);

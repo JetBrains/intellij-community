@@ -4,7 +4,6 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
-import com.intellij.notification.NotificationsAdapter
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -48,7 +47,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 
   fun registerListeners(project: Project) {
-    project.messageBus.connect().subscribe(Notifications.TOPIC, object : NotificationsAdapter() {
+    project.messageBus.connect().subscribe(Notifications.TOPIC, object : Notifications {
       override fun notify(notification: Notification) {
         if (!icsManager.isActive) {
           return
