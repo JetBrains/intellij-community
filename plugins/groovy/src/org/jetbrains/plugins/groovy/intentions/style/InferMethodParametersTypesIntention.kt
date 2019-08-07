@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
+import org.jetbrains.plugins.groovy.lang.UntypedParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
@@ -49,22 +49,28 @@ internal class InferMethodParametersTypesIntention : Intention() {
       GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
       method.modifierList.setModifierProperty(DEF, false)
     }
-    val virtualMethod = runInferenceProcess(method, GlobalSearchScope.allScope(project))
-    if (!method.isConstructor) {
-      method.returnType = virtualMethod.returnType
-      GrReferenceAdjuster.shortenAllReferencesIn(method.returnTypeElementGroovy)
+    UntypedParameterEnhancer.produceTypedMethod(method, GlobalSearchScope.allScope(project)) { virtualMethod ->
+      substituteMethodSignature(virtualMethod, method)
     }
-    if (virtualMethod.hasTypeParameters()) {
+  }
+
+
+  private fun substituteMethodSignature(sourceMethod: GrMethod, sinkMethod: GrMethod) {
+    if (!sinkMethod.isConstructor) {
+      sinkMethod.returnType = sourceMethod.returnType
+      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.returnTypeElementGroovy)
+    }
+    if (sourceMethod.hasTypeParameters()) {
       when {
-        method.hasTypeParameters() -> method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
-        method.isConstructor -> {
-          val parameterSubstitutor = collectParameterSubstitutor(virtualMethod)
-          virtualMethod.parameters.forEach { it.setType(parameterSubstitutor.recursiveSubstitute(it.type)) }
+        sinkMethod.hasTypeParameters() -> sinkMethod.typeParameterList!!.replace(sourceMethod.typeParameterList!!)
+        sinkMethod.isConstructor -> {
+          val parameterSubstitutor = collectParameterSubstitutor(sourceMethod)
+          sourceMethod.parameters.forEach { it.setType(parameterSubstitutor.recursiveSubstitute(it.type)) }
         }
-        else -> method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
+        else -> sinkMethod.addAfter(sourceMethod.typeParameterList!!, sinkMethod.firstChild)
       }
     }
-    for ((actual, inferred) in method.parameters.zip(virtualMethod.parameters)) {
+    for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
       if (actual.isVarArgs && !inferred.isVarArgs) {
@@ -79,9 +85,9 @@ internal class InferMethodParametersTypesIntention : Intention() {
         }
       }
     }
-    method.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
-    if ((method.isConstructor && !method.hasTypeParameters()) || method.hasModifier(JvmModifier.STATIC)) {
-      method.modifierList.setModifierProperty("def", false)
+    sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
+    if ((sinkMethod.isConstructor && !sinkMethod.hasTypeParameters()) || sinkMethod.hasModifier(JvmModifier.STATIC)) {
+      sinkMethod.modifierList.setModifierProperty("def", false)
     }
   }
 

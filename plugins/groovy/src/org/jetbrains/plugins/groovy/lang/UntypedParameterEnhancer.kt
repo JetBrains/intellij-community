@@ -14,22 +14,26 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer
 class UntypedParameterEnhancer : GrVariableEnhancer() {
 
   companion object {
-    val cache = mutableMapOf<GrMethod, GrMethod>()
-    val entranceMark = Key<Unit>("untypedParameterEnhancerMark")
+    private val entranceMark = Key<Unit>("untypedParameterEnhancerMark")
+
+    fun produceTypedMethod(method: GrMethod, scope: GlobalSearchScope, postProcessing: (GrMethod) -> Unit = {}): GrMethod {
+      method.putUserData(entranceMark, Unit)
+      val typedMethod = runInferenceProcess(method, scope)
+      postProcessing(typedMethod)
+      method.putUserData(entranceMark, null)
+      return typedMethod
+    }
   }
 
   override fun getVariableType(variable: GrVariable): PsiType? {
-    if (variable is GrParameter && variable.typeElement == null && variable.containingFile.isPhysical) {
+    if (variable is GrParameter && variable.typeElement == null && variable.containingFile.viewProvider.isPhysical) {
       val method = variable.parentOfType<GrMethod>() ?: return null
       if (entranceMark.isIn(method)) {
         return null
       }
       else {
-        method.putUserData(entranceMark, Unit)
-        val typedMethod = runInferenceProcess(method, GlobalSearchScope.fileScope(method.containingFile))
-        val resultType = typedMethod.parameters.find { it.name == variable.name }?.type
-        method.putUserData(entranceMark, null)
-        return resultType
+        val typedMethod = produceTypedMethod(method, GlobalSearchScope.fileScope(method.containingFile))
+        return typedMethod.parameters.find { it.name == variable.name }?.type
       }
     }
     return null

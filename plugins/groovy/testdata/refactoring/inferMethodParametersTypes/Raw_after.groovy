@@ -1,4 +1,4 @@
-def <T0> Object foo(List<T0> a, T0 b) {
+def <T0> boolean foo(List<T0> a, T0 b) {
   a.add(b)
 }
 

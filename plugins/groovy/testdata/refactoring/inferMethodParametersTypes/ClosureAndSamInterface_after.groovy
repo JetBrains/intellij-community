@@ -1,4 +1,4 @@
-Object foo(Predicate<? super Integer> a) {
+boolean foo(Predicate<? super Integer> a) {
   a.call(1)
 }
 

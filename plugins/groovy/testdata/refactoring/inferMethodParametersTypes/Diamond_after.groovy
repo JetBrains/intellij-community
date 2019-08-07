@@ -1,4 +1,4 @@
-def <T0> Object foo(ArrayList<T0> l, T0 a) {
+def <T0> boolean foo(ArrayList<T0> l, T0 a) {
   l.add(a)
 }
 

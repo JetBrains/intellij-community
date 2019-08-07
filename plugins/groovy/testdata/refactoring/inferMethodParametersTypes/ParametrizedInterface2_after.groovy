@@ -1,4 +1,4 @@
-def <U0> Object foo(Comparable<U0> a, U0 b) {
+def <U0> int foo(Comparable<U0> a, U0 b) {
   a.compareTo(b)
 }
 
