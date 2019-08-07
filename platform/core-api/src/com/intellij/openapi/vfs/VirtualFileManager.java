@@ -99,22 +99,26 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
 
   /**
-   * Adds listener to the file system.
-   *
-   * @param listener the listener
-   * @see VirtualFileListener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes listener form the file system.
-   *
-   * @param listener the listener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * Consider using extension point {@code vfs.asyncListener}.
+   */
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
