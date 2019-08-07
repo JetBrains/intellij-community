@@ -18,11 +18,29 @@ public class VFileCreateEvent extends VFileEvent {
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
   private final ChildInfo[] myChildren;
+  private final int myChildNameId;
   private VirtualFile myCreatedFile;
+
+  /**
+   * @deprecated Use {@link #VFileCreateEvent(Object, VirtualFile, String, int, boolean, FileAttributes, String, boolean, ChildInfo[])} instead
+   */
+  @Deprecated
+  public VFileCreateEvent(Object requestor,
+                          @NotNull VirtualFile parent,
+                          @NotNull String childName,
+                          boolean isDirectory,
+                          @Nullable("null means should read from the created file") FileAttributes attributes,
+                          @Nullable String symlinkTarget,
+                          boolean isFromRefresh,
+                          @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
+                          ChildInfo[] children) {
+    this(requestor, parent, childName, 0, isDirectory, attributes, symlinkTarget, isFromRefresh, children);
+  }
 
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
+                          int childNameId,
                           boolean isDirectory,
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
@@ -36,6 +54,7 @@ public class VFileCreateEvent extends VFileEvent {
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
     myChildren = children;
+    myChildNameId = childNameId;
   }
 
   @NotNull
@@ -127,5 +146,9 @@ public class VFileCreateEvent extends VFileEvent {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
     return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ myChildName +"]"
            + (myChildren == null ? "" : " with "+myChildren.length+" children");
+  }
+
+  public int getChildNameId() {
+    return myChildNameId;
   }
 }

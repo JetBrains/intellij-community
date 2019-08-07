@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +71,7 @@ class VfsEventGenerationHelper {
         children = scanChildren(root, excluded, checkCanceled);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
+    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, FileNameCache.storeName(childName), attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
   }
 
