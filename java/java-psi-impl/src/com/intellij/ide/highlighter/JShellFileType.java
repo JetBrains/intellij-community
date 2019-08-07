@@ -55,9 +55,4 @@ public class JShellFileType extends LanguageFileType {
   public Icon getIcon() {
     return AllIcons.FileTypes.Java; // todo: a dedicated icon?
   }
-
-  @Override
-  public boolean isJVMDebuggingSupported() {
-    return false;
-  }
 }
