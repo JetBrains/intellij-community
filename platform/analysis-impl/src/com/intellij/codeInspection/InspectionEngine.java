@@ -58,9 +58,11 @@ public class InspectionEngine {
     else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
       LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
     }
-
-    tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
+    // if inspection returned empty visitor then it should be skipped
+    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
+      tool.inspectionStarted(session, isOnTheFly);
+      acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
+    }
     return visitor;
   }
 
