@@ -59,7 +59,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
           val modifierList = element.modifierList
           if (modifierList != null) {
-            val offset = modifierList.textRange.startOffset
+            val textRange = modifierList.textRange ?: return true
+            val offset = textRange.startOffset
             if (presentations.isNotEmpty()) {
               val presentation = SequencePresentation(presentations)
               val prevSibling = element.prevSibling
