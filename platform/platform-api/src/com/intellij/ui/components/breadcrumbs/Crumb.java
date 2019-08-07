@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,16 +22,8 @@ public interface Crumb {
   /**
    * @return synchronously calculated tooltip text
    */
+  @Nullable
   default String getTooltip() { return null; }
-
-  /**
-   * @param tooltipOwner for which the tooltip is calculating and updating
-   *
-   * @return can return progress tooltip text, like `Calculating...`
-   * and start calculation of tooltip text in a pool thread
-   * with update at the end
-   */
-  default String getTooltipLazy(@Nullable Component tooltipOwner) { return getTooltip(); }
 
   /**
    * @return a list of actions for context menu

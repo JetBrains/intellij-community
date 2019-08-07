@@ -45,8 +45,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-  private Crumb hovered;
-  private Crumb selected;
+  protected Crumb hovered;
+  protected Crumb selected;
 
   public Breadcrumbs() {
     MouseHandler handler = new MouseHandler();
@@ -125,7 +125,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    return hovered == null ? null : hovered.getTooltipLazy(event.getComponent());
+    return hovered == null ? null : hovered.getTooltip();
   }
 
   @Override

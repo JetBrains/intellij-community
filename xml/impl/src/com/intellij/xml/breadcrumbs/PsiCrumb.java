@@ -1,27 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.Component;
 
 /**
  * @author Sergey.Malenkov
  */
-final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
+final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltipCrumb {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.PsiCrumb");
   private final PsiAnchor anchor;
   private volatile BreadcrumbsProvider provider;
   private volatile String tooltip;
@@ -36,8 +31,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
 
   @Override
   public String getTooltip() {
-    if (provider != null
-        && (tooltip == null || getLazyTooltipText().equals(tooltip))) {
+    if (needCalculateTooltip()) {
       PsiElement element = getElement(this);
       tooltip = element == null ? null
                                 : provider.getElementTooltip(element);
@@ -47,31 +41,8 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   }
 
   @Override
-  public String getTooltipLazy(@Nullable Component tooltipOwner) {
-    if (tooltip == null && provider != null) {
-      tooltip = getLazyTooltipText();
-      final IdeTooltipManager tooltipManager = IdeTooltipManager.getInstance();
-      ReadAction
-        .nonBlocking(() -> getTooltip())
-        .coalesceBy(this)
-        .expireWith(anchor.getFile().getProject())
-        .expireWhen(()->!tooltipManager.isProcessing(tooltipOwner))
-        .finishOnUiThread(ModalityState.any(), toolTipText -> {
-          tooltipManager.updateShownTooltip(tooltipOwner);
-        })
-        .submit(AppExecutorUtil.getAppExecutorService())
-        .onError(anyError -> {
-          if (getLazyTooltipText().equals(tooltip)) {
-            tooltip = null;
-          }
-        });
-    }
-    return tooltip;
-  }
-
-  @NotNull
-  private static String getLazyTooltipText() {
-    return UIBundle.message("crumbs.calculating.tooltip");
+  public boolean needCalculateTooltip() {
+    return provider != null && tooltip == null;
   }
 
   @Override
