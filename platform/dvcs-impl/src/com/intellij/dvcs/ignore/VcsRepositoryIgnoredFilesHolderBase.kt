@@ -38,6 +38,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val ignoredSet = hashSetOf<VirtualFile>()
   private val SET_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
+  private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
@@ -205,8 +206,11 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.multicaster.updateFinished(paths)
   }
 
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
-  private fun isUnder(parents: Set<FilePath>, child: FilePath) = generateSequence(child) { it.parentPath }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) =
+    generateSequence(child) { if (repository.root == it) null else it.parent }.any { it in parents }
+
+  private fun isUnder(parents: Set<FilePath>, child: FilePath) =
+    generateSequence(child) { if (repositoryRootPath == it) null else it.parentPath }.any { it in parents }
 
   @TestOnly
   inner class Waiter : VcsIgnoredHolderUpdateListener {
