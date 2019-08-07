@@ -29,8 +29,14 @@ interface InferenceDriver {
 
   fun collectSignatureSubstitutor(): PsiSubstitutor {
     val constraints = collectOuterConstraints()
-    val session = CollectingGroovyInferenceSession(typeParameters().toTypedArray())
-    constraints.forEach { session.addConstraint(it) }
-    return session.inferSubst()
+    val typeParameters = typeParameters()
+    if (typeParameters.isEmpty()) {
+      return PsiSubstitutor.EMPTY
+    }
+    else {
+      val session = CollectingGroovyInferenceSession(typeParameters.toTypedArray(), typeParameters.first())
+      constraints.forEach { session.addConstraint(it) }
+      return session.inferSubst()
+    }
   }
 }

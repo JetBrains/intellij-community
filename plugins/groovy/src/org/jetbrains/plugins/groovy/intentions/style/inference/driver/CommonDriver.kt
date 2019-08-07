@@ -31,9 +31,10 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
                                         private val closureDriver: InferenceDriver,
                                         private val originalMethod: GrMethod,
                                         private val typeParameters: Collection<PsiTypeParameter>,
-                                        searchScope: SearchScope? = null ) : InferenceDriver {
+                                        searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
-  private val scope : SearchScope
+  private val scope: SearchScope
+
   init {
     scope = searchScope ?: method.resolveScope
   }
@@ -85,6 +86,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val mapping = setUpParameterMapping(originalMethod, method).map { it.key.name to it.value }.toMap()
     val (constraints, samParameters) = collectOuterCallsInformation()
     val inferenceSession = CollectingGroovyInferenceSession(typeParameters().toTypedArray(),
+                                                            originalMethod,
                                                             proxyMethodMapping = mapping,
                                                             ignoreClosureArguments = samParameters)
     constraints.forEach { inferenceSession.addConstraint(it) }
@@ -213,7 +215,8 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
       }
       val notNullParam = if (newParam == PsiType.NULL) {
         getJavaLangObject(resultMethod)
-      } else {
+      }
+      else {
         newParam
       }
       actualParameter.setType(notNullParam)

@@ -250,7 +250,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
           .accept(this)
       }
       else {
-        return factory.createType(classType.resolve()!!, *classType.parameters.map { it.accept(this) }.toTypedArray())
+        return factory.createType(classType.resolve() ?: return null, *classType.parameters.map { it.accept(this) }.toTypedArray())
       }
     }
 
@@ -287,5 +287,5 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 
-fun GrAnnotation.attributeValue(name : String?) : GrAnnotationMemberValue? =
+fun GrAnnotation.attributeValue(name: String?): GrAnnotationMemberValue? =
   parameterList.attributes.find { it.name == name }?.value

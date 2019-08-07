@@ -17,8 +17,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CollectingGroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
+  context: PsiElement,
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
-  context: PsiElement = typeParams.first(),
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
   private val parent: CollectingGroovyInferenceSession? = null,
   private val ignoreClosureArguments: Set<GrParameter> = emptySet()
@@ -52,7 +52,7 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, proxyMethodMapping, this, ignoreClosureArguments)
+    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, this, ignoreClosureArguments)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession

@@ -207,7 +207,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
             argtype.isTypeParameter() -> PsiIntersectionType.createIntersection(*argtype.typeParameter()!!.extendsListTypes)
             else -> argtype
           }
-          setConstraints(param.type, correctArgumentType!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet())
+          setConstraints(param.type, correctArgumentType ?: PsiType.NULL, dependentTypes, requiredTypesCollector,
+                         method.typeParameters.toSet())
         }
       }
     }
@@ -232,6 +233,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
                        dependentTypes: MutableSet<PsiTypeParameter>,
                        requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
                        variableParameters: Set<PsiTypeParameter>) {
+      if (rightType == PsiType.NULL) {
+        return
+      }
       val leftBound = if (leftType.isTypeParameter()) {
         val typeParameter = leftType.typeParameter()!!
         val correctRightType = if (rightType.typeParameter() !in variableParameters) {
