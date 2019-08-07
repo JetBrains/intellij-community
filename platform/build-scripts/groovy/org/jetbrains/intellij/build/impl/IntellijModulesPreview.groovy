@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
@@ -15,40 +14,52 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
  * </p>
  */
 @CompileStatic
-@SuppressWarnings("unused")
 class IntellijModulesPreview {
-  private final BuildContext buildContext
-  private final int uploadRetryCount = 3
-  private final String repositoryId
-  private final String repositoryUrl
+  private final CompilationContext context
   private final File mavenSettings
+  private final Options options
 
-  IntellijModulesPreview(BuildContext context) {
-    buildContext = context
-    repositoryId = require('repository.id')
-    repositoryUrl = "${require('repository.publicationUrl')}/;publish=1;"
-    mavenSettings = settingsXml()
+  IntellijModulesPreview(CompilationContext context, Options options) {
+    this.context = context
+    this.options = options
+    this.mavenSettings = mavenSettings()
   }
 
-  private String require(String property) {
-    System.getProperty(property) ?: buildContext.messages.error("$property is not specifed")
+  class Options {
+    final int uploadRetryCount = 3
+    final String version = 'unknown'
+    final String repositoryUser = require('intellij.modules.preview.repository.user')
+    final String repositoryPassword = require('intellij.modules.preview.repository.password')
+    /**
+     * URL where the artifacts will be deployed
+     */
+    final String repositoryUrl = require('intellij.modules.preview.repository.url')
+    /**
+     * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
+     */
+    final File outputDir = new File(require('intellij.modules.preview.prebuilt.artifacts.dir'))
+    final Collection<String> modulesToPublish = require('intellij.modules.preview.list')
+      ?.split(',')?.toList()
+      ?.collect { it.trim() }
+      ?.findAll { !it.isEmpty() }
+
+    private String require(String property) {
+      System.getProperty(property) ?: {
+        throw new IllegalArgumentException("$property is not specifed")
+      }()
+    }
   }
 
-  /**
-   * @param modulesOutputDir output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
-   */
-  void publish(List<String> modulesToPublish, File modulesOutputDir) {
+  void publish() {
     def modules = new HashSet<JpsModule>()
-    modulesToPublish.each {
-      def module = buildContext.findRequiredModule(it)
+    options.modulesToPublish.each {
+      def module = context.findRequiredModule(it)
       modules << module
       transitiveModuleDependencies(module, modules)
     }
     modules.each {
-      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(
-        it.name, buildContext.messages, buildContext.buildNumber
-      )
-      def dir = new File(modulesOutputDir, coordinates.directoryPath)
+      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(it.name, context.messages, options.version)
+      def dir = new File(options.outputDir, coordinates.directoryPath)
       def pom = new File(dir, coordinates.getFileName('', 'pom'))
       def jar = new File(dir, coordinates.getFileName('', 'jar'))
       def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
@@ -86,23 +97,23 @@ class IntellijModulesPreview {
   }
 
   private def deployFile(File file, Collection args) {
-    buildContext.messages.info("Upload of $file.name")
+    context.messages.info("Upload of $file.name")
     def process = ([
                      'mvn', '--settings', mavenSettings.absolutePath,
                      'deploy:deploy-file',
+                     '-DrepositoryId=server-id',
                      "-Dfile=$file.absolutePath",
-                     "-DrepositoryId=$repositoryId",
-                     "-Durl=$repositoryUrl",
-                     "-DretryFailedDeploymentCount=$uploadRetryCount"
+                     "-Durl=$options.repositoryUrl/;publish=1;",
+                     "-DretryFailedDeploymentCount=$options.uploadRetryCount"
                    ] + args).execute()
     def output = process.text
     def exitCode = process.waitFor()
     if (exitCode != 0) {
-      buildContext.messages.error("Upload of $file.name failed with exit code $exitCode: $output")
+      context.messages.error("Upload of $file.name failed with exit code $exitCode: $output")
     }
   }
 
-  private File settingsXml() {
+  private File mavenSettings() {
     File.createTempFile('settings', '.xml').with {
       it << """<settings xmlns="https://maven.apache.org/SETTINGS/1.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -110,9 +121,9 @@ class IntellijModulesPreview {
                             https://maven.apache.org/xsd/settings-1.0.0.xsd">
                 <servers>
                   <server>
-                    <id>$repositoryId</id>
-                    <username>${require('repository.user')}</username>
-                    <password>${require('repository.password')}</password>
+                    <id>server-id</id>
+                    <username>${options.repositoryUser}</username>
+                    <password>${options.repositoryPassword}</password>
                   </server>
                 </servers>
                </settings>
