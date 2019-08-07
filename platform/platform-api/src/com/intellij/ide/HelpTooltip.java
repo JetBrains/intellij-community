@@ -483,8 +483,7 @@ public class HelpTooltip {
       Font font = deriveHeaderFont(getFont());
       setFont(font);
 
-      Font titleFont = StringUtil.isNotEmpty(description) ? font.deriveFont(Font.BOLD) : font;
-      Map<TextAttribute,?> tfa = titleFont.getAttributes();
+      Map<TextAttribute,?> tfa = font.getAttributes();
       titleString = new AttributedString(title, tfa);
       dotString = new AttributedString(DOTS, tfa);
       shortcutString = StringUtil.isNotEmpty(shortcut) ? new AttributedString(shortcut, font.getAttributes()) : null;
@@ -494,7 +493,7 @@ public class HelpTooltip {
       paragraphEnd = paragraph.getEndIndex();
 
       // Compute preferred size
-      FontMetrics tfm = getFontMetrics(titleFont);
+      FontMetrics tfm = getFontMetrics(font);
       int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
