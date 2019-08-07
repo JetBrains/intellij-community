@@ -594,10 +594,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
+    boolean needRestartForUninstall = true;
     try {
       ((IdeaPluginDescriptorImpl)descriptor).setDeleted(true);
-      PluginInstaller.prepareToUninstall(descriptor.getPluginId());
-      needRestart |= descriptor.isEnabled();
+      needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptor.getPluginId());
+      needRestart |= descriptor.isEnabled() && needRestartForUninstall;
     }
     catch (IOException e) {
       PluginManagerMain.LOG.error(e);
@@ -610,7 +611,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<CellPluginComponent> listComponents = myListMap.get(descriptor);
     if (listComponents != null) {
       for (CellPluginComponent listComponent : listComponents) {
-        listComponent.updateAfterUninstall();
+        listComponent.updateAfterUninstall(needRestartForUninstall);
       }
     }
 
@@ -619,7 +620,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin == descriptor) {
+      if (panel.myPlugin == descriptor && needRestartForUninstall) {
         panel.enableRestart();
       }
     }

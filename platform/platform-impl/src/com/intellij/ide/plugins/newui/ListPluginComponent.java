@@ -327,7 +327,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void updateAfterUninstall() {
+  public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
     updateColors(mySelection);
 
@@ -335,7 +335,9 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setEnabled(false);
     myEnableDisableButton.setVisible(false);
 
-    enableRestart();
+    if (needRestartForUninstall) {
+      enableRestart();
+    }
   }
 
   @Override

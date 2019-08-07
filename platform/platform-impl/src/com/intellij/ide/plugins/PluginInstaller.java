@@ -250,7 +250,10 @@ public class PluginInstaller {
     return allPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
   }
 
-  public static void prepareToUninstall(PluginId pluginId) throws IOException {
+  /**
+   * @return true if restart is needed
+   */
+  public static boolean prepareToUninstall(PluginId pluginId) throws IOException {
     synchronized (ourLock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
@@ -261,12 +264,25 @@ public class PluginInstaller {
           PluginManagerMain.LOG.error("Plugin is bundled: " + pluginId);
         }
         else {
-          StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+          boolean uninstalledWithoutRestart = false;
+          if (DynamicPlugins.isUnloadSafe(pluginDescriptor)) {
+            uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
+            if (uninstalledWithoutRestart) {
+              FileUtil.delete(pluginDescriptor.getPath());
+              PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), pluginDescriptor));
+            }
+          }
+
+          if (!uninstalledWithoutRestart) {
+            StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+          }
 
           fireState(pluginDescriptor, false);
+          return !uninstalledWithoutRestart;
         }
       }
     }
+    return false;
   }
 
   public static void installAfterRestart(@NotNull File sourceFile,

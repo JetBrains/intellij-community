@@ -216,7 +216,7 @@ public abstract class CellPluginComponent extends JPanel {
     throw new UnsupportedOperationException();
   }
 
-  public void updateAfterUninstall() {
+  public void updateAfterUninstall(boolean needRestartForUninstall) {
     throw new UnsupportedOperationException();
   }
 

@@ -33,6 +33,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   private final MyPluginModel myPluginModel;
   private final boolean myMarketplace;
   private boolean myUninstalled;
+  private boolean myUninstalledWithoutRestart;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
@@ -355,10 +356,13 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void updateAfterUninstall() {
+  public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
+    myUninstalledWithoutRestart = !needRestartForUninstall;
     updateColors(mySelection);
-    enableRestart();
+    if (needRestartForUninstall) {
+      enableRestart();
+    }
   }
 
   public void updatePlugin() {
