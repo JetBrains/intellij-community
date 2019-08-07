@@ -327,7 +327,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       return;
     }
 
-    for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList()) {
+    for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(true)) {
       T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null, null);
       if (extension == null) {
         break;
@@ -337,8 +337,18 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @NotNull
-  private synchronized List<ExtensionComponentAdapter> getThreadSafeAdapterList() {
-    LOG.assertTrue(myListeners.length == 0);
+  private synchronized List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
+    if (myListeners.length > 0) {
+      String message = "Listeners not allowed for extension point " + getName();
+      if (failIfListenerAdded) {
+        LOG.error(message);
+      }
+      else {
+        LOG.warn(message);
+        getExtensionList();
+      }
+    }
+
     // copy for safe iteration outside lock
     return ContainerUtil.copyList(getSortedAdapters());
   }
@@ -923,7 +933,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   public final T findExtension(@NotNull Class<T> aClass, boolean isRequired) {
     List<? extends T> extensionsCache = myExtensionsCache;
     if (extensionsCache == null) {
-      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList()) {
+      // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
+      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
         if (aClass.isAssignableFrom(adapter.getImplementationClass())) {
           return processAdapter(adapter, null /* don't even pass it */, null, null, null, null);
         }
