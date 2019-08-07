@@ -78,7 +78,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
@@ -1042,8 +1041,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class MyNotificationListener implements Notifications {
+  static class MyNotificationListener implements Notifications {
     private final Project myProject;
+
+    @SuppressWarnings("unused")
+    MyNotificationListener() {
+      myProject = null;
+    }
 
     private MyNotificationListener(@Nullable Project project) {
       myProject = project;

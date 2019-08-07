@@ -50,11 +50,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.notification.NotificationsManager</interface-class>
-      <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.util.FoundationLoader</implementation-class>
       <headless-implementation-class/>
     </component>

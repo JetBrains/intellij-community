@@ -2,6 +2,7 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class GitAnnotationProvider implements AnnotationProviderEx {
+@Service
+public final class GitAnnotationProvider implements AnnotationProviderEx {
   private final Project myProject;
   @NonNls private static final String SUBJECT_KEY = "summary";
   @NonNls private static final String FILENAME_KEY = "filename";
@@ -379,7 +381,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   }
 
   @NotNull
-  private CachedData cacheData(@NotNull GitFileAnnotation annotation) {
+  private static CachedData cacheData(@NotNull GitFileAnnotation annotation) {
     return new CachedData(annotation.getLines());
   }
 

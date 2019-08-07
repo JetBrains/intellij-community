@@ -3,6 +3,7 @@ package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,9 +38,10 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProviderEx,
-                                           VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
-                                           VcsBaseRevisionAdviser {
+@Service
+public final class GitHistoryProvider implements VcsHistoryProviderEx,
+                                                 VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+                                                 VcsBaseRevisionAdviser {
   private static final Logger LOG = Logger.getInstance(GitHistoryProvider.class.getName());
 
   @NotNull private final Project myProject;

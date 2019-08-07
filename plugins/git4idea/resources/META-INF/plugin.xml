@@ -219,16 +219,12 @@
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
     <projectService serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
-    <projectService serviceImplementation="git4idea.diff.GitDiffProvider"/>
     <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
     <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
-    <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
-    <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
-    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />

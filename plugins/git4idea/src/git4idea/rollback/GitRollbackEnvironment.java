@@ -3,6 +3,7 @@ package git4idea.rollback;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-public class GitRollbackEnvironment implements RollbackEnvironment {
+@Service
+public final class GitRollbackEnvironment implements RollbackEnvironment {
   @NotNull private final Project myProject;
 
   public GitRollbackEnvironment(@NotNull Project project) {

@@ -98,6 +98,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   Condition<?> getDisposed();
 
   @ApiStatus.Internal
+  default <T> T getService(@NotNull Class<T> serviceClass) {
+    return getService(serviceClass, true);
+  }
+
+  @ApiStatus.Internal
   default <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
     // default impl to keep backward compatibility
     //noinspection unchecked
