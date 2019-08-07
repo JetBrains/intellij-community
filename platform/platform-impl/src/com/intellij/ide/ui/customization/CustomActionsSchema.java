@@ -290,6 +290,13 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
+  public void invalidateCustomizedActionGroup(String groupId) {
+    ActionGroup group = myIdToActionGroup.get(groupId);
+    if (group instanceof CustomisedActionGroup) {
+      ((CustomisedActionGroup) group).resetChildren();
+    }
+  }
+
   public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
     List<String> path = ContainerUtil.newArrayList("root");

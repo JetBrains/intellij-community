@@ -12,6 +12,7 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -1144,6 +1145,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       if (removeFromGroups) {
         for (String groupId : myId2GroupId.get(actionId)) {
+          CustomActionsSchema.getInstance().invalidateCustomizedActionGroup(groupId);
           DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
           group.remove(oldValue, actionId);
         }

@@ -74,4 +74,8 @@ public class CustomisedActionGroup extends ActionGroup {
   }
 
   public ActionGroup getOrigin() { return myGroup; }
+
+  public void resetChildren() {
+    myChildren = null;
+  }
 }
