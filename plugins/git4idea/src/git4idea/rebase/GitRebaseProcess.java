@@ -117,12 +117,8 @@ public class GitRebaseProcess {
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    VIEW_STASH_ACTION = new NotificationAction("View " + capitalize(mySaver.getSaverName()) + "...") {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        mySaver.showSavedChanges();
-      }
-    };
+    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaverName()) + "...",
+                                                        () -> mySaver.showSavedChanges());
   }
 
   public void rebase() {
@@ -422,7 +418,7 @@ public class GitRebaseProcess {
       .Params(myProject)
       .setMergeDialogCustomizer(createDialogCustomizer(conflicting, myRebaseSpec))
       .setReverse(true);
-    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, conflicting, params, calledFromNotification);
+    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, conflicting, params, calledFromNotification);
     boolean allResolved = conflictResolver.merge();
     if (conflictResolver.myWasNothingToMerge) return ResolveConflictResult.NOTHING_TO_MERGE;
     if (allResolved) return ResolveConflictResult.ALL_RESOLVED;
@@ -633,7 +629,6 @@ public class GitRebaseProcess {
     private boolean myWasNothingToMerge;
 
     RebaseConflictResolver(@NotNull Project project,
-                           @NotNull Git git,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
       super(project, singleton(repository.getRoot()), params);
