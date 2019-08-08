@@ -30,7 +30,6 @@ class CircletTaskRunner(val project: Project) {
         }
 
         val config = script.config
-        config.applyIds()
         val task = script.config.tasks.firstOrNull { x -> x.name == taskName }
         if (task == null) {
             //logData.add("Task $taskName doesn't exist")
