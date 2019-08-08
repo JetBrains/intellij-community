@@ -104,7 +104,7 @@
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
     <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
-    <fileTypeFactory implementation="com.intellij.openapi.vcs.impl.VcsFileTypeFactory"/>
+    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" extensions="patch;diff" />
     <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
 
