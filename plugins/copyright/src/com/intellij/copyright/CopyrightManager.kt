@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
@@ -47,7 +47,7 @@ private const val MODULE = "module"
 private val LOG = Logger.getInstance(CopyrightManager::class.java)
 
 @State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
-class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
+class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory = SchemeManagerFactory.getInstance(project), isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<CopyrightManager>()
