@@ -113,7 +113,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
                     && !StringUtil.startsWithIgnoreCase(msg, "submodule")).
       map (msg -> GitUtil.cleanupErrorPrefixes(msg)).
       collect(Collectors.joining("<br/>"));
-    VcsNotifier.getInstance(project).notifyError("Clone failed", description);
+    VcsNotifier.getInstance(project).notifyError("Clone failed", StringUtil.capitalize(description));
     return false;
   }
 
