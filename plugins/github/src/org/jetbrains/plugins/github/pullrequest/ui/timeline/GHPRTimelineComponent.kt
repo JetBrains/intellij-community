@@ -1,31 +1,40 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.util.ui.JBInsets
-import org.jetbrains.plugins.github.api.data.GHIssueComment
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.util.ui.*
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
 import java.awt.Dimension
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.ListModel
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
-                            private val reviewsThreadsModel: GHPRReviewThreadsModel)
-  : JBPanelWithEmptyText(VerticalFlowLayout()) {
+class GHPRTimelineComponent(private val model: GHPRTimelineMergingModel,
+                            private val itemComponentFactory: GHPRTimelineItemComponentFactory)
+  : VerticalBox(), ComponentWithEmptyText {
+
+  private val emptyText = object : StatusText(this) {
+    override fun isStatusVisible() = model.size == 0
+  }
+
+  private val timeLineColor = JBColor(ColorUtil.fromHex("#F2F2F2"), ColorUtil.fromHex("#3E3E3E"))
+  private val timeLineValues = JBValue.JBValueGroup()
+  private val timeLineGap = timeLineValues.value(UIUtil.DEFAULT_VGAP.toFloat())
+  private val timeLineWidth = timeLineValues.value(2f)
+  private val timeLineX = timeLineValues.value(20f / 2 - 1)
 
   init {
     isOpaque = false
+    border = JBUI.Borders.emptyTop(6)
 
     model.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
+        for (i in e.index1 downTo e.index0) {
           remove(i)
         }
         revalidate()
@@ -34,26 +43,54 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(createComponent(model.getElementAt(i)), i)
+          add(itemComponentFactory.createComponent(model.getElementAt(i)), i)
         }
-        validate()
+        revalidate()
         repaint()
       }
 
       override fun contentsChanged(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
-          remove(i)
-          add(createComponent(model.getElementAt(i)), i)
-        }
-        revalidate()
+        validate()
         repaint()
       }
     })
 
     for (i in 0 until model.size) {
-      add(createComponent(model.getElementAt(i)), i)
+      add(itemComponentFactory.createComponent(model.getElementAt(i)), i)
     }
   }
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    // paint time LINE
+    // painted from bottom to top
+    synchronized(treeLock) {
+      val lastIdx = componentCount - 1
+      if (lastIdx < 0) return
+      val lastComp = getComponent(lastIdx) as? Item ?: return
+      var yEnd = computeYEnd(lastComp)
+
+      g as Graphics2D
+      g.color = timeLineColor
+      val x = timeLineX.float.toDouble()
+
+      for (i in componentCount - 2 downTo 0) {
+        val comp = getComponent(i) as? Item ?: continue
+        val yStart = computeYStart(comp)
+        if (yStart >= yEnd) continue
+        LinePainter2D.paint(g, x, yStart.toDouble(), x, yEnd.toDouble(), LinePainter2D.StrokeType.INSIDE, timeLineWidth.float.toDouble())
+        yEnd = computeYEnd(comp)
+      }
+    }
+  }
+
+  private fun computeYStart(item: Item) = item.y +
+                                          (item.marker.y + item.marker.height - item.marker.insets.bottom) +
+                                          timeLineGap.get()
+
+  private fun computeYEnd(item: Item) = item.y + (item.marker.y + item.marker.insets.top) - timeLineGap.get()
+
+  override fun getEmptyText() = emptyText
 
   override fun getPreferredSize(): Dimension? {
     if (model.size == 0 && !StringUtil.isEmpty(emptyText.text)) {
@@ -66,47 +103,8 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     }
   }
 
-  private fun createComponent(item: GHPRTimelineItem): JComponent {
-    if (item is GHPRTimelineItem.Unknown)
-      return JLabel("Unknown type:" + item.__typename)
-    else {
-      val text = when (item) {
-        is GHPullRequestCommit -> """Commit "${item.commit.messageHeadlineHTML}" by ${item.commit.author?.name}"""
-        is GHPullRequestReview -> """${item.author?.login} added review with text "${item.bodyHTML} and ${reviewsThreadsModel.getThreads(
-          item.id).size} comment threads"""
-        is GHIssueComment -> """Comment "${item.bodyHtml}" by ${item.author?.login}"""
-
-        is GHPRRenamedTitleEvent -> """${item.actor?.login} renamed from "${item.previousTitle}" to "${item.currentTitle}""""
-
-        is GHPRAssignedEvent -> """${item.actor?.login} assigned ${item.user.login}"""
-        is GHPRUnassignedEvent -> """${item.actor?.login} unassigned ${item.user.login}"""
-
-        is GHPRLabeledEvent -> """${item.actor?.login} added label ${item.label.name}"""
-        is GHPRUnlabeledEvent -> """${item.actor?.login} removed label ${item.label.name}"""
-
-        is GHPRReviewRequestedEvent -> """${item.actor?.login} added reviewer ${item.requestedReviewer}"""
-        is GHPRReviewUnrequestedEvent -> """${item.actor?.login} removed reviewer ${item.requestedReviewer}"""
-
-        is GHPRClosedEvent -> """${item.actor?.login} closed PR"""
-        is GHPRReopenedEvent -> """${item.actor?.login} reopened PR"""
-        is GHPRMergedEvent -> """${item.actor?.login} merged PR"""
-
-        is GHPRReviewDismissedEvent -> """${item.actor?.login} dismissed review by ${item.reviewAuthor} with message "${item.dismissalMessageHTML}" """
-
-        is GHPRBaseRefChangedEvent -> """${item.actor?.login} changed the base branch"""
-        is GHPRBaseRefForcePushedEvent -> """${item.actor?.login} force-pushed the branch ${item.ref?.name} from ${item.beforeCommit.abbreviatedOid} to ${item.afterCommit.abbreviatedOid}"""
-
-        is GHPRHeadRefForcePushedEvent -> """${item.actor?.login} force-pushed the branch ${item.ref?.name} from ${item.beforeCommit.abbreviatedOid} to ${item.afterCommit.abbreviatedOid}"""
-
-        is GHPRHeadRefDeletedEvent -> """${item.actor?.login} deleted the branch ${item.headRefName}"""
-        is GHPRHeadRefRestoredEvent -> """${item.actor?.login} restored the head branch"""
-
-        is GHPRTimelineMergedSimpleEvents -> """${item.actor?.login} performed multiple simple actions on ${item.createdAt}"""
-        is GHPRTimelineMergedStateEvents -> """${item.actor?.login} performed multiple actions changing state on ${item.createdAt}"""
-
-        else -> item.javaClass.canonicalName
-      }
-      return JLabel(text)
-    }
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+    emptyText.paint(this, g)
   }
 }

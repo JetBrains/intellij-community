@@ -2,20 +2,33 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import javax.swing.AbstractListModel
 import kotlin.math.max
 
-class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
+class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>(), GHPRReviewsThreadsProvider {
   private val list = mutableListOf<GHPRTimelineItem>()
+  private var threadsByReview = mapOf<String, List<GHPullRequestReviewThread>>()
+  private val threadsModelsByReview = mutableMapOf<String, GHPRReviewThreadsModel>()
 
   override fun getElementAt(index: Int): GHPRTimelineItem = list[index]
 
   override fun getSize(): Int = list.size
 
+  override fun setReviewsThreads(threads: List<GHPullRequestReviewThread>) {
+    threadsByReview = threads.groupBy { it.reviewId }
+    for ((reviewId, model) in threadsModelsByReview) {
+      model.update(threadsByReview[reviewId].orEmpty())
+    }
+  }
+
+  override fun findReviewThreads(reviewId: String): GHPRReviewThreadsModel? = threadsModelsByReview[reviewId]
+
   fun add(items: List<GHPRTimelineItem>) {
-    var lastListIdx = max(0, list.lastIndex)
+    var lastListIdx = list.lastIndex
     var lastEvent: GHPRTimelineEvent? = list.lastOrNull() as? GHPRTimelineEvent
     if (lastEvent != null) {
       list.removeAt(lastListIdx)
@@ -30,6 +43,10 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
           lastEvent = null
         }
         list.add(item)
+
+        if (item is GHPullRequestReview) {
+          threadsModelsByReview[item.id] = GHPRReviewThreadsModel(threadsByReview[item.id].orEmpty())
+        }
       }
       else {
         if (lastEvent != null) {
@@ -48,13 +65,15 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
       }
     }
     if (lastEvent != null && !isCollapsedMerge(lastEvent)) list.add(lastEvent)
-    fireIntervalAdded(this, max(0, lastListIdx), list.lastIndex)
+    fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
   }
 
   fun removeAll() {
     val lastIdx = max(0, size - 1)
     list.clear()
     if (lastIdx > 0) fireIntervalRemoved(this, 0, lastIdx)
+
+    threadsModelsByReview.clear()
   }
 
   companion object {

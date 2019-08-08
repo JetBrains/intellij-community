@@ -18,12 +18,16 @@ object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
-    val apiColor = ColorUtil.fromHex(label.color)
-    background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
-    foreground = computeForeground(background)
+    background = getLabelBackground(label)
+    foreground = getLabelForeground(background)
   }.andOpaque()
 
-  private fun computeForeground(bg: Color) = if (ColorUtil.isDark(bg)) Color.white else Color.black
+  fun getLabelBackground(label: GHLabel): JBColor {
+    val apiColor = ColorUtil.fromHex(label.color)
+    return JBColor(apiColor, ColorUtil.darker(apiColor, 3))
+  }
+
+  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
   fun setTransparentRecursively(component: Component) {
     if (component is JComponent) {

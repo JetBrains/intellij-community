@@ -18,6 +18,7 @@ class GHPullRequestReviewThread(id: String,
   val originalCommit = root.originalCommit
   val originalPosition = root.originalPosition
   val createdAt = root.createdAt
+  val diffHunk = root.diffHunk
 
   val reviewId = root.reviewId
 }

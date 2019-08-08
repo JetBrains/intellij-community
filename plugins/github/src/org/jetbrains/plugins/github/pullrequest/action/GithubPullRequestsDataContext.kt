@@ -7,9 +7,10 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
 
@@ -18,6 +19,7 @@ class GithubPullRequestsDataContext internal constructor(val requestExecutor: Gi
                                                          internal val listLoader: GHPRListLoader,
                                                          internal val selectionHolder: GithubPullRequestsListSelectionHolder,
                                                          internal val dataLoader: GithubPullRequestsDataLoader,
+                                                         val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                          val serverPath: GithubServerPath,
                                                          val repositoryDetails: GithubRepoDetailed,
                                                          val accountDetails: GithubAuthenticatedUser,

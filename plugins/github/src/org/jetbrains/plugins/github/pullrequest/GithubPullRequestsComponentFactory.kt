@@ -179,6 +179,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     }
 
     private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
+                                                            avatarIconsProviderFactory,
                                                             account.server, repoDetails, accountDetails, repository, remote)
 
     private fun installPopup(list: GithubPullRequestsList) {

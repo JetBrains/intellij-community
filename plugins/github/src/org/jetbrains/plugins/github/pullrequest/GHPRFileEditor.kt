@@ -3,10 +3,15 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
@@ -16,53 +21,69 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRHeaderPanel
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadsModel
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineComponent
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
-import javax.swing.JPanel
 
-internal class GHPRFileEditor(private val file: GHPRVirtualFile)
+internal class GHPRFileEditor(progressManager: ProgressManager,
+                              private val fileTypeRegistry: FileTypeRegistry,
+                              private val project: Project,
+                              private val editorFactory: EditorFactory,
+                              private val file: GHPRVirtualFile)
   : UserDataHolderBase(), FileEditor {
 
   private val propertyChangeSupport = PropertyChangeSupport(this)
-  private val panel: JPanel
+  private val mainPanel = Wrapper()
 
   init {
-    val detailsModel = SingleValueModel(file.pullRequest)
+    val context = file.dataContext
 
-    val dataProvider = file.dataProvider
-    dataProvider.addRequestsChangesListener(this, object : GithubPullRequestDataProvider.RequestsChangedListener {
-      override fun detailsRequestChanged() {
-        dataProvider.detailsRequest.handleOnEdt(this@GHPRFileEditor) { pr, _ ->
-          if (pr != null) detailsModel.value = pr
-        }
-      }
+    val detailsModel = SingleValueModel(file.pullRequest)
+    val timelineModel = GHPRTimelineMergingModel()
+    Disposer.register(this, Disposable {
+      timelineModel.removeAll()
     })
 
-    val header = GHPRHeaderPanel(detailsModel)
-    Disposer.register(this, header)
+    val loader = GHPRTimelineLoader(progressManager, context.requestExecutor, context.serverPath, context.repositoryDetails.fullPath,
+                                    file.pullRequest.number, timelineModel)
+    Disposer.register(this, loader)
 
-    val timelineListModel = GHPRTimelineMergingModel()
-    val reviewThreadsModel = GHPRReviewThreadsModel(dataProvider)
-    val timeline = GHPRTimelineComponent(timelineListModel, reviewThreadsModel)
+    val dataProvider = file.dataProvider
+    fun handleReviewsThreads() {
+      dataProvider.reviewThreadsRequest.handleOnEdt(this) { threads, _ ->
+        if (threads != null) timelineModel.setReviewsThreads(threads)
+      }
+    }
+
+    fun handleDetails() {
+      dataProvider.detailsRequest.handleOnEdt(this@GHPRFileEditor) { pr, _ ->
+        if (pr != null) detailsModel.value = pr
+      }
+    }
+    dataProvider.addRequestsChangesListener(this, object : GithubPullRequestDataProvider.RequestsChangedListener {
+      override fun detailsRequestChanged() = handleDetails()
+      override fun reviewThreadsRequestChanged() = handleReviewsThreads()
+    })
+    handleDetails()
+    handleReviewsThreads()
+
+    val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
+
+    val header = GHPRHeaderPanel(detailsModel)
+    val timeline = GHPRTimelineComponent(timelineModel, createItemComponentFactory(timelineModel, avatarIconsProvider))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
     }
-
-    val context = file.dataContext
-    val loader = GHPRTimelineLoader(service(), context.requestExecutor, context.serverPath, context.repositoryDetails.fullPath,
-                                    file.pullRequest.number, timelineListModel)
-    Disposer.register(this, loader)
 
     val contentPanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
       init {
@@ -71,40 +92,56 @@ internal class GHPRFileEditor(private val file: GHPRVirtualFile)
 
         layout = BorderLayout()
 
+        emptyText.clear()
+
         add(header, BorderLayout.NORTH)
         add(timeline, BorderLayout.CENTER)
         add(loadingIcon, BorderLayout.SOUTH)
-
-        emptyText.clear()
       }
 
       override fun getEmptyText() = timeline.emptyText
 
       override fun dispose() {}
     }
-    Disposer.register(contentPanel, loadingIcon)
 
-    panel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true) {
+    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true), DataProvider {
       override val loadingText = ""
-
-      init {
-        background = UIUtil.getListBackground()
-      }
 
       override fun createCenterPanel(content: JComponent) = Wrapper(content)
 
       override fun setLoading(isLoading: Boolean) {
         loadingIcon.isVisible = isLoading
       }
+
+      override fun updateUI() {
+        super.updateUI()
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
+
+      override fun getData(dataId: String): Any? {
+        if (GithubPullRequestKeys.DATA_CONTEXT.`is`(dataId)) return context
+        return null
+      }
     }
-    Disposer.register(panel, contentPanel)
-    Disposer.register(this, panel)
+    Disposer.register(this, loaderPanel)
+    Disposer.register(loaderPanel, contentPanel)
+    Disposer.register(contentPanel, loadingIcon)
+
+    mainPanel.setContent(loaderPanel)
+  }
+
+  private fun createItemComponentFactory(timelineModel: GHPRTimelineMergingModel, avatarIconsProvider: GHAvatarIconsProvider)
+    : GHPRTimelineItemComponentFactory {
+
+    val diffFactory = GHPRReviewThreadDiffComponentFactory(fileTypeRegistry, project, editorFactory)
+    val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
+    return GHPRTimelineItemComponentFactory(avatarIconsProvider, timelineModel, diffFactory, eventsFactory)
   }
 
   override fun getName() = file.name
 
-  override fun getComponent(): JComponent = panel
-  override fun getPreferredFocusedComponent(): JComponent? = panel
+  override fun getComponent(): JComponent = mainPanel
+  override fun getPreferredFocusedComponent(): JComponent? = mainPanel.targetComponent
 
   override fun getFile() = file
   override fun isModified(): Boolean = false

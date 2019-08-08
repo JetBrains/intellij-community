@@ -21,4 +21,12 @@ class SingleValueModel<T>(initialValue: T) {
         listener()
       }
     }, disposable)
+
+  @CalledInAwt
+  fun addValueChangedListener(listener: () -> Unit) =
+    changeEventDispatcher.addListener(object : SimpleEventListener {
+      override fun eventOccurred() {
+        listener()
+      }
+    })
 }

@@ -19,6 +19,7 @@ class GHPullRequestReviewComment(id: String,
                                  val originalCommit: GHCommitHash?,
                                  val originalPosition: Int,
                                  val replyTo: GHNode?,
+                                 val diffHunk: String,
                                  @JsonProperty("pullRequestReview") pullRequestReview: GHNode)
   : GHComment(id, author, bodyHTML, createdAt) {
   val reviewId = pullRequestReview.id

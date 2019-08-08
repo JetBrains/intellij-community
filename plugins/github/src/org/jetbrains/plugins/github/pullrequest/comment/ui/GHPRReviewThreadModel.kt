@@ -15,6 +15,8 @@ class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
 
   val id: String = thread.id
   val createdAt = thread.createdAt
+  val filePath = thread.path
+  val diffHunk = thread.diffHunk
 
   var fold by observable(true) { _, _, _ ->
     collapseStateEventDispatcher.multicaster.eventOccurred()
