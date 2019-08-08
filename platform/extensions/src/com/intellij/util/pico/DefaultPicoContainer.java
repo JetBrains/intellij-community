@@ -7,6 +7,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
@@ -194,6 +195,14 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       }
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public final void precreateService(@NotNull String serviceClass) {
+    ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass);
+    if (adapter != null) {
+      adapter.getComponentInstance(this);
+    }
   }
 
   @Nullable

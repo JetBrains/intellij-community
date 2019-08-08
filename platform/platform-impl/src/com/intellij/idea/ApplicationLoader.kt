@@ -61,8 +61,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.JOptionPane
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
@@ -81,10 +79,11 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine())
   }
 
-  val registerFuture = pluginDescriptorsFuture.thenAccept {
+  val registerFuture = pluginDescriptorsFuture.thenApply {
     initAppActivity.runChild("app component registration") {
       app.registerComponents(it)
     }
+    it
   }
 
   if (args.isEmpty()) {
@@ -105,12 +104,12 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   }
 }
 
-private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppActivity: Activity, registerFuture: CompletableFuture<Void?>, args: List<String>) {
+private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppActivity: Activity, registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, args: List<String>) {
   // this code is here for one simple reason - here we have application,
   // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
   // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
   // and do not place any time-consuming code in between (e.g. showLicenseeInfoOnSplash)
-  var future = registerRegistryAndInitStore(registerFuture, app)
+  val registerRegistryAndInitStoreFuture = registerRegistryAndInitStore(registerFuture, app)
 
   val headless = app.isHeadlessEnvironment
   if (!headless) {
@@ -122,9 +121,9 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
   }
 
   // preload services only after icon activation
-  future = future.thenCompose {
+  val future = registerRegistryAndInitStoreFuture.thenCompose {
     val preloadServiceActivity = StartUpMeasurer.start("preload services")
-    preloadServices(app)
+    preloadServices(app, it)
       .thenRun(Runnable {
         preloadServiceActivity.end()
       })
@@ -198,9 +197,9 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
 }
 
 @ApiStatus.Internal
-fun registerRegistryAndInitStore(registerFuture: CompletableFuture<*>, app: ApplicationImpl): CompletableFuture<Void?> {
+fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return registerFuture
-    .thenCompose {
+    .thenCompose { plugins ->
       val future = CompletableFuture.runAsync(Runnable {
         ParallelActivity.PREPARE_APP_INIT.run("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
@@ -211,6 +210,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<*>, app: Appl
       initConfigurationStore(app, null)
 
       future
+        .thenApply { plugins }
     }
 }
 
@@ -500,37 +500,23 @@ private fun processProgramArguments(args: Array<String>): List<String> {
 }
 
 @ApiStatus.Internal
-fun preloadServices(app: ApplicationImpl): CompletableFuture<Void?> {
-  val toPreload = mutableListOf<String>()
+fun preloadServices(app: ApplicationImpl, plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
+  val futures = mutableListOf<CompletableFuture<Void>>()
   val picoContainer = app.picoContainer
-  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+  val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors())
+  for (plugin in plugins) {
     for (service in (plugin as IdeaPluginDescriptorImpl).app.services) {
       if (service.preload) {
-        toPreload.add(service.getInterface())
+        futures.add(CompletableFuture.runAsync(Runnable { picoContainer.precreateService(service.getInterface()) }, executor))
       }
     }
   }
 
-  if (toPreload.isEmpty()) {
-    return CompletableFuture.completedFuture(null)
-  }
-
-  val appExecutorService = AppExecutorUtil.getAppExecutorService()
-
-  val maxThreads = Runtime.getRuntime().availableProcessors()
-  val bucketSize = max(toPreload.size / maxThreads, 1)
-  return CompletableFuture.allOf(*Array(min(toPreload.size, maxThreads)) {
-    val startIndex = it * bucketSize
-    val list = toPreload.subList(startIndex, min(startIndex + bucketSize, toPreload.size))
-    CompletableFuture.runAsync(Runnable {
-      for (key in list) {
-        picoContainer.getComponentInstance(key)
-      }
-    }, appExecutorService)
-  })
+  executor.shutdown()
+  return CompletableFuture.allOf(*futures.toTypedArray())
 }
 
-private fun CompletableFuture<Void?>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {
+private fun CompletableFuture<*>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {
   return thenRun(handler)
     .exceptionally {
       MainRunner.processException(it)
