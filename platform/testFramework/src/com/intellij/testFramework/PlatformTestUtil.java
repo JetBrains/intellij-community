@@ -134,20 +134,11 @@ public class PlatformTestUtil {
   /**
    * @see ExtensionPointImpl#maskAll(List, Disposable)
    */
-  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName,
-                                        @NotNull List<T> newExtensions,
-                                        @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
-  }
-
-  /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
-   */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
                                         @NotNull List<T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
 
   /**

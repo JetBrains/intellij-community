@@ -48,7 +48,7 @@ class ProjectOpeningTest {
   @Test
   fun openProjectCancelling() {
     val activity = MyStartupActivity()
-    PlatformTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable, fireEvents = false)
     val manager = ProjectManagerEx.getInstanceEx()
     val foo = tempDir.newPath()
     val project = manager.createProject(null, foo.toString())!!

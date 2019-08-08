@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -383,7 +384,9 @@ public class MiscImportingTest extends MavenImportingTestCase {
   public void testUserPropertiesCanBeCustomizedByMavenImporters() {
     Disposable disposable = Disposer.newDisposable();
     try {
-      PlatformTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME, Collections.singletonList(new NameSettingMavenImporter("name-from-properties")), disposable);
+      ExtensionTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
+                                       Collections.<MavenImporter>singletonList(new NameSettingMavenImporter("name-from-properties")),
+                                       disposable);
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>" +

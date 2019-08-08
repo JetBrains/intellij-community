@@ -17,10 +17,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -166,20 +163,19 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
 
-      PlatformTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME,
-                                      Collections.singletonList(new AdditionalLibraryRootsProvider() {
-                                        @NotNull
-                                        @Override
-                                        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-                                          return myProject == project ? Collections.singletonList(
-                                            new JavaSyntheticLibrary(
-                                              ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
-                                              ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
-                                              ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
-                                              null)
-                                          ) : Collections.emptyList();
-                                        }
-                                      }), getTestRootDisposable());
+      ExtensionTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME, Collections.<AdditionalLibraryRootsProvider>singletonList(new AdditionalLibraryRootsProvider() {
+                                          @NotNull
+                                          @Override
+                                          public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+                                            return myProject == project ? Collections.singletonList(
+                                              new JavaSyntheticLibrary(
+                                                ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
+                                                ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
+                                                ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
+                                                null)
+                                            ) : Collections.emptyList();
+                                          }
+                                        }), getTestRootDisposable());
 
       // fill roots of module3
       {

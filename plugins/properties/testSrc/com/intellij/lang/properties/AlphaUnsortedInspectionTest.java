@@ -7,7 +7,7 @@ import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectio
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
@@ -26,8 +26,8 @@ public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
   }
 
   public void testUnsortedSuppressed() {
-    PlatformTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
-                                    Collections.singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
+    ExtensionTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
+                                     Collections.<AlphaUnsortedPropertiesFileInspectionSuppressor>singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
                                       @Override
                                       public boolean suppressInspectionFor(PropertiesFile propertiesFile) {
                                         return propertiesFile.getName().toLowerCase(Locale.ENGLISH).contains("suppress");

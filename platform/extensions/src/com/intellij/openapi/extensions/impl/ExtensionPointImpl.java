@@ -549,7 +549,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
    */
   @TestOnly
-  public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable) {
+  @ApiStatus.Internal
+  public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable, boolean fireEvents) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       POINTS_IN_READONLY_MODE = ContainerUtil.newIdentityTroveSet();
@@ -565,7 +566,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
 
-    if (myListeners.length > 0) {
+    if (fireEvents && myListeners.length > 0) {
       if (oldList != null) {
         for (T extension : oldList) {
           notifyListenersOnRemove(extension, getDescriptor(), myListeners);
@@ -584,12 +585,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
           myExtensionsCache = oldList;
           myExtensionsCacheAsArray = oldArray;
 
-          for (T extension : list) {
-            notifyListenersOnRemove(extension, getDescriptor(), myListeners);
-          }
-          if (oldList != null) {
-            for (T extension : oldList) {
-              notifyListenersOnAdd(extension, getDescriptor(), myListeners);
+          if (fireEvents && myListeners.length > 0) {
+            for (T extension : list) {
+              notifyListenersOnRemove(extension, getDescriptor(), myListeners);
+            }
+
+            if (oldList != null) {
+              for (T extension : oldList) {
+                notifyListenersOnAdd(extension, getDescriptor(), myListeners);
+              }
             }
           }
         }

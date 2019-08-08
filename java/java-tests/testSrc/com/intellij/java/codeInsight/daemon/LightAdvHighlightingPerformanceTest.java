@@ -53,7 +53,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
-    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent);
+    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent, false);
   }
 
   private String getFilePath(String suffix) {
