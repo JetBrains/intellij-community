@@ -57,7 +57,7 @@ public class DocumentUndoProvider implements Disposable, DocumentListener {
     if (!shouldProcess(document)) return;
 
     UndoManagerImpl undoManager = getUndoManager();
-    if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
+    if (undoManager.isActive() && isUndoable(undoManager, document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
         document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
       throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
     }
@@ -69,24 +69,29 @@ public class DocumentUndoProvider implements Disposable, DocumentListener {
     if (!shouldProcess(document)) return;
 
     UndoManagerImpl undoManager = getUndoManager();
-    if (undoManager.isActive() && isUndoable(document)) {
-      registerUndoableAction(e);
+    if (undoManager.isActive() && isUndoable(undoManager, document)) {
+      registerUndoableAction(undoManager, e);
     }
     else {
-      registerNonUndoableAction(document);
+      registerNonUndoableAction(undoManager, document);
     }
   }
 
-  private boolean shouldProcess(Document document) {
-    if (myProject != null && myProject.isDisposed()) return false;
-    if (!ApplicationManager.getApplication().isDispatchThread()) return false; // some light document
+  private boolean shouldProcess(@NotNull Document document) {
+    if (myProject != null && myProject.isDisposed()) {
+      return false;
+    }
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      // some light document
+      return false;
+    }
     return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
            // for the same event twice (from original document too)
            // and undo will work incorrectly
            && shouldRecordActions(document);
   }
 
-  private static boolean shouldRecordActions(final Document document) {
+  private static boolean shouldRecordActions(@NotNull Document document) {
     if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
@@ -95,16 +100,16 @@ public class DocumentUndoProvider implements Disposable, DocumentListener {
            vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
   }
 
-  private void registerUndoableAction(DocumentEvent e) {
-    getUndoManager().undoableActionPerformed(new EditorChangeAction(e));
+  private static void registerUndoableAction(@NotNull UndoManagerImpl undoManager, @NotNull DocumentEvent e) {
+    undoManager.undoableActionPerformed(new EditorChangeAction(e));
   }
 
-  private void registerNonUndoableAction(final Document document) {
+  private static void registerNonUndoableAction(@NotNull UndoManagerImpl undoManager, @NotNull Document document) {
     DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
-    getUndoManager().nonundoableActionPerformed(ref, false);
+    undoManager.nonundoableActionPerformed(ref, false);
   }
 
-  private boolean isUndoable(Document document) {
+  private static boolean isUndoable(@NotNull UndoManagerImpl undoManager, @NotNull Document document) {
     DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
     VirtualFile file = ref.getFile();
 
@@ -112,6 +117,6 @@ public class DocumentUndoProvider implements Disposable, DocumentListener {
     if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
       return true;
     }
-    return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);
+    return !UndoManagerImpl.isRefresh() || undoManager.isUndoOrRedoAvailable(ref);
   }
 }
