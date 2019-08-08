@@ -37,15 +37,15 @@ function altool-upload() {
   export _JAVA_OPTIONS="-Duser.home=$HOME -Djava.io.tmpdir=$TMPDIR"
   # Reduce amount of downloads, cache transporter libraries
   shared_itmstransporter="$OLD_HOME/shared-itmstransporter"
-  mkdir -p "$shared_itmstransporter"
-  ln -s "$shared_itmstransporter" "$HOME/.itmstransporter"
+  if [[ -f "$shared_itmstransporter" ]]; then
+    cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
+  fi
   # For some reason altool prints everything to stderr, not stdout
   set +e
   xcrun altool --notarize-app \
     --username "$APPL_USER" --password "$APPL_PASSWORD" \
     --primary-bundle-id "$BUNDLE_ID" \
     --asc-provider JetBrainssro --file "$1" 2>&1 | tee "altool.init.out"
-  unlink "$HOME/.itmstransporter"
   unset TMPDIR
   export HOME="$OLD_HOME"
   set -e
