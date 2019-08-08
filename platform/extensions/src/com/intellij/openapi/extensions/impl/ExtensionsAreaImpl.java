@@ -80,11 +80,11 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       throw new ExtensionInstantiationException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
     }
 
-    boolean unloadSafe = Boolean.parseBoolean(extensionPointElement.getAttributeValue("unloadSafe"));
+    boolean dynamic = Boolean.parseBoolean(extensionPointElement.getAttributeValue("dynamic"));
 
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, picoContainer, pluginDescriptor, unloadSafe);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, picoContainer, pluginDescriptor, dynamic);
     }
     else {
       boolean registerInPicoContainer;
@@ -103,7 +103,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor);
       }
       else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor, unloadSafe);
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor, dynamic);
       }
     }
     registerExtensionPoint(point);

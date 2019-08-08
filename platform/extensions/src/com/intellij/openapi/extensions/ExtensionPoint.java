@@ -128,7 +128,10 @@ public interface ExtensionPoint<T> {
   @NotNull
   String getClassName();
 
-  boolean isUnloadSafe();
+  /**
+   * @return true if the EP allows adding/removing extensions at runtime
+   */
+  boolean isDynamic();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

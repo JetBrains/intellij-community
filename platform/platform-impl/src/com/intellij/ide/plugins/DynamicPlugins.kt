@@ -30,7 +30,7 @@ object DynamicPlugins {
       for (epName in extensions.keySet()) {
         val ep = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) ?:
           anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-        if (ep == null || !ep.isUnloadSafe) {
+        if (ep == null || !ep.isDynamic) {
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because of extension $epName")
           return false
         }

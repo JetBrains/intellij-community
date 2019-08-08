@@ -21,8 +21,8 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
                           @NotNull String className,
                           @NotNull MutablePicoContainer picoContainer,
                           @NotNull PluginDescriptor pluginDescriptor,
-                          boolean unloadSafe) {
-    super(name, className, picoContainer, pluginDescriptor, unloadSafe);
+                          boolean dynamic) {
+    super(name, className, picoContainer, pluginDescriptor, dynamic);
   }
 
   protected boolean isUsePicoComponentAdapter() {

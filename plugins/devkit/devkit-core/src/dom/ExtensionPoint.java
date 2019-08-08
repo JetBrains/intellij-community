@@ -48,6 +48,10 @@ public interface ExtensionPoint extends DomElement {
   GenericAttributeValue<Area> getArea();
 
   @NotNull
+  @Attribute("dynamic")
+  GenericAttributeValue<Boolean> getDynamic();
+
+  @NotNull
   @Stubbed
   @SubTagList("with")
   List<With> getWithElements();

@@ -10,8 +10,8 @@
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" unloadSafe="true"/>
-    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" unloadSafe="true"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -47,7 +47,7 @@
     <extensionPoint name="selectInTarget"
                     interface="com.intellij.ide.SelectInTarget"
                     area="IDEA_PROJECT"
-                    unloadSafe="true"/>
+                    dynamic="true"/>
 
     <extensionPoint name="fileEditorProvider"
                     interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
@@ -163,7 +163,7 @@
     <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
     <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
-    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP" unloadSafe="true">
+    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP" dynamic="true">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
@@ -346,7 +346,7 @@
     </extensionPoint>
 
     <extensionPoint name="systemProperty" beanClass="com.intellij.openapi.util.SystemPropertyBean"/>
-    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" unloadSafe="true"/>
+    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
 
     <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
 
