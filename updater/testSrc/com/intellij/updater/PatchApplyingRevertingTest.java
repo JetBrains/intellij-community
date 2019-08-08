@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -92,13 +92,13 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
-    assumeTrue("windows-only", Utils.IS_WINDOWS);
+    assumeTrue("Windows-only", Utils.IS_WINDOWS);
     doLockedFileTest();
   }
 
   @Test
   public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
-    assumeTrue("windows-only", Utils.IS_WINDOWS);
+    assumeTrue("Windows-only", Utils.IS_WINDOWS);
     FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
     doLockedFileTest();
   }
@@ -580,7 +580,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testExecutableFlagChange() throws Exception {
-    assumeFalse("windows-allergic", Utils.IS_WINDOWS);
+    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
 
     FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_executable"), "to_become_executable");
     FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_plain"), "to_become_plain");

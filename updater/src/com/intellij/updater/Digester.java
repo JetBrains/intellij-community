@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -14,7 +14,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class Digester {
-  // CRC32 will only use the lower 32bits of long, never returning negative values.
+  /* CRC32 uses the lower 32bits of a long, never returning negative values */
   public static final long INVALID    = 0x8000_0000_0000_0000L;
   public static final long DIRECTORY  = 0x4000_0000_0000_0000L;
   public static final long SYM_LINK   = 0x2000_0000_0000_0000L;
@@ -35,7 +35,7 @@ public class Digester {
 
     if (attrs.isSymbolicLink()) {
       Path target = Files.readSymbolicLink(path);
-      if (target.isAbsolute()) throw new IOException("Absolute link: " + file + " -> " + target);
+      if (target.isAbsolute()) throw new IOException("An absolute link: " + file + " -> " + target);
       return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | SYM_LINK;
     }
 
