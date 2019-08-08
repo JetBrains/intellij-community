@@ -43,8 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -55,6 +54,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.formatting.Indent.*;
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
@@ -736,63 +736,50 @@ public class GroovyBlockGenerator {
   }
 
 
-  private void addNestedChildren(final PsiElement elem,
-                                 List<Block> list,
+  private void addNestedChildren(@NotNull PsiElement elem,
+                                 @NotNull List<Block> list,
                                  @Nullable AlignmentProvider.Aligner aligner,
                                  final boolean topLevel,
-                                 Wrap wrap) {
+                                 @NotNull Wrap wrap) {
     final List<ASTNode> children = visibleChildren(elem.getNode());
-    if (elem instanceof GrMethodCallExpression) {
-      GrExpression invokedExpression = ((GrMethodCallExpression)elem).getInvokedExpression();
-      if (invokedExpression instanceof GrQualifiedReference) {
-        final PsiElement nameElement = ((GrQualifiedReference)invokedExpression).getReferenceNameElement();
-        if (nameElement != null) {
-          List<ASTNode> grandChildren = visibleChildren(invokedExpression.getNode());
-          int i = 0;
-          while (i < grandChildren.size()) {
-            ASTNode node = grandChildren.get(i);
-            if (nameElement == node.getPsi() || TokenSets.DOTS.contains(node.getElementType())) break;
-            i++;
-          }
-          if (i > 0) {
-            processNestedChildrenPrefix(list, aligner, false, grandChildren.subList(0, i), wrap);
-          }
-
-          MethodCallWithoutQualifierBlock nameBlock =
-            new MethodCallWithoutQualifierBlock(nameElement, wrap, topLevel, children, elem, myContext);
-          List<ASTNode> tail = grandChildren.subList(i, grandChildren.size());
-          list.add(syntheticBlockForCallTail(aligner, nameElement, tail, nameBlock));
-
-          return;
-        }
+    List<ASTNode> nodes = flattenQualifiedReference(elem);
+    if (nodes != null && !nodes.isEmpty()) {
+      int i = 0;
+      while (i < nodes.size()) {
+        ASTNode node = nodes.get(i);
+        if (TokenSets.DOTS.contains(node.getElementType())) break;
+        i++;
       }
+      if (i == nodes.size()) {
+        list.add(new MethodCallWithoutQualifierBlock(wrap, topLevel, nodes, myContext));
+        return;
+      }
+
+      if (i > 0) {
+        processNestedChildrenPrefix(list, aligner, false, nodes.subList(0, i), wrap);
+      }
+      Wrap synWrap = Wrap.createWrap(WrapType.NONE, false);
+      Indent indent = getContinuationWithoutFirstIndent();
+
+      List<Block> childBlocks = new ArrayList<>();
+      ASTNode dotNode = nodes.get(i);
+      if (aligner != null) {
+        aligner.append(dotNode.getPsi());
+      }
+      childBlocks.add(new GroovyBlock(dotNode, getIndent(dotNode), getChildWrap(dotNode), myContext));
+
+      List<ASTNode> callNodes = nodes.subList(i + 1, nodes.size());
+      if (!callNodes.isEmpty()) {
+        childBlocks.add(new MethodCallWithoutQualifierBlock(wrap, topLevel, callNodes, myContext));
+      }
+
+      SyntheticGroovyBlock synBlock = new SyntheticGroovyBlock(childBlocks, synWrap, indent, indent, myContext);
+      list.add(synBlock);
+
+      return;
     }
 
     processNestedChildrenPrefix(list, aligner, topLevel, children, wrap);
-  }
-
-  @NotNull
-  private Block syntheticBlockForCallTail(@Nullable AlignmentProvider.Aligner aligner,
-                                          @NotNull PsiElement nameElement,
-                                          @NotNull List<ASTNode> grandChildren,
-                                          @NotNull Block nameBlock) {
-    List<Block> subBlocks = new ArrayList<>();
-    for (ASTNode node : grandChildren) {
-
-      PsiElement currentElement = node.getPsi();
-      if (aligner != null && TokenSets.DOTS.contains(node.getElementType())) {
-        aligner.append(currentElement);
-      }
-      if (currentElement == nameElement) {
-        subBlocks.add(nameBlock);
-      }
-      else {
-        subBlocks.add(new GroovyBlock(node, getIndent(node), getChildWrap(node), myContext));
-      }
-    }
-    Wrap synWrap = Wrap.createWrap(WrapType.NONE, false);
-    Indent indent = getContinuationWithoutFirstIndent();
-    return new SyntheticGroovyBlock(subBlocks, synWrap, indent, indent, myContext);
   }
 
   private static boolean isAfterMultiLineClosure(ASTNode dot) {
@@ -843,4 +830,6 @@ public class GroovyBlockGenerator {
       }
     }
   }
+
+
 }

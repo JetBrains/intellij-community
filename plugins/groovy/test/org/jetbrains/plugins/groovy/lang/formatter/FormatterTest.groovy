@@ -319,15 +319,34 @@ class FormatterTest extends GroovyFormatterTestCase {
   }
 
   void testIndentAfterClosureQualifier() { doTest() }
+
   void testIndentAfterClosureQualifier2() { doTest() }
+
   void testIndentAfterClosureQualifier3() { doTest() }
+
+  void testChainCallFieldIndent() {
+    groovySettings.ALIGN_MULTILINE_CHAINED_METHODS = true
+    doTest()
+  }
+
+  void testChainCallFieldIndent2() {
+    groovySettings.ALIGN_MULTILINE_CHAINED_METHODS = true
+    doTest()
+  }
+
+  void testChainCallFieldIndent3() {
+    groovySettings.ALIGN_MULTILINE_CHAINED_METHODS = true
+    doTest()
+  }
 
   void testAssertDescriptionIndent() { doTest() }
 
   void testPackageDef1() { doTest() }
+
   void testPackageDef2() { doTest() }
 
   void testAnnotationArgs1() { doTest() }
+
   void testAnnotationArgs2() { doTest() }
 
   void testImplementsList() { doTest() }
@@ -363,7 +382,6 @@ def foo() {2}
 ''', '''\
 def foo() { 2 }
 ''')
-
   }
 
   void testSimpleBlocksInOneLine() {
@@ -422,7 +440,6 @@ for (;abc;) return 2
 for (; abc;)
   return 2
 ''')
-
   }
 
   void testWrapThrows() {
@@ -842,6 +859,7 @@ print abc ? cde
   }
 
   void testGDocAfterImports() { doTest() }
+
   void testGroovyDocAfterImports2() { doTest() }
 
   void testRegexExpressions() { doTest() }
