@@ -10,6 +10,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -103,6 +104,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Experimental
+  @Nullable
   default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, false);
   }
