@@ -218,7 +218,6 @@
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
-    <projectService serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
     <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
     <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
