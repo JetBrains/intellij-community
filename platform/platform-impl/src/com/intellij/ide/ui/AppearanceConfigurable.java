@@ -194,7 +194,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
     settings.setHideNavigationOnFocusLoss(myComponent.myHideNavigationPopupsCheckBox.isSelected());
     settings.setDndWithPressedAltOnly(myComponent.myAltDNDCheckBox.isSelected());
-    settings.setLanguageFlags(myComponent.myShowFlagsForLanguagesCheckBox.isSelected());  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
 
     update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
     settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
@@ -356,7 +355,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
-    myComponent.myShowFlagsForLanguagesCheckBox.setSelected(settings.getLanguageFlags());  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
@@ -454,7 +452,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
-    isModified |= myComponent.myShowFlagsForLanguagesCheckBox.isSelected() != settings.getLanguageFlags();  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -513,7 +510,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myDisableMnemonicInControlsCheckBox;
     private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAltDNDCheckBox;
-    private JCheckBox myShowFlagsForLanguagesCheckBox;  // Android Studio: added by Change I18c5f540 / commit 5ad4b9b
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
     private JBCheckBox myWidescreenLayoutCheckBox;

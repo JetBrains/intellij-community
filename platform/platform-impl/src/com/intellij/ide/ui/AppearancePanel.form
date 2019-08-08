@@ -108,15 +108,6 @@
                   <text value="Drag-n-Drop with ALT pressed only"/>
                 </properties>
               </component>
-              <!-- Android Studio: modified by Change I18c5f540 / commit 5ad4b9b -->
-              <component id="532df" class="javax.swing.JCheckBox" binding="myShowFlagsForLanguagesCheckBox" default-binding="true">
-                <constraints>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Show flags for languages"/>
-                </properties>
-              </component>
               <component id="123db" class="javax.swing.JButton" binding="myBackgroundImageButton">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
