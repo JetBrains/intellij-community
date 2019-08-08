@@ -24,7 +24,7 @@ public abstract class ProjectManager {
    * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
   /**
