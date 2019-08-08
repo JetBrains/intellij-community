@@ -106,7 +106,7 @@ final class PsiBreadcrumbs extends Breadcrumbs {
           .submit(AppExecutorUtil.getAppExecutorService())
           .onError(throwable -> {
             if (!(throwable instanceof CancellationException)) {
-              LOG.warn("Exception in LazyTooltipCrumb", throwable);
+              LOG.error("Exception in LazyTooltipCrumb", throwable);
             }
             removeFinishedTask.run();
           })
