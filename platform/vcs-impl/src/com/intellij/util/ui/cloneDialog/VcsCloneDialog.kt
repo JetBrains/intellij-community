@@ -44,7 +44,7 @@ class VcsCloneDialog private constructor(private val project: Project,
 
   init {
     init()
-    title = "Get From Version Control"
+    title = "Get from Version Control"
     JBUI.size(FlatWelcomeFrame.MAX_DEFAULT_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT).let {
       rootPane.minimumSize = it
       rootPane.preferredSize = it
