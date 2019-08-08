@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, AsyncFileListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
   static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -111,6 +111,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @TestOnly
   @NotNull
   synchronized VirtualFilePointer[] getPointersUnder(@NotNull VirtualFile parent, @NotNull String childName) {
+    assert !StringUtil.isEmptyOrSpaces(childName);
     List<FilePointerPartNode> nodes = new ArrayList<>();
     addRelevantPointers(parent, true, childName, nodes, true);
     return toPointers(nodes);
@@ -363,15 +364,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();
         container.throwDisposalError("Not disposed container");
       }
-    }
-  }
-
-  @TestOnly
-  synchronized void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
-    List<FilePointerPartNode> out = new ArrayList<>();
-    addRelevantPointers(null, false, "", out, true);
-    for (FilePointerPartNode node : out) {
-      node.addAllPointersTo(pointers);
     }
   }
 
@@ -701,18 +693,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  synchronized Collection<VirtualFilePointer> dumpPointers() {
+  synchronized Collection<VirtualFilePointer> dumpAllPointers() {
     Collection<VirtualFilePointer> result = new THashSet<>();
     for (FilePointerPartNode node : myPointers.values()) {
-      dumpPointersTo(node, result);
+      dumpPointersRecursivelyTo(node, result);
     }
     return result;
   }
 
-  private static void dumpPointersTo(@NotNull FilePointerPartNode node, @NotNull Collection<? super VirtualFilePointer> result) {
+  private static void dumpPointersRecursivelyTo(@NotNull FilePointerPartNode node, @NotNull Collection<? super VirtualFilePointer> result) {
     node.addAllPointersTo(result);
     for (FilePointerPartNode child : node.children) {
-      dumpPointersTo(child, result);
+      dumpPointersRecursivelyTo(child, result);
     }
   }
 }

@@ -65,14 +65,14 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() {
     myVirtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    pointersBefore = myVirtualFilePointerManager.dumpPointers();
+    pointersBefore = myVirtualFilePointerManager.dumpAllPointers();
     numberOfListenersBefore = myVirtualFilePointerManager.numberOfListeners();
   }
 
   @After
   public void tearDown() {
     Disposer.dispose(disposable);
-    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
+    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpAllPointers();
     int nListeners = myVirtualFilePointerManager.numberOfListeners();
     myVirtualFilePointerManager = null;
     assertEquals(numberOfListenersBefore, nListeners);
