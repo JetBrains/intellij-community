@@ -11,10 +11,12 @@ import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -71,7 +73,11 @@ class InferenceCache {
     }
 
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
-    if (!cache.containsVariable(descriptor)) {
+    final PsiType augmentedType = getAugmentedType(descriptor);
+    if (augmentedType != null) {
+      cache.putType(descriptor, DFAType.create(augmentedType));
+    }
+    else if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
@@ -86,6 +92,18 @@ class InferenceCache {
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
     return dfaType == null ? null : dfaType.getResultType();
+  }
+
+  @Nullable
+  private static PsiType getAugmentedType(@NotNull VariableDescriptor descriptor) {
+    if (descriptor instanceof ResolvedVariableDescriptor) {
+      final ResolvedVariableDescriptor resolvedDescriptor = (ResolvedVariableDescriptor)descriptor;
+      final GrVariable variable = resolvedDescriptor.getVariable();
+      return TypeAugmenter.Companion.inferAugmentedType(variable);
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable

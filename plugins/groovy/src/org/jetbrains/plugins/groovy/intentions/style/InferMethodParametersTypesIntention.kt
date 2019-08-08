@@ -13,8 +13,8 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.lang.UntypedParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
@@ -49,7 +49,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
       GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
       method.modifierList.setModifierProperty(DEF, false)
     }
-    UntypedParameterEnhancer.produceTypedMethod(method, GlobalSearchScope.allScope(project)) { virtualMethod ->
+    MethodParameterAugmenter.produceTypedMethod(method, GlobalSearchScope.allScope(project)) { virtualMethod ->
       substituteMethodSignature(virtualMethod, method)
     }
   }

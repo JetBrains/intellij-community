@@ -206,25 +206,24 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     }
     val parameterMapping = setUpParameterMapping(method, resultMethod)
     parameterMapping.forEach { (param, actualParameter) ->
-      val newParam = when {
+      val newParamType = when {
         param.type is PsiArrayType -> {
           val substituted = resultSubstitutor.substitute((param.type as PsiArrayType).componentType)
           (if (substituted is PsiWildcardType) substituted.bound else substituted)?.createArrayType()
         }
         else -> resultSubstitutor.substitute(param.type)
       }
-      val notNullParam = if (newParam == PsiType.NULL || newParam == null) {
-        getJavaLangObject(resultMethod)
+      if (newParamType == null || newParamType == PsiType.NULL) {
+        actualParameter.typeElementGroovy?.delete()
       }
       else {
-        newParam
-      }
-      val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(notNullParam)
-      if (actualParameter.typeElementGroovy == null) {
-        actualParameter.addAfter(typeElement, actualParameter.modifierList)
-      }
-      else {
-        actualParameter.typeElementGroovy!!.replace(typeElement)
+        val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(newParamType)
+        if (actualParameter.typeElementGroovy == null) {
+          actualParameter.addAfter(typeElement, actualParameter.modifierList)
+        }
+        else {
+          actualParameter.typeElementGroovy!!.replace(typeElement)
+        }
       }
     }
     closureDriver.instantiate(resultMethod, resultSubstitutor)

@@ -204,7 +204,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
           val param = mapping[candidate.argumentMapping?.targetParameter(argument)?.name] ?: return@run
           val argtype = argument.type
           val correctArgumentType = when {
-            argtype.isTypeParameter() -> PsiIntersectionType.createIntersection(*argtype.typeParameter()!!.extendsListTypes)
+            argtype.isTypeParameter() -> PsiIntersectionType.createIntersection(
+              *argtype.typeParameter()!!.extendsListTypes.takeIf { it.isNotEmpty() } ?: arrayOf(argtype))
             else -> argtype
           }
           setConstraints(param.type, correctArgumentType ?: PsiType.NULL, dependentTypes, requiredTypesCollector,

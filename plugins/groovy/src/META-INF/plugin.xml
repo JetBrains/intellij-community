@@ -32,6 +32,7 @@
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
+    <extensionPoint name="typeAugmenter" interface="org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter"/>
     <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor"
@@ -213,7 +214,7 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
 
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.UntypedParameterEnhancer"/>
+    <typeAugmenter implementation="org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter"/>
 
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SimpleTypeHintProcessor"/>
