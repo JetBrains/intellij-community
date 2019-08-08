@@ -169,7 +169,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<InlineInlayImpl> range =
       getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          INLINE_ELEMENTS_COMPARATOR);
@@ -188,7 +188,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<BlockInlayImpl> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                                                     BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
@@ -390,7 +390,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),

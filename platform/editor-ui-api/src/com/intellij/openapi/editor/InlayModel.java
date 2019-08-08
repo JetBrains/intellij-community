@@ -78,7 +78,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getInlineElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -93,7 +93,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getBlockElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -165,7 +165,7 @@ public interface InlayModel {
    * Same as {@link #getAfterLineEndElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
   @NotNull
-  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getAfterLineEndElementsInRange(startOffset, endOffset),
                                       inlay -> type.isInstance(inlay.getRenderer()));
