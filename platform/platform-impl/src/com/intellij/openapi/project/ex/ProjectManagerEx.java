@@ -17,7 +17,7 @@ import java.util.Collection;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -118,9 +118,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
     }
   };
 
-  public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
-    virtualFileManager.addAsyncFileListener(this, ApplicationManager.getApplication());
-    projectManager.addProjectManagerListener(this);
+  public FileDocumentManagerImpl() {
+    VirtualFileManager.getInstance().addAsyncFileListener(this, ApplicationManager.getApplication());
+    ProjectManager.getInstance().addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
     myBus.connect().subscribe(ProjectManager.TOPIC, this);
@@ -130,7 +130,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
       return null;
     };
 
-    final ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
+    ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 

@@ -27,6 +27,9 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
+                        serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"/>
+
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
       <description>Forces closing of WSL process input stream to prevent process zombification. See
