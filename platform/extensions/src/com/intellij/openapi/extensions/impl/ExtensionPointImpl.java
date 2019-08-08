@@ -339,7 +339,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   @NotNull
   private synchronized List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
-    if (myListeners.length > 0) {
+    if (!myDynamic && myListeners.length > 0) {
       String message = "Listeners not allowed for extension point " + getName();
       if (failIfListenerAdded) {
         LOG.error(message);
