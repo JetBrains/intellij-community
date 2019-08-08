@@ -103,6 +103,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       }
       else {
         computeSettingsInRA.run();
+        reset();
       }
     }
 
