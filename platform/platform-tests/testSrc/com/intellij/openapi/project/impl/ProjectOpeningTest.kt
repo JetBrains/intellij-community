@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -10,16 +12,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.io.createDirectories
 import junit.framework.TestCase
-import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import java.util.concurrent.atomic.AtomicBoolean
 
-class ProjectOpeningTest : HeavyPlatformTestCase() {
+@Suppress("UsePropertyAccessSyntax")
+class ProjectOpeningTest {
   companion object {
     @JvmStatic
     internal fun closeProject(project: Project?) {
@@ -27,88 +31,117 @@ class ProjectOpeningTest : HeavyPlatformTestCase() {
         PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       }
     }
+
+    @ClassRule
+    @JvmField
+    val appRule = ApplicationRule()
   }
 
-  fun testOpenProjectCancelling() {
-    var project: Project? = null
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
+
+  @Rule
+  @JvmField
+  val tempDir = TemporaryDirectory()
+
+  @Test
+  fun openProjectCancelling() {
     val activity = MyStartupActivity()
-    PlatformTestUtil.maskExtensions(POST_STARTUP_ACTIVITY, listOf(activity), testRootDisposable)
+    PlatformTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable)
+    val manager = ProjectManagerEx.getInstanceEx()
+    val foo = tempDir.newPath()
+    val project = manager.createProject(null, foo.toString())!!
     try {
-      val manager = ProjectManagerEx.getInstanceEx()
-      val foo = createTempDir("foo")
-      project = manager.createProject(null, foo.path)!!
-      assertThat(manager.openProject(project)).isFalse
-      assertThat(project.isOpen).isFalse
+      runInEdtAndWait {
+        assertThat(manager.openProject(project)).isFalse()
+      }
+      assertThat(project.isOpen).isFalse()
       // 1 on maskExtensions call, second call our call
-      assertThat(activity.passedCount!!.get()).isEqualTo(2)
+      assertThat(activity.passed.get()).isTrue()
     }
     finally {
-      closeProject(project)
+      runInEdtAndWait {
+        closeProject(project)
+      }
     }
   }
 
-  fun testCancelOnLoadingModules() {
-    val foo = createTempDir("foo")
-    var project: Project? = null
+  @Test
+  fun cancelOnLoadingModules() {
+    val foo = tempDir.newPath()
+    val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
+    var project = manager!!.createProject(null, foo.toString())!!
     try {
-      val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
-      project = manager!!.createProject(null, foo.path)
-      project!!.save()
-      closeProject(project)
-      ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(
-        ProjectLifecycleListener.TOPIC,
-        object : ProjectLifecycleListener {
-          override fun projectComponentsInitialized(project: Project) {
-            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-            TestCase.assertNotNull(indicator)
-            indicator!!.cancel()
-            indicator.checkCanceled()
-          }
-        })
-      project = manager.loadAndOpenProject(foo)
-      TestCase.assertFalse(project!!.isOpen)
-      TestCase.assertTrue(project.isDisposed)
+      StoreUtil.saveSettings(project, false)
+      runInEdtAndWait {
+        closeProject(project)
+      }
+      ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
+                                                                                                  object : ProjectLifecycleListener {
+                                                                                                    override fun projectComponentsInitialized(project: Project) {
+                                                                                                      val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
+                                                                                                      TestCase.assertNotNull(indicator)
+                                                                                                      indicator!!.cancel()
+                                                                                                      indicator.checkCanceled()
+                                                                                                    }
+                                                                                                  })
+      runInEdtAndWait {
+        project = manager.loadAndOpenProject(foo)!!
+      }
+      assertThat(project.isOpen).isFalse()
+      assertThat(project.isDisposed).isTrue()
     }
     finally {
-      closeProject(project)
+      runInEdtAndWait {
+        closeProject(project)
+      }
     }
   }
 
-  fun testIsSameProjectForDirectoryBasedProject() {
-    val projectDir = createTempDir("project")
-    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.absolutePath)!!
-    Disposer.register(testRootDisposable, dirBasedProject)
-    TestCase.assertTrue(ProjectUtil.isSameProject(projectDir.absolutePath, dirBasedProject))
-    TestCase.assertFalse(ProjectUtil.isSameProject(createTempDir("project2").absolutePath, dirBasedProject))
-    val iprFilePath = File(projectDir, "project.ipr")
-    TestCase.assertTrue(ProjectUtil.isSameProject(iprFilePath.absolutePath, dirBasedProject))
-    val miscXmlFilePath = File(projectDir, ".idea/misc.xml")
-    TestCase.assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.absolutePath, dirBasedProject))
-    val someOtherFilePath = File(projectDir, "misc.xml")
-    TestCase.assertFalse(
-      ProjectUtil.isSameProject(someOtherFilePath.absolutePath, dirBasedProject))
+  @Test
+  fun isSameProjectForDirectoryBasedProject() {
+    val projectDir = tempDir.newPath()
+    projectDir.createDirectories()
+
+    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.toAbsolutePath().toString())!!
+    Disposer.register(disposableRule.disposable, Disposable {
+      runInEdtAndWait { closeProject(dirBasedProject) }
+    })
+
+    assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), dirBasedProject)).isTrue()
+    assertThat(ProjectUtil.isSameProject(tempDir.newPath("project2").toAbsolutePath().toString(), dirBasedProject)).isFalse()
+    val iprFilePath = projectDir.resolve("project.ipr")
+    assertThat(ProjectUtil.isSameProject(iprFilePath.toAbsolutePath().toString(), dirBasedProject)).isTrue()
+    val miscXmlFilePath = projectDir.resolve(".idea/misc.xml")
+    assertThat(ProjectUtil.isSameProject(miscXmlFilePath.toAbsolutePath().toString(), dirBasedProject)).isTrue()
+    val someOtherFilePath = projectDir.resolve("misc.xml")
+    assertThat(ProjectUtil.isSameProject(someOtherFilePath.toAbsolutePath().toString(), dirBasedProject)).isFalse()
   }
 
-  fun testIsSameProjectForFileBasedProject() {
-    val projectDir = createTempDir("project")
-    val iprFilePath = File(projectDir, "project.ipr")
-    val fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.name, iprFilePath.absolutePath)!!
-    disposeOnTearDown(fileBasedProject)
-    TestCase.assertTrue(ProjectUtil.isSameProject(projectDir.absolutePath, fileBasedProject))
-    TestCase.assertFalse(ProjectUtil.isSameProject(createTempDir("project2").absolutePath, fileBasedProject))
-    val iprFilePath2 = File(projectDir, "project2.ipr")
-    TestCase.assertFalse(ProjectUtil.isSameProject(iprFilePath2.absolutePath, fileBasedProject))
+  @Test
+  fun isSameProjectForFileBasedProject() {
+    val projectDir = tempDir.newPath()
+    projectDir.createDirectories()
+
+    val iprFilePath = projectDir.resolve("project.ipr")
+    val fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.fileName.toString(), iprFilePath.toAbsolutePath().toString())!!
+    Disposer.register(disposableRule.disposable, Disposable {
+      runInEdtAndWait { closeProject(fileBasedProject) }
+    })
+    assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), fileBasedProject)).isTrue()
+    assertThat(ProjectUtil.isSameProject(tempDir.newPath("project2").toAbsolutePath().toString(), fileBasedProject)).isFalse()
+    val iprFilePath2 = projectDir.resolve("project2.ipr")
+    assertThat(ProjectUtil.isSameProject(iprFilePath2.toAbsolutePath().toString(), fileBasedProject)).isFalse()
   }
 }
 
 private class MyStartupActivity : StartupActivity, DumbAware {
-  val passedCount: AtomicInteger? = AtomicInteger()
+  val passed = AtomicBoolean()
+
   override fun runActivity(project: Project) {
-    if (passedCount!!.getAndIncrement() == 0) {
-      return
-    }
-    val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-    TestCase.assertNotNull(indicator)
-    indicator!!.cancel()
+    passed.set(true)
+
+    ProgressManager.getInstance().progressIndicator!!.cancel()
   }
 }
