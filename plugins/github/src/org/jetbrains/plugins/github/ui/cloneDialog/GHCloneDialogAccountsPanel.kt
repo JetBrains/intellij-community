@@ -104,7 +104,7 @@ internal class GHCloneDialogAccountsPanel(
       popupMenu.add(accountSubmenu)
     }
     popupMenu.addSeparator()
-    popupMenu.add("Add account\u2026").addActionListener { loginController.addAccount() }
+    popupMenu.add("Add Account\u2026").addActionListener { loginController.addAccount() }
     popupMenu.show(this, 0, bounds.maxY.toInt())
   }
 }
