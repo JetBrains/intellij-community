@@ -48,7 +48,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myMappingChangesDisposable = Disposer.newDisposable();
+  @NotNull private final Disposable myMessageBusConnections = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
   private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
@@ -62,11 +62,11 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         myDisposeStarted = true;
-        Disposer.dispose(myMappingChangesDisposable);
+        Disposer.dispose(myMessageBusConnections);
         disposeLog(false);
         myExecutor.shutdown();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -81,7 +81,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   private void subscribeToMappingsChanges() {
-    myMessageBus.connect(myMappingChangesDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
   }
 
   @Nullable
