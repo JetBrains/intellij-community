@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.diff.util.DiffDrawUtil
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
@@ -44,13 +44,9 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   private fun createDiff(filePath: String, diffHunk: String): JComponent {
     try {
-      val editor = createEditor()
-
       val patchReader = PatchReader(createPatchFromHunk(filePath, diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
-
-
 
       if (patchHunk.lines.find { it.type != PatchLine.Type.CONTEXT } != null) {
         val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
@@ -60,31 +56,35 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
         val builder = PatchChangeBuilder()
         builder.exec(appliedSplitHunks)
 
-        editor.gutterComponentEx.apply {
-          setLineNumberConvertor(builder.lineConvertor1.createConvertor(),
-                                 builder.lineConvertor2.createConvertor())
-        }
-
         val patchContent = builder.patchContent.removeSuffix("\n")
-        WriteAction.run<RuntimeException> { editor.document.setText(patchContent) }
+        val document = editorFactory.createDocument(patchContent)
 
-        val hunk = builder.hunks.first()
-        DiffDrawUtil.createUnifiedChunkHighlighters(editor,
-                                                    hunk.patchDeletionRange,
-                                                    hunk.patchInsertionRange,
-                                                    null)
+        return EditorHandlerPanel.create(editorFactory) {
+          val editor = createEditor(document)
+          editor.gutterComponentEx.apply {
+            setLineNumberConvertor(builder.lineConvertor1.createConvertor(),
+                                   builder.lineConvertor2.createConvertor())
+          }
+
+          val hunk = builder.hunks.first()
+          DiffDrawUtil.createUnifiedChunkHighlighters(editor,
+                                                      hunk.patchDeletionRange,
+                                                      hunk.patchInsertionRange,
+                                                      null)
+          editor
+        }
       }
       else {
-        editor.gutterComponentEx.apply {
-          setLineNumberConvertor({ it + patchHunk.startLineBefore }, { it + patchHunk.startLineAfter })
-        }
-
         val patchContent = patchHunk.text.removeSuffix("\n")
-        WriteAction.run<RuntimeException> { editor.document.setText(patchContent) }
-      }
+        val document = editorFactory.createDocument(patchContent)
 
-      return editor.component.apply {
-        isOpaque = false
+        return EditorHandlerPanel.create(editorFactory) {
+          val editor = createEditor(document)
+          editor.gutterComponentEx.apply {
+            setLineNumberConvertor({ it + patchHunk.startLineBefore }, { it + patchHunk.startLineAfter })
+          }
+          editor
+        }
       }
     }
     catch (e: Exception) {
@@ -118,9 +118,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
     }
   }
 
-
-  private fun createEditor(): EditorEx {
-    val document = editorFactory.createDocument("")
+  private fun createEditor(document: Document): EditorEx {
     return (editorFactory.createViewer(document, project, EditorKind.DIFF) as EditorEx).apply {
       setHorizontalScrollbarVisible(false)
       setVerticalScrollbarVisible(false)
