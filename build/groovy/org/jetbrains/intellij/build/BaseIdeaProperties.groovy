@@ -90,7 +90,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar": "1.4",
     "plugins/xslt-debugger/lib/xslt-debugger-engine.jar": "1.5",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar": "1.5",
-    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": "1.6"
+    "plugins/cucumber-java/lib/cucumber-jvmFormatter.jar": "1.6",
+    "plugins/android/lib/jdk11/layoutlib.jar": "1.9"
   ]
 
   BaseIdeaProperties() {
