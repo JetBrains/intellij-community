@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
@@ -24,7 +25,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -301,7 +302,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
-    checkNewDirAndRefresh(__->{}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
+    checkNewDirAndRefresh(__-> {}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
   }
 
   @Test(timeout = 20_000)
@@ -336,10 +337,12 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         return super.getAllExcludedUrls();
       }
     };
-    ProjectManager old = ProjectManager.getInstance();
-    PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, test);
+    ProjectManager old = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+    Application app = ApplicationManager.getApplication();
+    MutablePicoContainer container = (MutablePicoContainer)app.getPicoContainer();
+    container.unregisterComponent(ProjectManager.class.getName());
+    container.registerComponentInstance(ProjectManager.class.getName(), test);
     assertSame(test, ProjectManager.getInstance());
-
 
     try {
       final File temp = myTempDir.newFolder();
@@ -366,7 +369,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     }
     finally {
       if (old != null) {
-        PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, old);
+        container.unregisterComponent(ProjectManager.class.getName());
+        container.registerComponentInstance(ProjectManager.class.getName(), old);
       }
       assertSame(old, ProjectManager.getInstance());
       WriteAction.runAndWait(() -> Disposer.dispose(test));

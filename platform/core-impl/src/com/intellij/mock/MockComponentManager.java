@@ -75,6 +75,12 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(serviceImplementation);
   }
 
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation, @NotNull Disposable parentDisposable) {
+    String key = serviceInterface.getName();
+    registerService(serviceInterface, serviceImplementation);
+    Disposer.register(parentDisposable, () -> myPicoContainer.unregisterComponent(key));
+  }
+
   public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
     registerComponentInDisposer(instance);
