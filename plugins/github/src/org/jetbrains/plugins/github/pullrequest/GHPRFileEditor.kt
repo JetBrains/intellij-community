@@ -79,7 +79,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
 
     val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
-    val header = GHPRHeaderPanel(detailsModel)
+    val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
     val timeline = GHPRTimelineComponent(timelineModel, createItemComponentFactory(timelineModel, avatarIconsProvider))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
