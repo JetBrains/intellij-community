@@ -4,8 +4,8 @@ package com.intellij.codeInsight.externalAnnotation.location
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.containers.MultiMap
 import org.junit.Test
 
@@ -17,7 +17,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
                                                                               "artifact-id",
                                                                               "1.0",
                                                                               "file:///my-repo"))
-    PlatformTestUtil.maskExtensions(AnnotationsLocationProvider.EP_NAME, listOfNotNull(testAnnotationProvider, secondProvider), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(AnnotationsLocationProvider.EP_NAME, listOfNotNull(testAnnotationProvider, secondProvider), testRootDisposable)
   }
 
   @Test
