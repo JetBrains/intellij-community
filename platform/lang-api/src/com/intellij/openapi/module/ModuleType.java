@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
-  public static final ModuleType EMPTY;
+  public static final ModuleType<?> EMPTY;
 
   @NotNull
   private final String myId;

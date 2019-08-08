@@ -373,7 +373,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Override
   @Nullable
   public final Window suggestParentWindow(@Nullable Project project) {
-    return myWindowWatcher.suggestParentWindow(project);
+    return myWindowWatcher.suggestParentWindow(project, this);
   }
 
   @Override

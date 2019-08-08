@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 
 public final class ApplicationManagerEx extends ApplicationManager {
-  public static final String IDEA_APPLICATION = "idea";
-
   public static ApplicationEx getApplicationEx() {
     return (ApplicationEx)ourApplication;
   }

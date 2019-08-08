@@ -13,6 +13,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ final class SheetMessage implements Disposable {
   private Image staticImage;
   private int imageHeight;
 
-  SheetMessage(final Window owner,
+  SheetMessage(@Nullable Window owner,
                final String title,
                final String message,
                final Icon icon,
@@ -53,7 +54,7 @@ final class SheetMessage implements Disposable {
 
     //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
     // project being loaded. Let's employ the focus manager then.
-    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
+    myParent = owner == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
@@ -168,8 +169,7 @@ final class SheetMessage implements Disposable {
     }
   }
 
-  private static void maximizeIfNeeded(final Window owner) {
-    if (owner == null) return;
+  private static void maximizeIfNeeded(@Nullable Window owner) {
     if (owner instanceof Frame) {
       Frame f = (Frame)owner;
       if (f.getState() == Frame.ICONIFIED) {
