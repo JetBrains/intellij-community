@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -12,6 +14,8 @@ import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ReflectionUtil
 
 object DynamicPlugins {
+  private val LOG = Logger.getInstance(DynamicPlugins::class.java)
+
   @JvmStatic
   fun isUnloadSafe(pluginDescriptor: IdeaPluginDescriptor): Boolean {
     if (!ApplicationManager.getApplication().isInternal) return false
@@ -26,8 +30,9 @@ object DynamicPlugins {
       for (epName in extensions.keySet()) {
         val ep = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) ?:
           anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-        if (ep != null && ep.isUnloadSafe) {
-          return true
+        if (ep == null || !ep.isUnloadSafe) {
+          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because of extension $epName")
+          return false
         }
       }
     }
@@ -65,9 +70,17 @@ object DynamicPlugins {
       }
     }
 
-    ServiceManagerImpl.unloadServices(pluginDescriptor.app, ApplicationManager.getApplication() as ApplicationImpl)
+    val application = ApplicationManager.getApplication() as ApplicationImpl
+    val appServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.app, application)
+    for (appServiceInstance in appServiceInstances) {
+      application.stateStore.unloadComponent(appServiceInstance)
+    }
+
     for (project in openProjects) {
-      ServiceManagerImpl.unloadServices(pluginDescriptor.project, project as ProjectImpl)
+      val projectServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.project, project as ProjectImpl)
+      for (projectServiceInstance in projectServiceInstances) {
+        project.stateStore.unloadComponent(projectServiceInstance)
+      }
     }
 
     return pluginDescriptor.unloadClassLoader()

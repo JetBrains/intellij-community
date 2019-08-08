@@ -17,6 +17,10 @@ interface IComponentStore {
 
   fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?)
 
+  @JvmDefault
+  fun unloadComponent(component: Any) {
+  }
+
   fun initPersistencePlainComponent(component: Any, key: String)
 
   fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)

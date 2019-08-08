@@ -35,7 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -141,11 +143,23 @@ public final class ServiceManagerImpl implements Disposable {
   public void dispose() {
   }
 
-  public static void unloadServices(ContainerDescriptor containerDescriptor, ComponentManager componentManager) {
-    MutablePicoContainer picoContainer = (MutablePicoContainer) componentManager.getPicoContainer();
+  public static List<Object> unloadServices(ContainerDescriptor containerDescriptor, ComponentManager componentManager) {
+    List<Object> unloadedInstances = new ArrayList<>();
+    MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
     for (ServiceDescriptor service : containerDescriptor.getServices()) {
-      picoContainer.unregisterComponent(service.getInterface());
+      ComponentAdapter adapter = picoContainer.unregisterComponent(service.getInterface());
+      if (adapter instanceof DefaultPicoContainer.LazyComponentAdapter) {
+        DefaultPicoContainer.LazyComponentAdapter lazyAdapter = (DefaultPicoContainer.LazyComponentAdapter)adapter;
+        if (lazyAdapter.isComponentInstantiated()) {
+          Object instance = adapter.getComponentInstance(picoContainer);
+          if (instance instanceof Disposable) {
+            Disposer.dispose((Disposable)instance);
+          }
+          unloadedInstances.add(instance);
+        }
+      }
     }
+    return unloadedInstances;
   }
 
   private static class MyComponentAdapter implements AssignableToComponentAdapter, DefaultPicoContainer.LazyComponentAdapter {
