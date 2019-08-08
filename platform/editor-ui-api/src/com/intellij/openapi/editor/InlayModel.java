@@ -153,6 +153,17 @@ public interface InlayModel {
   Inlay getElementAt(@NotNull Point point);
 
   /**
+   * Return a custom visual element with renderer of given type at given coordinates in editor's coordinate space,
+   * or {@code null} if there's no such element at given point.
+   */
+  @Nullable
+  default <T> Inlay<? extends T> getElementAt(@NotNull Point point, @NotNull Class<T> type) {
+    Inlay inlay = getElementAt(point);
+    //noinspection unchecked
+    return inlay != null && type.isInstance(inlay.getRenderer()) ? inlay : null;
+  }
+
+  /**
    * Returns a list of after-line-end elements for a given offset range (both limits are inclusive).
    * Returned list is sorted by offset. Both visible and invisible (due to folding) elements are returned.
    *
