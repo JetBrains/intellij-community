@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -36,7 +37,8 @@ public class ProjectOpeningTest extends HeavyPlatformTestCase {
       project = manager.createProject(null, foo.getPath());
       assertThat(manager.openProject(project)).isFalse();
       assertThat(project.isOpen()).isFalse();
-      assertThat(activity.passed).isTrue();
+      // 1 on maskExtensions call, second call our call
+      assertThat(activity.passedCount.get()).isEqualTo(2);
     }
     finally {
       closeProject(project);
@@ -104,11 +106,15 @@ public class ProjectOpeningTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static class MyStartupActivity implements StartupActivity, DumbAware {
-    private boolean passed;
+  private static final class MyStartupActivity implements StartupActivity, DumbAware {
+    private final AtomicInteger passedCount = new AtomicInteger();
+
     @Override
     public void runActivity(@NotNull Project project) {
-      passed = true;
+      if (passedCount.getAndIncrement() == 0) {
+        return;
+      }
+
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       assertNotNull(indicator);
       indicator.cancel();

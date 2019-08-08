@@ -413,45 +413,47 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     AtomicBoolean success = new AtomicBoolean(true);
 
-    Runnable doLoad = () -> success.set(loadProjectUnderProgress(project, () -> {
-      beforeProjectOpened(project);
+    Runnable doLoad = () -> {
+      success.set(loadProjectUnderProgress(project, () -> {
+        beforeProjectOpened(project);
 
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
-      StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-      startupManager.runStartupActivities();
+        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+        startupManager.runStartupActivities();
 
-      // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
-      // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
-      // Post-startup activities should not ever see unindexed and at the same time non-dumb state
-      TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
+        // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
+        // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
+        // Post-startup activities should not ever see unindexed and at the same time non-dumb state
+        TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
 
-      startupManager.runPostStartupActivitiesFromExtensions();
+        startupManager.runPostStartupActivitiesFromExtensions();
 
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        if (!project.isDisposed()) {
-          startupManager.runPostStartupActivities();
-
-          Application application = ApplicationManager.getApplication();
-          if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-            StorageUtilKt.checkUnknownMacros(project, true);
-          }
-          StartUpMeasurer.stopPluginCostMeasurement();
-        }
-      }, ModalityState.NON_MODAL);
-      ApplicationManager.getApplication().invokeLater(
-        () -> {
-          LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
-                                     DumbService.isDumb(project)
-                                     ? LoadingPhase.PROJECT_OPENED
-                                     : LoadingPhase.INDEXING_FINISHED);
-
+        GuiUtils.invokeLaterIfNeeded(() -> {
           if (!project.isDisposed()) {
-            startupManager.scheduleBackgroundPostStartupActivities();
+            startupManager.runPostStartupActivities();
+
+            Application application = ApplicationManager.getApplication();
+            if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+              StorageUtilKt.checkUnknownMacros(project, true);
+            }
+            StartUpMeasurer.stopPluginCostMeasurement();
           }
-        },
-        ModalityState.NON_MODAL);
-    }));
+        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
+                                       DumbService.isDumb(project)
+                                       ? LoadingPhase.PROJECT_OPENED
+                                       : LoadingPhase.INDEXING_FINISHED);
+
+            if (!project.isDisposed()) {
+              startupManager.scheduleBackgroundPostStartupActivities();
+            }
+          },
+          ModalityState.NON_MODAL);
+      }));
+    };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().submitTransactionAndWait(doLoad);

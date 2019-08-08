@@ -202,7 +202,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
 
-    Extensions.getRootArea().getExtensionPoint(StartupActivity.POST_STARTUP_ACTIVITY).addExtensionPointListener(
+    StartupActivity.POST_STARTUP_ACTIVITY.getPoint(null).addExtensionPointListener(
       new ExtensionPointListener<StartupActivity>() {
         @Override
         public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {

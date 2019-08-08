@@ -914,6 +914,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
           }
           else {
             // createInstance() actually does caching, so it's safe to call multiple times
+            //noinspection unchecked
             listener.extensionAdded((T)adapter.createInstance(picoContainer), pluginDescriptor);
           }
         }
