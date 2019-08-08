@@ -157,10 +157,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
         }
       }
     });
-
-    if (myProject != null) {
-      Disposer.register(this, new DocumentUndoProvider(myProject));
-    }
   }
 
   public boolean isActive() {
