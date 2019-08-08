@@ -245,6 +245,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public void addMessageFilter(Project project, Filter filter) {
+    if (project.isDefault()) {
+      return;
+    }
     addHyperlinkFilter(line -> {
       Filter.Result r = filter.applyFilter(line, line.length());
       if (r != null) {
