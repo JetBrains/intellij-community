@@ -131,7 +131,7 @@ public class TestUtils {
     if (aClass == null) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, CHECK_HIERARCHY)) return runWithIsTestClass;
     for (final PsiMethod method : aClass.getAllMethods()) {
-      if (isJUnit4TestMethod(method)) return true;
+      if (AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, 0)) return true;
     }
     return false;
   }
