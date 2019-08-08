@@ -44,7 +44,7 @@ public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
   public final BuildFSState fsState;
-  public final ProjectStamps projectStamps;
+  public final ProjectStamps timestamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
   private final BuildTargetsState myTargetsState;
@@ -59,7 +59,7 @@ public final class ProjectDescriptor {
 
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
-                           ProjectStamps projectStamps,
+                           ProjectStamps timestamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
@@ -69,7 +69,7 @@ public final class ProjectDescriptor {
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
     this.fsState = fsState;
-    this.projectStamps = projectStamps;
+    this.timestamps = timestamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
@@ -143,7 +143,7 @@ public final class ProjectDescriptor {
     }
     if (shouldClose) {
       try {
-        projectStamps.close();
+        timestamps.close();
       }
       finally {
         try {

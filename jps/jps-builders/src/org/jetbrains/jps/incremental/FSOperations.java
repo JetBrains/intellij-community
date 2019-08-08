@@ -86,7 +86,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, round, file, rd, pd.projectStamps.getStorage(), false);
+      pd.fsState.markDirty(context, round, file, rd, pd.timestamps.getStorage(), false);
     }
   }
 
@@ -94,7 +94,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.projectStamps.getStorage());
+      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.timestamps.getStorage());
     }
   }
 
@@ -102,7 +102,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(context, rd.target, file, pd.projectStamps.getStorage());
+      pd.fsState.registerDeleted(context, rd.target, file, pd.timestamps.getStorage());
     }
   }
 
@@ -114,7 +114,7 @@ public class FSOperations {
 
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    markDirtyFiles(context, target, round, pd.projectStamps.getStorage(), true, null, filter);
+    markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {
@@ -165,7 +165,7 @@ public class FSOperations {
 
     removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
 
-    final StampsStorage stampsStorage = context.getProjectDescriptor().projectStamps.getStorage();
+    final StampsStorage stampsStorage = context.getProjectDescriptor().timestamps.getStorage();
     for (ModuleBuildTarget target : dirtyTargets) {
       markDirtyFiles(context, target, round, stampsStorage, true, null, filter);
     }

@@ -198,7 +198,7 @@ public class BuildRunner {
       includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
     }
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.projectStamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.timestamps.getStorage();
     if (!paths.isEmpty()) {
       boolean forceBuildAllModuleBasedTargets = false;
       for (BuildTargetType<?> type : targetTypesToForceBuild) {
