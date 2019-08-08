@@ -270,7 +270,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
-    if (resolvedOwner != null && !resolvedElements.isEmpty()) {
+    if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
       if (resolvedOwner == referenceOwner) {
         final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
         // TODO: Use the results from the processor as a cache for resolving to latest defs
