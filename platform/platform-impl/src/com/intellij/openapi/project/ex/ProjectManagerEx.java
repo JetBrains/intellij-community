@@ -102,7 +102,4 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @NotNull
   @ApiStatus.Internal
   public abstract String[] getAllExcludedUrls();
-  @NotNull
-  @ApiStatus.Internal
-  public abstract String[] getAllProjectUrls();
 }

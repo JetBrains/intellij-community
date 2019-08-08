@@ -2,15 +2,20 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
@@ -78,7 +83,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
 
   @NotNull
   private Module newModuleWithContent(@NotNull String name, @NotNull VirtualFile contentRoot) {
-    ModuleType type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE);
+    ModuleType<?> type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE);
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       String moduleName = moduleModel.newModule(contentRoot.getPath() + "/" + name + ".iml", type.getId()).getName();
@@ -89,5 +94,61 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
 
       return module;
     });
+  }
+
+  public void testDirectoryIndexMustNotGoInsideIgnoredDotGit() throws IOException {
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    assertNotNull(root);
+    /*
+      /root
+         /.git
+             g1.txt
+             g2.txt
+         /myModule (module content root)
+            /src (source root)
+     */
+    assertFalse(myFileIndex.isInContent(root));
+    File dGit = new File(root.getPath(), ".git");
+    assertTrue(dGit.mkdir());
+    File g1File = new File(dGit, "g1.txt");
+    assertTrue(g1File.createNewFile());
+    File g2File = new File(dGit, "g2.txt");
+    assertTrue(g2File.createNewFile());
+    VirtualFile module = createChildDirectory(root, "myModule");
+    VirtualFile src = createChildDirectory(module, "src");
+
+    Module myModule = newModuleWithContent("myModule", module);
+    PsiTestUtil.addSourceRoot(myModule, src);
+
+    root.refresh(false, true);
+    
+    checkIterate(root, module, src);
+    checkIterate(src, src);
+    checkIterate(module, module, src);
+
+    Collection<VirtualFile> cachedChildren = ((VirtualFileSystemEntry)root).getCachedChildren();
+    VirtualFile dgt = ContainerUtil.find(cachedChildren, v -> v.getName().equals(".git"));
+    // null is fine too - it means .git wasn't even loaded
+    if (dgt != null) {
+      // but no way .git should be entered
+      Collection<VirtualFile> dcached = ((VirtualFileSystemEntry)dgt).getCachedChildren();
+      assertEmpty(dcached.toString(), dcached);
+    }
+
+    VirtualFile dotGit = refreshAndFindFile(dGit);
+    VirtualFile g1Txt = refreshAndFindFile(g1File);
+    VirtualFile g2Txt = refreshAndFindFile(g2File);
+    assertTrue(myFileIndex.isUnderIgnored(dotGit));
+    assertTrue(FileTypeRegistry.getInstance().isFileIgnored(dotGit));
+    assertFalse(FileTypeRegistry.getInstance().isFileIgnored(g1Txt));
+    assertFalse(FileTypeRegistry.getInstance().isFileIgnored(g2Txt));
+    assertTrue(myFileIndex.isUnderIgnored(g1Txt));
+    assertTrue(myFileIndex.isUnderIgnored(g2Txt));
+    checkIterate(dotGit);
+
+    assertIteratedContent(myFileIndex,
+                          root,
+                          Arrays.asList(module, src),
+                          Arrays.asList(root, g1Txt, g2Txt));
   }
 }

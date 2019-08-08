@@ -41,7 +41,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -1001,16 +1000,5 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
-  }
-
-  @NotNull
-  @Override
-  public String[] getAllProjectUrls() {
-    synchronized (lock) {
-      return ContainerUtil.mapNotNull(myOpenProjects, project -> {
-        String basePath = project.getBasePath();
-        return basePath == null ? null : VfsUtilCore.pathToUrl(basePath);
-      }, ArrayUtil.EMPTY_STRING_ARRAY);
-    }
   }
 }

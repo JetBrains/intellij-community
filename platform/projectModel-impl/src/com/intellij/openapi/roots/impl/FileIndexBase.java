@@ -67,6 +67,10 @@ abstract class FileIndexBase implements FileIndex {
             }
             return SKIP_CHILDREN;
           }
+          if (info.isIgnored()) {
+            // it's certain nothing can be found under ignored directory
+            return SKIP_CHILDREN;
+          }
         }
         boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
                            && (customFilter == null || customFilter.accept(file));

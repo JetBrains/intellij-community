@@ -2,7 +2,11 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -61,27 +65,35 @@ class VfsEventGenerationHelper {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     ChildInfo[] children = null;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
-      Path root = Paths.get(parent.getPath(), childName);
-      if (isUnderSomeProjectRoot(root)) {
-        Path[] excluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
+      Path child = Paths.get(parent.getPath(), childName);
+      if (shouldScanDirectory(parent, child, childName)) {
+        Path[] relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
              url -> {
                Path path = Paths.get(VirtualFileManager.extractPath(url));
-               return path.startsWith(root) ? path : null;
+               return path.startsWith(child) ? path : null;
              }, new Path[0]);
-        children = scanChildren(root, excluded, checkCanceled);
+        children = scanChildren(child, relevantExcluded, checkCanceled);
       }
     }
     VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, FileNameCache.storeName(childName), attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
   }
 
-  private static boolean isUnderSomeProjectRoot(@NotNull Path root) {
-    String[] projectRootUrls = ProjectManagerEx.getInstanceEx().getAllProjectUrls();
-    return ContainerUtil.exists(projectRootUrls, projectRootUrl -> {
-      Path projectRootPath = Paths.get(VirtualFileManager.extractPath(projectRootUrl));
-      return root.startsWith(projectRootPath);
-    });
+  private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
+    if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
+    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent)) {
+        return false;
+      }
+      String projectRootPath = openProject.getBasePath();
+      if (projectRootPath != null) {
+        Path path = Paths.get(projectRootPath);
+        if (child.startsWith(path)) return true;
+      }
+    }
+    return false;
   }
+
 
   void beginTransaction() {
     myMarkedStart = myEvents.size();
