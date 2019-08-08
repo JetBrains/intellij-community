@@ -40,9 +40,9 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
-    T service = super.getService(serviceClass, isCreate);
-    if (service == null && isCreate && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    T service = super.getService(serviceClass, createIfNeeded);
+    if (service == null && createIfNeeded && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
       //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
       synchronized (serviceClass) {
         service = super.getService(serviceClass, true);

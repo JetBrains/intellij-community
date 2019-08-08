@@ -209,8 +209,8 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
-    return getDelegate().getService(serviceClass, isCreate);
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    return getDelegate().getService(serviceClass, createIfNeeded);
   }
 
   @Override

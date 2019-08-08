@@ -89,8 +89,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
-    T result = myPicoContainer.getService(serviceClass, isCreate);
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    T result = myPicoContainer.getService(serviceClass, createIfNeeded);
     registerComponentInDisposer(result);
     return result;
   }

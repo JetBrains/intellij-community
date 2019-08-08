@@ -97,13 +97,18 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   default <T> T getService(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, true);
   }
 
+  @ApiStatus.Experimental
+  default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return getService(serviceClass, false);
+  }
+
   @ApiStatus.Internal
-  default <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
     // default impl to keep backward compatibility
     //noinspection unchecked
     return (T)getPicoContainer().getComponentInstance(serviceClass.getName());

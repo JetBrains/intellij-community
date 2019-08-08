@@ -148,12 +148,12 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
-  final override fun <T : Any> getService(serviceClass: Class<T>, isCreate: Boolean): T? {
+  final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
       @Suppress("UNCHECKED_CAST")
       val result = lightServices.get(serviceClass) as T?
-      if (result != null || !isCreate) {
+      if (result != null || !createIfNeeded) {
         return result
       }
       else {
@@ -164,15 +164,15 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
 
     val componentKey = serviceClass.name
-    var result = picoContainer.getService(serviceClass, isCreate)
-    if (result != null || !isCreate) {
+    var result = picoContainer.getService(serviceClass, createIfNeeded)
+    if (result != null || !createIfNeeded) {
       return result
     }
 
     ProgressManager.checkCanceled()
 
     if (myParent != null) {
-      result = myParent.getService(serviceClass, isCreate)
+      result = myParent.getService(serviceClass, createIfNeeded)
       if (result != null) {
         LOG.error("$componentKey is registered as application service, but requested as project one")
         return result
