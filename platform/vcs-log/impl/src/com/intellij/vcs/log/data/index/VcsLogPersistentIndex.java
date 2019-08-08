@@ -476,7 +476,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       myStartTime = getCurrentTimeMillis();
 
-      LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
+      LOG.info("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
       try {
         try {
@@ -527,19 +527,19 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
       if (myFull) {
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits + " commits in " + myRoot.getName());
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits + " commits in " + myRoot.getName());
       }
       else {
         int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits +
-                  " new commits out of " +
-                  myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits +
+                 " new commits out of " +
+                 myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
     }
 
