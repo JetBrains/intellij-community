@@ -47,7 +47,8 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     int lineStartOffset = YAMLTextUtil.getLineStartSafeOffset(document, lineNumber);
     int indent = caretOffset - lineStartOffset;
 
-    String specialKeyPaste = tryToPasteAsKeySequence(text, file, editor, caretOffset, indent);
+    boolean smartPaste = YAMLEditorOptions.getInstance().isUseSmartPaste();
+    String specialKeyPaste = smartPaste ? tryToPasteAsKeySequence(text, file, editor, caretOffset, indent) : null;
     if (specialKeyPaste != null) {
       return specialKeyPaste;
     }
