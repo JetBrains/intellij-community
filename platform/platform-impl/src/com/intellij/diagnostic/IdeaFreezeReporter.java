@@ -335,8 +335,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       long sampled = dumpTask.getSampledTime();
       long gcTime = dumpTask.getGcTime();
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                       "Sampled time: " + sampled + "ms\n" +
-                       "GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+                       "Sampled time: " + sampled + "ms";
+      if (sampled > 0) {
+        message += "\nGC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+      }
       return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
     return null;
