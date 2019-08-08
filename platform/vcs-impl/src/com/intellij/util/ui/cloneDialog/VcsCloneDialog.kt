@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.ui.*
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
@@ -38,10 +39,7 @@ class VcsCloneDialog private constructor(private val project: Project,
       isOKActionEnabled = enabled
     }
 
-    override fun onListItemChanged() {
-      listModel.allContentsChanged()
-      pack()
-    }
+    override fun onListItemChanged() = listModel.allContentsChanged()
   }
 
   init {
@@ -65,6 +63,7 @@ class VcsCloneDialog private constructor(private val project: Project,
         val source = e.source as VcsCloneDialogExtensionList
         switchComponent(source.selectedValue)
       })
+      preferredSize = JBDimension(200, 0) // width fixed by design
     }
     val scrollableList = ScrollPaneFactory.createScrollPane(extensionList, true).apply {
 
