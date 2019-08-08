@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,34 +107,24 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convert(@NotNull Path projectPath) {
-    try {
-      if (!Files.exists(projectPath) || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return ConversionResultImpl.CONVERSION_NOT_NEEDED;
-      }
-
-      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
-      if (!isConversionNeeded(context)) {
-        return ConversionResultImpl.CONVERSION_NOT_NEEDED;
-      }
-
-      final List<ConversionRunner> converters = getConversionRunners(context);
-      ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
-      dialog.show();
-      if (dialog.isConverted()) {
-        saveConversionResult(context);
-        return new ConversionResultImpl(converters);
-      }
-      return ConversionResultImpl.CONVERSION_CANCELED;
+  public ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException {
+    if (!Files.exists(projectPath) || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-      AppUIUtil.invokeOnEdt(() -> {
-        Messages.showErrorDialog(IdeBundle.message("error.cannot.convert.project", e.getMessage()),
-                                 IdeBundle.message("title.cannot.convert.project"));
-      });
-      return ConversionResultImpl.ERROR_OCCURRED;
+
+    final ConversionContextImpl context = new ConversionContextImpl(projectPath);
+    if (!isConversionNeeded(context)) {
+      return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
+
+    final List<ConversionRunner> converters = getConversionRunners(context);
+    ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
+    dialog.show();
+    if (dialog.isConverted()) {
+      saveConversionResult(context);
+      return new ConversionResultImpl(converters);
+    }
+    return ConversionResultImpl.CONVERSION_CANCELED;
   }
 
   private static List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {

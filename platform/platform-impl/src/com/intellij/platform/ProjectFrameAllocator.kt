@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
+import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
@@ -25,9 +27,15 @@ internal open class ProjectFrameAllocator {
   /**
    * Project is loaded and is initialized, project services and components can be accessed.
    */
-  open fun projectLoaded(project: Project) { }
+  open fun projectLoaded(project: Project) {}
 
-  open fun projectOpened(project: Project) { }
+  open fun projectNotLoaded(error: CannotConvertException?) {
+    if (error != null) {
+      ProjectManagerImpl.showCannotConvertMessage(error, null)
+    }
+  }
+
+  open fun projectOpened(project: Project) {}
 }
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
@@ -110,6 +118,19 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       }
 
       windowManager.assignFrame(frame, project)
+    }
+  }
+
+  override fun projectNotLoaded(error: CannotConvertException?) {
+    ApplicationManager.getApplication().invokeLater {
+      val frame = ideFrame
+      ideFrame = null
+
+      if (error != null) {
+        ProjectManagerImpl.showCannotConvertMessage(error, frame)
+      }
+
+      frame?.dispose()
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -96,7 +97,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
   @Nullable
-  public abstract Project convertAndLoadProject(@NotNull Path path) throws IOException;
+  public abstract Project convertAndLoadProject(@NotNull Path path) throws IOException, CannotConvertException;
 
   @NotNull
   @ApiStatus.Internal

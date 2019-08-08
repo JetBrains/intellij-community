@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -216,13 +217,31 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                            : new ProjectUiFrameAllocator(options);
     Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
     boolean isCompleted = frameAllocator.run(() -> {
-      Pair<Project, Module> result = prepareProject(file, options, baseDir, dummyProjectName);
-      if (result == null) {
+      Pair<Project, Module> result;
+      CannotConvertException cannotConvertException = null;
+      try {
+        result = prepareProject(file, options, baseDir, dummyProjectName);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (CannotConvertException e) {
+        LOG.info(e);
+        cannotConvertException = e;
+        result = Pair.empty();
+      }
+      catch (Exception e) {
+        result = Pair.empty();
+        LOG.error(e);
+      }
+
+      Project project = result.first;
+      if (project == null) {
+        frameAllocator.projectNotLoaded(cannotConvertException);
         return;
       }
 
       refResult.set(result);
-      Project project = result.first;
       frameAllocator.projectLoaded(project);
       if (ProjectManagerEx.getInstanceEx().openProject(project)) {
         frameAllocator.projectOpened(project);
@@ -253,11 +272,11 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return project;
   }
 
-  @Nullable
+  @NotNull
   private static Pair<Project, Module> prepareProject(@NotNull Path file,
                                                       @NotNull OpenProjectTask options,
                                                       @NotNull Path baseDir,
-                                                      @Nullable String dummyProjectName) {
+                                                      @Nullable String dummyProjectName) throws CannotConvertException {
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
     boolean isNewProject = options.isNewProject;
@@ -266,23 +285,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       project = projectManager.newProject(baseDir, projectName, !options.useDefaultProjectAsTemplate, true);
     }
     else {
-      try {
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
-          processor.refreshProjectFiles(baseDir);
-        }
-        project = projectManager.convertAndLoadProject(baseDir);
+      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
+        processor.refreshProjectFiles(baseDir);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        project = null;
-      }
+      project = projectManager.convertAndLoadProject(baseDir);
     }
 
     if (project == null) {
-      return null;
+      return Pair.empty();
     }
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);

@@ -3,11 +3,13 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.*;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -43,6 +45,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,11 +58,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -541,14 +546,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project loadAndOpenProject(@NotNull Path file) {
-    ConversionResult conversionResult = ConversionService.getInstance().convert(file);
+    ConversionResult conversionResult;
+    try {
+      conversionResult = ConversionService.getInstance().convert(file);
+    }
+    catch (CannotConvertException e) {
+      conversionResult = null;
+      LOG.info(e);
+      showCannotConvertMessage(e, null);
+    }
+
     ProjectImpl project;
-    if (conversionResult.openingIsCanceled()) {
+    if (conversionResult == null || conversionResult.openingIsCanceled()) {
       project = null;
     }
     else {
       project = doCreateProject(null, file);
       //noinspection CodeBlock2Expr
+      ConversionResult finalConversionResult = conversionResult;
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
           @Override
@@ -564,8 +579,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
               return;
             }
 
-            if (!conversionResult.conversionNotNeeded()) {
-              StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
+            if (!finalConversionResult.conversionNotNeeded()) {
+              StartupManager.getInstance(project).registerPostStartupActivity(() -> finalConversionResult.postStartupActivity(project));
             }
             openProject(project);
           }
@@ -589,6 +604,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return project;
   }
 
+  public static void showCannotConvertMessage(@NotNull CannotConvertException e, @Nullable Component component) {
+    AppUIUtil.invokeOnEdt(() -> {
+      Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
+                               IdeBundle.message("title.cannot.convert.project"));
+    });
+  }
+
   /**
    * Converts and loads the project at the specified path.
    *
@@ -597,7 +619,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull Path path) {
+  public Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
