@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,19 +24,13 @@ import java.util.*;
  *
  * @author yole
  */
-public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
+public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   private static final Map<String, String> REGISTRY_MAP =
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
 
   private static volatile Set<String> ourRegistryCache;
-  @NotNull
-  private final WinRegistryService myWinRegService;
-
-  WinPythonSdkFlavor(@NotNull final WinRegistryService winRegistryService) {
-    myWinRegService = winRegistryService;
-  }
 
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module) {
@@ -68,8 +63,13 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   void findInRegistry(@NotNull final Collection<String> candidates) {
-    fillRegistryCache(myWinRegService);
+    fillRegistryCache(getWinRegistryService());
     candidates.addAll(ourRegistryCache);
+  }
+
+  @NotNull
+  protected WinRegistryService getWinRegistryService() {
+    return ApplicationManager.getApplication().getService(WinRegistryService.class);
   }
 
   private static void findInstallations(Set<String> candidates, String exe_name, String... roots) {
