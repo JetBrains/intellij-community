@@ -8,9 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,7 +19,6 @@ import com.intellij.settingsSummary.ProblemType;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Compressor;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,38 +37,33 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
-    try {
-      if (!doNotShowDialog) {
-        Messages.showIdeaMessageDialog(
-          project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
-          new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
-          new DialogWrapper.DoNotAskOption.Adapter() {
-            @Override
-            public void rememberChoice(final boolean selected, final int exitCode) {
-              PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
-            }
-          }
-        );
-      }
-      final StringBuilder troubleshooting = collectInfoFromExtensions(project);
-      final File zippedLogsFile =
-        ProgressManager.getInstance().run(new Task.WithResult<File, IOException>(project, "Collecting Log Files", false) {
+    if (!doNotShowDialog) {
+      Messages.showIdeaMessageDialog(
+        project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
+        new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
+        new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
-          protected File compute(@NotNull ProgressIndicator indicator) throws IOException {
-            indicator.setIndeterminate(true);
-            return createZip(troubleshooting);
+          public void rememberChoice(final boolean selected, final int exitCode) {
+            PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
           }
-        });
-      if (RevealFileAction.isSupported()) {
-        RevealFileAction.openFile(zippedLogsFile);
-      }
-      else {
-        Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
-      }
+        }
+      );
     }
-    catch (final IOException exception) {
-      Messages.showErrorDialog("Can't create zip file with logs: " + exception.getLocalizedMessage(), "Can't Create File");
-    }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        final StringBuilder troubleshooting = collectInfoFromExtensions(project);
+        final File zippedLogsFile = createZip(troubleshooting);
+        if (RevealFileAction.isSupported()) {
+          RevealFileAction.openFile(zippedLogsFile);
+        }
+        else {
+          Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
+        }
+      }
+      catch (final IOException exception) {
+        Messages.showErrorDialog("Can't create zip file with logs: " + exception.getLocalizedMessage(), "Can't Create File");
+      }
+    }, "Collecting Logs", false, project);
   }
 
   @NotNull
@@ -100,7 +92,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @SuppressWarnings("deprecation")
   @Nullable
-  @CalledInAwt
   private static StringBuilder collectInfoFromExtensions(@Nullable Project project) {
     StringBuilder settings = null;
     if (project != null) {
