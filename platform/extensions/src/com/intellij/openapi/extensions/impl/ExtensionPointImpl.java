@@ -918,6 +918,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         }
       }
     }
+
+    clearCache();
   }
 
   @TestOnly
