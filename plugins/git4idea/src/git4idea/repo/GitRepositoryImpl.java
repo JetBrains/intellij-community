@@ -104,7 +104,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
-      repository.getIgnoredFilesHolder().setupVfsListener();
+      repository.getIgnoredFilesHolder().setupListeners();
       repository.setupUpdater();
       notifyListenersAsync(repository);
     }

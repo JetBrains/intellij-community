@@ -54,7 +54,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(getProject(), rootDir);
     myLocalIgnoredHolder = new HgLocalIgnoredHolder(this, HgUtil.getRepositoryManager(getProject()));
-    myLocalIgnoredHolder.setupVfsListener();
+    myLocalIgnoredHolder.setupListeners();
     Disposer.register(this, myLocalIgnoredHolder);
     myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
     update();
