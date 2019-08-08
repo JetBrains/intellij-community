@@ -238,7 +238,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     JPanel innerPanel = new JPanel(new BorderLayout());
     JComponent toolWindowComponent = myToolWindow.getComponent();
     if (!dumbAware) {
-      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myProject);
+      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myToolWindow);
     }
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
