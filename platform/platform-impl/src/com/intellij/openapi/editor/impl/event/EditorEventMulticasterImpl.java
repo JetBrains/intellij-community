@@ -185,6 +185,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
+  public void addVisibleAreaListener(@NotNull VisibleAreaListener listener, @NotNull Disposable parent) {
+    myVisibleAreaMulticaster.addListener(listener, parent);
+  }
+
+  @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     myVisibleAreaMulticaster.removeListener(listener);
   }

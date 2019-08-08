@@ -49,7 +49,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
     ApplicationManager.getApplication().getMessageBus()
     .connect().subscribe(JavaLensSettings.JAVA_LENS_SETTINGS_CHANGED, settings->{
       if (settings.isShowUsages() || settings.isShowImplementations()) {
-        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this);
+        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, ApplicationManager.getApplication());
       }
       else {
         EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(this);

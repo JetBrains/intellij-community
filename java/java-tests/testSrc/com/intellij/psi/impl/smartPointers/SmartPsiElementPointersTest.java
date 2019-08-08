@@ -292,7 +292,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       }
     };
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addDocumentListener(listener);
+    multicaster.addDocumentListener(listener, getTestRootDisposable());
     try {
       insertString(document, offset, "/******/");
     }
