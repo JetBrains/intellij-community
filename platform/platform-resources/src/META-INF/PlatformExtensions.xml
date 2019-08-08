@@ -734,5 +734,7 @@
     <editorFactoryMouseMotionListener implementation="com.intellij.openapi.editor.EditorMouseHoverPopupManager$MyEditorMouseMotionEventListener"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
+
+    <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
   </extensions>
 </idea-plugin>

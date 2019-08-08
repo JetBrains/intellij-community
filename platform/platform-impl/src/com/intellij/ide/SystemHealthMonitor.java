@@ -12,12 +12,9 @@ import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SystemHealthMonitor implements BaseComponent {
+final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
@@ -48,24 +45,16 @@ public class SystemHealthMonitor implements BaseComponent {
   private static final String IBUS_URL = "https://youtrack.jetbrains.com/issue/IDEA-78860";
   private static final String SIGINT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360004770440";
 
-  private final PropertiesComponent myProperties;
-
-  public SystemHealthMonitor(@NotNull PropertiesComponent properties) {
-    myProperties = properties;
-  }
-
   @Override
-  public void initComponent() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      checkRuntime();
-      checkReservedCodeCacheSize();
-      checkIBus();
-      checkSignalBlocking();
-      startDiskSpaceMonitoring();
-    });
+  public void preload(@NotNull ProgressIndicator indicator) {
+    checkRuntime();
+    checkReservedCodeCacheSize();
+    checkIBus();
+    checkSignalBlocking();
+    startDiskSpaceMonitoring();
   }
 
-  private void checkRuntime() {
+  private static void checkRuntime() {
     if (JavaVersion.current().ea) {
       showNotification("unsupported.jvm.ea.message", null);
     }
@@ -103,7 +92,7 @@ public class SystemHealthMonitor implements BaseComponent {
     }
   }
 
-  private void checkReservedCodeCacheSize() {
+  private static void checkReservedCodeCacheSize() {
     int minReservedCodeCacheSize = 240;
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
@@ -119,7 +108,7 @@ public class SystemHealthMonitor implements BaseComponent {
     }
   }
 
-  private void checkIBus() {
+  private static void checkIBus() {
     if (SystemInfo.isXWindow) {
       String xim = System.getenv("XMODIFIERS");
       if (xim != null && xim.contains("im=ibus")) {
@@ -137,7 +126,7 @@ public class SystemHealthMonitor implements BaseComponent {
     }
   }
 
-  private void checkSignalBlocking() {
+  private static void checkSignalBlocking() {
     if (SystemInfo.isUnix) {
       try {
         Signal sigInt = new Signal("INT");
@@ -164,10 +153,10 @@ public class SystemHealthMonitor implements BaseComponent {
     }
   }
 
-  private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
-                                @Nullable NotificationAction action,
-                                Object... params) {
-    boolean ignored = myProperties.isValueSet("ignore." + key);
+  private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
+                                       @Nullable NotificationAction action,
+                                       Object... params) {
+    boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
@@ -179,7 +168,7 @@ public class SystemHealthMonitor implements BaseComponent {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         notification.expire();
-        myProperties.setValue("ignore." + key, "true");
+        PropertiesComponent.getInstance().setValue("ignore." + key, "true");
       }
     });
     notification.setImportant(true);

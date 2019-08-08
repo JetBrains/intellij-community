@@ -59,11 +59,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
-      <headless-implementation-class/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.internal.DebugAttachDetector</implementation-class>
       <headless-implementation-class/>
     </component>
