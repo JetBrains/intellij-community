@@ -10,6 +10,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,8 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
+  public boolean myChangeThreadName = true;
+
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
     myName = name;
     myBackendExecutor = backendExecutor;
@@ -48,6 +51,11 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
     }
     myMaxThreads = maxThreads;
+  }
+
+  @ApiStatus.Internal
+  public void setChangeThreadName(boolean value) {
+    myChangeThreadName = value;
   }
 
   /** @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead */
@@ -178,15 +186,22 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          ConcurrencyUtil.runUnderThreadName(myName, () -> {
-            Runnable task = currentTask.get();
-            do {
-              currentTask.set(task);
-              doRun(task);
-              task = pollOrGiveUp(status);
-            }
-            while (task != null);
-          });
+          if (myChangeThreadName) {
+            ConcurrencyUtil.runUnderThreadName(myName, this::execute);
+          }
+          else {
+            execute();
+          }
+        }
+
+        private void execute() {
+          Runnable task = currentTask.get();
+          do {
+            currentTask.set(task);
+            doRun(task);
+            task = pollOrGiveUp(status);
+          }
+          while (task != null);
         }
 
         @Override

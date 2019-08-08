@@ -5,6 +5,7 @@ import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
@@ -27,7 +28,10 @@ final class LoadDescriptorsContext implements AutoCloseable {
   LoadDescriptorsContext(boolean isParallel) {
     int maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
-      myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads);
+      BoundedTaskExecutor executor =
+        (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads);
+      executor.setChangeThreadName(false);
+      myExecutorService = executor;
       myInterners = Collections.newSetFromMap(ContainerUtil.newConcurrentMap(maxThreads));
     }
     else {
