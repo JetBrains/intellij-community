@@ -50,7 +50,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -83,7 +83,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final DefaultProject myDefaultProject = new DefaultProject();
-  private final ProjectManagerListener myBusPublisher;
   private final ExcludeRootsCache myExcludeRootsCache;
 
   @NotNull
@@ -94,9 +93,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   public ProjectManagerImpl() {
-    MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
-    myBusPublisher = messageBus.syncPublisher(TOPIC);
-    messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         for (ProjectManagerListener listener : getAllListeners(project)) {
@@ -119,8 +117,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
             handleListenerError(e, listener);
           }
         }
-        ZipHandler.clearFileAccessorCache();
-        LaterInvocator.purgeExpiredItems();
       }
 
       @Override
@@ -147,7 +143,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     });
-    myExcludeRootsCache = new ExcludeRootsCache(messageBus);
+    myExcludeRootsCache = new ExcludeRootsCache(connection);
+  }
+
+  @NotNull
+  private static ProjectManagerListener getPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
   }
 
   private static void handleListenerError(@NotNull Throwable e, @NotNull ProjectManagerListener listener) {
@@ -737,7 +738,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
-      myBusPublisher.projectClosingBeforeSave(project);
+      getPublisher().projectClosingBeforeSave(project);
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -755,6 +756,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         removeFromOpened(project);
 
         fireProjectClosed(project);
+
+        ZipHandler.clearFileAccessorCache();
+        LaterInvocator.purgeExpiredItems();
 
         if (dispose) {
           Disposer.dispose(project);
@@ -778,12 +782,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true /* checkCanClose */);
   }
 
-  private void fireProjectClosing(@NotNull Project project) {
+  private static void fireProjectClosing(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: fireProjectClosing()");
     }
 
-    myBusPublisher.projectClosing(project);
+    getPublisher().projectClosing(project);
   }
 
   @Override
@@ -834,14 +838,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.assertTrue(removed);
   }
 
-  private void fireProjectOpened(@NotNull Project project) {
+  private static void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
-    myBusPublisher.projectOpened(project);
+    getPublisher().projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
     // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
@@ -865,14 +869,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     ProjectImpl.ourClassesAreLoaded = true;
   }
 
-  private void fireProjectClosed(@NotNull Project project) {
+  private static void fireProjectClosed(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectClosed");
     }
 
     LifecycleUsageTriggerCollector.onProjectClosed(project);
 
-    myBusPublisher.projectClosed(project);
+    getPublisher().projectClosed(project);
     // see "why is called after message bus" in the fireProjectOpened
     if (project instanceof ComponentManagerImpl) {
       List<ProjectComponent> components = ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class);

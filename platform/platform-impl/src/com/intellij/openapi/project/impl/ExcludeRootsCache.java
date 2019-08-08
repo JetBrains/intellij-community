@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 // provides list of all excluded folders across all opened projects, fast.
-class ExcludeRootsCache {
+final class ExcludeRootsCache {
   private volatile CachedUrls myCache;
 
   private static class CachedUrls {
@@ -33,8 +33,8 @@ class ExcludeRootsCache {
     }
   }
 
-  ExcludeRootsCache(@NotNull MessageBus messageBus) {
-    messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+  ExcludeRootsCache(@NotNull MessageBusConnection connection) {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         myCache = null;
