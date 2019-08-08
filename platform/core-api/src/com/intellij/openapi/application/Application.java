@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -434,4 +435,10 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
+  /** DO NOT USE */
+  @ApiStatus.Internal
+  default boolean isInImpatientReader() {
+    return false;
+  }
 }

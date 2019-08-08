@@ -142,12 +142,6 @@ public interface ApplicationEx extends Application {
     runnable.run();
   }
 
-  /** DO NOT USE */
-  @ApiStatus.Internal
-  default boolean isInImpatientReader() {
-    return false;
-  }
-
   @ApiStatus.Experimental
   default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
                                                                         @Nullable Project project,
