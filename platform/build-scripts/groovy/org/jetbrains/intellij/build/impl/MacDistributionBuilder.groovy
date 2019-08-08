@@ -114,8 +114,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
-            && !SystemProperties.getBooleanProperty("build.is.personal", false)
+          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
+                             !SystemProperties.getBooleanProperty("build.is.personal", false)
           // With second JRE
           def jreManager = buildContext.bundledJreManager
           if (jreManager.doBundleSecondJre()) {
