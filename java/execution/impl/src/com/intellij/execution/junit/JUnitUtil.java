@@ -198,13 +198,18 @@ public class JUnitUtil {
   private static boolean hasTestOrSuiteMethods(@NotNull PsiClass psiClass) {
     for (final PsiMethod method : psiClass.getAllMethods()) {
       if (isSuiteMethod(method)) return true;
-      if (isTestAnnotated(method)) return true;
+      if (isExplicitlyTestAnnotated(method)) {
+        return true;
+      }
     }
 
-    if (isJUnit5(psiClass)) {
-      for (PsiClass innerClass : psiClass.getInnerClasses()) {
+    PsiClass[] classes = psiClass.getInnerClasses();
+    if (classes.length > 0 && isJUnit5(psiClass)) {
+      for (PsiClass innerClass : classes) {
         for (PsiMethod method : innerClass.getAllMethods()) {
-          if (isTestAnnotated(method)) return true;
+          if (isExplicitlyTestAnnotated(method)) {
+            return true;
+          }
         }
       }
     }
@@ -248,7 +253,8 @@ public class JUnitUtil {
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
-      if (isJUnit4TestAnnotated(method)) return true;
+      if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) ||
+          JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) return true;
     }
 
     return false;
@@ -324,6 +330,12 @@ public class JUnitUtil {
     }
 
     return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? TEST5_ANNOTATIONS : TEST5_JUPITER_ANNOTATIONS);
+  }
+
+  private static boolean isExplicitlyTestAnnotated(PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) ||
+           JUnitRecognizer.willBeAnnotatedAfterCompilation(method) ||
+           MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
   }
 
   public static boolean isJUnit4TestAnnotated(PsiMethod method) {
