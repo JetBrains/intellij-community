@@ -17,11 +17,14 @@ import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.convert
 import org.jetbrains.uast.getLanguagePlugin
+
+private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
 class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -39,21 +42,34 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       return null
     }
 
+    val area: Area?
+    val isService: Boolean
     var extensionPoint: ExtensionPoint? = null
-    // fast path - check by qualified name
-    if (!isExtensionBean(aClass)) {
-      // slow path - check using index
-      extensionPoint = findExtensionPoint(aClass, manager.project) ?: return null
+    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+      area = null
+      isService = true
     }
-    else if (javaPsi.name == "VcsConfigurableEP") {
-      // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
-      return null
+    else {
+      // fast path - check by qualified name
+      if (!isExtensionBean(aClass)) {
+        // slow path - check using index
+        extensionPoint = findExtensionPoint(aClass, manager.project) ?: return null
+      }
+      else if (javaPsi.name == "VcsConfigurableEP") {
+        // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
+        return null
+      }
+
+      area = getArea(extensionPoint)
+      isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
     }
+
+    val isAppLevelExtensionPoint = area == null || area == Area.IDEA_APPLICATION
 
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
       val parameters = method.parameterList
-      if (isAllowedParameters(parameters, extensionPoint)) {
+      if (isAllowedParameters(parameters, extensionPoint, isAppLevelExtensionPoint)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -67,11 +83,35 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
         method.isPhysical -> method
         else -> aClass.getLanguagePlugin().convert<UMethod>(method, aClass).sourcePsi ?: continue@loop
       }
+
+
+      val kind = if (isService) "Service" else "Extension"
+      val suffix = if (area == null) {
+        " (except Project or Module if requested on corresponding level)"
+      }
+      else {
+        if (isAppLevelExtensionPoint) "" else " (except ${if (area == Area.IDEA_PROJECT) "Project" else "Module"})"
+      }
       errors.add(manager.createProblemDescriptor(anchorElement,
-                                                 "Extension class should not have constructor with parameters", true,
+                                                 "$kind should not have constructor with parameters${suffix}. To not instantiate services in constructor.", true,
                                                  ProblemHighlightType.ERROR, isOnTheFly))
     }
     return errors?.toTypedArray()
+  }
+
+  private fun getArea(extensionPoint: ExtensionPoint?): Area {
+    val areaName = (extensionPoint ?: return Area.IDEA_APPLICATION).area.stringValue
+    when (areaName) {
+      "IDEA_PROJECT" -> return Area.IDEA_PROJECT
+      "IDEA_MODULE" -> return Area.IDEA_MODULE
+      else -> {
+        when (extensionPoint.name.value) {
+          "projectService" -> return Area.IDEA_PROJECT
+          "moduleService" -> return Area.IDEA_MODULE
+        }
+      }
+    }
+    return Area.IDEA_APPLICATION
   }
 }
 
@@ -93,17 +133,26 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
   val strictMatch = searchString === qualifiedName
   processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
     val point = extension.extensionPoint ?: return@processExtensionDeclarations true
-    if (point.beanClass.stringValue == null) {
-      if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
-        result = point
-        return@processExtensionDeclarations false
+    val pointBeanClass = point.beanClass.stringValue
+    when (pointBeanClass) {
+      null -> {
+        if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
+          result = point
+          return@processExtensionDeclarations false
+        }
       }
-    }
-    else {
-      // bean EP
-      if (tag.name == "className" || tag.subTags.any { it.name == "className" && (strictMatch || it.textMatches(qualifiedName)) } || checkAttributes(tag, qualifiedName)) {
-        result = point
-        return@processExtensionDeclarations false
+      serviceBeanFqn -> {
+        if (tag.attributes.any { it.name == "serviceImplementation" && it.value == qualifiedName }) {
+          result = point
+          return@processExtensionDeclarations false
+        }
+      }
+      else -> {
+        // bean EP
+        if (tag.name == "className" || tag.subTags.any { it.name == "className" && (strictMatch || it.textMatches(qualifiedName)) } || checkAttributes(tag, qualifiedName)) {
+          result = point
+          return@processExtensionDeclarations false
+        }
       }
     }
     true
@@ -129,13 +178,10 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
-private fun isAllowedParameters(list: PsiParameterList, extensionPoint: ExtensionPoint?): Boolean {
+private fun isAllowedParameters(list: PsiParameterList, extensionPoint: ExtensionPoint?, isAppLevelExtensionPoint: Boolean): Boolean {
   if (list.isEmpty) {
     return true
   }
-
-  val area = extensionPoint?.area?.stringValue
-  val isAppLevelExtensionPoint = area == null || area == "IDEA_APPLICATION"
 
   // hardcoded for now, later will be generalized
   if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
@@ -162,12 +208,12 @@ private fun isAllowedParameters(list: PsiParameterList, extensionPoint: Extensio
   return qualifiedName == "com.intellij.openapi.project.Project" || qualifiedName == "com.intellij.openapi.module.Module"
 }
 
-private val interfacesToCheck = THashSet<String>(listOf(
+private val interfacesToCheck = THashSet(listOf(
   "com.intellij.codeInsight.daemon.LineMarkerProvider",
   "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"
 ))
 
-private val classesToCheck = THashSet<String>(listOf(
+private val classesToCheck = THashSet(listOf(
   "com.intellij.codeInsight.completion.CompletionContributor",
   "com.intellij.codeInsight.completion.CompletionConfidence",
   "com.intellij.psi.PsiReferenceContributor"
