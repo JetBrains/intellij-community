@@ -68,7 +68,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
 
   override fun inferType(variable: GrVariable): PsiType? {
-    if (variable is GrParameter && variable.typeElement == null && variable.containingFile.viewProvider.isPhysical && !reentrancyMark.get()) {
+    if (variable is GrParameter && variable.typeElement == null && !reentrancyMark.get()) {
       val method = variable.parentOfType<GrMethod>() ?: return null
       val parameterIndex = method.parameterList.getParameterNumber(variable)
       val typedMethod = produceTypedMethod(method, GlobalSearchScope.fileScope(method.containingFile))

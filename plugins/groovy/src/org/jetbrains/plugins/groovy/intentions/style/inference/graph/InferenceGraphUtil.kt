@@ -179,7 +179,7 @@ private class TypeLattice(val context: PsiElement) {
   private val bottom = PsiType.NULL as PsiType
 
   fun join(types: Iterable<PsiType>): PsiType = types.fold(bottom) { accum, type ->
-    GenericsUtil.getLeastUpperBound(accum, type, manager)!!
+    GenericsUtil.getLeastUpperBound(accum, type, manager) ?: bottom
   }
 
   fun meet(types: Iterable<PsiType>): PsiType = types.fold(top) { accum, type ->

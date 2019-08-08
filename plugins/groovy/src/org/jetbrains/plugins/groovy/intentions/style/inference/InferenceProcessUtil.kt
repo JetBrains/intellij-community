@@ -271,7 +271,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
 
   for ((typeParameter, type) in substitutionMap.entries) {
     typeParameters.add(typeParameter)
-    substitutions.add(type.accept(ForeignTypeParameterEraser()))
+    substitutions.add(type.accept(ForeignTypeParameterEraser()) ?: PsiType.NULL)
   }
   return PsiSubstitutor.EMPTY.putAll(typeParameters.toTypedArray(), substitutions.toTypedArray())
 }
