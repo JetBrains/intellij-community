@@ -54,7 +54,7 @@ import java.util.List;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends DumbAwareAction {
-  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+  public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);

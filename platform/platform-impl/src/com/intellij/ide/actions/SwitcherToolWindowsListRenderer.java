@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.actions.Switcher.SwitcherPanel.RECENT_LOCATIONS;
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,7 +48,10 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
-    String name = "";
+    setBorder(value == RECENT_LOCATIONS
+              ? JBUI.Borders.customLine(selected ? getBackground() : new JBColor(Gray._220, Gray._80), 1, 0, 0, 0)
+              : JBUI.Borders.empty());
+
     String nameToMatch = "";
     if (value instanceof ToolWindow) {
       ToolWindow tw = ((ToolWindow)value);
@@ -55,6 +61,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
 
       nameToMatch = tw.getStripeTitle();
       String shortcut = shortcuts.get(tw);
+      String name;
       if (myPinned || shortcut == null) {
         name = nameToMatch;
       }
@@ -62,17 +69,21 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
         append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
         name = ": " + nameToMatch;
       }
+
+      append(name);
     }
     else if (value == RECENT_LOCATIONS) {
-      name = Switcher.SwitcherPanel.getRecentLocationsLabel(myShowEdited);
-      nameToMatch = name;
+      String label = Switcher.SwitcherPanel.getRecentLocationsLabel(myShowEdited);
+      nameToMatch = label;
+
+      ShortcutSet shortcuts = getActiveKeymapShortcuts(RecentLocationsAction.RECENT_LOCATIONS_ACTION_ID);
+      append(label);
+
+      if (!myShowEdited.get()) {
+        append(" ").append(KeymapUtil.getShortcutsText(shortcuts.getShortcuts()), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
     }
 
-    setBorder(value == RECENT_LOCATIONS
-              ? JBUI.Borders.customLine(selected ? getBackground() : new JBColor(Gray._220, Gray._80), 1, 0, 0, 0)
-              : JBUI.Borders.empty());
-
-    append(name);
     if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
       hide = mySpeedSearch.matchingFragments(nameToMatch) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
     }
