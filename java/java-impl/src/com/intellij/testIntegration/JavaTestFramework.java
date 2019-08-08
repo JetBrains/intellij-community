@@ -17,9 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +51,7 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
-    if (!(clazz instanceof PsiClass)) return false;
-    return CachedValuesManager.getCachedValue(
-      clazz, () -> CachedValueProvider.Result.create(isTestClass((PsiClass)clazz, false),
-                                                     PsiModificationTracker.MODIFICATION_COUNT));
+    return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, false);
   }
 
   @Override
