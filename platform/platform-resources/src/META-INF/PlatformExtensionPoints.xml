@@ -10,8 +10,8 @@
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
-    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" unloadSafe="true"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" unloadSafe="true"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>

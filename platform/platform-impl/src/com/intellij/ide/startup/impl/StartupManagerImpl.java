@@ -18,6 +18,8 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -199,6 +201,19 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
+
+    Extensions.getRootArea().getExtensionPoint(StartupActivity.POST_STARTUP_ACTIVITY).addExtensionPointListener(
+      new ExtensionPointListener<StartupActivity>() {
+        @Override
+        public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+          if (DumbService.isDumbAware(extension)) {
+            runActivity(new AtomicBoolean(), extension, pluginDescriptor);
+          }
+          else {
+            dumbService.runWhenSmart(() -> runActivity(new AtomicBoolean(), extension, pluginDescriptor));
+          }
+        }
+      }, false, this);
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -463,6 +478,14 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
         for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
           activity.runActivity(myProject);
         }
+
+        Extensions.getRootArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
+          new ExtensionPointListener<StartupActivity>() {
+            @Override
+            public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+              extension.runActivity(myProject);
+            }
+          }, false, this);
       }), 5, TimeUnit.SECONDS);
   }
 
