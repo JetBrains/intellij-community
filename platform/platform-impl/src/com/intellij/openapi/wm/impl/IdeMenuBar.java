@@ -335,7 +335,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   void updateMenuActions(boolean forceRebuild) {
-    doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
+    doUpdateMenuActions(forceRebuild, ActionManager.getInstance());
   }
 
   private void doUpdateMenuActions(boolean forceRebuild, ActionManager manager) {
