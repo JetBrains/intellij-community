@@ -40,6 +40,13 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
 
   @Internal
   open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
+    // Register services before registering extensions because plugins can access services in their
+    // extensions which can be invoked right away if the plugin is loaded dynamically
+    for (plugin in plugins) {
+      val containerDescriptor = getContainerDescriptor(plugin as IdeaPluginDescriptorImpl)
+      registerServices(containerDescriptor.services, plugin)
+    }
+
     ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_EXTENSIONS) {
       @Suppress("UNCHECKED_CAST")
       PluginManagerCore.registerExtensionPointsAndExtensions(extensionArea, picoContainer,
@@ -69,8 +76,6 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
           componentConfigCount++
         }
       }
-
-      registerServices(containerDescriptor.services, plugin)
 
       val listeners = containerDescriptor.listeners
       if (listeners.isNotEmpty()) {
