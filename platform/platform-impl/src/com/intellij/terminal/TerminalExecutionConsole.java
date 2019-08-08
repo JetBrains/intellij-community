@@ -120,7 +120,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
-    myTerminalWidget.addMessageFilter(project, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -251,7 +251,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @Override
   public void addMessageFilter(@NotNull Filter filter) {
-    myTerminalWidget.addMessageFilter(myProject, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -315,7 +315,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
     private ConsoleTerminalWidget(@NotNull Project project, @NotNull JBTerminalSystemSettingsProviderBase provider) {
-      super(project, 200, 24, provider, TerminalExecutionConsole.this);
+      super(project, 200, 24, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }
 
     @Override
