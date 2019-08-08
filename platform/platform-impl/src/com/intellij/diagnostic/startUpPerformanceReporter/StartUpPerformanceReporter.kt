@@ -22,6 +22,7 @@ import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import gnu.trove.THashMap
+import java.io.File
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -167,11 +168,20 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       }
     }
 
-    lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
+    val currentReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
+    lastReport = currentReport
 
     if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
       stringWriter.write("\n=== Stop: StartUp Measurement ===")
       LOG.info(stringWriter.toString())
+    }
+
+    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+    if (!perfFilePath.isNullOrBlank()) {
+      LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
+      val perfFile = File(perfFilePath)
+      perfFile.parentFile?.mkdirs()
+      perfFile.writeBytes(currentReport)
     }
   }
 
