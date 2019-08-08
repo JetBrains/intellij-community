@@ -24,7 +24,7 @@ public class PathRelativizerService {
   private Set<String> myUnhandledPaths;
 
   public PathRelativizerService(@Nullable String projectPath, @Nullable String buildDirPath) {
-    initialize(projectPath, buildDirPath, null); //TODO :: fix null value for references
+    initialize(projectPath, buildDirPath, null);
   }
 
   public PathRelativizerService(@NotNull JpsProject project, @NotNull File buildDir) {
@@ -70,7 +70,7 @@ public class PathRelativizerService {
     return path;
   }
 
-  public void reportUnhandledPaths() { //TODO:: Rewrite this part
+  public void reportUnhandledPaths() {
     if (!LOG.isDebugEnabled()) return;
     final StringBuilder logBuilder = new StringBuilder();
     myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
