@@ -17,6 +17,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.DisposableWrapper;
@@ -247,12 +248,20 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     addHyperlinkFilter(line -> {
       Filter.Result r = filter.applyFilter(line, line.length());
       if (r != null) {
-        return new LinkResult(ContainerUtil.map(r.getResultItems(),
-                                                item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                                                            new LinkInfo(() -> item.getHyperlinkInfo().navigate(project)))));
+        return new LinkResult(ContainerUtil.mapNotNull(r.getResultItems(), item -> convertResultItem(project, item)));
       }
       return null;
     });
+  }
+
+  @Nullable
+  private static LinkResultItem convertResultItem(@NotNull Project project, @NotNull Filter.ResultItem item) {
+    HyperlinkInfo info = item.getHyperlinkInfo();
+    if (info != null) {
+      return new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                new LinkInfo(() -> info.navigate(project)));
+    }
+    return null;
   }
 
   @Override
