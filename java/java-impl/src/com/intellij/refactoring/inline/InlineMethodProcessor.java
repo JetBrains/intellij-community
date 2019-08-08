@@ -627,22 +627,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           ChangeContextUtil.encodeContextInfo(returnExpr, true);
           PsiElement copy = returnExpr.copy();
           ChangeContextUtil.clearContextInfo(returnExpr);
-          copy.accept(new JavaRecursiveElementVisitor() {
-            @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-              super.visitReferenceExpression(expression);
-              PsiElement resolve = expression.resolve();
-              if (resolve instanceof PsiParameter) {
-                int paramIdx = ArrayUtil.find(myMethod.getParameterList().getParameters(), resolve);
-                if (paramIdx >= 0) {
-                  PsiExpression initializer = blockData.parmVars[paramIdx].getInitializer();
-                  if (initializer != null) {
-                    inlineInitializer((PsiVariable)resolve, initializer, expression);
-                  }
-                }
+          if (copy instanceof PsiReferenceExpression && ((PsiReferenceExpression)copy).getQualifierExpression() == null) {
+            copy = inlineParameterReference((PsiReferenceExpression)copy, blockData);
+          } else {
+            copy.accept(new JavaRecursiveElementVisitor() {
+              @Override
+              public void visitReferenceExpression(PsiReferenceExpression expression) {
+                super.visitReferenceExpression(expression);
+                inlineParameterReference(expression, blockData);
               }
-            }
-          });
+            });
+          }
           PsiElement replace = methodCall.replace(copy);
           if (blockData.thisVar != null) {
             ChangeContextUtil.decodeContextInfo(replace, myMethod.getContainingClass(), blockData.thisVar.getInitializer());
@@ -742,6 +737,18 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     ChangeContextUtil.clearContextInfo(anchorParent);
+  }
+
+  @NotNull
+  private PsiExpression inlineParameterReference(@NotNull PsiReferenceExpression expression, BlockData blockData) {
+    if (expression.getQualifierExpression() != null) return expression;
+    PsiElement resolve = expression.resolve();
+    if (!(resolve instanceof PsiParameter)) return expression;
+    int paramIdx = ArrayUtil.find(myMethod.getParameterList().getParameters(), resolve);
+    if (paramIdx < 0) return expression;
+    PsiExpression initializer = blockData.parmVars[paramIdx].getInitializer();
+    if (initializer == null) return expression;
+    return inlineInitializer((PsiVariable)resolve, initializer, expression);
   }
 
   private PsiSubstitutor getCallSubstitutor(PsiMethodCallExpression methodCall) {
