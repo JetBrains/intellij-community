@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -31,14 +33,17 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   @JvmField
   protected val repository: REPOSITORY,
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
-) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener {
+) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener, ChangeListListener {
 
   private val inUpdateMode = AtomicBoolean(false)
   private val updateQueue = VcsIgnoreManagerImpl.getInstanceImpl(repository.project).ignoreRefreshQueue
   private val ignoredSet = hashSetOf<VirtualFile>()
+  private val unprocessedFiles = hashSetOf<FilePath>()
   private val SET_LOCK = ReentrantReadWriteLock()
+  private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
   private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
+  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(repository.project)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
@@ -67,7 +72,26 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
+  override fun changeListUpdateDone() {
+    if (scanTurnedOff()) return
+
+    val filesToCheck = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.removeAll(filesToCheck)
+    }
+    //if the files already unversioned, there is no need to check it for ignore
+    filesToCheck.removeAll(changeListManager.unversionedFiles.mapNotNull(VcsUtil::getFilePath))
+
+    if (filesToCheck.isNotEmpty()) {
+      removeIgnoredFiles(filesToCheck)
+      checkIgnored(filesToCheck)
+    }
+  }
+
   override fun filesChanged(events: List<VFileEvent>) {
+    if (scanTurnedOff()) return
+
     val affectedFiles = events
       .asSequence()
       .mapNotNull(::getAffectedFile)
@@ -75,16 +99,16 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       .map(VcsUtil::getFilePath)
       .toList()
 
-    if (affectedFiles.isNotEmpty()) {
-      removeIgnoredFiles(affectedFiles)
-      checkIgnored(affectedFiles)
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.addAll(affectedFiles)
     }
   }
 
-  fun setupVfsListener() =
+  fun setupListeners() =
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+      changeListManager.addChangeListListener(this, this)
     }
 
   @Throws(VcsException::class)
