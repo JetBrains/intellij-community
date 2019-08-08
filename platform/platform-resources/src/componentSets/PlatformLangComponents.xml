@@ -31,6 +31,7 @@
     <listener class="com.intellij.diagnostic.IdeaFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener" activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
+    <listener class="com.intellij.notification.EventLog$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>

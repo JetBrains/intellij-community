@@ -50,10 +50,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.notification.EventLog</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader</implementation-class>
       <headless-implementation-class/>
     </component>
