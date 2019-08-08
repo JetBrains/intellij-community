@@ -676,7 +676,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType == null) {
         return getOrDetectFromContent(file, content);
       }
-      if (fileType instanceof PlainTextLikeFileType) {
+      if (fileType instanceof PlainTextLikeFileType && fileType.isReadOnly()) {
         FileType detectedFromContent = getOrDetectFromContent(file, content);
         if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
           return detectedFromContent;
