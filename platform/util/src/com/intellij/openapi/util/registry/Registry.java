@@ -216,6 +216,11 @@ public final class Registry  {
     }
   }
 
+  public static synchronized void removeKey(String key) {
+    ourInstance.myContributedKeys.remove(key);
+    ourInstance.myValues.remove(key);
+  }
+
   /**
    * @deprecated Use extension point `com.intellij.registryKey`.
    */
