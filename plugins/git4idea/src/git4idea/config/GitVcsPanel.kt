@@ -36,6 +36,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import java.awt.Color
+import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 
@@ -225,14 +226,14 @@ internal class GitVcsPanel(private val project: Project,
     row {
       cell {
         label("Clean working tree using:")
-        comboBox(
-          model = EnumComboBoxModel(GitVcsSettings.UpdateChangesPolicy::class.java),
-          getter = { projectSettings.updateChangesPolicy() },
-          setter = { projectSettings.setUpdateChangesPolicy(it) },
-          renderer = SimpleListCellRenderer.create<GitVcsSettings.UpdateChangesPolicy>("") { value ->
-            value.name.toLowerCase().capitalize()
-          }
-        )
+        val group = ButtonGroup()
+        GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
+          val rb = radioButton(saveSetting.name.toLowerCase().capitalize()).withSelectedBinding(PropertyBinding(
+            get = { projectSettings.updateChangesPolicy() == saveSetting },
+            set = { selected -> if (selected) projectSettings.setUpdateChangesPolicy(saveSetting) }
+          ))
+          group.add(rb.component)
+        }
       }
     }
     row {
