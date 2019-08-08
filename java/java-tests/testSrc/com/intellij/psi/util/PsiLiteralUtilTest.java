@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.junit.Test;
 
+import static com.intellij.psi.util.PsiLiteralUtil.escapeTextBlockCharacters;
 import static org.junit.Assert.*;
 
 /**
@@ -14,8 +15,8 @@ public class PsiLiteralUtilTest {
 
   @Test
   public void testEscapeTextBlockCharacters() {
-    assertEquals("\\\"\"\"\\\"\"\"\\\"\\\"", PsiLiteralUtil.escapeTextBlockCharacters("\"\"\"\"\"\"\"\"", false, true));
-    assertEquals("\\\\", PsiLiteralUtil.escapeTextBlockCharacters("\\", false, true));
+    assertEquals("\\\"\"\"\\\"\"\"\\\"\\\"", escapeTextBlockCharacters("\"\"\"\"\"\"\"\"", false, true));
+    assertEquals("\\\\", escapeTextBlockCharacters("\\", false, true));
+    assertEquals("", escapeTextBlockCharacters("", false, true));
   }
-
 }

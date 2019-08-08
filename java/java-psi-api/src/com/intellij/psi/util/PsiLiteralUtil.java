@@ -155,6 +155,7 @@ public class PsiLiteralUtil {
   @Contract(pure = true)
   public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote, boolean escapeEndQuote) {
     int length = s.length();
+    if (length == 0) return s;
     StringBuilder result = new StringBuilder(length);
     int q = 0;
     for (int i = 0; i < length; i++) {
