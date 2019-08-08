@@ -140,37 +140,13 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    Activity fjp = StartUpMeasurer.start("setupForkJoinCommonPool");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
+    fjp.end();
 
     LoadingPhase.setStrictMode();
 
-    // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
-    // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
-      checkHiDPISettings();
-
-      //noinspection SpellCheckingInspection
-      System.setProperty("sun.awt.noerasebackground", "true");
-
-      // see note about StartupUiUtil static init - it is required even if headless
-      try {
-        StartupUiUtil.initDefaultLaF();
-        if (!Main.isHeadless()) {
-          SplashManager.show(args);
-        }
-
-        LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
-
-        // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
-        StartupUiUtil.configureHtmlKitStylesheet();
-      }
-      catch (Exception e) {
-        throw new CompletionException(e);
-      }
-    }, runnable -> {
-      installExceptionHandler();
-      EventQueue.invokeLater(runnable);
-    });
+    CompletableFuture<Void> initLafTask = createInitLafFuture(args);
 
     configureLogging();
 
@@ -236,6 +212,42 @@ public class StartupUtil {
         runInEdtAndWait(log, task);
       }
     }, () -> appStarter.start());
+  }
+
+  @NotNull
+  private static CompletableFuture<Void> createInitLafFuture(@NotNull String[] args) {
+
+    Activity initLafAsync = StartUpMeasurer.start("init laf async, mainly call PlatformLogger.getLogger");
+    // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
+    // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
+    CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
+      checkHiDPISettings();
+
+      //noinspection SpellCheckingInspection
+      System.setProperty("sun.awt.noerasebackground", "true");
+
+      // see note about StartupUiUtil static init - it is required even if headless
+      try {
+        StartupUiUtil.initDefaultLaF();
+        if (!Main.isHeadless()) {
+          SplashManager.show(args);
+        }
+
+        LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+
+        // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
+        StartupUiUtil.configureHtmlKitStylesheet();
+      }
+      catch (Exception e) {
+        throw new CompletionException(e);
+      }
+    }, runnable -> {
+      installExceptionHandler();
+      EventQueue.invokeLater(runnable);
+    });
+
+    initLafAsync.end();
+    return initLafTask;
   }
 
   @NotNull
