@@ -199,6 +199,10 @@ public final class Registry  {
     return false;
   }
 
+  /**
+   * @deprecated Use extension point `com.intellij.registryKey`.
+   */
+  @Deprecated
   public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
     getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, false));
   }
@@ -220,6 +224,10 @@ public final class Registry  {
     addKey(key, description, Integer.toString(defaultValue), restartRequired);
   }
 
+  /**
+   * @deprecated Use extension point `com.intellij.registryKey`.
+   */
+  @Deprecated
   public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
     addKey(key, description, Boolean.toString(defaultValue), restartRequired);
   }
