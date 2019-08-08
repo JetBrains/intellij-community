@@ -89,8 +89,9 @@ final class PsiBreadcrumbs extends Breadcrumbs {
     }
 
     final Crumb crumb = hovered;
+    Promise<String> tooltipLazy;
     synchronized (scheduledTooltipTasks) {
-      Promise<String> tooltipLazy = scheduledTooltipTasks.get(crumb);
+      tooltipLazy = scheduledTooltipTasks.get(crumb);
       if (tooltipLazy == null) {
         Runnable removeFinishedTask = () -> {
           synchronized (scheduledTooltipTasks) {
@@ -112,13 +113,13 @@ final class PsiBreadcrumbs extends Breadcrumbs {
           .onSuccess(toolTipText -> removeFinishedTask.run());
         scheduledTooltipTasks.put(crumb, tooltipLazy);
       }
-      if (tooltipLazy.isSucceeded()) {
-        try {
-          return tooltipLazy.blockingGet(0);
-        }
-        catch (TimeoutException | ExecutionException e) {
-          LOG.error(e);
-        }
+    }
+    if (tooltipLazy.isSucceeded()) {
+      try {
+        return tooltipLazy.blockingGet(0);
+      }
+      catch (TimeoutException | ExecutionException e) {
+        LOG.error(e);
       }
     }
     return getLazyTooltipProgressText();
