@@ -71,7 +71,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     }
 
     companion object {
-      val pattern: Pattern = Pattern.compile("<# block (.*)#>\n<#(.*)#>")
+      val pattern: Pattern = Pattern.compile("<# block (.*)#>(\r\n|\r|\n)|<#(.*)#>")
     }
   }
 
