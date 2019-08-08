@@ -21,6 +21,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -61,11 +62,13 @@ public class CompilerReferenceIndex<Input> {
   });
   private volatile Throwable myRebuildRequestCause;
 
-  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
-                                File buildDir,
-                                PathRelativizerService relativizer,
-                                boolean readOnly,
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir, boolean readOnly,
                                 int version) {
+    this(indices, buildDir, null, readOnly, version);
+  }
+
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
+                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version) {
     myBuildDir = buildDir;
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
@@ -78,9 +81,20 @@ public class CompilerReferenceIndex<Input> {
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(String path) throws IOException {
-          String rel = relativizer.toRelative(path);
-          String s = SystemInfo.isFileSystemCaseSensitive ? rel : StringUtil.toLowerCase(rel); // todo: lowercase kills $PROJECT_DIR$
-          return super.enumerate(s);
+          if (relativizer != null) {
+            return super.enumerate(relativizer.toRelative(path));
+          }
+          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path));
+        }
+
+        @Nullable
+        @Override
+        public String valueOf(int idx) throws IOException {
+          String path = super.valueOf(idx);
+          if (relativizer != null && path != null) {
+            return relativizer.toFull(path);
+          }
+          return path;
         }
       };
 
@@ -169,7 +183,7 @@ public class CompilerReferenceIndex<Input> {
   private static File getIndexDir(@NotNull File buildDir) {
     return new File(buildDir, "backward-refs");
   }
-  
+
   public static boolean exists(@NotNull File buildDir) {
     return getIndexDir(buildDir).exists();
   }
@@ -216,7 +230,7 @@ public class CompilerReferenceIndex<Input> {
   public File getIndicesDir() {
     return myIndicesDir;
   }
-  
+
   public void setRebuildRequestCause(Throwable e) {
     myRebuildRequestCause = e;
     LOG.error(e);
