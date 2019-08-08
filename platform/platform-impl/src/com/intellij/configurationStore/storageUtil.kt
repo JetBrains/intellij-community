@@ -120,21 +120,26 @@ private fun collect(componentManager: ComponentManager,
 
 @ApiStatus.Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
-  if (virtualFile != null) {
-    return virtualFile
+  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
+  if (virtualFile == null) {
+    val parentFile = file.parent
+    parentFile.createDirectories()
+
+    // need refresh if the directory has just been created
+    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+                            ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+
+    virtualFile = runAsWriteActionIfNeeded {
+      parentVirtualFile.createChildData(requestor, file.fileName.toString())
+    }
   }
-
-  val parentFile = file.parent
-  parentFile.createDirectories()
-
-  // need refresh if the directory has just been created
-  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
-                          ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
-
-  return runAsWriteActionIfNeeded {
-    parentVirtualFile.createChildData(requestor, file.fileName.toString())
+  // internal .xml files written with BOM can cause problems, see IDEA-219913
+  // (e.g. unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
+  // so we forcibly remove BOM from storage .xmls
+  if (virtualFile.bom != null) {
+    virtualFile.bom = null
   }
+  return virtualFile
 }
 
 // runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
