@@ -41,7 +41,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
-    this(project, new ArrayList<>());
+    this(project, Collections.emptyList());
   }
 
   public CompositeFilter(@NotNull Project project, @NotNull List<? extends Filter> filters) {
