@@ -25,6 +25,8 @@
     <projectService serviceImplementation="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
     <buildProcess.parametersProvider implementation="com.intellij.compiler.server.impl.CustomBuildProcessPluginsClasspathProvider"/>
     <vfs.asyncListener implementation="com.intellij.compiler.impl.TranslatingCompilerFilesMonitor"/>
+
+    <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
   </extensions>
 
 </idea-plugin>
