@@ -16,9 +16,9 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.filters.CompositeFilter;
-import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.DisposableWrapper;
@@ -101,7 +101,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private static CompositeFilter createCompositeFilter(@NotNull Project project, @Nullable TerminalExecutionConsole console) {
     List<Filter> filters = Collections.emptyList();
     if (!project.isDefault()) {
-      filters = ConsoleFilterProvider.computeConsoleFilters(project, console, GlobalSearchScope.allScope(project));
+      filters = ConsoleViewUtil.computeConsoleFilters(project, console, GlobalSearchScope.allScope(project));
     }
     return new CompositeFilter(project, filters);
   }
