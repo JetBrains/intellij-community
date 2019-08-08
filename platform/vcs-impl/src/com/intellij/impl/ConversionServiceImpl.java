@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.graph.*;
@@ -116,9 +118,12 @@ public class ConversionServiceImpl extends ConversionService {
       }
 
       final List<ConversionRunner> converters = getConversionRunners(context);
-      ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
-      dialog.show();
-      if (dialog.isConverted()) {
+      Ref<ConvertProjectDialog> dialog = new Ref<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        dialog.set(new ConvertProjectDialog(context, converters));
+        dialog.get().show();
+      });
+      if (!dialog.isNull() && dialog.get().isConverted()) {
         saveConversionResult(context);
         return new ConversionResultImpl(converters);
       }
@@ -126,8 +131,10 @@ public class ConversionServiceImpl extends ConversionService {
     }
     catch (CannotConvertException e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.convert.project", e.getMessage()),
-                               IdeBundle.message("title.cannot.convert.project"));
+      AppUIUtil.invokeOnEdt(() -> {
+        Messages.showErrorDialog(IdeBundle.message("error.cannot.convert.project", e.getMessage()),
+                                 IdeBundle.message("title.cannot.convert.project"));
+      });
       return ConversionResultImpl.ERROR_OCCURRED;
     }
   }
