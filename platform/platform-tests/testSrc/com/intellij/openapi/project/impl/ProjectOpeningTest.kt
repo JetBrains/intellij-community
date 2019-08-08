@@ -1,123 +1,114 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.project.impl;
+package com.intellij.openapi.project.impl
 
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import junit.framework.TestCase
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-/**
- * @author Dmitry Avdeev
- */
-public class ProjectOpeningTest extends HeavyPlatformTestCase {
-  public void testOpenProjectCancelling() throws Exception {
-    Project project = null;
-    MyStartupActivity activity = new MyStartupActivity();
-    PlatformTestUtil.maskExtensions(POST_STARTUP_ACTIVITY, Collections.singletonList(activity), getTestRootDisposable());
-    try {
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-      File foo = createTempDir("foo");
-      project = manager.createProject(null, foo.getPath());
-      assertThat(manager.openProject(project)).isFalse();
-      assertThat(project.isOpen()).isFalse();
-      // 1 on maskExtensions call, second call our call
-      assertThat(activity.passedCount.get()).isEqualTo(2);
-    }
-    finally {
-      closeProject(project);
-    }
-  }
-
-  public void testCancelOnLoadingModules() throws Exception {
-    File foo = createTempDir("foo");
-    Project project = null;
-    try {
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-      project = manager.createProject(null, foo.getPath());
-      project.save();
-      closeProject(project);
-
-      ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-        @Override
-        public void projectComponentsInitialized(@NotNull Project project) {
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          assertNotNull(indicator);
-          indicator.cancel();
-          indicator.checkCanceled();
-        }
-      });
-
-      project = manager.loadAndOpenProject(foo);
-      assertFalse(project.isOpen());
-      assertTrue(project.isDisposed());
-    }
-    finally {
-      closeProject(project);
-    }
-  }
-
-  public void testIsSameProjectForDirectoryBasedProject() throws IOException {
-    File projectDir = createTempDir("project");
-    Project dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.getAbsolutePath());
-    disposeOnTearDown(dirBasedProject);
-
-    assertTrue(ProjectUtil.isSameProject(projectDir.getAbsolutePath(), dirBasedProject));
-    assertFalse(ProjectUtil.isSameProject(createTempDir("project2").getAbsolutePath(), dirBasedProject));
-    File iprFilePath = new File(projectDir, "project.ipr");
-    assertTrue(ProjectUtil.isSameProject(iprFilePath.getAbsolutePath(), dirBasedProject));
-    File miscXmlFilePath = new File(projectDir, ".idea/misc.xml");
-    assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.getAbsolutePath(), dirBasedProject));
-    File someOtherFilePath = new File(projectDir, "misc.xml");
-    assertFalse(ProjectUtil.isSameProject(someOtherFilePath.getAbsolutePath(), dirBasedProject));
-  }
-
-  public void testIsSameProjectForFileBasedProject() throws IOException {
-    File projectDir = createTempDir("project");
-    File iprFilePath = new File(projectDir, "project.ipr");
-    Project fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.getName(), iprFilePath.getAbsolutePath());
-    disposeOnTearDown(fileBasedProject);
-
-    assertTrue(ProjectUtil.isSameProject(projectDir.getAbsolutePath(), fileBasedProject));
-    assertFalse(ProjectUtil.isSameProject(createTempDir("project2").getAbsolutePath(), fileBasedProject));
-    File iprFilePath2 = new File(projectDir, "project2.ipr");
-    assertFalse(ProjectUtil.isSameProject(iprFilePath2.getAbsolutePath(), fileBasedProject));
-  }
-
-  static void closeProject(@Nullable Project project) {
-    if (project != null && !project.isDisposed()) {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
-    }
-  }
-
-  private static final class MyStartupActivity implements StartupActivity, DumbAware {
-    private final AtomicInteger passedCount = new AtomicInteger();
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (passedCount.getAndIncrement() == 0) {
-        return;
+class ProjectOpeningTest : HeavyPlatformTestCase() {
+  companion object {
+    @JvmStatic
+    internal fun closeProject(project: Project?) {
+      if (project != null && !project.isDisposed) {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       }
-
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      assertNotNull(indicator);
-      indicator.cancel();
     }
+  }
+
+  fun testOpenProjectCancelling() {
+    var project: Project? = null
+    val activity = MyStartupActivity()
+    PlatformTestUtil.maskExtensions(POST_STARTUP_ACTIVITY, listOf(activity), testRootDisposable)
+    try {
+      val manager = ProjectManagerEx.getInstanceEx()
+      val foo = createTempDir("foo")
+      project = manager.createProject(null, foo.path)!!
+      assertThat(manager.openProject(project)).isFalse
+      assertThat(project.isOpen).isFalse
+      // 1 on maskExtensions call, second call our call
+      assertThat(activity.passedCount!!.get()).isEqualTo(2)
+    }
+    finally {
+      closeProject(project)
+    }
+  }
+
+  fun testCancelOnLoadingModules() {
+    val foo = createTempDir("foo")
+    var project: Project? = null
+    try {
+      val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
+      project = manager!!.createProject(null, foo.path)
+      project!!.save()
+      closeProject(project)
+      ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(
+        ProjectLifecycleListener.TOPIC,
+        object : ProjectLifecycleListener {
+          override fun projectComponentsInitialized(project: Project) {
+            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
+            TestCase.assertNotNull(indicator)
+            indicator!!.cancel()
+            indicator.checkCanceled()
+          }
+        })
+      project = manager.loadAndOpenProject(foo)
+      TestCase.assertFalse(project!!.isOpen)
+      TestCase.assertTrue(project.isDisposed)
+    }
+    finally {
+      closeProject(project)
+    }
+  }
+
+  fun testIsSameProjectForDirectoryBasedProject() {
+    val projectDir = createTempDir("project")
+    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.absolutePath)!!
+    Disposer.register(testRootDisposable, dirBasedProject)
+    TestCase.assertTrue(ProjectUtil.isSameProject(projectDir.absolutePath, dirBasedProject))
+    TestCase.assertFalse(ProjectUtil.isSameProject(createTempDir("project2").absolutePath, dirBasedProject))
+    val iprFilePath = File(projectDir, "project.ipr")
+    TestCase.assertTrue(ProjectUtil.isSameProject(iprFilePath.absolutePath, dirBasedProject))
+    val miscXmlFilePath = File(projectDir, ".idea/misc.xml")
+    TestCase.assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.absolutePath, dirBasedProject))
+    val someOtherFilePath = File(projectDir, "misc.xml")
+    TestCase.assertFalse(
+      ProjectUtil.isSameProject(someOtherFilePath.absolutePath, dirBasedProject))
+  }
+
+  fun testIsSameProjectForFileBasedProject() {
+    val projectDir = createTempDir("project")
+    val iprFilePath = File(projectDir, "project.ipr")
+    val fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.name, iprFilePath.absolutePath)!!
+    disposeOnTearDown(fileBasedProject)
+    TestCase.assertTrue(ProjectUtil.isSameProject(projectDir.absolutePath, fileBasedProject))
+    TestCase.assertFalse(ProjectUtil.isSameProject(createTempDir("project2").absolutePath, fileBasedProject))
+    val iprFilePath2 = File(projectDir, "project2.ipr")
+    TestCase.assertFalse(ProjectUtil.isSameProject(iprFilePath2.absolutePath, fileBasedProject))
+  }
+}
+
+private class MyStartupActivity : StartupActivity, DumbAware {
+  val passedCount: AtomicInteger? = AtomicInteger()
+  override fun runActivity(project: Project) {
+    if (passedCount!!.getAndIncrement() == 0) {
+      return
+    }
+    val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
+    TestCase.assertNotNull(indicator)
+    indicator!!.cancel()
   }
 }

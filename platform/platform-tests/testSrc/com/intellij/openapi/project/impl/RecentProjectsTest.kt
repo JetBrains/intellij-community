@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectOpeningTest.closeProject
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -82,7 +81,7 @@ class RecentProjectsTest {
     try {
       val path = tempDir.newPath("z1")
       project = HeavyPlatformTestCase.createProject(path)
-      closeProject(project)
+      ProjectOpeningTest.closeProject(project)
       project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
       val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
@@ -90,7 +89,7 @@ class RecentProjectsTest {
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
-      closeProject(project)
+      ProjectOpeningTest.closeProject(project)
     }
   }
 
@@ -107,14 +106,14 @@ class RecentProjectsTest {
   @Throws(IOException::class, JDOMException::class)
   private fun doReopenCloseAndCheck(projectPath: String, vararg results: String) {
     val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
-    closeProject(project)
+    ProjectOpeningTest.closeProject(project)
     checkRecents(*results)
   }
 
   @Throws(IOException::class, JDOMException::class)
   private fun doReopenCloseAndCheckGroups(projectPath: String, results: List<String>) {
     val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
-    closeProject(project)
+    ProjectOpeningTest.closeProject(project)
     checkGroups(results)
   }
 
@@ -142,12 +141,12 @@ class RecentProjectsTest {
       val path = tempDir.newPath(name)
       project = HeavyPlatformTestCase.createProject(path)
       PlatformTestUtil.saveProject(project)
-      closeProject(project)
+      ProjectOpeningTest.closeProject(project)
       project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
       return project!!.basePath!!
     }
     finally {
-      closeProject(project)
+      ProjectOpeningTest.closeProject(project)
     }
   }
 }
