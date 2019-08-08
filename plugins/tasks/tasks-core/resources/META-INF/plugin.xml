@@ -128,7 +128,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <!-- JQL support -->
-    <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
+    <fileType name="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlFileType" fieldName="INSTANCE" language="JQL" extensions="jql" />
     <lang.parserDefinition language="JQL"
                            implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
