@@ -24,7 +24,7 @@ val myShowWelcomeScreen = CheckboxDescriptor(IdeBundle.message("checkbox.show.we
 val myChkSyncOnFrameActivation = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"),
                                                     PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
 val myChkSaveOnFrameDeactivation = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"),
-                                                      PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
+                                                      PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
 val myChkAutoSaveIfInactive = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"),
                                                  PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
 val myChkUseSafeWrite = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)",
