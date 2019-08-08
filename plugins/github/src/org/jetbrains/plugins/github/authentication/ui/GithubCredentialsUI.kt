@@ -107,7 +107,7 @@ sealed class GithubCredentialsUI {
       return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
         invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
-                                   "Authentication Code",
+                                   "Authentication code:",
                                    "GitHub Two-Factor Authentication",
                                    null)
         }
