@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.cloud;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +21,10 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
                              @NotNull OutputStream terminalInput) {
     super(presentableName);
 
-    final CloudTerminalProcess process = new CloudTerminalProcess(terminalInput, terminalOutput,
-                                                                  ttySize -> getResizeHandler().accept(ttySize));
+    final CloudTerminalProcess process = new CloudTerminalProcess(terminalInput, terminalOutput);
 
-    CloudTerminalRunner terminalRunner = new CloudTerminalRunner(project, presentableName, process);
+    TtyResizeHandler handlerBoundLater = (w, h) -> getResizeHandler().onTtyResizeRequest(w, h); //right now handler is null
+    CloudTerminalRunner terminalRunner = new CloudTerminalRunner(project, presentableName, process, handlerBoundLater);
 
     myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
   }
