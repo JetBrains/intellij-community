@@ -84,11 +84,6 @@ public final class ImageDescriptor {
       return null;
     }
 
-    if (resourceClass != null) {
-      InputStream stream = resourceClass.getResourceAsStream(path);
-      return stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), null);
-    }
-
     String cacheKey = null;
     URL url;
     if (useCache) {
@@ -98,6 +93,11 @@ public final class ImageDescriptor {
         origUsrSize.setSize(pair.second);
         return pair.first;
       }
+    }
+
+    if (resourceClass != null) {
+      InputStream stream = resourceClass.getResourceAsStream(path);
+      return stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), cacheKey);
     }
 
     url = new URL(path);
