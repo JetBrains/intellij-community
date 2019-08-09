@@ -1146,7 +1146,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
-    String optimisticUrl = VirtualFileManager.constructUrl(fs.getProtocol(), path);
+    String optimisticUrl = VirtualFileManager.constructUrl(fs.getProtocol(), StringUtil.trimTrailing(path, '/'));
     VirtualFileSystemEntry root = myRoots.get(optimisticUrl);
     if (root != null) return root;
     String rootUrl = normalizeRootUrl(path, fs);
