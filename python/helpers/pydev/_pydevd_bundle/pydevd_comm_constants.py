@@ -86,6 +86,11 @@ CMD_RETURN = 502
 CMD_SET_PROTOCOL = 503
 CMD_ERROR = 901
 
+
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
+file_system_encoding = getfilesystemencoding()
+filesystem_encoding_is_utf8 = file_system_encoding.lower() in ('utf-8', 'utf_8', 'utf8')
+
 ID_TO_MEANING = {
     '101': 'CMD_RUN',
     '102': 'CMD_LIST_THREADS',
