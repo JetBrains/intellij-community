@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class IconLoadMeasurer {
   private static final Counter decodingSvg = new Counter("svg-decode");
@@ -33,19 +34,19 @@ public final class IconLoadMeasurer {
     ((type == ImageType.SVG) ? loadingSvg : loadingPng).addDuration(duration);
   }
 
-  public static void addFindIcon(int duration) {
+  public static void addFindIcon(long duration) {
     findIcon.addDuration(duration);
   }
 
-  public static void addFindIconLoad(int duration) {
+  public static void addFindIconLoad(long duration) {
     findIconLoad.addDuration(duration);
   }
 
-  public static void addLoadFromUrl(int duration) {
+  public static void addLoadFromUrl(long duration) {
     loadFromUrl.addDuration(duration);
   }
 
-  public static void addLoadFromResources(int duration) {
+  public static void addLoadFromResources(long duration) {
     loadFromResources.addDuration(duration);
   }
 
@@ -53,7 +54,7 @@ public final class IconLoadMeasurer {
     private final String type;
 
     private final AtomicInteger counter = new AtomicInteger();
-    private final AtomicInteger totalTime = new AtomicInteger();
+    private final AtomicLong totalTime = new AtomicLong();
 
     public Counter(@NotNull String type) {
       this.type = type;
@@ -68,7 +69,7 @@ public final class IconLoadMeasurer {
       return counter.get();
     }
 
-    public int getTotalTime() {
+    public long getTotalTime() {
       return totalTime.get();
     }
 
@@ -76,10 +77,10 @@ public final class IconLoadMeasurer {
       counter.incrementAndGet();
     }
 
-    public void addDuration(int duration) {
+    public void addDuration(long duration) {
       counter.incrementAndGet();
       if (duration > 0) {
-        totalTime.updateAndGet(current -> current + duration);
+        totalTime.getAndAdd(duration);
       }
     }
   }

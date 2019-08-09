@@ -363,9 +363,7 @@ private fun writeIcons(writer: JsonGenerator) {
       writer.obj {
         writer.writeStringField("name", stat.type)
         writer.writeNumberField("count", stat.counter)
-        val totalTime = stat.totalTime
-
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(totalTime.toLong()))
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalTime))
       }
     }
   }

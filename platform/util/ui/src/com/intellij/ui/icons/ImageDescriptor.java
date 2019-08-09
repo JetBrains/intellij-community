@@ -100,7 +100,7 @@ public final class ImageDescriptor {
       InputStream stream = resourceClass.getResourceAsStream(path);
       Image image = stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), cacheKey);
       if (start != -1) {
-        IconLoadMeasurer.addLoadFromResources((int)(StartUpMeasurer.getCurrentTime() - start));
+        IconLoadMeasurer.addLoadFromResources(StartUpMeasurer.getCurrentTime() - start);
       }
       return image;
     }
@@ -113,7 +113,7 @@ public final class ImageDescriptor {
     }
     Image image = loadFromStream(connection.getInputStream(), url, cacheKey);
     if (start != -1) {
-      IconLoadMeasurer.addLoadFromUrl((int)(StartUpMeasurer.getCurrentTime() - start));
+      IconLoadMeasurer.addLoadFromUrl(StartUpMeasurer.getCurrentTime() - start);
     }
     return image;
   }

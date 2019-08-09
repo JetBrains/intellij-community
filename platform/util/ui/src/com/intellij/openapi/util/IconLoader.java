@@ -278,7 +278,7 @@ public final class IconLoader {
     long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
     Icon icon = findIconImpl(originalPath, clazz, classLoader, handleNotFound, deferUrlResolve);
     if (start != -1) {
-      IconLoadMeasurer.addFindIcon((int)(StartUpMeasurer.getCurrentTime() - start));
+      IconLoadMeasurer.addFindIcon(StartUpMeasurer.getCurrentTime() - start);
     }
 
     return icon;
@@ -725,7 +725,7 @@ public final class IconLoader {
       long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
       Image image = loadFromUrlImpl(ctx, dark);
       if (start != -1) {
-        IconLoadMeasurer.addFindIconLoad((int)(StartUpMeasurer.getCurrentTime() - start));
+        IconLoadMeasurer.addFindIconLoad(StartUpMeasurer.getCurrentTime() - start);
       }
       return image;
     }
