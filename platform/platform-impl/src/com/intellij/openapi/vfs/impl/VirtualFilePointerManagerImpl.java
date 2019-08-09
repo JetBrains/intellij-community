@@ -408,6 +408,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull
   @Override
   public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    long start = System.currentTimeMillis();
     List<FilePointerPartNode> toFireEvents = new ArrayList<>();
     List<FilePointerPartNode> toUpdateUrl = new ArrayList<>();
     VirtualFilePointer[] toFirePointers;
@@ -479,7 +480,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
       }
     }
-
+    long prepareElapsedMs = System.currentTimeMillis() - start;
     return new ChangeApplier() {
       @Override
       public void beforeVfsChange() {
@@ -501,7 +502,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
       @Override
       public void afterVfsChange() {
-        after(toFireEvents, toUpdateUrl, eventList);
+        after(toFireEvents, toUpdateUrl, eventList, prepareElapsedMs, events.size());
       }
     };
   }
@@ -528,7 +529,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private void after(@NotNull List<? extends FilePointerPartNode> toFireEvents,
                      @NotNull List<? extends FilePointerPartNode> toUpdateUrl,
-                     @NotNull List<? extends EventDescriptor> eventList) {
+                     @NotNull List<? extends EventDescriptor> eventList, long prepareElapsedMs, int eventsSize) {
+    long start = System.currentTimeMillis();
     ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
     VirtualFilePointer[] pointersToFireArray;
@@ -577,6 +579,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     assertConsistency();
+    long afterElapsedMs = System.currentTimeMillis() - start;
+    if (afterElapsedMs > 1000 || prepareElapsedMs > 1000) {
+      int totalPointers;
+      synchronized (this) {
+        totalPointers = myPointers.values().stream().mapToInt(root -> root.pointersUnder).sum();
+      }
+      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms." +
+               " after(toFireEvents: "+toFireEvents.size()+", toUpdateUrl: "+toUpdateUrl+", eventList: "+eventList+"): "+afterElapsedMs+"ms." +
+               " total pointers: "+totalPointers);
+    }
   }
 
   synchronized void removeNodeFrom(@NotNull VirtualFilePointerImpl pointer) {
