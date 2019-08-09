@@ -324,6 +324,7 @@ public abstract class GitImplBase implements Git {
         && progressIndicator != null
         && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
       GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
+      if (e instanceof ProcessCanceledException) throw (ProcessCanceledException)e;
       throw new ProcessCanceledException(e);
     }
     else {
