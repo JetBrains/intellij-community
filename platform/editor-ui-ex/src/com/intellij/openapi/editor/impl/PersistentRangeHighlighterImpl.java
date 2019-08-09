@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   private int myLine; // for PersistentRangeHighlighterImpl only
-  static PersistentRangeHighlighterImpl create(@NotNull MarkupModel model,
+  static PersistentRangeHighlighterImpl create(@NotNull MarkupModelImpl model,
                                                int offset,
                                                int layer,
                                                @NotNull HighlighterTargetArea target,
@@ -43,7 +42,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
     return new PersistentRangeHighlighterImpl(model, startOffset, line, layer, target, textAttributes);
   }
 
-  private PersistentRangeHighlighterImpl(@NotNull MarkupModel model,
+  private PersistentRangeHighlighterImpl(@NotNull MarkupModelImpl model,
                                          int startOffset,
                                          int line,
                                          int layer,
