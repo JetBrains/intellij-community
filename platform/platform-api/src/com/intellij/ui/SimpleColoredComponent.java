@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
@@ -469,17 +468,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   private Font getBaseFont() {
     Font font = getFont();
-    if (font == null) font = StartupUiUtil.getLabelFont();
+    if (font == null) font = UIUtil.getLabelFont();
     return font;
   }
 
   private TextLayout getTextLayout(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    Font baseFont = getBaseFont();
-    if (baseFont != myLayoutFont) {
-      myFragments.forEach(ColoredFragment::invalidateLayout);
-      myLayoutFont = baseFont;
+    if (getBaseFont() != myLayoutFont) myFragments.forEach(each -> each.layout = null);
+    TextLayout layout = fragment.layout;
+    if (layout == null && needFontFallback(font, fragment.text)) {
+      layout = createAndCacheTextLayout(fragment, font, frc);
     }
-    return fragment.getAndCacheLayout(font, frc);
+    return layout;
   }
 
   private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, float x, float y) {
@@ -502,8 +501,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return layout != null ? layout.getAdvance() : (float)font.getStringBounds(text, fontRenderContext).getWidth();
   }
 
-  @NotNull
-  private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
+  private TextLayout createAndCacheTextLayout(@NotNull ColoredFragment fragment, Font basefont, FontRenderContext fontRenderContext) {
+    String text = fragment.text;
     AttributedString string = new AttributedString(text);
     int start = 0;
     int end = text.length();
@@ -530,7 +529,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (currentIndex < end) {
       string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
     }
-    return new TextLayout(string.getIterator(), fontRenderContext);
+    TextLayout layout = new TextLayout(string.getIterator(), fontRenderContext);
+    fragment.layout = layout;
+    myLayoutFont = getBaseFont();
+    return layout;
   }
 
   private static boolean needFontFallback(Font font, String text) {
@@ -1218,31 +1220,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @NotNull volatile String text;
     @NotNull volatile SimpleTextAttributes attributes;
     @Nullable volatile Object tag;
-    @Nullable private volatile Ref<TextLayout> layout;
+    @Nullable volatile TextLayout layout;
     volatile int padding;
     volatile int alignment;
 
     ColoredFragment(@NotNull String text, @NotNull SimpleTextAttributes attributes) {
       this.text = text;
       this.attributes = attributes;
-    }
-
-    void invalidateLayout() {
-      layout = null;
-    }
-
-    @Nullable
-    private TextLayout getAndCacheLayout(Font font, FontRenderContext frc) {
-      Ref<TextLayout> layoutRef = this.layout;
-      if (layoutRef == null) {
-        String text = this.text;
-        TextLayout layout = null;
-        if (needFontFallback(font, text)) {
-          layout = createTextLayout(text, font, frc);
-        }
-        this.layout = layoutRef = Ref.create(layout);
-      }
-      return layoutRef.get();
     }
   }
 }
