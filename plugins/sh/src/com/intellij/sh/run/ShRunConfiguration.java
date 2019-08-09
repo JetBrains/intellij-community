@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -28,6 +27,7 @@ import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
   private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
   private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
+  private static final String SCRIPT_WORKING_DIRECTORY = "SCRIPT_WORKING_DIRECTORY";
   private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
 
@@ -35,6 +35,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   private String myScriptOptions = "";
   private String myInterpreterPath = "";
   private String myInterpreterOptions = "";
+  private String myScriptWorkingDirectory = "";
 
   ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
     super(project, factory, name);
@@ -51,6 +52,9 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     if (!FileUtil.exists(myScriptPath)) {
       throw new RuntimeConfigurationError("Shell script not found");
     }
+    if (!FileUtil.exists(myScriptWorkingDirectory)) {
+      throw new RuntimeConfigurationError("Working directory not found");
+    }
     if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
       if (!FileUtil.exists(myInterpreterPath)) throw new RuntimeConfigurationError("Interpreter not found");
       if (!new File(myInterpreterPath).canExecute()) throw new RuntimeConfigurationError("Interpreter should be executable file");
@@ -59,7 +63,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
     return new ShRunConfigurationProfileState(getProject(), this);
   }
 
@@ -67,9 +71,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
-    JDOMExternalizerUtil.writeField(element, SCRIPT_PATH_TAG, myScriptPath);
+    JDOMExternalizerUtil.writeField(element, SCRIPT_PATH_TAG, FileUtil.toSystemIndependentName(myScriptPath));
     JDOMExternalizerUtil.writeField(element, SCRIPT_OPTIONS_TAG, myScriptOptions);
-    JDOMExternalizerUtil.writeField(element, INTERPRETER_PATH_TAG, myInterpreterPath);
+    JDOMExternalizerUtil.writeField(element, SCRIPT_WORKING_DIRECTORY, FileUtil.toSystemIndependentName(myScriptWorkingDirectory));
+    JDOMExternalizerUtil.writeField(element, INTERPRETER_PATH_TAG, FileUtil.toSystemIndependentName(myInterpreterPath));
     JDOMExternalizerUtil.writeField(element, INTERPRETER_OPTIONS_TAG, myInterpreterOptions);
   }
 
@@ -77,9 +82,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
-    myScriptPath = notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_PATH_TAG), "");
+    myScriptPath = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_PATH_TAG), ""));
     myScriptOptions = notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_OPTIONS_TAG), "");
-    myInterpreterPath = notNullize(JDOMExternalizerUtil.readField(element, INTERPRETER_PATH_TAG), "");
+    myScriptWorkingDirectory = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_WORKING_DIRECTORY), ""));
+    myInterpreterPath = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, INTERPRETER_PATH_TAG), ""));
     myInterpreterOptions = notNullize(JDOMExternalizerUtil.readField(element, INTERPRETER_OPTIONS_TAG), "");
   }
 
@@ -124,6 +130,14 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   void setScriptOptions(@NotNull String scriptOptions) {
     myScriptOptions = scriptOptions.trim();
+  }
+
+  String getScriptWorkingDirectory() {
+    return myScriptWorkingDirectory;
+  }
+
+  void setScriptWorkingDirectory(String scriptWorkingDirectory) {
+    myScriptWorkingDirectory = scriptWorkingDirectory.trim();
   }
 
   String getInterpreterPath() {

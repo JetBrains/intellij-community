@@ -18,6 +18,7 @@ import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalUtil;
 import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,13 +33,13 @@ public class ShTerminalRunner extends ShRunner {
   }
 
   @Override
-  public void run(@NotNull String command) {
+  public void run(@NotNull String command, @NotNull String workingDirectory) {
     TerminalView terminalView = TerminalView.getInstance(myProject);
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) return;
 
     ContentManager contentManager = window.getContentManager();
-    Pair<Content, Process> pair = getSuitableProcess(contentManager);
+    Pair<Content, Process> pair = getSuitableProcess(contentManager, workingDirectory);
     if (pair != null) {
       try {
         window.activate(null);
@@ -53,7 +54,7 @@ public class ShTerminalRunner extends ShRunner {
       terminalView.createNewSession(new LocalTerminalDirectRunner(myProject) {
         @Override
         protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
-          PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
+          PtyProcess process = super.createProcess(workingDirectory, commandHistoryFilePath);
           runCommand(process, command);
           return process;
         }
@@ -68,27 +69,29 @@ public class ShTerminalRunner extends ShRunner {
   }
 
   @Nullable
-  private static Pair<Content, Process> getSuitableProcess(@NotNull ContentManager contentManager) {
+  private static Pair<Content, Process> getSuitableProcess(@NotNull ContentManager contentManager, @NotNull String workingDirectory) {
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
-      Pair<Content, Process> pair = getSuitableProcess(selectedContent);
+      Pair<Content, Process> pair = getSuitableProcess(selectedContent, workingDirectory);
       if (pair != null) return pair;
     }
 
     return Arrays.stream(contentManager.getContents())
-      .map(ShTerminalRunner::getSuitableProcess)
+      .map(content -> getSuitableProcess(content, workingDirectory))
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
   }
 
   @Nullable
-  private static Pair<Content, Process> getSuitableProcess(@NotNull Content content) {
+  private static Pair<Content, Process> getSuitableProcess(@NotNull Content content, @NotNull String workingDirectory) {
     JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
     if (widget == null) return null;
     if (widget.getTtyConnector() instanceof ProcessTtyConnector) {
       ProcessTtyConnector ttyConnector = (ProcessTtyConnector)widget.getTtyConnector();
-      if (!TerminalUtil.hasRunningCommands(ttyConnector)) {
+      String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, null);
+      if (currentWorkingDirectory == null) return null;
+      if (!TerminalUtil.hasRunningCommands(ttyConnector) && currentWorkingDirectory.equals(workingDirectory)) {
         return Pair.create(content, ttyConnector.getProcess());
       }
     }
