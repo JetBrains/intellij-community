@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.TextRange;
@@ -9,6 +8,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Sergey.Malenkov
  */
 final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltipCrumb {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.PsiCrumb");
   private final PsiAnchor anchor;
   private volatile BreadcrumbsProvider provider;
   private volatile String tooltip;
@@ -51,6 +50,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
     return element != null ? element.getTextOffset() : -1;
   }
 
+  @Nullable
   @Override
   public TextRange getHighlightRange() {
     PsiElement element = anchor.retrieve();
@@ -79,12 +79,12 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
     }
   }
 
-  @Nullable
+  @Contract("null -> null")
   static PsiElement getElement(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).anchor.retrieve() : null;
   }
 
-  @Nullable
+  @Contract(value = "null -> null", pure = true)
   static CrumbPresentation getPresentation(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).presentation : null;
   }
