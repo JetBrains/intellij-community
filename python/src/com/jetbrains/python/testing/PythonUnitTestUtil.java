@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import com.jetbrains.extensions.python.PyClassExtKt;
 import com.jetbrains.python.psi.PyClass;
@@ -50,7 +51,6 @@ public final class PythonUnitTestUtil {
   private PythonUnitTestUtil() {
   }
 
-
   public static boolean isTestFile(@NotNull final PyFile file,
                                    @NotNull final ThreeState testCaseClassRequired,
                                    @Nullable final TypeEvalContext context) {
@@ -72,6 +72,25 @@ public final class PythonUnitTestUtil {
   @Deprecated
   public static boolean isTestCaseClass(@NotNull final PyClass cls, @Nullable final TypeEvalContext context) {
     return isTestClass(cls, ThreeState.YES, context);
+  }
+
+  /**
+   * If element itself is test or situated inside of test
+   */
+  public static boolean isTestElement(@NotNull final PsiElement element, @Nullable final TypeEvalContext context) {
+    final PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+    if (fun != null) {
+      if (isTestFunction(fun, ThreeState.UNSURE, context)) {
+        return true;
+      }
+    }
+
+    final PyClass clazz = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+    if (clazz != null && isTestClass(clazz, ThreeState.UNSURE, context)) {
+      return true;
+    }
+
+    return element instanceof PyFile && isTestFile((PyFile)element, ThreeState.UNSURE, context);
   }
 
   public static boolean isTestClass(@NotNull final PyClass cls,
@@ -145,6 +164,10 @@ public final class PythonUnitTestUtil {
     if (userProvidedValue != ThreeState.UNSURE) {
       return userProvidedValue.toBoolean();
     }
+    return isTestCaseClassRequired(anchor);
+  }
+
+  public static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(anchor);
     if (module == null) {
       return true;

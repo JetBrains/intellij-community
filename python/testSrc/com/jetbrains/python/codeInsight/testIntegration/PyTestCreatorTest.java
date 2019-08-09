@@ -20,12 +20,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
-import org.easymock.IMocksControl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-
-import static org.easymock.EasyMock.createNiceControl;
-import static org.easymock.EasyMock.expect;
 
 /**
  * Checks how test classes are created
@@ -41,20 +38,23 @@ public final class PyTestCreatorTest extends PyTestCase {
     assert roots.length > 0 : "Empty roots for module " + myFixture.getModule();
     final VirtualFile root = roots[0];
 
-    final IMocksControl mockControl = createNiceControl();
-    final CreateTestDialog dialog = mockControl.createMock(CreateTestDialog.class);
-    expect(dialog.getFileName()).andReturn("tests.py").anyTimes();
-    expect(dialog.getClassName()).andReturn("Spam").anyTimes();
-    // Target dir is first module source
-    expect(dialog.getTargetDir()).andReturn(root.getCanonicalPath()).anyTimes();
-    expect(dialog.getMethods()).andReturn(Arrays.asList("eggs", "eggs_and_ham")).anyTimes();
-    mockControl.replay();
+    final PyTestCreationModel model =
+      new PyTestCreationModel("tests.py", root.getCanonicalPath(), "Spam", Arrays.asList("eggs", "eggs_and_ham"));
 
 
+    checkResult(model, "create_tst_class.expected.py");
+
+    model.setClassName("");
+    model.setFileName("tests_no_class.py");
+
+    checkResult(model, "create_tst.expected.py");
+  }
+
+  private void checkResult(@NotNull final PyTestCreationModel model, @NotNull final String fileName) {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-      final PsiFile file = PyTestCreator.generateTest(myFixture.getProject(), dialog).getContainingFile();
+      final PsiFile file = PyTestCreator.generateTest(myFixture.getProject(), model).getContainingFile();
       myFixture.configureByText(file.getFileType(), file.getText());
-      myFixture.checkResultByFile("/create_tests/create_tst.expected.py");
+      myFixture.checkResultByFile("/create_tests/" + fileName);
     });
   }
 }
