@@ -34,7 +34,7 @@ public class PathUtil {
   }
 
   @NotNull
-  public static String getJarPathForClass(@NotNull Class aClass) {
+  public static String getJarPathForClass(@NotNull Class<?> aClass) {
     final String pathForClass = PathManager.getJarPathForClass(aClass);
     assert pathForClass != null : aClass;
     return pathForClass;
