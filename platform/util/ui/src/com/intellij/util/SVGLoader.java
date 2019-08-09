@@ -51,6 +51,28 @@ public final class SVGLoader {
 
   @ApiStatus.Internal
   public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+    final String theme = "TODO"; //compute from the actual SvgColorPatcher instance
+
+    if (docSize == null) {
+      docSize = new ImageLoader.Dimension2DDouble(0, 0);
+    }
+
+    if (url != null) {
+      final Image image = SVGLoaderCache.INSTANCE.loadFromCache(theme, url, scale, docSize);
+      if (image != null) {
+        return image;
+      }
+    }
+
+    final BufferedImage image = loadWithoutCache(url, stream, scale, docSize);
+    if (image != null && url != null) {
+      SVGLoaderCache.INSTANCE.storeLoadedImage(theme, url, scale, image, docSize);
+    }
+    return image;
+  }
+
+  @ApiStatus.Internal
+  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     try {
       MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
       if (docSize != null) {
