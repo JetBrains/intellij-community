@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import sun.swing.SwingUtilities2
+import java.awt.FontMetrics
 import java.io.File
 import javax.swing.JComponent
 
@@ -43,27 +44,23 @@ class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTi
       if (value == longText) return
       super.longText = value
       val shtt = if(value.isEmpty()) "" else value.substringAfterLast(fileSeparatorChar)
-      if(shtt != longText && !shtt.isEmpty()) shortText = "$ellipsisSymbol$fileSeparatorChar$shtt"
+      if(shtt != longText && shtt.isNotEmpty()) shortText = "$ellipsisSymbol$fileSeparatorChar$shtt"
     }
 
-  override fun shrink(maxWidth: Int): Int {
-    val fm = label.getFontMetrics(label.font)
+  override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
     val prefixWidth = SwingUtilities2.stringWidth(label, fm, prefix)
     val suffixWidth = SwingUtilities2.stringWidth(label, fm, suffix)
 
     return when {
       maxWidth > longWidth -> {
-        showLong()
-        longWidth
+        getLong()
       }
       longWidth > maxWidth - prefixWidth - suffixWidth -> {
         val clipString = clipString(label, longText, maxWidth - prefixWidth - suffixWidth, fileSeparatorChar)
-        label.text = if (clipString.isEmpty()) "" else "$prefix$clipString$suffix"
-        SwingUtilities2.stringWidth(label, fm, longText)
+        return if (clipString.isEmpty()) "" else "$prefix$clipString$suffix"
       }
       else -> {
-          showShort()
-          return shortWidth
+        return getShort()
       }
     }
   }

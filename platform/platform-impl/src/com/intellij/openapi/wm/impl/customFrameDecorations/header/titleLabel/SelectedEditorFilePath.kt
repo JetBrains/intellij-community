@@ -17,12 +17,11 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.JLabel
 
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -50,7 +49,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref][pref]push")){
+  private val label = object : JLabel() {
     override fun addNotify() {
       super.addNotify()
       installListeners()
@@ -64,14 +63,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     override fun getMinimumSize(): Dimension {
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
-  }.apply {
-    isOpaque = false
-    
-    add(projectTitle.component)
-    add(classTitle.component, "growx")
-    add(productTitle.component)
-    add(productVersion.component)
-    add(superUserSuffix.component)
   }
 
   private fun updateTitlePaths() {
@@ -82,7 +73,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   open fun getView(): JComponent {
-    return pane
+    return label
   }
 
   private var disposable: Disposable? = null
@@ -137,13 +128,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     getView().removeComponentListener(resizedListener)
   }
 
-  fun isClipped(): Boolean {
-    for (component in components) {
-      if(component.isClipped) return true
-    }
-    return false
-  }
-
   private val resizedListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       update()
@@ -155,7 +139,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       val fileEditorManager = FileEditorManager.getInstance(it)
 
       val file = if (fileEditorManager is FileEditorManagerEx) {
-        val splittersFor = fileEditorManager.getSplittersFor(pane)
+        val splittersFor = fileEditorManager.getSplittersFor(getView())
         splittersFor.currentFile
       }
       else {
@@ -192,117 +176,103 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
+  protected var isClipped = false
+
   private fun update() {
     val insets = getView().getInsets(null)
     val width: Int = getView().width - (insets.right + insets.left)
 
-    components.forEach{it.refresh()}
+    val fm = label.getFontMetrics(label.font)
 
-    when {
+    components.forEach{it.refresh(label, fm)}
+
+    isClipped = true
+
+    label.text = when {
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.showLong()
+        isClipped = components.any{!it.active}
+
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()+
+        superUserSuffix.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth + superUserSuffix.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.showShort()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()+
+        superUserSuffix.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productVersion.longWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productVersion.shortWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showShort()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        superUserSuffix.hide()
-        productVersion.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showShort()
-        productVersion.hide()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.SHRINK: ${width - projectTitle.longWidth}, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.showLong()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.shrink(width - projectTitle.longWidth)
+        projectTitle.getLong()+
+        classTitle.shrink(label, fm,width - projectTitle.longWidth)
       }
 
       width > projectTitle.shortWidth + classTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.SHOW_SHORT, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.shrink(width - classTitle.shortWidth)
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.showShort()
+        projectTitle.shrink(label, fm,width - classTitle.shortWidth)+
+        classTitle.getShort()
       }
 
-      width > projectTitle.shortWidth -> {
+      else -> {
         //LOGGER.info("projectTitle.SHOW_SHORT, classTitle.HIDE, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.showShort()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.hide()
+        projectTitle.getShort()
       }
     }
 
-    val clipped = isClipped()
-    val tooltip = if(!clipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
-    components.forEach {it.setToolTip(tooltip)}
+    label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
 
     onBoundsChanged?.invoke()
   }

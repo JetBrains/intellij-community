@@ -18,13 +18,11 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   fun setActive(value: Boolean) {
     val color = if (value) CustomFrameDecorations.titlePaneInfoForeground() else CustomFrameDecorations.titlePaneInactiveInfoForeground()
 
-    components.forEach {
-      it.component.foreground = color
-    }
+    getView().foreground = color
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
-    return if (!isClipped()) {
+    return if (!isClipped) {
       emptyList()
     }
     else {
