@@ -43,16 +43,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
-                                 @NotNull VcsLogGraphTable table,
-                                 boolean compact,
-                                 boolean showTagNames,
-                                 boolean leftAligned) {
+                                 @NotNull VcsLogGraphTable table) {
     myLogData = logData;
     myGraphTable = table;
 
     LabelIconCache iconCache = new LabelIconCache();
-    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames, leftAligned);
-    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames, leftAligned);
+    myComponent = new MyComponent(logData, painter, table, iconCache);
+    myTemplateComponent = new MyComponent(logData, painter, table, iconCache);
   }
 
   @Override
@@ -157,14 +154,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     MyComponent(@NotNull VcsLogData data,
                 @NotNull GraphCellPainter painter,
                 @NotNull VcsLogGraphTable table,
-                @NotNull LabelIconCache iconCache,
-                boolean compact,
-                boolean showTags,
-                boolean leftAligned) {
+                @NotNull LabelIconCache iconCache) {
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags, leftAligned);
+      myReferencePainter = new LabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
 
       myFont = getLabelFont();

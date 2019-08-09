@@ -116,8 +116,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this,
-                                                            true, false, false);
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
     myStringCellRenderer = new StringCellRenderer();
 
     getEmptyText().setText(CHANGES_LOG_TEXT);

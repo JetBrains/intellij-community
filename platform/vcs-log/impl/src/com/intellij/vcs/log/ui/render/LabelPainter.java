@@ -63,16 +63,10 @@ public class LabelPainter {
 
   public LabelPainter(@NotNull VcsLogData data,
                       @NotNull JComponent component,
-                      @NotNull LabelIconCache iconCache,
-                      boolean compact,
-                      boolean showTagNames,
-                      boolean leftAligned) {
+                      @NotNull LabelIconCache iconCache) {
     myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
-    myCompact = compact;
-    myShowTagNames = showTagNames;
-    myLeftAligned = leftAligned;
   }
 
   @Nullable
