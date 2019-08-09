@@ -7,6 +7,9 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,15 +53,28 @@ public class FUCounterUsageLogger {
     }
 
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
-      final String id = ep.getGroupId();
-      if (StringUtil.isNotEmpty(id)) {
-        register(new EventLogGroup(id, ep.version));
-      }
+      registerGroupFromEP(ep);
     }
+    Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
+      new ExtensionPointListener<CounterUsageCollectorEP>() {
+        @Override
+        public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          registerGroupFromEP(extension);
+        }
+
+        // Not unregistering groups when a plugin is unloaded is harmless
+      });
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> logRegisteredGroups(), LOG_REGISTERED_INITIAL_DELAY_MIN, LOG_REGISTERED_DELAY_MIN, TimeUnit.MINUTES
     );
+  }
+
+  private void registerGroupFromEP(CounterUsageCollectorEP ep) {
+    final String id = ep.getGroupId();
+    if (StringUtil.isNotEmpty(id)) {
+      register(new EventLogGroup(id, ep.version));
+    }
   }
 
   /**

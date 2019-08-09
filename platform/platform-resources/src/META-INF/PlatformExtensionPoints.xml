@@ -26,11 +26,13 @@
                     interface="com.intellij.codeInsight.ContainerProvider"/>
 
     <extensionPoint name="preloadingActivity"
-                    interface="com.intellij.openapi.application.PreloadingActivity"/>
+                    interface="com.intellij.openapi.application.PreloadingActivity"
+                    dynamic="true"/>
 
     <extensionPoint name="projectConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
-                    area="IDEA_PROJECT">
+                    area="IDEA_PROJECT"
+                    dynamic="true">
       <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
 
@@ -216,7 +218,7 @@
     <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
     <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector"/>
     <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector"/>
-    <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP"/>
+    <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP" dynamic="true"/>
     <extensionPoint name="statistics.validation.customWhiteListRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
