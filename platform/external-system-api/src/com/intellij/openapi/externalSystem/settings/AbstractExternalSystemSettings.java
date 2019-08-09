@@ -9,9 +9,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +80,6 @@ public abstract class AbstractExternalSystemSettings<
    * @abstract at 2021
    */
   public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
-    //noinspection deprecation
     subscribe(listener); // Api backward compatibility
   }
 
@@ -96,7 +98,13 @@ public abstract class AbstractExternalSystemSettings<
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
   protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
-    getProject().getMessageBus().connect(parentDisposable).subscribe(getChangesTopic(), listener);
+    Project project = getProject();
+    if (project != parentDisposable) {
+      Disposer.register(project, parentDisposable);
+    }
+    MessageBus messageBus = project.getMessageBus();
+    MessageBusConnection connection = messageBus.connect(parentDisposable);
+    connection.subscribe(getChangesTopic(), listener);
   }
 
   public void copyFrom(@NotNull SS settings) {
