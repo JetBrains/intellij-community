@@ -53,13 +53,13 @@ public class VcsProjectLog implements Disposable {
   private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
 
-  public VcsProjectLog(@NotNull Project project,
-                       @NotNull MessageBus messageBus,
-                       @NotNull VcsLogProjectTabsProperties uiProperties) {
+  public VcsProjectLog(@NotNull Project project) {
     myProject = project;
-    myMessageBus = messageBus;
+    myMessageBus = myProject.getMessageBus();
+    
+    VcsLogProjectTabsProperties uiProperties = ServiceManager.getService(myProject, VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
-    myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
+    myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
     myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
