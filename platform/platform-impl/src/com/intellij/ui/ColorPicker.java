@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -378,6 +379,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       //.addSeparator()
       //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
       .addColorListener(colorListener,true)
+      .addColorListener(new ColorListener() {
+        @Override
+        public void colorChanged(Color color, Object source) {
+          updatePointer(color, ref);
+        }
+      }, true)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
@@ -386,6 +393,15 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     ref.set(popup);
 
     popup.show(MouseInfo.getPointerInfo().getLocation());
+  }
+
+  private static void updatePointer(Color c, Ref<LightCalloutPopup> ref) {
+    LightCalloutPopup popup = ref.get();
+    Balloon balloon = popup.getBalloon();
+    if (balloon instanceof BalloonImpl) {
+      ((BalloonImpl)balloon).setFillColor(c);
+      
+    }
   }
 
   @NotNull

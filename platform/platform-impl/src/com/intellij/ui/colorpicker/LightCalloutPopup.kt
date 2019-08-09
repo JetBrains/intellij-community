@@ -42,6 +42,8 @@ class LightCalloutPopup(val content: JComponent,
 
   private var balloon: Balloon? = null
 
+  public fun getBalloon(): Balloon? = balloon
+
   /**
    * @param content The content in Popup Window
    * @param parentComponent The anchor component. Can be null.
