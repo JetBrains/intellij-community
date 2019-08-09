@@ -132,7 +132,7 @@ public class PlatformTestUtil {
   }
 
   /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   * @see ExtensionPointImpl#maskAll(List, Disposable, boolean)
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
