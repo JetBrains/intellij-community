@@ -95,9 +95,14 @@ public final class ImageDescriptor {
       }
     }
 
+    long start = StartUpMeasurer.isEnabled() || loadTimeConsumer != null ? StartUpMeasurer.getCurrentTime() : -1;
     if (resourceClass != null) {
       InputStream stream = resourceClass.getResourceAsStream(path);
-      return stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), cacheKey);
+      Image image = stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), cacheKey);
+      if (start != -1) {
+        IconLoadMeasurer.addLoadFromResources((int)(StartUpMeasurer.getCurrentTime() - start));
+      }
+      return image;
     }
 
     url = new URL(path);
@@ -106,7 +111,11 @@ public final class ImageDescriptor {
       if (!original) return null;
       connection.addRequestProperty("User-Agent", "IntelliJ");
     }
-    return loadFromStream(connection.getInputStream(), url, cacheKey);
+    Image image = loadFromStream(connection.getInputStream(), url, cacheKey);
+    if (start != -1) {
+      IconLoadMeasurer.addLoadFromUrl((int)(StartUpMeasurer.getCurrentTime() - start));
+    }
+    return image;
   }
 
   @Nullable

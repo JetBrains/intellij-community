@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.text.StringUtil;
@@ -274,6 +275,21 @@ public final class IconLoader {
                                @NotNull ClassLoader classLoader,
                                @NotNull HandleNotFound handleNotFound,
                                boolean deferUrlResolve) {
+    long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+    Icon icon = findIconImpl(originalPath, clazz, classLoader, handleNotFound, deferUrlResolve);
+    if (start != -1) {
+      IconLoadMeasurer.addFindIcon((int)(StartUpMeasurer.getCurrentTime() - start));
+    }
+
+    return icon;
+  }
+
+  @Nullable
+  private static Icon findIconImpl(@NotNull String originalPath,
+                                   @Nullable Class clazz,
+                                   @NotNull ClassLoader classLoader,
+                                   @NotNull HandleNotFound handleNotFound,
+                                   boolean deferUrlResolve) {
     Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(originalPath, classLoader);
     String path = patchedPath.first;
     if (patchedPath.second != null) {
@@ -706,6 +722,15 @@ public final class IconLoader {
 
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
+      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+      Image image = loadFromUrlImpl(ctx, dark);
+      if (start != -1) {
+        IconLoadMeasurer.addFindIconLoad((int)(StartUpMeasurer.getCurrentTime() - start));
+      }
+      return image;
+    }
+
+    private Image loadFromUrlImpl(@NotNull ScaleContext ctx, boolean dark) {
       int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (myUseCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;

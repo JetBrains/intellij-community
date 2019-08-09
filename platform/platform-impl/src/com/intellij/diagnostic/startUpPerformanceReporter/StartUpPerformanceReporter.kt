@@ -125,7 +125,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "8")
+        writer.writeStringField("version", "9")
         writeServiceStats(writer)
         writeIcons(writer)
 
@@ -358,22 +358,15 @@ private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
 }
 
 private fun writeIcons(writer: JsonGenerator) {
-  fun writeStats(infoList: List<IconLoadMeasurer>) {
-    writer.obj(infoList[0].type.name.toLowerCase()) {
-      writer.writeNumberField("count", infoList[0].counter)
-      writer.writeNumberField("loading", TimeUnit.NANOSECONDS.toMillis(infoList[0].totalTime.toLong()))
-      writer.writeNumberField("decoding", TimeUnit.NANOSECONDS.toMillis(infoList[1].totalTime.toLong()))
-    }
-  }
+  writer.array("icons") {
+    for (stat in IconLoadMeasurer.getStats()) {
+      writer.obj {
+        writer.writeStringField("name", stat.type)
+        writer.writeNumberField("count", stat.counter)
+        val totalTime = stat.totalTime
 
-  val map = linkedMapOf<String, MutableList<IconLoadMeasurer>>()
-  for (stat in IconLoadMeasurer.getStats()) {
-    map.getOrPut(stat.type.name.toLowerCase()) { mutableListOf() }.add(stat)
-  }
-
-  writer.obj("icons") {
-    for (infoList in map.values) {
-      writeStats(infoList)
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(totalTime.toLong()))
+      }
     }
   }
 }

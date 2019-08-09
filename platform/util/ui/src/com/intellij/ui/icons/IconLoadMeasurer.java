@@ -8,24 +8,21 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class IconLoadMeasurer {
-  private final ImageType type;
+  private static final Counter decodingSvg = new Counter("svg-decode");
+  private static final Counter decodingPng = new Counter("png-decode");
 
-  private final AtomicInteger counter = new AtomicInteger();
-  private final AtomicInteger totalTime = new AtomicInteger();
+  private static final Counter loadingSvg = new Counter("svg-load");
+  private static final Counter loadingPng = new Counter("png-load");
 
-  private static final IconLoadMeasurer decodingSvg = new IconLoadMeasurer(ImageType.SVG);
-  private static final IconLoadMeasurer decodingPng = new IconLoadMeasurer(ImageType.IMG);
+  private static final Counter findIcon = new Counter("find-icon");
+  private static final Counter findIconLoad = new Counter("find-icon-load");
 
-  private static final IconLoadMeasurer loadingSvg = new IconLoadMeasurer(ImageType.SVG);
-  private static final IconLoadMeasurer loadingPng = new IconLoadMeasurer(ImageType.IMG);
-
-  public IconLoadMeasurer(@NotNull ImageType type) {
-    this.type = type;
-  }
+  private static final Counter loadFromUrl = new Counter("load-from-url");
+  private static final Counter loadFromResources = new Counter("load-from-resource");
 
   @NotNull
-  public static List<IconLoadMeasurer> getStats() {
-    return Arrays.asList(loadingSvg, decodingSvg, loadingPng, decodingPng);
+  public static List<Counter> getStats() {
+    return Arrays.asList(findIcon, findIconLoad, loadFromUrl, loadFromResources, loadingSvg, decodingSvg, loadingPng, decodingPng);
   }
 
   public static void addDecoding(@NotNull ImageType type, int duration) {
@@ -36,21 +33,54 @@ public final class IconLoadMeasurer {
     ((type == ImageType.SVG) ? loadingSvg : loadingPng).addDuration(duration);
   }
 
-  public int getCounter() {
-    return counter.get();
+  public static void addFindIcon(int duration) {
+    findIcon.addDuration(duration);
   }
 
-  public int getTotalTime() {
-    return totalTime.get();
+  public static void addFindIconLoad(int duration) {
+    findIconLoad.addDuration(duration);
   }
 
-  @NotNull
-  public ImageType getType() {
-    return type;
+  public static void addLoadFromUrl(int duration) {
+    loadFromUrl.addDuration(duration);
   }
 
-  private void addDuration(int duration) {
-    counter.incrementAndGet();
-    totalTime.updateAndGet(current -> current + duration);
+  public static void addLoadFromResources(int duration) {
+    loadFromResources.addDuration(duration);
+  }
+
+  public static final class Counter {
+    private final String type;
+
+    private final AtomicInteger counter = new AtomicInteger();
+    private final AtomicInteger totalTime = new AtomicInteger();
+
+    public Counter(@NotNull String type) {
+      this.type = type;
+    }
+
+    @NotNull
+    public String getType() {
+      return type;
+    }
+
+    public int getCounter() {
+      return counter.get();
+    }
+
+    public int getTotalTime() {
+      return totalTime.get();
+    }
+
+    public void addCounter() {
+      counter.incrementAndGet();
+    }
+
+    public void addDuration(int duration) {
+      counter.incrementAndGet();
+      if (duration > 0) {
+        totalTime.updateAndGet(current -> current + duration);
+      }
+    }
   }
 }
