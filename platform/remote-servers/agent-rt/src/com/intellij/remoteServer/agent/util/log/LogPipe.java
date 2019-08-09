@@ -58,6 +58,8 @@ public abstract class LogPipe extends LogPipeBase {
 
       @Override
       public void run() {
+         //inti log listener
+        onStartListening(getLogListener());
         try {
           while (true) {
             String line = bufferedReader.readLine();
@@ -148,5 +150,8 @@ public abstract class LogPipe extends LogPipeBase {
     if (myLogDebugEnabled) {
       myLogger.debugEx(e);
     }
+  }
+
+  protected void onStartListening(LogListener logListener) {
   }
 }
