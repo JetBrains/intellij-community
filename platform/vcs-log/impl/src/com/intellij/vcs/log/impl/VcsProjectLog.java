@@ -65,6 +65,8 @@ public class VcsProjectLog implements Disposable {
     myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
+        if (myProject != project) return;
+        
         myDisposeStarted = true;
         Disposer.dispose(myMessageBusConnections);
         disposeLog(false);
