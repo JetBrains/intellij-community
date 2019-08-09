@@ -2,7 +2,7 @@ import socket
 import struct
 import threading
 
-from _pydev_comm.io import PipeIO, readall
+from _pydev_comm.pydev_io import PipeIO, readall
 from _shaded_thriftpy.thrift import TClient
 from _shaded_thriftpy.transport import TTransportBase
 
