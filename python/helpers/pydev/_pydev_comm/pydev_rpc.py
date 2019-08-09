@@ -1,8 +1,8 @@
 import socket
 import threading
 
-from _pydev_comm.server import TSingleThreadedServer
-from _pydev_comm.transport import TSyncClient, open_transports_as_client, _create_client_server_transports
+from _pydev_comm.pydev_server import TSingleThreadedServer
+from _pydev_comm.pydev_transport import TSyncClient, open_transports_as_client, _create_client_server_transports
 from _shaded_thriftpy.protocol import TBinaryProtocolFactory
 from _shaded_thriftpy.thrift import TProcessor
 
