@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -34,6 +33,7 @@ import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -418,7 +418,7 @@ public class NewMappings implements Disposable {
     @SystemIndependent String filePath = file.getPath();
     // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
     for (MappedRoot mapping : mappings) {
-      if (mapping.root.isValid() && FileUtil.isAncestor(mapping.rootPath, filePath, false)) {
+      if (mapping.root.isValid() && VcsFileUtil.isAncestor(mapping.rootPath, filePath, false)) {
         return mapping;
       }
     }

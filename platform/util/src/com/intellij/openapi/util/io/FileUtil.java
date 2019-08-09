@@ -133,11 +133,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive, false));
+    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
+    return startsWith(path, start, caseSensitive, false);
+  }
+
+  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive, boolean strict) {
+    return !ThreeState.NO.equals(startsWith(path, start, strict, caseSensitive, false));
   }
 
   @NotNull
