@@ -98,7 +98,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
   private final Color myBorderColor;
   private final Insets myBorderInsets;
-  private final Color myFillColor;
+  private Paint myFillColor;
 
   private final Insets myContainerInsets;
 
@@ -219,6 +219,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       }
     }
     return false;
+  }
+
+  public void setFillColor(Paint fillColor) {
+    myFillColor = fillColor;
   }
 
   private final long myFadeoutTime;
@@ -1216,7 +1220,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
         shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1), balloon.getArc(), balloon.getArc());
       }
 
-      g.setColor(balloon.myFillColor);
+      g.setPaint(balloon.myFillColor);
       g.fill(shape);
       g.setColor(balloon.myBorderColor);
 
@@ -1252,6 +1256,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       g.draw(shape);
       cfg.restore();
     }
+
 
     protected abstract Insets getTitleInsets(int normalInset, int pointerLength);
 
@@ -1784,7 +1789,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       BufferedImage image = ImageUtil.createImage(g, getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       useSafely(image.createGraphics(), imageGraphics -> {
         //noinspection UseJBColor
-        imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
+        imageGraphics.setPaint(myFillColor instanceof Color ? new Color(((Color)myFillColor).getRGB()) : myFillColor); // create a copy to remove alpha
         imageGraphics.fillRect(0, 0, getWidth(), getHeight());
 
         super.paintChildren(imageGraphics);
@@ -1796,7 +1801,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
           float s = 1 / JBUIScale.sysScale(g2d);
           g2d.scale(s, s);
         }
-        StartupUiUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
+        if (myFillColor instanceof Color) {
+          StartupUiUtil.drawImage(g2d, makeColorTransparent(image, (Color)myFillColor), 0, 0, null);
+        }
       }
       finally {
         g2d.dispose();
