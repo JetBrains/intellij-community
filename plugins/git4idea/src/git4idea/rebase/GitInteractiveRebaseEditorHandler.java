@@ -71,7 +71,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
-    return GitImplBase.loadFileAndShowInSimpleEditor(myProject, myRoot, path);
+    return GitImplBase.loadFileAndShowInSimpleEditor(myProject, myRoot, path, "Git Commit Message", "Continue Rebasing");
   }
 
   protected boolean handleInteractiveEditor(@NotNull String path) throws IOException {

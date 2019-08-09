@@ -10,7 +10,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +25,12 @@ public class GitUnstructuredEditor extends DialogWrapper {
 
   public GitUnstructuredEditor(@NotNull Project project,
                                @Nullable VirtualFile root,
-                               @NotNull String initialText) {
+                               @NotNull String initialText,
+                               @NotNull String dialogTitle,
+                               @NotNull String okButtonText) {
     super(project, true);
-    setTitle(GitBundle.message("rebase.unstructured.editor.title"));
-    setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));
+    setTitle(dialogTitle);
+    setOKButtonText(okButtonText);
 
     myRootLabel = root == null ? null : new JBLabel("Git Root: " + root.getPresentableUrl());
 

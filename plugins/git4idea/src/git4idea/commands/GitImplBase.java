@@ -221,12 +221,14 @@ public abstract class GitImplBase implements Git {
   @CalledInBackground
   public static boolean loadFileAndShowInSimpleEditor(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull String path) throws IOException {
+                                                      @NotNull String path,
+                                                      @NotNull String dialogTitle,
+                                                      @NotNull String okButtonText) throws IOException {
     String encoding = root == null ? CharsetToolkit.UTF8 : GitConfigUtil.getCommitEncoding(project, root);
     File file = new File(path);
     String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
-    String newText = showUnstructuredEditorAndWait(project, root, initialText);
+    String newText = showUnstructuredEditorAndWait(project, root, initialText, dialogTitle, okButtonText);
     if (newText == null) {
       return false;
     }
@@ -239,10 +241,12 @@ public abstract class GitImplBase implements Git {
   @Nullable
   private static String showUnstructuredEditorAndWait(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull String initialText) {
+                                                      @NotNull String initialText,
+                                                      @NotNull String dialogTitle,
+                                                      @NotNull String okButtonText) {
     Ref<String> newText = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitUnstructuredEditor editor = new GitUnstructuredEditor(project, root, initialText);
+      GitUnstructuredEditor editor = new GitUnstructuredEditor(project, root, initialText, dialogTitle, okButtonText);
       DialogManager.show(editor);
       if (editor.isOK()) {
         newText.set(editor.getText());

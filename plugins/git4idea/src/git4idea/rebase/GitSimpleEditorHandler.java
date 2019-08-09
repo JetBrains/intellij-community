@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.GitImplBase;
@@ -20,7 +21,7 @@ public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
   @Override
   public int editCommits(@NotNull String path) {
     try {
-      boolean cancelled = !GitImplBase.loadFileAndShowInSimpleEditor(myProject, null, path);
+      boolean cancelled = !GitImplBase.loadFileAndShowInSimpleEditor(myProject, null, path, "Git Editor", CommonBundle.getOkButtonText());
       return cancelled ? ERROR_EXIT_CODE : 0;
     }
     catch (Exception e) {
