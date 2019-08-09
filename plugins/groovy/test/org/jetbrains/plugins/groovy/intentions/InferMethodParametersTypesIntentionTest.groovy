@@ -448,4 +448,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testReturnTypeInfluence() {
     doTest(true)
   }
+
+  void testDgm() {
+    doTest(true)
+  }
 }

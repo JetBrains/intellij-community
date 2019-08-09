@@ -60,10 +60,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun processMethod(result: GroovyResolveResult) {
     val methodResult = result as? GroovyMethodResult
     val candidate = methodResult?.candidate
-    val receiver = candidate?.receiver as? PsiClassType
+    val receiver = candidate?.smartReceiver()
     receiver?.run {
-      // todo: receiver might be null because of gdk method
-      generateRequiredTypes(typeParameter() ?: return@run, candidate.method.containingClass?.type() ?: return@run, UPPER)
+      val containingType = candidate.smartContainingType()
+      generateRequiredTypes(typeParameter() ?: return@run, containingType ?: return@run, UPPER)
     }
     val invokedMethod = when (val method = methodResult?.element) {
       is GrGdkMethod -> method.staticMethod

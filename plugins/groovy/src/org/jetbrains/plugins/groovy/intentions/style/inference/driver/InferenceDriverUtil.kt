@@ -6,7 +6,11 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 data class BoundConstraint(val type: PsiType, val marker: ContainMarker) {
@@ -65,3 +69,16 @@ fun setUpParameterMapping(sourceMethod: GrMethod, sinkMethod: GrMethod) = source
 fun getJavaLangObject(context: PsiElement): PsiType {
   return PsiType.getJavaLangObject(context.manager, context.resolveScope)
 }
+
+fun GroovyMethodCandidate.smartReceiver(): PsiType? =
+  when (this) {
+    is GdkMethodCandidate -> argumentMapping?.arguments?.first()?.type
+    else -> receiver
+  }
+
+
+fun GroovyMethodCandidate.smartContainingType(): PsiType? =
+  when (this) {
+    is GdkMethodCandidate -> (method.parameters.first()?.type as PsiType)
+    else -> method.containingClass?.type()
+  }.takeIf { it.resolve() !is PsiTypeParameter }
