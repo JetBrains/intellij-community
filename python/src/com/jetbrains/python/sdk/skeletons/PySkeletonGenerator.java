@@ -98,12 +98,11 @@ public class PySkeletonGenerator {
                                   String modfilename,
                                   List<String> assemblyRefs,
                                   String syspath,
-                                  String sdkHomePath,
+                                  Sdk sdk,
                                   Consumer<Boolean> resultConsumer)
     throws InvalidSdkException {
 
-    final ProcessOutput genResult = runSkeletonGeneration(modname, modfilename, assemblyRefs, sdkHomePath,
-                                                          syspath);
+    final ProcessOutput genResult = runSkeletonGeneration(modname, modfilename, assemblyRefs, sdk, syspath);
 
     final Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP()) {
@@ -121,7 +120,7 @@ public class PySkeletonGenerator {
       else {
         sb.append(" had some minor errors on ");
       }
-      sb.append(sdkHomePath).append(". stderr: --\n");
+      sb.append(sdk.getHomePath()).append(". stderr: --\n");
       for (String err_line : genResult.getStderrLines()) {
         sb.append(err_line).append("\n");
       }
@@ -140,12 +139,13 @@ public class PySkeletonGenerator {
   public ProcessOutput runSkeletonGeneration(String modname,
                                              String modfilename,
                                              List<String> assemblyRefs,
-                                             String binaryPath, String extraSyspath)
+                                             Sdk sdk, String extraSyspath)
     throws InvalidSdkException {
+    final String binaryPath = sdk.getHomePath();
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
 
-    final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(binaryPath);
+    final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(sdk);
     final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
     return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), env, MINUTE * 10);
