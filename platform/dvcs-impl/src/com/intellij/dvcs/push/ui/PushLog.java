@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.push.PushSettings;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -59,7 +60,6 @@ public class PushLog extends JPanel implements DataProvider {
   private static final String START_EDITING = "startEditing";
   private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
   private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
-  private static final String SHOW_DETAILS_KEY = "Vcs.Push.Show.Details";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
@@ -253,7 +253,7 @@ public class PushLog extends JPanel implements DataProvider {
     JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
     detailsSplitter.setFirstComponent(myChangesBrowser);
 
-    myShowDetailsAction = new MyShowDetailsAction(project, SHOW_DETAILS_KEY, (state) -> {
+    myShowDetailsAction = new MyShowDetailsAction(project, (state) -> {
       detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
     });
     myShowDetailsAction.setEnabled(false);
@@ -752,20 +752,17 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
-    private final static boolean DEFAULT_VALUE = true;
-    @NotNull private final String mySettingKey;
-    @NotNull private final Project myProject;
+    @NotNull private final PushSettings mySettings;
     @NotNull private final Consumer<Boolean> myOnUpdate;
 
-    MyShowDetailsAction(@NotNull Project project, @NotNull String settingKey, @NotNull Consumer<Boolean> onUpdate) {
+    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
       super("Show Details", AllIcons.Actions.PreviewDetailsVertically);
-      mySettingKey = settingKey;
-      myProject = project;
+      mySettings = ServiceManager.getService(project, PushSettings.class);
       myOnUpdate = onUpdate;
     }
 
     private boolean getValue() {
-      return PropertiesComponent.getInstance(myProject).getBoolean(mySettingKey, DEFAULT_VALUE);
+      return mySettings.getShowDetailsInPushDialog();
     }
 
     @Override
@@ -775,7 +772,7 @@ public class PushLog extends JPanel implements DataProvider {
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(mySettingKey, state, DEFAULT_VALUE);
+      mySettings.setShowDetailsInPushDialog(state);
       myOnUpdate.accept(state);
     }
 
