@@ -83,6 +83,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.setCompactReferencesView(true);
     myGraphTable.setShowTagNames(false);
+    myGraphTable.setLabelsLeftAligned(false);
 
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
       @Override

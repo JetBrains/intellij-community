@@ -59,17 +59,20 @@ public class LabelPainter {
 
   private boolean myCompact;
   private boolean myShowTagNames;
+  private boolean myLeftAligned;
 
   public LabelPainter(@NotNull VcsLogData data,
                       @NotNull JComponent component,
                       @NotNull LabelIconCache iconCache,
                       boolean compact,
-                      boolean showTagNames) {
+                      boolean showTagNames,
+                      boolean leftAligned) {
     myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
     myCompact = compact;
     myShowTagNames = showTagNames;
+    myLeftAligned = leftAligned;
   }
 
   @Nullable
@@ -338,7 +341,7 @@ public class LabelPainter {
   }
 
   public boolean isLeftAligned() {
-    return Registry.is("vcs.log.labels.left.aligned");
+    return myLeftAligned;
   }
 
   public static Font getReferenceFont() {
@@ -356,6 +359,10 @@ public class LabelPainter {
 
   public void setCompact(boolean compact) {
     myCompact = compact;
+  }
+
+  public void setLeftAligned(boolean leftAligned) {
+    myLeftAligned = leftAligned;
   }
 }
 

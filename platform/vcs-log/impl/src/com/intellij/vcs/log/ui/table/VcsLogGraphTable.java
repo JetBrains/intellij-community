@@ -116,7 +116,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, true, false);
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this,
+                                                            true, false, false);
     myStringCellRenderer = new StringCellRenderer();
 
     getEmptyText().setText(CHANGES_LOG_TEXT);
@@ -516,8 +517,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
       sb.append(StringUtil.join(visibleColumns, j -> {
-        if (j == ROOT_COLUMN) return "";
-        else return getModel().getValueAt(row, j).toString();
+        if (j == ROOT_COLUMN) {
+          return "";
+        }
+        else {
+          return getModel().getValueAt(row, j).toString();
+        }
       }, " "));
       if (i != selectedRows.length - 1) sb.append("\n");
     }
@@ -653,6 +658,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void setShowTagNames(boolean showTagsNames) {
     myGraphCommitCellRenderer.setShowTagsNames(showTagsNames);
+    repaint();
+  }
+
+  public void setLabelsLeftAligned(boolean leftAligned) {
+    myGraphCommitCellRenderer.setLeftAligned(leftAligned);
     repaint();
   }
 

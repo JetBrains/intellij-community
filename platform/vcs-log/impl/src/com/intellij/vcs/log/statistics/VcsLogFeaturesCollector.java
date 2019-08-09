@@ -54,6 +54,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), "labels.compact");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), "labels.showTagNames");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(LABELS_LEFT_ALIGNED), "labels.onTheLeft");
 
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_REGEX), "textFilter.regex");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_MATCH_CASE), "textFilter.matchCase");

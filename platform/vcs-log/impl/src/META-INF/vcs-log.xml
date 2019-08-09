@@ -90,6 +90,7 @@
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowTagNamesAction" id="Vcs.Log.ShowTagNames"/>
+    <action class="com.intellij.vcs.log.ui.actions.AlignLabelsAction" id="Vcs.Log.AlignLabels"/>
     <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
@@ -137,6 +138,7 @@
            icon="AllIcons.Actions.Show" text="Presentation Settings" description="Configure presentation of the Log" popup="true">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
+      <reference id="Vcs.Log.AlignLabels"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
       <separator/>

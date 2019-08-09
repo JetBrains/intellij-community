@@ -45,13 +45,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                                  @NotNull GraphCellPainter painter,
                                  @NotNull VcsLogGraphTable table,
                                  boolean compact,
-                                 boolean showTagNames) {
+                                 boolean showTagNames,
+                                 boolean leftAligned) {
     myLogData = logData;
     myGraphTable = table;
 
     LabelIconCache iconCache = new LabelIconCache();
-    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
-    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames, leftAligned);
+    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames, leftAligned);
   }
 
   @Override
@@ -132,6 +133,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
+  public void setLeftAligned(boolean leftAligned) {
+    myComponent.getReferencePainter().setLeftAligned(leftAligned);
+    myTemplateComponent.getReferencePainter().setLeftAligned(leftAligned);
+  }
+
   public static Font getLabelFont() {
     return UIUtil.getLabelFont();
   }
@@ -153,11 +159,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                 @NotNull VcsLogGraphTable table,
                 @NotNull LabelIconCache iconCache,
                 boolean compact,
-                boolean showTags) {
+                boolean showTags,
+                boolean leftAligned) {
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags);
+      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags, leftAligned);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
 
       myFont = getLabelFont();
