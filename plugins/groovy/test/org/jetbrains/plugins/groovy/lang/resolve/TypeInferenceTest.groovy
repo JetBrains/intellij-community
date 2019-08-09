@@ -1332,4 +1332,15 @@ class C {
 [new C()]*.field.las<caret>t()
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test outer call influence'() {
+    doTest '''
+def foo(a) {
+  <caret>a
+}
+
+foo(1)
+''', JAVA_LANG_INTEGER
+  }
+
 }
