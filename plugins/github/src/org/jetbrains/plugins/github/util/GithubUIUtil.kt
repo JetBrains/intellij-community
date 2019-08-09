@@ -6,16 +6,25 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GithubIssueLabel
 import java.awt.Color
-import javax.swing.JList
+import java.awt.Component
+import javax.swing.JComponent
 
 object GithubUIUtil {
-   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
+  fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     val apiColor = ColorUtil.fromHex(label.color)
     background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
     foreground = computeForeground(background)
   }.andOpaque()
 
   private fun computeForeground(bg: Color) = if (ColorUtil.isDark(bg)) Color.white else Color.black
+
+  fun setTransparentRecursively(component: Component) {
+    if (component is JComponent) {
+      component.isOpaque = false
+      for (c in component.components) {
+        setTransparentRecursively(c)
+      }
+    }
+  }
 }

@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
@@ -44,6 +45,11 @@ internal class GithubPullRequestSearchPanel(project: Project,
 
     override fun setupBorder(editor: EditorEx) {
       editor.setBorder(JBUI.Borders.empty(6, 5))
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      GithubUIUtil.setTransparentRecursively(this)
     }
   }
 
