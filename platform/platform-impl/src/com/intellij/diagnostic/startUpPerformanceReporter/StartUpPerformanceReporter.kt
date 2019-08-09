@@ -24,6 +24,8 @@ import com.intellij.util.io.jackson.obj
 import gnu.trove.THashMap
 import java.io.File
 import java.io.StringWriter
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -126,6 +128,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.use {
       writer.obj {
         writer.writeStringField("version", "9")
+        writer.writeStringField("generated", SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.MEDIUM, SimpleDateFormat.LONG, Locale.ENGLISH).format(Date()))
         writeServiceStats(writer)
         writeIcons(writer)
 
