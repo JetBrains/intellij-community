@@ -253,8 +253,7 @@ public class JUnitUtil {
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
-      if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) ||
-          JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) return true;
+      if (isExplicitlyJUnit4TestAnnotated(method)) return true;
     }
 
     return false;
@@ -333,15 +332,16 @@ public class JUnitUtil {
   }
 
   private static boolean isExplicitlyTestAnnotated(PsiMethod method) {
-    return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) ||
-           JUnitRecognizer.willBeAnnotatedAfterCompilation(method) ||
-           MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
+    return isExplicitlyJUnit4TestAnnotated(method) || MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
   }
 
   public static boolean isJUnit4TestAnnotated(PsiMethod method) {
     return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, CHECK_HIERARCHY) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method);
   }
 
+  private static boolean isExplicitlyJUnit4TestAnnotated(PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method);
+  }
 
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final PsiClass psiClass) {
