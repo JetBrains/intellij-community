@@ -82,22 +82,15 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<? super T, ? extends PsiType> f) {
-    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
-    final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
-
     ConcurrentMap<PsiExpression, PsiType> map = myCalculatedTypes.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
 
-    PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
+    final boolean prohibitCaching = MethodCandidateInfo.isOverloadCheck() && PsiPolyExpressionUtil.isPolyExpression(expr);
+    PsiType type = prohibitCaching ? null : map.get(expr);
     if (type == null) {
       RecursionGuard.StackStamp dStackStamp = RecursionManager.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow()) {
-        return type;
-      }
-
-      //cache standalone expression types as they do not depend on the context
-      if (isOverloadCheck && polyExpression) {
+      if (prohibitCaching || !dStackStamp.mayCacheNow()) {
         return type;
       }
 
