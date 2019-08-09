@@ -34,7 +34,7 @@ public class VFileCreateEvent extends VFileEvent {
                           boolean isFromRefresh,
                           @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
                           ChildInfo[] children) {
-    this(requestor, parent, childName, 0, isDirectory, attributes, symlinkTarget, isFromRefresh, children);
+    this(requestor, parent, childName, -1, isDirectory, attributes, symlinkTarget, isFromRefresh, children);
   }
 
   public VFileCreateEvent(Object requestor,
@@ -148,6 +148,9 @@ public class VFileCreateEvent extends VFileEvent {
            + (myChildren == null ? "" : " with "+myChildren.length+" children");
   }
 
+  /**
+   * @return the nameId (obtained via FileNameCache.storeName()) of the myChildName or -1 if the nameId wasn't computed.
+   */
   public int getChildNameId() {
     return myChildNameId;
   }
