@@ -1179,15 +1179,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     VfsData.Segment segment = myVfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimTrailing(rootPath, '/'));
-
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, StringUtil.trimTrailing(rootPath, '/'));
+    int rootNameId = FileNameCache.storeName(rootName.toString());
     boolean mark;
     synchronized (myRoots) {
       root = myRoots.get(rootUrl);
       if (root != null) return root;
 
       try {
-        VfsData.initFile(rootId, segment, -1, directoryData);
+        VfsData.initFile(rootId, segment, rootNameId, directoryData);
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -1197,7 +1197,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             throw new RuntimeException(message, e);
           }
         }
-        throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.listAll(1)), e);
+        throw new RuntimeException("No root duplication, rootName='"+rootName + "'; rootNameId="+rootNameId+"; rootId="+rootId+"; path='"+path+"'; fs="+fs+"; rootUrl='"+rootUrl+"'", e);
       }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, rootName, fs, attributes, null);
@@ -1553,27 +1553,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static class FsRoot extends VirtualDirectoryImpl {
-    private final CharSequence myName;
     private final String myPathWithOneSlash;
 
     private FsRoot(int id,
                    @NotNull VfsData.Segment segment,
                    @NotNull VfsData.DirectoryData data,
                    @NotNull NewVirtualFileSystem fs,
-                   @NotNull CharSequence name,
                    @NotNull String pathBeforeSlash) {
       super(id, segment, data, null, fs);
-      myName = name;
       if (!looksCanonical(pathBeforeSlash)) {
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
       myPathWithOneSlash = pathBeforeSlash + '/';
-    }
-
-    @NotNull
-    @Override
-    public CharSequence getNameSequence() {
-      return myName;
     }
 
     @NotNull
