@@ -55,6 +55,8 @@ class HighlightingCaches {
   final ConcurrentMap<PsiClass, PsiClass[]> DIRECT_SUB_CLASSES = createWeakCache();
   // baseClass -> all sub classes transitively, including anonymous
   final ConcurrentMap<PsiClass, Iterable<PsiClass>> ALL_SUB_CLASSES = createWeakCache();
+  // baseClass -> all sub classes transitively, excluding anonymous
+  final ConcurrentMap<PsiClass, Iterable<PsiClass>> ALL_SUB_CLASSES_NO_ANONYMOUS = createWeakCache();
   // baseMethod -> all overriding methods
   final Map<PsiMethod, Iterable<PsiMethod>> OVERRIDING_METHODS = createWeakCache();
 
