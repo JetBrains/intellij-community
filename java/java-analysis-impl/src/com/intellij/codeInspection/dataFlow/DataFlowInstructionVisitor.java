@@ -30,7 +30,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
-  private final Set<TypeCastInstruction> myCCEInstructions = new HashSet<>();
+  private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
@@ -128,15 +128,12 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
-    myCCEInstructions.add(instruction);
+  protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {
+    myClassCastProblems.computeIfAbsent(castExpression, e -> new StateInfo()).update(state, castPossible);
   }
 
   StreamEx<NullabilityProblemKind.NullabilityProblem<?>> problems() {
-    // non-ephemeral NPE should be reported
-    // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
-    //  (e.g. if it's inside "if (var == null)" check after contract method invocation
-    return StreamEx.ofKeys(myStateInfos, info -> info.normalNpe || info.ephemeralNpe && !info.normalOk);
+    return StreamEx.ofKeys(myStateInfos, StateInfo::shouldReport);
   }
 
   public Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> getArrayStoreProblems() {
@@ -155,8 +152,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myMethodReferenceResults;
   }
 
-  Set<TypeCastInstruction> getClassCastExceptionInstructions() {
-    return myCCEInstructions;
+  StreamEx<PsiTypeCastExpression> getFailingCastExpressions() {
+    return StreamEx.ofKeys(myClassCastProblems, StateInfo::shouldReport);
   }
 
   Set<PsiElement> getMutabilityViolations(boolean receiver) {
@@ -289,12 +286,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     boolean ok = super.checkNotNullable(state, value, problem);
     if (problem == null) return ok;
     StateInfo info = myStateInfos.computeIfAbsent(problem, k -> new StateInfo());
-    if (state.isEphemeral() && !ok) {
-      info.ephemeralNpe = true;
-    } else if (!state.isEphemeral()) {
-      if (ok) info.normalOk = true;
-      else info.normalNpe = true;
-    }
+    info.update(state, ok);
     return ok;
   }
 
@@ -316,9 +308,26 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   private static class StateInfo {
-    boolean ephemeralNpe;
-    boolean normalNpe;
+    boolean ephemeralException;
+    boolean normalException;
     boolean normalOk;
+
+    void update(DfaMemoryState state, boolean ok) {
+      if (state.isEphemeral()) {
+        if (!ok) ephemeralException = true;
+      }
+      else {
+        if (ok) normalOk = true;
+        else normalException = true;
+      }
+    }
+
+    boolean shouldReport() {
+      // non-ephemeral exceptions should be reported
+      // ephemeral exceptions should also be reported if only ephemeral states have reached a particular problematic instruction
+      //  (e.g. if it's inside "if (var == null)" check after contract method invocation
+      return normalException || ephemeralException && !normalOk;
+    }
   }
 
   private class ExpressionVisitor extends JavaElementVisitor {

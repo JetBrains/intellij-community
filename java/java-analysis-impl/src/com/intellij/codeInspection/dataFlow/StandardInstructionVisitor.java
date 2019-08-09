@@ -259,22 +259,49 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiType type = instruction.getCastTo();
+    DfaControlTransferValue transfer = instruction.getCastExceptionTransfer();
     final DfaValueFactory factory = runner.getFactory();
     PsiType fromType = instruction.getCasted().getType();
-    if (fromType != null && type.isConvertibleFrom(fromType) && !memState.castTopOfStack(factory.createDfaType(type))) {
-      onInstructionProducesCCE(instruction);
-    }
+    DfaPsiType dfaType = factory.createDfaType(type);
+    boolean castPossible = true;
+    List<DfaInstructionState> result = new ArrayList<>();
+    if (transfer != null) {
+      DfaMemoryState castFail = memState.createCopy();
+      if (fromType != null && type.isConvertibleFrom(fromType)) {
+        if (!memState.castTopOfStack(dfaType)) {
+          castPossible = false;
+        } else {
+          result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+          DfaValue value = memState.pop();
+          pushExpressionResult(value, instruction, memState);
+        }
+      }
+      DfaValue value = castFail.peek();
+      DfaValue notNullCondition = factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull());
+      DfaValue notTypeCondition = factory.createCondition(value, RelationType.IS_NOT, factory.createTypeValue(type, Nullability.NOT_NULL));
+      if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
+        List<DfaInstructionState> states = transfer.dispatch(castFail, runner);
+        for (DfaInstructionState cceState : states) {
+          cceState.getMemoryState().markEphemeral();
+        }
+        result.addAll(states);
+      }
+    } else {
+      if (fromType != null && type.isConvertibleFrom(fromType)) {
+        if (!memState.castTopOfStack(dfaType)) {
+          castPossible = false;
+        }
+      }
 
-    DfaValue value = memState.pop();
-    if (type instanceof PsiPrimitiveType) {
-      value = DfaUtil.boxUnbox(value, type);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+      DfaValue value = memState.pop();
+      pushExpressionResult(value, instruction, memState);
     }
-    pushExpressionResult(value, instruction, memState);
-
-    return nextInstruction(instruction, runner, memState);
+    onTypeCast(instruction.getExpression(), memState, castPossible);
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  protected void onInstructionProducesCCE(TypeCastInstruction instruction) {}
+  protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {}
 
   protected void beforeMethodCall(@NotNull PsiExpression expression,
                                   @NotNull DfaCallArguments arguments,

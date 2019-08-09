@@ -125,10 +125,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myFactory;
   }
 
-  PsiElement getContext() {
-    return myCodeFragment;
-  }
-
   @NotNull
   private PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
@@ -2050,7 +2046,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
-      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      DfaControlTransferValue transfer =
+        shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ClassCastException"), myTrapStack) : null;
+      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
     }
     finishElement(castExpression);
   }
