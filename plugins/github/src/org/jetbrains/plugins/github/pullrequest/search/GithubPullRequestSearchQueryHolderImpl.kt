@@ -2,22 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest.search
 
 import com.intellij.openapi.Disposable
-import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import kotlin.properties.Delegates
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 internal class GithubPullRequestSearchQueryHolderImpl : GithubPullRequestSearchQueryHolder {
+  private val delegate = SingleValueModel(GithubPullRequestSearchQuery.parseFromString("state:open"))
+
   override var query: GithubPullRequestSearchQuery
-    by Delegates.observable(GithubPullRequestSearchQuery(emptyList())) { _, _, _ ->
-      queryChangeEventDispatcher.multicaster.eventOccurred()
+    get() = delegate.value
+    set(value) {
+      delegate.value = value
     }
 
-  private val queryChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-  init {
-    query = GithubPullRequestSearchQuery.parseFromString("state:open")
-  }
-
   override fun addQueryChangeListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(queryChangeEventDispatcher, disposable, listener)
+    delegate.addValueChangedListener(disposable, listener)
 }
