@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
@@ -29,15 +30,23 @@ class MethodParameterAugmenter : TypeAugmenter() {
     }
   }
 
+  data class InferenceResult(val virtualMethod: GrMethod?, val typeParameterSubstitutor: PsiSubstitutor)
+
 
   override fun inferType(variable: GrVariable): PsiType? {
     if (variable is GrParameter && variable.typeElement == null && !reentrancyMark.get()) {
       val method = variable.parentOfType<GrMethod>() ?: return null
-      val typedMethod = CachedValuesManager.getCachedValue(method) {
-        CachedValueProvider.Result(produceTypedMethod(method, GlobalSearchScope.fileScope(method.containingFile)), method)
+      val inferenceResult = CachedValuesManager.getCachedValue(method) {
+        val typedMethod = produceTypedMethod(method, GlobalSearchScope.fileScope(method.containingFile))
+        val typeParameterSubstitutor = typedMethod?.run {
+          createVirtualToActualSubstitutor(typedMethod, method)
+        } ?: PsiSubstitutor.EMPTY
+        CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
       }
       val parameterIndex = method.parameterList.getParameterNumber(variable)
-      return typedMethod?.parameters?.getOrNull(parameterIndex)?.takeIf { it.typeElementGroovy != null }?.type
+      return inferenceResult?.virtualMethod?.parameters?.getOrNull(parameterIndex)
+        ?.takeIf { it.typeElementGroovy != null }?.type
+        ?.let { inferenceResult.typeParameterSubstitutor.substitute(it) }
     }
     return null
   }
