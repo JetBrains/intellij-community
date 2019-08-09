@@ -612,13 +612,15 @@ public class PushLog extends JPanel implements DataProvider {
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
+      renderer.setIpad(JBUI.emptyInsets());
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         RepositoryNode valueNode = (RepositoryNode)value;
         boolean isCheckboxVisible = valueNode.isCheckboxVisible();
         myCheckbox.setVisible(isCheckboxVisible);
         if (!isCheckboxVisible) {
-          renderer.setBorder(JBUI.Borders.emptyLeft(10));
+          // if we don't set right inset, "new" icon will be cropped
+          renderer.setIpad(JBUI.insets(0, 10));
         }
         if (valueNode.isChecked() && valueNode.isLoading()) {
           myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
