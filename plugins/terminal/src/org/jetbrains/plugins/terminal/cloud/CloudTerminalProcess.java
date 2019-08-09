@@ -2,31 +2,22 @@
 package org.jetbrains.plugins.terminal.cloud;
 
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.function.Consumer;
 
 public class CloudTerminalProcess extends Process {
 
   private final OutputStream myOutputStream;
   private final InputStream myInputStream;
-  private final Consumer<Dimension> myTtyResizeHandler;
+
   private final Semaphore mySemaphore;
 
-  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput, @Nullable Consumer<Dimension> ttyResizeHandler) {
+  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput) {
     myOutputStream = terminalInput;
     myInputStream = terminalOutput;
-    myTtyResizeHandler = ttyResizeHandler;
     mySemaphore = new Semaphore();
     mySemaphore.down();
-  }
-
-  public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput) {
-    this(terminalInput, terminalOutput, null);
   }
 
   @Override
@@ -58,11 +49,5 @@ public class CloudTerminalProcess extends Process {
   @Override
   public void destroy() {
     mySemaphore.up();
-  }
-
-  void resizeTty(@NotNull Dimension termSize) {
-    if (myTtyResizeHandler != null) {
-      myTtyResizeHandler.accept(termSize);
-    }
   }
 }
