@@ -79,7 +79,7 @@ public final class LowMemoryWatcherManager implements Disposable {
         final boolean afterGc = memoryCollectionThreshold;
 
         // whether LowMemoryWatcher runnables should be executed on the same thread that the low memory events come
-        if (SystemProperties.getBooleanProperty("low.memory.watcher.sync", true)) {
+        if (SystemProperties.getBooleanProperty("low.memory.watcher.sync", false)) {
           handleEventImmediately(afterGc);
           return;
         }
