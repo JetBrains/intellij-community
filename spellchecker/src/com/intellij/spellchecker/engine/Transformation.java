@@ -16,17 +16,16 @@
 package com.intellij.spellchecker.engine;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings({"ALL"})
 public class Transformation {
-  
+
   @Nullable
-  public  String transform(@Nullable String word) {
+  public String transform(@Nullable String word) {
     if (word == null) return null;
     word = word.trim();
     if (word.length() < 3) {
@@ -37,11 +36,11 @@ public class Transformation {
   }
 
   @Nullable
-  public  Set<String> transform(@Nullable Collection<String> words) {
+  public Set<String> transform(@Nullable Collection<String> words) {
     if (words == null || words.isEmpty()) {
       return null;
     }
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (String word : words) {
       String transformed = transform(word);
       if (transformed != null) {
