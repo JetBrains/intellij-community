@@ -227,7 +227,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
-        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING.get());
+        int referencesWidth = myReferencePainter.getSize().width;
+        if (referencesWidth > 0) referencesWidth += LabelPainter.RIGHT_PADDING.get();
+        appendTextPadding(myGraphImage.getWidth() + referencesWidth);
         appendText(cell, style, isSelected);
       }
       else {
