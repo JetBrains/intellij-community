@@ -1491,6 +1491,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     public MyContentPanel(PopupBorder border) {
       super(new BorderLayout());
+      putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       setBorder(border);
     }
 

@@ -1690,6 +1690,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     private MyComponent(JComponent content, BalloonImpl balloon, EmptyBorder shapeBorder) {
       setOpaque(false);
       setLayout(null);
+      putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       myBalloon = balloon;
 
       // When a screen reader is active, TAB/Shift-TAB should allow moving the focus

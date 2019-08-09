@@ -76,6 +76,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil extends StartupUiUtil {
+
   static {
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
   }
@@ -419,6 +420,14 @@ public final class UIUtil extends StartupUiUtil {
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  /**
+   * Alt+click does copy text from tooltip or balloon to clipboard.
+   * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
+   * To provide more accurate text scope you should mark dedicated component with putClientProperty(TEXT_COPY_ROOT, Boolean.TRUE)
+   * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
+   */
+  public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
+
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {

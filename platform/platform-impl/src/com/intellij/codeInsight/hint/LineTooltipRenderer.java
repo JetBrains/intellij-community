@@ -149,6 +149,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
     JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane);
+    editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
