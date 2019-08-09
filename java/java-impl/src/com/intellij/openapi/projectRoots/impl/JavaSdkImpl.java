@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -116,7 +117,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release == 13) return "https://download.java.net/java/early_access/jdk13/docs/api/";
+    if (release > LanguageLevel.HIGHEST.toJavaVersion().feature) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
     if (release >= 6) return "https://docs.oracle.com/javase/" + release + "/docs/api/";
     if (release == 5) return "https://docs.oracle.com/javase/1.5.0/docs/api/";
