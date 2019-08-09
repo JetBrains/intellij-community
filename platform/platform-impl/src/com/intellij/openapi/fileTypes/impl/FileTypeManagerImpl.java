@@ -522,7 +522,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
               "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
         }
 
-        if (after == null) {
+        if (after == null || mightBeReplacedByDetectedFileType(after)) {
           try {
             after = detectFromContentAndCache(file);
           }
@@ -676,7 +676,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType == null) {
         return getOrDetectFromContent(file, content);
       }
-      if (fileType instanceof PlainTextLikeFileType && fileType.isReadOnly()) {
+      if (mightBeReplacedByDetectedFileType(fileType)) {
         FileType detectedFromContent = getOrDetectFromContent(file, content);
         if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
           return detectedFromContent;
@@ -684,6 +684,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+  }
+
+  private static boolean mightBeReplacedByDetectedFileType(FileType fileType) {
+    return fileType instanceof PlainTextLikeFileType && fileType.isReadOnly();
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
