@@ -233,12 +233,12 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
   private static boolean hasAncestor(@NotNull Set<? extends FilePath> dirs, @NotNull FilePath filePath) {
     for (FilePath parent : dirs) {
-      if (isAncestor(filePath, parent)) return true;
+      if (isAncestor(parent, filePath)) return true;
     }
     return false;
   }
 
-  private static boolean isAncestor(@NotNull FilePath filePath, @NotNull FilePath parent) {
+  private static boolean isAncestor(@NotNull FilePath parent, @NotNull FilePath filePath) {
     return FileUtil.startsWith(filePath.getPath(), parent.getPath());
   }
 
@@ -267,7 +267,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (files != null) {
           for (Iterator<FilePath> it = files.iterator(); it.hasNext();) {
             FilePath oldBoy = it.next();
-            if (isAncestor(oldBoy, newcomer)) {
+            if (isAncestor(newcomer, oldBoy)) {
               it.remove();
             }
           }
@@ -283,11 +283,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     else {
       for (Iterator<FilePath> it = dirsByRoot.iterator(); it.hasNext();) {
         FilePath oldBoy = it.next();
-        if (isAncestor(newcomer, oldBoy)) {
+        if (isAncestor(oldBoy, newcomer)) {
           return;
         }
 
-        if (isAncestor(oldBoy, newcomer)) {
+        if (isAncestor(newcomer, oldBoy)) {
           it.remove();
         }
       }
