@@ -41,8 +41,8 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     new RunAll(
       () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
       () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, true),
-      () -> checkNoPsiFilesInProjectReachable(project),
-      () -> super.tearDown()).run();
+      () -> super.tearDown(),
+      () -> checkNoPsiFilesInProjectReachable(project)).run();
   }
 
   private static void checkNoPsiFilesInProjectReachable(Project project) {
