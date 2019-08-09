@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
 import com.intellij.openapi.extensions.AreaInstance;
@@ -33,7 +33,7 @@ import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
-  private final Invoker invoker = new Invoker.BackgroundThread(this);
+  private final Invoker invoker = new Invoker.Background(this);
   private final ProjectFileNodeUpdater updater;
   private final ProjectNode root;
 

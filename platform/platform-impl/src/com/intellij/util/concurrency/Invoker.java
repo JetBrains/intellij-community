@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -302,7 +303,10 @@ public abstract class Invoker implements Disposable {
   /**
    * This class is the {@code Invoker} in a single background thread.
    * This invoker does not need additional synchronization.
+   * @deprecated use {@link Background#Background(Disposable)} instead
    */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2021.1")
   public static final class BackgroundThread extends Invoker {
     private final ScheduledExecutorService executor;
     private volatile Thread thread;

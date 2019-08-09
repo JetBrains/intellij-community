@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -113,10 +113,10 @@ public class TreeTest implements Disposable {
     new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.EDT(parent)));
     new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.EDT(parent)));
     new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.BackgroundThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.Background(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.Background(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.Background(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.Background(parent)));
   }
 
   private static TreeModel model(Supplier<TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {
