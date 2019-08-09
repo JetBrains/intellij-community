@@ -266,7 +266,11 @@ public class JavaLexer extends LexerBase {
     int pos = offset;
 
     while ((pos = getClosingQuote(pos + 1, '"')) < myBufferEndOffset) {
-      if (pos + 1 < myBufferEndOffset && charAt(pos + 1) == '"' && charAt(pos) == '"') {
+      char current = charAt(pos);
+      if (current == '\\') {
+        pos++;
+      }
+      else if (current == '"' && pos + 1 < myBufferEndOffset && charAt(pos + 1) == '"') {
         pos += 2;
         break;
       }
