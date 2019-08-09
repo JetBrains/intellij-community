@@ -164,28 +164,18 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @Nullable
   protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
-    if (elementAtSelectionStart == null) {
+    final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
+    if (elementAtSelectionStart == null || elementAtSelectionEnd == null ||
+        elementAtSelectionEnd.getNode().getElementType() != elementAtSelectionStart.getNode().getElementType()) {
       return null;
     }
-    final boolean isTextBlock = isTextBlock(elementAtSelectionStart);
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock) {
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock(elementAtSelectionStart)) {
       return null;
     }
-
-    final TextRange range = elementAtSelectionStart.getTextRange();
-    final TextRange textRange = isTextBlock ? new TextRange(range.getStartOffset() + 3, range.getEndOffset() - 2) : range;
-    if (textRange.getEndOffset() < selectionEnd) {
-      final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
-      if (elementAtSelectionEnd == null) {
-        return null;
-      }
-      if (elementAtSelectionEnd.getNode().getElementType() == elementAtSelectionStart.getNode().getElementType() &&
-          elementAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
-        return elementAtSelectionStart;
-      }
-    }
-    
-    if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
+    final TextRange startTextRange = getEscapedRange(elementAtSelectionStart);
+    final TextRange endTextRange = getEscapedRange(elementAtSelectionEnd);
+    if (startTextRange == null || endTextRange == null ||
+        !startTextRange.containsOffset(selectionStart) || !endTextRange.containsOffset(selectionEnd)) {
       return null;
     }
     return elementAtSelectionStart;
@@ -208,18 +198,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
   @Nullable
   protected TextRange getEscapedRange(@NotNull PsiElement token) {
-    if (isCharLiteral(token) || isStringLiteral(token)) {
-      TextRange tokenRange = token.getTextRange();
-      return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
-    }
-    else if (isTextBlock(token)) {
-      PsiElement parent = token.getParent();
-      if (parent instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent).getValue() != null) {
-        TextRange rangeInParent = StringLiteralManipulator.getValueRange((PsiLiteralExpression)parent);
-        return rangeInParent.shiftRight(parent.getTextRange().getStartOffset());
-      }
-    }
-    return null;
+    PsiElement parent = token.getParent();
+    if (!(parent instanceof PsiLiteralExpression)) return null;
+    final TextRange valueTextRange = StringLiteralManipulator.getValueRange((PsiLiteralExpression)token.getParent());
+    return valueTextRange.shiftRight(token.getTextRange().getStartOffset());
   }
 
   @NotNull
@@ -236,8 +218,11 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     for (int i = 0; i < lines.length; i++) {
       buffer.append(PsiLiteralUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
       if (i < lines.length - 1) {
-        buffer.append("\n");
+        buffer.append('\n');
       }
+    }
+    if (StringUtil.endsWithChar(text, '\n')) {
+      buffer.append('\n');
     }
     return buffer.toString();
   }
