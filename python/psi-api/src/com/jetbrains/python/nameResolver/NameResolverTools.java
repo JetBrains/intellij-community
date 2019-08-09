@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.nameResolver;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -40,6 +42,9 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class NameResolverTools {
+
+  private static final Logger LOG = Logger.getInstance(NameResolverTools.class);
+
   /**
    * Cache: pair [qualified element name, class name (may be null)] by any psi element.
    */
@@ -77,7 +82,11 @@ public final class NameResolverTools {
    */
   public static boolean isName(@NotNull final PyElement element, @NotNull final FQNamesProvider... namesProviders) {
     assert element.isValid();
-    final Pair<String, String> qualifiedAndClassName = QUALIFIED_AND_CLASS_NAME.getValue(element);
+    final Pair<String, String> qualifiedAndClassName = RecursionManager.doPreventingRecursion(element, false,
+                                                                                        () -> QUALIFIED_AND_CLASS_NAME.getValue(element));
+    LOG.assertTrue(qualifiedAndClassName != null);
+    //noinspection ConstantConditions
+    if (qualifiedAndClassName == null) return false;
     final String qualifiedName = qualifiedAndClassName.first;
     final String className = qualifiedAndClassName.second;
 
