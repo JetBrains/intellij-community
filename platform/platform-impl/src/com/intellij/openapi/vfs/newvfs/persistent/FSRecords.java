@@ -894,6 +894,7 @@ public class FSRecords {
       this.id = id;
       this.nameId = nameId;
       this.name = name;
+      if (id <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     }
 
     @Override

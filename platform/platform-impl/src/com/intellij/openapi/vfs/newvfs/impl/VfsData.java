@@ -133,6 +133,7 @@ public class VfsData {
   }
 
   private static int getOffset(int id) {
+    if (id <= 0) throw new IllegalArgumentException("invalid argument id: "+id);
     return id & OFFSET_MASK;
   }
 
@@ -156,7 +157,6 @@ public class VfsData {
   }
 
   public static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
-    assert id > 0;
     int offset = getOffset(id);
 
     segment.setNameId(id, nameId);
@@ -223,6 +223,7 @@ public class VfsData {
     }
 
     void setNameId(int fileId, int nameId) {
+      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+fileId+"; nameId: "+nameId);
       myIntArray.set(getOffset(fileId) * 2, nameId);
     }
 
