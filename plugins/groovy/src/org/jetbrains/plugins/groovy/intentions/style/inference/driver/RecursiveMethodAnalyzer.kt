@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
@@ -15,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
@@ -156,6 +158,11 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     super.visitAssignmentExpression(expression)
   }
 
+  override fun visitReturnStatement(returnStatement: GrReturnStatement) {
+    returnStatement.returnValue?.apply { processExitExpression(this) }
+    super.visitReturnStatement(returnStatement)
+  }
+
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     variableDeclaration.variables.forEach {
       processRequiredParameters(it.initializerGroovy?.type?.typeParameter() ?: return@forEach, it.type)
@@ -263,6 +270,20 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         setConstraints(it.first ?: return, it.second ?: return, dependentTypes, requiredTypesCollector, variableParameters)
       }
     }
+  }
+
+  fun runAnalyzer(method: GrMethod) {
+    method.accept(this)
+    method.block?.statements?.lastOrNull()?.apply { processExitExpression(this as? GrExpression ?: return@apply) }
+  }
+
+  private fun processExitExpression(expression: GrExpression) {
+    val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
+    constraintsCollector.add(ExpressionConstraint(returnType, expression))
+    val typeParameter = expression.type.typeParameter() ?: return
+    contravariantTypesCollector.add(typeParameter.type())
+    covariantTypesCollector.add(typeParameter.type())
+    addRequiredType(typeParameter, BoundConstraint(returnType, UPPER))
   }
 
 

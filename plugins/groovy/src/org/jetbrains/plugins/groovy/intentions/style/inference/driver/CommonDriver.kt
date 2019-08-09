@@ -195,7 +195,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
   override fun collectInnerConstraints(): TypeUsageInformation {
     val typeUsageInformation = closureDriver.collectInnerConstraints()
     val analyzer = RecursiveMethodAnalyzer(method)
-    method.accept(analyzer)
+    analyzer.runAnalyzer(method)
     analyzer.visitOuterCalls(originalMethod)
     return analyzer.buildUsageInformation() + typeUsageInformation
   }

@@ -444,4 +444,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testDelegationFromType() {
     doTest(true)
   }
+
+  void testReturnTypeInfluence() {
+    doTest(true)
+  }
 }

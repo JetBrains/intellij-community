@@ -1,4 +1,4 @@
-Object foo(ArrayList<? extends A> a) {
+def Object foo(ArrayList<? extends A> a) {
   a[0].bar()
 }
 

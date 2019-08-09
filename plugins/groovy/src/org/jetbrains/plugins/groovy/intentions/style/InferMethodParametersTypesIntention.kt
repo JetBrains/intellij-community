@@ -37,7 +37,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    if (!method.isConstructor) {
+    if (!method.isConstructor && method.returnTypeElement == null) {
       val inferredType = method.inferredReturnType
       val returnType = TypesUtil.unboxPrimitiveTypeWrapper(
         if (inferredType == null || inferredType == PsiType.NULL) {
