@@ -10,7 +10,8 @@ import java.util.Map;
 /**
  * Non thread safe version of {@link UserDataHolderBase}.
  */
-public class UnprotectedUserDataHolder implements UserDataHolder {
+@SuppressWarnings("deprecation")
+public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolderUnprotected {
 
   private Map<Key, Object> myUserData;
 
@@ -30,5 +31,16 @@ public class UnprotectedUserDataHolder implements UserDataHolder {
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) myUserData = new HashMap<>();
     myUserData.put(key, value);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserDataUnprotected(@NotNull Key<T> key) {
+    return getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserDataUnprotected(@NotNull Key<T> key, @Nullable T value) {
+    putUserData(key, value);
   }
 }
