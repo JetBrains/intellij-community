@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -38,55 +38,54 @@ public class VirtualFileHolder implements FileHolder {
     myFiles.clear();
   }
 
-  static void cleanScope(final Project project, final Collection<VirtualFile> files, final VcsModifiableDirtyScope scope) {
-    ReadAction.run(() -> {
-      if (project.isDisposed() || files.isEmpty()) return;
+  static void cleanScope(final Collection<VirtualFile> files, final VcsModifiableDirtyScope scope) {
+    ProgressManager.checkCanceled();
+    if (files.isEmpty()) return;
 
-      if (scope.getRecursivelyDirtyDirectories().size() == 0) {
-        final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
-        boolean cleanDroppedFiles = false;
+    if (scope.getRecursivelyDirtyDirectories().size() == 0) {
+      final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
+      boolean cleanDroppedFiles = false;
 
-        for (FilePath dirtyFile : dirtyFiles) {
-          VirtualFile f = dirtyFile.getVirtualFile();
-          if (f != null) {
-            files.remove(f);
-          }
-          else {
-            cleanDroppedFiles = true;
-          }
+      for (FilePath dirtyFile : dirtyFiles) {
+        VirtualFile f = dirtyFile.getVirtualFile();
+        if (f != null) {
+          files.remove(f);
         }
-        if (cleanDroppedFiles) {
-          for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext(); ) {
-            final VirtualFile file = iterator.next();
-            if (fileDropped(file)) {
-              iterator.remove();
-              scope.addDirtyFile(VcsUtil.getFilePath(file));
-            }
-          }
+        else {
+          cleanDroppedFiles = true;
         }
       }
-      else {
+      if (cleanDroppedFiles) {
         for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext(); ) {
           final VirtualFile file = iterator.next();
-          final boolean fileDropped = fileDropped(file);
-          if (fileDropped) {
-            scope.addDirtyFile(VcsUtil.getFilePath(file));
-          }
-          if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
+          if (fileDropped(file)) {
             iterator.remove();
+            scope.addDirtyFile(VcsUtil.getFilePath(file));
           }
         }
       }
-    });
+    }
+    else {
+      for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext(); ) {
+        final VirtualFile file = iterator.next();
+        final boolean fileDropped = fileDropped(file);
+        if (fileDropped) {
+          scope.addDirtyFile(VcsUtil.getFilePath(file));
+        }
+        if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
-    cleanScope(myProject, myFiles, scope);
+    cleanScope(myFiles, scope);
   }
 
   private static boolean fileDropped(final VirtualFile file) {
-    return ! file.isValid();
+    return !file.isValid();
   }
 
   public void addFile(VirtualFile file) {
