@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -25,6 +26,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
+import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -44,7 +46,13 @@ public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
   public final BuildFSState fsState;
-  public final ProjectStamps timestamps;
+  /**
+   * @deprecated use {@link #getProjectStamps()} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  public final ProjectTimestamps timestamps;
+  private final ProjectStamps myProjectStamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
   private final BuildTargetsState myTargetsState;
@@ -59,7 +67,7 @@ public final class ProjectDescriptor {
 
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
-                           ProjectStamps timestamps,
+                           ProjectTimestamps timestamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
@@ -70,6 +78,7 @@ public final class ProjectDescriptor {
     myProject = model.getProject();
     this.fsState = fsState;
     this.timestamps = timestamps;
+    myProjectStamps = timestamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
@@ -143,7 +152,7 @@ public final class ProjectDescriptor {
     }
     if (shouldClose) {
       try {
-        timestamps.close();
+        myProjectStamps.close();
       }
       finally {
         try {
@@ -166,5 +175,9 @@ public final class ProjectDescriptor {
 
   public JpsProject getProject() {
     return myProject;
+  }
+
+  public ProjectStamps getProjectStamps() {
+    return myProjectStamps;
   }
 }

@@ -377,7 +377,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);

@@ -86,10 +86,10 @@ public class BuildRunner {
 
     PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), dataPaths.getDataStorageRoot());
 
-    ProjectStamps projectStamps = null;
+    ProjectTimestamps projectStamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
+      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
@@ -108,7 +108,7 @@ public class BuildRunner {
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
+      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
@@ -198,7 +198,7 @@ public class BuildRunner {
       includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
     }
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     if (!paths.isEmpty()) {
       boolean forceBuildAllModuleBasedTargets = false;
       for (BuildTargetType<?> type : targetTypesToForceBuild) {

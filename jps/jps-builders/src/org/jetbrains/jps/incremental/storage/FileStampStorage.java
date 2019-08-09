@@ -18,8 +18,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-public class FileStampStorage extends AbstractStateStorage<String, FileStampStorage.FileStampPerTarget[]>
-  implements StampsStorage<FileStampStorage.FileStamp> {
+import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
+import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStampPerTarget;
+
+public class FileStampStorage extends AbstractStateStorage<String, FileStampPerTarget[]> implements TimestampStorage<FileStamp> {
   private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final String HASH_FUNCTION = "MD5";
   private static final int HASH_FUNCTION_SIZE = 16;

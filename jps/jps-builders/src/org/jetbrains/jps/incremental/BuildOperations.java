@@ -48,7 +48,7 @@ public class BuildOperations {
 
   public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage stampsStorage = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, true, null, null);
@@ -75,7 +75,7 @@ public class BuildOperations {
 
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     final THashSet<File> currentFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, forceMarkDirty, currentFiles, null);
 
@@ -105,7 +105,7 @@ public class BuildOperations {
         if (target instanceof ModuleBuildTarget) {
           context.clearNonIncrementalMark((ModuleBuildTarget)target);
         }
-        final StampsStorage<? extends StampsStorage.Stamp>  stampsStorage = pd.timestamps.getStorage();
+        final StampsStorage<? extends StampsStorage.Stamp>  stampsStorage = pd.getProjectStamps().getStampStorage();
         for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
           marked |= fsState.markAllUpToDate(context, rd, stampsStorage);
         }
