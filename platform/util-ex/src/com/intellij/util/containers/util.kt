@@ -119,6 +119,13 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
   }
 }
 
+inline fun <T, reified R> Array<out T>.map2Array(transform: (T) -> R): Array<R> = Array(this.size) { i -> transform(this[i]) }
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> = arrayOfNulls<R>(this.size).also { array ->
+  this.forEachIndexed { index, t -> array[index] = transform(t) }
+} as Array<R>
+
 inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
   return when (val size = size) {
     1 -> SmartList(transform(first()))
