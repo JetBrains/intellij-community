@@ -550,7 +550,11 @@ public class PluginManagerCore {
   private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
                                                      @NotNull ClassLoader[] parentLoaders,
                                                      @NotNull IdeaPluginDescriptor descriptor) {
-    if (descriptor.getUseIdeaClassLoader()) {
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+      return null;
+    }
+    else if (descriptor.getUseIdeaClassLoader()) {
+      getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
         // the method can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
@@ -569,9 +573,6 @@ public class PluginManagerCore {
         //noinspection GraziInspection
         throw new IllegalStateException("Unexpected core classloader: " + loader + " (" + loader.getClass() + ")", t);
       }
-    }
-    else if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
-      return null;
     }
     else {
       List<URL> urls = new ArrayList<>(classPath.length);
