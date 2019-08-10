@@ -75,7 +75,7 @@ public class PluginManagerCore {
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
   private static final String ALL_MODULES_MARKER = "com.intellij.modules.all";
 
-  /** @noinspection StaticNonFinalField*/
+  @SuppressWarnings("StaticNonFinalField")
   public static String BUILD_NUMBER;
 
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
@@ -557,39 +557,33 @@ public class PluginManagerCore {
       getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
-        // the method can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
+        // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
         MethodHandle addURL = MethodHandles.lookup().findVirtual(loader.getClass(), "addURL", MethodType.methodType(void.class, URL.class));
         for (File pathElement : classPath) {
-          try {
-            addURL.invoke(loader, classpathElementToUrl(pathElement));
-          }
-          catch (MalformedURLException e) {
-            throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
-          }
+          addURL.invoke(loader, classpathElementToUrl(pathElement, descriptor));
         }
         return loader;
       }
       catch (Throwable t) {
-        //noinspection GraziInspection
-        throw new IllegalStateException("Unexpected core classloader: " + loader + " (" + loader.getClass() + ")", t);
+        throw new IllegalStateException("An unexpected core classloader: " + loader.getClass(), t);
       }
     }
     else {
       List<URL> urls = new ArrayList<>(classPath.length);
       for (File pathElement : classPath) {
-        try {
-          urls.add(classpathElementToUrl(pathElement));
-        }
-        catch (MalformedURLException e) {
-          throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
-        }
+        urls.add(classpathElementToUrl(pathElement, descriptor));
       }
       return new PluginClassLoader(urls, parentLoaders, descriptor.getPluginId(), descriptor.getVersion(), descriptor.getPath());
     }
   }
 
-  private static URL classpathElementToUrl(File cpElement) throws MalformedURLException {
-    return cpElement.toPath().normalize().toUri().toURL();  // it is important not to have "." and ".." in classpath elements
+  private static URL classpathElementToUrl(File cpElement, IdeaPluginDescriptor descriptor) {
+    try {
+      return cpElement.toPath().normalize().toUri().toURL();  // it is important not to have traversal elements in classpath
+    }
+    catch (MalformedURLException e) {
+      throw new PluginException("Corrupted path element: `" + cpElement + '`', e, descriptor.getPluginId());
+    }
   }
 
   public static synchronized void invalidatePlugins() {
@@ -1348,17 +1342,16 @@ public class PluginManagerCore {
 
   public static void initClassLoader(@NotNull ClassLoader coreLoader,
                                      Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
-                                     IdeaPluginDescriptorImpl pluginDescriptor) {
-    File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-    ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor);
+                                     IdeaPluginDescriptorImpl descriptor) {
+    File[] classPath = descriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
+    ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, descriptor);
     if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
-    pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
+    descriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, descriptor));
   }
 
   public static void initClassLoaderForDisabledPlugin(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
-    List<File> classPath = descriptor.getClassPath();
-    ClassLoader loader = createPluginClassLoader(classPath.toArray(ArrayUtilRt.EMPTY_FILE_ARRAY), new ClassLoader[]{parentLoader}, descriptor);
-    descriptor.setLoader(loader);
+    File[] classPath = descriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
+    descriptor.setLoader(createPluginClassLoader(classPath, new ClassLoader[]{parentLoader}, descriptor));
   }
 
   static BuildNumber getBuildNumber() {

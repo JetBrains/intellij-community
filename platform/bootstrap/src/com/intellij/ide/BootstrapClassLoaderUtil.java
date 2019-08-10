@@ -267,12 +267,12 @@ public class BootstrapClassLoaderUtil {
     }
 
     @Override
-    protected Class _defineClass(String name, byte[] b) {
+    protected Class<?> _defineClass(String name, byte[] b) {
       return super._defineClass(name, doTransform(name, null, b));
     }
 
     @Override
-    protected Class _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
+    protected Class<?> _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
       return super._defineClass(name, doTransform(name, protectionDomain, b), protectionDomain);
     }
 

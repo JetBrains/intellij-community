@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -225,13 +211,8 @@ public class ClassPath {
       return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      JarLoader loader;
-      if (myURLsWithProtectionDomain.contains(url)) {
-        loader = new SecureJarLoader(url, index, this);
-      }
-      else {
-        loader = new JarLoader(url, index, this);
-      }
+      boolean isSigned = myURLsWithProtectionDomain.contains(url);
+      JarLoader loader = isSigned ? new SecureJarLoader(url, index, this) : new JarLoader(url, index, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
@@ -247,6 +228,7 @@ public class ClassPath {
           }
           push(urls);
           if (ourLogTiming) {
+            //noinspection UseOfSystemOutOrSystemErr
             System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
           }
         }
@@ -459,6 +441,7 @@ public class ClassPath {
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
         @Override
         public void run() {
+          //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
         }
       });
