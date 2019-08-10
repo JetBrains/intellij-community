@@ -15,10 +15,8 @@
  */
 package git4idea.update;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
-import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 
@@ -30,8 +28,6 @@ public class GitUpdateOptionsPanel {
   private JRadioButton myBranchDefaultRadioButton;
   private JRadioButton myForceRebaseRadioButton;
   private JRadioButton myForceMergeRadioButton;
-  private JRadioButton myStashRadioButton;
-  private JRadioButton myShelveRadioButton;
 
   public JComponent getPanel() {
     return myPanel;
@@ -39,14 +35,7 @@ public class GitUpdateOptionsPanel {
 
   public boolean isModified(GitVcsSettings settings) {
     UpdateMethod type = getUpdateType();
-    return type != settings.getUpdateMethod() || updateSaveFilesPolicy() != settings.updateChangesPolicy();
-  }
-
-  /**
-   * @return get policy value from selected radio buttons
-   */
-  private GitVcsSettings.UpdateChangesPolicy updateSaveFilesPolicy() {
-    return UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton);
+    return type != settings.getUpdateMethod();
   }
 
   /**
@@ -72,7 +61,6 @@ public class GitUpdateOptionsPanel {
    */
   public void applyTo(GitVcsSettings settings) {
     settings.setUpdateMethod(getUpdateType());
-    settings.setUpdateChangesPolicy(updateSaveFilesPolicy());
   }
 
   /**
@@ -92,12 +80,5 @@ public class GitUpdateOptionsPanel {
       default:
         assert false : "Unknown value of update type: " + settings.getUpdateMethod();
     }
-    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton);
-  }
-
-  private void createUIComponents() {
-    myShelveRadioButton = new JRadioButton(GitBundle.message("update.options.save.shelve"));
-    myShelveRadioButton.setToolTipText(GitBundle.message("update.options.save.shelve.tooltip",
-                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 }
