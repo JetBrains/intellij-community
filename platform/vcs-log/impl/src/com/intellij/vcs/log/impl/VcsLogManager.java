@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -113,6 +114,8 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+    if (isDisposed()) throw new ProcessCanceledException();
+
     U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
@@ -189,6 +192,10 @@ public class VcsLogManager implements Disposable {
     // the above method first disposes ui in EDT, than disposes everything else in background
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
+  }
+
+  public boolean isDisposed() {
+    return Disposer.isDisposed(myTabsLogRefresher);
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

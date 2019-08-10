@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -96,10 +97,17 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     log.dataManager?.addDataPackChangeListener(listener)
 
+    val cancelled = Ref.create(false)
     ApplicationManager.getApplication().invokeLater {
       // the log may be refreshed before we subscribe to the listener
-      createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
+      try {
+        createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
+      }
+      catch (e: ProcessCanceledException) {
+        cancelled.set(true)
+      }
     }
+    if (cancelled.get()) throw ProcessCanceledException()
 
     BackgroundTaskUtil.awaitWithCheckCanceled(dataSupplier)
     return dataSupplier.get()
