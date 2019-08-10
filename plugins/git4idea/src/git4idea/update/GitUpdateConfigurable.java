@@ -47,7 +47,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   @Override
   public JComponent createComponent() {
-    myPanel = new GitUpdateOptionsPanel();
+    myPanel = new GitUpdateOptionsPanel(mySettings);
     return myPanel.getPanel();
   }
 
@@ -56,7 +56,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   @Override
   public boolean isModified() {
-    return myPanel.isModified(mySettings);
+    return myPanel.isModified();
   }
 
   /**
@@ -64,7 +64,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   @Override
   public void apply() {
-    myPanel.applyTo(mySettings);
+    myPanel.applyTo();
   }
 
   /**
@@ -72,7 +72,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   @Override
   public void reset() {
-    myPanel.updateFrom(mySettings);
+    myPanel.updateFrom();
   }
 
   /**

@@ -15,6 +15,8 @@
  */
 package git4idea.config;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * The type of update to perform
  */
@@ -22,13 +24,24 @@ public enum UpdateMethod {
   /**
    * Use default specified in the config file for the branch
    */
-  BRANCH_DEFAULT,
+  BRANCH_DEFAULT("Branch Default"),
   /**
    * Merge fetched commits with local branch
    */
-  MERGE,
+  MERGE("Merge"),
   /**
    * Rebase local commits upon the fetched branch
    */
-  REBASE
+  REBASE("Rebase");
+
+  @NotNull private final String myPresentation;
+
+  UpdateMethod(@NotNull String presentation) {
+    myPresentation = presentation;
+  }
+
+  @NotNull
+  public String asString() {
+    return myPresentation;
+  }
 }

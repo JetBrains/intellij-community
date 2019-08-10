@@ -13,72 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.update;
+package git4idea.update
 
-import git4idea.config.GitVcsSettings;
-import git4idea.config.UpdateMethod;
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.layout.*
+import git4idea.config.GitVcsSettings
+import git4idea.config.UpdateMethod
+import git4idea.config.UpdateMethod.BRANCH_DEFAULT
 
-import javax.swing.*;
+class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
+  val panel = createPanel()
 
-/**
- * Update options panel
- */
-public class GitUpdateOptionsPanel {
-  private JPanel myPanel;
-  private JRadioButton myBranchDefaultRadioButton;
-  private JRadioButton myForceRebaseRadioButton;
-  private JRadioButton myForceMergeRadioButton;
-
-  public JComponent getPanel() {
-    return myPanel;
-  }
-
-  public boolean isModified(GitVcsSettings settings) {
-    UpdateMethod type = getUpdateType();
-    return type != settings.getUpdateMethod();
-  }
-
-  /**
-   * @return get the currently selected update type
-   */
-  private UpdateMethod getUpdateType() {
-    UpdateMethod type = null;
-    if (myForceRebaseRadioButton.isSelected()) {
-      type = UpdateMethod.REBASE;
+  fun createPanel(): DialogPanel =
+    panel {
+      titledRow("Update Type") {
+        buttonGroup {
+          getUpdateMethods().forEach { method ->
+            row {
+              radioButton(method.asString()).withSelectedBinding(PropertyBinding(
+                get = { settings.updateMethod == method },
+                set = { selected -> if (selected) settings.updateMethod = method }
+              ))
+            }
+          }
+        }
+      }
     }
-    else if (myForceMergeRadioButton.isSelected()) {
-      type = UpdateMethod.MERGE;
-    }
-    else if (myBranchDefaultRadioButton.isSelected()) {
-      type = UpdateMethod.BRANCH_DEFAULT;
-    }
-    assert type != null;
-    return type;
-  }
 
-  /**
-   * Save configuration to settings object
-   */
-  public void applyTo(GitVcsSettings settings) {
-    settings.setUpdateMethod(getUpdateType());
-  }
+  fun isModified(): Boolean = panel.isModified()
 
-  /**
-   * Update panel according to settings
-   */
-  public void updateFrom(GitVcsSettings settings) {
-    switch (settings.getUpdateMethod()) {
-      case REBASE:
-        myForceRebaseRadioButton.setSelected(true);
-        break;
-      case MERGE:
-        myForceMergeRadioButton.setSelected(true);
-        break;
-      case BRANCH_DEFAULT:
-        myBranchDefaultRadioButton.setSelected(true);
-        break;
-      default:
-        assert false : "Unknown value of update type: " + settings.getUpdateMethod();
-    }
-  }
+  fun applyTo() = panel.apply()
+
+  fun updateFrom() = panel.reset()
+
+  private fun getUpdateMethods(): List<UpdateMethod> =
+    UpdateMethod.values().sortedWith(Comparator { o1, o2 ->
+      when {
+        o1 == o2 -> 0
+        o1 == BRANCH_DEFAULT -> 1
+        o2 == BRANCH_DEFAULT -> -1
+        else -> o1.ordinal - o2.ordinal
+      }
+    })
 }
