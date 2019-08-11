@@ -17,6 +17,6 @@ interface EditorConfigOptionDescriptorManager {
 
   companion object {
     val instance: EditorConfigOptionDescriptorManager
-      get() = ServiceManager.getService(EditorConfigOptionDescriptorManager::class.java)
+      get() = ServiceManager.getService(EditorConfigOptionDescriptorManagerProvider::class.java).descriptorManager
   }
 }

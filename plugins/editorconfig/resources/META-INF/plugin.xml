@@ -362,8 +362,8 @@
 
     <!-- Services -->
     <applicationService
-        serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
-        serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>
+        serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManagerProvider"
+        serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerProviderImpl"/>
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigElementFactory"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigElementFactoryImpl"/>
