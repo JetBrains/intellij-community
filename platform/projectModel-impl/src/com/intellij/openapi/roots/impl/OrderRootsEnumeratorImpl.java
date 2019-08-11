@@ -13,10 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -118,7 +115,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       OrderRootType type = getRootType(orderEntry);
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
-        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly());
+        boolean includeTests = !myOrderEnumerator.isProductionOnly();
+        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests);
       }
       else if (orderEntry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -126,8 +124,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
           boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
-          boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase
-            .shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
+          boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
           collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
         }
@@ -212,9 +209,10 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     OrderEnumeratorBase.addCustomRootsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
   }
 
-  private void collectModuleRootsUrls(OrderRootType type,
-                                      ModuleRootModel rootModel,
-                                      Collection<? super String> result, final boolean includeProduction, final boolean includeTests) {
+  private void collectModuleRootsUrls(@NotNull OrderRootType type,
+                                      @NotNull ModuleRootModel rootModel,
+                                      @NotNull Collection<? super String> result,
+                                      boolean includeProduction, boolean includeTests) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
         Collections.addAll(result, rootModel.getSourceRootUrls(includeTests));
@@ -228,6 +226,20 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       }
     }
     else if (type.equals(OrderRootType.CLASSES)) {
+      boolean hasTests = false;
+      boolean hasProduction = false;
+      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+          if (sourceFolder.isTestSource()) {
+            hasTests = true;
+          }
+          else {
+            hasProduction = true;
+          }
+        }
+      }
+      includeTests &= hasTests;
+      includeProduction &= hasProduction;
       final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
       if (extension != null) {
         if (myWithoutSelfModuleOutput && myOrderEnumerator.isRootModuleModel(rootModel)) {
@@ -239,7 +251,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           if (includeProduction) {
             Collections.addAll(result, extension.getOutputRootUrls(includeTests));
           }
-          else {
+          else if (includeTests) {
             ContainerUtil.addIfNotNull(result, extension.getCompilerOutputUrlForTests());
           }
         }
