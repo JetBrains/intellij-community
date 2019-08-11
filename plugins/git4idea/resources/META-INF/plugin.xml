@@ -36,7 +36,7 @@
     </action>
 
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
-    <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
+    <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision" text="Show Repository at Revision"/>
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
            description="Checkout selected revision or a branch on selected commit"/>
