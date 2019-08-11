@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.psi.base
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.psi.PsiReference
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
@@ -39,23 +38,20 @@ abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsi
     }
 
 
-  override fun getReference(): PsiReference? {
-    val descriptor = getDescriptor(false)
-    return when (descriptor) {
-      is EditorConfigDeclarationDescriptor -> EditorConfigDeclarationReference(this)
-      is EditorConfigReferenceDescriptor -> EditorConfigIdentifierReference(this, descriptor.id)
-      is EditorConfigConstantDescriptor -> EditorConfigConstantReference(this)
-      is EditorConfigUnionDescriptor -> {
-        if (EditorConfigDescriptorUtil.isConstant(descriptor)) {
-          EditorConfigConstantReference(this)
-        }
-        else {
-          logger<EditorConfigDescribableElementBase>().warn("Got non-constant union")
-          null
-        }
+  override fun getReference() = when (val descriptor = getDescriptor(false)) {
+    is EditorConfigDeclarationDescriptor -> EditorConfigDeclarationReference(this)
+    is EditorConfigReferenceDescriptor -> EditorConfigIdentifierReference(this, descriptor.id)
+    is EditorConfigConstantDescriptor -> EditorConfigConstantReference(this)
+    is EditorConfigUnionDescriptor -> {
+      if (EditorConfigDescriptorUtil.isConstant(descriptor)) {
+        EditorConfigConstantReference(this)
       }
-      else -> null
+      else {
+        logger<EditorConfigDescribableElementBase>().warn("Got non-constant union")
+        null
+      }
     }
+    else -> null
   }
 
   final override fun toString(): String = text

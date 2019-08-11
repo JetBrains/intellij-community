@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.findusages
 
 import com.intellij.lang.HelpID
@@ -23,8 +23,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor -> EditorConfigBundle.get(
         "usage.type.identifier",
@@ -46,8 +45,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor,
       is EditorConfigConstantDescriptor ->
@@ -63,8 +61,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor,
       is EditorConfigConstantDescriptor ->

@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
@@ -24,7 +23,7 @@ class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
     dataContext: DataContext,
     originalHandler: EditorActionHandler?
   ): EnterHandlerDelegate.Result {
-    if (file !is EditorConfigPsiFile) return Result.Continue
+    if (file !is EditorConfigPsiFile) return EnterHandlerDelegate.Result.Continue
 
     val document = editor.document
     val project = file.project
@@ -39,7 +38,8 @@ class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
     val psiElementStart = psiUnderCaret?.text?.firstOrNull()
     val charUnderCaret = document.text.elementAtOrNull(caretOffset)
 
-    if (elementType != EditorConfigElementTypes.LINE_COMMENT || isCommentStart(charUnderCaret)) return Result.Continue
+    if (elementType != EditorConfigElementTypes.LINE_COMMENT || isCommentStart(charUnderCaret))
+      return EnterHandlerDelegate.Result.Continue
 
     val (text, offset) = if (isWhitespace(charUnderCaret)) "\n$psiElementStart" to 3 else "\n$psiElementStart " to 3
 
@@ -47,7 +47,7 @@ class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
     editor.caretModel.moveToOffset(caretOffset + offset)
     editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     editor.selectionModel.removeSelection()
-    return Result.Stop
+    return EnterHandlerDelegate.Result.Stop
   }
 
   private companion object {

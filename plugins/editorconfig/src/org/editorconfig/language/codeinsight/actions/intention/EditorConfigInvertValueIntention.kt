@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.actions.intention
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -53,12 +53,12 @@ class EditorConfigInvertValueIntention : IntentionAction {
     EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)?.getParentOfType()
 
   private fun getText(descriptor: EditorConfigDescriptor): String? {
-    descriptor as? EditorConfigConstantDescriptor ?: return null
+    if (descriptor !is EditorConfigConstantDescriptor) return null
     return descriptor.text
   }
 
   private fun constantMatches(descriptor: EditorConfigDescriptor, value: String): Boolean {
-    descriptor as? EditorConfigConstantDescriptor ?: return false
+    if (descriptor !is EditorConfigConstantDescriptor) return false
     return EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(descriptor.text, value)
   }
 

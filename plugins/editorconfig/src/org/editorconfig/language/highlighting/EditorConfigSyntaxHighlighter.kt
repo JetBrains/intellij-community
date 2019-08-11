@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.highlighting
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -42,7 +42,7 @@ object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
 
   override fun getHighlightingLexer() = EditorConfigLexerFactory.getAdapter()
 
-  override fun getTokenHighlights(tokenType: IElementType) = when (tokenType) {
+  override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> = when (tokenType) {
     EditorConfigElementTypes.SEPARATOR,
     EditorConfigElementTypes.COLON -> SEPARATOR_KEYS
     EditorConfigElementTypes.L_BRACKET,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.findusages
 
 import com.intellij.find.findUsages.FindUsagesHandler
@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
 class EditorConfigFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
   override fun canFindUsages(element: PsiElement) = element is EditorConfigIdentifierElement
   override fun createFindUsagesHandler(element: PsiElement, forHighlightUsages: Boolean): FindUsagesHandler? {
-    element as? EditorConfigDescribableElement ?: return null
+    if (element !is EditorConfigDescribableElement) return null
     if (getId(element) != null) return EditorConfigFindVariableUsagesHandler(element)
     return EditorConfigDescriptorBasedFindUsagesHandler(element)
   }

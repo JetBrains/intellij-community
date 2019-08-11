@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -16,7 +16,7 @@ import org.editorconfig.language.util.EditorConfigIdentifierUtil
 class EditorConfigMissingRequiredDeclarationInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitPsiElement(element: PsiElement) {
-      element as? EditorConfigDescribableElement ?: return
+      if (element !is EditorConfigDescribableElement) return
       val descriptor = element.getDescriptor(false) as? EditorConfigDeclarationDescriptor ?: return
       val declarations = EditorConfigIdentifierUtil.findDeclarations(element.section, descriptor.id, element.text)
       val manager = EditorConfigOptionDescriptorManager.instance
@@ -25,9 +25,8 @@ class EditorConfigMissingRequiredDeclarationInspection : LocalInspectionTool() {
           describable.getDescriptor(false) === requiredDescriptor
         }
       }
-      val errorCount = errors.count()
 
-      val message = when (errorCount) {
+      val message = when (val errorCount = errors.count()) {
         0 -> return
         1 -> EditorConfigBundle.get("inspection.declaration.missing.singular.message", element.text)
         else -> EditorConfigBundle.get("inspection.declaration.missing.plural.message", element.text, errorCount)

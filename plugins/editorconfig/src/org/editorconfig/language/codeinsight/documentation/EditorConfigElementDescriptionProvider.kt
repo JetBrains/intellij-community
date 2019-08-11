@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.documentation
 
 import com.intellij.psi.ElementDescriptionLocation
@@ -13,13 +13,12 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDe
 
 class EditorConfigElementDescriptionProvider : ElementDescriptionProvider {
   override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
-    element as? EditorConfigDescribableElement ?: return null
+    if (element !is EditorConfigDescribableElement) return null
     if (element is EditorConfigFlatOptionKey) {
       return EditorConfigBundle.get("usage.type.option.key", element.text, element.section.header.text)
     }
 
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor -> EditorConfigBundle.get(
         "usage.type.identifier",

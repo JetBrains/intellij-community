@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.messages
 
 import com.intellij.CommonBundle
@@ -24,7 +24,7 @@ object EditorConfigBundle {
   fun message(key : String) = EditorConfigBundle[key]
 
   @JvmStatic
-  fun message(key: String, param: String) = EditorConfigBundle.get(key, param)
+  fun message(key: String, param: String) = get(key, param)
 
   private fun getBundle() = SoftReference.dereference(bundleReference) ?: run {
     val bundle = ResourceBundle.getBundle(BUNDLE)

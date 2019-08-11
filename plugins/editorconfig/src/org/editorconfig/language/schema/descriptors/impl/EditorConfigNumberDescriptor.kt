@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.schema.descriptors.impl
 
 import com.intellij.psi.PsiElement
@@ -22,6 +22,7 @@ data class EditorConfigNumberDescriptor(
     private val NUMBER_REGEX = "-?\\d+".toRegex()
 
     private fun String.asEditorConfigInt(): Int? {
+      @Suppress("ConstantConditionIf")
       val regex =
         if (ALLOW_NEGATIVE_INTEGERS) NUMBER_REGEX
         else POSITIVE_NUMBER_REGEX

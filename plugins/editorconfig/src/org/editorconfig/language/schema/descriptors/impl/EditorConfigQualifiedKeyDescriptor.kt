@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.schema.descriptors.impl
 
 import com.intellij.psi.PsiElement
@@ -23,7 +23,7 @@ data class EditorConfigQualifiedKeyDescriptor(
   override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitQualifiedKey(this)
 
   override fun matches(element: PsiElement): Boolean {
-    element as? EditorConfigQualifiedOptionKey ?: return false
+    if (element !is EditorConfigQualifiedOptionKey) return false
     val parts = element.qualifiedKeyPartList
     if (children.size != parts.size) return false
     return children.zip(parts).all { (descriptor, part) -> matches(descriptor, part) }

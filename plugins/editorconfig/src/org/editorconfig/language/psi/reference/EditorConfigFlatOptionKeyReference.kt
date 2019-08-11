@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.psi.reference
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -7,17 +7,18 @@ import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
+import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.isSubcaseOf
 
-class EditorConfigFlatOptionKeyReference(element: EditorConfigFlatOptionKey)
-  : PsiReferenceBase<EditorConfigFlatOptionKey>(element) {
-  private val virtualFile: VirtualFile get() = myElement.containingFile.virtualFile
-  private val option get() = myElement.option
+class EditorConfigFlatOptionKeyReference(private val element: EditorConfigFlatOptionKey)
+  : PsiReferenceBase<EditorConfigDescribableElement>(element) {
+  private val virtualFile: VirtualFile get() = element.containingFile.virtualFile
+  private val option get() = element.option
   private val section get() = option.section
   private val psiFile: EditorConfigPsiFile?
     get() {
-      val file = myElement.containingFile as? EditorConfigPsiFile
+      val file = element.containingFile as? EditorConfigPsiFile
       return EditorConfigPsiTreeUtil.getOriginalFile(file)
     }
 
@@ -65,7 +66,7 @@ class EditorConfigFlatOptionKeyReference(element: EditorConfigFlatOptionKey)
    * Most importantly, disallows to have parent in same file downwards
    */
   private fun isAllowedToContainParentIn(section: EditorConfigSection) =
-    section.containsKey(myElement)
+    section.containsKey(element)
     && (section.containingFile.virtualFile != virtualFile || section.textRange.endOffset < this.section.textRange.startOffset)
 
   override fun resolve() = element
@@ -90,10 +91,10 @@ class EditorConfigFlatOptionKeyReference(element: EditorConfigFlatOptionKey)
     child.option.section.header.isSubcaseOf(option.section.header)
 
   private fun isDistantParentOf(child: EditorConfigFlatOptionKey) =
-    child !== myElement && isDistantParentOfRecursion(child)
+    child !== element && isDistantParentOfRecursion(child)
 
   private fun isDistantParentOfRecursion(child: EditorConfigFlatOptionKey): Boolean {
-    if (child === myElement) return true
+    if (child === element) return true
     val parents = child.reference.findParents()
     return parents.any(::isDistantParentOfRecursion)
   }

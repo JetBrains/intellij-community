@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.index
 
 import com.intellij.psi.PsiPolyVariantReference
@@ -44,9 +44,8 @@ class EditorConfigIdentifierIndex : FileBasedIndexExtension<String, Int>() {
     val editorconfigInputFilter = DefaultFileTypeSpecificInputFilter(EditorConfigFileType)
 
     private fun isValidReference(identifier: EditorConfigDescribableElement): Boolean {
-      identifier.getDescriptor(false) as? EditorConfigReferenceDescriptor ?: return false
-      val reference = identifier.reference
-      return when (reference) {
+      if (identifier.getDescriptor(false) !is EditorConfigReferenceDescriptor) return false
+      return when (val reference = identifier.reference) {
         is PsiPolyVariantReference -> reference.multiResolve(false).isNotEmpty()
         is PsiReference -> reference.resolve() != null
         else -> false

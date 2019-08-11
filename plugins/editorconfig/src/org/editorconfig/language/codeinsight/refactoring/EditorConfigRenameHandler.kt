@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.refactoring
 
 import com.intellij.openapi.editor.Editor
@@ -14,10 +14,9 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDe
 
 class EditorConfigRenameHandler : VariableInplaceRenameHandler() {
   override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile): Boolean {
-    element as? EditorConfigDescribableElement ?: return false
+    if (element !is EditorConfigDescribableElement) return false
     if (PsiElementRenameHandler.isVetoed(element)) return false
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor ->
         editor.settings.isVariableInplaceRenameEnabled

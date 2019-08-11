@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.findusages
 
 import com.intellij.find.findUsages.FindUsagesHandler
@@ -17,7 +17,7 @@ import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
   override fun processElementUsages(element: PsiElement, processor: Processor<UsageInfo>, options: FindUsagesOptions) = runReadAction {
-    element as? EditorConfigDescribableElement ?: return@runReadAction false
+    if (element !is EditorConfigDescribableElement) return@runReadAction false
     val descriptor = element.getDescriptor(false) ?: return@runReadAction false
     EditorConfigVfsUtil
       .getEditorConfigFiles(project)
@@ -33,8 +33,8 @@ class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescriba
   }
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) = runReadAction {
-    searchScope as? LocalSearchScope ?: return@runReadAction emptyList<PsiReference>()
-    target as? EditorConfigDescribableElement ?: return@runReadAction emptyList<PsiReference>()
+    if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
+    if (target !is EditorConfigDescribableElement) return@runReadAction emptyList<PsiReference>()
     val descriptor = target.getDescriptor(false) ?: return@runReadAction emptyList<PsiReference>()
     searchScope.scope.asSequence()
       .flatMap { PsiTreeUtil.findChildrenOfType(it, EditorConfigDescribableElement::class.java).asSequence() }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.util
 
 import com.intellij.codeInsight.template.impl.TemplateImpl
@@ -95,19 +95,19 @@ object EditorConfigTemplateUtil {
 
     companion object {
       fun from(descriptor: EditorConfigDescriptor): DescriptorType = when (descriptor) {
-        is EditorConfigConstantDescriptor -> DescriptorType.Constant
-        is EditorConfigDeclarationDescriptor -> DescriptorType.Variable(descriptor.id)
+        is EditorConfigConstantDescriptor -> Constant
+        is EditorConfigDeclarationDescriptor -> Variable(descriptor.id)
         is EditorConfigUnionDescriptor -> {
           val types = descriptor.children.map { from(it) }
-          if (types.all { it is DescriptorType.Constant }) DescriptorType.Constant
+          if (types.all { it is Constant }) Constant
           else {
-            val variables = types.mapNotNull { it as? DescriptorType.Variable }
+            val variables = types.mapNotNull { it as? Variable }
             if (variables.size == types.size && variables.isNotEmpty()) {
               val id = variables[0].id
-              if (variables.all { it.id == id }) DescriptorType.Variable(id)
+              if (variables.all { it.id == id }) Variable(id)
             }
 
-            DescriptorType.Inconsistent
+            Inconsistent
           }
         }
         else -> throw IllegalStateException()

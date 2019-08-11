@@ -22,7 +22,7 @@ import java.io.IOException
 class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
   override fun getKey() = KEY
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    fileEditor as? TextEditor ?: return null
+    if (fileEditor !is TextEditor) return null
     val editor = fileEditor.editor
     if (editor.getUserData(HIDDEN_KEY) != null) return null
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
