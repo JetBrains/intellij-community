@@ -6,10 +6,10 @@ from generator3.util_methods import sanitize_value
 from six import PY2
 
 if PY2:
-    from generator3.pyparsing_py2 import *
+    from generator3._vendor.pyparsing_py2 import *
 else:
     # noinspection PyUnresolvedReferences
-    from generator3.pyparsing_py3 import *
+    from generator3._vendor.pyparsing_py3 import *
 
 # grammar to parse parameter lists
 
