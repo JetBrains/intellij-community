@@ -6,7 +6,7 @@ import keyword
 import shutil
 from contextlib import contextmanager
 
-from pycharm_generator_utils.constants import *
+from generator3.constants import *
 
 try:
     import inspect

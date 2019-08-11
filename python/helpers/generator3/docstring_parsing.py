@@ -1,15 +1,15 @@
 import re
 import sys
 
-from pycharm_generator_utils.constants import STR_TYPES
-from pycharm_generator_utils.util_methods import sanitize_value
+from generator3.constants import STR_TYPES
+from generator3.util_methods import sanitize_value
 from six import PY2
 
 if PY2:
-    from pycharm_generator_utils.pyparsing_py2 import *
+    from generator3.pyparsing_py2 import *
 else:
     # noinspection PyUnresolvedReferences
-    from pycharm_generator_utils.pyparsing_py3 import *
+    from generator3.pyparsing_py3 import *
 
 # grammar to parse parameter lists
 
