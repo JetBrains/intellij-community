@@ -43,7 +43,7 @@ public class PySkeletonGenerator {
 
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final int MINUTE = 60 * 1000;
-  protected static final String GENERATOR3 = "generator3.py";
+  protected static final String GENERATOR3 = "generator3/__init__.py";
 
   private final String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
@@ -78,13 +78,14 @@ public class PySkeletonGenerator {
    */
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
+    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
     if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      myEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
+      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
+      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
     }
-    else {
-      myEnv = Collections.emptyMap();
-    }
+    myEnv = env;
   }
 
   public String getSkeletonsPath() {
@@ -143,12 +144,8 @@ public class PySkeletonGenerator {
     throws InvalidSdkException {
     final String binaryPath = sdk.getHomePath();
     final String parent_dir = new File(binaryPath).getParent();
-    List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
-
-    final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(sdk);
-    final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
-
-    return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), env, MINUTE * 10);
+    final List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
+    return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), PythonSdkType.activateVirtualEnv(sdk), MINUTE * 10);
   }
 
   @NotNull
@@ -182,7 +179,7 @@ public class PySkeletonGenerator {
 
   protected ProcessOutput getProcessOutput(String homePath, @NotNull String[] commandLine, Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
-    final Map<String, String> env = extraEnv != null ? new HashMap<>(extraEnv) : new HashMap<>();
+    final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, extraEnv);
     PythonEnvUtil.setPythonDontWriteBytecode(env);
     if (myPrebuilt) {
       env.put("IS_PREGENERATED_SKELETONS", "1");
