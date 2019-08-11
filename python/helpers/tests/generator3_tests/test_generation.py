@@ -4,7 +4,7 @@ import sys
 import textwrap
 import unittest
 
-import generator3
+import generator3.core
 from generator3_tests import GeneratorTestCase, python3_only, python2_only
 from generator3.constants import (
     CACHE_DIR_NAME,
@@ -48,13 +48,10 @@ class SkeletonCachingTest(GeneratorTestCase):
         if extra_env:
             env.update(extra_env)
 
-        generator3_path = os.path.abspath(generator3.__file__)
-        base, ext = os.path.splitext(generator3_path)
-        if ext == '.pyc':
-            generator3_path = base + '.py'
         args = [
             sys.executable,
-            generator3_path,
+            '-m',
+            'generator3',
             '-d', output_dir,
             '-s', extra_syspath_entry,
         ]
@@ -94,11 +91,11 @@ class SkeletonCachingTest(GeneratorTestCase):
                 _ast.py
         sdk_skeletons/
             _ast.py
-        """.format(hash=generator3.module_hash('_ast', None)))
+        """.format(hash=generator3.core.module_hash('_ast', None)))
 
     def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
         self.run_generator(builtins=True)
-        builtins_hash = generator3.module_hash('sys', None)
+        builtins_hash = generator3.core.module_hash('sys', None)
         builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
         self.assertTrue(os.path.isdir(builtins_cache_dir))
         builtin_mod_skeletons = os.listdir(builtins_cache_dir)
@@ -114,7 +111,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 mod.py
         sdk_skeletons/
             mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     def test_layout_for_physical_module_inside_package(self):
         mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
@@ -133,7 +130,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 subpkg/
                     __init__.py
                     mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.core.module_hash('mod', mod_path)))
 
     # PY-36884
     def test_pregenerated_skeletons_mode(self):
@@ -146,7 +143,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.run_generator('sys', builtins=True, extra_env={
             'IS_PREGENERATED_SKELETONS': '1'
         })
-        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.module_hash('sys', None), 'sys.py')
+        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.core.module_hash('sys', None), 'sys.py')
         self.assertTrue(os.path.exists(sys_cached_skeleton_path))
         with open(sys_cached_skeleton_path, 'r') as f:
             self.assertTrue('# from (pre-generated)\n' in f.read())
@@ -227,7 +224,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_path='mod.py')
 
     def test_origin_stamp_for_pregenerated_builtins_is_updated(self):
-        mod_hash = generator3.module_hash('_abc', None)
+        mod_hash = generator3.core.module_hash('_abc', None)
         template = textwrap.dedent("""\
         # encoding: utf-8
         # module _ast
