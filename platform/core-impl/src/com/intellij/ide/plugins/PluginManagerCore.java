@@ -761,7 +761,7 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
-      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory(), isUnitTestMode);
+      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory(), isUnitTestMode, loadingContext.ignoreDisabled);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
@@ -792,7 +792,7 @@ public class PluginManagerCore {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), context.isBundled);
         SafeJdomFactory factory = context.getXmlFactory();
         Interner<String> interner = factory == null ? null : factory.stringInterner();
-        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), factory), jarURL, pathResolver, interner);
+        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), factory), jarURL, pathResolver, interner, context.ignoreDisabled);
         context.lastZipWithDescriptor = file;
         return descriptor;
       }
@@ -812,7 +812,12 @@ public class PluginManagerCore {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, false, false, null);
+    return loadDescriptor(file, fileName, false);
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName, boolean ignoreDisabled) {
+    return loadDescriptor(file, fileName, false, false, ignoreDisabled, null);
   }
 
   @Nullable
@@ -820,8 +825,9 @@ public class PluginManagerCore {
                                                          @NotNull String fileName,
                                                          boolean bundled,
                                                          boolean essential,
+                                                         boolean ignoreDisabled,
                                                          @Nullable LoadDescriptorsContext parentContext) {
-    try (LoadingContext context = new LoadingContext(parentContext, bundled, essential)) {
+    try (LoadingContext context = new LoadingContext(parentContext, bundled, essential, ignoreDisabled)) {
       return loadDescriptor(file, fileName, context);
     }
   }
@@ -831,15 +837,17 @@ public class PluginManagerCore {
     final @Nullable LoadDescriptorsContext parentContext;
     final boolean isBundled;
     final boolean isEssential;
+    final boolean ignoreDisabled;
     File lastZipWithDescriptor;
 
     /**
      * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
      */
-    LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential) {
+    LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential, boolean ignoreDisabled) {
       this.parentContext = parentContext;
       this.isBundled = isBundled;
       this.isEssential = isEssential;
+      this.ignoreDisabled = ignoreDisabled;
     }
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -945,7 +953,7 @@ public class PluginManagerCore {
         // Note that this code is meant for IDE development / testing purposes
         URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
         if (resource != null) {
-          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, context.isBundled, false, context.parentContext);
+          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, context.isBundled, false, context.ignoreDisabled, context.parentContext);
         }
       }
       return optionalDescriptor;
@@ -1048,7 +1056,7 @@ public class PluginManagerCore {
     Set<IdeaPluginDescriptorImpl> existingResults = new THashSet<>(result);
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(files.length);
     for (File file : files) {
-      tasks.add(context.getExecutorService().submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false, context)));
+      tasks.add(context.getExecutorService().submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false, false, context)));
     }
 
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
@@ -1178,7 +1186,7 @@ public class PluginManagerCore {
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(urls.size());
     for (Map.Entry<URL, String> entry : urls.entrySet()) {
       URL url = entry.getKey();
-      tasks.add(context.getExecutorService().submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL), context)));
+      tasks.add(context.getExecutorService().submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL), false, context)));
     }
 
     // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
@@ -1223,18 +1231,19 @@ public class PluginManagerCore {
                                                                      @NotNull String pathName,
                                                                      boolean bundled,
                                                                      boolean essential,
+                                                                     boolean ignoreDisabled,
                                                                      @Nullable LoadDescriptorsContext parentContext) {
     try {
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
         File descriptorFile = urlToFile(resource);
         String pathname = StringUtil.trimEnd(FileUtil.toSystemIndependentName(descriptorFile.getPath()), pathName);
         File pluginDir = new File(pathname).getParentFile();
-        return loadDescriptor(pluginDir, pathName, bundled, essential, parentContext);
+        return loadDescriptor(pluginDir, pathName, bundled, essential, ignoreDisabled, parentContext);
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
         File pluginJar = urlToFile(new URL(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR))));
-        return loadDescriptor(pluginJar, pathName, bundled, essential, parentContext);
+        return loadDescriptor(pluginJar, pathName, bundled, essential, ignoreDisabled, parentContext);
       }
     }
     catch (Throwable e) {
@@ -1265,7 +1274,7 @@ public class PluginManagerCore {
 
     for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator + ","); t.hasMoreTokens();) {
       String s = t.nextToken();
-      IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML, false, false, context);
+      IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML, false, false, false, context);
       if (ideaPluginDescriptor != null) {
         result.add(ideaPluginDescriptor);
       }
@@ -1659,7 +1668,7 @@ public class PluginManagerCore {
    */
   public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
-    try (LoadingContext context = new LoadingContext(null, true, true)) {
+    try (LoadingContext context = new LoadingContext(null, true, true, false)) {
       if (pluginRoot.isDirectory()) {
         descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
       }

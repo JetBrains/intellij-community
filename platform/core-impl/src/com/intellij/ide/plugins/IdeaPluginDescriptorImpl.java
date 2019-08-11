@@ -135,21 +135,32 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Element element,
                            @NotNull URL url,
                            @NotNull JDOMXIncluder.PathResolver pathResolver,
-                           @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
+                           @Nullable Interner<String> stringInterner,
+                           boolean ignoreDisabled) throws InvalidDataException, MalformedURLException {
     Application app = ApplicationManager.getApplication();
-    readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
+    readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner, ignoreDisabled);
   }
 
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude) throws IOException, JDOMException {
+  public void loadFromFile(@NotNull File file,
+                           @Nullable SafeJdomFactory factory,
+                           boolean ignoreMissingInclude) throws IOException, JDOMException {
+    loadFromFile(file, factory, ignoreMissingInclude, false);
+  }
+
+  public void loadFromFile(@NotNull File file,
+                           @Nullable SafeJdomFactory factory,
+                           boolean ignoreMissingInclude,
+                           boolean ignoreDisabledPlugins) throws IOException, JDOMException {
     readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), ignoreMissingInclude,
-                 JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
+                 JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), ignoreDisabledPlugins);
   }
 
   private void readExternal(@NotNull Element element,
                             @NotNull URL url,
                             boolean ignoreMissingInclude,
                             @NotNull JDOMXIncluder.PathResolver pathResolver,
-                            @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
+                            @Nullable Interner<String> stringInterner,
+                            boolean ignoreDisabledPlugins) throws InvalidDataException, MalformedURLException {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -158,7 +169,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     String pluginId = element.getChildTextTrim("id");
     if (pluginId == null) pluginId = element.getChildTextTrim("name");
-    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId)) {
+    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId) || ignoreDisabledPlugins) {
       JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     }
     else if (LOG.isDebugEnabled()) {

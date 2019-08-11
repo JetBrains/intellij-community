@@ -1451,7 +1451,9 @@ public class PluginManagerConfigurableNewLayout
           pluginDescriptorsToDisable.add(descriptor);
         }
         else {
-          pluginDescriptorsToEnable.add(descriptor);
+          // For disabled plugins, we do not resolve XInclude references and potentially do not load other parts of plugin.xml.
+          // To check if a plugin can be loaded without restart, we need to read the complete descriptor.
+          pluginDescriptorsToEnable.add(PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true));
         }
       }
       descriptor.setEnabled(enabled);
