@@ -43,7 +43,7 @@ public class PySkeletonGenerator {
 
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final int MINUTE = 60 * 1000;
-  protected static final String GENERATOR3 = "generator3/__init__.py";
+  protected static final String GENERATOR3 = "generator3/__main__.py";
 
   private final String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
