@@ -26,6 +26,9 @@ class GitVcsOptions : BaseState() {
   @com.intellij.configurationStore.Property(description = "Update method")
   var updateMethod by enum(UpdateMethod.BRANCH_DEFAULT)
 
+  @com.intellij.configurationStore.Property(description = "gc.auto")
+  var gcAuto by string()
+
   @get:OptionTag("PUSH_AUTO_UPDATE")
   var isPushAutoUpdate by property(false)
   @get:OptionTag("PUSH_UPDATE_ALL_ROOTS")
