@@ -9,7 +9,7 @@ from io import open
 
 import six
 
-from pycharm_generator_utils.constants import ENV_TEST_MODE_FLAG
+from generator3.constants import ENV_TEST_MODE_FLAG
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
