@@ -6,17 +6,18 @@ import unittest
 
 import generator3
 from generator3_tests import GeneratorTestCase, python3_only, python2_only
-from pycharm_generator_utils.constants import (
+from generator3.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
     ENV_STANDALONE_MODE_FLAG,
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
 )
-from pycharm_generator_utils.util_methods import mkdir
+from generator3.util_methods import mkdir
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
+_helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
 
 
 class SkeletonCachingTest(GeneratorTestCase):
@@ -39,6 +40,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         env = {
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
+            'PYTHONPATH': _helpers_root,
         }
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path

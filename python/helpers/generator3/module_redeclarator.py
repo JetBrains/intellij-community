@@ -1,7 +1,7 @@
 from generator3 import OriginType
-from pycharm_generator_utils.util_methods import *
-from pycharm_generator_utils.util_methods import get_relative_path_by_qname
-from pycharm_generator_utils.docstring_parsing import *
+from generator3.util_methods import *
+from generator3.util_methods import get_relative_path_by_qname
+from generator3.docstring_parsing import *
 
 
 class emptylistdict(dict):
