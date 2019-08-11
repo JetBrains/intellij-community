@@ -1,4 +1,4 @@
-from generator3 import OriginType
+from generator3.core import OriginType
 from generator3.util_methods import *
 from generator3.util_methods import get_relative_path_by_qname
 from generator3.docstring_parsing import *
@@ -69,9 +69,9 @@ class ModuleRedeclarator(object):
             Normally, it's "<IDE system dir>/python_stubs/cache/<sha256 digest>/".
         @param indent_size: amount of space characters per indent
         """
-        import generator3
-        self.test_mode = generator3.is_test_mode()
-        self.gen_version = generator3.version()
+        import generator3.core
+        self.test_mode = generator3.core.is_test_mode()
+        self.gen_version = generator3.core.version()
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
@@ -794,8 +794,8 @@ class ModuleRedeclarator(object):
         out(0, "# module ", p_name, mod_name) # line 2
 
         origin_type = OriginType.FILE
-        import generator3
-        if generator3.is_pregeneration_mode():
+        import generator3.core
+        if generator3.core.is_pregeneration_mode():
             origin = origin_type = OriginType.PREGENERATED
         elif self.mod_filename:
             origin = self.mod_filename
