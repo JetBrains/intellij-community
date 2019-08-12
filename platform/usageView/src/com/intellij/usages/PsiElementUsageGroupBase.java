@@ -5,10 +5,12 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -33,9 +35,9 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
     this(element, element.getIcon(0));
   }
 
-  @NotNull
-  protected SmartPsiElementPointer<T> getElementPointer() {
-    return myElementPointer;
+  @Nullable
+  protected VirtualFile getVirtualFile() {
+    return myElementPointer.getVirtualFile();
   }
 
   @Override
