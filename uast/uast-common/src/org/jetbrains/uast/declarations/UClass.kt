@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -39,17 +42,39 @@ interface UClass : UDeclaration, PsiClass {
    */
   val uastDeclarations: List<UDeclaration>
 
+  private inline fun <reified T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement): T? =
+    convertOrReport(psiElement, parent, T::class.java)
+
+  private fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
+    fun getInfoString() = buildString {
+      appendln("context:${this@UClass.javaClass}")
+      appendln("psiElement:${psiElement.javaClass}")
+      appendln("psiElementContent:${runCatching { psiElement.text }}")
+    }
+
+    val plugin = this.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)
+    if (plugin == null) {
+      LOG.error("cant get UAST plugin for $this to convert element $psiElement", Attachment("info.txt", getInfoString()))
+      return null
+    }
+    val result = expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
+    if (result == null) {
+      LOG.error("failed to convert element $psiElement in $this", Attachment("info.txt", getInfoString()))
+    }
+    return result
+  }
+
   override fun getFields(): Array<UField> =
-    javaPsi.fields.map { getLanguagePlugin().convert<UField>(it, this) }.toTypedArray()
+    javaPsi.fields.mapNotNull { convertOrReport<UField>(it, this) }.toTypedArray()
 
   override fun getInitializers(): Array<UClassInitializer> =
-    javaPsi.initializers.map { getLanguagePlugin().convert<UClassInitializer>(it, this) }.toTypedArray()
+    javaPsi.initializers.mapNotNull { convertOrReport<UClassInitializer>(it, this) }.toTypedArray()
 
   override fun getMethods(): Array<UMethod> =
-    javaPsi.methods.map { getLanguagePlugin().convert<UMethod>(it, this) }.toTypedArray()
+    javaPsi.methods.mapNotNull { convertOrReport<UMethod>(it, this) }.toTypedArray()
 
   override fun getInnerClasses(): Array<UClass> =
-    javaPsi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
+    javaPsi.innerClasses.mapNotNull { convertOrReport<UClass>(it, this) }.toTypedArray()
 
   override fun asLogString(): String = log("name = $name")
 
@@ -84,6 +109,8 @@ interface UClass : UDeclaration, PsiClass {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClass(this, data)
 }
+
+private val LOG = Logger.getInstance(UClass::class.java)
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
   override val psi: PsiAnonymousClass
