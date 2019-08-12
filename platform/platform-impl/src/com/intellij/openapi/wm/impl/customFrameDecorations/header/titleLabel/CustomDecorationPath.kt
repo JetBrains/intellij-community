@@ -27,7 +27,7 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
     }
     else {
       val hitTestSpots = ArrayList<RelativeRectangle>()
-      hitTestSpots.addAll(getMouseInsetList(getView()))
+      hitTestSpots.addAll(getMouseInsetList(label))
       hitTestSpots
     }
   }

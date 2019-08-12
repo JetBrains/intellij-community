@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -17,11 +18,16 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.util.Alarm
+import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.JPanel
 
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -42,6 +48,9 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
 
+  private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
+  private val UPDATER_TIMEOUT = 50
+
   private val registryListener = object : RegistryValueListener.Adapter() {
     override fun afterValueChanged(value: RegistryValue) {
       updateTitlePaths()
@@ -49,7 +58,29 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  private val label = object : JLabel() {
+  protected val label = object : JComponent() {
+    override fun getMinimumSize(): Dimension {
+      return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val fm = getFontMetrics(font)
+      return Dimension(parent.width, fm.height)
+    }
+
+    override fun paintComponent(g: Graphics) {
+      val fm = getFontMetrics(font)
+
+      g as Graphics2D
+
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                         RenderingHints.VALUE_ANTIALIAS_ON);
+
+      g.drawString(titleString, 0, fm.ascent)
+    }
+  }
+
+  private var pane = object : JPanel(MigLayout("ins 0, novisualpadding, gap 0", "[]push")) {
     override fun addNotify() {
       super.addNotify()
       installListeners()
@@ -63,6 +94,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     override fun getMinimumSize(): Dimension {
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
+
+  }.apply {
+    isOpaque = false
+    add(label)
   }
 
   private fun updateTitlePaths() {
@@ -73,7 +108,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   open fun getView(): JComponent {
-    return label
+    return pane
   }
 
   private var disposable: Disposable? = null
@@ -125,12 +160,19 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       disposable = null
     }
 
+    pane.invalidate()
+
     getView().removeComponentListener(resizedListener)
   }
 
   private val resizedListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      update()
+
+      updater.addRequest({
+                           update()
+                         }, UPDATER_TIMEOUT)
+      //update()
+
     }
   }
 
@@ -177,8 +219,11 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   protected var isClipped = false
+  var titleString = ""
 
   private fun update() {
+    updater.cancelAllRequests()
+
     val insets = getView().getInsets(null)
     val width: Int = getView().width - (insets.right + insets.left)
 
@@ -188,7 +233,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     isClipped = true
 
-    label.text = when {
+    titleString = when {
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
 
@@ -273,6 +318,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
 
     label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+    label.repaint()
 
     onBoundsChanged?.invoke()
   }
