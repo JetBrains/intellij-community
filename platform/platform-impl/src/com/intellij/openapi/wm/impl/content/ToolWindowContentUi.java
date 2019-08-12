@@ -29,6 +29,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -75,10 +75,12 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myContent.setFocusable(false);
     setOpaque(false);
 
-    setBorder(new EmptyBorder(0, 0, 0, 2));
+    setBorder(JBUI.Borders.emptyRight(2));
 
+    // InternalDecorator adds myContent right after "this" (via ToolWindowHeader)
+    // also myContent is never removed (can be invisible due to DumbAwareHider)
     UIUtil.putClientProperty(
-      this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+      myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
         @Override
         public Iterator<JComponent> iterator() {
           if (myManager == null || myManager.getContentCount() == 0) {
