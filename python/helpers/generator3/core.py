@@ -741,11 +741,12 @@ def process_builtin_modules(sdk_skeletons_dir):
 
 
 def process_all(sdk_skeletons_dir):
-    progress("Updating skeletons of builtins for {}...".format(sys.executable))
+    interpreter = collapse_user(sys.executable)
+    progress("Updating skeletons of builtins for {}...".format(interpreter))
     process_builtin_modules(sdk_skeletons_dir)
-    progress("Querying skeleton generator for {}...".format(sys.executable))
+    progress("Querying skeleton generator for {}...".format(interpreter))
     binaries = collect_binaries(sys.path)
-    progress("Updating skeletons for {}...".format(sys.executable))
+    progress("Updating skeletons for {}...".format(interpreter))
     for i, binary in enumerate(binaries):
         progress((i + 1.0) / len(binaries))
         process_one(binary.qname, binary.path, False, sdk_skeletons_dir)
