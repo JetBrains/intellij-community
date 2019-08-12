@@ -86,7 +86,6 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
             ExecutionStatus.SCHEDULED,
             graphExecution,
             bootstrapJob,
-            false,
             null,
             false,
             null
