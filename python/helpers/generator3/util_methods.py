@@ -858,3 +858,10 @@ def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result
         return q.get_nowait()
     except queue.Empty:
         return failure_result
+
+
+def collapse_user(path):
+    home = os.path.expanduser('~')
+    if path.startswith(home):
+        return '~' + path[len(home):]
+    return path
