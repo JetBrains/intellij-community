@@ -16,11 +16,17 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -33,6 +39,9 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testMyEnum() { assertIntentionNotAvailable(); }
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
+  public void testMyInterfaceJava9() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' private"));
+  }
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testLocalClass() { assertIntentionNotAvailable(); }
   public void testMethod() { doTestWithChooser("private"); }
@@ -69,6 +78,12 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
     UiInterceptors
       .register(new ChooserInterceptor(Arrays.asList("public", "protected", "package-private", "private"), Pattern.quote(wanted)));
     doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override
