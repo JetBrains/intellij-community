@@ -21,8 +21,8 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.convert
-import org.jetbrains.uast.getLanguagePlugin
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.convertOpt
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
@@ -81,7 +81,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       // kotlin is not physical, but here only physical is expected, so, convert to uast element and use sourcePsi
       val anchorElement = when {
         method.isPhysical -> method
-        else -> aClass.getLanguagePlugin().convert<UMethod>(method, aClass).sourcePsi ?: continue@loop
+        else -> aClass.sourcePsi?.let { UastFacade.findPlugin(it)?.convertOpt<UMethod>(method, aClass)?.sourcePsi } ?: continue@loop
       }
 
 

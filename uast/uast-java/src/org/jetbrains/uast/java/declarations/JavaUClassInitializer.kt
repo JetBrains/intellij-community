@@ -21,7 +21,7 @@ class JavaUClassInitializer(
     get() = null
 
   override val uastBody: UExpression by lz {
-    getLanguagePlugin().convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
+    UastFacade.findPlugin(sourcePsi.body)?.convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }

@@ -22,7 +22,7 @@ open class JavaUMethod(
 
   override val uastBody: UExpression? by lz {
     val body = sourcePsi.body ?: return@lz null
-    getLanguagePlugin().convertElement(body, this) as? UExpression
+    UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
   override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
