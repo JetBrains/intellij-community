@@ -7,6 +7,7 @@ import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -205,7 +206,7 @@ fun PsiClassType.erasure(): PsiClassType {
   val raw = rawType()
   val typeParameter = raw.typeParameter()
   return if (typeParameter != null) {
-    typeParameter.extendsListTypes.firstOrNull()?.erasure() ?: PsiType.getJavaLangObject(typeParameter.manager, typeParameter.resolveScope)
+    typeParameter.extendsListTypes.firstOrNull()?.erasure() ?: getJavaLangObject(typeParameter)
   }
   else {
     raw
@@ -245,7 +246,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
       classType ?: return classType
       val typeParameter = classType.typeParameter()
       if (typeParameter != null && typeParameter !in allowedTypeParameters) {
-        return (compress(typeParameter.extendsListTypes.asList()) ?: PsiType.getJavaLangObject(method.manager, method.resolveScope))
+        return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method))
           .accept(this)
       }
       else {

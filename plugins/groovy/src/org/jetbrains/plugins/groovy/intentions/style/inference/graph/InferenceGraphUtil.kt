@@ -5,12 +5,12 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
@@ -105,7 +105,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
                                   signatureTypes: List<PsiClassType>): PsiType {
   val context = parameter.context!!
   val typeLattice = TypeLattice(context)
-  val javaLangObject = PsiType.getJavaLangObject(context.manager, GlobalSearchScope.allScope(context.project)) as PsiType
+  val javaLangObject = getJavaLangObject(parameter)
   val parameterType = parameter.type()
   val contravariantTypes = usageInformation.run {
     contravariantTypes.subtract(this.covariantTypes).subtract(dependentTypes.map { it.type() })
@@ -175,7 +175,7 @@ private fun PsiType.mapConjuncts(action: (PsiType) -> PsiType): PsiType {
 
 private class TypeLattice(val context: PsiElement) {
   private val manager = context.manager
-  private val top = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(context.project)) as PsiType
+  private val top = getJavaLangObject(context) as PsiType
   private val bottom = PsiType.NULL as PsiType
 
   fun join(types: Iterable<PsiType>): PsiType = types.fold(bottom) { accum, type ->

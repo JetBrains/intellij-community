@@ -4,13 +4,17 @@ package org.jetbrains.plugins.groovy.intentions.style
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -38,13 +42,12 @@ internal class InferMethodParametersTypesIntention : Intention() {
       val inferredType = method.inferredReturnType
       val returnType = TypesUtil.unboxPrimitiveTypeWrapper(
         if (inferredType == null || inferredType == PsiType.NULL) {
-          PsiType.getJavaLangObject(PsiManager.getInstance(method.project), method.resolveScope)
+          getJavaLangObject(method)
         }
         else {
           inferredType
         })
-      GrReferenceAdjuster.shortenAllReferencesIn(
-        method.setReturnType(PsiType.getJavaLangObject(method.manager, GlobalSearchScope.allScope(method.project))))
+      GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(getJavaLangObject(method)))
       method.modifierList.setModifierProperty(DEF, false)
       returnType
     }
@@ -98,7 +101,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
 
   private fun collectParameterSubstitutor(virtualMethod: GrMethod): PsiSubstitutor {
     val parameterTypes = virtualMethod.typeParameters.map {
-      it.extendsListTypes.firstOrNull() ?: PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope)
+      it.extendsListTypes.firstOrNull() ?: getJavaLangObject(virtualMethod)
     }
     return PsiSubstitutor.EMPTY.putAll(virtualMethod.typeParameters, parameterTypes.toTypedArray())
   }

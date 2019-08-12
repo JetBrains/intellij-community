@@ -76,7 +76,7 @@ class ParameterizationManager(method: GrMethod) {
 
   /**
    * Creates type parameter with upper bound of [target].
-   * If [target] is parametrized, all it's parameter types will also be parametrized.
+   * If [target] is has type arguments, they will be parametrized.
    */
   fun createDeeplyParameterizedType(target: PsiType): ParameterizationResult {
     val createdTypeParameters = mutableListOf<PsiTypeParameter>()
@@ -85,17 +85,11 @@ class ParameterizationManager(method: GrMethod) {
     val visitor = Parameterizer(context, registerAction)
     val calculatedType =
       when {
-        target is PsiArrayType -> {
-          if (target.componentType is PsiPrimitiveType) {
-            target
-          }
-          else {
-            registerAction(target.componentType.accept(visitor)).createArrayType()
-          }
-        }
+        target is PsiArrayType ->
+          if (target.componentType is PsiPrimitiveType) target else registerAction(target.componentType.accept(visitor)).createArrayType()
         target.isTypeParameter() -> registerAction(target)
         target is PsiIntersectionType -> registerAction(target.accept(visitor))
-        target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(null)
+        target == getJavaLangObject(context) -> registerAction(null)
         else -> registerAction(target.accept(visitor))
       }
     return ParameterizationResult(calculatedType, createdTypeParameters)

@@ -227,14 +227,15 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     private fun <K, V> MutableMap<K, MutableList<V>>.safePut(key: K, value: V) = computeIfAbsent(key) { mutableListOf() }.add(value)
 
 
-    private fun expandWildcards(type: PsiType, context: PsiElement): List<PsiType> = when (type) {
-      is PsiWildcardType -> when {
-        type.isSuper -> listOf(type.superBound, getJavaLangObject(context))
-        type.isExtends -> listOf(type.extendsBound, PsiType.NULL)
-        else -> listOf(getJavaLangObject(context), PsiType.NULL)
+    private fun expandWildcards(type: PsiType, context: PsiElement): List<PsiType> =
+      when (type) {
+        is PsiWildcardType -> when {
+          type.isSuper -> listOf(type.superBound, getJavaLangObject(context))
+          type.isExtends -> listOf(type.extendsBound, PsiType.NULL)
+          else -> listOf(getJavaLangObject(context), PsiType.NULL)
+        }
+        else -> listOf(type)
       }
-      else -> listOf(type)
-    }
 
 
     fun setConstraints(leftType: PsiType, rightType: PsiType,
