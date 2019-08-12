@@ -20,6 +20,7 @@ import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.add.addInterpretersAsync
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -44,7 +45,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private val moduleField: JComboBox<Module>
 
-  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks, module), null).apply {
+  private val baseSdkField = PySdkPathChoosingComboBox().apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
     val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
     selectedSdk = when {
@@ -54,6 +55,11 @@ class PyAddPipEnvPanel(private val project: Project?,
       }
       else -> items.getOrNull(0)
     }
+  }
+  init {
+   addInterpretersAsync(baseSdkField) {
+     findBaseSdks(existingSdks, module)
+   }
   }
 
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {

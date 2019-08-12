@@ -31,7 +31,7 @@ import java.awt.BorderLayout
  */
 class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
   override val panelName: String = "System interpreter"
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(module, existingSdks), null)
+  private val sdkComboBox = PySdkPathChoosingComboBox()
 
   init {
     layout = BorderLayout()
@@ -50,6 +50,9 @@ class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks:
       .addComponentToRightColumn(permWarning)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    addInterpretersAsync(sdkComboBox) {
+      detectSystemWideSdks(module, existingSdks)
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox))

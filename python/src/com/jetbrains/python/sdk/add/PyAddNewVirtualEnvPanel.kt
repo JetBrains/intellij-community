@@ -48,7 +48,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override val panelName: String = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks, module), null).apply {
+  private val baseSdkField = PySdkPathChoosingComboBox().apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
     val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
     selectedSdk = when {
@@ -76,6 +76,9 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    addInterpretersAsync(baseSdkField) {
+      findBaseSdks(existingSdks, module)
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> =
@@ -107,7 +110,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   override fun addChangeListener(listener: Runnable) {
-    pathField.textField.document.addDocumentListener(object: DocumentAdapter() {
+    pathField.textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         listener.run()
       }

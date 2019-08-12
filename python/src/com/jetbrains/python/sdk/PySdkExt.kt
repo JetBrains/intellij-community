@@ -54,6 +54,7 @@ fun findBaseSdks(existingSdks: List<Sdk>, module: Module?): List<Sdk> {
 }
 
 fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> {
+  if (module != null && module.isDisposed) return emptyList()
   val existingPaths = existingSdks.map { it.homePath }.toSet()
   return PythonSdkFlavor.getApplicableFlavors(false)
     .asSequence()

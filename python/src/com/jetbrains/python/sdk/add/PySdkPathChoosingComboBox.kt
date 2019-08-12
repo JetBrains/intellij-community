@@ -34,9 +34,11 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  * A combobox with browse button for choosing a path to SDK, also capable of showing progress indicator.
  * To toggle progress indicator visibility use [setBusy] method.
  *
+ * To fill this box in async mode use [addInterpretersAsync]
+ *
  * @author vlan
  */
-class PySdkPathChoosingComboBox(sdks: List<Sdk>, suggestedFile: VirtualFile?) :
+class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: VirtualFile? = null) :
   ComponentWithBrowseButton<ComboBoxWithWidePopup<Sdk>>(ComboBoxWithWidePopup(sdks.toTypedArray()), null) {
 
   private val busyIconExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }

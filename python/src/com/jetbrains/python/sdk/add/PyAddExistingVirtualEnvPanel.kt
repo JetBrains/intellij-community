@@ -35,9 +35,7 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    override var newProjectPath: String?) : PyAddSdkPanel() {
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectVirtualEnvs(module, existingSdks)
-                                                        .filterNot { it.isAssociatedWithAnotherModule(module) },
-                                                      null)
+  private val sdkComboBox = PySdkPathChoosingComboBox()
   private val makeSharedField = JBCheckBox("Make available to all projects")
 
   init {
@@ -47,6 +45,10 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    addInterpretersAsync(sdkComboBox) {
+      detectVirtualEnvs(module, existingSdks)
+        .filterNot { it.isAssociatedWithAnotherModule(module) }
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> =
