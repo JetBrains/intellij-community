@@ -114,7 +114,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-EscapedCurly             = "\\{" | "\\}"
+ParamExpansion           = [^{}\\] | {EscapedChar}
+ParamExpansionBody       = {ParamExpansion}+
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -259,7 +260,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
   "${"                                { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
   "{"                                 {             return LEFT_CURLY; }
   "}"                                 { popState(); return RIGHT_CURLY; }
-  ([^{}]|{EscapedCurly})+ / "${"|"}"  {             return PARAMETER_EXPANSION_BODY; }
+  {ParamExpansionBody} / "${"|"}"     {             return PARAMETER_EXPANSION_BODY; }
 }
 
 <CASE_CONDITION> {
