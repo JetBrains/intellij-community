@@ -11,3 +11,5 @@
 
 (b := -)
 (x := )
+
+x = (b[j] := z) = 'spam'  # z is a reference

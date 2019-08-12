@@ -15,3 +15,5 @@ foo(x := 1, cat='2')
 (loc := x, y)  # loc will be x, not (x, y)
 
 (px, py, pz := position)  # pz will be position, px and py are references
+
+x = (y := z) = 'spam'  # z is a reference

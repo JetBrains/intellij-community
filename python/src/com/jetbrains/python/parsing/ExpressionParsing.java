@@ -776,7 +776,7 @@ public class ExpressionParsing extends Parsing {
 
       myBuilder.advanceLexer();
 
-      if (!parseTestExpression(stopOnIn, isTargetExpression)) {
+      if (!parseTestExpression(stopOnIn, false)) {
         myBuilder.error(message("PARSE.expected.expression"));
       }
 
@@ -796,7 +796,7 @@ public class ExpressionParsing extends Parsing {
 
         myBuilder.advanceLexer();
 
-        if (!parseTestExpression(stopOnIn, isTargetExpression)) {
+        if (!parseTestExpression(stopOnIn, false)) {
           myBuilder.error(message("PARSE.expected.expression"));
         }
 

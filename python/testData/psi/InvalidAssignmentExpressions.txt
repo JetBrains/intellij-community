@@ -111,3 +111,35 @@ PyFile:InvalidAssignmentExpressions.py
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n\n')
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PySubscriptionExpression
+          PyReferenceExpression: b
+            PsiElement(Py:IDENTIFIER)('b')
+          PsiElement(Py:LBRACKET)('[')
+          PyReferenceExpression: j
+            PsiElement(Py:IDENTIFIER)('j')
+          PsiElement(Py:RBRACKET)(']')
+        PsiErrorElement:Identifier expected
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: z
+          PsiElement(Py:IDENTIFIER)('z')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: spam
+      PsiElement(Py:SINGLE_QUOTED_STRING)(''spam'')
+    PsiWhiteSpace('  ')
+    PsiComment(Py:END_OF_LINE_COMMENT)('# z is a reference')

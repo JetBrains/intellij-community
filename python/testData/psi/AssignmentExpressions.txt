@@ -184,3 +184,28 @@ PyFile:AssignmentExpressions.py
       PsiElement(Py:RPAR)(')')
     PsiWhiteSpace('  ')
     PsiComment(Py:END_OF_LINE_COMMENT)('# pz will be position, px and py are references')
+  PsiWhiteSpace('\n\n')
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PyTargetExpression: y
+          PsiElement(Py:IDENTIFIER)('y')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: z
+          PsiElement(Py:IDENTIFIER)('z')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: spam
+      PsiElement(Py:SINGLE_QUOTED_STRING)(''spam'')
+    PsiWhiteSpace('  ')
+    PsiComment(Py:END_OF_LINE_COMMENT)('# z is a reference')
