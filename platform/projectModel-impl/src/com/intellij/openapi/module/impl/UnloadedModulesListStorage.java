@@ -7,6 +7,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,9 @@ import java.util.List;
 public class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
   private List<String> myModuleNames = new ArrayList<>();
 
-  static UnloadedModulesListStorage getInstance(@NotNull Project project) {
+  // Do not call directly. Use ModuleManager
+  @ApiStatus.Internal
+  public static UnloadedModulesListStorage getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, UnloadedModulesListStorage.class);
   }
 
