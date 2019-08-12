@@ -541,7 +541,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
 
   public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(place.getLanguage());
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(place);
     return supportProvider != null &&
            (editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART) == null || !editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART)) &&
            editor.getUserData(AbstractInplaceIntroducer.ACTIVE_INTRODUCE) == null &&

@@ -638,7 +638,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
     final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(expr);
     final boolean isInplaceAvailableOnDataContext =
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
