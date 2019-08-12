@@ -3,6 +3,7 @@ import errno
 import functools
 import hashlib
 import keyword
+import queue
 import shutil
 from contextlib import contextmanager
 
@@ -840,3 +841,19 @@ def is_text_file(path):
 
 
 _bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | set(range(28, 32)) | {127}
+
+
+def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result=None):
+    import multiprocessing as mp
+
+    def wrapper(q, func, *args, **kwargs):
+        q.put(func(*args, **kwargs))
+
+    q = mp.Queue(1)
+    p = mp.Process(name=name, target=wrapper, args=(q, func) + args, kwargs=kwargs, daemon=True)
+    p.start()
+    p.join()
+    try:
+        return q.get_nowait()
+    except queue.Empty:
+        return failure_result
