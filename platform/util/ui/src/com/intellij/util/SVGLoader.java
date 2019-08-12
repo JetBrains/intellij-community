@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -9,6 +10,7 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
 import com.intellij.ui.svg.SaxSvgDocumentFactory;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import org.apache.batik.anim.dom.SVGOMDocument;
@@ -26,16 +28,30 @@ import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.concurrent.Callable;
 
 /**
  * @author tav
  */
 public final class SVGLoader {
   private static SvgColorPatcher ourColorPatcher = null;
+  private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
+    @NotNull
+    @Override
+    protected File getCachesHome() {
+      return new File(PathManager.getSystemPath(), "icons");
+    }
+
+    @Override
+    protected void forkIOTask(@NotNull Runnable action) {
+      AppExecutorUtil.getAppExecutorService().execute(action);
+    }
+  };
 
   public static final int ICON_DEFAULT_SIZE = 16;
 
@@ -60,14 +76,14 @@ public final class SVGLoader {
     }
 
     byte[] svgBytes = FileUtil.loadBytes(stream); //TODO: check for OOMs/Limit load?
-    BufferedImage image = SVGLoaderCache.INSTANCE.loadFromCache(theme, svgBytes, scale, docSize);
+    BufferedImage image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
     if (image != null) {
       return image;
     }
 
     image = loadWithoutCache(url, svgBytes, scale, docSize);
     if (image != null) {
-      SVGLoaderCache.INSTANCE.storeLoadedImage(theme, svgBytes, scale, image, docSize);
+      ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
     return image;
   }
