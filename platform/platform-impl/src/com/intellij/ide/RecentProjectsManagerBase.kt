@@ -346,7 +346,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
-  fun doOpenProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
+  open fun doOpenProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
     return doOpenProject(Paths.get(projectPath), openProjectOptions)
   }
 
