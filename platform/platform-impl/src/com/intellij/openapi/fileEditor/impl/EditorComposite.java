@@ -100,6 +100,7 @@ public class EditorComposite implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditors = editors;
+    myProviders = providers;
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
