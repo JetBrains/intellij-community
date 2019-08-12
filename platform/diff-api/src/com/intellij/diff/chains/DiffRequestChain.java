@@ -29,6 +29,11 @@ public interface DiffRequestChain extends UserDataHolder {
   @CalledInAwt
   int getIndex();
 
+  /**
+   * @see com.intellij.diff.impl.CacheDiffRequestChainProcessor#setCurrentRequest
+   * @deprecated This method will not change selected position if chain was already shown.
+   */
+  @Deprecated
   @CalledInAwt
   void setIndex(int index);
 }
