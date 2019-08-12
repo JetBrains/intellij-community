@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -30,6 +31,8 @@ import java.util.Date;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -57,11 +60,19 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           RevealFileAction.openFile(zippedLogsFile);
         }
         else {
-          Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
+          final Notification logNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+                                                                "",
+                                                                "Log file is created: " + zippedLogsFile.getAbsolutePath(),
+                                                                NotificationType.INFORMATION);
+          Notifications.Bus.notify(logNotification);
         }
       }
       catch (final IOException exception) {
-        Messages.showErrorDialog("Can't create zip file with logs: " + exception.getLocalizedMessage(), "Can't Create File");
+        final Notification errorNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+                                                                "",
+                                                                "Can't create zip file with logs: " + exception.getLocalizedMessage(),
+                                                                NotificationType.ERROR);
+        Notifications.Bus.notify(errorNotification);
       }
     }, "Collecting Logs", false, project);
   }
