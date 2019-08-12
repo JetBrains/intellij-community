@@ -425,4 +425,11 @@ public class FoldingTest extends AbstractEditorTest {
     assertSize(1, carets);
     assertEquals(0, carets.get(0).getOffset());
   }
+
+  public void testMousePositionAfterClickOnCollapsedFolding() {
+    initText("\ntext");
+    addCollapsedFoldRegion(0, getEditor().getDocument().getTextLength(), "...");
+    mouse().clickAt(0, 1);
+    assertEquals(new VisualPosition(0, 0), getEditor().getCaretModel().getVisualPosition());
+  }
 }
