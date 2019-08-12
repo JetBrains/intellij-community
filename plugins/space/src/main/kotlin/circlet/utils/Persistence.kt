@@ -2,11 +2,18 @@ package circlet.utils
 
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.*
-import runtime.*
+import runtime.json.*
 import runtime.persistence.*
 import runtime.reactive.*
 
 object IdeaPasswordSafePersistence : Persistence {
+    override suspend fun putJson(key: String, value: JsonElement) {
+        put(key, value.text())
+    }
+
+    override suspend fun batchPutJson(keyValuePairs: List<Pair<String, JsonElement>>) {
+        batchPut(keyValuePairs.map { it.first to it.second.text() })
+    }
 
     override suspend fun put(key: String, value: String) {
         PasswordSafe.instance.setPassword(createCredentialAttributes(key), value)
