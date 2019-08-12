@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
@@ -102,15 +104,20 @@ public class PySkeletonGenerator {
             final String trimmed = line.trim();
             if (indicator != null) {
               indicator.checkCanceled();
-              if (trimmed.startsWith("[progress]")) {
-                indicator.setText(StringUtil.trimStart(trimmed, "[progress] "));
-              }
-              else if (trimmed.startsWith("[progress:minor]")) {
-                indicator.setText2(StringUtil.trimStart(trimmed, "[progress:minor] "));
-              }
-              else if (trimmed.startsWith("[progress:fraction]")) {
-                indicator.setIndeterminate(false);
-                indicator.setFraction(StringUtil.parseDouble(StringUtil.trimStart(trimmed, "[progress:fraction] "), 0));
+              final ControlMessage control = ControlMessage.fromLine(trimmed);
+              if (control != null) {
+                if (control.getType().equals("progress")) {
+                  if (control.getSubType().equals("minor")) {
+                    indicator.setText2(control.getContent());
+                  }
+                  else if (trimmed.startsWith("[progress:fraction]")) {
+                    indicator.setIndeterminate(false);
+                    indicator.setFraction(StringUtil.parseDouble(control.getContent(), 0));
+                  }
+                  else {
+                    indicator.setText(control.getContent());
+                  }
+                }
               }
             }
           }
@@ -128,6 +135,48 @@ public class PySkeletonGenerator {
     }
     runResult.checkSuccess(LOG);
     return false;
+  }
+
+  private static class ControlMessage {
+    private static final Pattern CONTROL_LINE_PATTERN = Pattern.compile("\\[(?<type>\\w+)(:(?<subtype>\\w+))?]\\s*(?<content>.*)");
+
+    private ControlMessage(@NotNull String type, @NotNull String subType, @NotNull String content) {
+      myType = type;
+      mySubType = subType;
+      myContent = content;
+    }
+
+    final String myType;
+    final String mySubType;
+    final String myContent;
+
+    @NotNull
+    private String getContent() {
+      return myContent;
+    }
+
+    @NotNull
+    private String getType() {
+      return myType;
+    }
+
+    @NotNull
+    private String getSubType() {
+      return mySubType;
+    }
+
+    @Nullable
+    public static ControlMessage fromLine(@NotNull String line) {
+      final Matcher matcher = CONTROL_LINE_PATTERN.matcher(line);
+      if (!matcher.matches()) {
+        return null;
+      }
+
+      return new ControlMessage(matcher.group("type"),
+                                StringUtil.notNullize(matcher.group("subtype")),
+                                matcher.group("content").trim()
+      );
+    }
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
