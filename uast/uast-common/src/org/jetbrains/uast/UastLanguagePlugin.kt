@@ -112,6 +112,7 @@ inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElem
   return convertElement(element, parent) as? T
 }
 
+@Deprecated("will throw exception if conversion fails", ReplaceWith("convertOpt"))
 inline fun <reified T : UElement> UastLanguagePlugin.convert(element: PsiElement, parent: UElement?): T {
   return convertElement(element, parent, T::class.java) as T
 }
