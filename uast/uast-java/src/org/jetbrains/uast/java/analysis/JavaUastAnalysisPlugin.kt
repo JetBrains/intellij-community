@@ -12,10 +12,10 @@ import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 
 class JavaUastAnalysisPlugin : UastAnalysisPlugin {
-  override fun <T : Any> getExpressionFact(expression: UExpression, fact: UExpressionFact<T>): T? {
+  override fun <T : Any> UExpression.getExpressionFact(fact: UExpressionFact<T>): T? {
     when (fact) {
       is UExpressionFact.UNullabilityFact -> {
-        val psiExpression = expression.sourcePsi as? PsiExpression ?: return null
+        val psiExpression = sourcePsi as? PsiExpression ?: return null
         val nullability = CommonDataflow.getExpressionFact(psiExpression, DfaFactType.NULLABILITY)?.toUNullability()
                           ?: UNullability.UNKNOWN
 
