@@ -3,21 +3,21 @@ package com.intellij.util
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ImageLoader.Dimension2DDouble
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.UnsyncByteArrayInputStream
+import com.intellij.util.io.UnsyncByteArrayOutputStream
 import java.awt.image.BufferedImage
-import java.awt.image.RenderedImage
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.security.MessageDigest
-import java.util.Base64
-import javax.imageio.ImageIO
 
-private const val MAX_IMAGE_SIZE = 1024L * 1024L
-private const val headerSize = 2 * Long.SIZE_BYTES
+private const val MAX_IMAGE_SIZE = 16 * 1024L * 1024L
+private val imagePixelFormat = BufferedImage.TYPE_INT_ARGB
 
 object SVGLoaderCache : SVGLoaderCacheBasics() {
   override val cachesHome: File
@@ -35,6 +35,7 @@ abstract class SVGLoaderCacheBasics {
   protected abstract fun forkIOTask(action: () -> Unit)
 
   private fun cacheFile(theme: String, url: URL, scale: Double): File {
+    //TODO: include IntelliJ version (or JAR files signature)
     val d = MessageDigest.getInstance("SHA1")
     //caches version
     d.update(0x0)
@@ -43,25 +44,10 @@ abstract class SVGLoaderCacheBasics {
     d.update(url.toString().toByteArray())
     d.update(url.toString().toByteArray())
 
-    val hex = Base64.getEncoder().encodeToString(d.digest()).replace("=", "").replace("/", "ZZ").replace("+", "PP")
-    return File(cachesHome, "$hex.bin")
+    val hex = StringUtil.toHexString(d.digest())
+    return File(cachesHome, "$hex.12")
   }
 
-  private fun readDouble(b: ByteArray, off: Int): Double {
-    var l = 0L
-    repeat(Long.SIZE_BYTES) {
-      l += (b[off + it].toLong() shl Byte.SIZE_BITS * it)
-    }
-    return Double.fromBits(l)
-  }
-
-
-  private fun writeDouble(d: Double, dest: ByteArray, off: Int) {
-    val l = d.toBits()
-    repeat(Long.SIZE_BYTES) {
-      dest[off + it] = ((l shr Byte.SIZE_BITS * it) and 0xff).toByte()
-    }
-  }
 
   @Throws(IOException::class)
   fun loadFromCache(theme: String, url: URL, scale: Double, docSize: Dimension2DDouble?  /*OUT*/): BufferedImage? {
@@ -77,12 +63,23 @@ abstract class SVGLoaderCacheBasics {
     }
 
     try {
-      val data = file.readBytes()
-      val w = readDouble(data, 0)
-      val h = readDouble(data, Long.SIZE_BYTES)
+      val data = UnsyncByteArrayInputStream(file.readBytes())
+      val buff = DataInputStream(data)
 
-      val image = ImageIO.read(ByteArrayInputStream(data, headerSize, data.size - headerSize))
-      docSize?.setSize(w, h)
+      val width = buff.readDouble()
+      val height = buff.readDouble()
+      val w = buff.readInt()
+      val h = buff.readInt()
+      val sz = buff.readInt()
+      val img = IntArray(sz)
+      for(i in 0 until sz) {
+        img[i] = buff.readInt()
+      }
+
+      //TODO: what image to create?
+      val image = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
+      image.raster.setPixels(0, 0, w, h, img)
+      docSize?.setSize(width, height)
       return image
     }
     catch (e: Exception) {
@@ -94,19 +91,29 @@ abstract class SVGLoaderCacheBasics {
     }
   }
 
-  fun storeLoadedImage(theme: String, url: URL, scale: Double, image: RenderedImage, size: Dimension2DDouble) = forkIOTask {
-    val file = cacheFile(theme, url, scale)
+  fun storeLoadedImage(theme: String, url: URL, scale: Double, image: BufferedImage, size: Dimension2DDouble) {
+    require(image.type == imagePixelFormat) { "image type must be $imagePixelFormat but was ${image.type}"}
 
-    val header = ByteArray(headerSize)
-    writeDouble(size.width, header, 0)
-    writeDouble(size.height, header, Long.SIZE_BYTES)
+    forkIOTask {
+      val file = cacheFile(theme, url, scale)
 
-    val data = ByteArrayOutputStream().use { out ->
-      ImageIO.write(image, "png", out)
-      out.toByteArray()
+      val intData = image.raster.getPixels(0, 0, image.width, image.height, null as IntArray?)
+      val output = UnsyncByteArrayOutputStream(intData.size * Int.SIZE_BYTES + 2 * 64 + 2 * 32 + 32)
+      val buff = DataOutputStream(output)
+
+      buff.writeDouble(size.width)
+      buff.writeDouble(size.height)
+
+      buff.writeInt(image.width)
+      buff.writeInt(image.height)
+
+      buff.writeInt(intData.size)
+      for (i in intData) {
+        buff.writeInt(i)
+      }
+
+      file.parentFile?.mkdirs()
+      file.writeBytes(output.toByteArray())
     }
-
-    file.parentFile?.mkdirs()
-    file.writeBytes(header + data)
   }
 }
