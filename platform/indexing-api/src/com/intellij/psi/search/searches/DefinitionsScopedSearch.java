@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.search.searches;
 
@@ -14,7 +14,6 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -81,7 +80,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       return myCheckDeep;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Project getProject() {
       return myProject;
