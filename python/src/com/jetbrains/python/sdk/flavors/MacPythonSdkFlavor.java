@@ -16,10 +16,12 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -36,8 +38,9 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
   public static final MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
   private static final String[] POSSIBLE_BINARY_NAMES = {"python", "python2", "python3"};
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> candidates = new HashSet<>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);

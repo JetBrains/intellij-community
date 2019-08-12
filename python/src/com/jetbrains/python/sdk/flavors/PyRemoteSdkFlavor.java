@@ -17,9 +17,11 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteFile;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,8 +39,9 @@ public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
 
   public static PyRemoteSdkFlavor INSTANCE = new PyRemoteSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     return Lists.newArrayList();
   }
 

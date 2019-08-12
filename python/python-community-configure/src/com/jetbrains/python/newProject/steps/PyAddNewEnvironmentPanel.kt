@@ -4,6 +4,8 @@ package com.jetbrains.python.newProject.steps
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
@@ -30,11 +32,12 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
         panel.newProjectPath = newProjectPath
       }
     }
+  private val context:UserDataHolder = UserDataHolderBase()
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
-  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath),
-                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath),
-                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath))
+  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath,context),
+                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context),
+                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context))
 
   var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.*
@@ -32,7 +33,8 @@ import javax.swing.Icon
 class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    private val module: Module?,
                                    private val existingSdks: List<Sdk>,
-                                   override var newProjectPath: String?) : PyAddSdkPanel() {
+                                   override var newProjectPath: String?,
+                                   context:UserDataHolder ) : PyAddSdkPanel() {
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val sdkComboBox = PySdkPathChoosingComboBox()
@@ -46,7 +48,7 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
       .panel
     add(formPanel, BorderLayout.NORTH)
     addInterpretersAsync(sdkComboBox) {
-      detectVirtualEnvs(module, existingSdks)
+      detectVirtualEnvs(module, existingSdks, context)
         .filterNot { it.isAssociatedWithAnotherModule(module) }
     }
   }

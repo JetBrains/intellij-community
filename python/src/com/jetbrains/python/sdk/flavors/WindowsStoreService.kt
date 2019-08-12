@@ -3,8 +3,10 @@ package com.jetbrains.python.sdk.flavors
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -22,7 +24,7 @@ private fun findPowerShell(): VirtualFile? {
  * On Win10 uses `Get-AppxPackage` cmdlet to fetch installation location of package by name.
  * To be used to find location of tools installed with Windows Store
  */
-fun findInstallLocationForPackage(packageName: String): VirtualFile? {
+fun findInstallLocationForPackage(packageName: String, fs:VirtualFileSystem): VirtualFile? {
   if (!SystemInfo.isWin10OrNewer) {
     return null
   }
@@ -57,7 +59,7 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
     logger.warn("Strange output: $line")
     return null
   }
-  return LocalFileSystem.getInstance().refreshAndFindFileByPath(groupValues[1])
+  return fs.refreshAndFindFileByPath(groupValues[1])
 }
 
 private fun reportError(command: String, error: String, process: Process, logger: Logger) {

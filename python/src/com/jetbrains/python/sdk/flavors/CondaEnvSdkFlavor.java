@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -45,8 +46,9 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
 
   public static final CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     final List<String> results = new ArrayList<>();
     final Sdk sdk = ReadAction.compute(() -> PythonSdkType.findPythonSdk(module));
     try {

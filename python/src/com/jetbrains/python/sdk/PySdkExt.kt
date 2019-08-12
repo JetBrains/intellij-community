@@ -28,6 +28,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,18 +49,19 @@ import java.nio.file.Paths
  * @author vlan
  */
 
-fun findBaseSdks(existingSdks: List<Sdk>, module: Module?): List<Sdk> {
+fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context:UserDataHolder): List<Sdk> {
   val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
-  val detected = detectSystemWideSdks(module, existingSdks)
+  val detected = detectSystemWideSdks(module, existingSdks, context)
   return existing + detected
 }
 
-fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> {
+@JvmOverloads
+fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context:UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
   if (module != null && module.isDisposed) return emptyList()
   val existingPaths = existingSdks.map { it.homePath }.toSet()
   return PythonSdkFlavor.getApplicableFlavors(false)
     .asSequence()
-    .flatMap { it.suggestHomePaths(module).asSequence() }
+    .flatMap { it.suggestHomePaths(module, context).asSequence() }
     .filter { it !in existingPaths }
     .map { PyDetectedSdk(it) }
     .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
@@ -66,11 +69,11 @@ fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>): List<PyDetec
     .toList()
 }
 
-fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(module), existingSdks, module)
+fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>,  context:UserDataHolder): List<PyDetectedSdk> =
+  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
 
-fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(module), existingSdks, module)
+fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context:UserDataHolder): List<PyDetectedSdk> =
+  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,

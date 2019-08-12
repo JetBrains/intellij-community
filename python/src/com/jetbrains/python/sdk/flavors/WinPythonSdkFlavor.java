@@ -4,12 +4,15 @@ package com.jetbrains.python.sdk.flavors;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -26,6 +29,9 @@ import java.util.*;
  * @author yole
  */
 public class WinPythonSdkFlavor extends CPythonSdkFlavor {
+  @NotNull
+  private static final Key<String> APPX_PYTHON_CACHE = new Key<>("PythonFromStoreCache");
+  private static final String NOTHING = "";
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   private static final Map<String, String> REGISTRY_MAP =
     ImmutableMap.of("Python", "python.exe",
@@ -33,15 +39,16 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
   private static volatile Set<String> ourRegistryCache;
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
 
     if (SystemInfo.isWin10OrNewer) {
       // For pythons installed from WindowsStore
-      final VirtualFile installLocation = WindowsStoreServiceKt.findInstallLocationForPackage("Python");
+      final VirtualFile installLocation = getInstallationLocationForStoreWithCache(context);
       if (installLocation != null) {
         final VirtualFile pythonFromStore = installLocation.findChild("python.exe");
         if (pythonFromStore != null) {
@@ -51,6 +58,29 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
 
     return candidates;
+  }
+
+  @Nullable
+  private static VirtualFile getInstallationLocationForStoreWithCache(@Nullable final UserDataHolder context) {
+    final VirtualFileSystem fs = LocalFileSystem.getInstance();
+
+    if (context != null) {
+      synchronized (APPX_PYTHON_CACHE) {
+        final String result = context.getUserData(APPX_PYTHON_CACHE);
+        if (result != null) {
+          return result.equals(NOTHING) ? null : fs.refreshAndFindFileByPath(result);
+        }
+        final VirtualFile python = getInstallationLocationForStore(fs);
+        context.putUserData(APPX_PYTHON_CACHE, python != null ? python.getPath() : NOTHING);
+        return python;
+      }
+    }
+    return getInstallationLocationForStore(fs);
+  }
+
+  @Nullable
+  private static VirtualFile getInstallationLocationForStore(@NotNull final VirtualFileSystem fs) {
+    return WindowsStoreServiceKt.findInstallLocationForPackage("Python", fs);
   }
 
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {

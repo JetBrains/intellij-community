@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,6 +11,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
@@ -30,7 +31,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         .firstOrNull()
     }
 
-    fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>): PyDetectedSdk? {
+    fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
       // TODO: Move all interpreter detection away from EDT & use proper synchronization for that
       val progress = ProgressManager.getInstance()
       return progress.run(object : Task.WithResult<PyDetectedSdk?, Exception>(module.project,
@@ -38,10 +39,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
                                                                               false) {
         override fun compute(indicator: ProgressIndicator): PyDetectedSdk? {
           indicator.isIndeterminate = true
-          detectVirtualEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
+          detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let {
             return it
           }
-          detectCondaEnvs(module, existingSdks).firstOrNull { it.isAssociatedWithModule(module) }?.let {
+          detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let {
             return it
           }
           return null
@@ -52,11 +53,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
       existingSdks.filter { it.isSystemWide }.sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
 
-    private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>) =
-      detectSystemWideSdks(module, existingSdks).firstOrNull()
+    private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder) =
+      detectSystemWideSdks(module, existingSdks, context).firstOrNull()
   }
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>) {
+    val context = UserDataHolderBase()
     if (project.pythonSdk != null || baseDir.children?.any { it.name != Project.DIRECTORY_STORE_FOLDER } == false) {
       return
     }
@@ -68,7 +70,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
 
-    findDetectedAssociatedEnvironment(module, existingSdks)?.let {
+    findDetectedAssociatedEnvironment(module, existingSdks, context)?.let {
       val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
       SdkConfigurationUtil.addSdk(newSdk)
       newSdk.associateWithModule(module, null)
@@ -88,7 +90,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
 
-    findDetectedSystemWideSdk(module, existingSdks)?.let {
+    findDetectedSystemWideSdk(module, existingSdks, context)?.let {
       SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
       }

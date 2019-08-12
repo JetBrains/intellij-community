@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -34,7 +35,8 @@ import javax.swing.event.DocumentEvent
 class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val module: Module?,
                               private val existingSdks: List<Sdk>,
-                              newProjectPath: String?) : PyAddNewEnvPanel() {
+                              newProjectPath: String?,
+                              context:UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
@@ -77,7 +79,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .panel
     add(formPanel, BorderLayout.NORTH)
     addInterpretersAsync(baseSdkField) {
-      findBaseSdks(existingSdks, module)
+      findBaseSdks(existingSdks, module, context)
     }
   }
 

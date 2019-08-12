@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -38,7 +39,8 @@ import javax.swing.event.DocumentEvent
 class PyAddPipEnvPanel(private val project: Project?,
                        private val module: Module?,
                        private val existingSdks: List<Sdk>,
-                       override var newProjectPath: String?) : PyAddNewEnvPanel() {
+                       override var newProjectPath: String?,
+                       context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName = "Pipenv"
   override val panelName = "Pipenv Environment"
   override val icon: Icon = PIPENV_ICON
@@ -58,7 +60,7 @@ class PyAddPipEnvPanel(private val project: Project?,
   }
   init {
    addInterpretersAsync(baseSdkField) {
-     findBaseSdks(existingSdks, module)
+     findBaseSdks(existingSdks, module, context)
    }
   }
 
