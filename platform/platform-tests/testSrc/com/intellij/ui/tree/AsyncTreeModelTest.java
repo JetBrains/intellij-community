@@ -672,7 +672,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class BackgroundPoolModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.BackgroundPool(this);
+    private final Invoker invoker = new Invoker.Background(this, 10);
 
     private BackgroundPoolModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -776,7 +776,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnBackgroundPool(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.BackgroundPool(this);
+      private final Invoker invoker = new Invoker.Background(this, 10);
 
       @NotNull
       @Override

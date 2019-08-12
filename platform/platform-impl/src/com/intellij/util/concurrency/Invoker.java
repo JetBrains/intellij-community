@@ -283,7 +283,10 @@ public abstract class Invoker implements Disposable {
    * Every thread is valid for this invoker except the EDT.
    * It allows to run background tasks in parallel,
    * but requires a good synchronization.
+   * @deprecated use {@link Background#Background(Disposable, int)} instead
    */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final class BackgroundPool extends Invoker {
     public BackgroundPool(@NotNull Disposable parent) {
       super("Background.Pool", parent, ThreeState.YES);
