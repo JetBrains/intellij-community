@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +22,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
+
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private final Set<String> myEnabledExtensions = new HashSet<>();
 
@@ -32,15 +36,25 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!(file.getFileType() instanceof PlainTextLikeFileType)) return null;
+    if (!(file.getFileType() instanceof PlainTextLikeFileType)) {
+      LOG.debug(String.format("File '%s' (type: '%s') is not a plaint text like file", file.getName(), file.getFileType()));
+      return null;
+    }
 
-    final String extension = file.getExtension();
+    final String extension = ObjectUtils.doIfNotNull(file.getExtension(), fileExt -> "*." + fileExt);
     final String fileName = file.getName();
-    if (extension != null && isIgnored("*." + extension, project) || isIgnored(fileName, project)) return null;
+    if (extension != null && isIgnored(extension, project)) {
+      LOG.debug(String.format("Extension '%s' is ignored in project '%s'", extension, project.getName()));
+      return null;
+    }
+    if (isIgnored(fileName, project)) {
+      LOG.debug(String.format("File '%s' is ignored in project '%s'", fileName, project.getName()));
+      return null;
+    }
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
-      final EditorNotificationPanel panel = extension != null ? createPanel("*." + extension, knownExtensions, project) : null;
+      final EditorNotificationPanel panel = extension != null ? createPanel(extension, knownExtensions, project) : null;
       if (panel != null) {
         return panel;
       }
