@@ -103,10 +103,14 @@ public class PySkeletonGenerator {
             if (indicator != null) {
               indicator.checkCanceled();
               if (trimmed.startsWith("[progress]")) {
-                indicator.setText(StringUtil.trimStart(trimmed, "[progress]"));
+                indicator.setText(StringUtil.trimStart(trimmed, "[progress] "));
               }
               else if (trimmed.startsWith("[progress:minor]")) {
-                indicator.setText2(StringUtil.trimStart(trimmed, "[progress:minor]"));
+                indicator.setText2(StringUtil.trimStart(trimmed, "[progress:minor] "));
+              }
+              else if (trimmed.startsWith("[progress:fraction]")) {
+                indicator.setIndeterminate(false);
+                indicator.setFraction(StringUtil.parseDouble(StringUtil.trimStart(trimmed, "[progress:fraction] "), 0));
               }
             }
           }

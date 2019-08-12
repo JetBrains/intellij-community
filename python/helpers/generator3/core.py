@@ -707,8 +707,11 @@ BinaryModule = collections.namedtuple('BinaryModule', ['qname', 'path'])
 
 
 def progress(msg, minor=False):
-    prefix = '[progress:minor]' if minor else '[progress]'
-    say(prefix + msg)
+    if isinstance(msg, float):
+        say('[progress:fraction] ' + str(msg))
+    else:
+        prefix = '[progress:minor] ' if minor else '[progress] '
+        say(prefix + msg)
 
 
 def log(msg, level='debug'):
@@ -742,5 +745,6 @@ def process_all(sdk_skeletons_dir):
     progress("Querying skeleton generator for {}...".format(sys.executable))
     binaries = collect_binaries(sys.path)
     progress("Updating skeletons for {}...".format(sys.executable))
-    for binary in binaries:
+    for i, binary in enumerate(binaries):
+        progress((i + 1.0) / len(binaries))
         process_one(binary.qname, binary.path, False, sdk_skeletons_dir)
