@@ -115,7 +115,7 @@ interface UastLanguagePlugin {
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {
   if (element == null) return null
-  return convertElement(element, parent) as? T
+  return convertElement(element, parent, T::class.java) as? T
 }
 
 @Deprecated("will throw exception if conversion fails", ReplaceWith("convertOpt"))
