@@ -674,10 +674,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType fileType = getByFile(file);
     if (!(file instanceof StubVirtualFile)) {
       if (fileType == null) {
-        return getOrDetectFromContent(file, content);
+        return getOrDetectFromContent(file);
       }
       if (mightBeReplacedByDetectedFileType(fileType)) {
-        FileType detectedFromContent = getOrDetectFromContent(file, content);
+        FileType detectedFromContent = getOrDetectFromContent(file);
         if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
           return detectedFromContent;
         }
@@ -1052,7 +1052,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (type instanceof PlainTextLikeFileType || type.equals(UnknownFileType.INSTANCE)) {
+    if (mightBeReplacedByDetectedFileType(type) || type.equals(UnknownFileType.INSTANCE)) {
       // a file has unknown file type if none of file type detectors matched it
       // for plain text file type, we run file type detection based on content
 
