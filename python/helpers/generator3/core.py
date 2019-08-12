@@ -178,19 +178,19 @@ def list_binaries(paths):
             binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
             binaries = [(f, name) for (f, name) in binaries if name]
             if binaries:
-                note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
+                debug("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
                 for f, name in binaries:
                     the_name = prefix + name
                     if is_skipped_module(root, f, the_name):
-                        note('skipping module %s' % the_name)
+                        debug('skipping module %s' % the_name)
                         continue
-                    note("cutout: %s", name)
+                    debug("cutout: %s" % name)
                     if preprefix:
-                        note("prefixes: %s %s", prefix, preprefix)
+                        debug("prefixes: %s %s" % (prefix, preprefix))
                         pre_name = (preprefix + prefix + name).upper()
                         if pre_name in res:
                             res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
-                        note("done with %s", name)
+                        debug("done with %s" % name)
                     file_path = os.path.join(root, f)
 
                     res[the_name.upper()] = (the_name,
@@ -543,7 +543,7 @@ class GenerationStatus(object):
 
 
 def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir):
-    say('Updating cache for %s at %r', name, mod_cache_dir)
+    info('Updating cache for %s at %r' % (name, mod_cache_dir))
     # All builtin modules go into the same directory
     if not doing_builtins:
         delete(mod_cache_dir)
@@ -591,8 +591,7 @@ def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_sk
             # Synthetic module, not explicitly imported
             if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
                 if not quiet:
-                    say(m)
-                    sys.stdout.flush()
+                    info('Processing submodule %s of %s' % (m, name))
                 action("opening %r", mod_cache_dir)
                 try:
                     redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
@@ -617,8 +616,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         report("Ignored a regular Python file %r", name)
         return True
     if not quiet:
-        say('%s (%r)', name, mod_file_name or 'built-in')
-        sys.stdout.flush()
+        info('%s (%r)' % (name, mod_file_name or 'built-in'))
     action("doing nothing")
 
     # Normalize the path to directory for os.path functions
@@ -646,11 +644,11 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                                                        kwargs={},
                                                        failure_result=GenerationStatus.FAILED)
         elif cached_skeleton_status == SkeletonStatus.FAILING:
-            say('Cache entry for %s at %r indicates failed generation', name, mod_cache_dir)
+            info('Cache entry for %s at %r indicates failed generation' % (name, mod_cache_dir))
             return GenerationStatus.FAILED
         else:
             # Copy entire skeletons directory if nothing needs to be updated
-            say('Copying cached stubs for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            info('Copying cached stubs for %s from %r to %r' % (name, mod_cache_dir, sdk_skeletons_dir))
             copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
             return GenerationStatus.COPIED
     except:
@@ -706,7 +704,19 @@ def progress(msg, minor=False):
 
 
 def log(msg, level='debug'):
-    say('[log:{}]{}'.format(level, msg))
+    say('[log:{}] {}'.format(level, msg))
+
+
+def info(msg):
+    log(msg, level='info')
+
+
+def debug(msg):
+    log(msg, level='debug')
+
+
+def trace(msg):
+    log(msg, level='trace')
 
 
 def collect_binaries(paths):
