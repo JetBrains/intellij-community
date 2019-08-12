@@ -22,10 +22,13 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,12 +52,15 @@ public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
-  private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion.v2";
+  private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
+  private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
   private final VcsCommitInfoBalloon myBalloon;
+  private final CommitDetailsPanel myDetailsPanel;
+  private final BorderLayoutPanel myDetailsContentPanel;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private String mySyncRenderedText;
@@ -235,7 +241,19 @@ public class PushLog extends JPanel implements DataProvider {
     myChangesBrowser.setBorder(JBUI.Borders.emptyTop(2));
     setDefaultEmptyText();
 
-    JBSplitter splitter = new OnePixelSplitter(SPLITTER_PROPORTION, 0.5f);
+    myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
+    JScrollPane detailsScrollPane =
+      new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    detailsScrollPane.setBorder(JBUI.Borders.empty());
+    detailsScrollPane.setViewportBorder(JBUI.Borders.empty());
+    myDetailsContentPanel = new BorderLayoutPanel();
+    myDetailsContentPanel.addToCenter(detailsScrollPane);
+
+    JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
+    detailsSplitter.setFirstComponent(myChangesBrowser);
+    detailsSplitter.setSecondComponent(myDetailsContentPanel);
+
+    JBSplitter splitter = new OnePixelSplitter(TREE_SPLITTER_PROPORTION, 0.5f);
     final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
     myScrollPane = new JBScrollPane(myTree) {
 
@@ -261,7 +279,7 @@ public class PushLog extends JPanel implements DataProvider {
     }
     myScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
     splitter.setFirstComponent(myScrollPane);
-    splitter.setSecondComponent(myChangesBrowser);
+    splitter.setSecondComponent(detailsSplitter);
 
     setLayout(new BorderLayout());
     add(splitter);
@@ -398,6 +416,13 @@ public class PushLog extends JPanel implements DataProvider {
       setDefaultEmptyText();
     }
     myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
+    if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
+      myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
+      myDetailsContentPanel.setVisible(true);
+    }
+    else {
+      myDetailsContentPanel.setVisible(false);
+    }
   }
 
   private void setDefaultEmptyText() {
