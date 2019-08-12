@@ -55,10 +55,16 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @Override
   protected abstract void run(@NotNull Result<T> result) throws Throwable;
 
+  /**
+   * @see Application#runReadAction(Runnable)
+   */
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     compute(() -> {action.run(); return null; });
   }
 
+  /**
+   * @see Application#runReadAction(ThrowableComputable)
+   */
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runReadAction(action);
   }
