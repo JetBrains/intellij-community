@@ -7,20 +7,23 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NotNull;
 
 public final class FileClassMacro extends Macro {
+  @NotNull
   @Override
   public String getName() {
     return "FileClass";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return IdeBundle.message("macro.class.name");
   }
 
   @Override
-  public String expand(DataContext dataContext) {
+  public String expand(@NotNull DataContext dataContext) {
     //Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     //if (project == null) {
     //  return null;
