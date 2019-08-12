@@ -8,7 +8,6 @@ import com.intellij.sh.completion.ShKeywordCompletionTest;
 import com.intellij.sh.editing.ShTypingTest;
 import com.intellij.sh.formatter.ShLineIndentProviderTest;
 import com.intellij.sh.lexer.ShFileLexerTest;
-import com.intellij.sh.lexer.ShLexerBugfixTest;
 import com.intellij.sh.lexer.ShOldLexerVersion3Test;
 import com.intellij.sh.lexer.ShOldLexerVersion4Test;
 import com.intellij.sh.oldParser.ShOldParserTest;
@@ -37,7 +36,6 @@ public class ShTestSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Lexer");
       suite.addTestSuite(ShFileLexerTest.class);
-      suite.addTestSuite(ShLexerBugfixTest.class);
       suite.addTestSuite(ShOldLexerVersion3Test.class);
       suite.addTestSuite(ShOldLexerVersion4Test.class);
       return suite;
