@@ -3,9 +3,10 @@ import os
 import sys
 
 import generator3.core
+import generator3.extra
 from generator3.clr_tools import get_namespace_by_name
 from generator3.constants import Timer
-from generator3.core import version, list_binaries, list_sources, zip_sources, zip_stdlib, process_one, \
+from generator3.core import version, list_binaries, process_one, \
     GenerationStatus, process_builtin_modules, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
@@ -96,21 +97,21 @@ def main():
             report("Expected no args with -S, got %d args", len(args))
             sys.exit(1)
         say(version())
-        list_sources(sys.path)
+        generator3.extra.list_sources(sys.path)
         sys.exit(0)
 
     if "-z" in opts:
         if len(args) != 1:
             report("Expected 1 arg with -z, got %d args", len(args))
             sys.exit(1)
-        zip_sources(args[0])
+        generator3.extra.zip_sources(args[0])
         sys.exit(0)
 
     if "-u" in opts:
         if len(args) != 1:
             report("Expected 1 arg with -u, got %d args", len(args))
             sys.exit(1)
-        zip_stdlib(args[0])
+        generator3.extra.zip_stdlib(args[0])
         sys.exit(0)
 
     # build skeleton(s)
