@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,4 +191,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public VirtualFile findFileById(int id) {
     return null;
   }
+
+  @ApiStatus.Internal
+  public abstract int storeName(@NotNull String name);
+  @ApiStatus.Internal
+  @NotNull
+  public abstract CharSequence getVFileName(int nameId);
 }

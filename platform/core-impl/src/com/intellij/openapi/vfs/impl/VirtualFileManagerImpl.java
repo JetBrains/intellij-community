@@ -317,4 +317,15 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
   }
+
+  @Override
+  public int storeName(@NotNull String name) {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getVFileName(int nameId) {
+    throw new AbstractMethodError();
+  }
 }

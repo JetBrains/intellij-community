@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -110,7 +109,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
         String name = "xxx" + (i%20);
-        events.add(new VFileCreateEvent(this, temp, name, FileNameCache.storeName(name), false, null, null, true, null));
+        events.add(new VFileCreateEvent(this, temp, name, false, null, null, true, null));
       }
       PlatformTestUtil.startPerformanceTest("vfp update", 7_500, () -> {
         for (int i = 0; i < 100; i++) {

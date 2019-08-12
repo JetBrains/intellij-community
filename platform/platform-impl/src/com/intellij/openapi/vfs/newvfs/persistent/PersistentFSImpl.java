@@ -446,7 +446,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
-    processEvent(new VFileCreateEvent(requestor, parent, dir, FileNameCache.storeName(dir), true, null, null, false, ChildInfo.EMPTY_ARRAY));
+    processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, false, ChildInfo.EMPTY_ARRAY));
 
     final VirtualFile child = parent.findChild(dir);
     if (child == null) {
@@ -459,7 +459,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
-    processEvent(new VFileCreateEvent(requestor, parent, file, FileNameCache.storeName(file), false, null, null, false, null));
+    processEvent(new VFileCreateEvent(requestor, parent, file, false, null, null, false, null));
 
     final VirtualFile child = parent.findChild(file);
     if (child == null) {

@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class VFileCreateEvent extends VFileEvent {
   private final @NotNull VirtualFile myParent;
-  private final @NotNull String myChildName;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
@@ -21,26 +21,9 @@ public class VFileCreateEvent extends VFileEvent {
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
-  /**
-   * @deprecated Use {@link #VFileCreateEvent(Object, VirtualFile, String, int, boolean, FileAttributes, String, boolean, ChildInfo[])} instead
-   */
-  @Deprecated
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
-                          boolean isDirectory,
-                          @Nullable("null means should read from the created file") FileAttributes attributes,
-                          @Nullable String symlinkTarget,
-                          boolean isFromRefresh,
-                          @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
-                          ChildInfo[] children) {
-    this(requestor, parent, childName, -1, isDirectory, attributes, symlinkTarget, isFromRefresh, children);
-  }
-
-  public VFileCreateEvent(Object requestor,
-                          @NotNull VirtualFile parent,
-                          @NotNull String childName,
-                          int childNameId,
                           boolean isDirectory,
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
@@ -49,17 +32,16 @@ public class VFileCreateEvent extends VFileEvent {
                           ChildInfo[] children) {
     super(requestor, isFromRefresh);
     myParent = parent;
-    myChildName = childName;
     myDirectory = isDirectory;
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
     myChildren = children;
-    myChildNameId = childNameId;
+    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
   }
 
   @NotNull
   public String getChildName() {
-    return myChildName;
+    return VirtualFileManager.getInstance().getVFileName(myChildNameId).toString();
   }
 
   public boolean isDirectory() {
@@ -91,14 +73,14 @@ public class VFileCreateEvent extends VFileEvent {
   protected String computePath() {
     String parentPath = myParent.getPath();
     // jar file returns "x.jar!/"
-    return StringUtil.endsWithChar(parentPath, '/') ?  parentPath + myChildName : parentPath + "/" + myChildName;
+    return StringUtil.endsWithChar(parentPath, '/') ?  parentPath + getChildName() : parentPath + "/" + getChildName();
   }
 
   @Override
   public VirtualFile getFile() {
     VirtualFile createdFile = myCreatedFile;
     if (createdFile == null && myParent.isValid()) {
-      myCreatedFile = createdFile = myParent.findChild(myChildName);
+      myCreatedFile = createdFile = myParent.findChild(getChildName());
     }
     return createdFile;
   }
@@ -120,7 +102,7 @@ public class VFileCreateEvent extends VFileEvent {
 
   @Override
   public boolean isValid() {
-    return myParent.isValid() && myParent.findChild(myChildName) == null;
+    return myParent.isValid() && myParent.findChild(getChildName()) == null;
   }
 
   @Override
@@ -130,21 +112,21 @@ public class VFileCreateEvent extends VFileEvent {
 
     final VFileCreateEvent event = (VFileCreateEvent)o;
 
-    return myDirectory == event.myDirectory && myChildName.equals(event.myChildName) && myParent.equals(event.myParent);
+    return myDirectory == event.myDirectory && getChildName().equals(event.getChildName()) && myParent.equals(event.myParent);
   }
 
   @Override
   public int hashCode() {
     int result = myParent.hashCode();
     result = 31 * result + (myDirectory ? 1 : 0);
-    result = 31 * result + myChildName.hashCode();
+    result = 31 * result + getChildName().hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
-    return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ myChildName +"]"
+    return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ getChildName() +"]"
            + (myChildren == null ? "" : " with "+myChildren.length+" children");
   }
 

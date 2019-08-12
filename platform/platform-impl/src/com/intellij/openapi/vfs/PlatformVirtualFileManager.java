@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,5 +66,16 @@ public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @Override
   public VirtualFile findFileById(int id) {
     return myManagingFS.findFileById(id);
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getVFileName(int nameId) {
+    return FileNameCache.getVFileName(nameId);
+  }
+
+  @Override
+  public int storeName(@NotNull String name) {
+    return FileNameCache.storeName(name);
   }
 }
