@@ -72,7 +72,7 @@ class StatusPanel extends JPanel {
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
       if (myTimeText != null && text.endsWith(myTimeText)) {
         int withoutTime = maxWidth - fm.stringWidth(myTimeText);
-        int end = Math.min(myTimeText.length() - 1, 1000);
+        int end = Math.min(text.length() - myTimeText.length() - 1, 1000);
         while (end > 0) {
           final String truncated = text.substring(0, end) + "... ";
           if (fm.stringWidth(truncated) < withoutTime) {
