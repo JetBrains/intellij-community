@@ -1,4 +1,5 @@
 # encoding: utf-8
+import collections
 import zipfile
 
 from generator3.util_methods import *
@@ -221,19 +222,19 @@ def is_source_file(path):
     if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
         return True
     has_bad_extension = path.endswith((
-            # plotlywidget/static/index.js.map is 8.7 MiB.
-            # Many map files from notebook are near 2 MiB.
-            '.js.map',
+        # plotlywidget/static/index.js.map is 8.7 MiB.
+        # Many map files from notebook are near 2 MiB.
+        '.js.map',
 
-            # uvloop/loop.c contains 6.4 MiB of code.
-            # Some header files from tensorflow has size more than 1 MiB.
-            '.h', '.c',
+        # uvloop/loop.c contains 6.4 MiB of code.
+        # Some header files from tensorflow has size more than 1 MiB.
+        '.h', '.c',
 
-            # Test data of pycrypto, many files are near 1 MiB.
-            '.rsp',
+        # Test data of pycrypto, many files are near 1 MiB.
+        '.rsp',
 
-            # No need to read these files even if they are small.
-            '.dll', '.pyc', '.pyd', '.pyo', '.so',
+        # No need to read these files even if they are small.
+        '.dll', '.pyc', '.pyd', '.pyo', '.so',
     ))
     if has_bad_extension:
         return False
@@ -549,13 +550,77 @@ class GenerationStatus(object):
     """
 
 
-# command-line interface
+def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir):
+    say('Updating cache for %s at %r', name, mod_cache_dir)
+    # All builtin modules go into the same directory
+    if not doing_builtins:
+        delete(mod_cache_dir)
+    mkdir(mod_cache_dir)
+
+    old_modules = list(sys.modules.keys())
+    imported_module_names = set()
+
+    class MyFinder:
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            if fullname != name:
+                imported_module_names.add(fullname)
+            return None
+
+    my_finder = None
+    if hasattr(sys, 'meta_path'):
+        my_finder = MyFinder()
+        sys.meta_path.insert(0, my_finder)
+    else:
+        imported_module_names = None
+
+    create_failed_version_stamp(mod_cache_dir, name)
+
+    action("importing")
+    __import__(name)  # sys.modules will fill up with what we want
+
+    if my_finder:
+        sys.meta_path.remove(my_finder)
+    if imported_module_names is None:
+        imported_module_names = set(sys.modules.keys()) - set(old_modules)
+
+    redo_module(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir)
+    # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+    # restore all of them
+    path = name.split(".")
+    redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+    if redo_imports:
+        initial_module_set = set(sys.modules)
+        for m in list(sys.modules):
+            if m.startswith("pycharm_generator_utils"): continue
+            action("looking at possible submodule %r", m)
+            if m == name or m in old_modules or m in sys.builtin_module_names:
+                continue
+            # Synthetic module, not explicitly imported
+            if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
+                if not quiet:
+                    say(m)
+                    sys.stdout.flush()
+                action("opening %r", mod_cache_dir)
+                try:
+                    redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
+                                sdk_dir=sdk_skeletons_dir)
+                    extra_modules = set(sys.modules) - initial_module_set
+                    if extra_modules:
+                        report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
+                               m, name, ', '.join(extra_modules))
+                finally:
+                    action("closing %r", mod_cache_dir)
+    return GenerationStatus.GENERATED
+
+
 # noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
     Returns True on success.
     """
+    progress(name, minor=True)
     if has_regular_python_ext(name):
         report("Ignored a regular Python file %r", name)
         return True
@@ -580,67 +645,15 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
-            say('Updating cache for %s at %r', name, mod_cache_dir)
-            # All builtin modules go into the same directory
-            if not doing_builtins:
-                delete(mod_cache_dir)
-            mkdir(mod_cache_dir)
-
-            old_modules = list(sys.modules.keys())
-            imported_module_names = set()
-
-            class MyFinder:
-                # noinspection PyMethodMayBeStatic
-                def find_module(self, fullname, path=None):
-                    if fullname != name:
-                        imported_module_names.add(fullname)
-                    return None
-
-            my_finder = None
-            if hasattr(sys, 'meta_path'):
-                my_finder = MyFinder()
-                sys.meta_path.insert(0, my_finder)
-            else:
-                imported_module_names = None
-
-            create_failed_version_stamp(mod_cache_dir, name)
-
-            action("importing")
-            __import__(name)  # sys.modules will fill up with what we want
-
-            if my_finder:
-                sys.meta_path.remove(my_finder)
-            if imported_module_names is None:
-                imported_module_names = set(sys.modules.keys()) - set(old_modules)
-
-            redo_module(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir)
-            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-            # restore all of them
-            path = name.split(".")
-            redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-            if redo_imports:
-                initial_module_set = set(sys.modules)
-                for m in list(sys.modules):
-                    if m.startswith("pycharm_generator_utils"): continue
-                    action("looking at possible submodule %r", m)
-                    if m == name or m in old_modules or m in sys.builtin_module_names:
-                        continue
-                    # Synthetic module, not explicitly imported
-                    if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
-                        if not quiet:
-                            say(m)
-                            sys.stdout.flush()
-                        action("opening %r", mod_cache_dir)
-                        try:
-                            redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
-                                        sdk_dir=sdk_skeletons_dir)
-                            extra_modules = set(sys.modules) - initial_module_set
-                            if extra_modules:
-                                report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
-                                       m, name, ', '.join(extra_modules))
-                        finally:
-                            action("closing %r", mod_cache_dir)
-            return GenerationStatus.GENERATED
+            return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
+                                                       func=generate_skeleton,
+                                                       args=(name,
+                                                             mod_file_name,
+                                                             doing_builtins,
+                                                             mod_cache_dir,
+                                                             sdk_skeletons_dir),
+                                                       kwargs={},
+                                                       failure_result=GenerationStatus.FAILED)
         elif cached_skeleton_status == SkeletonStatus.FAILING:
             say('Cache entry for %s at %r indicates failed generation', name, mod_cache_dir)
             return GenerationStatus.FAILED
@@ -688,3 +701,46 @@ def create_failed_version_stamp(base_dir, mod_qname):
 
 def delete_failed_version_stamp(base_dir, mod_qname):
     delete(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname))
+
+
+BinaryModule = collections.namedtuple('BinaryModule', ['qname', 'path'])
+
+
+def progress(msg, minor=False):
+    prefix = '[progress:minor]' if minor else '[progress]'
+    say(prefix + msg)
+
+
+def log(msg, level='debug'):
+    say('[log:{}]{}'.format(level, msg))
+
+
+def collect_binaries(paths):
+    return [BinaryModule(qname, path) for (qname, path, _, _) in list_binaries(paths)]
+
+
+def process_builtin_modules(sdk_skeletons_dir):
+    names = list(sys.builtin_module_names)
+    if BUILTIN_MOD_NAME not in names:
+        names.append(BUILTIN_MOD_NAME)
+    if '__main__' in names:
+        names.remove('__main__')
+    result = True
+    for name in names:
+        status = process_one(name, None, True, sdk_skeletons_dir)
+        # Assume that if a skeleton for one built-in module was copied, all of them were copied.
+        if status == GenerationStatus.COPIED:
+            break
+        elif status == GenerationStatus.FAILED:
+            result = False
+    return result
+
+
+def process_all(sdk_skeletons_dir):
+    progress("Updating skeletons of builtins for {}...".format(sys.executable))
+    process_builtin_modules(sdk_skeletons_dir)
+    progress("Querying skeleton generator for {}...".format(sys.executable))
+    binaries = collect_binaries(sys.path)
+    progress("Updating skeletons for {}...".format(sys.executable))
+    for binary in binaries:
+        process_one(binary.qname, binary.path, False, sdk_skeletons_dir)

@@ -2,9 +2,11 @@ import atexit
 import os
 import sys
 
+import generator3.core
 from generator3.clr_tools import get_namespace_by_name
-from generator3.constants import Timer, BUILTIN_MOD_NAME
-from generator3.core import version, list_binaries, list_sources, zip_sources, zip_stdlib, process_one, GenerationStatus
+from generator3.constants import Timer
+from generator3.core import version, list_binaries, list_sources, zip_sources, zip_stdlib, process_one, \
+    GenerationStatus, process_builtin_modules, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
 
@@ -57,17 +59,13 @@ def main():
     opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzu")
     opts = dict(opts)
 
-    quiet = '-q' in opts
+    generator3.core.quiet = '-q' in opts
     set_verbose('-v' in opts)
     subdir = opts.get('-d', '')
 
     if not opts or '-h' in opts:
         say(helptext)
         sys.exit(0)
-
-    if '-L' not in opts and '-b' not in opts and '-S' not in opts and '-i' not in opts and '-u' not in opts and not args:
-        report("Neither -L nor -b nor -S nor any module name given")
-        sys.exit(1)
 
     if "-x" in opts:
         debug_mode = True
@@ -123,22 +121,9 @@ def main():
         if args:
             report("No names should be specified with -b")
             sys.exit(1)
-        names = list(sys.builtin_module_names)
-        if not BUILTIN_MOD_NAME in names:
-            names.append(BUILTIN_MOD_NAME)
-        if '__main__' in names:
-            names.remove('__main__')  # we don't want ourselves processed
-        ok = True
-        for name in names:
-            status = process_one(name, None, True, subdir)
-            # Assume that if a skeleton for one built-in module was copied, all of them were copied.
-            if status == GenerationStatus.COPIED:
-                break
-            elif status == GenerationStatus.FAILED:
-                ok = False
+        ok = process_builtin_modules(subdir)
         if not ok:
             sys.exit(1)
-
     else:
         if '-i' in opts:
             if args:
@@ -151,10 +136,13 @@ def main():
                 mod_file_name = None
 
             refs = sys.stdin.readline().strip()
+        elif len(args) > 2:
+            report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
+            sys.exit(1)
+        elif not args:
+            process_all(subdir)
+            sys.exit()
         else:
-            if len(args) > 2:
-                report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
-                sys.exit(1)
             name = args[0]
 
             if len(args) == 2:
