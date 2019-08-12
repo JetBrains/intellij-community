@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
@@ -57,24 +59,23 @@ public final class SVGLoader {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
-    if (url != null) {
-      final Image image = SVGLoaderCache.INSTANCE.loadFromCache(theme, url, scale, docSize);
-      if (image != null) {
-        return image;
-      }
+    byte[] svgBytes = FileUtil.loadBytes(stream); //TODO: check for OOMs/Limit load?
+    BufferedImage image = SVGLoaderCache.INSTANCE.loadFromCache(theme, svgBytes, scale, docSize);
+    if (image != null) {
+      return image;
     }
 
-    final BufferedImage image = loadWithoutCache(url, stream, scale, docSize);
-    if (image != null && url != null) {
-      SVGLoaderCache.INSTANCE.storeLoadedImage(theme, url, scale, image, docSize);
+    image = loadWithoutCache(url, svgBytes, scale, docSize);
+    if (image != null) {
+      SVGLoaderCache.INSTANCE.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
     return image;
   }
 
   @ApiStatus.Internal
-  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull byte[] stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     try {
-      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
+      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, new ByteArrayInputStream(stream)));
       if (docSize != null) {
         docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
       }

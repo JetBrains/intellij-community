@@ -34,24 +34,23 @@ abstract class SVGLoaderCacheBasics {
   protected abstract val cachesHome: File
   protected abstract fun forkIOTask(action: () -> Unit)
 
-  private fun cacheFile(theme: String, url: URL, scale: Double): File {
+  private fun cacheFile(theme: String, imageBytes: ByteArray, scale: Double): File {
     //TODO: include IntelliJ version (or JAR files signature)
     val d = MessageDigest.getInstance("SHA1")
     //caches version
     d.update(0x0)
     d.update(theme.toByteArray())
     d.update(scale.toString().toByteArray())
-    d.update(url.toString().toByteArray())
-    d.update(url.toString().toByteArray())
+    d.update(imageBytes)
 
     val hex = StringUtil.toHexString(d.digest())
-    return File(cachesHome, "$hex.12")
+    return File(cachesHome, "$hex.x16")
   }
 
 
   @Throws(IOException::class)
-  fun loadFromCache(theme: String, url: URL, scale: Double, docSize: Dimension2DDouble?  /*OUT*/): BufferedImage? {
-    val file = cacheFile(theme, url, scale)
+  fun loadFromCache(theme: String, imageBytes: ByteArray, scale: Double, docSize: Dimension2DDouble?  /*OUT*/): BufferedImage? {
+    val file = cacheFile(theme, imageBytes, scale)
     if (!file.isFile) return null
 
     //let's avoid OOM if an image is too big
@@ -91,11 +90,11 @@ abstract class SVGLoaderCacheBasics {
     }
   }
 
-  fun storeLoadedImage(theme: String, url: URL, scale: Double, image: BufferedImage, size: Dimension2DDouble) {
+  fun storeLoadedImage(theme: String, imageBytes: ByteArray, scale: Double, image: BufferedImage, size: Dimension2DDouble) {
     require(image.type == imagePixelFormat) { "image type must be $imagePixelFormat but was ${image.type}"}
 
     forkIOTask {
-      val file = cacheFile(theme, url, scale)
+      val file = cacheFile(theme, imageBytes, scale)
 
       val intData = image.raster.getPixels(0, 0, image.width, image.height, null as IntArray?)
       val output = UnsyncByteArrayOutputStream(intData.size * Int.SIZE_BYTES + 2 * 64 + 2 * 32 + 32)

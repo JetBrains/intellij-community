@@ -21,7 +21,7 @@ class SVGLoaderCacheTest {
   @Test
   fun `no entry`() = runTest {
     Assert.assertNull(
-      loadFromCache("", URL("file://mock"), 1.0, null)
+      loadFromCache("", "file://mock".toByteArray(), 1.0, null)
     )
   }
 
@@ -43,10 +43,11 @@ class SVGLoaderCacheTest {
     i.setRGB(0, 0, 0xff00ff)
     i.setRGB(0, 1, 0x00ff00)
 
-    storeLoadedImage("", URL("file://mock"), 1.0, i, ImageLoader.Dimension2DDouble(20.0, 15.0))
+    val imageBytes = "file://mock".toByteArray()
+    storeLoadedImage("", imageBytes, 1.0, i, ImageLoader.Dimension2DDouble(20.0, 15.0))
 
     val copySize = ImageLoader.Dimension2DDouble(0.0, 0.0)
-    val copy = loadFromCache("", URL("file://mock"), 1.0, copySize)
+    val copy = loadFromCache("", imageBytes, 1.0, copySize)
 
     Assert.assertEquals(20.0, copySize.width, 0.1)
     Assert.assertEquals(15.0, copySize.height, 0.1)
@@ -57,13 +58,13 @@ class SVGLoaderCacheTest {
     ImageComparator.compareAndAssert(ImageComparator.AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0)), i, fixImage(copy), null)
 
     Assert.assertNull(
-      loadFromCache("A", URL("file://mock"), 1.0, null)
+      loadFromCache("A", "file://mock".toByteArray(), 1.0, null)
     )
     Assert.assertNull(
-      loadFromCache("", URL("file://mock-2"), 1.0, null)
+      loadFromCache("", "file://mock-2".toByteArray(), 1.0, null)
     )
     Assert.assertNull(
-      loadFromCache("", URL("file://mock"), 2.0, null)
+      loadFromCache("", "file://mock".toByteArray(), 2.0, null)
     )
   }
 
