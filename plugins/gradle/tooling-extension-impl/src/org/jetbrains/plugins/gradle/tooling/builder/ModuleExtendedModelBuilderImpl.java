@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.specs.Specs;
@@ -77,27 +76,21 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final File buildDir = project.getBuildDir();
 
     String javaSourceCompatibility = null;
-    for (Task task : project.getTasks()) {
-      if (task instanceof JavaCompile) {
-        JavaCompile javaCompile = (JavaCompile)task;
-        javaSourceCompatibility = javaCompile.getSourceCompatibility();
-        if(task.getName().equals("compileJava")) break;
-      }
+    for (JavaCompile task : project.getTasks().withType(JavaCompile.class)) {
+      javaSourceCompatibility = task.getSourceCompatibility();
+      if (task.getName().equals("compileJava")) break;
     }
 
     final ModuleExtendedModelImpl moduleVersionModel =
       new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir, javaSourceCompatibility);
 
     final List<File> artifacts = new ArrayList<File>();
-    for (Task task : project.getTasks()) {
-      if (task instanceof Jar) {
-        Jar jar = (Jar)task;
-        try {
-          artifacts.add(jar.getArchivePath());
-        }
-        catch (Exception e) {
-          project.getLogger().error("warning: [task " + jar.getPath() + "] " + e.getMessage());
-        }
+    for (Jar jar : project.getTasks().withType(Jar.class)) {
+      try {
+        artifacts.add(jar.getArchivePath());
+      }
+      catch (Exception e) {
+        project.getLogger().error("warning: [task " + jar.getPath() + "] " + e.getMessage());
       }
     }
 
@@ -106,22 +99,19 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final IdeaModuleDirectorySet directorySet = new IdeaModuleDirectorySet();
 
     final List<File> testClassesDirs = new ArrayList<File>();
-    for (Task task : project.getTasks()) {
-      if (task instanceof Test) {
-        Test test = (Test)task;
-        if (is4OorBetter) {
-          testClassesDirs.addAll(test.getTestClassesDirs().getFiles());
-        }
-        else {
-          testClassesDirs.add(getTestClassesDirOld(test));
-        }
+    for (Test test : project.getTasks().withType(Test.class)) {
+      if (is4OorBetter) {
+        testClassesDirs.addAll(test.getTestClassesDirs().getFiles());
+      }
+      else {
+        testClassesDirs.add(getTestClassesDirOld(test));
+      }
 
-        if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
-          Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
-          if (testSrcDirs instanceof Iterable) {
-            for (Object dir : (Iterable)testSrcDirs) {
-              addFilePath(directorySet.getTestDirectories(), dir);
-            }
+      if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
+        Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
+        if (testSrcDirs instanceof Iterable) {
+          for (Object dir : (Iterable)testSrcDirs) {
+            addFilePath(directorySet.getTestDirectories(), dir);
           }
         }
       }
