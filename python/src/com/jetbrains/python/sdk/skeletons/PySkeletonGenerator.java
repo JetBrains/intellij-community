@@ -3,11 +3,15 @@ package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +49,7 @@ public class PySkeletonGenerator {
   protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
+  private final Sdk mySdk;
   private final String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
 
@@ -61,16 +66,6 @@ public class PySkeletonGenerator {
     myPrebuilt = prebuilt;
   }
 
-  public static class ListBinariesResult {
-    public final int generatorVersion;
-    public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
-
-    public ListBinariesResult(int generatorVersion, Map<String, PySkeletonRefresher.PyBinaryItem> modules) {
-      this.generatorVersion = generatorVersion;
-      this.modules = modules;
-    }
-  }
-
   /**
    * @param skeletonPath path where skeletons should be generated
    * @param pySdk SDK
@@ -78,6 +73,7 @@ public class PySkeletonGenerator {
    */
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
+    mySdk = pySdk;
     Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
 
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
@@ -86,6 +82,69 @@ public class PySkeletonGenerator {
       env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
     }
     myEnv = env;
+  }
+
+  public boolean generateAllSkeletons(@NotNull String extraSysPath, @Nullable ProgressIndicator indicator)
+    throws InvalidSdkException, ExecutionException {
+    final String binaryPath = mySdk.getHomePath();
+    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+
+    final List<String> command = Arrays.asList(binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", mySkeletonsPath, "-s", extraSysPath);
+    final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, PythonSdkType.activateVirtualEnv(mySdk));
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command)
+      .withEnvironment(env);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+          for (String line : StringUtil.splitByLines(event.getText())) {
+            final String trimmed = line.trim();
+            if (indicator != null) {
+              indicator.checkCanceled();
+              if (trimmed.startsWith("[progress]")) {
+                indicator.setText(StringUtil.trimStart(trimmed, "[progress]"));
+              }
+              else if (trimmed.startsWith("[progress:minor]")) {
+                indicator.setText2(StringUtil.trimStart(trimmed, "[progress:minor]"));
+              }
+            }
+          }
+        }
+      }
+    });
+    final ProcessOutput runResult = handler.runProcess(MINUTE * 20);
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isInternal() || app.isEAP()) {
+      final String stdout = runResult.getStdout();
+      if (StringUtil.isNotEmpty(stdout)) {
+        LOG.info(stdout);
+      }
+    }
+    runResult.checkSuccess(LOG);
+    return false;
+  }
+
+  public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
+    //noinspection ResultOfMethodCallIgnored
+    new File(mySkeletonsPath).mkdirs();
+    String binaryPath = sdk.getHomePath();
+    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
+
+    long startTime = System.currentTimeMillis();
+    final ProcessOutput runResult = getProcessOutput(
+      new File(binaryPath).getParent(),
+      new String[]{
+        binaryPath,
+        PythonHelpersLocator.getHelperPath(GENERATOR3),
+        "-d", mySkeletonsPath, // output dir
+        "-b", // for builtins
+      },
+      PythonSdkType.activateVirtualEnv(sdk), MINUTE * 5
+    );
+    runResult.checkSuccess(LOG);
+    LOG.info("Rebuilding builtin skeletons took Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
   }
 
   public String getSkeletonsPath() {
@@ -187,25 +246,14 @@ public class PySkeletonGenerator {
     return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
   }
 
-  public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
-    //noinspection ResultOfMethodCallIgnored
-    new File(mySkeletonsPath).mkdirs();
-    String binaryPath = sdk.getHomePath();
-    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
+  public static class ListBinariesResult {
+    public final int generatorVersion;
+    public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
 
-    long startTime = System.currentTimeMillis();
-    final ProcessOutput runResult = getProcessOutput(
-      new File(binaryPath).getParent(),
-      new String[]{
-        binaryPath,
-        PythonHelpersLocator.getHelperPath(GENERATOR3),
-        "-d", mySkeletonsPath, // output dir
-        "-b", // for builtins
-      },
-      PythonSdkType.activateVirtualEnv(sdk), MINUTE * 5
-    );
-    runResult.checkSuccess(LOG);
-    LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
+    public ListBinariesResult(int generatorVersion, Map<String, PySkeletonRefresher.PyBinaryItem> modules) {
+      this.generatorVersion = generatorVersion;
+      this.modules = modules;
+    }
   }
 
   @NotNull
