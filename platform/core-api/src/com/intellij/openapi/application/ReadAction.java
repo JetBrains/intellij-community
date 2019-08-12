@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
+/**
+ * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ *
+ * @param <T> Result type.
+ * @see WriteAction
+ */
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
