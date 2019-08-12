@@ -330,6 +330,10 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           caret.putUserData(MARK_FOR_UPDATE, Boolean.TRUE);
         }
       }
+      else if (caret.getOffset() == region.getStartOffset()) {
+        caret.putUserData(MARK_FOR_UPDATE, Boolean.TRUE);
+        caret.putUserData(SAVED_CARET_POSITION, new SavedCaretPosition(caret));
+      }
     }
 
     myFoldRegionsProcessed = true;
