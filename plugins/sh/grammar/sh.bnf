@@ -97,6 +97,8 @@
     REDIRECT_AMP_GREATER_GREATER = "&>>"
     REDIRECT_LESS_GREATER = "<>"
     REDIRECT_GREATER_BAR = ">|"
+    OUTPUT_PROCESS_SUBSTITUTION = ">("
+    INPUT_PROCESS_SUBSTITUTION = "<("
 
     OPEN_QUOTE = 'OPEN_QUOTE'
     CLOSE_QUOTE = 'CLOSE_QUOTE'
@@ -154,8 +156,8 @@ command ::= shell_command [heredoc | redirection+]
 
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (number | '-')
-                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
-process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
+                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+process_substitution ::= ('<(' | '>(') list ')' {pin=1}
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
