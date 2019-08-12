@@ -33,7 +33,6 @@ public class FontInfo {
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
-  private final boolean myUseLigatures;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
@@ -66,7 +65,6 @@ public class FontInfo {
            @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle, boolean useLigatures, FontRenderContext context) {
     mySize = size;
     myStyle = style;
-    myUseLigatures = useLigatures;
     Font font = new Font(familyName, style, size);
     myFont = useLigatures ? getFontWithLigaturesEnabled(font, realStyle) : font;
     myContext = context;
@@ -206,10 +204,6 @@ public class FontInfo {
   @JdkConstants.FontStyle
   public int getStyle() {
     return myStyle;
-  }
-
-  public boolean areLigaturesEnabled() {
-    return myUseLigatures;
   }
 
   public FontRenderContext getFontRenderContext() {
