@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
@@ -191,9 +192,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     super.visitExpression(expression)
   }
 
-  fun visitOuterCalls(originalMethod: GrMethod) {
+  fun visitOuterCalls(originalMethod: GrMethod, scope: SearchScope) {
     val mapping = originalMethod.parameters.map { it.name }.zip(method.parameters).toMap()
-    val calls = ReferencesSearch.search(originalMethod).findAll()
+    val calls = ReferencesSearch.search(originalMethod, scope).findAll()
     for (parameter in method.parameters) {
       setConstraints(parameter.type, parameter.initializerGroovy?.type ?: continue, dependentTypes, requiredTypesCollector,
                      method.typeParameters.toSet())

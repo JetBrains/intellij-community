@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiIntersectionType.createIntersection
 import com.intellij.psi.PsiIntersectionType.flatten
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
@@ -26,14 +25,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  */
 @Suppress("RemoveExplicitTypeArguments")
 fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
-  val originalMethod = method.containingFile.originalFile.run {
-    if (method.containingFile == this) {
-      method
-    }
-    else {
-      findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
-    }
-  }
+  val originalMethod = MethodParameterAugmenter.getOriginalMethod(method)
   val overridableMethod = findOverridableMethod(originalMethod)
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod)

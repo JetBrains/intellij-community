@@ -31,10 +31,22 @@ class MethodParameterAugmenter : TypeAugmenter() {
       }
     }
 
+    internal fun getOriginalMethod(method: GrMethod): GrMethod {
+      return method.containingFile.originalFile.run {
+        if (method.containingFile == this) {
+          method
+        }
+        else {
+          findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
+        }
+      }
+    }
+
     internal fun createInferenceResult(method: GrMethod): InferenceResult? {
-      val containingFile = method.containingFile ?: return null
+      val originalMethod = getOriginalMethod(method)
+      val scope = GlobalSearchScope.fileScope(originalMethod.project, originalMethod.containingFile.virtualFile)
       return CachedValuesManager.getCachedValue(method) {
-        val typedMethod = produceTypedMethod(method, GlobalSearchScope.fileScope(containingFile))
+        val typedMethod = produceTypedMethod(method, scope)
         val typeParameterSubstitutor = typedMethod?.run {
           createVirtualToActualSubstitutor(typedMethod, method)
         } ?: PsiSubstitutor.EMPTY

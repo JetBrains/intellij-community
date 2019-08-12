@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
@@ -28,7 +29,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
 
 
   companion object {
-    fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator): InferenceDriver {
+    fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator, scope: SearchScope): InferenceDriver {
       val closureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
       val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
 
@@ -44,7 +45,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           closureParameters[parameter] = parameterizedClosure
         }
 
-      collectClosureArguments(method, virtualMethod).forEach { (parameter, calls) ->
+      collectClosureArguments(method, virtualMethod, scope).forEach { (parameter, calls) ->
         // todo: default-valued parameters
         produceParameterizedClosure(parameter, (calls.first() as GrClosableBlock).allParameters.size, calls.map { it as GrClosableBlock })
       }

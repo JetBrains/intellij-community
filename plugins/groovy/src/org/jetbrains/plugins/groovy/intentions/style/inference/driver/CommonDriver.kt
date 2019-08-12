@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
@@ -33,11 +34,8 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
                                         private val typeParameters: Collection<PsiTypeParameter>,
                                         searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
-  private val scope: SearchScope
+  private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
 
-  init {
-    scope = searchScope ?: method.resolveScope
-  }
 
   companion object {
 
@@ -114,7 +112,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
       }
     }
     val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
-    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator)
+    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, scope)
     val subst = closureDriver.collectSignatureSubstitutor()
     val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod, subst)
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
@@ -196,7 +194,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val typeUsageInformation = closureDriver.collectInnerConstraints()
     val analyzer = RecursiveMethodAnalyzer(method)
     analyzer.runAnalyzer(method)
-    analyzer.visitOuterCalls(originalMethod)
+    analyzer.visitOuterCalls(originalMethod, scope)
     return analyzer.buildUsageInformation() + typeUsageInformation
   }
 
