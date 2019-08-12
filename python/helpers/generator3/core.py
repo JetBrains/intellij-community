@@ -26,14 +26,6 @@ def is_test_mode():
     return ENV_TEST_MODE_FLAG in os.environ
 
 
-# Future generator mode where all the checks will be performed on Python side.
-# Now it works in transitional mode where validity of existing SDK skeletons is checked on
-# Java side (see PySkeletonRefresher), and generator itself inspects only the cache.
-@cached
-def is_standalone_mode():
-    return ENV_STANDALONE_MODE_FLAG in os.environ
-
-
 @cached
 def is_pregeneration_mode():
     return ENV_PREGENERATION_MODE_FLAG in os.environ
@@ -635,13 +627,12 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
         global_cache_dir = os.path.join(python_stubs_dir, CACHE_DIR_NAME)
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
-        # At the moment this is actually enforced on Java-side
-        if is_standalone_mode():
-            sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name)
-            if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
-                return GenerationStatus.UP_TO_DATE
-            elif sdk_skeleton_status == SkeletonStatus.FAILING:
-                return GenerationStatus.FAILED
+
+        sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name)
+        if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
+            return GenerationStatus.UP_TO_DATE
+        elif sdk_skeleton_status == SkeletonStatus.FAILING:
+            return GenerationStatus.FAILED
 
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
