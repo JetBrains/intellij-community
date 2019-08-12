@@ -432,6 +432,9 @@ public interface Application extends ComponentManager {
   @Deprecated
   AccessToken acquireWriteActionLock(@NotNull Class marker);
 
+  /**
+   * Checks if IDE is running in <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a> to enable additional features for plugin development.
+   */
   boolean isInternal();
 
   boolean isEAP();
