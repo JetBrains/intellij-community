@@ -214,15 +214,12 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   protected String escapeTextBlock(@NotNull String text, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
-    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
     for (int i = 0; i < lines.length; i++) {
       buffer.append(PsiLiteralUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
       if (i < lines.length - 1) {
         buffer.append('\n');
       }
-    }
-    if (StringUtil.endsWithChar(text, '\n')) {
-      buffer.append('\n');
     }
     return buffer.toString();
   }
