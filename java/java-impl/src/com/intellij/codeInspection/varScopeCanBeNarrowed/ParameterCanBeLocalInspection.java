@@ -54,12 +54,16 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Collection<PsiParameter> parameters = filterFinal(method.getParameterList().getParameters());
     final PsiCodeBlock body = method.getBody();
-    if (body == null || parameters.isEmpty() || isOverrides(method) || MethodUtils.isOverridden(method)) {
+    if (body == null || parameters.isEmpty() || isOverrides(method)) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
+    Collection<PsiParameter> writtenBeforeReadParameters = getWriteBeforeRead(parameters, body);
+    if (writtenBeforeReadParameters.isEmpty() || MethodUtils.isOverridden(method)) {
+      return ProblemDescriptor.EMPTY_ARRAY;
+    }
     final List<ProblemDescriptor> result = new ArrayList<>();
-    for (PsiParameter parameter : getWriteBeforeRead(parameters, body)) {
+    for (PsiParameter parameter : writtenBeforeReadParameters) {
       final PsiIdentifier identifier = parameter.getNameIdentifier();
       if (identifier != null && identifier.isPhysical()) {
         result.add(createProblem(manager, identifier, isOnTheFly));
@@ -99,7 +103,10 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     if (controlFlow == null) return Collections.emptyList();
 
     final Set<PsiParameter> result = filterParameters(controlFlow, parameters);
+    if (result.isEmpty()) return Collections.emptyList();
+    //noinspection SuspiciousMethodCalls
     result.retainAll(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
+    if (result.isEmpty()) return Collections.emptyList();
     for (final PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
       final PsiElement resolved = readBeforeWrite.resolve();
       if (resolved instanceof PsiParameter) {
