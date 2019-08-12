@@ -344,6 +344,7 @@ def say(msg, *data):
     """Say something at info level (stdout)"""
     sys.stdout.write(msg % data)
     sys.stdout.write("\n")
+    sys.stdout.flush()
 
 
 def flatten(seq):

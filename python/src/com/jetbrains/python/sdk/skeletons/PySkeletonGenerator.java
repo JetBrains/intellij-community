@@ -91,50 +91,58 @@ public class PySkeletonGenerator {
     final String binaryPath = mySdk.getHomePath();
     if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
 
-    final List<String> command = Arrays.asList(binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", mySkeletonsPath, "-s", extraSysPath);
+    final List<String> command =
+      Arrays.asList(binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", mySkeletonsPath, "-s", extraSysPath);
     final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, PythonSdkType.activateVirtualEnv(mySdk));
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command)
-      .withEnvironment(env);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
           for (String line : StringUtil.splitByLines(event.getText())) {
             final String trimmed = line.trim();
             if (indicator != null) {
               indicator.checkCanceled();
-              final ControlMessage control = ControlMessage.fromLine(trimmed);
-              if (control != null) {
-                if (control.getType().equals("progress")) {
-                  if (control.getSubType().equals("minor")) {
-                    indicator.setText2(control.getContent());
-                  }
-                  else if (trimmed.startsWith("[progress:fraction]")) {
-                    indicator.setIndeterminate(false);
-                    indicator.setFraction(StringUtil.parseDouble(control.getContent(), 0));
-                  }
-                  else {
-                    indicator.setText(control.getContent());
-                  }
+            }
+            final ControlMessage msg = ControlMessage.fromLine(trimmed);
+            if (msg != null) {
+              final String msgType = msg.getType();
+              final String msgStubType = msg.getSubType();
+              if (msgType.equals("progress") && indicator != null) {
+                if (msgStubType.equals("minor")) {
+                  indicator.setText2(msg.getContent());
+                }
+                else if (msgStubType.equals("fraction")) {
+                  indicator.setIndeterminate(false);
+                  indicator.setFraction(StringUtil.parseDouble(msg.getContent(), 0));
+                }
+                else {
+                  indicator.setText(msg.getContent());
+                }
+              }
+              else if (msgType.equals("log")) {
+                if (msgStubType.equals("info")) {
+                  LOG.info(msg.getContent());
+                }
+                else if (msgStubType.equals("debug")) {
+                  LOG.debug(msg.getContent());
+                }
+                else if (msgStubType.equals("trace")) {
+                  LOG.trace(msg.myContent);
                 }
               }
             }
           }
         }
+        else if (outputType == ProcessOutputType.STDERR) {
+          // Tracebacks are handled line-by-line, thus leading indent must be preserved
+          LOG.info(StringUtil.trimTrailing(event.getText()));
+        }
       }
     });
     final ProcessOutput runResult = handler.runProcess(MINUTE * 20);
-
-    final Application app = ApplicationManager.getApplication();
-    if (app.isInternal() || app.isEAP()) {
-      final String stdout = runResult.getStdout();
-      if (StringUtil.isNotEmpty(stdout)) {
-        LOG.info(stdout);
-      }
-    }
-    runResult.checkSuccess(LOG);
-    return false;
+    return runResult.getExitCode() == 0;
   }
 
   private static class ControlMessage {
