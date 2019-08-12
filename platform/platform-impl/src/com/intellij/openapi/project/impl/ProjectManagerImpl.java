@@ -74,6 +74,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
 
+  @NotNull
   private Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
@@ -316,7 +317,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  protected ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
+  private static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -415,8 +416,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     Runnable doLoad = () -> {
       success.set(loadProjectUnderProgress(project, () -> {
-        beforeProjectOpened(project);
-
         TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
         StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
@@ -473,9 +472,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return true;
-  }
-
-  protected void beforeProjectOpened(Project project) {
   }
 
   private static void assertInTransaction() {
