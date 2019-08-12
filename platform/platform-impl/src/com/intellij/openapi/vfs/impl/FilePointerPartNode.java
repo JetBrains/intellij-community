@@ -144,12 +144,13 @@ class FilePointerPartNode {
   }
 
   private static int getNameId(VirtualFile file) {
-    return file == null ? -1 : /*file.getParent() == null ? toNameId(file.getNameSequence()) : */((VirtualFileSystemEntry)file).getNameId();
+    return file == null ? -1 : ((VirtualFileSystemEntry)file).getNameId();
   }
 
   private FilePointerPartNode findByExistingNameId(@Nullable VirtualFile parent,
                                                    int childNameId,
                                                    @Nullable List<? super FilePointerPartNode> outDirs) {
+    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     FilePointerPartNode leaf;
     if (parent == null) {
       leaf = this;
@@ -177,6 +178,7 @@ class FilePointerPartNode {
   }
 
   private FilePointerPartNode findChildByNameId(int nameId, boolean createIfNotFound) {
+    if (nameId <= 0) throw new IllegalArgumentException("invalid argument nameId: "+nameId);
     for (FilePointerPartNode child : children) {
       if (child.nameEqualTo(nameId)) return child;
     }
@@ -229,6 +231,7 @@ class FilePointerPartNode {
                                int childNameId,
                                @NotNull List<? super FilePointerPartNode> out,
                                boolean addSubdirectoryPointers) {
+    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     FilePointerPartNode node = findByExistingNameId(parent, childNameId, out);
     if (node != null) {
       if (node.leaves != null) {
@@ -307,10 +310,12 @@ class FilePointerPartNode {
     assert leaves != null : toString();
     associate(null, null);
     useCount = 0;
-    //myLastUpdated = -1;
     FilePointerPartNode node;
     for (node = this; node.parent != null; node = node.parent) {
-      node.pointersUnder-=pointersNumber;
+      int pointersAfter = node.pointersUnder-=pointersNumber;
+      if (pointersAfter == 0) {
+        node.parent.children = ArrayUtil.remove(node.parent.children, node);
+      }
     }
     if ((node.pointersUnder-=pointersNumber) == 0) {
       node.children = EMPTY_ARRAY; // clear root node, especially in tests

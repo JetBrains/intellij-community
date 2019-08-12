@@ -125,6 +125,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
                                    int childNameId,
                                    @NotNull List<? super FilePointerPartNode> out,
                                    boolean addSubdirectoryPointers) {
+    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     for (FilePointerPartNode root : myPointers.values()) {
       root.addRelevantPointersFrom(parent, childNameId, out, addSubdirectoryPointers);
     }
@@ -462,7 +463,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
             FileType fileType = myFileTypeManager.getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
             fireSubdirectoryPointers = fileType instanceof ArchiveFileType;
           }
-          addRelevantPointers(createEvent.getParent(), toNameId(createEvent), toFireEvents, fireSubdirectoryPointers);
+          addRelevantPointers(createEvent.getParent(), createEvent.getChildNameId(), toFireEvents, fireSubdirectoryPointers);
           // when new file created its UrlPartNode should be converted to id-based FilePointerPartNode to save memory
           toUpdateUrl.addAll(toFireEvents);
 
@@ -535,14 +536,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         after(toFireEvents, toUpdateUrl, eventList, prepareElapsedMs, events.size());
       }
     };
-  }
-
-  private static int toNameId(@NotNull VFileCreateEvent event) {
-    int nameId = event.getChildNameId();
-    if (nameId == -1) {
-      nameId = toNameId(event.getChildName());
-    }
-    return nameId;
   }
 
   private static int toNameId(@NotNull String name) {
