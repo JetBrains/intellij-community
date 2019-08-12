@@ -113,7 +113,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         newParameter.setType(newType.type)
       }
     }
-    val copiedVirtualMethod = createVirtualMethod(targetMethod)
+    val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
     val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator)
     val subst = closureDriver.collectSignatureSubstitutor()
     val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod, subst)

@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -139,7 +140,7 @@ fun collectDependencies(typeParameterList: PsiTypeParameterList,
         }
       }
       else {
-        classType.parameters.forEach { it.accept(this) }
+        classType.parameters.forEach { it?.accept(this) }
       }
       super.visitClassType(classType)
     }
@@ -213,9 +214,9 @@ fun PsiClassType.erasure(): PsiClassType {
   }
 }
 
-fun createVirtualMethod(method: GrMethod): GrMethod {
-  val virtualFile = method.containingFile.copy()
-  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()!!
+fun createVirtualMethod(method: GrMethod): GrMethod? {
+  val virtualFile = method.containingFile.copy() as GroovyFile
+  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
   if (!newMethod.hasTypeParameters()) {
     newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
   }

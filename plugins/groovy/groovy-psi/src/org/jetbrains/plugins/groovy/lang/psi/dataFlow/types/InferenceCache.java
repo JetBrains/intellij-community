@@ -77,6 +77,7 @@ class InferenceCache {
       final PsiType augmentedType = getAugmentedType(descriptor);
       if (augmentedType != null) {
         cache.putType(descriptor, DFAType.create(augmentedType));
+        myVarTypes.get().set(instruction.num(), cache);
       }
       else {
         Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;

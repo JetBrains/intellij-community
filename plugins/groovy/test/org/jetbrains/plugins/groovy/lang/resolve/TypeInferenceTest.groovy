@@ -965,7 +965,8 @@ def foo() {
     doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
     doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
     doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
-    doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
+    doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()',
+               "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
   }
 
   void 'test range literal type'() {
@@ -1343,4 +1344,27 @@ foo(1)
 ''', JAVA_LANG_INTEGER
   }
 
+  void 'test implicit @ClosureParams'() {
+    doTest '''
+def foo(a, c) {
+  c(a)
+}
+
+foo(1) { <caret>it }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test implicit @ClosureParams with nontrivial substitutor'() {
+    doTest '''
+class A<T> {
+    T t = null
+    def foo(c) {
+        c(t)
+    }
+}
+
+(new A<Integer>()).foo {
+    <caret>it
+}''', "? super $JAVA_LANG_INTEGER"
+  }
 }

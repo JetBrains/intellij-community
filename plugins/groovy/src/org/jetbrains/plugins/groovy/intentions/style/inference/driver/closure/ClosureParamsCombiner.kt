@@ -12,12 +12,12 @@ class ClosureParamsCombiner {
 
 
   companion object {
-    private const val CLOSURE_PARAMS = "ClosureParams"
+    const val CLOSURE_PARAMS = "ClosureParams"
     const val FROM_STRING = "FromString"
     const val SIMPLE_TYPE = "SimpleType"
     const val FROM_ABSTRACT_TYPE_METHODS = "FromAbstractTypeMethods"
     const val MAP_ENTRY_OR_KEY_VALUE = "MapEntryOrKeyValue"
-    private const val ANNOTATION_PACKAGE = "groovy.transform.stc"
+    const val ANNOTATION_PACKAGE = "groovy.transform.stc"
     const val CLOSURE_PARAMS_FQ = "$ANNOTATION_PACKAGE.$CLOSURE_PARAMS"
     const val FROM_STRING_FQ = "$ANNOTATION_PACKAGE.$FROM_STRING"
     const val SIMPLE_TYPE_FQ = "$ANNOTATION_PACKAGE.$SIMPLE_TYPE"
@@ -84,27 +84,24 @@ class ClosureParamsCombiner {
   }
 
 
-  private fun createSimpleType(type: PsiType, context: PsiElement): PsiAnnotation =
-    GroovyPsiElementFactory.getInstance(context.project).createAnnotationFromText(
-      "@$CLOSURE_PARAMS_FQ(value = $SIMPLE_TYPE_FQ, options = ['${type.canonicalText}']) ")
+  private fun createSimpleType(types: Iterable<PsiType>, context: PsiElement): PsiAnnotation {
+    val typesRepresentation = types.joinToString(", ") { "'${it.canonicalText}'" }
+    return GroovyPsiElementFactory.getInstance(context.project).createAnnotationFromText(
+      "@$CLOSURE_PARAMS_FQ(value = $SIMPLE_TYPE_FQ, options = [$typesRepresentation]) ")
+
+  }
 
 
   fun instantiateAnnotation(outerParameters: PsiParameterList,
                             types: List<PsiType>): String {
     if (types.size == 1) {
-      val indexedAnnotation = typeHintChooser.mapNotNull { it(outerParameters, types.first()) }.firstOrNull()
-      val resultAnnotation = indexedAnnotation ?: run {
-        val signatureType = types.first()
-        if (signatureType.isTypeParameter()) {
-          null
-        }
-        else {
-          createSimpleType(signatureType, outerParameters)
-        }
-      }
-      if (resultAnnotation != null) {
-        return resultAnnotation.text
-      }
+      typeHintChooser
+        .mapNotNull { it(outerParameters, types.first()) }
+        .firstOrNull()
+        ?.run { return this.text }
+    }
+    if (!types.any { type -> type.any { it.isTypeParameter() } }) {
+      return createSimpleType(types, outerParameters).text
     }
     return """@$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=["${types.joinToString(",") { it.canonicalText }}"]) """
   }

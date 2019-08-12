@@ -6,28 +6,27 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_ABSTRACT_TYPE_METHODS
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
-import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -263,3 +262,59 @@ private fun parseSimpleType(parameterTypes: GrAnnotationArrayInitializer): Int {
 
 data class AnnotatingResult(val parameter: GrParameter, val annotationText: String)
 
+
+fun inferTypeFromTypeHint(parameter: ClosureSyntheticParameter): PsiType? {
+  val closureBlock = parameter.closure
+  val methodCall = closureBlock?.parentOfType<GrCall>() ?: return null
+  val method = (methodCall.resolveMethod() as? GrMethod)
+                 ?.takeIf { method -> method.parameters.any { it.typeElement == null } } ?: return null
+  val (virtualMethod, substitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
+  val resolveResult = methodCall.advancedResolve() as? GroovyMethodResult ?: return null
+  val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
+    ExpressionArgument(closureBlock)) as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
+  val virtualParameter = virtualMethod?.parameters?.getOrNull(method.parameterList.getParameterNumber(methodParameter)) ?: return null
+  val anno = virtualParameter.modifierList.annotations.find { it.shortName == ClosureParamsCombiner.CLOSURE_PARAMS }
+             ?: return null
+  val className = (anno.findAttributeValue("value") as? GrReferenceExpression)?.qualifiedReferenceName ?: return null
+  val processor = SignatureHintProcessor.getHintProcessor(className) ?: return null
+  val options = AnnotationUtil.arrayAttributeValues(anno.findAttributeValue("options")).mapNotNull { (it as? PsiLiteral)?.stringValue() }
+  val completeContextSubstitutor = substitutor compose resolveResult.substitutor
+  val signatures = processor.inferExpectedSignatures(virtualMethod, completeContextSubstitutor, options.toTypedArray())
+  val parameters = closureBlock.allParameters
+  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(0)
+}
+
+
+infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor {
+  val typeParameters = substitutionMap.keys
+  var newSubstitutor = PsiSubstitutor.EMPTY
+  typeParameters.forEach { typeParameter ->
+    newSubstitutor = newSubstitutor.put(typeParameter, right.substitute(this.substitute(typeParameter)))
+  }
+  return newSubstitutor
+}
+
+fun PsiType.any(predicate: (PsiType) -> Boolean): Boolean {
+  var mark = false
+  accept(object : PsiTypeVisitor<Unit>() {
+    override fun visitClassType(classType: PsiClassType?) {
+      if (predicate(classType ?: return)) {
+        mark = true
+      }
+      classType.parameters.forEach { it.accept(this) }
+    }
+
+    override fun visitWildcardType(wildcardType: PsiWildcardType?) {
+      wildcardType?.bound?.accept(this)
+    }
+
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
+      intersectionType?.conjuncts?.forEach { it.accept(this) }
+    }
+
+    override fun visitArrayType(arrayType: PsiArrayType?) {
+      arrayType?.componentType?.accept(this)
+    }
+  })
+  return mark
+}

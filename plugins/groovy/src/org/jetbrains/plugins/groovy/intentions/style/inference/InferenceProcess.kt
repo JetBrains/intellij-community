@@ -40,7 +40,7 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   }
   val driver = createDriver(originalMethod, scope)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
-  val virtualMethod = createVirtualMethod(method)
+  val virtualMethod = createVirtualMethod(method) ?: return method
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
   val typeUsage = parameterizedDriver.collectInnerConstraints()
   val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList(), typeUsage)
@@ -49,7 +49,7 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
 
 private fun createDriver(method: GrMethod,
                          scope: SearchScope): InferenceDriver {
-  val virtualMethod = createVirtualMethod(method)
+  val virtualMethod = createVirtualMethod(method) ?: return EmptyDriver
   val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name })
   return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
 }
@@ -117,7 +117,7 @@ private fun inferTypeParameters(driver: InferenceDriver,
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
                                                         endpointTypes.toTypedArray())
   val finalSubstitutor = resultSubstitutor.putAll(endpointSubstitutor)
-  val resultMethod = createVirtualMethod(method)
+  val resultMethod = createVirtualMethod(method) ?: return method
   driver.instantiate(resultMethod, finalSubstitutor)
   resultMethod.typeParameterList!!.replace(collector.typeParameterList)
   val residualTypeParameterList = buildResidualTypeParameterList(resultMethod, driver, method)
