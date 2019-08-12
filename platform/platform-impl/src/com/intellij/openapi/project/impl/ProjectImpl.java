@@ -233,9 +233,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
-      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    }
+    app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
   }
 
   public void init(@Nullable ProgressIndicator indicator) {
