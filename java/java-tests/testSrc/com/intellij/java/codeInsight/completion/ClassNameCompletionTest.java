@@ -126,11 +126,6 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testBracesAfterNew() { doTest(); }
 
-  public void testInPlainTextFile() {
-    configureByFile(getTestName(false) + ".txt");
-    checkResultByFile(getTestName(false) + "_after.txt");
-  }
-
   public void testInPropertiesFile() {
     myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
     complete();

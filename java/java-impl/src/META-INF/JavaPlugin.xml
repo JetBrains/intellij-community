@@ -1197,7 +1197,7 @@
                             implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor"/>
     <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"
                             implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor"/>
-    <completion.contributor language="any" id="javaClassName" order="last, before default"
+    <completion.contributor language="JVM" id="javaClassName" order="last, before default"
                             implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaMemberName" order="before javaOverride"
                             implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor"/>
