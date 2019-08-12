@@ -97,13 +97,12 @@ public class LightFilePointer implements VirtualFilePointer {
       Application application = ApplicationManager.getApplication();
       if (!myRefreshed) {
         myRefreshed = true;
-        boolean isDispatch = application.isDispatchThread();
-        if (isDispatch || !application.isReadAccessAllowed()) {
+        if (application.isDispatchThread() || !application.isReadAccessAllowed()) {
           virtualFile = vfManager.refreshAndFindFileByUrl(myUrl);
         }
         else {
           //refresh only
-          ApplicationManager.getApplication().invokeLater(() -> vfManager.refreshAndFindFileByUrl(myUrl));
+          application.invokeLater(() -> vfManager.refreshAndFindFileByUrl(myUrl));
         }
       }
     }
