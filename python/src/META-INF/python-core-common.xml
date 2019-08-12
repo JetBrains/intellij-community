@@ -661,6 +661,7 @@
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
+    <statistics.validation.customWhiteListRule implementation="com.jetbrains.python.statistics.PyPackageUsagesWhiteListRule"/>
   </extensions>
 
   <extensionPoints>
