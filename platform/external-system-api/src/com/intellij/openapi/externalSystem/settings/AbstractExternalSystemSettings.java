@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.externalSystem.util.DisposeUtils.createOrDisposable;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -99,11 +100,9 @@ public abstract class AbstractExternalSystemSettings<
    */
   protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
     Project project = getProject();
-    if (project != parentDisposable) {
-      Disposer.register(project, parentDisposable);
-    }
     MessageBus messageBus = project.getMessageBus();
-    MessageBusConnection connection = messageBus.connect(parentDisposable);
+    Disposable disposable = createOrDisposable(project, parentDisposable);
+    MessageBusConnection connection = messageBus.connect(disposable);
     connection.subscribe(getChangesTopic(), listener);
   }
 
