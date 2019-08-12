@@ -19,7 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import sun.swing.SwingUtilities2
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -28,6 +30,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.math.min
 
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -49,7 +52,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
 
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
-  private val UPDATER_TIMEOUT = 50
+  private val UPDATER_TIMEOUT = 70
 
   private val registryListener = object : RegistryValueListener.Adapter() {
     override fun afterValueChanged(value: RegistryValue) {
@@ -65,7 +68,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     override fun getPreferredSize(): Dimension {
       val fm = getFontMetrics(font)
-      return Dimension(parent.width, fm.height)
+      val w = SwingUtilities2.stringWidth(this, fm, titleString) + JBUI.scale(5)
+      return Dimension(min(parent.width, w), fm.height)
     }
 
     override fun paintComponent(g: Graphics) {
@@ -171,8 +175,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       updater.addRequest({
                            update()
                          }, UPDATER_TIMEOUT)
-      //update()
-
     }
   }
 
@@ -318,6 +320,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
 
     label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+
+    label.revalidate()
     label.repaint()
 
     onBoundsChanged?.invoke()

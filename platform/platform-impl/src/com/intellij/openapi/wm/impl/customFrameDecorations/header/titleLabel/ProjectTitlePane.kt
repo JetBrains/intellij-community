@@ -87,7 +87,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
 class ProjectTitle : ShrinkingTitlePart {
 
-  protected var text: String =""
+  private var text: String =""
   private val description = ClippingTitle()
 
   private var projectTextWidth: Int = 0
