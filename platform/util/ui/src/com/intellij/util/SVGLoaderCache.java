@@ -27,18 +27,15 @@ public abstract class SVGLoaderCache {
 
 
   @NotNull
-  private File cacheFile(@NotNull String theme, @NotNull byte[] imageBytes, double scale) {
+  private File cacheFile(@NotNull byte[] theme, @NotNull byte[] imageBytes, double scale) {
     try {
-      MessageDigest d = MessageDigest.getInstance("SHA1");
+      MessageDigest d = MessageDigest.getInstance("SHA-256");
       //caches version
-      d.update((byte)0);
-      d.update(theme.getBytes(StandardCharsets.UTF_8));
-      //TODO:!!!
-      d.update(String.valueOf(scale).getBytes(StandardCharsets.UTF_8));
+      d.update(theme);
       d.update(imageBytes);
 
       String hex = StringUtil.toHexString(d.digest());
-      return new File(getCachesHome(), hex + ".x18");
+      return new File(getCachesHome(), hex + ".x" + scale);
     }
     catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("SHA1 is not supported!", e);
@@ -46,7 +43,7 @@ public abstract class SVGLoaderCache {
   }
 
   @Nullable
-  public final BufferedImage loadFromCache(@NotNull String theme,
+  public final BufferedImage loadFromCache(@NotNull byte[] theme,
                                            @NotNull byte[] imageBytes,
                                            double scale,
                                            @NotNull ImageLoader.Dimension2DDouble docSize) {
@@ -88,7 +85,7 @@ public abstract class SVGLoaderCache {
     }
   }
 
-  public final void storeLoadedImage(@NotNull String theme,
+  public final void storeLoadedImage(@NotNull byte[] theme,
                                      @NotNull byte[] imageBytes,
                                      double scale,
                                      @NotNull BufferedImage image,

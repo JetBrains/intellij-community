@@ -41,7 +41,7 @@ public class SVGLoaderCacheTest {
 
   @Test
   public void testNoEntry() {
-    Assert.assertNull(myCache.loadFromCache("", new byte[]{}, 1.0, new ImageLoader.Dimension2DDouble(0, 0)));
+    Assert.assertNull(myCache.loadFromCache(new byte[]{}, new byte[]{}, 1.0, new ImageLoader.Dimension2DDouble(0, 0)));
   }
 
   @Test
@@ -52,10 +52,11 @@ public class SVGLoaderCacheTest {
     i.setRGB(0, 1, 0x00ff00);
 
     byte[] imageBytes = new byte[]{1, 2, 3};
-    myCache.storeLoadedImage("", imageBytes, 1.0, i, new ImageLoader.Dimension2DDouble(20.0, 15.0));
+    final byte[] theme = {};
+    myCache.storeLoadedImage(theme, imageBytes, 1.0, i, new ImageLoader.Dimension2DDouble(20.0, 15.0));
 
     ImageLoader.Dimension2DDouble copySize = new ImageLoader.Dimension2DDouble(0.0, 0.0);
-    BufferedImage copy = myCache.loadFromCache("", imageBytes, 1.0, copySize);
+    BufferedImage copy = myCache.loadFromCache(theme, imageBytes, 1.0, copySize);
 
     Assert.assertEquals(20.0, copySize.getWidth(), 0.1);
     Assert.assertEquals(15.0, copySize.getHeight(), 0.1);
@@ -64,8 +65,8 @@ public class SVGLoaderCacheTest {
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), i, copy, null);
 
     final ImageLoader.Dimension2DDouble size = new ImageLoader.Dimension2DDouble(0, 0);
-    Assert.assertNull(myCache.loadFromCache("A", imageBytes, 1.0, size));
-    Assert.assertNull(myCache.loadFromCache("", new byte[]{6, 7}, 1.0, size));
-    Assert.assertNull(myCache.loadFromCache("", imageBytes, 2.0, size));
+    Assert.assertNull(myCache.loadFromCache(new byte[]{123}, imageBytes, 1.0, size));
+    Assert.assertNull(myCache.loadFromCache(theme, new byte[]{6, 7}, 1.0, size));
+    Assert.assertNull(myCache.loadFromCache(theme, imageBytes, 2.0, size));
   }
 }

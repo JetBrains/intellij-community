@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -30,9 +32,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -58,7 +59,7 @@ public class UITheme {
   private Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
-  private SVGLoader.SvgColorPatcher colorPatcher;
+  private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
 
   private UITheme() { }
 
@@ -151,31 +152,43 @@ public class UITheme {
           }
         }
 
-        theme.colorPatcher = new SVGLoader.SvgColorPatcher() {
+        theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+          @Nullable
           @Override
-          public void patchColors(URL url, Element svg) {
+          public SVGLoader.SvgElementColorPatcher forURL(@NotNull URL url) {
             PaletteScope scope = paletteScopeManager.getScopeByURL(url);
             if (scope == null) {
-              return;
+              return null;
             }
-            String fill = svg.getAttribute("fill");
-            if (fill != null) {
-              String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
-              if (newFill != null) {
-                svg.setAttribute("fill", newFill);
-                if (scope.alphas.get(newFill) != null) {
-                  svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
+
+            return new SVGLoader.SvgElementColorPatcher() {
+              @Override
+              public byte[] digest() {
+                return scope.digest();
+              }
+
+              @Override
+              public void patchColors(Element svg) {
+                String fill = svg.getAttribute("fill");
+                if (fill != null) {
+                  String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
+                  if (newFill != null) {
+                    svg.setAttribute("fill", newFill);
+                    if (scope.alphas.get(newFill) != null) {
+                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
+                    }
+                  }
+                }
+                NodeList nodes = svg.getChildNodes();
+                int length = nodes.getLength();
+                for (int i = 0; i < length; i++) {
+                  Node item = nodes.item(i);
+                  if (item instanceof Element) {
+                    patchColors((Element)item);
+                  }
                 }
               }
-            }
-            NodeList nodes = svg.getChildNodes();
-            int length = nodes.getLength();
-            for (int i = 0; i < length; i++) {
-              Node item = nodes.item(i);
-              if (item instanceof Element) {
-                patchColors(url, (Element)item);
-              }
-            }
+            };
           }
         };
       }
@@ -282,7 +295,7 @@ public class UITheme {
     return patcher;
   }
 
-  public SVGLoader.SvgColorPatcher getColorPatcher() {
+  public SVGLoader.SvgElementColorPatcherProvider getColorPatcher() {
     return colorPatcher;
   }
 
@@ -463,12 +476,39 @@ public class UITheme {
   static class PaletteScope {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
+
+    private byte[] hash = null;
+
+    @NotNull
+    byte[] digest() {
+      if (hash != null) return hash;
+
+      final Hasher hasher = Hashing.sha256().newHasher();
+      //order is significant
+      for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
+        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
+        hasher.putString(e.getValue(), StandardCharsets.UTF_8);
+      }
+      //order is significant
+      for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
+        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
+        final Integer value = e.getValue();
+        if (value != null) {
+          hasher.putInt(value);
+        }
+      }
+      hash = hasher.hash().asBytes();
+      return hash;
+    }
   }
 
   static class PaletteScopeManager {
     final PaletteScope ui = new PaletteScope();
     final PaletteScope checkBoxes = new PaletteScope();
     final PaletteScope radioButtons = new PaletteScope();
+
+    PaletteScopeManager() {
+    }
 
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;

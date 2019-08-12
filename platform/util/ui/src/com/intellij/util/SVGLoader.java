@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,13 +32,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.concurrent.Callable;
 
 /**
  * @author tav
  */
 public final class SVGLoader {
-  private static SvgColorPatcher ourColorPatcher = null;
+  private static final byte[] DEFAULT_THEME = new byte[0];
+
+  private static SvgElementColorPatcherProvider ourColorPatcher = null;
+
   private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
     @NotNull
     @Override
@@ -69,20 +70,31 @@ public final class SVGLoader {
 
   @ApiStatus.Internal
   public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    final String theme = "TODO"; //compute from the actual SvgColorPatcher instance
+    byte[] theme = DEFAULT_THEME;
+
+    byte[] svgBytes = FileUtil.loadBytes(stream);
+
+    if (ourColorPatcher != null && url != null) {
+      SvgElementColorPatcher subPatcher = ourColorPatcher.forURL(url);
+      if (subPatcher != null) {
+        theme = subPatcher.digest();
+      }
+    }
 
     if (docSize == null) {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
-    byte[] svgBytes = FileUtil.loadBytes(stream); //TODO: check for OOMs/Limit load?
-    BufferedImage image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
-    if (image != null) {
-      return image;
+    BufferedImage image;
+    if (theme != null) {
+      image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
+      if (image != null) {
+        return image;
+      }
     }
 
     image = loadWithoutCache(url, svgBytes, scale, docSize);
-    if (image != null) {
+    if (image != null && theme != null) {
       ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
     return image;
@@ -200,11 +212,43 @@ public final class SVGLoader {
 
   private static void patchColors(URL url, Document document) {
     if (ourColorPatcher != null) {
-      ourColorPatcher.patchColors(url, document.getDocumentElement());
+      final SvgElementColorPatcher patcher = ourColorPatcher.forURL(url);
+      if (patcher != null) {
+        patcher.patchColors(document.getDocumentElement());
+      }
     }
   }
 
-  public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
+  /**
+   * @deprecated use {@link setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
+   */
+  @Deprecated
+  public static void setColorPatcher(@Nullable final SvgColorPatcher colorPatcher) {
+    if (colorPatcher == null) {
+      setColorPatcherProvider(null);
+      return;
+    }
+
+    setColorPatcherProvider(new SvgElementColorPatcherProvider() {
+      @Override
+      public SvgElementColorPatcher forURL(@NotNull final URL url) {
+        return new SvgElementColorPatcher() {
+          @Override
+          public void patchColors(Element svg) {
+            colorPatcher.patchColors(url, svg);
+          }
+
+          @Nullable
+          @Override
+          public byte[] digest() {
+            return null;
+          }
+        };
+      }
+    });
+  }
+
+  public static void setColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
   }
@@ -217,12 +261,30 @@ public final class SVGLoader {
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);
   }
 
+  public interface SvgElementColorPatcher {
+    void patchColors(Element svg);
+
+    /**
+     * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
+     */
+    @Nullable
+    byte[] digest();
+  }
+
+  public interface SvgElementColorPatcherProvider {
+    @Nullable
+    SvgElementColorPatcher forURL(@NotNull URL url);
+  }
+
+  /**
+   * @deprecated use {@link SvgElementColorPatcherProvider instead}
+   */
+  @Deprecated
   public interface SvgColorPatcher {
 
     /**
      * @deprecated use {@link #patchColors(URL, Element)}
      */
-    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     default void patchColors(@SuppressWarnings("unused") Element svg) {}
 
