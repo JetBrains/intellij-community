@@ -42,8 +42,9 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
     else if (getAfter() != null) {
       return "after " + DateFormatUtil.formatDate(getAfter());
     }
-    else {
+    else if (getBefore() != null) {
       return "before " + DateFormatUtil.formatDate(getBefore());
     }
+    return "";
   }
 }
