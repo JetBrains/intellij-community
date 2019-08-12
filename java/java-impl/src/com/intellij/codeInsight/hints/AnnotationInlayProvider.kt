@@ -166,40 +166,16 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
-      val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"))
-      val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"))
-      override fun createComponent(listener: ChangeListener): JComponent {
-        reset()
-        fun onUiChanged() {
-          settings.showInferred = showInferredCheckBox.isSelected
-          settings.showExternal = showExternalCheckBox.isSelected
-          listener.settingsChanged()
-          if (!settings.showExternal && !settings.showInferred) {
-            listener.didDeactivated()
-          }
-        }
-        val panel = JPanel(GridLayout(1, 1))
-        panel.add(panel {
-          row {
-            showExternalCheckBox.addChangeListener { onUiChanged() }
-            showExternalCheckBox()
-          }
-          row {
-            showInferredCheckBox.addChangeListener { onUiChanged() }
-            showInferredCheckBox()
-          }
-        })
-        panel.border = JBUI.Borders.empty(0, 20, 0, 0)
-        return panel
-      }
-
-      override fun reset() {
-        showExternalCheckBox.isSelected = settings.showExternal
-        showInferredCheckBox.isSelected = settings.showInferred
-      }
+      override fun createComponent(listener: ChangeListener): JComponent = panel {}
 
       override val mainCheckboxText: String
         get() = "Show hints for:"
+
+      override val cases: List<ImmediateConfigurable.Case>
+        get() = listOf(
+          ImmediateConfigurable.Case("Inferred annotations", settings::showInferred),
+          ImmediateConfigurable.Case("External annotations", settings::showExternal)
+        )
     }
   }
 

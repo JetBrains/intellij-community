@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import kotlin.reflect.KMutableProperty0
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>("com.intellij.codeInsight.inlayProvider")
 
@@ -75,6 +76,7 @@ interface ImmediateConfigurable {
   /**
    * Creates component, which listen to its components and immediately updates state of settings object
    * This is required to make preview in settings works instantly
+   * Note, that if you need to express only cases of this provider, you should use [cases] instead
    */
   fun createComponent(listener: ChangeListener): JComponent
 
@@ -90,18 +92,27 @@ interface ImmediateConfigurable {
   @JvmDefault
   val mainCheckboxText: String
     get() = "Show hints"
+
+  @JvmDefault
+  val cases : List<Case>
+    get() = emptyList()
+
+  class Case(val name: String, private val loadFromSettings: () -> Boolean, private val onUserChanged: (Boolean) -> Unit) {
+    var value: Boolean
+      get() = loadFromSettings()
+      set(value) = onUserChanged(value)
+
+    constructor(name: String, property: KMutableProperty0<Boolean>) : this(name, { property.get() }, {property.set(it)})
+  }
 }
+
+
 
 interface ChangeListener {
   /**
    * This method should be called on any change of corresponding settings
    */
   fun settingsChanged()
-
-  /**
-   * Called when settings are in the state, when provider do nothing (e. g. all checkboxes are unchecked)
-   */
-  fun didDeactivated() {}
 }
 
 /**
