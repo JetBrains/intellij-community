@@ -27,4 +27,9 @@ public class ShLexerBugfixTest extends LexerTestCase {
    * IDEA-219928
    */
   public void testParamExpansionEscape() { doFileTest("sh"); }
+
+  /**
+   * IDEA-220072
+   */
+  public void testProcessSubstitution()  { doFileTest("sh"); }
 }

@@ -9,11 +9,10 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
               PROCESS_SUBSTITUTION
-                PsiElement(<)('<')
-                PsiWhiteSpace(' ')
-                PsiElement(<)('<')
-                PsiElement(()('(')
+                PsiElement(<()('<(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE
@@ -33,8 +32,7 @@ SHELL_SCRIPT
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PROCESS_SUBSTITUTION
-                PsiElement(>)('>')
-                PsiElement(()('(')
+                PsiElement(>()('>(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE
@@ -53,40 +51,10 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
               PROCESS_SUBSTITUTION
-                PsiElement(<)('<')
-                PsiWhiteSpace(' ')
-                PsiElement(<)('<')
-                PsiElement(()('(')
-                COMPOUND_LIST
-                  PIPELINE_COMMAND
-                    PIPELINE
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('true')
-                  PsiWhiteSpace(' ')
-                  PsiElement(&&)('&&')
-                  PsiWhiteSpace(' ')
-                  PIPELINE_COMMAND
-                    PIPELINE
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('false')
-                PsiElement())(')')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('cat')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            REDIRECTION
-              PROCESS_SUBSTITUTION
-                PsiElement(>)('>')
-                PsiElement(()('(')
+                PsiElement(<()('<(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE
@@ -114,11 +82,37 @@ SHELL_SCRIPT
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PROCESS_SUBSTITUTION
-                PsiElement(<)('<')
-                PsiWhiteSpace(' ')
-                PsiElement(<)('<')
-                PsiWhiteSpace(' ')
-                PsiElement(()('(')
+                PsiElement(>()('>(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('true')
+                  PsiWhiteSpace(' ')
+                  PsiElement(&&)('&&')
+                  PsiWhiteSpace(' ')
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('false')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              PROCESS_SUBSTITUTION
+                PsiElement(<()('<(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE
@@ -138,9 +132,7 @@ SHELL_SCRIPT
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PROCESS_SUBSTITUTION
-                PsiElement(>)('>')
-                PsiWhiteSpace(' ')
-                PsiElement(()('(')
+                PsiElement(>()('>(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE

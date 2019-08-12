@@ -387,6 +387,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
     "<>"                          { return REDIRECT_LESS_GREATER; }
     "&>"                          { return REDIRECT_AMP_GREATER; }
     ">|"                          { return REDIRECT_GREATER_BAR; }
+    ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
+    "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
     "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
