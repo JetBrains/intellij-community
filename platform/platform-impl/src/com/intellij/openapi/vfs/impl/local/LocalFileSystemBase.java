@@ -649,7 +649,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           char c = path.charAt(idx);
           if (c == '\\' || c == '/') {
             slashCount++;
-            idx--;
+            if (slashCount == 2) {
+              idx--;
+            }
           }
         }
 
