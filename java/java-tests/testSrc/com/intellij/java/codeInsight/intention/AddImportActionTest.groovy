@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.intention
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
@@ -152,7 +153,7 @@ public class Foo {
     Ma<caret>p l = new HashMap<>();
 }
 '''
-    ImportClassFix intention = myFixture.findSingleIntention("Import class").delegate as ImportClassFix
+    ImportClassFix intention = IntentionActionDelegate.unwrap(myFixture.findSingleIntention("Import class")) as ImportClassFix
     assert intention.classesToImport.collect { it.qualifiedName } == ['java.util.Map']
   }
 
