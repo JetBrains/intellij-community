@@ -657,21 +657,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return false;
   }
 
-  private void annotateExtension(Extension extension,
-                                 DomElementAnnotationHolder holder, ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
+  private static void annotateExtension(Extension extension,
+                                        DomElementAnnotationHolder holder,
+                                        ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
-    final GenericAttributeValue<PsiClass> interfaceAttribute = extensionPoint.getInterface();
-    if (DomUtil.hasXml(interfaceAttribute)) {
-      final PsiClass value = interfaceAttribute.getValue();
-      if (value != null && value.isDeprecated()) {
-        highlightDeprecated(
-          extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
-          holder, false, false);
-      }
-      else if (value != null && value.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
-        highlightExperimental(extension, holder);
-      }
+
+    final PsiClass extensionPointClass = extensionPoint.getEffectiveClass();
+    if (extensionPointClass != null && extensionPointClass.isDeprecated()) {
+      highlightDeprecated(
+        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
+        holder, false, false);
+    }
+    else if (extensionPointClass != null && extensionPointClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
+      highlightExperimental(extension, holder);
     }
 
     if (ExtensionPoints.ERROR_HANDLER.equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
