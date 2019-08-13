@@ -27,6 +27,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+
 public class ChangeListViewerDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ChangeListViewerDialog.class);
 
@@ -96,7 +98,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
         return () -> {
           myLoadingPanel.stopLoading();
           myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
-          emptyText.setText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          emptyText.setText(notNullize(e.getMessage(), "Can't load changes"), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
     }, () -> myLoadingPanel.startLoading());
