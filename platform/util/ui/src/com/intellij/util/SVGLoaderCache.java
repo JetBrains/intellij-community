@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -55,25 +53,7 @@ public abstract class SVGLoaderCache {
 
     try {
       byte[] bytes = FileUtil.loadFileBytes(file);
-      ByteBuffer buff = ByteBuffer.wrap(bytes);
-
-      double width = buff.getDouble();
-      double height = buff.getDouble();
-      int actualWidth = buff.getInt();
-      int actualHeight = buff.getInt();
-
-      @SuppressWarnings("UndesirableClassUsage")
-      //we do not need a specific image here, it will be wrapped later
-      BufferedImage image = new BufferedImage(actualWidth, actualHeight, BufferedImage.TYPE_INT_ARGB);
-
-      for (int y = 0; y < actualHeight; y++) {
-        for (int x = 0; x < actualWidth; x++) {
-          image.setRGB(x, y, buff.getInt());
-        }
-      }
-
-      docSize.setSize(width, height);
-      return image;
+      return SVGLoaderCacheIO.readImageFile(bytes, docSize);
     }
     catch (Exception e) {
       Logger.getInstance(getClass()).warn("Failed to read SVG cache from: " + file + ". " + e.getMessage(), e);
@@ -95,33 +75,7 @@ public abstract class SVGLoaderCache {
 
     forkIOTask(() -> {
       File file = cacheFile(theme, imageBytes, scale);
-
-      int actualWidth = image.getWidth();
-      int actualHeight = image.getHeight();
-
-      ByteBuffer buff = ByteBuffer.allocate(actualHeight * actualWidth * Integer.BYTES + 2 * Double.BYTES + 2 * Integer.BYTES);
-      buff.putDouble(size.getWidth());
-      buff.putDouble(size.getHeight());
-      buff.putInt(actualWidth);
-      buff.putInt(actualHeight);
-
-      for (int y = 0; y < actualHeight; y++) {
-        for (int x = 0; x < actualWidth; x++) {
-          buff.putInt(image.getRGB(x, y));
-        }
-      }
-
-      try {
-        final File parentFile = file.getParentFile();
-        if (parentFile != null) {
-          //noinspection ResultOfMethodCallIgnored
-          parentFile.mkdirs();
-        }
-
-        FileUtil.writeToFile(file, buff.array());
-      } catch (IOException e) {
-        Logger.getInstance(getClass()).warn("Failed to write SVG cache to: " + file + ". " + e.getMessage(), e);
-      }
+      SVGLoaderCacheIO.writeImageFile(file, image, size);
     });
   }
 }

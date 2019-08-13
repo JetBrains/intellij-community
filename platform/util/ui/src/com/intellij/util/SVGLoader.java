@@ -69,7 +69,19 @@ public final class SVGLoader {
   }
 
   @ApiStatus.Internal
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  public static Image load(@Nullable URL url,
+                           @NotNull InputStream stream,
+                           double scale,
+                           @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+    if (docSize == null) {
+      docSize = new ImageLoader.Dimension2DDouble(0, 0);
+    }
+
+    BufferedImage image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
+    if (image != null) {
+      return image;
+    }
+
     byte[] theme = DEFAULT_THEME;
 
     byte[] svgBytes = FileUtil.loadBytes(stream);
@@ -81,11 +93,6 @@ public final class SVGLoader {
       }
     }
 
-    if (docSize == null) {
-      docSize = new ImageLoader.Dimension2DDouble(0, 0);
-    }
-
-    BufferedImage image;
     if (theme != null) {
       image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
       if (image != null) {
