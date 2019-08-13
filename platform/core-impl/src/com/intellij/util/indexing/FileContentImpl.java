@@ -32,10 +32,7 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
-  private final VirtualFile myFile;
-  private final String myFileName;
-  private final FileType myFileType;
+public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText;
@@ -61,19 +58,11 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
                           byte[] content,
                           long stamp,
                           boolean physicalContent) {
-    myFile = file;
+    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content));
     myContentAsText = contentAsText;
     myContent = content;
-    myFileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
-    // remember name explicitly because the file could be renamed afterwards
-    myFileName = file.getName();
     myStamp = stamp;
     myPhysicalContent = physicalContent;
-  }
-
-  @Override
-  public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
   }
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
