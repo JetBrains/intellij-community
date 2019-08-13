@@ -77,7 +77,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         else -> arrayOf(argtype)
       }
       argumentTypes.forEach { argtype ->
-        processRequiredParameters(argtype.typeParameter() ?: return@forEach, methodResult.substitutor.substitute(type))
+        processRequiredParameters(argtype, methodResult.substitutor.substitute(type))
       }
       val typeParameter = methodResult.substitutor.substitute(type).typeParameter() ?: continue
       argumentTypes.forEach { argtype ->
@@ -88,22 +88,28 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   /**
-   * Calculates required supertypes for all type arguments of [type].
-   * We need to distinguish containing and subtyping relations, so this is why there is two types of bounds
+   * Visits every parameter of [lowerType] (which is probably parameterized with type parameters) and sets restrictions found in [upperType]
+   * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
-  private fun processRequiredParameters(argumentTypeParameter: PsiTypeParameter, type: PsiType) {
-    var currentRestrictedTypeParameter = argumentTypeParameter
+  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) {
+    var currentRestrictedType = lowerType as? PsiClassType ?: return
     var firstVisit = true
-    type.accept(object : PsiTypeVisitor<Unit>() {
+    val context = lowerType.resolve()?.context ?: return
+    upperType.accept(object : PsiTypeVisitor<Unit>() {
 
       fun visitClassParameters(classType: PsiClassType) {
+        val properBoundTypes = if (currentRestrictedType.isTypeParameter()) {
+          currentRestrictedType.typeParameter()!!.extendsListTypes.filterIsInstance<PsiClassType>()
+        }
+        else {
+          listOf(currentRestrictedType)
+        }
         val matchedBound =
-          currentRestrictedTypeParameter.extendsListTypes
-            .find {
-              TypesUtil.canAssign(classType.rawType(), it.rawType(), argumentTypeParameter, METHOD_PARAMETER) == OK
-            } ?: return
+          properBoundTypes.find {
+            TypesUtil.canAssign(classType.rawType(), it.rawType(), context, METHOD_PARAMETER) == OK
+          } ?: return
         for (classParameterIndex in classType.parameters.indices) {
-          currentRestrictedTypeParameter = matchedBound.parameters[classParameterIndex]?.typeParameter() ?: continue
+          currentRestrictedType = matchedBound.parameters[classParameterIndex] as? PsiClassType ?: continue
           classType.parameters[classParameterIndex].accept(this)
         }
       }
@@ -113,8 +119,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         val primaryConstraint = if (firstVisit) UPPER else EQUAL
         // firstVisit is necessary because parameters can accept their subtypes, while type arguments (without wildcard) are not
         firstVisit = false
-        run {
-          generateRequiredTypes(currentRestrictedTypeParameter, classType, primaryConstraint)
+        if (currentRestrictedType.isTypeParameter()) {
+          generateRequiredTypes(currentRestrictedType.typeParameter()!!, classType, primaryConstraint)
         }
         visitClassParameters(classType)
         super.visitClassType(classType)
@@ -123,8 +129,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       override fun visitWildcardType(wildcardType: PsiWildcardType?) {
         wildcardType ?: return
         val extendsBound = wildcardType.extendsBound as PsiClassType
-        run {
-          generateRequiredTypes(currentRestrictedTypeParameter, extendsBound, UPPER)
+        if (currentRestrictedType.isTypeParameter()) {
+          generateRequiredTypes(currentRestrictedType.typeParameter()!!, extendsBound, UPPER)
         }
         visitClassParameters(extendsBound)
         super.visitWildcardType(wildcardType)
@@ -145,13 +151,13 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val accessorResult = lValueReference?.advancedResolve() as? GroovyMethodResult
       val mapping = accessorResult?.candidate?.argumentMapping
       mapping?.expectedTypes?.forEach { (type, argument) ->
-        processRequiredParameters(argument.type?.typeParameter() ?: return@forEach, type)
+        processRequiredParameters(argument.type ?: return@forEach, type)
       }
       val fieldResult = lValueReference?.resolve() as? GrField
       if (fieldResult != null) {
         val leftType = fieldResult.type
         val rightType = expression.rValue?.type
-        processRequiredParameters(rightType.typeParameter() ?: return@run, leftType)
+        processRequiredParameters(rightType ?: return@run, leftType)
         constraintsCollector.add(TypeConstraint(leftType, rightType, method))
       }
     }
@@ -166,7 +172,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     variableDeclaration.variables.forEach {
-      processRequiredParameters(it.initializerGroovy?.type?.typeParameter() ?: return@forEach, it.type)
+      processRequiredParameters(it.initializerGroovy?.type ?: return@forEach, it.type)
     }
     super.visitVariableDeclaration(variableDeclaration)
   }

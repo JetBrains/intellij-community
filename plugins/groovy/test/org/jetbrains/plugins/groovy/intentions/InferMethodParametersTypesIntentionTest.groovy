@@ -452,4 +452,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testDgm() {
     doTest(true)
   }
+
+  void testIndirectBoundConstraint() {
+    doTest(true)
+  }
 }
