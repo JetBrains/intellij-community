@@ -95,12 +95,16 @@ public class OSProcessUtil {
   }
 
   public static int getProcessID(@NotNull Process process) {
+    return getProcessID(process, Registry.is("disable.winp"));
+  }
+
+  public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
         }
-        if (!Registry.is("disable.winp")) {
+        if (!disableWinp) {
           try {
             return createWinProcess(process).getPid();
           }
@@ -112,7 +116,7 @@ public class OSProcessUtil {
       }
       catch (Throwable e) {
         throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
-                                        + ", OS: " + SystemInfo.OS_NAME, e);
+          + ", OS: " + SystemInfo.OS_NAME, e);
       }
     }
     else if (SystemInfo.isUnix) {
