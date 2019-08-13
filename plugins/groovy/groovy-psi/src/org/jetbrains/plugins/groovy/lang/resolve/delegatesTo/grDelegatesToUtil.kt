@@ -2,14 +2,20 @@
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.*
+import com.intellij.psi.util.*
 import com.intellij.psi.util.CachedValueProvider.Result
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ArrayUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 
 @JvmField
 val DELEGATES_TO_KEY: Key<DelegatesToInfo> = Key.create("groovy.closure.delegatesTo")
@@ -45,5 +51,73 @@ fun getContainingCall(expression: GrFunctionalExpression): GrCall? {
     return grandParent as? GrCall
   }
 
+  return null
+}
+
+
+fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
+  val value = delegatesTo.findDeclaredAttributeValue("value")
+  if (value is GrReferenceExpression) {
+    return ResolveUtil.unwrapClassType(value.type)
+  }
+  else if (value is PsiClassObjectAccessExpression) {
+    return ResolveUtil.unwrapClassType(value.type)
+  }
+  else if (value == null ||
+           value is PsiLiteralExpression && value.type === PsiType.NULL ||
+           value is GrLiteral && value.type === PsiType.NULL) {
+    return null
+  }
+  else if (value is PsiExpression) {
+    return value.type
+  }
+  return null
+}
+
+fun getFromTarget(parameterList: PsiParameterList,
+                  delegatesTo: PsiAnnotation,
+                  mapping: ArgumentMapping): PsiType? {
+  val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
+
+  val parameter = findTargetParameter(parameterList, target) ?: return null
+
+  val type = mapping.arguments.firstOrNull {
+    mapping.targetParameter(it) == parameter
+  }?.type ?: return null
+
+  val index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex")
+  return if (index != null) {
+    inferGenericArgType(type, index, parameter)
+  }
+  else {
+    type
+  }
+}
+
+private fun inferGenericArgType(targetType: PsiType?, genericIndex: Int, param: PsiParameter): PsiType? {
+  if (targetType !is PsiClassType) return null
+  val result = targetType.resolveGenerics()
+  val psiClass = result.element ?: return null
+  val substitutor = result.substitutor
+  val baseType = param.type
+  val baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType)
+  if (baseClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true)) {
+    val typeParameters = baseClass.typeParameters
+    if (genericIndex < typeParameters.size) {
+      val superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, substitutor)
+      return superClassSubstitutor.substitute(typeParameters[genericIndex])
+    }
+  }
+  return null
+}
+
+private fun findTargetParameter(list: PsiParameterList, target: String): PsiParameter? {
+  val parameters = list.parameters
+  for (parameter in parameters) {
+    val modifierList = parameter.modifierList ?: continue
+    val targetAnnotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET) ?: continue
+    val value = GrAnnotationUtil.inferStringAttribute(targetAnnotation, "value") ?: continue
+    if (value == target) return parameter
+  }
   return null
 }
