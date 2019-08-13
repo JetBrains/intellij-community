@@ -13,7 +13,6 @@ class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
                 exec = ProjectJob.ProcessExecutable.ContainerExecutable.DefaultCommand(emptyList())
             )
         )
-        container.applyIds()
         return container
     }
 }

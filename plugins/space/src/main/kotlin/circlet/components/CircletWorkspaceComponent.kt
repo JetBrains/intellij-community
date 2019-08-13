@@ -4,6 +4,7 @@ import circlet.auth.*
 import circlet.common.oauth.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
+import circlet.platform.workspaces.*
 import circlet.settings.*
 import circlet.utils.*
 import circlet.workspaces.*

@@ -7,6 +7,7 @@ import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.*
 import kotlinx.coroutines.*
+import libraries.common.*
 import runtime.*
 
 class TestCircletAction : AnAction() {
@@ -21,8 +22,8 @@ class TestCircletAction : AnAction() {
             val project = e.project!!
 
             Notification(
-                "Circlet",
-                "Circlet check",
+                ProductName,
+                "$ProductName check",
                 "Hello, this is a fake check",
                 NotificationType.INFORMATION
             ).notify(project)

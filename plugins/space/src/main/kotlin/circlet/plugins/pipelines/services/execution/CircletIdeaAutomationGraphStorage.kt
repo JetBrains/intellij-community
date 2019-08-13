@@ -3,15 +3,15 @@ package circlet.plugins.pipelines.services.execution
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.api.storage.*
 
-class CircletIdeaAutomationGraphStorage(internal val task: ProjectTask) : AutomationGraphStorage<GraphStorageTransaction> {
+class CircletIdeaAutomationGraphStorage(internal val task: ProjectTask) : AutomationGraphStorage<CircletIdeaGraphStorageTransaction> {
     internal val idStorage = TaskLongIdStorage()
     internal val storedExecutions = mutableMapOf<Long, AJobExecutionEntity<*>>()
 
-    val singletonTx = CircletIdeaGraphStorageTransaction(this)
-
-    override suspend fun <T> invoke(body: (GraphStorageTransaction) -> T): T {
-        val res = body(singletonTx)
-        singletonTx.executeAfterTransactionHooks()
+    override suspend fun <T> invoke(txName: String?, body: (CircletIdeaGraphStorageTransaction) -> T): T {
+        val tx = CircletIdeaGraphStorageTransaction(this)
+        val res = body(tx)
+        tx.executeAfterTransactionHooks()
         return res
     }
+
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.components.*
 import com.intellij.ui.content.*
+import libraries.common.*
 
 class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponent by SimpleLifetimedComponent() {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -36,7 +37,7 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponen
     }
 
     companion object {
-        const val TOOL_WINDOW_ID = "Circlet"
+        const val TOOL_WINDOW_ID = ProductName
     }
 }
 

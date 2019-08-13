@@ -30,7 +30,6 @@ class CircletTaskRunner(val project: Project) {
         }
 
         val config = script.config
-        config.applyIds()
         val task = script.config.tasks.firstOrNull { x -> x.name == taskName }
         if (task == null) {
             //logData.add("Task $taskName doesn't exist")
@@ -60,7 +59,7 @@ class CircletTaskRunner(val project: Project) {
 
         val storage = CircletIdeaAutomationGraphStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
-        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage.singletonTx)
+        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
         val automationGraphEngineCommon = AutomationGraphEngineCommon(
             provider,
             provider,

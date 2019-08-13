@@ -13,7 +13,7 @@ class CircletIdeaJobExecutionProvider(
     private val lifetime: Lifetime,
     private val logCallback: (String) -> Unit,
     private val notifyProcessTerminated: (Int) -> Unit,
-    private val tx: CircletIdeaGraphStorageTransaction
+    private val storage: CircletIdeaAutomationGraphStorage
 ) : JobExecutionProvider, JobExecutionScheduler {
 
     companion object : KLogging()
@@ -38,7 +38,7 @@ class CircletIdeaJobExecutionProvider(
         }
     }
 
-    override suspend fun startExecution(jobExec: JobExecutionData<*>) {
+    override suspend fun startExecution(jobExec: JobExecutionData<*>) = storage { tx ->
         val jobEntity = tx.findJobExecution(jobExec.id) ?: error("Job execution [$jobExec] is not found")
         if (jobEntity !is CircletIdeaAJobExecutionEntity) {
             error("unknown job $jobEntity")

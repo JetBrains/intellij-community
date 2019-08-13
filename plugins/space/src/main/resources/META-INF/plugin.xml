@@ -1,10 +1,10 @@
 <idea-plugin version="2">
-    <id>com.jetbrains.circlet</id>
-    <name>Circlet Integration</name>
+    <id>com.jetbrains.space</id>
+    <name>Space Integration</name>
     <version>0.1.dev</version>
     <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[Circlet Integration plugin]]></description>
+    <description><![CDATA[Space Integration plugin]]></description>
 
     <change-notes><![CDATA[]]>
 
@@ -23,11 +23,14 @@
         <applicationConfigurable
             groupId="tools"
             groupWeight="239"
-            displayName="Circlet"
+            displayName="Space"
             instance="circlet.settings.CircletConfigurable"
         />
 
-        <toolWindow id="Circlet" anchor="right" canCloseContents="true"
+        <toolWindow id="Space"
+                    icon="CircletIcons.mainIcon"
+                    anchor="right"
+                    canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
@@ -74,11 +77,9 @@
     <actions>
 
         <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..." id="Circlet.ReEnterCredentialsAction"/>
-        <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="Circlet.TestCircletAction"/>
+        <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
 
-
-
-        <group text="Circlet" id="CircletGroup" popup="true">
+        <group text="Space" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <reference id="Circlet.ReEnterCredentialsActionRef" ref="Circlet.ReEnterCredentialsAction"/>
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>

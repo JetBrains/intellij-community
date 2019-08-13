@@ -7,6 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.xml.util.*
+import libraries.common.*
 import runtime.reactive.*
 
 val application: Application
@@ -62,8 +63,8 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
 
 fun notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
     Notification(
-        "Circlet",
-        "Circlet",
+        ProductName,
+        ProductName,
         XmlStringUtil.wrapInHtml(text),
         NotificationType.INFORMATION,
         handler?.let { NotificationListener { _, _ -> it() } }
