@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -28,6 +29,7 @@ public class TextPanel extends JComponent implements Accessible {
 
   protected TextPanel() {
     setOpaque(true);
+    UISettings.setupComponentAntialiasing(this);
   }
 
   @Override
@@ -62,7 +64,6 @@ public class TextPanel extends JComponent implements Accessible {
 
     Graphics2D g2 = (Graphics2D)g;
     g2.setFont(getFont());
-    UISettings.setupAntialiasing(g);
 
     Rectangle bounds = new Rectangle(panelWidth, panelHeight);
     int x = getTextX(g2);
@@ -76,7 +77,7 @@ public class TextPanel extends JComponent implements Accessible {
     int y = UIUtil.getStringY(s, bounds, g2);
     Color foreground = isEnabled() ? getForeground() : UIUtil.getInactiveTextColor();
     g2.setColor(foreground);
-    g2.drawString(s, x, y);
+    SwingUtilities2.drawString(this, g2, s, x, y);
   }
 
   protected int getTextX(Graphics g) {
@@ -99,7 +100,7 @@ public class TextPanel extends JComponent implements Accessible {
   }
 
   protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-    return SwingUtilities.layoutCompoundLabel(fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
+    return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                               SwingConstants.TRAILING,
                                               bounds, iconR, textR, 0);
   }
@@ -150,7 +151,7 @@ public class TextPanel extends JComponent implements Accessible {
 
   private Dimension getPanelDimensionFromFontMetrics(String text) {
     Insets insets = getInsets();
-    int width = insets.left + insets.right + (text != null ? getFontMetrics(getFont()).stringWidth(text) : 0);
+    int width = insets.left + insets.right + (text != null ? SwingUtilities2.stringWidth(this, getFontMetrics(getFont()), text) : 0);
     int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
     return new Dimension(width, height);
   }
