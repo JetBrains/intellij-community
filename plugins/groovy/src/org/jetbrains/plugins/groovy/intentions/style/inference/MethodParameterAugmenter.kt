@@ -7,12 +7,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.getBlock
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.inferTypeFromTypeHint
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
 
 class MethodParameterAugmenter : TypeAugmenter() {
 
@@ -31,20 +31,23 @@ class MethodParameterAugmenter : TypeAugmenter() {
       }
     }
 
+    @Suppress("RemoveExplicitTypeArguments")
     internal fun getOriginalMethod(method: GrMethod): GrMethod {
-      return method.containingFile.originalFile.run {
+      return method.containingFile?.originalFile?.run {
         if (method.containingFile == this) {
           method
         }
         else {
           findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
         }
-      }
+      } ?: method
     }
 
     internal fun createInferenceResult(method: GrMethod): InferenceResult? {
       val originalMethod = getOriginalMethod(method)
-      val scope = GlobalSearchScope.fileScope(originalMethod.project, originalMethod.containingFile.virtualFile)
+      val scope = with(originalMethod.containingFile?.virtualFile) {
+        if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
+      }
       return CachedValuesManager.getCachedValue(method) {
         val typedMethod = produceTypedMethod(method, scope)
         val typeParameterSubstitutor = typedMethod?.run {
@@ -61,7 +64,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
   override fun inferType(variable: GrVariable): PsiType? {
     if (variable is GrParameter && variable.typeElement == null && !reentrancyMark.get()) {
-      if (variable is ClosureSyntheticParameter) {
+      if (getBlock(variable) != null) {
         return inferTypeFromTypeHint(variable)
       }
       val method = variable.parentOfType<GrMethod>() ?: return null

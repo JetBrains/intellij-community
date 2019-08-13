@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
  * 3. Inferring dependencies between new type parameters and instantiating them.
  */
-@Suppress("RemoveExplicitTypeArguments")
 fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   val originalMethod = MethodParameterAugmenter.getOriginalMethod(method)
   val overridableMethod = findOverridableMethod(originalMethod)

@@ -1367,4 +1367,15 @@ class A<T> {
     <caret>it
 }''', "? super $JAVA_LANG_INTEGER"
   }
+
+  void 'test implicit @ClosureParams with two parameters'() {
+    doTest '''
+def foo(cl) {
+    cl(1, 'q')
+}
+
+foo { a, b ->
+    <caret>a
+}''', "? super $JAVA_LANG_INTEGER"
+  }
 }

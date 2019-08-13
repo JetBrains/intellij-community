@@ -264,8 +264,31 @@ private fun parseSimpleType(parameterTypes: GrAnnotationArrayInitializer): Int {
 data class AnnotatingResult(val parameter: GrParameter, val annotationText: String)
 
 
-fun inferTypeFromTypeHint(parameter: ClosureSyntheticParameter): PsiType? {
-  val closureBlock = parameter.closure
+fun getBlock(parameter: GrParameter): GrClosableBlock? = when (parameter) {
+  is ClosureSyntheticParameter -> parameter.closure
+  else -> {
+    with(parameter.parentOfType<GrClosableBlock>()) { return if (this == null) null else extractBlock(this, parameter) }
+  }
+}
+
+private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClosableBlock? {
+  if (block.parameterList.getParameterNumber(parameter) == -1) {
+    val outerBlock = block.parentOfType<GrClosableBlock>()
+    if (outerBlock != null) {
+      return extractBlock(block, parameter)
+    }
+    else {
+      return null
+    }
+  }
+  else {
+    return block
+  }
+}
+
+fun inferTypeFromTypeHint(parameter: GrParameter): PsiType? {
+  val closureBlock = getBlock(parameter) ?: return null
+  val index = if (parameter is ClosureSyntheticParameter) 0 else closureBlock.parameterList.getParameterNumber(parameter)
   val methodCall = closureBlock?.parentOfType<GrCall>() ?: return null
   val method = (methodCall.resolveMethod() as? GrMethod)
                  ?.takeIf { method -> method.parameters.any { it.typeElement == null } } ?: return null
@@ -282,7 +305,7 @@ fun inferTypeFromTypeHint(parameter: ClosureSyntheticParameter): PsiType? {
   val completeContextSubstitutor = substitutor compose resolveResult.substitutor
   val signatures = processor.inferExpectedSignatures(virtualMethod, completeContextSubstitutor, options.toTypedArray())
   val parameters = closureBlock.allParameters
-  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(0)
+  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(index)
 }
 
 
