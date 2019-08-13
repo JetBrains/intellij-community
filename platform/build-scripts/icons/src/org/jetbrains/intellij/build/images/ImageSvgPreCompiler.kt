@@ -3,15 +3,24 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.*
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.isFile
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 /**
  * Works together with [SVGLoaderCache] to generate pre-cached icons
  */
-class ImageSvgPreCompilerOptimizer(private val projectHome: File) {
+class ImageSvgPreCompiler(private val projectHome: File) {
   /// the expected scales of images that we have
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
@@ -20,13 +29,26 @@ class ImageSvgPreCompilerOptimizer(private val projectHome: File) {
   private val generatedSize = AtomicLong(0)
   private val totalFiles = AtomicLong(0)
 
-  fun preCompileIcons(module: JpsModule) {
-    val icons = ImageCollector(projectHome.toPath()).collect(module)
-    icons.parallelStream().forEach { icon ->
-      icon.files.parallelStream().forEach {
-        preCompile(it)
+  fun preCompileIcons(modules: List<JpsModule>) {
+    val allRoots : List<Path> = modules
+      .flatMap { module -> module.sourceRoots }
+      .filterNot { root -> root.rootType == JavaResourceRootType.TEST_RESOURCE }
+      .filterNot { root -> root.rootType == JavaSourceRootType.TEST_SOURCE }
+      .map { sourceRoot ->
+        //right now we scan all source roots (probably test sources are good to skip)
+        //for example, darkula/laf is in source root, not resources root
+        Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
       }
-    }
+      .distinct()
+
+    val allIcons = allRoots.parallelStream().flatMap { rootDir ->
+      if (!rootDir.isDirectory()) return@flatMap Stream.empty<Path>()
+      Files.walk(rootDir).parallel().filter { file ->
+        file.fileName.toString().endsWith(".svg") && file.isFile()
+      }
+    }.collect(Collectors.toSet())
+
+    allIcons.parallelStream().forEach(this::preCompile)
   }
 
   fun printStats() {
