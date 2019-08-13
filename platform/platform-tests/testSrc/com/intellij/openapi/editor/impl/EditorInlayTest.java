@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.DocumentUtil;
@@ -413,6 +415,15 @@ public class EditorInlayTest extends AbstractEditorTest {
     List<Inlay> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
     List<Inlay> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
     assertEquals(list1, list2);
+  }
+
+  public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
+    initText(" \tabcd efghijklmno");
+    addInlay(1, TEST_CHAR_WIDTH);
+    configureSoftWraps(11);
+    verifySoftWrapPositions(7);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
+    verifySoftWrapPositions(7, 16);
   }
 
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
