@@ -42,7 +42,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
 
   private JCheckBox myTabCharacter;
   private IntegerField myIndentField;
-  private JLabel myIndentLabel;
+  private IntegerField myTabField;
   private JLabel myWarningLabel;
   private JLabel myErrorLabel;
 
@@ -69,16 +69,6 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    myTabCharacter.addChangeListener(listener -> {
-      if (myTabCharacter.isSelected()) {
-        myIndentField.setEnabled(false);
-        myIndentLabel.setEnabled(false);
-      }
-      else {
-        myIndentField.setEnabled(true);
-        myIndentLabel.setEnabled(true);
-      }
-    });
     myWarningLabel.setIcon(AllIcons.General.Warning);
     myErrorLabel.setForeground(JBColor.RED);
 
@@ -93,6 +83,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
 
   private void createUIComponents() {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
+    myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
     myShfmtDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
@@ -132,6 +123,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(ShLanguage.INSTANCE);
     indentOptions.INDENT_SIZE = myIndentField.getValue();
+    indentOptions.TAB_SIZE = myTabField.getValue();
     indentOptions.USE_TAB_CHARACTER = myTabCharacter.isSelected();
 
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
@@ -157,6 +149,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
         || isFieldModified(myMinifyProgram, shSettings.MINIFY_PROGRAM)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
+        || isFieldModified(myTabField, indentOptions.TAB_SIZE)
         || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath());
   }
 
@@ -170,6 +163,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   protected void resetImpl(CodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(ShLanguage.INSTANCE);
     myIndentField.setValue(indentOptions.INDENT_SIZE);
+    myTabField.setValue(indentOptions.TAB_SIZE);
     myTabCharacter.setSelected(indentOptions.USE_TAB_CHARACTER);
 
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);

@@ -89,7 +89,7 @@
                       </grid>
                     </constraints>
                   </vspacer>
-                  <grid id="2466a" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="30" vgap="-1">
+                  <grid id="2466a" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="30" vgap="-1">
                     <margin top="10" left="0" bottom="0" right="0"/>
                     <constraints>
                       <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -97,9 +97,9 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="8f1b1" class="javax.swing.JLabel" binding="myIndentLabel">
+                      <component id="8f1b1" class="javax.swing.JLabel">
                         <constraints>
-                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Indent:"/>
@@ -107,7 +107,7 @@
                       </component>
                       <component id="4aed0" class="com.intellij.ui.components.fields.IntegerField" binding="myIndentField" custom-create="true">
                         <constraints>
-                          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties/>
                       </component>
@@ -126,6 +126,20 @@
                         <properties>
                           <text value="Indent"/>
                         </properties>
+                      </component>
+                      <component id="2991d" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text value="Tab size:"/>
+                        </properties>
+                      </component>
+                      <component id="22c29" class="com.intellij.ui.components.fields.IntegerField" binding="myTabField" custom-create="true">
+                        <constraints>
+                          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
                       </component>
                     </children>
                   </grid>
