@@ -28,5 +28,4 @@ class ProjectModulesCompletionProvider(private val myProject: Project) : Depende
   override fun findClassesByString(str: String, searchParameters: SearchParameters): List<MavenDependencyCompletionItemWithClass> {
     return emptyList()
   }
-
 }
