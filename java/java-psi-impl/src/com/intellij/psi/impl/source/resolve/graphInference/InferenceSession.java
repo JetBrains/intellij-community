@@ -1000,8 +1000,9 @@ public class InferenceSession {
                              @NotNull PsiSubstitutor substitutor) {
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
     final Collection<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
+    Map<InferenceVariable, Set<InferenceVariable>> dependencies = InferenceVariablesOrder.getDependencies(allVars, this);
     while (!allVars.isEmpty()) {
-      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, dependencies);
       List<InferenceVariable> unresolved = new ArrayList<>();
       for (InferenceVariable var : vars) {
         final PsiType eqBound = getEqualsBound(var, substitutor);

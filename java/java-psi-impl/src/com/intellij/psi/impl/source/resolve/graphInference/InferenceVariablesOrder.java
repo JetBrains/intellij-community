@@ -17,18 +17,46 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 
 public class InferenceVariablesOrder {
-  public static List<InferenceVariable> resolveOrder(Collection<? extends InferenceVariable> vars, InferenceSession session) {
-    return resolveOrderIterator(vars, session).next();
+  public static List<InferenceVariable> resolveOrder(Collection<? extends InferenceVariable> vars,
+                                                     Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+    Collection<? extends InferenceGraphNode<InferenceVariable>> allNodes = buildInferenceGraph(vars, depMap).values();
+    return InferenceGraphNode.merge(tarjan(allNodes).get(0), allNodes).getValue();
   }
-  
+
   public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<? extends InferenceVariable> vars, InferenceSession session) {
-    Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes =
-      new LinkedHashMap<>();
+    Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = buildInferenceGraph(vars, session);
+    final ArrayList<InferenceGraphNode<InferenceVariable>> acyclicNodes = initNodes(nodes.values());
+    return ContainerUtil.map(acyclicNodes, node -> node.getValue()).iterator();
+  }
+
+  public static Map<InferenceVariable, Set<InferenceVariable>> getDependencies(
+    Collection<? extends InferenceVariable> vars, InferenceSession session) {
+
+    Map<InferenceVariable, Set<InferenceVariable>> map = new HashMap<>();
+    for (InferenceVariable var : vars) {
+      map.put(var, var.getDependencies(session));
+    }
+    return map;
+  }
+
+  @NotNull
+  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+    Collection<? extends InferenceVariable> vars, InferenceSession session) {
+
+    return buildInferenceGraph(vars, getDependencies(vars, session));
+  }
+
+  @NotNull
+  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+    Collection<? extends InferenceVariable> vars, Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+
+    Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = new LinkedHashMap<>();
     for (InferenceVariable var : vars) {
       nodes.put(var, new InferenceGraphNode<>(var));
     }
@@ -36,7 +64,7 @@ public class InferenceVariablesOrder {
     for (InferenceVariable var : vars) {
       if (var.getInstantiation() != PsiType.NULL) continue;
       final InferenceGraphNode<InferenceVariable> node = nodes.get(var);
-      final Set<InferenceVariable> dependencies = var.getDependencies(session);
+      final Set<InferenceVariable> dependencies = depMap.get(var);
       for (InferenceVariable dependentVariable : dependencies) {
         final InferenceGraphNode<InferenceVariable> dependency = nodes.get(dependentVariable);
         if (dependency != null) {
@@ -44,8 +72,7 @@ public class InferenceVariablesOrder {
         }
       }
     }
-    final ArrayList<InferenceGraphNode<InferenceVariable>> acyclicNodes = initNodes(nodes.values());
-    return ContainerUtil.map(acyclicNodes, node -> node.getValue()).iterator();
+    return nodes;
   }
 
   public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<? extends InferenceGraphNode<T>> nodes) {

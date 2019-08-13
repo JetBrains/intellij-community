@@ -27,6 +27,8 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.IntStreamEx;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -106,6 +108,27 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertEmpty(infos);
   }
 
+  public void testVarArgPoly() {
+    @Language("JAVA")
+    String template = "import java.util.Map;\n" +
+                      "\n" +
+                      "class X {\n" +
+                      "  " +
+                      "public void foo() {\n" +
+                      "    Map<Integer, Class<?>> map = ofEntries(\n" +
+                      "      $entries$\n" +
+                      "    );\n" +
+                      "  }\n" +
+                      "\n" +
+                      "  static native <K, V> Map<K, V> ofEntries(Map.Entry<? extends K, ? extends V>... entries);\n" +
+                      "  static native <K, V> Map.Entry<K, V> entry(K k, V v);\n" +
+                      "}\n";
+    int count = 50;
+    String entries = IntStreamEx.range(count).mapToObj(i -> "entry(" + i + ", String.class)").joining(",\n      ");
+    configureFromFileText("Test.java", template.replace("$entries$", entries));
+    List<HighlightInfo> errors = startTest(3000);
+    assertEmpty(errors);
+  }
 
   public void testGetProjectPerformance() {
     configureByFile("/psi/resolve/ThinletBig.java");
