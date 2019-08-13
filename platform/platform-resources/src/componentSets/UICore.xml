@@ -43,7 +43,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl" preload="true"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
   </extensions>
 </idea-plugin>
