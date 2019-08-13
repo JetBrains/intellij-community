@@ -117,7 +117,7 @@ class LightCalloutPopup(val content: JComponent,
       val y2 = y1 + size.height
       val x = if (point.x < x1) x1 else if (point.x > x2) x2 else point.x
       val y = if (point.y < y1) y1 else if (point.y > y2) y2 else point.y
-      if (y == y2) return JBColor.PanelBackground
+      if (y == y2) return null
       return saturationBrightnessComponent.getColorByPoint(Point(x,y))
     }
     return null
@@ -125,7 +125,7 @@ class LightCalloutPopup(val content: JComponent,
 
   private fun createPopup(component: JComponent) =
     JBPopupFactory.getInstance().createBalloonBuilder(component)
-      .setFillColor(JBColor(0xfcfcfc, 0x313435))
+      .setFillColor(PICKER_BACKGROUND_COLOR)
       .setBorderColor(JBColor.border())
       .setBorderInsets(JBUI.insets(1))
       .setAnimationCycle(Registry.intValue("ide.tooltip.animationCycle"))
