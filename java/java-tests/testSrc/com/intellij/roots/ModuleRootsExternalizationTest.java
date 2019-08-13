@@ -59,8 +59,9 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     FileUtil.createDirectory(exclude);
     FileUtil.createDirectory(classes);
     FileUtil.createDirectory(testClasses);
-    final VirtualFile contentFile = LocalFileSystem.getInstance().findFileByIoFile(content);
+    final VirtualFile contentFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(content);
     assertNotNull(contentFile);
+    refreshRecursively(contentFile);
     final VirtualFile sourceFile = LocalFileSystem.getInstance().findFileByIoFile(source);
     assertNotNull(sourceFile);
     final VirtualFile testSourceFile = LocalFileSystem.getInstance().findFileByIoFile(testSource);
@@ -115,14 +116,14 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
     final File unnamedLibClasses = new File(myProject.getBasePath(), "unnamedLibClasses");
     FileUtil.createDirectory(unnamedLibClasses);
-    final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(unnamedLibClasses);
+    final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(unnamedLibClasses);
     final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
     libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
     final File namedLibClasses = new File(myProject.getBasePath(), "namedLibClasses");
     FileUtil.createDirectory(namedLibClasses);
-    final VirtualFile namedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(namedLibClasses);
+    final VirtualFile namedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(namedLibClasses);
     final Library.ModifiableModel namedLibraryModel = namedLibrary.getModifiableModel();
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
