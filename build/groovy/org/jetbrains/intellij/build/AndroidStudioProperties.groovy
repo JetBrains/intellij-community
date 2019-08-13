@@ -99,8 +99,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "intellij.android.smali",
                                            "test-recorder",
                                            "url-assistant",
-                                           "intellij.android.wizardTemplate.impl",
-                                           "intellij.android.wizardTemplate.plugin"
                                          ]
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
@@ -161,6 +159,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
+      withModule("intellij.android.wizardTemplate.plugin", "wizard-template.jar")
+      withModule("intellij.android.wizardTemplate.impl", "wizard-template.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
