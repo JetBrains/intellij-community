@@ -213,10 +213,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
     // else url has come from VirtualFile.getPath() and is good enough
-    if (file != null) {
-      return getOrCreateFromFile(file, recursive, parentDisposable, listener);
-    }
-    return getOrCreateFromUrl(path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
+    return getOrCreate(file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
   }
 
   private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>(); // guarded by this
@@ -311,47 +308,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  private synchronized VirtualFilePointerImpl getOrCreateFromUrl(@NotNull String path,
-                                                                 @NotNull String url,
-                                                                 boolean recursive,
-                                                                 @NotNull Disposable parentDisposable,
-                                                                 @Nullable VirtualFilePointerListener listener,
-                                                                 @NotNull NewVirtualFileSystem fs) {
+  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file,
+                                                          String path, String url,
+                                                          boolean recursive,
+                                                          @NotNull Disposable parentDisposable,
+                                                          @Nullable VirtualFilePointerListener listener,
+                                                          @NotNull NewVirtualFileSystem fs) {
     VirtualFilePointerListener nl = ObjectUtils.notNull(listener, NULL_LISTENER);
     FilePointerPartNode root = myPointers.computeIfAbsent(nl, __ -> FilePointerPartNode.createFakeRoot());
 
-    FilePointerPartNode node = FilePointerPartNode.findOrCreateNodeByPath(root, path, fs);
+    FilePointerPartNode node = file == null ? FilePointerPartNode.findOrCreateNodeByPath(root, path, fs) : root.findOrCreateNodeByFile(file);
 
     VirtualFilePointerImpl pointer = node.getAnyPointer();
     if (pointer == null) {
       pointer = new VirtualFilePointerImpl(listener);
-      Pair<VirtualFile, String> fileAndUrl = Pair.create(null, url);
-      node.associate(pointer, fileAndUrl);
-      for (FilePointerPartNode n=node; n!= null; n=n.parent) {
-        n.pointersUnder++;
-      }
-    }
-    pointer.incrementUsageCount(1);
-    pointer.recursive = recursive;
-
-    root.checkConsistency();
-    DelegatingDisposable.registerDisposable(parentDisposable, pointer);
-    return pointer;
-  }
-
-  @NotNull
-  private synchronized VirtualFilePointerImpl getOrCreateFromFile(@NotNull VirtualFile file,
-                                                                  boolean recursive,
-                                                                  @NotNull Disposable parentDisposable,
-                                                                  @Nullable VirtualFilePointerListener listener) {
-    VirtualFilePointerListener nl = ObjectUtils.notNull(listener, NULL_LISTENER);
-    FilePointerPartNode root = myPointers.computeIfAbsent(nl, __ -> FilePointerPartNode.createFakeRoot());
-    FilePointerPartNode node = root.findOrCreateNodeByFile(file);
-
-    VirtualFilePointerImpl pointer = node.getAnyPointer();
-    if (pointer == null) {
-      pointer = new VirtualFilePointerImpl(listener);
-      Pair<VirtualFile, String> fileAndUrl = Pair.create(file, file.getUrl());
+      Pair<VirtualFile, String> fileAndUrl = Pair.create(file, file == null ? url : file.getUrl());
       node.associate(pointer, fileAndUrl);
       for (FilePointerPartNode n=node; n!= null; n=n.parent) {
         n.pointersUnder++;
@@ -591,7 +562,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
             String path = trimTrailingSeparators(VfsUtilCore.urlToPath(urlAfter));
             FilePointerPartNode newNode = fileAfter == null ? FilePointerPartNode.findOrCreateNodeByPath(root, path, (NewVirtualFileSystem)fs)
                                                             : root.findOrCreateNodeByFile(fileAfter);
-
             newNode.addAllPointersTo(myPointers);
             int pointersDelta = myPointers.size() - newNode.pointersUnder;
             Object newMyPointers = myPointers.size() == 1 ? myPointers.get(0) : myPointers.toArray(new VirtualFilePointerImpl[0]);

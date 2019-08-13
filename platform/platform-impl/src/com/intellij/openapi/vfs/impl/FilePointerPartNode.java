@@ -197,9 +197,9 @@ class FilePointerPartNode {
                          + " UrlPart.nameEquals: " + FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(child.getName(), fromNameId(nameId))
                          + "; name.equals(child.getName())=" + name.equals(child.getName())
         ;
-      FilePointerPartNode node = new FilePointerPartNode(nameId, this);
-      children = ArrayUtil.insert(children, -index-1, node);
-      return node;
+      child = new FilePointerPartNode(nameId, this);
+      children = ArrayUtil.insert(children, -index-1, child);
+      return child;
     }
     return null;
   }

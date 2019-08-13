@@ -58,7 +58,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
     return index >= 0 ? url.substring(index + 1) : url;
   }
 
-  private Pair<VirtualFile, String> update(FilePointerPartNode node) {
+  private Pair<VirtualFile, String> update(@NotNull FilePointerPartNode node) {
     while (true) {
       Pair<VirtualFile, String> result = node.update();
       if (result != null) {

@@ -245,6 +245,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(fileToMoveTargetPointer.isValid());
     assertEquals("[before:true, after:true]", listener.log.toString());
     assertEquals("[before:false, after:true]", targetListener.log.toString());
+    assertEquals(VfsUtilCore.pathToUrl(getVirtualFile(moveTarget).getPath() + "/" + fileToMove.getName()), fileToMovePointer.getUrl());
+    assertEquals(VfsUtilCore.pathToUrl(getVirtualFile(moveTarget).getPath() + "/" + fileToMove.getName()), fileToMoveTargetPointer.getUrl());
   }
 
   private void doMove(File fileToMove, File moveTarget) throws IOException {
