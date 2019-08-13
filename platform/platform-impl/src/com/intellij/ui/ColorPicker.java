@@ -19,7 +19,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.colorpicker.ColorPickerBuilder;
 import com.intellij.ui.colorpicker.LightCalloutPopup;
 import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
-import com.intellij.ui.colorpicker.SaturationBrightnessComponent;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
@@ -404,9 +403,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     if (balloon instanceof BalloonImpl) {
       RelativePoint showingPoint = ((BalloonImpl)balloon).getShowingPoint();
       Color c = popup.getPointerColor(showingPoint, ((BalloonImpl)balloon).getComponent());
-      if (c != null) {
-        ((BalloonImpl)balloon).setFillColor(c);
-      }
+      ((BalloonImpl)balloon).setPointerColor(c);
     }
   }
 
