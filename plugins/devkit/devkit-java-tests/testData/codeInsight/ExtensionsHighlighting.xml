@@ -7,7 +7,8 @@
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
         <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
-        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"/>
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
+                        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental">dynamic="true"</warning>/>
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
