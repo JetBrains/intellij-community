@@ -24,11 +24,17 @@ public interface ExtensionPoint extends DomElement {
   @Override
   XmlTag getXmlTag();
 
+  /**
+   * @see #getEffectiveName()
+   */
   @NotNull
   @Stubbed
   @NameValue
   GenericAttributeValue<String> getName();
 
+  /**
+   * @see #getEffectiveName()
+   */
   @Attribute("qualifiedName")
   @Stubbed
   GenericAttributeValue<String> getQualifiedName();
