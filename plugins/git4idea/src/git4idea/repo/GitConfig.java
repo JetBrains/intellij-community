@@ -4,7 +4,6 @@ package git4idea.repo;
   import com.intellij.openapi.diagnostic.Logger;
   import com.intellij.openapi.util.Pair;
   import com.intellij.openapi.util.text.StringUtil;
-  import com.intellij.util.ArrayUtilRt;
   import com.intellij.util.containers.ContainerUtil;
   import git4idea.GitLocalBranch;
   import git4idea.GitRemoteBranch;
@@ -24,7 +23,6 @@ package git4idea.repo;
   import java.util.regex.Matcher;
   import java.util.regex.Pattern;
 
-  import static java.util.Arrays.asList;
   import static java.util.Collections.emptyList;
 
   /**
@@ -112,21 +110,20 @@ public class GitConfig {
       return emptyConfig;
     }
 
-    ClassLoader classLoader = GitConfigHelperKt.findClassLoader();
-    Pair<Collection<Remote>, Collection<Url>> remotesAndUrls = parseRemotes(ini, classLoader);
-    Collection<BranchConfig> trackedInfos = parseTrackedInfos(ini, classLoader);
+    Pair<Collection<Remote>, Collection<Url>> remotesAndUrls = parseRemotes(ini);
+    Collection<BranchConfig> trackedInfos = parseTrackedInfos(ini);
 
     return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos);
   }
 
   @NotNull
-  private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini, @Nullable ClassLoader classLoader) {
+  private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini) {
     Collection<BranchConfig> configs = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
       if (StringUtil.startsWithIgnoreCase(sectionName, "branch")) {
-        BranchConfig branchConfig = parseBranchSection(sectionName, section,  classLoader);
+        BranchConfig branchConfig = parseBranchSection(sectionName, section);
         if (branchConfig != null) {
           configs.add(branchConfig);
         }
@@ -143,9 +140,9 @@ public class GitConfig {
       return null;
     }
     final String branchName = branchConfig.getName();
-    String remoteName = branchConfig.getBean().getRemote();
-    String mergeName = branchConfig.getBean().getMerge();
-    String rebaseName = branchConfig.getBean().getRebase();
+    String remoteName = branchConfig.getRemote();
+    String mergeName = branchConfig.getMerge();
+    String rebaseName = branchConfig.getRebase();
 
     if (StringUtil.isEmptyOrSpaces(mergeName) && StringUtil.isEmptyOrSpaces(rebaseName)) {
       LOG.debug("No branch." + branchName + ".merge/rebase item in the .git/config");
@@ -186,12 +183,13 @@ public class GitConfig {
 
   @Nullable
   private static BranchConfig parseBranchSection(@NotNull String sectionName,
-                                                 @NotNull Profile.Section section,
-                                                 @Nullable ClassLoader classLoader) {
-    BranchBean branchBean = section.as(BranchBean.class, classLoader);
+                                                 @NotNull Profile.Section section) {
     Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
-      return new BranchConfig(matcher.group(1), branchBean);
+      String remote = section.get("remote");
+      String merge = section.get("merge");
+      String rebase = section.get("rebase");
+      return new BranchConfig(matcher.group(1), remote, merge, rebase);
     }
     if (BRANCH_COMMON_PARAMS_SECTION.matcher(sectionName).matches()) {
       LOG.debug(String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section));
@@ -202,19 +200,19 @@ public class GitConfig {
   }
 
   @NotNull
-  private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini, @Nullable ClassLoader classLoader) {
+  private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini) {
     Collection<Remote> remotes = new ArrayList<>();
     Collection<Url> urls = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
 
-      Remote remote = parseRemoteSection(sectionName, section, classLoader);
+      Remote remote = parseRemoteSection(sectionName, section);
       if (remote != null) {
         remotes.add(remote);
       }
       else {
-        Url url = parseUrlSection(sectionName, section, classLoader);
+        Url url = parseUrlSection(sectionName, section);
         if (url != null) {
           urls.add(url);
         }
@@ -331,123 +329,124 @@ public class GitConfig {
 
   @Nullable
   private static Remote parseRemoteSection(@NotNull String sectionName,
-                                           @NotNull Profile.Section section,
-                                           @Nullable ClassLoader classLoader) {
+                                           @NotNull Profile.Section section) {
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
     if (matcher.matches() && matcher.groupCount() == 1) {
-      return new Remote(matcher.group(1), section.as(RemoteBean.class, classLoader));
+      List<String> fetch = ContainerUtil.notNullize(section.getAll("fetch"));
+      List<String> push = ContainerUtil.notNullize(section.getAll("push"));
+      List<String> url = ContainerUtil.notNullize(section.getAll("url"));
+      List<String> pushurl = ContainerUtil.notNullize(section.getAll("pushurl"));
+      return new Remote(matcher.group(1), fetch, push, url, pushurl);
     }
     return null;
   }
 
   @Nullable
-  private static Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section, @Nullable ClassLoader classLoader) {
+  private static Url parseUrlSection(@NotNull String sectionName, @NotNull Profile.Section section) {
     Matcher matcher = URL_SECTION.matcher(sectionName);
     if (matcher.matches() && matcher.groupCount() == 1) {
-      return new Url(matcher.group(1), section.as(UrlBean.class, classLoader));
+      String insteadof = section.get("insteadof");
+      String pushInsteadof = section.get("pushinsteadof");
+      return new Url(matcher.group(1), insteadof, pushInsteadof);
     }
     return null;
   }
 
   private static class Remote {
 
-    private final String myName;
-    private final RemoteBean myRemoteBean;
+    @NotNull private final String myName;
+    @NotNull List<String> myFetchSpecs;
+    @NotNull List<String> myPushSpec;
+    @NotNull List<String> myUrls;
+    @NotNull List<String> myPushUrls;
 
-    private Remote(@NotNull String name, @NotNull RemoteBean remoteBean) {
-      myRemoteBean = remoteBean;
+    private Remote(@NotNull String name,
+                   @NotNull List<String> fetchSpecs,
+                   @NotNull List<String> pushSpec,
+                   @NotNull List<String> urls,
+                   @NotNull List<String> pushUrls) {
       myName = name;
+      myFetchSpecs = fetchSpecs;
+      myPushSpec = pushSpec;
+      myUrls = urls;
+      myPushUrls = pushUrls;
     }
 
     @NotNull
     private Collection<String> getUrls() {
-      return nonNullCollection(myRemoteBean.getUrl());
+      return myUrls;
     }
 
     @NotNull
     private Collection<String> getPushUrls() {
-      return nonNullCollection(myRemoteBean.getPushurl());
+      return myPushUrls;
     }
 
     @NotNull
     private List<String> getPushSpec() {
-      String[] push = myRemoteBean.getPush();
-      return push == null ? emptyList() : asList(push);
+      return myPushSpec;
     }
 
     @NotNull
     private List<String> getFetchSpecs() {
-      return asList(notNull(myRemoteBean.getFetch()));
+      return myFetchSpecs;
     }
-
-  }
-
-  private interface RemoteBean {
-    @Nullable String[] getFetch();
-    @Nullable String[] getPush();
-    @Nullable String[] getUrl();
-    @Nullable String[] getPushurl();
   }
 
   private static class Url {
     private final String myName;
-    private final UrlBean myUrlBean;
+    @Nullable private final String myInsteadof;
+    @Nullable private final String myPushInsteadof;
 
-    private Url(String name, UrlBean urlBean) {
-      myUrlBean = urlBean;
+    private Url(String name, @Nullable String insteadof, @Nullable String pushInsteadof) {
       myName = name;
+      myInsteadof = insteadof;
+      myPushInsteadof = pushInsteadof;
     }
 
     @Nullable
-    // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
+    // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getInsteadOf() {
-      return myUrlBean.getInsteadof();
+      return myInsteadof;
     }
 
     @Nullable
-    // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
+    // null means no entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getPushInsteadOf() {
-      return myUrlBean.getPushinsteadof();
+      return myPushInsteadof;
     }
-  }
-
-  private interface UrlBean {
-    @Nullable String getInsteadof();
-    @Nullable String getPushinsteadof();
   }
 
   private static class BranchConfig {
     private final String myName;
-    private final BranchBean myBean;
+    @Nullable private final String myRemote;
+    @Nullable private final String myMerge;
+    @Nullable private final String myRebase;
 
-    BranchConfig(String name, BranchBean bean) {
+    private BranchConfig(String name, @Nullable String remote, @Nullable String merge, @Nullable String rebase) {
       myName = name;
-      myBean = bean;
+      myRemote = remote;
+      myMerge = merge;
+      myRebase = rebase;
     }
 
     public String getName() {
       return myName;
     }
 
-    public BranchBean getBean() {
-      return myBean;
+    @Nullable
+    private String getRemote() {
+      return myRemote;
+    }
+
+    @Nullable
+    private String getMerge() {
+      return myMerge;
+    }
+
+    @Nullable
+    private String getRebase() {
+      return myRebase;
     }
   }
-
-  private interface BranchBean {
-    @Nullable String getRemote();
-    @Nullable String getMerge();
-    @Nullable String getRebase();
-  }
-
-  @NotNull
-  private static String[] notNull(@Nullable String[] s) {
-    return s == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : s;
-  }
-
-  @NotNull
-  private static Collection<String> nonNullCollection(@Nullable String[] array) {
-    return array == null ? emptyList() : new ArrayList<>(asList(array));
-  }
-
 }
