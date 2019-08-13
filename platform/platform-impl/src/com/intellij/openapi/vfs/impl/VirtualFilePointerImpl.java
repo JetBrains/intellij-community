@@ -22,24 +22,20 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
 
-  private final VirtualFilePointerListener myListener;
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
   volatile FilePointerPartNode myNode; // null means disposed
   boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
 
-  VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
+  VirtualFilePointerImpl() {
     super(TRACE_CREATION);
-    myListener = listener;
   }
 
   @Override
@@ -142,10 +138,6 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
   private static boolean isDisposed(FilePointerPartNode node) {
     return node == null;
-  }
-
-  VirtualFilePointerListener getListener() {
-    return myListener;
   }
 
   int incrementUsageCount(int delta) {

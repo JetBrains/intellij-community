@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,8 +28,7 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   private final String myUrl;
   private volatile int useCount;
 
-  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, VirtualFilePointerListener listener) {
-    super(listener);
+  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url) {
     myFile = file;
     myUrl = url;
   }
