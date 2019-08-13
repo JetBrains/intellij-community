@@ -66,8 +66,7 @@ infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, 
 
 @ApiStatus.Experimental
 inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
-  this.withContainingElements.mapNotNull { it.sourcePsi }.firstOrNull()
-    ?.let { UastCodeGenerationPlugin.byLanguage(it.language) }
+  UastCodeGenerationPlugin.byLanguage(this.lang)
     ?.replace(this, newElement, T::class.java)
 
 @ApiStatus.Experimental
@@ -75,5 +74,5 @@ inline fun <reified T : UElement> T.refreshed() = sourcePsi?.toUElementOfType<T>
 
 val UElement.generationPlugin: UastCodeGenerationPlugin?
   @ApiStatus.Experimental
-  get() = this.withContainingElements.mapNotNull { it.sourcePsi }.firstOrNull()?.let { UastCodeGenerationPlugin.byLanguage(it.language) }
+  get() = UastCodeGenerationPlugin.byLanguage(this.lang)
 

@@ -2,6 +2,8 @@
 
 package org.jetbrains.uast.java
 
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -145,4 +147,7 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       else -> uParent
     }
   }.let(this::unwrapCompositeQualifiedReference)
+
+  override val lang: Language
+    get() = JavaLanguage.INSTANCE
 }
