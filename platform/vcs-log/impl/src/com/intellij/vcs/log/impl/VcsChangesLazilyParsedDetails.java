@@ -120,7 +120,9 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     private List<Change> parseMergedChanges() {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
       List<Change> changes = myParser.apply(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
-      LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
+      if (changes.size() != statuses.size()) {
+        LOG.error("Incorrectly parsed statuses " + statuses + " to changes " + changes);
+      }
       if (getParents().size() <= 1) return changes;
 
       // each merge change knows about all changes to parents
@@ -146,7 +148,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public int size() {
       int size = 0;
-      for (List<VcsFileStatusInfo> changesToParent: myChangesOutput) {
+      for (List<VcsFileStatusInfo> changesToParent : myChangesOutput) {
         size += changesToParent.size();
       }
       return size;
