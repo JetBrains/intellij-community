@@ -15,9 +15,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.colorpicker.ColorPickerBuilder;
 import com.intellij.ui.colorpicker.LightCalloutPopup;
 import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
+import com.intellij.ui.colorpicker.SaturationBrightnessComponent;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
@@ -382,7 +384,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       .addColorListener(new ColorListener() {
         @Override
         public void colorChanged(Color color, Object source) {
-          updatePointer(color, ref);
+          updatePointer(ref);
         }
       }, true)
       .focusWhenDisplay(true)
@@ -395,12 +397,15 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     popup.show(MouseInfo.getPointerInfo().getLocation());
   }
 
-  private static void updatePointer(Color c, Ref<LightCalloutPopup> ref) {
+  private static void updatePointer(Ref<LightCalloutPopup> ref) {
     LightCalloutPopup popup = ref.get();
     Balloon balloon = popup.getBalloon();
     if (balloon instanceof BalloonImpl) {
-      ((BalloonImpl)balloon).setFillColor(c);
-      
+      RelativePoint showingPoint = ((BalloonImpl)balloon).getShowingPoint();
+      Color c = popup.getPointerColor(showingPoint, ((BalloonImpl)balloon).getComponent());
+      if (c != null) {
+        ((BalloonImpl)balloon).setFillColor(c);
+      }
     }
   }
 
