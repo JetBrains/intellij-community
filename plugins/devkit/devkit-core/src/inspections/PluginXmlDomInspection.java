@@ -668,7 +668,6 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         highlightDeprecated(
           extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
           holder, false, false);
-        return;
       }
       else if (value != null && value.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
         highlightExperimental(extension, holder);
