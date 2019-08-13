@@ -75,7 +75,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val argumentTypes = when (val argtype = argument.type) {
         is PsiIntersectionType -> argtype.conjuncts
         else -> arrayOf(argtype)
-      }
+      }.filterNotNull()
       argumentTypes.forEach { argtype ->
         processRequiredParameters(argtype, methodResult.substitutor.substitute(type))
       }
@@ -109,7 +109,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
             TypesUtil.canAssign(classType.rawType(), it.rawType(), context, METHOD_PARAMETER) == OK
           } ?: return
         for (classParameterIndex in classType.parameters.indices) {
-          currentRestrictedType = matchedBound.parameters[classParameterIndex] as? PsiClassType ?: continue
+          currentRestrictedType = matchedBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
           classType.parameters[classParameterIndex].accept(this)
         }
       }
