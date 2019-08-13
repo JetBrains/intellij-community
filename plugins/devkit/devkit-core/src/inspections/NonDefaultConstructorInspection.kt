@@ -44,10 +44,12 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 
     val area: Area?
     val isService: Boolean
+    var isServiceAnnotation = false // hack, allow Project-level @Service
     var extensionPoint: ExtensionPoint? = null
     if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
       area = null
       isService = true
+      isServiceAnnotation = true
     }
     else {
       // fast path - check by qualified name
@@ -69,7 +71,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
       val parameters = method.parameterList
-      if (isAllowedParameters(parameters, extensionPoint, isAppLevelExtensionPoint)) {
+      if (isAllowedParameters(parameters, extensionPoint, isAppLevelExtensionPoint, isServiceAnnotation)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -178,15 +180,20 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
-private fun isAllowedParameters(list: PsiParameterList, extensionPoint: ExtensionPoint?, isAppLevelExtensionPoint: Boolean): Boolean {
+private fun isAllowedParameters(list: PsiParameterList,
+                                extensionPoint: ExtensionPoint?,
+                                isAppLevelExtensionPoint: Boolean,
+                                isServiceAnnotation: Boolean): Boolean {
   if (list.isEmpty) {
     return true
   }
 
   // hardcoded for now, later will be generalized
-  if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
-    // disallow any parameters
-    return false
+  if (!isServiceAnnotation) {
+    if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
+      // disallow any parameters
+      return false
+    }
   }
 
   if (list.parametersCount != 1) {
