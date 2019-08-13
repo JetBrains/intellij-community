@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -162,6 +163,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       else {
         List<Collection<Change>> changes = new ArrayList<>(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
+          ProgressManager.checkCanceled();
           changes.add(myParser.apply(myChangesOutput.get(i), i));
         }
         return changes;

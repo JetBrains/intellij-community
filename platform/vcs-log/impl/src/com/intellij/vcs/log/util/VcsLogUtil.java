@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -212,12 +211,17 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
-                                              detail.getChanges(),
+                                              withChanges ? detail.getChanges() : ContainerUtil.emptyList(),
                                               convertToRevisionNumber(detail.getId()));
+  }
+
+  @NotNull
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+    return createCommittedChangeList(detail, true);
   }
 
   @NotNull
