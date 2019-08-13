@@ -77,7 +77,7 @@ public class SimpleDiffModel {
 
   public void updateGutterActions(boolean force) {
     for (SimpleDiffChangeUi changeUi : myPresentations) {
-      changeUi.updateGutterActions(force);
+      if (changeUi != null) changeUi.updateGutterActions(force);
     }
   }
 
