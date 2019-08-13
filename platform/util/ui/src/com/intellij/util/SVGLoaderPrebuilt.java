@@ -28,7 +28,7 @@ public class SVGLoaderPrebuilt {
   private static URL preBuiltImageURL(@Nullable URL url, double scale) {
     if (url == null) return null;
     try {
-      return new URL(url, getPreBuiltImageURLSuffix(scale));
+      return new URL(url, url.getPath() + getPreBuiltImageURLSuffix(scale));
     }
     catch (MalformedURLException e) {
       return null;
@@ -45,15 +45,13 @@ public class SVGLoaderPrebuilt {
     URL lookupUrl = preBuiltImageURL(url, scale);
     if (lookupUrl == null) return null;
 
-    BufferedImage result;
     try (InputStream is = lookupUrl.openStream()) {
-      result = SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);
+      BufferedImage result = SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);
+      IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
+      return result;
     }
     catch (IOException e) {
-      result = null;
+      return null;
     }
-
-    IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
-    return result;
   }
 }
