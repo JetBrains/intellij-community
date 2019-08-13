@@ -6,9 +6,12 @@ import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
 import java.util.Set;
@@ -27,6 +30,15 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   }
 
   @NotNull
+  public CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
+    return Promises.resolvedCancellablePromise(getMetrics(project));
+  }
+
+  /**
+   * If you need to perform long blocking operations with Read lock or on EDT,
+   * consider using {@link #getMetrics(Project, ProgressIndicator)} along with ReadAction#nonBlocking if needed.
+   */
+  @NotNull
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
     return getUsages(project).stream().
       filter(descriptor -> descriptor.getValue() > 0).
@@ -39,7 +51,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   }
 
   /**
-   * @deprecated use {@link ProjectUsagesCollector#getMetrics(Project)}
+   * @deprecated use {@link ProjectUsagesCollector#getMetrics(Project, ProgressIndicator)}
    */
   @NotNull
   @Deprecated

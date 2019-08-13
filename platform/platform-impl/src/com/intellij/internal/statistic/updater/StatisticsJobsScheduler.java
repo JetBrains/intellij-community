@@ -107,7 +107,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
       @Override
       public void projectOpened(@NotNull Project project) {
         ScheduledFuture<?> future =
-          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project),
+          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project, null),
                                                              LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
                                                              LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);

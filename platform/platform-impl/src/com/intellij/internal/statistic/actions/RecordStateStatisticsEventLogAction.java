@@ -37,7 +37,7 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
         File logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
         VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile) : null;
         myStatesLogger.logApplicationStates();
-        myStatesLogger.logProjectStates(project);
+        myStatesLogger.logProjectStates(project, indicator);
 
         ApplicationManager.getApplication().invokeLater(
           () -> {

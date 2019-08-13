@@ -11,13 +11,17 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import org.jetbrains.concurrency.CancellablePromise
+import java.util.concurrent.Callable
 
 /**
  * @author egor
@@ -28,14 +32,15 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
 
   override fun getVersion(): Int = 2
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
-    return ReadAction.compute<MutableSet<MetricEvent>, Exception> {
+  override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<out Set<MetricEvent>> {
+    return ReadAction.nonBlocking(Callable {
       val breakpointManager = XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl
 
       val res = XBreakpointUtil.breakpointTypes()
         .filter { it.isSuspendThreadSupported() }
         .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
         .map {
+          indicator?.checkCanceled()
           val data = FeatureUsageData()
           data.addData("suspendPolicy", breakpointManager.getBreakpointDefaults(it).getSuspendPolicy().toString())
           addType(it, data)
@@ -51,14 +56,14 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
 
       res.add(newCounterMetric("total", breakpoints.size))
 
-      res.add(newCounterMetric("total.disabled", breakpoints.count { !it.isEnabled() }))
-      res.add(newCounterMetric("total.non.suspending", breakpoints.count { it.getSuspendPolicy() == SuspendPolicy.NONE }))
+      res.add(newCounterMetric("total.disabled", breakpoints.count { !it.isEnabled }))
+      res.add(newCounterMetric("total.non.suspending", breakpoints.count { it.suspendPolicy == SuspendPolicy.NONE }))
 
-      if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getConditionExpression()) }) {
+      if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.conditionExpression) }) {
         res.add(newBooleanMetric("using.condition", true))
       }
 
-      if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getLogExpressionObject()) }) {
+      if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.logExpressionObject) }) {
         res.add(newBooleanMetric("using.log.expression", true))
       }
 
@@ -70,23 +75,23 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
         res.add(newBooleanMetric("using.dependent", true))
       }
 
-      if (breakpoints.any { it.isLogMessage() }) {
+      if (breakpoints.any { it.isLogMessage }) {
         res.add(newBooleanMetric("using.log.message", true))
       }
 
-      if (breakpoints.any { it.isLogStack() }) {
+      if (breakpoints.any { it.isLogStack }) {
         res.add(newBooleanMetric("using.log.stack", true))
       }
 
       res
-    }
+    }).expireWith(project).submit(NonUrgentExecutor.getInstance())
   }
 }
 
 fun addType(type: XBreakpointType<*, *>, data: FeatureUsageData) {
   val info = getPluginInfo(type.javaClass)
   data.addPluginInfo(info)
-  data.addData("type", if (info.isDevelopedByJetBrains()) type.getId() else "custom")
+  data.addData("type", if (info.isDevelopedByJetBrains()) type.id else "custom")
 }
 
 class BreakpointsUtilValidator : CustomWhiteListRule() {

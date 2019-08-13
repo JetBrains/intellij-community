@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -9,20 +9,25 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
@@ -40,35 +45,36 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    return getDescriptors(project);
-  }
-
-  @NotNull
-  public static Set<MetricEvent> getDescriptors(@NotNull Project project) {
+  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     final Set<MetricEvent> events = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
-      return Collections.emptySet();
+      return Promises.resolvedCancellablePromise(Collections.emptySet());
     }
     final FileType[] registeredFileTypes = fileTypeManager.getRegisteredFileTypes();
+    Collection<Promise<?>> promises = new ArrayList<>(registeredFileTypes.length);
     for (final FileType fileType : registeredFileTypes) {
       if (project.isDisposed()) {
-        return Collections.emptySet();
+        return Promises.resolvedCancellablePromise(Collections.emptySet());
       }
-
-      ApplicationManager.getApplication().runReadAction(() -> {
+      promises.add(ReadAction.nonBlocking(() -> {
+        IProjectStore stateStore = ProjectKt.getStateStore(project);
         FileTypeIndex.processFiles(fileType, file -> {
+          if (indicator != null) {
+            indicator.checkCanceled();
+          }
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-          if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
+          if (!stateStore.isProjectFile(file)) {
             events.add(new MetricEvent("file.in.project", newFeatureUsageData(fileType)));
             return false;
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
-      });
+      }).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
-    return events;
+    AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
+    Promises.all(promises).onSuccess(__ -> result.setResult(events)).onError(t -> result.setError(t));
+    return result;
   }
 
   @NotNull
