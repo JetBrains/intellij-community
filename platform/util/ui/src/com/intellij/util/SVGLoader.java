@@ -220,7 +220,7 @@ public final class SVGLoader {
   }
 
   /**
-   * @deprecated use {@link setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
+   * @deprecated use {@link #setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
    */
   @Deprecated
   public static void setColorPatcher(@Nullable final SvgColorPatcher colorPatcher) {
