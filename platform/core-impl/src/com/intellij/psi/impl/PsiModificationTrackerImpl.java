@@ -15,15 +15,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED;
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
@@ -104,32 +101,28 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   protected void incLanguageTrackers(@NotNull PsiTreeChangeEventImpl event) {
-    incLanguageModificationCount(Language.ANY);
     PsiElement[] elements = {
       event.getFile(), event.getParent(), event.getOldParent(), event.getNewParent(),
       event.getElement(), event.getChild(), event.getOldChild(), event.getNewChild()};
-    Set<Language> languages = new HashSet<>(elements.length);
-    languages.add(Language.ANY);
+    incLanguageModificationCount(Language.ANY);
     for (PsiElement o : elements) {
-      PsiFile file = o instanceof PsiFile ? (PsiFile)o : null;
-      if (file == null) {
+      if (o == null) continue;
+      if (o instanceof PsiDirectory) continue;
+      if (o instanceof PsiFile) {
+        for (Language language : ((PsiFile)o).getViewProvider().getLanguages()) {
+          incLanguageModificationCount(language);
+        }
+      }
+      else {
         try {
           IElementType type = PsiUtilCore.getElementType(o);
-          Language language = type != null ? type.getLanguage() : o != null ? o.getLanguage() : null;
-          ContainerUtil.addIfNotNull(languages, language);
+          Language language = type != null ? type.getLanguage() : o.getLanguage();
+          incLanguageModificationCount(language);
         }
         catch (PsiInvalidElementAccessException e) {
           PsiDocumentManagerBase.LOG.warn(e);
         }
       }
-      else {
-        for (Language language : file.getViewProvider().getLanguages()) {
-          ContainerUtil.addIfNotNull(languages, language);
-        }
-      }
-    }
-    for (Language language : languages) {
-      incLanguageModificationCount(language);
     }
   }
 
