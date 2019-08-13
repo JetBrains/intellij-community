@@ -395,6 +395,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     ref.set(popup);
 
     popup.show(MouseInfo.getPointerInfo().getLocation());
+    updatePointer(ref);
   }
 
   private static void updatePointer(Ref<LightCalloutPopup> ref) {
