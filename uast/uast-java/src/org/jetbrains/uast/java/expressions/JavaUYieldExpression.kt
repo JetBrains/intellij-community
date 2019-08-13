@@ -18,4 +18,7 @@ class JavaUYieldExpression(
 
   override val label: String?
     get() = null
+
+  override val jumpTarget: UElement? =
+    sourcePsi.findEnclosingExpression()?.let { JavaConverter.convertExpression(it, null) }
 }

@@ -11,4 +11,7 @@ class JavaUBreakExpression(
 ) : JavaAbstractUExpression(givenParent), UBreakExpression {
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
+
+  override val jumpTarget: UElement? =
+    sourcePsi.findExitedStatement()?.let { JavaConverter.convertStatement(it, null) }
 }
