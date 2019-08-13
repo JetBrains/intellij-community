@@ -21,11 +21,10 @@
 		<module>_decimal</module>
 		<module>_dummy_thread</module>
 		<module>_gdbm</module>
-		<module>_hashlib</module>
 		<module>_imp</module>
 		<module>_io</module>
-		<module>_lzma</module>
 		<module>_markupbase</module>
+		<module>_md5</module>
 		<module>_opcode</module>
 		<module>_operator</module>
 		<module>_osx_support</module>
@@ -42,18 +41,16 @@
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
-		<module>_sqlite3</module>
-		<module>_ssl</module>
 		<module>_stat</module>
 		<module>_string</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testinternalcapi</module>
 		<module>_testmultiphase</module>
 		<module>_thread</module>
-		<module>_tkinter</module>
 		<module>_tracemalloc</module>
 		<module>_uuid</module>
 		<module>_weakrefset</module>
@@ -62,6 +59,7 @@
 		<module>antigravity</module>
 		<module>argparse</module>
 		<module>asyncio</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
@@ -81,11 +79,13 @@
 		<module>asyncio.runners</module>
 		<module>asyncio.selector_events</module>
 		<module>asyncio.sslproto</module>
+		<module>asyncio.staggered</module>
 		<module>asyncio.streams</module>
 		<module>asyncio.subprocess</module>
 		<module>asyncio.tasks</module>
 		<module>asyncio.test_utils</module>
 		<module>asyncio.transports</module>
+		<module>asyncio.trsock</module>
 		<module>asyncio.unix_events</module>
 		<module>asyncio.windows_events</module>
 		<module>asyncio.windows_utils</module>
@@ -103,13 +103,11 @@
 		<module>configparser</module>
 		<module>contextvars</module>
 		<module>copyreg</module>
-		<module>crypt</module>
 		<module>ctypes._aix</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_wintypes</module>
 		<module>dataclasses</module>
-		<module>dbm</module>
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
@@ -139,7 +137,6 @@
 		<module>distutils.tests.test_spawn</module>
 		<module>distutils.tests.test_text_file</module>
 		<module>distutils.tests.test_version</module>
-		<module>django_fetch_doc_urls</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
@@ -169,13 +166,13 @@
 		<module>http.server</module>
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.autocomplete</module>
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
 		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
 		<module>idlelib.colorizer</module>
 		<module>idlelib.config</module>
@@ -189,6 +186,7 @@
 		<module>idlelib.dynoption</module>
 		<module>idlelib.editor</module>
 		<module>idlelib.filelist</module>
+		<module>idlelib.format</module>
 		<module>idlelib.grep</module>
 		<module>idlelib.help</module>
 		<module>idlelib.help_about</module>
@@ -209,6 +207,7 @@
 		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_key</module>
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
@@ -220,10 +219,12 @@
 		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_history</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
@@ -242,6 +243,7 @@
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
 		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_rstrip</module>
 		<module>idlelib.idle_test.test_run</module>
@@ -249,8 +251,10 @@
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_searchengine</module>
+		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_squeezer</module>
 		<module>idlelib.idle_test.test_stackviewer</module>
 		<module>idlelib.idle_test.test_statusbar</module>
@@ -259,6 +263,7 @@
 		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_warning</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.idle_test.test_window</module>
@@ -283,6 +288,7 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.sidebar</module>
 		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
@@ -291,7 +297,6 @@
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.window</module>
-		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>importlib</module>
@@ -299,6 +304,7 @@
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
+		<module>importlib.metadata</module>
 		<module>importlib.resources</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
@@ -319,20 +325,318 @@
 		<module>multiprocessing.popen_spawn_posix</module>
 		<module>multiprocessing.popen_spawn_win32</module>
 		<module>multiprocessing.resource_sharer</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.semaphore_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>multiprocessing.spawn</module>
-		<module>nis</module>
 		<module>ossaudiodev</module>
 		<module>pathlib</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
-		<module>pypi_download_install</module>
 		<module>queue</module>
-		<module>readline</module>
-		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
-		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
@@ -398,6 +702,7 @@
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
 		<module>unittest.__main__</module>
+		<module>unittest.async_case</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
 		<module>unittest.main</module>
@@ -412,6 +717,7 @@
 		<module>unittest.test.dummy</module>
 		<module>unittest.test.support</module>
 		<module>unittest.test.test_assertions</module>
+		<module>unittest.test.test_async_case</module>
 		<module>unittest.test.test_break</module>
 		<module>unittest.test.test_case</module>
 		<module>unittest.test.test_discovery</module>
@@ -426,6 +732,7 @@
 		<module>unittest.test.testmock</module>
 		<module>unittest.test.testmock.__main__</module>
 		<module>unittest.test.testmock.support</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>unittest.test.testmock.testcallable</module>
 		<module>unittest.test.testmock.testhelpers</module>
 		<module>unittest.test.testmock.testmagicmethods</module>
@@ -435,7 +742,6 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
-		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -448,7 +754,6 @@
 		<module>xmlrpc.server</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
-		<module>zlib</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -496,7 +801,6 @@
 		<module>_fileio</module>
 		<module>_gdbm</module>
 		<module>_imp</module>
-		<module>_lzma</module>
 		<module>_markupbase</module>
 		<module>_md5</module>
 		<module>_opcode</module>
@@ -507,28 +811,27 @@
 		<module>_py_abc</module>
 		<module>_pydecimal</module>
 		<module>_queue</module>
-		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
 		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
-		<module>_sqlite3</module>
 		<module>_stat</module>
 		<module>_string</module>
-		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testinternalcapi</module>
 		<module>_testmultiphase</module>
 		<module>_thread</module>
-		<module>_tkinter</module>
 		<module>_tracemalloc</module>
 		<module>_uuid</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>asyncio</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
@@ -548,11 +851,13 @@
 		<module>asyncio.runners</module>
 		<module>asyncio.selector_events</module>
 		<module>asyncio.sslproto</module>
+		<module>asyncio.staggered</module>
 		<module>asyncio.streams</module>
 		<module>asyncio.subprocess</module>
 		<module>asyncio.tasks</module>
 		<module>asyncio.test_utils</module>
 		<module>asyncio.transports</module>
+		<module>asyncio.trsock</module>
 		<module>asyncio.unix_events</module>
 		<module>asyncio.windows_events</module>
 		<module>asyncio.windows_utils</module>
@@ -567,14 +872,12 @@
 		<module>configparser</module>
 		<module>contextvars</module>
 		<module>copyreg</module>
-		<module>crypt_failed</module>
 		<module>ctypes._aix</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
 		<module>dataclasses</module>
-		<module>dbm</module>
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
@@ -584,7 +887,6 @@
 		<module>distutils.tests.test_extension</module>
 		<module>distutils.tests.test_log</module>
 		<module>distutils.tests.test_msvccompiler</module>
-		<module>django_fetch_doc_urls</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
@@ -597,9 +899,6 @@
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
 		<module>encodings.oem</module>
-		<module>ensurepip</module>
-		<module>ensurepip.__main__</module>
-		<module>ensurepip._uninstall</module>
 		<module>enum</module>
 		<module>faulthandler</module>
 		<module>html</module>
@@ -611,13 +910,13 @@
 		<module>http.cookies</module>
 		<module>http.server</module>
 		<module>idlelib.__main__</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.autocomplete</module>
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
 		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
 		<module>idlelib.colorizer</module>
 		<module>idlelib.config</module>
@@ -631,8 +930,8 @@
 		<module>idlelib.dynoption</module>
 		<module>idlelib.editor</module>
 		<module>idlelib.filelist</module>
+		<module>idlelib.format</module>
 		<module>idlelib.grep</module>
-		<module>idlelib.help</module>
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
@@ -644,19 +943,18 @@
 		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_key</module>
-		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_debugger</module>
 		<module>idlelib.idle_test.test_debugger_r</module>
 		<module>idlelib.idle_test.test_debugobj</module>
 		<module>idlelib.idle_test.test_debugobj_r</module>
-		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
 		<module>idlelib.idle_test.test_history</module>
-		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
 		<module>idlelib.idle_test.test_mainmenu</module>
@@ -669,20 +967,22 @@
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
 		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
-		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
+		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_squeezer</module>
 		<module>idlelib.idle_test.test_stackviewer</module>
 		<module>idlelib.idle_test.test_statusbar</module>
 		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
-		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_window</module>
 		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
@@ -705,25 +1005,27 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.sidebar</module>
 		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
+		<module>idlelib.testcode</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.window</module>
-		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
+		<module>importlib.metadata</module>
 		<module>importlib.resources</module>
 		<module>importlib.util</module>
 		<module>ipaddress</module>
-		<module>lib2to3.fixes.fix_asserts</module>
+		<module>lib2to3.fixes.fix_callable</module>
 		<module>lib2to3.fixes.fix_reload</module>
 		<module>lib2to3.tests.__main__</module>
 		<module>lzma</module>
@@ -734,17 +1036,14 @@
 		<module>multiprocessing.popen_spawn_posix</module>
 		<module>multiprocessing.popen_spawn_win32</module>
 		<module>multiprocessing.resource_sharer</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.semaphore_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>multiprocessing.spawn</module>
-		<module>nis_failed</module>
 		<module>pathlib</module>
 		<module>pydoc_topics</module>
-		<module>pypi_download_install</module>
 		<module>queue</module>
-		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
-		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
@@ -807,12 +1106,15 @@
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
+		<module>unittest.async_case</module>
 		<module>unittest.mock</module>
 		<module>unittest.test.__main__</module>
 		<module>unittest.test._test_warnings</module>
+		<module>unittest.test.test_async_case</module>
 		<module>unittest.test.testmock</module>
 		<module>unittest.test.testmock.__main__</module>
 		<module>unittest.test.testmock.support</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>unittest.test.testmock.testcallable</module>
 		<module>unittest.test.testmock.testhelpers</module>
 		<module>unittest.test.testmock.testmagicmethods</module>
@@ -821,7 +1123,6 @@
 		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
-		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -899,35 +1200,30 @@
 		<module>_bytesio</module>
 		<module>_compression</module>
 		<module>_contextvars</module>
-		<module>_dbm</module>
 		<module>_fileio</module>
-		<module>_gdbm</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
 		<module>_pydecimal</module>
 		<module>_queue</module>
-		<module>_sha</module>
 		<module>_sha3</module>
 		<module>_signal</module>
-		<module>_sqlite3</module>
-		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_testinternalcapi</module>
 		<module>_testmultiphase</module>
-		<module>_tkinter</module>
 		<module>_uuid</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_tasks</module>
-		<module>asyncio.compat</module>
-		<module>asyncio.coroutines</module>
 		<module>asyncio.exceptions</module>
 		<module>asyncio.format_helpers</module>
 		<module>asyncio.runners</module>
-		<module>asyncio.sslproto</module>
+		<module>asyncio.staggered</module>
+		<module>asyncio.trsock</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -978,9 +1274,10 @@
 		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
-		<module>crypt_failed</module>
 		<module>ctypes._aix</module>
-		<module>ctypes.test.__main__</module>
+		<module>ctypes.test.runtests</module>
+		<module>ctypes.test.test_errcheck</module>
+		<module>ctypes.test.test_integers</module>
 		<module>curses.wrapper</module>
 		<module>dataclasses</module>
 		<module>dbhash</module>
@@ -992,7 +1289,6 @@
 		<module>distutils.tests.setuptools_extension</module>
 		<module>distutils.tests.test_ccompiler</module>
 		<module>distutils.tests.test_msvccompiler</module>
-		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.test</module>
@@ -1008,6 +1304,7 @@
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
+		<module>gdbm</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -1015,13 +1312,13 @@
 		<module>htmlentitydefs</module>
 		<module>htmllib</module>
 		<module>httplib</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.autocomplete</module>
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
 		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
 		<module>idlelib.colorizer</module>
 		<module>idlelib.config</module>
@@ -1035,63 +1332,60 @@
 		<module>idlelib.dynoption</module>
 		<module>idlelib.editor</module>
 		<module>idlelib.filelist</module>
+		<module>idlelib.format</module>
 		<module>idlelib.grep</module>
-		<module>idlelib.help</module>
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
 		<module>idlelib.idle_test.template</module>
-		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autocomplete_w</module>
-		<module>idlelib.idle_test.test_autoexpand</module>
 		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_calltip</module>
 		<module>idlelib.idle_test.test_calltip_w</module>
 		<module>idlelib.idle_test.test_codecontext</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_key</module>
-		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_debugger</module>
 		<module>idlelib.idle_test.test_debugger_r</module>
 		<module>idlelib.idle_test.test_debugobj</module>
 		<module>idlelib.idle_test.test_debugobj_r</module>
 		<module>idlelib.idle_test.test_editmenu</module>
-		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_help</module>
 		<module>idlelib.idle_test.test_help_about</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_history</module>
-		<module>idlelib.idle_test.test_hyperparser</module>
-		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
 		<module>idlelib.idle_test.test_mainmenu</module>
 		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
-		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_pyparse</module>
 		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
 		<module>idlelib.idle_test.test_rpc</module>
 		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_runscript</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
-		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
+		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_squeezer</module>
 		<module>idlelib.idle_test.test_stackviewer</module>
 		<module>idlelib.idle_test.test_statusbar</module>
-		<module>idlelib.idle_test.test_textview</module>
 		<module>idlelib.idle_test.test_tooltip</module>
 		<module>idlelib.idle_test.test_tree</module>
 		<module>idlelib.idle_test.test_undo</module>
-		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_window</module>
 		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.iomenu</module>
@@ -1114,19 +1408,21 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.sidebar</module>
 		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
+		<module>idlelib.testcode</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.window</module>
-		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
+		<module>importlib.metadata</module>
 		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -1147,7 +1443,6 @@
 		<module>json.tests.test_speedups</module>
 		<module>json.tests.test_tool</module>
 		<module>json.tests.test_unicode</module>
-		<module>lib2to3.tests.__main__</module>
 		<module>linuxaudiodev</module>
 		<module>markupbase</module>
 		<module>md5</module>
@@ -1156,21 +1451,320 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis_failed</module>
 		<module>os2emxpath</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
-		<module>pypi_download_install</module>
-		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
@@ -1189,14 +1783,15 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
-		<module>tkinter.test.test_tkinter.test_images</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.rosette</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>typing</module>
+		<module>unittest.async_case</module>
+		<module>unittest.test.test_async_case</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>unittest.test.testmock.testsealable</module>
-		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -1263,29 +1858,27 @@
 		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_contextvars</module>
-		<module>_dbm</module>
 		<module>_fileio</module>
-		<module>_gdbm</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
 		<module>_queue</module>
-		<module>_sha</module>
 		<module>_sha3</module>
-		<module>_sqlite3</module>
-		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_tkinter</module>
+		<module>_testinternalcapi</module>
 		<module>_uuid</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.base_futures</module>
 		<module>asyncio.base_tasks</module>
 		<module>asyncio.exceptions</module>
 		<module>asyncio.format_helpers</module>
 		<module>asyncio.runners</module>
+		<module>asyncio.staggered</module>
+		<module>asyncio.trsock</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1336,7 +1929,6 @@
 		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
-		<module>crypt_failed</module>
 		<module>ctypes._aix</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
@@ -1363,6 +1955,7 @@
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
+		<module>gdbm</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -1370,13 +1963,13 @@
 		<module>htmlentitydefs</module>
 		<module>htmllib</module>
 		<module>httplib</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.autocomplete</module>
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
 		<module>idlelib.calltip</module>
 		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
 		<module>idlelib.colorizer</module>
 		<module>idlelib.config</module>
@@ -1390,6 +1983,7 @@
 		<module>idlelib.dynoption</module>
 		<module>idlelib.editor</module>
 		<module>idlelib.filelist</module>
+		<module>idlelib.format</module>
 		<module>idlelib.grep</module>
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
@@ -1407,10 +2001,10 @@
 		<module>idlelib.idle_test.test_debugger_r</module>
 		<module>idlelib.idle_test.test_debugobj</module>
 		<module>idlelib.idle_test.test_debugobj_r</module>
-		<module>idlelib.idle_test.test_editmenu</module>
 		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_help</module>
-		<module>idlelib.idle_test.test_help_about</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_history</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
@@ -1418,7 +2012,6 @@
 		<module>idlelib.idle_test.test_multicall</module>
 		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
-		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_pyparse</module>
 		<module>idlelib.idle_test.test_pyshell</module>
 		<module>idlelib.idle_test.test_query</module>
@@ -1430,6 +2023,7 @@
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
+		<module>idlelib.idle_test.test_sidebar</module>
 		<module>idlelib.idle_test.test_squeezer</module>
 		<module>idlelib.idle_test.test_stackviewer</module>
 		<module>idlelib.idle_test.test_statusbar</module>
@@ -1458,6 +2052,7 @@
 		<module>idlelib.search</module>
 		<module>idlelib.searchbase</module>
 		<module>idlelib.searchengine</module>
+		<module>idlelib.sidebar</module>
 		<module>idlelib.squeezer</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
@@ -1467,10 +2062,10 @@
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.window</module>
-		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
 		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
+		<module>importlib.metadata</module>
 		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -1491,6 +2086,7 @@
 		<module>json.tests.test_speedups</module>
 		<module>json.tests.test_tool</module>
 		<module>json.tests.test_unicode</module>
+		<module>lib2to3.fixes.fix_callable</module>
 		<module>linuxaudiodev</module>
 		<module>markupbase</module>
 		<module>md5</module>
@@ -1499,11 +2095,313 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis_failed</module>
 		<module>os2emxpath</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
@@ -1511,7 +2409,6 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>scipy_doc_mapping</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
@@ -1534,11 +2431,13 @@
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.rosette</module>
+		<module>unittest.async_case</module>
+		<module>unittest.test.test_async_case</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>unittest.test.testmock.testsealable</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
-		<module>versions_updater</module>
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
@@ -1570,11 +2469,13 @@
 		<module>Canvas</module>
 		<module>ConfigParser</module>
 		<module>Cookie</module>
+		<module>DLFCN</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
+		<module>IN</module>
 		<module>MimeWriter</module>
 		<module>Queue</module>
 		<module>ScrolledText</module>
@@ -1583,6 +2484,7 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
+		<module>TYPES</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -1596,8 +2498,6 @@
 		<module>__main__</module>
 		<module>_abc</module>
 		<module>_abcoll</module>
-		<module>_asyncio</module>
-		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_contextvars</module>
 		<module>_fileio</module>
@@ -1605,19 +2505,19 @@
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
 		<module>_queue</module>
-		<module>_sha</module>
-		<module>_sha3</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
+		<module>_testinternalcapi</module>
 		<module>_uuid</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
-		<module>asyncio.base_futures</module>
-		<module>asyncio.base_tasks</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.exceptions</module>
 		<module>asyncio.format_helpers</module>
 		<module>asyncio.runners</module>
+		<module>asyncio.staggered</module>
+		<module>asyncio.trsock</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1653,6 +2553,7 @@
 		<module>bsddb.test.test_thread</module>
 		<module>cPickle</module>
 		<module>cStringIO</module>
+		<module>collections.__main__</module>
 		<module>commands</module>
 		<module>compiler</module>
 		<module>compiler.ast</module>
@@ -1668,7 +2569,6 @@
 		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
-		<module>crypt_failed</module>
 		<module>ctypes._aix</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
@@ -1690,11 +2590,11 @@
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>email.test.test_email_torture</module>
-		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
+		<module>gdbm</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -1746,51 +2646,35 @@
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
 		<module>idlelib.aboutDialog</module>
-		<module>idlelib.calltip</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
-		<module>idlelib.idle_test.template</module>
-		<module>idlelib.idle_test.test_autocomplete_w</module>
-		<module>idlelib.idle_test.test_browser</module>
-		<module>idlelib.idle_test.test_calltip</module>
-		<module>idlelib.idle_test.test_calltip_w</module>
-		<module>idlelib.idle_test.test_codecontext</module>
+		<module>idlelib.format</module>
+		<module>idlelib.idle_test.test_calltips</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_debugger_r</module>
-		<module>idlelib.idle_test.test_debugobj</module>
-		<module>idlelib.idle_test.test_debugobj_r</module>
-		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
 		<module>idlelib.idle_test.test_io</module>
-		<module>idlelib.idle_test.test_mainmenu</module>
-		<module>idlelib.idle_test.test_multicall</module>
-		<module>idlelib.idle_test.test_outwin</module>
-		<module>idlelib.idle_test.test_pyparse</module>
-		<module>idlelib.idle_test.test_pyshell</module>
-		<module>idlelib.idle_test.test_rpc</module>
-		<module>idlelib.idle_test.test_run</module>
-		<module>idlelib.idle_test.test_runscript</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_squeezer</module>
-		<module>idlelib.idle_test.test_stackviewer</module>
-		<module>idlelib.idle_test.test_statusbar</module>
-		<module>idlelib.idle_test.test_tooltip</module>
+		<module>idlelib.idle_test.test_sidebar</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
-		<module>idlelib.idle_test.test_window</module>
-		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
-		<module>idlelib.squeezer</module>
+		<module>idlelib.sidebar</module>
+		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
-		<module>idlelib.window</module>
-		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
+		<module>importlib.metadata</module>
 		<module>importlib.resources</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -1811,6 +2695,7 @@
 		<module>json.tests.test_speedups</module>
 		<module>json.tests.test_tool</module>
 		<module>json.tests.test_unicode</module>
+		<module>lib2to3.fixes.fix_callable</module>
 		<module>linuxaudiodev</module>
 		<module>markupbase</module>
 		<module>md5</module>
@@ -1819,11 +2704,313 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis_failed</module>
 		<module>os2emxpath</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
@@ -1831,7 +3018,6 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>scipy_doc_mapping</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
@@ -1852,16 +3038,17 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
-		<module>turtledemo.rosette</module>
+		<module>turtledemo.wikipedia</module>
+		<module>unittest.async_case</module>
+		<module>unittest.test.test_async_case</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>unittest.test.testmock.testsealable</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
-		<module>versions_updater</module>
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
 		<func>TargetScopeError</func>
 		<func>apply</func>
@@ -1916,27 +3103,22 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>__main__</module>
-		<module>_abc</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
-		<module>_contextvars</module>
-		<module>_dbm</module>
 		<module>_fileio</module>
-		<module>_gdbm</module>
 		<module>_hotshot</module>
 		<module>_posixshmem</module>
-		<module>_py_abc</module>
-		<module>_queue</module>
-		<module>_sha</module>
-		<module>_sqlite3</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
+		<module>_testinternalcapi</module>
 		<module>_xxsubinterpreters</module>
 		<module>anydbm</module>
+		<module>asyncio.__main__</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.exceptions</module>
-		<module>asyncio.format_helpers</module>
-		<module>asyncio.runners</module>
+		<module>asyncio.staggered</module>
+		<module>asyncio.test_utils</module>
+		<module>asyncio.trsock</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -1985,11 +3167,8 @@
 		<module>compiler.syntax</module>
 		<module>compiler.transformer</module>
 		<module>compiler.visitor</module>
-		<module>contextvars</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
-		<module>crypt_failed</module>
-		<module>ctypes._aix</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
@@ -2013,6 +3192,7 @@
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
+		<module>gdbm</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -2063,50 +3243,37 @@
 		<module>idlelib.WidgetRedirector</module>
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.aboutDialog</module>
-		<module>idlelib.calltip</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
-		<module>idlelib.idle_test.template</module>
-		<module>idlelib.idle_test.test_autocomplete_w</module>
-		<module>idlelib.idle_test.test_calltip</module>
-		<module>idlelib.idle_test.test_calltip_w</module>
-		<module>idlelib.idle_test.test_codecontext</module>
+		<module>idlelib.format</module>
+		<module>idlelib.idle_test.test_calltips</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_debugger_r</module>
-		<module>idlelib.idle_test.test_debugobj</module>
-		<module>idlelib.idle_test.test_debugobj_r</module>
-		<module>idlelib.idle_test.test_filelist</module>
+		<module>idlelib.idle_test.test_format</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
 		<module>idlelib.idle_test.test_io</module>
-		<module>idlelib.idle_test.test_mainmenu</module>
-		<module>idlelib.idle_test.test_multicall</module>
-		<module>idlelib.idle_test.test_pyparse</module>
-		<module>idlelib.idle_test.test_pyshell</module>
-		<module>idlelib.idle_test.test_rpc</module>
-		<module>idlelib.idle_test.test_runscript</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_squeezer</module>
-		<module>idlelib.idle_test.test_stackviewer</module>
-		<module>idlelib.idle_test.test_statusbar</module>
-		<module>idlelib.idle_test.test_tooltip</module>
+		<module>idlelib.idle_test.test_sidebar</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
-		<module>idlelib.idle_test.test_window</module>
-		<module>idlelib.idle_test.test_zoomheight</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
-		<module>idlelib.squeezer</module>
+		<module>idlelib.sidebar</module>
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
-		<module>idlelib.window</module>
 		<module>ihooks</module>
-		<module>importlib.resources</module>
+		<module>importlib.metadata</module>
 		<module>imputil</module>
 		<module>json.tests</module>
 		<module>json.tests.test_check_circular</module>
@@ -2136,11 +3303,313 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.resource_tracker</module>
 		<module>multiprocessing.shared_memory</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis_failed</module>
 		<module>os2emxpath</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
@@ -2148,11 +3617,9 @@
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>scipy_doc_mapping</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
-		<module>sqlite3.test.backup</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
 		<module>statvfs</module>
@@ -2169,11 +3636,13 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
-		<module>turtledemo.rosette</module>
+		<module>turtledemo.wikipedia</module>
+		<module>unittest.async_case</module>
+		<module>unittest.test.test_async_case</module>
+		<module>unittest.test.testmock.testasync</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
-		<module>versions_updater</module>
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
@@ -2234,11 +3703,8 @@
 		<module>_bytesio</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
-		<module>_sha</module>
 		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
-		<module>_tkinter</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.test_utils</module>
@@ -2292,7 +3758,6 @@
 		<module>compiler.visitor</module>
 		<module>cookielib</module>
 		<module>copy_reg</module>
-		<module>crypt_failed</module>
 		<module>ctypes.test.runtests</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
@@ -2312,10 +3777,13 @@
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>email.test.test_email_torture</module>
+		<module>encodings.cp65001</module>
 		<module>encodings.string_escape</module>
+		<module>encodings.unicode_internal</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
+		<module>gdbm</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -2366,27 +3834,35 @@
 		<module>idlelib.WidgetRedirector</module>
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
+		<module>idlelib._pyclbr</module>
 		<module>idlelib.aboutDialog</module>
-		<module>idlelib.calltips</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
 		<module>idlelib.configSectionNameDialog</module>
 		<module>idlelib.dynOptionMenuWidget</module>
 		<module>idlelib.idle_test.test_calltips</module>
+		<module>idlelib.idle_test.test_config_help</module>
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_helpabout</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
 		<module>idlelib.idle_test.test_io</module>
+		<module>idlelib.idle_test.test_paragraph</module>
+		<module>idlelib.idle_test.test_replacedialog</module>
+		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_searchdialog</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_undodelegator</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
+		<module>idlelib.paragraph</module>
+		<module>idlelib.rstrip</module>
 		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
-		<module>idlelib.windows</module>
 		<module>ihooks</module>
 		<module>imputil</module>
 		<module>json.tests</module>
@@ -2418,10 +3894,312 @@
 		<module>mimify</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
+		<module>multiprocessing.semaphore_tracker</module>
 		<module>mutex</module>
 		<module>new</module>
-		<module>nis_failed</module>
 		<module>os2emxpath</module>
+		<module>pip</module>
+		<module>pip.__main__</module>
+		<module>pip._internal</module>
+		<module>pip._internal.build_env</module>
+		<module>pip._internal.cache</module>
+		<module>pip._internal.cli</module>
+		<module>pip._internal.cli.autocompletion</module>
+		<module>pip._internal.cli.base_command</module>
+		<module>pip._internal.cli.cmdoptions</module>
+		<module>pip._internal.cli.main_parser</module>
+		<module>pip._internal.cli.parser</module>
+		<module>pip._internal.cli.status_codes</module>
+		<module>pip._internal.commands</module>
+		<module>pip._internal.commands.check</module>
+		<module>pip._internal.commands.completion</module>
+		<module>pip._internal.commands.configuration</module>
+		<module>pip._internal.commands.download</module>
+		<module>pip._internal.commands.freeze</module>
+		<module>pip._internal.commands.hash</module>
+		<module>pip._internal.commands.help</module>
+		<module>pip._internal.commands.install</module>
+		<module>pip._internal.commands.list</module>
+		<module>pip._internal.commands.search</module>
+		<module>pip._internal.commands.show</module>
+		<module>pip._internal.commands.uninstall</module>
+		<module>pip._internal.commands.wheel</module>
+		<module>pip._internal.configuration</module>
+		<module>pip._internal.download</module>
+		<module>pip._internal.exceptions</module>
+		<module>pip._internal.index</module>
+		<module>pip._internal.locations</module>
+		<module>pip._internal.models</module>
+		<module>pip._internal.models.candidate</module>
+		<module>pip._internal.models.format_control</module>
+		<module>pip._internal.models.index</module>
+		<module>pip._internal.models.link</module>
+		<module>pip._internal.operations</module>
+		<module>pip._internal.operations.check</module>
+		<module>pip._internal.operations.freeze</module>
+		<module>pip._internal.operations.prepare</module>
+		<module>pip._internal.pep425tags</module>
+		<module>pip._internal.pyproject</module>
+		<module>pip._internal.req</module>
+		<module>pip._internal.req.constructors</module>
+		<module>pip._internal.req.req_file</module>
+		<module>pip._internal.req.req_install</module>
+		<module>pip._internal.req.req_set</module>
+		<module>pip._internal.req.req_tracker</module>
+		<module>pip._internal.req.req_uninstall</module>
+		<module>pip._internal.resolve</module>
+		<module>pip._internal.utils</module>
+		<module>pip._internal.utils.appdirs</module>
+		<module>pip._internal.utils.compat</module>
+		<module>pip._internal.utils.deprecation</module>
+		<module>pip._internal.utils.encoding</module>
+		<module>pip._internal.utils.filesystem</module>
+		<module>pip._internal.utils.glibc</module>
+		<module>pip._internal.utils.hashes</module>
+		<module>pip._internal.utils.logging</module>
+		<module>pip._internal.utils.misc</module>
+		<module>pip._internal.utils.models</module>
+		<module>pip._internal.utils.outdated</module>
+		<module>pip._internal.utils.packaging</module>
+		<module>pip._internal.utils.setuptools_build</module>
+		<module>pip._internal.utils.temp_dir</module>
+		<module>pip._internal.utils.typing</module>
+		<module>pip._internal.utils.ui</module>
+		<module>pip._internal.vcs</module>
+		<module>pip._internal.vcs.bazaar</module>
+		<module>pip._internal.vcs.git</module>
+		<module>pip._internal.vcs.mercurial</module>
+		<module>pip._internal.vcs.subversion</module>
+		<module>pip._internal.wheel</module>
+		<module>pip._vendor</module>
+		<module>pip._vendor.appdirs</module>
+		<module>pip._vendor.cachecontrol</module>
+		<module>pip._vendor.cachecontrol._cmd</module>
+		<module>pip._vendor.cachecontrol.adapter</module>
+		<module>pip._vendor.cachecontrol.cache</module>
+		<module>pip._vendor.cachecontrol.caches</module>
+		<module>pip._vendor.cachecontrol.caches.file_cache</module>
+		<module>pip._vendor.cachecontrol.caches.redis_cache</module>
+		<module>pip._vendor.cachecontrol.compat</module>
+		<module>pip._vendor.cachecontrol.controller</module>
+		<module>pip._vendor.cachecontrol.filewrapper</module>
+		<module>pip._vendor.cachecontrol.heuristics</module>
+		<module>pip._vendor.cachecontrol.serialize</module>
+		<module>pip._vendor.cachecontrol.wrapper</module>
+		<module>pip._vendor.certifi</module>
+		<module>pip._vendor.certifi.__main__</module>
+		<module>pip._vendor.certifi.core</module>
+		<module>pip._vendor.chardet</module>
+		<module>pip._vendor.chardet.big5freq</module>
+		<module>pip._vendor.chardet.big5prober</module>
+		<module>pip._vendor.chardet.chardistribution</module>
+		<module>pip._vendor.chardet.charsetgroupprober</module>
+		<module>pip._vendor.chardet.charsetprober</module>
+		<module>pip._vendor.chardet.cli</module>
+		<module>pip._vendor.chardet.cli.chardetect</module>
+		<module>pip._vendor.chardet.codingstatemachine</module>
+		<module>pip._vendor.chardet.compat</module>
+		<module>pip._vendor.chardet.cp949prober</module>
+		<module>pip._vendor.chardet.enums</module>
+		<module>pip._vendor.chardet.escprober</module>
+		<module>pip._vendor.chardet.escsm</module>
+		<module>pip._vendor.chardet.eucjpprober</module>
+		<module>pip._vendor.chardet.euckrfreq</module>
+		<module>pip._vendor.chardet.euckrprober</module>
+		<module>pip._vendor.chardet.euctwfreq</module>
+		<module>pip._vendor.chardet.euctwprober</module>
+		<module>pip._vendor.chardet.gb2312freq</module>
+		<module>pip._vendor.chardet.gb2312prober</module>
+		<module>pip._vendor.chardet.hebrewprober</module>
+		<module>pip._vendor.chardet.jisfreq</module>
+		<module>pip._vendor.chardet.jpcntx</module>
+		<module>pip._vendor.chardet.langbulgarianmodel</module>
+		<module>pip._vendor.chardet.langcyrillicmodel</module>
+		<module>pip._vendor.chardet.langgreekmodel</module>
+		<module>pip._vendor.chardet.langhebrewmodel</module>
+		<module>pip._vendor.chardet.langhungarianmodel</module>
+		<module>pip._vendor.chardet.langthaimodel</module>
+		<module>pip._vendor.chardet.langturkishmodel</module>
+		<module>pip._vendor.chardet.latin1prober</module>
+		<module>pip._vendor.chardet.mbcharsetprober</module>
+		<module>pip._vendor.chardet.mbcsgroupprober</module>
+		<module>pip._vendor.chardet.mbcssm</module>
+		<module>pip._vendor.chardet.sbcharsetprober</module>
+		<module>pip._vendor.chardet.sbcsgroupprober</module>
+		<module>pip._vendor.chardet.sjisprober</module>
+		<module>pip._vendor.chardet.universaldetector</module>
+		<module>pip._vendor.chardet.utf8prober</module>
+		<module>pip._vendor.chardet.version</module>
+		<module>pip._vendor.colorama</module>
+		<module>pip._vendor.colorama.ansi</module>
+		<module>pip._vendor.colorama.ansitowin32</module>
+		<module>pip._vendor.colorama.initialise</module>
+		<module>pip._vendor.colorama.win32</module>
+		<module>pip._vendor.colorama.winterm</module>
+		<module>pip._vendor.distlib</module>
+		<module>pip._vendor.distlib._backport</module>
+		<module>pip._vendor.distlib._backport.misc</module>
+		<module>pip._vendor.distlib._backport.shutil</module>
+		<module>pip._vendor.distlib._backport.sysconfig</module>
+		<module>pip._vendor.distlib._backport.tarfile</module>
+		<module>pip._vendor.distlib.compat</module>
+		<module>pip._vendor.distlib.database</module>
+		<module>pip._vendor.distlib.index</module>
+		<module>pip._vendor.distlib.locators</module>
+		<module>pip._vendor.distlib.manifest</module>
+		<module>pip._vendor.distlib.markers</module>
+		<module>pip._vendor.distlib.metadata</module>
+		<module>pip._vendor.distlib.resources</module>
+		<module>pip._vendor.distlib.scripts</module>
+		<module>pip._vendor.distlib.util</module>
+		<module>pip._vendor.distlib.version</module>
+		<module>pip._vendor.distlib.wheel</module>
+		<module>pip._vendor.distro</module>
+		<module>pip._vendor.html5lib</module>
+		<module>pip._vendor.html5lib._ihatexml</module>
+		<module>pip._vendor.html5lib._inputstream</module>
+		<module>pip._vendor.html5lib._tokenizer</module>
+		<module>pip._vendor.html5lib._trie</module>
+		<module>pip._vendor.html5lib._trie._base</module>
+		<module>pip._vendor.html5lib._trie.datrie</module>
+		<module>pip._vendor.html5lib._trie.py</module>
+		<module>pip._vendor.html5lib._utils</module>
+		<module>pip._vendor.html5lib.constants</module>
+		<module>pip._vendor.html5lib.filters</module>
+		<module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+		<module>pip._vendor.html5lib.filters.base</module>
+		<module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+		<module>pip._vendor.html5lib.filters.lint</module>
+		<module>pip._vendor.html5lib.filters.optionaltags</module>
+		<module>pip._vendor.html5lib.filters.sanitizer</module>
+		<module>pip._vendor.html5lib.filters.whitespace</module>
+		<module>pip._vendor.html5lib.html5parser</module>
+		<module>pip._vendor.html5lib.serializer</module>
+		<module>pip._vendor.html5lib.treeadapters</module>
+		<module>pip._vendor.html5lib.treeadapters.genshi</module>
+		<module>pip._vendor.html5lib.treeadapters.sax</module>
+		<module>pip._vendor.html5lib.treebuilders</module>
+		<module>pip._vendor.html5lib.treebuilders.base</module>
+		<module>pip._vendor.html5lib.treebuilders.dom</module>
+		<module>pip._vendor.html5lib.treebuilders.etree</module>
+		<module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers</module>
+		<module>pip._vendor.html5lib.treewalkers.base</module>
+		<module>pip._vendor.html5lib.treewalkers.dom</module>
+		<module>pip._vendor.html5lib.treewalkers.etree</module>
+		<module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+		<module>pip._vendor.html5lib.treewalkers.genshi</module>
+		<module>pip._vendor.idna</module>
+		<module>pip._vendor.idna.codec</module>
+		<module>pip._vendor.idna.compat</module>
+		<module>pip._vendor.idna.core</module>
+		<module>pip._vendor.idna.idnadata</module>
+		<module>pip._vendor.idna.intranges</module>
+		<module>pip._vendor.idna.package_data</module>
+		<module>pip._vendor.idna.uts46data</module>
+		<module>pip._vendor.ipaddress</module>
+		<module>pip._vendor.lockfile</module>
+		<module>pip._vendor.lockfile.linklockfile</module>
+		<module>pip._vendor.lockfile.mkdirlockfile</module>
+		<module>pip._vendor.lockfile.pidlockfile</module>
+		<module>pip._vendor.lockfile.sqlitelockfile</module>
+		<module>pip._vendor.lockfile.symlinklockfile</module>
+		<module>pip._vendor.msgpack</module>
+		<module>pip._vendor.msgpack._version</module>
+		<module>pip._vendor.msgpack.exceptions</module>
+		<module>pip._vendor.msgpack.fallback</module>
+		<module>pip._vendor.packaging</module>
+		<module>pip._vendor.packaging.__about__</module>
+		<module>pip._vendor.packaging._compat</module>
+		<module>pip._vendor.packaging._structures</module>
+		<module>pip._vendor.packaging.markers</module>
+		<module>pip._vendor.packaging.requirements</module>
+		<module>pip._vendor.packaging.specifiers</module>
+		<module>pip._vendor.packaging.utils</module>
+		<module>pip._vendor.packaging.version</module>
+		<module>pip._vendor.pep517</module>
+		<module>pip._vendor.pep517._in_process</module>
+		<module>pip._vendor.pep517.build</module>
+		<module>pip._vendor.pep517.check</module>
+		<module>pip._vendor.pep517.colorlog</module>
+		<module>pip._vendor.pep517.compat</module>
+		<module>pip._vendor.pep517.envbuild</module>
+		<module>pip._vendor.pep517.wrappers</module>
+		<module>pip._vendor.pkg_resources</module>
+		<module>pip._vendor.pkg_resources.py31compat</module>
+		<module>pip._vendor.progress</module>
+		<module>pip._vendor.progress.bar</module>
+		<module>pip._vendor.progress.counter</module>
+		<module>pip._vendor.progress.helpers</module>
+		<module>pip._vendor.progress.spinner</module>
+		<module>pip._vendor.pyparsing</module>
+		<module>pip._vendor.pytoml</module>
+		<module>pip._vendor.pytoml.core</module>
+		<module>pip._vendor.pytoml.parser</module>
+		<module>pip._vendor.pytoml.test</module>
+		<module>pip._vendor.pytoml.utils</module>
+		<module>pip._vendor.pytoml.writer</module>
+		<module>pip._vendor.requests</module>
+		<module>pip._vendor.requests.__version__</module>
+		<module>pip._vendor.requests._internal_utils</module>
+		<module>pip._vendor.requests.adapters</module>
+		<module>pip._vendor.requests.api</module>
+		<module>pip._vendor.requests.auth</module>
+		<module>pip._vendor.requests.certs</module>
+		<module>pip._vendor.requests.compat</module>
+		<module>pip._vendor.requests.cookies</module>
+		<module>pip._vendor.requests.exceptions</module>
+		<module>pip._vendor.requests.help</module>
+		<module>pip._vendor.requests.hooks</module>
+		<module>pip._vendor.requests.models</module>
+		<module>pip._vendor.requests.packages</module>
+		<module>pip._vendor.requests.sessions</module>
+		<module>pip._vendor.requests.status_codes</module>
+		<module>pip._vendor.requests.structures</module>
+		<module>pip._vendor.requests.utils</module>
+		<module>pip._vendor.retrying</module>
+		<module>pip._vendor.six</module>
+		<module>pip._vendor.urllib3</module>
+		<module>pip._vendor.urllib3._collections</module>
+		<module>pip._vendor.urllib3.connection</module>
+		<module>pip._vendor.urllib3.connectionpool</module>
+		<module>pip._vendor.urllib3.contrib</module>
+		<module>pip._vendor.urllib3.contrib._appengine_environ</module>
+		<module>pip._vendor.urllib3.contrib._securetransport</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+		<module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+		<module>pip._vendor.urllib3.contrib.appengine</module>
+		<module>pip._vendor.urllib3.contrib.ntlmpool</module>
+		<module>pip._vendor.urllib3.contrib.pyopenssl</module>
+		<module>pip._vendor.urllib3.contrib.securetransport</module>
+		<module>pip._vendor.urllib3.contrib.socks</module>
+		<module>pip._vendor.urllib3.exceptions</module>
+		<module>pip._vendor.urllib3.fields</module>
+		<module>pip._vendor.urllib3.filepost</module>
+		<module>pip._vendor.urllib3.packages</module>
+		<module>pip._vendor.urllib3.packages.backports</module>
+		<module>pip._vendor.urllib3.packages.backports.makefile</module>
+		<module>pip._vendor.urllib3.packages.six</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+		<module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+		<module>pip._vendor.urllib3.poolmanager</module>
+		<module>pip._vendor.urllib3.request</module>
+		<module>pip._vendor.urllib3.response</module>
+		<module>pip._vendor.urllib3.util</module>
+		<module>pip._vendor.urllib3.util.connection</module>
+		<module>pip._vendor.urllib3.util.queue</module>
+		<module>pip._vendor.urllib3.util.request</module>
+		<module>pip._vendor.urllib3.util.response</module>
+		<module>pip._vendor.urllib3.util.retry</module>
+		<module>pip._vendor.urllib3.util.ssl_</module>
+		<module>pip._vendor.urllib3.util.timeout</module>
+		<module>pip._vendor.urllib3.util.url</module>
+		<module>pip._vendor.urllib3.util.wait</module>
+		<module>pip._vendor.webencodings</module>
+		<module>pip._vendor.webencodings.labels</module>
+		<module>pip._vendor.webencodings.mklabels</module>
+		<module>pip._vendor.webencodings.tests</module>
+		<module>pip._vendor.webencodings.x_user_defined</module>
 		<module>popen2</module>
 		<module>posixfile</module>
 		<module>pydoc_topics</module>
@@ -2452,7 +4230,6 @@
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
-		<module>versions_updater</module>
 		<module>whichdb</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
