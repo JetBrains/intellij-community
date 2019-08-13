@@ -56,7 +56,7 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     final Module epModule = ModuleUtilCore.findModuleForFile(epDeclarationFile.getVirtualFile(), element.getProject());
     final String epPrefix = extensionPoint.getNamePrefix();
 
-    final PsiClass epClass = getExtensionPointClass(extensionPoint);
+    final PsiClass epClass = extensionPoint.getEffectiveClass();
     StringBuilder epClassText = new StringBuilder();
     if (epClass != null) {
       generateClassLink(epClassText, epClass);
@@ -81,45 +81,44 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     ExtensionPoint extensionPoint = findExtensionPoint(originalElement);
     if (extensionPoint == null) return null;
 
-    final PsiClass epClass = getExtensionPointClass(extensionPoint);
-    if (epClass != null) {
-      StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
-      sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b>");
-      String namePrefix = extensionPoint.getNamePrefix();
-      if (StringUtil.isNotEmpty(namePrefix)) {
-        sb.append(" [").append(namePrefix).append("]");
-      }
-      sb.append("<br>");
-      generateClassLink(sb, epClass);
-      sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
-
-      List<With> withElements = extensionPoint.getWithElements();
-      if (!withElements.isEmpty()) {
-        sb.append(DocumentationMarkup.SECTIONS_START);
-        for (With withElement : withElements) {
-
-          String name = StringUtil.notNullize(DomUtil.hasXml(withElement.getAttribute())
-                                              ? withElement.getAttribute().getStringValue()
-                                              : "<" + withElement.getTag().getStringValue() + ">");
-
-          StringBuilder classLinkSb = new StringBuilder();
-          generateClassLink(classLinkSb, withElement.getImplements().getValue());
-
-          appendSection(sb, XmlUtil.escape(name), classLinkSb.toString());
-        }
-        sb.append(DocumentationMarkup.SECTIONS_END);
-      }
-      sb.append(DocumentationMarkup.DEFINITION_END);
-
-      sb.append(DocumentationMarkup.CONTENT_START);
-      String epDocumentationType = DomUtil.hasXml(extensionPoint.getBeanClass()) ? "Bean Class" : "Implementation Class";
-      sb.append("<em>Extension Point ").append(epDocumentationType).append("</em>");
-      sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
-      sb.append(DocumentationMarkup.CONTENT_END);
-
-      return sb.toString();
+    final PsiClass epClass = extensionPoint.getEffectiveClass();
+    if (epClass == null) return null;
+    
+    StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
+    sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b>");
+    String namePrefix = extensionPoint.getNamePrefix();
+    if (StringUtil.isNotEmpty(namePrefix)) {
+      sb.append(" [").append(namePrefix).append("]");
     }
-    return null;
+    sb.append("<br>");
+    generateClassLink(sb, epClass);
+    sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
+
+    List<With> withElements = extensionPoint.getWithElements();
+    if (!withElements.isEmpty()) {
+      sb.append(DocumentationMarkup.SECTIONS_START);
+      for (With withElement : withElements) {
+
+        String name = StringUtil.notNullize(DomUtil.hasXml(withElement.getAttribute())
+                                            ? withElement.getAttribute().getStringValue()
+                                            : "<" + withElement.getTag().getStringValue() + ">");
+
+        StringBuilder classLinkSb = new StringBuilder();
+        generateClassLink(classLinkSb, withElement.getImplements().getValue());
+
+        appendSection(sb, XmlUtil.escape(name), classLinkSb.toString());
+      }
+      sb.append(DocumentationMarkup.SECTIONS_END);
+    }
+    sb.append(DocumentationMarkup.DEFINITION_END);
+
+    sb.append(DocumentationMarkup.CONTENT_START);
+    String epDocumentationType = DomUtil.hasXml(extensionPoint.getBeanClass()) ? "Bean Class" : "Implementation Class";
+    sb.append("<em>Extension Point ").append(epDocumentationType).append("</em>");
+    sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
+    sb.append(DocumentationMarkup.CONTENT_END);
+
+    return sb.toString();
   }
 
   @Override
@@ -154,9 +153,4 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     return null;
   }
 
-  @Nullable
-  private static PsiClass getExtensionPointClass(ExtensionPoint extensionPoint) {
-    return DomUtil.hasXml(extensionPoint.getInterface()) ?
-           extensionPoint.getInterface().getValue() : extensionPoint.getBeanClass().getValue();
-  }
 }
