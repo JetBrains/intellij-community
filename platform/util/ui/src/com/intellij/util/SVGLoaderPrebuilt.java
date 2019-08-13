@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.icons.IconLoadMeasurer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,14 +40,20 @@ public class SVGLoaderPrebuilt {
   public static BufferedImage loadUrlFromPreBuiltCache(@Nullable URL url,
                                                        double scale,
                                                        @NotNull ImageLoader.Dimension2DDouble docSize) {
+    long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+
     URL lookupUrl = preBuiltImageURL(url, scale);
     if (lookupUrl == null) return null;
 
+    BufferedImage result;
     try (InputStream is = lookupUrl.openStream()) {
-      return SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);
+      result = SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);
     }
     catch (IOException e) {
-      return null;
+      result = null;
     }
+
+    IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
+    return result;
   }
 }

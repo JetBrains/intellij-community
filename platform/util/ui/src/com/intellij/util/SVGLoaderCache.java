@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.icons.IconLoadMeasurer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +54,13 @@ public abstract class SVGLoaderCache {
     }
 
     try {
+      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+
       byte[] bytes = FileUtil.loadFileBytes(file);
-      return SVGLoaderCacheIO.readImageFile(bytes, docSize);
+      BufferedImage image = SVGLoaderCacheIO.readImageFile(bytes, docSize);
+      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+
+      return image;
     }
     catch (Exception e) {
       Logger.getInstance(getClass()).warn("Failed to read SVG cache from: " + file + ". " + e.getMessage(), e);
@@ -74,8 +81,12 @@ public abstract class SVGLoaderCache {
     }
 
     forkIOTask(() -> {
+      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+
       File file = cacheFile(theme, imageBytes, scale);
       SVGLoaderCacheIO.writeImageFile(file, image, size);
+
+      IconLoadMeasurer.svgCacheWrite.addDurationStartedAt(start);
     });
   }
 }

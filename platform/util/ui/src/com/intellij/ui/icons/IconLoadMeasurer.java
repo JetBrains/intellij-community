@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.icons;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -9,10 +10,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class IconLoadMeasurer {
-  private static final Counter decodingSvg = new Counter("svg-decode");
-  private static final Counter decodingPng = new Counter("png-decode");
+  private static final Counter svgDecoding = new Counter("svg-decode");
+  private static final Counter svgLoading = new Counter("svg-load");
 
-  private static final Counter loadingSvg = new Counter("svg-load");
+  public static final Counter svgPreBuiltLoad = new Counter("svg-prebuilt");
+  public static final Counter svgCacheWrite = new Counter("svg-cache-write");
+  public static final Counter svgCacheRead = new Counter("svg-cache-read");
+
+  private static final Counter decodingPng = new Counter("png-decode");
   private static final Counter loadingPng = new Counter("png-load");
 
   private static final Counter findIcon = new Counter("find-icon");
@@ -23,15 +28,18 @@ public final class IconLoadMeasurer {
 
   @NotNull
   public static List<Counter> getStats() {
-    return Arrays.asList(findIcon, findIconLoad, loadFromUrl, loadFromResources, loadingSvg, decodingSvg, loadingPng, decodingPng);
+    return Arrays.asList(findIcon, findIconLoad,
+                         loadFromUrl, loadFromResources,
+                         svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
+                         loadingPng, decodingPng);
   }
 
   public static void addDecoding(@NotNull ImageType type, int duration) {
-    ((type == ImageType.SVG) ? decodingSvg : decodingPng).addDuration(duration);
+    ((type == ImageType.SVG) ? svgDecoding : decodingPng).addDuration(duration);
   }
 
   public static void addLoading(@NotNull ImageType type, int duration) {
-    ((type == ImageType.SVG) ? loadingSvg : loadingPng).addDuration(duration);
+    ((type == ImageType.SVG) ? svgLoading : loadingPng).addDuration(duration);
   }
 
   public static void addFindIcon(long duration) {
@@ -73,8 +81,9 @@ public final class IconLoadMeasurer {
       return totalTime.get();
     }
 
-    public void addCounter() {
-      counter.incrementAndGet();
+    public void addDurationStartedAt(long startTime) {
+      if (startTime <= 0) return;
+      addDuration(StartUpMeasurer.getCurrentTime() - startTime);
     }
 
     public void addDuration(long duration) {
