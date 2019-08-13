@@ -31,10 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ik, dsl
@@ -128,13 +125,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof PsiSubstitutorImpl)) return false;
-
-    final PsiSubstitutorImpl that = (PsiSubstitutorImpl)o;
-
-    if (mySubstitutionMap != null ? !mySubstitutionMap.equals(that.mySubstitutionMap) : that.mySubstitutionMap != null) return false;
-
-    return true;
+    return o instanceof PsiSubstitutorImpl && Objects.equals(mySubstitutionMap, ((PsiSubstitutorImpl)o).mySubstitutionMap);
   }
 
   @Override

@@ -39,6 +39,8 @@ public class GenericsUtil {
 
   public static PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null || type2 == null) return null;
+    if (type1.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type2;
+    if (type2.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type1;
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 

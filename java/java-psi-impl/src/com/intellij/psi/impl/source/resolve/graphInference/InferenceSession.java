@@ -560,7 +560,7 @@ public class InferenceSession {
   }
 
   InitialInferenceState createInitialState(InferenceSessionContainer container,
-                                           Collection<InferenceVariable> variables,
+                                           Collection<InitialInferenceState.VariableInfo> variables,
                                            PsiSubstitutor topInferenceSubstitutor) {
     return new InitialInferenceState(variables,
                                      topInferenceSubstitutor,

@@ -26,7 +26,7 @@ public class InferenceVariablesOrder {
   public static List<InferenceVariable> resolveOrder(Collection<? extends InferenceVariable> vars,
                                                      Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     Collection<? extends InferenceGraphNode<InferenceVariable>> allNodes = buildInferenceGraph(vars, depMap).values();
-    return InferenceGraphNode.merge(tarjan(allNodes).get(0), allNodes).getValue();
+    return InferenceGraphNode.merge(tarjan(allNodes, 1).get(0), allNodes).getValue();
   }
 
   public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<? extends InferenceVariable> vars, InferenceSession session) {
@@ -76,12 +76,17 @@ public class InferenceVariablesOrder {
   }
 
   public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<? extends InferenceGraphNode<T>> nodes) {
+    return tarjan(nodes, Integer.MAX_VALUE);
+  }
+
+  public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<? extends InferenceGraphNode<T>> nodes, int limit) {
     final ArrayList<List<InferenceGraphNode<T>>> result = new ArrayList<>();
     final Stack<InferenceGraphNode<T>> currentStack = new Stack<>();
     int index = 0;
     for (InferenceGraphNode<T> node : nodes) {
       if (node.index == -1) {
         index += InferenceGraphNode.strongConnect(node, index, currentStack, result);
+        if (result.size() >= limit) break;
       }
     }
     return result;
