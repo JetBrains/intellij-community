@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,13 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  private static boolean packageSearchIgnore(){
-    return true;
-  }
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -125,9 +120,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testAddingLocalProjectsIntoCompletion() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -161,7 +153,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m, "project", "m1", "m2");
+    assertCompletionVariants(m, "project-group:project:1", "project-group:m1:1", "project-group:m2:2");
   }
 
   public void testResolvingPropertiesForLocalProjectsInCompletion() {
@@ -225,11 +217,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting(m);
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testChangingExistingProjects() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -262,7 +250,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m1, "project", "m1", "m2");
+    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2:1");
 
     createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
@@ -285,7 +273,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                           "  </dependency>" +
                           "</dependencies>");
 
-    assertCompletionVariants(m1, "project", "m1", "m2_new");
+    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2_new:1");
   }
 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() {
@@ -934,8 +922,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testHighlightingCoordinatesWithClosedTags() {
-    if (ignore()) return;
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
