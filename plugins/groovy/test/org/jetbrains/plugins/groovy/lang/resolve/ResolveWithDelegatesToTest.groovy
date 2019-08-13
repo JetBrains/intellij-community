@@ -749,6 +749,46 @@ c {
 ''', GrMethod
   }
 
+  void 'test inferred delegation'() {
+    assertScript '''\
+def foo(closure) {
+  closure.delegate = 1
+}
+
+foo {
+  byt<caret>eValue()
+}
+''', 'java.lang.Integer'
+  }
+
+  void 'test inferred delegation from dgm'() {
+    assertScript '''\
+def foo(closure) {
+  1.with closure
+}
+
+foo {
+  byt<caret>eValue()
+}
+''', 'java.lang.Integer'
+  }
+
+  void 'test inferred delegation from type parameter'() {
+    assertScript '''\
+class A<T> {
+  
+  def foo(closure) {
+  (null as T).with closure
+  }
+}
+
+(new A<Integer>()).foo {
+  byt<caret>eValue()
+}
+''', 'java.lang.Integer'
+  }
+
+
   private void assertScript(String text, String resolvedClass) {
     def resolved = resolveByText(text, PsiMethod)
     final containingClass = resolved.containingClass.qualifiedName

@@ -289,7 +289,7 @@ private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClos
 fun inferTypeFromTypeHint(parameter: GrParameter): PsiType? {
   val closureBlock = getBlock(parameter) ?: return null
   val index = if (parameter is ClosureSyntheticParameter) 0 else closureBlock.parameterList.getParameterNumber(parameter)
-  val methodCall = closureBlock?.parentOfType<GrCall>() ?: return null
+  val methodCall = closureBlock.parentOfType<GrCall>() ?: return null
   val method = (methodCall.resolveMethod() as? GrMethod)
                  ?.takeIf { method -> method.parameters.any { it.typeElement == null } } ?: return null
   val (virtualMethod, substitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null

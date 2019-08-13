@@ -1,19 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiMethod
 import groovy.lang.Closure.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer.Companion.substitutorIgnoringClosures
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -61,46 +56,10 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     return DelegatesToInfo(delegateType, strategyValue)
   }
 
-  private fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
-    val element = result.element as? PsiMethod ?: return null
-    val typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type") ?: return null
-    if (typeValue.isBlank()) return null
-    val context = FromStringHintProcessor.createContext(element)
-    val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
-    val substitutor = if (result is GroovyMethodResult) {
-      result.candidate?.let { candidate ->
-        substitutorIgnoringClosures(call, candidate, result)
-      } ?: result.partialSubstitutor
-    }
-    else {
-      result.substitutor
-    }
-    return substitutor.substitute(type)
-  }
-
 
   private fun inferCallQualifier(call: GrMethodCall): GrExpression? {
     val expression = call.invokedExpression
     return if (expression !is GrReferenceExpression) null else expression.qualifier
   }
 
-  private fun getStrategyValue(strategy: PsiAnnotationMemberValue?): Int {
-    if (strategy == null) return OWNER_FIRST
-    val text = strategy.text
-    return when (text) {
-      "0" -> OWNER_FIRST
-      "1" -> DELEGATE_FIRST
-      "2" -> OWNER_ONLY
-      "3" -> DELEGATE_ONLY
-      "4" -> TO_SELF
-      else -> when {
-        text.endsWith("OWNER_FIRST") -> OWNER_FIRST
-        text.endsWith("DELEGATE_FIRST") -> DELEGATE_FIRST
-        text.endsWith("OWNER_ONLY") -> OWNER_ONLY
-        text.endsWith("DELEGATE_ONLY") -> DELEGATE_ONLY
-        text.endsWith("TO_SELF") -> TO_SELF
-        else -> OWNER_FIRST
-      }
-    }
-  }
 }

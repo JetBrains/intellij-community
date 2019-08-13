@@ -84,10 +84,10 @@ class DelegatesToCombiner {
       parameter != null -> "target = '${parameter.name}'"
       delegateTypeRepresentation.isEmpty() -> ""
       else -> when {
-                delegateType.isTypeParameter() -> "type = "
-                strategy.isNotEmpty() -> "value = "
-                else -> ""
-              } + delegateTypeRepresentation
+        delegateType.isTypeParameter() -> "type = '$delegateTypeRepresentation'"
+        strategy.isNotEmpty() -> "value = $delegateTypeRepresentation"
+        else -> delegateTypeRepresentation
+      }
     }
     return "@$DELEGATES_TO(${listOf(type, strategy).filter { it.isNotEmpty() }.joinToString()})" to additionalParameter
   }

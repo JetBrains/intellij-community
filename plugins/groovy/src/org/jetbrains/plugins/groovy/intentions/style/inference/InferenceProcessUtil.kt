@@ -215,7 +215,7 @@ fun PsiClassType.erasure(): PsiClassType {
 }
 
 fun createVirtualMethod(method: GrMethod): GrMethod? {
-  val virtualFile = method.containingFile.copy() as GroovyFile
+  val virtualFile = method.containingFile.copy() as? GroovyFile ?: return null
   val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
   if (!newMethod.hasTypeParameters()) {
     newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)

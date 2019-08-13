@@ -8,11 +8,15 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.util.ArrayUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
@@ -111,7 +115,7 @@ private fun inferGenericArgType(targetType: PsiType?, genericIndex: Int, param: 
   return null
 }
 
-private fun findTargetParameter(list: PsiParameterList, target: String): PsiParameter? {
+fun findTargetParameter(list: PsiParameterList, target: String): PsiParameter? {
   val parameters = list.parameters
   for (parameter in parameters) {
     val modifierList = parameter.modifierList ?: continue
@@ -120,4 +124,41 @@ private fun findTargetParameter(list: PsiParameterList, target: String): PsiPara
     if (value == target) return parameter
   }
   return null
+}
+
+fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
+  val element = result.element as? PsiMethod ?: return null
+  val typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type") ?: return null
+  if (typeValue.isBlank()) return null
+  val context = FromStringHintProcessor.createContext(element)
+  val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
+  val substitutor = if (result is GroovyMethodResult) {
+    result.candidate?.let { candidate ->
+      ClosureAsAnonymousParameterEnhancer.substitutorIgnoringClosures(call, candidate, result)
+    } ?: result.partialSubstitutor
+  }
+  else {
+    result.substitutor
+  }
+  return substitutor.substitute(type)
+}
+
+fun getStrategyValue(strategy: PsiAnnotationMemberValue?): Int {
+  if (strategy == null) return Closure.OWNER_FIRST
+  val text = strategy.text
+  return when (text) {
+    "0" -> Closure.OWNER_FIRST
+    "1" -> Closure.DELEGATE_FIRST
+    "2" -> Closure.OWNER_ONLY
+    "3" -> Closure.DELEGATE_ONLY
+    "4" -> Closure.TO_SELF
+    else -> when {
+      text.endsWith("OWNER_FIRST") -> Closure.OWNER_FIRST
+      text.endsWith("DELEGATE_FIRST") -> Closure.DELEGATE_FIRST
+      text.endsWith("OWNER_ONLY") -> Closure.OWNER_ONLY
+      text.endsWith("DELEGATE_ONLY") -> Closure.DELEGATE_ONLY
+      text.endsWith("TO_SELF") -> Closure.TO_SELF
+      else -> Closure.OWNER_FIRST
+    }
+  }
 }

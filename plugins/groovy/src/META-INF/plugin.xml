@@ -289,6 +289,7 @@
     <expectedPackageNameProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.DefaultExpectedPackageNameProvider"
                                  order="last"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider" id="default" order="last"/>
+    <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.InferredDelegatesToProvider" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
