@@ -6,7 +6,10 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.InvocationHandler;
@@ -243,7 +246,7 @@ public class FileUtilRt {
     do {
       index = path.indexOf('/', index+1);
       char next = index == path.length() - 1 ? 0 : path.charAt(index + 1);
-      if (next == '.' || next == '/') {
+      if (next == '.' || (next == '/' && !(index == 0 && SystemInfoRt.isWindows))) {
         break;
       }
     }
@@ -252,7 +255,7 @@ public class FileUtilRt {
       if (removeLastSlash) {
         int start = processRoot(path, NullAppendable.INSTANCE);
         int slashIndex = path.lastIndexOf('/');
-        return slashIndex != -1 && slashIndex > start && slashIndex == path.length() - 1 ? path.substring(0, path.length() - 1) : path;
+        return slashIndex != -1 && slashIndex >= start && slashIndex == path.length() - 1 ? path.substring(0, path.length() - 1) : path;
       }
       return path;
     }
