@@ -356,7 +356,7 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
-  boolean containsCustomEnvironmentVariable(@NotNull String key) {
+  public boolean containsCustomEnvironmentVariable(@NotNull String key) {
     return myCustomEnv.containsKey(key);
   }
 

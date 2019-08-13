@@ -25,7 +25,9 @@ import git4idea.GitVcs;
 import git4idea.commands.GitCommand.LockingPolicy;
 import git4idea.config.*;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.*;
+import git4idea.rebase.GitHandlerRebaseEditorManager;
+import git4idea.rebase.GitSimpleEditorHandler;
+import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInBackground;
@@ -42,7 +44,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimLeading;
-import static git4idea.commands.GitCommand.GIT_EDITOR_ENV;
 import static git4idea.commands.GitCommand.LockingPolicy.READ;
 
 /**
@@ -149,7 +150,7 @@ public abstract class GitImplBase implements Git {
 
     if (project != null) {
       try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
-        try (SafeAutoCloseable ignored = prepareGeneralPurposeEditor(project, handler)) {
+        try (GitHandlerRebaseEditorManager ignored = prepareGeneralPurposeEditor(project, handler)) {
           GitCommandResult result = doRun(handler, version, outputCollector);
           return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());
         }
@@ -164,13 +165,8 @@ public abstract class GitImplBase implements Git {
   }
 
   @NotNull
-  private static SafeAutoCloseable prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
-    if (handler.containsCustomEnvironmentVariable(GIT_EDITOR_ENV)) {
-      return new SafeAutoCloseable();
-    }
-
-    GitRebaseEditorHandler editor = new GitSimpleEditorHandler(project);
-    return GitHandlerRebaseEditorManager.prepareEditor(handler, editor);
+  private static GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
+    return GitHandlerRebaseEditorManager.prepareEditor(handler, new GitSimpleEditorHandler(project));
   }
 
   /**
