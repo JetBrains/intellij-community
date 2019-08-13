@@ -47,6 +47,11 @@ cdef class ThreadInfo:
             if t is None:
                 return  # Cannot initialize until thread becomes active.
 
+            for thread in threading.enumerate():
+                if isinstance(t, threading._DummyThread) and t is thread and t.ident != thread.ident:
+                    t = thread
+                    break
+
             if getattr(t, 'is_pydev_daemon_thread', False):
                 self.is_pydevd_thread = True
                 self.fully_initialized = True
