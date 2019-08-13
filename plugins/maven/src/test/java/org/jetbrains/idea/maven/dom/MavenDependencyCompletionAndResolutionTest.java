@@ -124,7 +124,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom); // should not throw
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testAddingLocalProjectsIntoCompletion() {
     if(packageSearchIgnore()){
       return;
