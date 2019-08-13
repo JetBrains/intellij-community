@@ -297,14 +297,7 @@ public class GitPullDialog extends DialogWrapper {
         text = GitBundle.getString("util.remote.renderer.self");
       }
       else {
-        String key;
-        if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
-          key = "util.remote.renderer.default";
-        }
-        else {
-          key = "util.remote.renderer.normal";
-        }
-        text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
+        text = String.format("<html><b>%s</b>(<i>%s</i>)</html>", remote.getName(), remote.getFirstUrl());
       }
       label.setText(text);
     });
