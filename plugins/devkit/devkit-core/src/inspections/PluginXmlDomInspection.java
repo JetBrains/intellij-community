@@ -57,10 +57,7 @@ import com.intellij.xml.util.IncludedXmlTag;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
@@ -673,6 +670,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           holder, false, false);
         return;
       }
+      else if (value != null && value.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
+        highlightExperimental(extension, holder);
+      }
     }
 
     if (ExtensionPoints.ERROR_HANDLER.equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
@@ -735,6 +735,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
           highlightDeprecated(
             attributeValue, DevKitBundle.message("inspections.plugin.xml.deprecated.attribute", attributeDescription.getName()),
             holder, false, true);
+        }
+        else if (psiField.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
+          highlightExperimental(attributeValue, holder);
         }
       }
     }
@@ -948,6 +951,12 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (highlightWholeElement) {
       problem.highlightWholeElement();
     }
+  }
+
+  private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
+    holder.createProblem(element, ProblemHighlightType.WARNING,
+                         "Usage of API marked with @" + ApiStatus.Experimental.class.getCanonicalName(), null)
+      .highlightWholeElement();
   }
 
   private static void checkTemplateText(GenericDomValue<String> domValue,

@@ -6,6 +6,7 @@
         <extensionPoint name="foo.bar" interface="java.util.List"/>
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"/>
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
@@ -17,6 +18,8 @@
         <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
 
         <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
+
+        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental"><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental">experimentalAttribute="java.lang.String"</warning>/></warning>
 
         <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
 

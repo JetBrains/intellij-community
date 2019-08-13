@@ -21,11 +21,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -148,8 +146,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
-    myFixture.addClass("package foo;\n" +
-                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
+    myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Experimental; " +
+                       "@Experimental public class MyExperimentalEP { " +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Experimental public String experimentalAttribute; " +
+                       "}")
+    myFixture.addClass("package foo; " +
+                       "import com.intellij.util.xmlb.annotations.Attribute; " +
                        "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
 
     configureByFile()
