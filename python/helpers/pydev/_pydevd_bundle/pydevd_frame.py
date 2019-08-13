@@ -191,7 +191,8 @@ class PyDBFrame:
                         frame = trace.tb_frame
                         while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
                             frame = frame.f_back
-                    if ignore_exception_trace(trace):
+
+                    if ignore_exception_trace(trace) or frame is None:
                         return False, frame
 
                     was_just_raised = just_raised(trace)
