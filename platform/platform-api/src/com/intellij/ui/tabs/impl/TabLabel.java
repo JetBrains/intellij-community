@@ -156,17 +156,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     });
   }
 
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, getPreferredHeight());
-  }
-
-  protected int getPreferredHeight() {
-    return JBUI.scale(UNSCALED_PREF_HEIGHT);
-  }
-
   @Override
   public void dispose() {
   }

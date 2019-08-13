@@ -599,7 +599,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private static final class EditorTabs extends JBEditorTabs {
+  private static final class EditorTabs extends SingleHeightTabs {
     @NotNull
     private final EditorWindow myWindow;
 
@@ -636,7 +636,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     @NotNull
     @Override
     protected TabLabel createTabLabel(@NotNull TabInfo info) {
-      return new TabLabel(this, info) {
+      return new SingleHeightLabel(this, info) {
         @Override
         protected int getPreferredHeight() {
           Insets insets = getInsets();
