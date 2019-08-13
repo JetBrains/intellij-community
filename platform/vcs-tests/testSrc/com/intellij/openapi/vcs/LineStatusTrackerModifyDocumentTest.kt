@@ -751,4 +751,12 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testCompensatedModifications() {
+    test("X_X_X_X_X_X_X_X") {
+      (1 th "X_").insertBefore("X_")
+      (7 th "X_").delete()
+      assertTextContentIs("X_X_X_X_X_X_X_X")
+      assertRangesEmpty()
+    }
+  }
 }
