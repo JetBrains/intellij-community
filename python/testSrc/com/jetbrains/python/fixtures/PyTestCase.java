@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
@@ -50,7 +48,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -68,6 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -133,16 +131,31 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    initApplication();
     super.setUp();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    createTempDirFixture());
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
+    if (SwingUtilities.isEventDispatchThread()) {
+      myFixture.setUp();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          myFixture.setUp();
+        }
+        catch (final Exception e) {
+          throw new RuntimeException("Error running setup", e);
+        }
+      });
+    }
 
-    PythonDialectsTokenSetProvider.reset();
+  }
+
+  private static void initApplication() {
+    IdeaTestApplication.getInstance();
   }
 
   /**
