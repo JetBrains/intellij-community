@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import org.ini4j.Ini
@@ -25,10 +24,4 @@ internal fun loadIniFile(file: File): Ini {
     LOG.warn("Couldn't load config file at ${file.path}", e)
     throw e
   }
-}
-
-internal fun findClassLoader(): ClassLoader? {
-  val javaClass = ::findClassLoader.javaClass
-  val plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(javaClass.name))
-  return plugin?.pluginClassLoader ?: javaClass.classLoader  // null e.g. if IDEA is started from IDEA
 }
