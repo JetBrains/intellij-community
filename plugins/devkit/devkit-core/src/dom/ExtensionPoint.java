@@ -33,11 +33,17 @@ public interface ExtensionPoint extends DomElement {
   @Stubbed
   GenericAttributeValue<String> getQualifiedName();
 
+  /**
+   * @see #getEffectiveClass()
+   */
   @NotNull
   @Stubbed
   @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getInterface();
 
+  /**
+   * @see #getEffectiveClass()
+   */
   @NotNull
   @Stubbed
   @Attribute("beanClass")
@@ -59,7 +65,7 @@ public interface ExtensionPoint extends DomElement {
   With addWith();
 
   /**
-   * Returns the fully qualified EP name
+   * Returns the fully qualified EP name.
    *
    * @return {@code PluginID.name} or {@code qualifiedName}.
    */
@@ -73,6 +79,14 @@ public interface ExtensionPoint extends DomElement {
    */
   @NotNull
   String getEffectiveName();
+
+  /**
+   * Returns the extension point class.
+   *
+   * @return {@link #getInterface()} if defined, {@link #getBeanClass()} otherwise.
+   */
+  @Nullable
+  PsiClass getEffectiveClass();
 
   /**
    * Returns EP name prefix (Plugin ID).
