@@ -63,9 +63,14 @@ class ImageSvgPreCompiler(private val projectHome: File) {
 
     totalFiles.incrementAndGet()
 
-    for (scale in scales) {
-      val data = file.toFile().readBytes()
+    val data = file.toFile().readBytes()
 
+    if (data.toString(Charsets.UTF_8).contains("xlink:href=\"data:")) {
+      println("WARN: Image $file uses data urls and WILL BE SKIPPED")
+      return
+    }
+
+    for (scale in scales) {
       val dim = ImageLoader.Dimension2DDouble(0.0, 0.0)
       val image = SVGLoader.loadWithoutCache(file.toUri().toURL(), data, scale, dim)
 
