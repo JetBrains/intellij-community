@@ -45,4 +45,7 @@ public interface Bar extends DomElement {
   List<NotStubbed> getNotStubbeds();
 
   NotStubbed addNotStubbed();
+
+  @Stubbed
+  List<Bar> getBars();
 }

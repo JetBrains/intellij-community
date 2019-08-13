@@ -115,11 +115,12 @@ public class DomStubBuilderTest extends DomStubTest {
     myFixture.copyFileToProject("include.xml");
     doBuilderTest("inclusion.xml", "File:foo\n" +
                                    "  Element:foo\n" +
-                                   "    XInclide:href=include.xml xpointer=xpointer(/foo/*)\n" +
+                                   "    XInclude:href=include.xml xpointer=xpointer(/foo/*)\n" +
                                    "    Element:bar\n" +
                                    "      Attribute:string:xxx\n" +
                                    "      Attribute:int:666\n" +
-                                   "    Element:bar\n");
+                                   "    Element:bar\n" +
+                                   "      XInclude:href=include.xml xpointer=xpointer(/foo/bar-2/*)\n");
 
     PsiFile file = myFixture.getFile();
     if (onStubs) {
@@ -133,6 +134,11 @@ public class DomStubBuilderTest extends DomStubTest {
     assertEquals(3, bars.size());
     assertEquals("included", bars.get(0).getString().getValue());
 //    assertEquals("inclusion.xml", bar.getXmlTag().getContainingFile().getName());
+
+    assertEquals(!onStubs, ((PsiFileImpl) file).isContentsLoaded());
+
+    Bar lastBar = bars.get(2);
+    assertEquals("included2", assertOneElement(lastBar.getBars()).getString().getStringValue());
   }
 
   public static class TestExtender extends DomExtender<Bar> {

@@ -36,5 +36,8 @@ public interface Foo extends DomElement {
   @Stubbed
   List<Bar> getBars();
 
+  @Stubbed
+  List<Bar> getBar2s();
+
   Bar addBar();
 }
