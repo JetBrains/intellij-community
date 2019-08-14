@@ -22,6 +22,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
+import git4idea.commands.GitObjectType;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -132,8 +133,8 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
-    String objectType = Git.getInstance().getObjectType(repository, beforeVersionId);
-    if (!"commit".equals(objectType)) return false;
+    GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
+    if (!GitObjectType.COMMIT.equals(objectType)) return false;
 
     final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
     return !processor.process(content.getContent());

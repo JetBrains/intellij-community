@@ -247,6 +247,9 @@ public interface Git {
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
 
+  @NotNull
+  GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
+
   @Nullable
-  String getObjectType(@NotNull GitRepository repository, @NotNull String object);
+  GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object);
 }
