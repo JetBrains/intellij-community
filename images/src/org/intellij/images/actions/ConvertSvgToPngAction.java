@@ -17,6 +17,7 @@ package org.intellij.images.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +35,8 @@ import java.io.IOException;
  * @author Konstantin Bulenkov
  */
 public class ConvertSvgToPngAction extends DumbAwareAction {
+  private final static Logger LOG = Logger.getInstance(ConvertSvgToPngAction.class);
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile svgFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
@@ -42,8 +45,8 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
       String path = svgFile.getPath();
       ImageIO.write((BufferedImage)image, "png", new File(path + ".png"));
     }
-    catch (IOException e1) {
-      e1.printStackTrace();
+    catch (IOException ex) {
+      LOG.error(ex);
     }
   }
 
