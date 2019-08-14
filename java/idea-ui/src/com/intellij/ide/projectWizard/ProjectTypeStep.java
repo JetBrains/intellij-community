@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
@@ -557,11 +557,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
             map.putValue(ep.projectType, template);
           }
         }
-        catch(Exception e) {
-          LOG.error("Error loading template from URL " + ep.templatePath, e);
+        catch (Exception e) {
+          LOG.error("Error loading template from URL '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]", e);
         }
-      } else {
-        LOG.error("Can't find resource for project template " + ep.templatePath);
+      }
+      else {
+        LOG.error("Can't find resource for project template '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]");
       }
     }
     return map;
