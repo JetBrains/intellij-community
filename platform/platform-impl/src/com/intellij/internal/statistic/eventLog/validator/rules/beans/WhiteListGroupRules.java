@@ -78,11 +78,13 @@ public class WhiteListGroupRules {
   }
 
   public ValidationResultType validateEventId(@NotNull EventContext context) {
+    ValidationResultType prevResult = null;
     for (FUSRule rule : eventIdRules) {
       ValidationResultType resultType = rule.validate(context.eventId, context);
-      if (resultType != REJECTED) return resultType;
+      if (resultType.isFinal()) return resultType;
+      prevResult = resultType;
     }
-    return REJECTED;
+    return prevResult != null ? prevResult : REJECTED;
   }
 
   public ValidationResultType validateEventData(@NotNull String key,
@@ -99,11 +101,14 @@ public class WhiteListGroupRules {
 
   private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, @Nullable FUSRule... rules) {
     if (rules == null) return UNDEFINED_RULE;
+
+    ValidationResultType prevResult = null;
     for (FUSRule rule : rules) {
       ValidationResultType resultType = rule.validate(ruleData, context);
-      if (resultType != REJECTED) return resultType;
+      if (resultType.isFinal()) return resultType;
+      prevResult = resultType;
     }
-    return REJECTED;
+    return prevResult != null ? prevResult : REJECTED;
   }
 
   @NotNull
