@@ -107,7 +107,13 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
   }
 
   fun setCommits(commits: List<VcsCommitMetadata>) {
-    commitDetailsList.forEachIndexed { i, panel ->
+    rebuildPanel(commits.size)
+    if (commits.isEmpty()) {
+      setStatusText(StatusText.DEFAULT_EMPTY_TEXT)
+      return
+    }
+    setStatusText("")
+    forEachPanelIndexed { i, panel ->
       val commit = commits[i]
       panel.setCommit(commit)
     }
