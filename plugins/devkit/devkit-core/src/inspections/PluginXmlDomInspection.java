@@ -957,7 +957,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
     holder.createProblem(element, ProblemHighlightType.WARNING,
-                         "Usage of API marked with @" + ApiStatus.Experimental.class.getCanonicalName(), null)
+                         "Usage of API marked with @" + ApiStatus.Experimental.class.getCanonicalName() + ". "+
+                         "Such API may be changed or removed in future IDE versions causing compatibility problems.",
+                         null)
       .highlightWholeElement();
   }
 
