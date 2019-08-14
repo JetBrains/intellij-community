@@ -403,6 +403,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     if (balloon instanceof BalloonImpl) {
       RelativePoint showingPoint = ((BalloonImpl)balloon).getShowingPoint();
       Color c = popup.getPointerColor(showingPoint, ((BalloonImpl)balloon).getComponent());
+      if (c != null) {
+        c = ColorUtil.withAlpha(c, 1.0); //clear transparency
+      }
       ((BalloonImpl)balloon).setPointerColor(c);
     }
   }
