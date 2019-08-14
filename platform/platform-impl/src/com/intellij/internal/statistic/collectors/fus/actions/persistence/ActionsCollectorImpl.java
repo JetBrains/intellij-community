@@ -47,21 +47,16 @@ public class ActionsCollectorImpl extends ActionsCollector {
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  private final DefaultKeymap myDefaultKeymap;
   private boolean myKeymapsInitialized;
 
   public static boolean isCustomAllowedAction(@NotNull String actionId) {
     return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
   }
 
-  public ActionsCollectorImpl(@NotNull DefaultKeymap defaultKeymap) {
-    myDefaultKeymap = defaultKeymap;
-  }
-
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
-    final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    final FeatureUsageData data = new FeatureUsageData();
+    String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
+    FeatureUsageData data = new FeatureUsageData();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
@@ -85,8 +80,8 @@ public class ActionsCollectorImpl extends ActionsCollector {
                             @Nullable Consumer<FeatureUsageData> configurator) {
     if (action == null) return;
 
-    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageData data = new FeatureUsageData().addProject(project).addPluginInfo(info);
+    PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
+    FeatureUsageData data = new FeatureUsageData().addProject(project).addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).
@@ -98,11 +93,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
       configurator.accept(data);
     }
 
-    final String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
+    String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
     String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(info, action);
     if (action instanceof ActionWithDelegate) {
-      final Object delegate = ((ActionWithDelegate)action).getDelegate();
-      final PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
+      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+      PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
       actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
       data.addData("class", actionId);
       data.addData("parent", actionClassName);
@@ -135,7 +130,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private synchronized void ensureMapInitialized() {
     if (!myKeymapsInitialized) {
-      for (Keymap keymap : myDefaultKeymap.getKeymaps()) {
+      for (Keymap keymap : DefaultKeymap.getInstance().getKeymaps()) {
         if (!(keymap instanceof DefaultKeymapImpl)) continue;
         Class<BundledKeymapProvider> providerClass = ((DefaultKeymapImpl)keymap).getProviderClass();
         if (!PluginInfoDetectorKt.getPluginInfo(providerClass).isDevelopedByJetBrains()) continue;
