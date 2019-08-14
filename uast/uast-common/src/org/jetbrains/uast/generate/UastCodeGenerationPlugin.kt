@@ -36,7 +36,9 @@ interface UastCodeGenerationPlugin {
 
   fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression?
 
-  fun createReturnExpresion(expression: UExpression, inLambda: Boolean = false): UReturnExpression?
+  fun createReturnExpresion(expression: UExpression?,
+                            project: Project,
+                            inLambda: Boolean = false): UReturnExpression?
 
   fun createLocalVariable(suggestedName: String?, type: PsiType?, initializer: UExpression, immutable: Boolean = false): ULocalVariable?
 

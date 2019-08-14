@@ -162,25 +162,31 @@ class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     adjustChainStyleToMethodCalls(oldPsi, newPsi)
 
     val factory = JavaPsiFacade.getElementFactory(oldPsi.project)
-    return if (oldPsi is PsiStatement && newPsi is PsiExpression) {
-      newPsi.let { factory.createExpresionStatement(it) }
+    val updOldPsi = when {
+      (newPsi is PsiBlockStatement || newPsi is PsiCodeBlock) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
+      else -> oldPsi
     }
-    else {
-      newPsi
+    val updNewPsi = when {
+      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpresionStatement(newPsi) ?: return null
+      else -> newPsi
     }
-      ?.let { oldPsi.replace(it) }
-      ?.toUElementOfExpectedTypes(elementType)
+    return when (val replaced = updOldPsi.replace(updNewPsi)) {
+      is PsiExpressionStatement -> replaced.expression.toUElementOfExpectedTypes(elementType)
+      else -> replaced.toUElementOfExpectedTypes(elementType)
+    }
   }
 
   override fun createDeclarationExpression(declarations: List<UDeclaration>, project: Project): UDeclarationsExpression? {
     return JavaUDeclarationsExpression(null, declarations)
   }
 
-  override fun createReturnExpresion(expression: UExpression, inLambda: Boolean): UReturnExpression? {
-    val factory = JavaPsiFacade.getElementFactory(expression.sourcePsi?.project ?: return null)
+  override fun createReturnExpresion(expression: UExpression?,
+                                     project: Project,
+                                     inLambda: Boolean): UReturnExpression? {
+    val factory = JavaPsiFacade.getElementFactory(project)
     val returnStatement = factory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
-    (returnStatement as CompositeElement).addChild(expression.sourcePsi!!.node, returnStatement.lastChild.node)
+    expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }
 
     return JavaUReturnExpression(returnStatement, null)
   }
