@@ -34,8 +34,8 @@
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
-        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
-        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletAutomationListener" />
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore"/>
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletAutomationListener"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.SyncDslViewManager"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
         <runLineMarkerContributor
@@ -66,11 +66,6 @@
         </component>
     </application-components>
 
-    <project-components>
-        <component>
-            <implementation-class>circlet.tools.CircletToolWindowManager</implementation-class>
-        </component>
-    </project-components>
 
     <actions>
 
