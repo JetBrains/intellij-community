@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.merge;
 
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +44,7 @@ public class MergeDialogCustomizer {
    * Returns the title that is shown above the left panel in the 3-way merge dialog.
    *
    * @param file the file that is being merged.
+   * @see #getLeftTitleCustomizer
    */
   @NotNull
   public String getLeftPanelTitle(@NotNull VirtualFile file) {
@@ -65,6 +55,7 @@ public class MergeDialogCustomizer {
    * Returns the title that is shown above the center panel in the 3-way merge dialog.
    *
    * @param file the file that is being merged.
+   * @see #getCenterTitleCustomizer
    */
   @NotNull
   public String getCenterPanelTitle(@NotNull VirtualFile file) {
@@ -76,6 +67,7 @@ public class MergeDialogCustomizer {
    *
    * @param file           the file that is being merged.
    * @param revisionNumber the revision number of the file at the right. Can be null if unknown.
+   * @see #getRightTitleCustomizer
    */
   @NotNull
   public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
@@ -102,6 +94,36 @@ public class MergeDialogCustomizer {
    */
   @Nullable
   public List<String> getColumnNames() {
+    return null;
+  }
+
+  /**
+   * Allows to customize the left diff editor title in the 3-way merge dialog using {@link DiffEditorTitleCustomizer}.
+   * This method takes precedence over {@link #getLeftPanelTitle}, which is used as a fallback only if this method returns {@code null}.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public DiffEditorTitleCustomizer getLeftTitleCustomizer(@NotNull FilePath file) {
+    return null;
+  }
+
+  /**
+   * Allows to customize the center diff editor title in the 3-way merge dialog using {@link DiffEditorTitleCustomizer}.
+   * This method takes precedence over {@link #getCenterPanelTitle}, which is used as a fallback only if this method returns {@code null}.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public DiffEditorTitleCustomizer getCenterTitleCustomizer(@NotNull FilePath file) {
+    return null;
+  }
+
+  /**
+   * Allows to customize the right diff editor title in the 3-way merge dialog using {@link DiffEditorTitleCustomizer}.
+   * This method takes precedence over {@link #getRightPanelTitle}, which is used as a fallback only if this method returns {@code null}.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public DiffEditorTitleCustomizer getRightTitleCustomizer(@NotNull FilePath file) {
     return null;
   }
 }
