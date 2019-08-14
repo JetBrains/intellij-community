@@ -24,7 +24,7 @@ val log = logger<CircletConfigurable>()
 class CircletConfigurable : ConfigurableBase<CircletSettingUi, CircletServerSettings>("settings.space",
                                                                                       ProductName,
                                                                                       null) {
-    override fun getSettings() = circletServerSettings.settings.value
+    override fun getSettings() = CircletServerSettingsComponent.getInstance().settings.value
 
     override fun createUi() = CircletSettingUi()
 }
@@ -41,7 +41,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
     }
 
     init {
-        val settings = circletServerSettings.settings
+        val settings = CircletServerSettingsComponent.getInstance().settings
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
                 state.value = CircletLoginState.Disconnected(settings.value.server, "")

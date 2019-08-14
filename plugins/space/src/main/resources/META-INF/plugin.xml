@@ -19,6 +19,7 @@
     <depends>org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
 
         <applicationConfigurable
             groupId="tools"
@@ -63,9 +64,6 @@
         <component>
             <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
         </component>
-        <component>
-            <implementation-class>circlet.components.CircletServerSettingsComponent</implementation-class>
-        </component>
     </application-components>
 
     <project-components>
@@ -76,7 +74,8 @@
 
     <actions>
 
-        <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..." id="Circlet.ReEnterCredentialsAction"/>
+        <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..."
+                id="Circlet.ReEnterCredentialsAction"/>
         <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
 
         <group text="Space" id="CircletGroup" popup="true">

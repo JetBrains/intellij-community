@@ -1,11 +1,7 @@
-package circlet.components
+package circlet.settings
 
-import circlet.settings.*
-import circlet.utils.*
 import com.intellij.openapi.components.*
 import runtime.reactive.*
-
-val circletServerSettings get() = application.getComponent<CircletServerSettingsComponent>()
 
 @State(
     name = "SpaceServerConfigurable",
@@ -23,6 +19,10 @@ class CircletServerSettingsComponent : PersistentStateComponent<CircletServerSet
 
     fun applySettings(state: CircletServerSettings) {
         settings.value = state
+    }
+
+    companion object {
+        fun getInstance(): CircletServerSettingsComponent = ServiceManager.getService(CircletServerSettingsComponent::class.java)
     }
 
 }

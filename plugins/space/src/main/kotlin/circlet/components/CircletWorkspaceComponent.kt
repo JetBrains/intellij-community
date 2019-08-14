@@ -37,7 +37,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
     }
 
     override fun initComponent() {
-        val settingsOnStartup = circletServerSettings.settings.value
+        val settingsOnStartup = CircletServerSettingsComponent.getInstance().settings.value
         val wsLifetime = workspacesLifetimes.next()
 
         // sign in automatically on application startup.
@@ -69,7 +69,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
         if (response is OAuthTokenResponse.Success) {
             log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
             wss.signInWithToken(response.toTokenInfo())
-            circletServerSettings.applySettings(CircletServerSettings(true, server))
+            CircletServerSettingsComponent.getInstance().applySettings(CircletServerSettings(true, server))
             manager.value = wss
         }
         return response
@@ -80,7 +80,7 @@ class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), 
         oldManager?.signOut(true)
         workspacesLifetimes.clear()
         manager.value = null
-        circletServerSettings.applySettings(circletServerSettings.state.copy(enabled = false))
+        CircletServerSettingsComponent.getInstance().applySettings(CircletServerSettingsComponent.getInstance().state.copy(enabled = false))
     }
 
     private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
