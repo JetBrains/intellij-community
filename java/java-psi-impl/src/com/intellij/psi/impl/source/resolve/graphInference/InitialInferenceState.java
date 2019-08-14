@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import java.util.*;
 
 class InitialInferenceState {
-  private final Set<InferenceVariable> myInferenceVariables;
+  private final List<InferenceVariable> myInferenceVariables;
   private final PsiElement myContext;
 
   private final PsiSubstitutor myInferenceSubstitutor;
@@ -40,7 +40,7 @@ class InitialInferenceState {
                         boolean erased, 
                         InferenceSessionContainer inferenceSessionContainer) {
     myErased = erased;
-    myInferenceVariables = new HashSet<>();
+    myInferenceVariables = new ArrayList<>(inferenceVariables.size());
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     for (VariableInfo info : inferenceVariables) {
@@ -72,7 +72,7 @@ class InitialInferenceState {
     return myInferenceSessionContainer;
   }
 
-  Set<InferenceVariable> getInferenceVariables() {
+  List<InferenceVariable> getInferenceVariables() {
     return myInferenceVariables;
   }
 
