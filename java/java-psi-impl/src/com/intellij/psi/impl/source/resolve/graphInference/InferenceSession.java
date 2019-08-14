@@ -999,7 +999,7 @@ public class InferenceSession {
   protected void resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                              @NotNull PsiSubstitutor substitutor) {
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    final Collection<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
+    final List<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
     Map<InferenceVariable, Set<InferenceVariable>> dependencies = InferenceVariablesOrder.getDependencies(allVars, this);
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, dependencies);

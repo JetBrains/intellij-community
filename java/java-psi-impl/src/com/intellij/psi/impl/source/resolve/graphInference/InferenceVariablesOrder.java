@@ -19,15 +19,46 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class InferenceVariablesOrder {
-  public static List<InferenceVariable> resolveOrder(Collection<? extends InferenceVariable> vars,
+  public static List<InferenceVariable> resolveOrder(List<InferenceVariable> vars,
                                                      Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+    if (vars.size() < 2) return vars;
+    InferenceVariable result = resolveOrderFast(vars, depMap);
+    if (result != null) return Collections.singletonList(result);
     Collection<? extends InferenceGraphNode<InferenceVariable>> allNodes = buildInferenceGraph(vars, depMap).values();
     return InferenceGraphNode.merge(tarjan(allNodes, 1).get(0), allNodes).getValue();
+  }
+
+  @Nullable
+  private static InferenceVariable resolveOrderFast(List<InferenceVariable> vars,
+                                                          Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+    // Fast-path to find the first resolve group if it consists of single var
+    InferenceVariable var = vars.get(0);
+    if (var.getInstantiation() == PsiType.NULL || depMap.get(var).isEmpty()) {
+      return var;
+    }
+    Set<InferenceVariable> visited = new HashSet<>();
+    while (visited.add(var)) {
+      if (var.getInstantiation() != PsiType.NULL) {
+        return var;
+      }
+      Set<InferenceVariable> deps = depMap.get(var);
+      if (deps.isEmpty()) {
+        return var;
+      }
+      InferenceVariable nextVar = ContainerUtil.find(deps, v -> vars.contains(v));
+      if (nextVar == null) {
+        return var;
+      }
+      var = nextVar;
+    }
+    return null;
   }
 
   public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<? extends InferenceVariable> vars, InferenceSession session) {
