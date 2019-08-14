@@ -847,7 +847,19 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule());
   }
 
-  public void testPreviewLanguageLevel() {
+  public void testPreviewLanguageLevelOneLine() {
+    doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelArg() {
+    doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelCompilerArg() {
+    doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n");
+  }
+
+  private void doTestPreview(String compilerArgs) {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -860,11 +872,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
                   "          <release>13</release>\n" +
-                  "          <compilerArgs>\n" +
-                  "              <arg>--enable-preview</arg>\n" +
-                  "          </compilerArgs>\n" +
-                  "          <source>13</source>\n" +
-                  "          <target>13</target>\n" +
+                             compilerArgs +
+                  "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
                   "      </configuration>\n" +
                   "    </plugin>" +
                   "  </plugins>" +
