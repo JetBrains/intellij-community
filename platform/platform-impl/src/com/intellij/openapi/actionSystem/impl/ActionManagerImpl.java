@@ -128,13 +128,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
-  private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
   private boolean myPreloadComplete;
 
   ActionManagerImpl() {
     registerPluginActions();
-    messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
+  }
+
+  @NotNull
+  private static AnActionListener publisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -1293,7 +1296,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
-    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
+    publisher().beforeActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1308,7 +1311,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       catch(AbstractMethodError ignored) { }
     }
-    messageBusPublisher.afterActionPerformed(action, dataContext, event);
+    publisher().afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1336,7 +1339,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
-    messageBusPublisher.beforeEditorTyping(c, dataContext);
+    publisher().beforeEditorTyping(c, dataContext);
   }
 
   @Override
