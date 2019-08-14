@@ -73,6 +73,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Eugene Zhuravlev
@@ -86,7 +87,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       // should add file to test dire as soon as possible
       String otherRoot = myFixture.getTempDirPath() + "/otherRoot";
       assertTrue(new File(otherRoot).mkdirs());
-      assertTrue(new File(otherRoot, "intellij.exe").createNewFile());
+
+      def file = new File(otherRoot, "intellij.txt")
+      assertTrue(file.createNewFile());
+      while (file.size() < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+        FileUtil.appendToFile(file, "class A {"+ createLongSequenceOfCharacterConstants() + "}")
+      }
+
+      def file2 = new File(otherRoot, "intellij.jar")
+      assertTrue(file2.createNewFile());
       moduleBuilder.addSourceContentRoot(otherRoot)
     }
   }
@@ -1089,14 +1098,23 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def scope = GlobalSearchScope.allScope(getProject())
     FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
 
-    def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
+    def files = FilenameIndex.getFilesByName(getProject(), "intellij.txt", scope)
     def file = assertOneElement(files).virtualFile
-    assertTrue(file.getFileType().isBinary())
-    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertTrue(SingleRootFileViewProvider.isTooLargeForIntelligence(file))
 
-    file.rename(this, 'intellij2.exe')
+    def files2 = FilenameIndex.getFilesByName(getProject(), "intellij.jar", scope)
+    def file2 = assertOneElement(files2).virtualFile
+    assertTrue(file2.getFileType().isBinary())
+
+    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)file2).isFileIndexed())
+
+    file.rename(this, 'intellij2.txt')
+    file2.rename(this, "intellij2.jar")
+
     FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)file2).isFileIndexed())
   }
 
   void "test IDEA-188028" () {
