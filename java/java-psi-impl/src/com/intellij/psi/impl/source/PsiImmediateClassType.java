@@ -119,6 +119,13 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
+  public int getParameterCount() {
+    PsiTypeParameterList list = myClass.getTypeParameterList();
+    if (list == null) return 0;
+    return list.getTypeParameters().length;
+  }
+
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
