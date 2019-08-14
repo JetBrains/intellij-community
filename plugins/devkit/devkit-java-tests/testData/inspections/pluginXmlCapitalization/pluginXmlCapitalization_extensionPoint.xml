@@ -20,5 +20,14 @@
     <myExtension>
       <tagTitle><warning descr="String 'not a title' is not properly capitalized. It should have title capitalization">not a title</warning></tagTitle>
     </myExtension>
+
+
+    <!--  spelling  -->
+    <myExtension titleProperty="<warning descr="String 'eror spel' is not properly capitalized. It should have title capitalization"><TYPO descr="Typo: In word 'eror'">eror</TYPO> <TYPO descr="Typo: In word 'spel'">spel</TYPO></warning>"/>
+    <myExtension noSpellCheck="kjasf74 aoeuhrgp837"/>
+    <myExtension>
+      <tagTitle><warning descr="String 'eror spel' is not properly capitalized. It should have title capitalization"><TYPO descr="Typo: In word 'eror'">eror</TYPO> <TYPO descr="Typo: In word 'spel'">spel</TYPO></warning></tagTitle>
+      <tagNoSpellCheck>kjasf74 aoeuhrgp837</tagNoSpellCheck>
+    </myExtension>
   </extensions>
 </idea-plugin>

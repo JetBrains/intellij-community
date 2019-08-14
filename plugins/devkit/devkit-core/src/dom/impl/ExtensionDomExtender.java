@@ -13,6 +13,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -25,7 +26,10 @@ import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.Constants;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
@@ -176,6 +180,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         if (findAnnotation(RequiredElement.class, field) != null) {
           extension.addCustomAnnotation(MyRequired.INSTANCE);
         }
+        if (clazz == String.class && findAnnotation(NonNls.class, field) != null) {
+          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+        }
 
         markAsClass(extension, fieldName, withElement);
         if (clazz.equals(String.class)) {
@@ -184,6 +191,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       }
       return;
     }
+    
     final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
     final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
     final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
@@ -195,6 +203,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
+        if (findAnnotation(NonNls.class, field) != null) {
+          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+        }
       }
       else {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
@@ -398,6 +409,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public interface SimpleTagValue extends GenericDomValue<String> {
+  }
+
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyNoSpellchecking implements NoSpellchecking {
+
+    private static final MyNoSpellchecking INSTANCE = new MyNoSpellchecking();
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return NoSpellchecking.class;
+    }
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")
