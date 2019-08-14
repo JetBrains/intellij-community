@@ -309,6 +309,23 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
+  public static <K, V> MultiMap<K, V> createObjectLinkedOpenHashSet() {
+    return new LinkedMultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Collection<V> createCollection() {
+        return new ObjectLinkedOpenHashSet<>();
+      }
+
+      @NotNull
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
+      }
+    };
+  }
+
+  @NotNull
   public static <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<K, V>() {
       @NotNull

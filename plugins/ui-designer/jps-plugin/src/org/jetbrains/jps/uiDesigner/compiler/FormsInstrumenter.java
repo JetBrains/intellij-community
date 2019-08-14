@@ -11,7 +11,7 @@ import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -61,7 +61,7 @@ public class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Set<File> formsToCompile = new OrderedSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> formsToCompile = new ObjectLinkedOpenHashSet<>();
     for (Collection<File> files : srcToForms.values()) {
       formsToCompile.addAll(files);
     }

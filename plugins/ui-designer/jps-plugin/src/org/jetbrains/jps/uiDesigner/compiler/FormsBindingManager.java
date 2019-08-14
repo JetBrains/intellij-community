@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -208,7 +208,7 @@ public class FormsBindingManager extends FormsBuilder {
       }
     }
 
-    final Set<File> candidates = new OrderedSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> candidates = new ObjectLinkedOpenHashSet<>();
     for (JavaSourceRootDescriptor rd : targetRoots) {
       candidates.addAll(findPossibleSourcesForClass(rd, className));
     }
