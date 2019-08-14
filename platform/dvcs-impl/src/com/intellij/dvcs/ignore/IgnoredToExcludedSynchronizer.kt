@@ -110,7 +110,7 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
         //shelf directory usually contains in project and excluding it prevents local history to work on it
         .filterNot(::containsShelfDirectoryOrUnderIt)
         .mapNotNull(FilePath::getVirtualFile)
-        .filterNot(fileIndex::isExcluded)
+        .filterNot { runReadAction { fileIndex.isExcluded(it) } }
         //do not propose to exclude if there is a source root inside
         .filterNot { ignored -> sourceRoots.contains(ignored) }
         .toList()
