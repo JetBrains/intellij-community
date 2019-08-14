@@ -19,7 +19,8 @@ class SVGPreBuilder {
     new File(buildContext.paths.temp, "svg-prebuild/result")
   }
 
-  static void prebuildSVGIcons(BuildContext buildContext, List<String> modulesToProcess) {
+  static void prebuildSVGIcons(BuildContext buildContext, List<String> modules) {
+    Set<String> modulesToProcess = new TreeSet<>(modules)
     buildContext.executeStep("Prebuild SVG icons", BuildOptions.SVGICONS_PREBUILD_STEP, {
       buildContext.messages.progress("Prebuild SVG icons for ${modulesToProcess.size()} modules")
       buildContext.messages.debug("Prebuild SVG icons are going to be built for the following modules: $modulesToProcess")
