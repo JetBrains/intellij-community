@@ -179,7 +179,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
     private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyNamedTupleType? {
       if (ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3) ||
-          PyUtil.isInit(function) && PyTypingTypeProvider.NAMEDTUPLE == function.containingClass?.qualifiedName) {
+          PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName) {
         return getNamedTupleTypeFromAST(call, context, PyNamedTupleType.DefinitionLevel.NT_FUNCTION)
       }
 

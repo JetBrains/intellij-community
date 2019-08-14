@@ -48,7 +48,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     val error = when {
       element.isAsync -> "refactoring.inline.function.async"
       element.isGenerator -> "refactoring.inline.function.generator"
-      PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
+      PyUtil.isInitOrNewMethod(element) -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
       isSpecialMethod(element) -> "refactoring.inline.function.special.method"
       isUnderSkeletonDir(element) -> "refactoring.inline.function.skeleton.only"

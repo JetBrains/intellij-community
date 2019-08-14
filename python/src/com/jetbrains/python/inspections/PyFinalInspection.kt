@@ -262,7 +262,7 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
-      if (PyUtil.isInit(method)) return
+      if (PyUtil.isInitMethod(method)) return
 
       val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
@@ -312,7 +312,7 @@ class PyFinalInspection : PyInspection() {
       val classAttribute = cls.findClassAttribute(name, false, myTypeEvalContext)
       if (classAttribute != null && !classAttribute.hasAssignedValue() && isFinal(classAttribute)) {
         if (target is PyTargetExpression &&
-            ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.isInit(it) && cls == it.containingClass }) {
+            ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.turnConstructorIntoClass(it) == cls }) {
           return
         }
         registerProblem(target, "'$name' is 'Final' and could not be reassigned")

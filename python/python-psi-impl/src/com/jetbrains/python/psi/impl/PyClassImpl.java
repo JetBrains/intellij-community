@@ -1097,7 +1097,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     Set<String> namesInInit = new HashSet<>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
-      if (!PyNames.INIT.equals(method.getName())) {
+      if (!PyUtil.isInitMethod(method)) {
         collectInstanceAttributes(method, result, namesInInit);
       }
     }

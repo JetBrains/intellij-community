@@ -447,7 +447,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
-        ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
+        !PyUtil.isInitOrNewMethod(element)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);

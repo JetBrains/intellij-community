@@ -225,9 +225,7 @@ public class PyCallExpressionHelper {
       }
     }
 
-    final boolean isConstructor = resolved instanceof PyFunction &&
-                                  isConstructorName(((PyFunction)resolved).getName()) &&
-                                  call.getReceiver((PyCallable)resolved) == null;
+    final boolean isConstructor = PyUtil.isInitOrNewMethod(resolved) && call.getReceiver((PyCallable)resolved) == null;
     return resolved != null
            ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, isConstructor))
            : Collections.emptyList();
@@ -235,8 +233,8 @@ public class PyCallExpressionHelper {
 
   @Nullable
   private static PyCallExpression.PyMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
-                                                                        @NotNull TypeEvalContext context,
-                                                                        int implicitOffset) {
+                                                                   @NotNull TypeEvalContext context,
+                                                                   int implicitOffset) {
     final PsiElement clarifiedResolved = resolveResult.myClarifiedResolved;
     if (!(clarifiedResolved instanceof PyTypedElement)) return null;
 
@@ -294,14 +292,11 @@ public class PyCallExpressionHelper {
     final List<PyExpression> qualifiers = followed.getQualifiers();
     final PyExpression firstQualifier = ContainerUtil.getFirstItem(qualifiers);
     boolean isByInstance = isQualifiedByInstance(function, qualifiers, resolveContext.getTypeEvalContext());
-    final boolean isConstructorCall = isConstructorName(function.getName()) &&
-                                      (!callReference.isQualified() || !isConstructorName(callReference.getName()));
+    String name = callReference.getName();
+    final boolean isConstructorCall = PyUtil.isInitOrNewMethod(function) &&
+                                      (!callReference.isQualified() || !PyNames.INIT.equals(name) && !PyNames.NEW.equals(name));
     boolean isByClass = firstQualifier != null && isQualifiedByClass(function, firstQualifier, resolveContext.getTypeEvalContext());
     return getImplicitArgumentCount(function, function.getModifier(), isConstructorCall, isByInstance, isByClass);
-  }
-
-  private static boolean isConstructorName(@Nullable String name) {
-    return PyNames.NEW.equals(name) || PyNames.INIT.equals(name);
   }
 
   /**
@@ -335,10 +330,10 @@ public class PyCallExpressionHelper {
     PyFunction method = callable.asMethod();
     if (method == null) return implicit_offset;
 
-    if (PyNames.NEW.equals(method.getName())) {
+    if (PyUtil.isNewMethod(method)) {
       return isConstructorCall ? 1 : 0;
     }
-    if (!isByInstance && !isByClass && PyNames.INIT.equals(method.getName())) {
+    if (!isByInstance && !isByClass && PyUtil.isInitMethod(method)) {
       return 1;
     }
 
@@ -531,7 +526,7 @@ public class PyCallExpressionHelper {
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
-      if (isConstructorName(f.getName())) {
+      if (PyUtil.isInitOrNewMethod(f)) {
         init = f;
         cls = f.getContainingClass();
       }
@@ -1225,8 +1220,8 @@ public class PyCallExpressionHelper {
     @NotNull private final List<PyExpression> variadicPositionalArguments;
 
     PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
-                                              @NotNull List<PyExpression> componentsOfVariadicPositionalArguments,
-                                              @NotNull List<PyExpression> variadicPositionalArguments) {
+                                       @NotNull List<PyExpression> componentsOfVariadicPositionalArguments,
+                                       @NotNull List<PyExpression> variadicPositionalArguments) {
       this.allPositionalArguments = allPositionalArguments;
       this.componentsOfVariadicPositionalArguments = componentsOfVariadicPositionalArguments;
       this.variadicPositionalArguments = variadicPositionalArguments;
@@ -1336,9 +1331,9 @@ public class PyCallExpressionHelper {
     private final boolean myIsConstructor;
 
     ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
-                                  @NotNull PsiElement clarifiedResolved,
-                                  @Nullable PyFunction.Modifier wrappedModifier,
-                                  boolean isConstructor) {
+                           @NotNull PsiElement clarifiedResolved,
+                           @Nullable PyFunction.Modifier wrappedModifier,
+                           boolean isConstructor) {
       myOriginalResolveResult = originalResolveResult;
       myClarifiedResolved = clarifiedResolved;
       myWrappedModifier = wrappedModifier;

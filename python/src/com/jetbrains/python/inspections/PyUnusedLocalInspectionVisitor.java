@@ -347,7 +347,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
-            if (PyNames.INIT.equals(func.getName()) && containingClass != null && !namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
+            if (containingClass != null &&
+                PyUtil.isInitMethod(func) &&
+                !namedParameter.isKeywordContainer() &&
+                !namedParameter.isPositionalContainer()) {
               mayBeField = true;
             }
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
@@ -414,7 +417,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (functionsWithInheritors.contains(func)) {
       return true;
     }
-    if (!PyNames.INIT.equals(func.getName()) && PySuperMethodsSearch.search(func, myTypeEvalContext).findFirst() != null ||
+    if (!PyUtil.isInitMethod(func) && PySuperMethodsSearch.search(func, myTypeEvalContext).findFirst() != null ||
         PyOverridingMethodsSearch.search(func, true).findFirst() != null) {
       functionsWithInheritors.add(func);
       return true;

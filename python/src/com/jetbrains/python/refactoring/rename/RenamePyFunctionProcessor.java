@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
@@ -62,7 +61,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     if (containingClass == null) {
       return function;
     }
-    if (PyNames.INIT.equals(function.getName())) {
+    if (PyUtil.isInitMethod(function)) {
       return containingClass;
     }
 

@@ -838,7 +838,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (anyType != null) {
         return anyType;
       }
-      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in 
+      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in
       // expression both when it's not a reference expression and when it's failed to resolve it, hence we might
       // hit SOE for mere unresolved references in the latter case.
       if (alias != null) {
@@ -1366,15 +1366,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         results = tryResolvingOnStubs((PyReferenceExpression)expression, context);
       }
       for (PsiElement element : results) {
-        if (element instanceof PyFunction) {
-          final PyFunction function = (PyFunction)element;
-          if (PyUtil.isInit(function)) {
-            final PyClass cls = function.getContainingClass();
-            if (cls != null) {
-              elements.add(Pair.create(null, cls));
-              continue;
-            }
-          }
+        final PyClass cls = PyUtil.turnConstructorIntoClass(as(element, PyFunction.class));
+        if (cls != null) {
+          elements.add(Pair.create(null, cls));
+          continue;
         }
         final String name = element != null ? getQualifiedName(element) : null;
         if (name != null && OPAQUE_NAMES.contains(name)) {

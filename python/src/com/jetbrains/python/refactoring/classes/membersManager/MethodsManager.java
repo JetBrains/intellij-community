@@ -171,7 +171,7 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @return if method could be made abstract? (that means "create abstract version if method in parent class")
    */
   private static boolean couldBeAbstract(@NotNull final PyFunction function) {
-    if (PyUtil.isInit(function)) {
+    if (PyUtil.isInitMethod(function)) {
       return false; // Who wants to make __init__ abstract?!
     }
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(function);
@@ -243,7 +243,7 @@ class MethodsManager extends MembersManager<PyFunction> {
             final PyFunction calleeFunction = (PyFunction)calleeDeclaration;
             final PyClass clazz = calleeFunction.getContainingClass();
             if (clazz != null) {
-              if (PyUtil.isInit(calleeFunction)) {
+              if (PyUtil.isInitMethod(calleeFunction)) {
                 return; // Init call should not be marked as dependency
               }
               myResult.putValue(clazz, calleeFunction);

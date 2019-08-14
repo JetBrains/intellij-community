@@ -28,6 +28,7 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -48,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.*;
 
 /**
  * @author Mikhail Golubev
@@ -222,11 +223,9 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
           continue;
         }
         if (readWriteInstruction.getAccess().isReadAccess()) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
+            resolved = ObjectUtils.chooseNotNull(turnConstructorIntoClass(as(resolved, PyFunction.class)), resolved);
             if (resolved != null) {
-              if (isInitOrNewMethod(resolved)) {
-                resolved = ((PyFunction)resolved).getContainingClass();
-              }
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
               }
@@ -245,7 +244,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
           }
         }
         if (readWriteInstruction.getAccess().isWriteAccess() && element instanceof PyTargetExpression) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
             if (resolved != null) {
               if (element.getParent() instanceof PyNonlocalStatement && isFromEnclosingScope(resolved)) {
                 result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
@@ -262,13 +261,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return result;
   }
 
-  private static boolean isInitOrNewMethod(@NotNull PsiElement elem) {
-    final PyFunction func = as(elem, PyFunction.class);
-    return func != null && (PyNames.INIT.equals(func.getName()) || PyNames.NEW.equals(func.getName()));
-  }
-
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
-    return PyUtil.inSameFile(element, myFunction) &&
+    return inSameFile(element, myFunction) &&
            !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
   }
