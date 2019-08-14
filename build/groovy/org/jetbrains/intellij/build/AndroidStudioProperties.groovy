@@ -242,7 +242,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   static PluginLayout layoutlibNativePlugin () {
     plugin("intellij.android.layoutlib-native") {
       withModule("android.sdktools.layoutlib-api")
-      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
+      bundlingRestrictions.supportedOs = [OsFamily.LINUX, OsFamily.MACOS]
     }
   }
 
@@ -559,6 +559,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         fileset(dir: "$root/prebuilts/tools/darwin-x86_64/simpleperf")
       }
       extraExecutables.add("plugins/android/resources/simpleperf/darwin-x86_64/simpleperf")
+
+      context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
+        fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
+          include(name: "icu/**")
+          include(name: "mac/**")
+        }
+      }
     }
   }
 
