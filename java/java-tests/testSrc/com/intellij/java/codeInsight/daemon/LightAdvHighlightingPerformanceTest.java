@@ -123,7 +123,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
                       "  static native <K, V> Map<K, V> ofEntries(Map.Entry<? extends K, ? extends V>... entries);\n" +
                       "  static native <K, V> Map.Entry<K, V> entry(K k, V v);\n" +
                       "}\n";
-    int count = 50;
+    int count = 70;
     String entries = IntStreamEx.range(count).mapToObj(i -> "entry(" + i + ", String.class)").joining(",\n      ");
     configureFromFileText("Test.java", template.replace("$entries$", entries));
     List<HighlightInfo> errors = startTest(3000);
