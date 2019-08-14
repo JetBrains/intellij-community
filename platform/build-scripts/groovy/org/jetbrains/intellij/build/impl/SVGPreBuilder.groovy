@@ -58,6 +58,10 @@ class SVGPreBuilder {
       }
       arg(path: "$requestFile")
 
+      buildContext.applicationInfo.svgProductIcons.forEach {
+        arg(value: "$it")
+      }
+
       classpath() {
         for (String element : svgToolClasspath) {
           pathelement(location: "$element")

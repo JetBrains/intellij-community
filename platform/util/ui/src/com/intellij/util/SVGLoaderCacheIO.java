@@ -45,7 +45,7 @@ public class SVGLoaderCacheIO {
   @ApiStatus.Internal
   public static void writeImageFile(@NotNull File file,
                                     @NotNull BufferedImage image,
-                                    @NotNull ImageLoader.Dimension2DDouble size) {
+                                    @NotNull ImageLoader.Dimension2DDouble size) throws IOException {
 
     int actualWidth = image.getWidth();
     int actualHeight = image.getHeight();
@@ -62,16 +62,12 @@ public class SVGLoaderCacheIO {
       }
     }
 
-    try {
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        //noinspection ResultOfMethodCallIgnored
-        parentFile.mkdirs();
-      }
-
-      FileUtil.writeToFile(file, buff.array());
-    } catch (IOException e) {
-      Logger.getInstance(SVGLoaderCache.class).warn("Failed to write SVG cache to: " + file + ". " + e.getMessage(), e);
+    final File parentFile = file.getParentFile();
+    if (parentFile != null) {
+      //noinspection ResultOfMethodCallIgnored
+      parentFile.mkdirs();
     }
+
+    FileUtil.writeToFile(file, buff.array());
   }
 }

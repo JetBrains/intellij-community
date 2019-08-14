@@ -84,7 +84,11 @@ public abstract class SVGLoaderCache {
       long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
 
       File file = cacheFile(theme, imageBytes, scale);
-      SVGLoaderCacheIO.writeImageFile(file, image, size);
+      try {
+        SVGLoaderCacheIO.writeImageFile(file, image, size);
+      } catch (Exception e) {
+        Logger.getInstance(SVGLoaderCache.class).warn("Failed to write SVG cache to: " + file + ". " + e.getMessage(), e);
+      }
 
       IconLoadMeasurer.svgCacheWrite.addDurationStartedAt(start);
     });
