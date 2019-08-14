@@ -29,6 +29,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -47,21 +48,27 @@ class RegistrationIndexer {
 
   @NotNull
   Map<String, List<RegistrationEntry>> indexFile() {
-    CharSequence text = myContent.getContentAsText();
-    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
-      return Collections.emptyMap();
-    }
-
-    final PsiFile file = myContent.getPsiFile();
-    if (!(file instanceof XmlFile)) return Collections.emptyMap();
-
-    final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
-    if (fileElement == null) return Collections.emptyMap();
+    IdeaPlugin plugin = obtainIdeaPlugin(myContent);
+    if (plugin == null) return Collections.emptyMap();
 
     myValueMap = FactoryMap.create(s -> new SmartList<>());
-    process(fileElement.getRootElement());
+    process(plugin);
 
     return myValueMap;
+  }
+
+  @Nullable
+  static IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
+    CharSequence text = content.getContentAsText();
+    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
+      return null;
+    }
+
+    PsiFile file = content.getPsiFile();
+    if (!(file instanceof XmlFile)) return null;
+
+    DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
+    return fileElement == null ? null : fileElement.getRootElement();
   }
 
   private void process(IdeaPlugin ideaPlugin) {

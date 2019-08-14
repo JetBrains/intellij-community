@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,8 +14,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
 import com.intellij.util.xml.impl.DomInvocationHandler;
@@ -33,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 
@@ -83,29 +81,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
     Set<IdeaPlugin> result = new HashSet<>();
-    MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
-    collectDependencies(ideaPlugin, result, byId);
-    result.addAll(byId.get(null));
+    collectDependencies(ideaPlugin, result);
+    result.addAll(PluginIdModuleIndex.findPlugins(ideaPlugin, ""));
     return result;
   }
 
-  private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
-    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<>();
-    for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
-      byId.putValue(each.getPluginId(), each);
-    }
-    return byId;
-  }
-
-  private static void collectDependencies(final IdeaPlugin ideaPlugin, Set<IdeaPlugin> result, final MultiMap<String, IdeaPlugin> byId) {
+  private static void collectDependencies(IdeaPlugin ideaPlugin, Set<IdeaPlugin> result) {
     ProgressManager.checkCanceled();
     if (!result.add(ideaPlugin)) {
       return;
     }
 
     for (String id : getDependencies(ideaPlugin)) {
-      for (IdeaPlugin dep : byId.get(id)) {
-        collectDependencies(dep, result, byId);
+      for (IdeaPlugin dep : PluginIdModuleIndex.findPlugins(ideaPlugin, id)) {
+        collectDependencies(dep, result);
       }
     }
   }
@@ -191,7 +180,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       }
       return;
     }
-    
+
     final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
     final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
     final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
@@ -389,15 +378,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
-      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
       AbstractCollectionChildDescription collectionChildDescription =
         (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
       DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
       assert handler != null;
       List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
-      for (ExtensionPoints points : children) {
-        for (ExtensionPoint point : points.getExtensionPoints()) {
-          registerExtensionPoint(registrar, point, epPrefix, pluginId);
+      if (!children.isEmpty()) {
+        String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
+        for (ExtensionPoints points : children) {
+          for (ExtensionPoint point : points.getExtensionPoints()) {
+            registerExtensionPoint(registrar, point, epPrefix, pluginId);
+          }
         }
       }
     }

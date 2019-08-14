@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
+import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,16 +64,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   @Override
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
-    for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
-      final String otherId = ideaPlugin.getPluginId();
-      if (otherId == null) continue;
-      if (otherId.equals(s)) return ideaPlugin;
-      for (PluginModule module : ideaPlugin.getModules()) {
-        final String moduleName = module.getValue().getValue();
-        if (moduleName != null && moduleName.equals(s)) return ideaPlugin;
-      }
-    }
-    return null;
+    return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 
   @Override
