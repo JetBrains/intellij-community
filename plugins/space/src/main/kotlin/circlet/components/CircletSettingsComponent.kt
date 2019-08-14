@@ -8,8 +8,8 @@ import runtime.reactive.*
 val circletServerSettings get() = application.getComponent<CircletServerSettingsComponent>()
 
 @State(
-    name = "CircletServerConfigurable",
-    storages = [Storage(value = "CircletServer.xml", roamingType = RoamingType.DEFAULT)]
+    name = "SpaceServerConfigurable",
+    storages = [Storage(value = "SpaceServer.xml", roamingType = RoamingType.DEFAULT)]
 )
 class CircletServerSettingsComponent : PersistentStateComponent<CircletServerSettings> {
 
