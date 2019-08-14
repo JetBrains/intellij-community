@@ -62,12 +62,6 @@ public class SVGLoaderCacheIO {
       }
     }
 
-    final File parentFile = file.getParentFile();
-    if (parentFile != null) {
-      //noinspection ResultOfMethodCallIgnored
-      parentFile.mkdirs();
-    }
-
     FileUtil.writeToFile(file, buff.array());
   }
 }

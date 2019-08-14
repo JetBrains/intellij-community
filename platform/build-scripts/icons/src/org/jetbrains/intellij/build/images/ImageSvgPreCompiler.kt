@@ -98,7 +98,13 @@ class ImageSvgPreCompiler {
 
       val targetFile = File(targetFileBase.path + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
       SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
-      val length = targetFile.length()
+
+      var length = targetFile.length()
+      if (length <= 0) {
+        //looks like a race condition at least on macOS (or same file if processed multiple times)
+        Thread.sleep(500)
+        length = targetFile.length()
+      }
       require(length > 0) { "File ${targetFile} is empty!"}
       generatedSize.addAndGet(length)
     }
