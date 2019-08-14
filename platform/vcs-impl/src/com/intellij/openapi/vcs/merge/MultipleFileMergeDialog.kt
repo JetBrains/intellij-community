@@ -9,6 +9,7 @@ import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
+import com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -45,6 +46,7 @@ import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
@@ -426,7 +428,14 @@ open class MultipleFileMergeDialog(
         }
         break
       }
-
+      val filePath = VcsUtil.getFilePath(file)
+      mergeDialogCustomizer.run {
+        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(
+          getLeftTitleCustomizer(filePath),
+          getCenterTitleCustomizer(filePath),
+          getRightTitleCustomizer(filePath)
+        ))
+      }
       DiffManager.getInstance().showMerge(project, request)
     }
     updateModelFromFiles()
