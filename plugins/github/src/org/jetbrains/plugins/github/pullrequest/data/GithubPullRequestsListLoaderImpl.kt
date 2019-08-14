@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.function.Function
 import javax.swing.ListModel
 import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
@@ -109,9 +111,8 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
   }
 
   private fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<List<GHPullRequestShort>> {
-    lastFuture = lastFuture.thenApplyAsync {
-      progressManager.runProcess(Computable { loader.loadNext(indicator) }, indicator)
-    }
+    lastFuture = lastFuture.thenApplyAsync(Function { progressManager.runProcess(Computable { loader.loadNext(indicator) }, indicator) },
+                                           ProcessIOExecutorService.INSTANCE)
     return lastFuture
   }
 

@@ -19,8 +19,7 @@ abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExec
   fun loadNext(progressIndicator: ProgressIndicator): R? {
     if (!hasNext) return null
 
-    val response = executor.execute(progressIndicator, requestProducer(
-      GHGQLRequestPagination(cursor, pageSize)))
+    val response = executor.execute(progressIndicator, requestProducer(GHGQLRequestPagination(cursor, pageSize)))
     val page = extractPageInfo(response)
     hasNext = page.hasNextPage
     cursor = page.endCursor
