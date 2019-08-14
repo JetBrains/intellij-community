@@ -61,7 +61,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   }
 
   fun setProject(project: Project) {
-    mySelectedEditorFilePath.setProject(project)
+    mySelectedEditorFilePath.project = project
   }
 
   override fun updateActive() {

@@ -105,8 +105,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean()
-    classTitle.active = CLASSPATH_REGISTRY.asBoolean()
+    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean() || multipleSameNamed
+    classTitle.active = CLASSPATH_REGISTRY.asBoolean() || classPathNeeded
     productTitle.active = PRODUCT_REGISTRY.asBoolean()
     productVersion.active = VERSION_REGISTRY.asBoolean()
   }
@@ -116,7 +116,34 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private var disposable: Disposable? = null
-  private var project: Project? = null
+  var project: Project? = null
+    set(value) {
+      if(field == value) return
+      field = value
+
+      installListeners()
+    }
+
+  var multipleSameNamed = false
+    set(value) {
+      if(field == value) return
+      field = value
+
+      updateTitlePaths()
+      update()
+    }
+
+
+  var classPathNeeded = false
+    set(value) {
+      if(field == value) return
+      field = value
+
+      updateTitlePaths()
+      update()
+    }
+
+
   protected open fun installListeners() {
     project ?: return
 
@@ -196,12 +223,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     } ?: ""
 
     update()
-  }
-
-  fun setProject(project: Project) {
-    this.project = project
-
-    installListeners()
   }
 
   protected fun updateProjectName() {
