@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureDriver
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -215,12 +216,16 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         actualParameter.typeElementGroovy?.delete()
       }
       else {
-        val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(newParamType)
-        if (actualParameter.typeElementGroovy == null) {
-          actualParameter.addAfter(typeElement, actualParameter.modifierList)
-        }
-        else {
-          actualParameter.typeElementGroovy!!.replace(typeElement)
+        try {
+          val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(newParamType)
+          if (actualParameter.typeElementGroovy == null) {
+            actualParameter.addAfter(typeElement, actualParameter.modifierList)
+          }
+          else {
+            actualParameter.typeElementGroovy!!.replace(typeElement)
+          }
+        } catch (e : IncorrectOperationException) {
+          actualParameter.typeElementGroovy?.delete()
         }
       }
     }
