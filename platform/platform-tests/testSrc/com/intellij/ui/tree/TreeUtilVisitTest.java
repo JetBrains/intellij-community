@@ -494,7 +494,7 @@ public final class TreeUtilVisitTest {
 
   private static void testSelect(TreeVisitor visitor, String expected) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
-      -> TreeUtil.select(test.getTree(), visitor, path
+      -> TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(path
       -> test.assertTree(expected, true, test::done)));
   }
 

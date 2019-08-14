@@ -1459,7 +1459,10 @@ public final class TreeUtil {
    * @param tree     a tree, which nodes should be selected
    * @param visitor  a visitor that controls expanding of tree nodes
    * @param consumer a path consumer called on EDT if path is found and selected
+   * @deprecated use {@code promiseSelect(tree, visitor).onSuccess(consumer)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisibleOne(tree, visitor, path -> {
       internalSelectPath(tree, path);

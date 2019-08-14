@@ -279,7 +279,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param consumer a path consumer called on EDT if path is found and selected
    */
   public final void select(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
-    promiseVisitor(element).onSuccess(visitor -> TreeUtil.select(tree, visitor, consumer));
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.promiseSelect(tree, visitor).onSuccess(consumer));
   }
 
   /**
