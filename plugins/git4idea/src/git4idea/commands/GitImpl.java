@@ -769,14 +769,27 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  @Nullable
-  public String getObjectType(@NotNull GitRepository repository, @NotNull String object) {
+  @NotNull
+  public GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CAT_FILE);
     h.setSilent(true);
     h.addParameters("-t", object);
-    GitCommandResult result = runCommand(h);
+    return runCommand(h);
+  }
+
+  @Override
+  @Nullable
+  public GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object) {
+    GitCommandResult result = getObjectType(repository, object);
     if (!result.success()) return null;
-    return result.getOutputAsJoinedString();
+    String string = result.getOutputAsJoinedString();
+    try {
+      return GitObjectType.valueOf(StringUtil.toUpperCase(string));
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
