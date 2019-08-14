@@ -53,14 +53,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     this(file, null, null, -1, true);
   }
 
-  FileContentImpl(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    super(file, fileType);
-    myContentAsText = null;
-    myContent = null;
-    myStamp = -1;
-    myPhysicalContent = true;
-  }
-
   private FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
