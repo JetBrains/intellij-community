@@ -122,7 +122,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public int getParameterCount() {
     PsiTypeParameterList list = myClass.getTypeParameterList();
     if (list == null) return 0;
-    return list.getTypeParameters().length;
+    PsiTypeParameter[] parameters = list.getTypeParameters();
+    for (PsiTypeParameter parameter : parameters) {
+      if (mySubstitutor.substitute(parameter) == null) return 0;
+    }
+    return parameters.length;
   }
 
   @Override
@@ -133,15 +137,17 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
       return PsiType.EMPTY_ARRAY;
     }
 
-    List<PsiType> lst = new ArrayList<>();
+    PsiType[] result = new PsiType[parameters.length];
+    int pos = 0;
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
       if (substituted == null) {
         return PsiType.EMPTY_ARRAY;
       }
-      lst.add(substituted);
+      result[pos++] = substituted;
     }
-    return lst.toArray(createArray(lst.size()));
+    assert pos == result.length;
+    return result;
   }
 
   @Override
