@@ -61,6 +61,15 @@ public class OpenFileAction extends AnAction implements DumbAware {
     });
   }
 
+  public static class OnWelcomeScreen extends OpenFileAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+  }
+
   @Nullable
   protected VirtualFile getPathToSelect() {
     return VfsUtil.getUserHomeDir();
