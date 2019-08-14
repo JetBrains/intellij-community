@@ -35,7 +35,7 @@ val PICKER_TEXT_COLOR = Color(186, 186, 186)
 const val PICKER_PREFERRED_WIDTH = 300
 const val HORIZONTAL_MARGIN_TO_PICKER_BORDER = 14
 
-private val PICKER_BORDER = JBUI.Borders.empty()
+private val PICKER_BORDER = JBUI.Borders.emptyBottom(10)
 
 private const val SEPARATOR_HEIGHT = 5
 
