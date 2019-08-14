@@ -136,7 +136,8 @@ sealed class GithubApiRequest<out T>(val url: String) {
         : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): T {
           val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
-          if (result.data != null) return result.data
+          val data = result.data
+          if (data != null) return data
           else throw GithubConfusingException(result.errors.toString())
         }
       }
