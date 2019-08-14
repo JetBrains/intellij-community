@@ -91,6 +91,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private boolean myIconOnTheRight;
   private boolean myTransparentIconBackground;
+  private volatile Dimension myPreferredSizeCache = null;
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<>(3);
@@ -182,6 +183,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   void revalidateAndRepaint() {
+    myPreferredSizeCache = null;
     if (myAutoInvalidate) {
       revalidate();
     }
@@ -381,6 +383,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {
+      if (!mainTextOnly && myPreferredSizeCache != null) return new Dimension(myPreferredSizeCache);
       // Calculate width
       int width = myIpad.left;
 
@@ -404,7 +407,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       int height = computePreferredHeight();
 
-      return new Dimension(width, height);
+      return !mainTextOnly
+             ? myPreferredSizeCache = new Dimension(width, height)
+             : new Dimension(width, height);
     }
   }
 
@@ -474,7 +479,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
     Font baseFont = getBaseFont();
-    if (baseFont != myLayoutFont) {
+    if (!baseFont.equals(myLayoutFont)) {
       myFragments.forEach(ColoredFragment::invalidateLayout);
       myLayoutFont = baseFont;
     }
