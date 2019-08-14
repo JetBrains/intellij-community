@@ -280,10 +280,14 @@ class FilePointerPartNode {
       dotDotOccurred |= part.equals("..") || dotDotIndex != 0 && part.charAt(dotDotIndex - 1) == '/' || dotDotIndex < part.length() - 2 && part.charAt(dotDotIndex + 2) == '/';
     }
     int childSum = 0;
-    for (FilePointerPartNode child : children) {
+    for (int i = 0; i < children.length; i++) {
+      FilePointerPartNode child = children[i];
       childSum += child.pointersUnder;
       child.doCheckConsistency(dotDotOccurred);
       assert child.parent == this;
+      if (i != 0) {
+        assert !FileUtil.namesEqual(child.getName().toString(), children[i-1].getName().toString()) : "child["+i+"] = "+child+"; [-1] = "+children[i-1];
+      }
     }
     childSum += leavesNumber();
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
@@ -464,6 +468,10 @@ class FilePointerPartNode {
         if (fsRoot == null) {
           String rootPath = ContainerUtil.getLastItem(names);
           fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
+          if (fsRoot != null && !fsRoot.getName().equals(rootPath)) {
+            // ignore really weird root names, like "/" under windows
+            fsRoot = null;
+          }
         }
         currentFile = fsRoot == null ? null : findFileFromRoot(fsRoot, fs, names, i);
       }

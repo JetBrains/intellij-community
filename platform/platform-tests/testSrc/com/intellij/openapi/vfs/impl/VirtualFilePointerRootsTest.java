@@ -109,7 +109,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
         String name = "xxx" + (i%20);
-        events.add(new VFileCreateEvent(this, temp, name, false, null, null, true, null));
+        events.add(new VFileCreateEvent(this, temp, name, true, null, null, true, null));
       }
       PlatformTestUtil.startPerformanceTest("vfp update", 7_500, () -> {
         for (int i = 0; i < 100; i++) {
