@@ -28,7 +28,7 @@ public class SVGLoaderPrebuilt {
   private static URL preBuiltImageURL(@Nullable URL url, double scale) {
     if (url == null) return null;
     try {
-      return new URL(url, url.getPath() + getPreBuiltImageURLSuffix(scale));
+      return new URL(url, url.toString() + getPreBuiltImageURLSuffix(scale));
     }
     catch (MalformedURLException e) {
       return null;
