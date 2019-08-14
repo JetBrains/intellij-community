@@ -380,6 +380,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                    (opcode, owner, name, desc, itf, ordinal) ->
                                      removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess));
             if (!methodTargets.isEmpty()) {
+              LOG.debug("Sanity check failed for: " + methodTargets);
               return Collections.emptyList();
             }
           }
