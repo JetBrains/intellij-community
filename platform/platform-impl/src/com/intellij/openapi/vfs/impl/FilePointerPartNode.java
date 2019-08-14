@@ -59,7 +59,8 @@ class FilePointerPartNode {
 
   // in case there is file pointer exists for this part, its info is saved here
   volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
-  volatile long myLastUpdated = -1;
+  private static final long DISPOSED = -2;
+  volatile long myLastUpdated = -1; // contains latest result of ManagingFS.getInstance().getStructureModificationCount() or DISPOSED if this node is removed
   volatile int useCount;
 
   int pointersUnder;   // number of alive pointers in this node plus all nodes beneath
@@ -319,6 +320,7 @@ class FilePointerPartNode {
       int pointersAfter = node.pointersUnder-=pointersNumber;
       if (pointersAfter == 0) {
         node.parent.children = ArrayUtil.remove(node.parent.children, node);
+        node.myLastUpdated = DISPOSED;
       }
     }
     if ((node.pointersUnder-=pointersNumber) == 0) {
@@ -327,12 +329,12 @@ class FilePointerPartNode {
     return node;
   }
 
-  @Nullable("null means this node's myFileAndUrl became invalid (e.g. after splitting into two other nodes)")
+  @Nullable("null means this node's myFileAndUrl became invalid")
   // returns pair.second != null always
   Pair<VirtualFile, String> update() {
     final long lastUpdated = myLastUpdated;
     final Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    if (fileAndUrl == null) return null;
+    if (fileAndUrl == null || lastUpdated == DISPOSED) return null;
     final long fsModCount = ManagingFS.getInstance().getStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
@@ -525,5 +527,8 @@ class FilePointerPartNode {
       if (file == null) break;
     }
     return file;
+  }
+  boolean isDisposed() {
+    return myLastUpdated == DISPOSED;
   }
 }
