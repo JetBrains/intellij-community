@@ -24,11 +24,18 @@ class ImageSvgPreCompiler {
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
   private val scales = doubleArrayOf(1.0, 2.0, 2.5)
+  private val productIconScales = doubleArrayOf(1.0, 2.0, 2.5, 4.0)
+
+  private val productIconPrefixes = mutableListOf<String>()
 
   private val generatedSize = AtomicLong(0)
   private val totalFiles = AtomicLong(0)
 
   private data class Request(val from: Path, val to: Path)
+
+  fun addProductIconPrefix(path: String) {
+    productIconPrefixes += path.trim().replace('\\', '/').trim('/').removeSuffix(".svg")
+  }
 
   fun preCompileIcons(modules: List<JpsModule>) {
     val allRoots: List<Request> = modules
@@ -52,8 +59,16 @@ class ImageSvgPreCompiler {
       allIcons.parallelStream().forEach { fromFile ->
         val relativePath = rootDir.relativize(fromFile)
         val toFile = req.to.resolve(relativePath)
+
+        val scales = when {
+          productIconPrefixes.any { relativePath.toFile().path.startsWith(it) } -> {
+            println("INFO Generating Product Icon scales for $relativePath")
+            productIconScales
+          }
+          else -> scales
+        }
         //TODO: use output directory
-        preCompile(fromFile.toFile(), toFile.toFile())
+        preCompile(fromFile.toFile(), toFile.toFile(), scales)
       }
     }
   }
@@ -63,7 +78,7 @@ class ImageSvgPreCompiler {
     println("SVG generation: ${StringUtil.formatFileSize(generatedSize.get())} bytes in total in ${totalFiles.get()} files(s)")
   }
 
-  private fun preCompile(svgFile: File, targetFileBase: File = svgFile) {
+  private fun preCompile(svgFile: File, targetFileBase: File, scales: DoubleArray) {
     if (!svgFile.path.endsWith(".svg")) {
       return
     }
@@ -79,12 +94,12 @@ class ImageSvgPreCompiler {
 
     for (scale in scales) {
       val dim = ImageLoader.Dimension2DDouble(0.0, 0.0)
-      val image = SVGLoader.loadWithoutCache(svgFile.toURI().toURL(), data, scale, dim)
+      val image = SVGLoader.loadWithoutCache(svgFile.toURI().toURL(), data.inputStream(), scale, dim)
 
       val targetFile = File(targetFileBase.path + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
       SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
       val length = targetFile.length()
-      require(length > 0)
+      require(length > 0) { "File ${targetFile} is empty!"}
       generatedSize.addAndGet(length)
     }
   }
@@ -104,14 +119,14 @@ class ImageSvgPreCompiler {
 
     private fun mainImpl(args: Array<String>) {
       println("Pre-building SVG images...")
-      println("Usage: <tool> tasks_file")
+      println("Usage: <tool> tasks_file product_icons*")
       println("")
       println("tasks_file: list of paths, every path on a new line: {<input dir>\n<output dir>\n}+")
       println("")
 
       System.setProperty("java.awt.headless", "true")
 
-      val argsFile = args.singleOrNull() ?: error("only one parameter is supported")
+      val argsFile = args.firstOrNull() ?: error("only one parameter is supported")
       val requests = File(argsFile).readLines().chunked(2).mapNotNull { block ->
         if (block.size != 2) error("Invalid args format. Two paths were expected but was: $block")
 
@@ -127,7 +142,11 @@ class ImageSvgPreCompiler {
         Request(from = fromFile, to = toFile)
       }.toList()
 
+      val productIcons = args.drop(1).toSortedSet()
+      println("Expecting product icons: $productIcons")
+
       val compiler = ImageSvgPreCompiler()
+      productIcons.forEach(compiler::addProductIconPrefix)
       compiler.preCompileIconsImpl(requests)
       compiler.printStats()
     }

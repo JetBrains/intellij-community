@@ -77,30 +77,35 @@ public final class SVGLoader {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
-    BufferedImage image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
-    if (image != null) {
-      return image;
-    }
+    byte[] theme = null;
+    byte[] svgBytes = null;
+    BufferedImage image;
 
-    byte[] theme = DEFAULT_THEME;
-
-    byte[] svgBytes = FileUtil.loadBytes(stream);
-
-    if (ourColorPatcher != null && url != null) {
-      SvgElementColorPatcher subPatcher = ourColorPatcher.forURL(url);
-      if (subPatcher != null) {
-        theme = subPatcher.digest();
-      }
-    }
-
-    if (theme != null) {
-      image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
+    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true)) {
+      image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
       if (image != null) {
         return image;
       }
+
+      theme = DEFAULT_THEME;
+      if (ourColorPatcher != null && url != null) {
+        SvgElementColorPatcher subPatcher = ourColorPatcher.forURL(url);
+        if (subPatcher != null) {
+          theme = subPatcher.digest();
+        }
+      }
+
+      if (theme != null) {
+        svgBytes = FileUtil.loadBytes(stream);
+        image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
+        if (image != null) {
+          return image;
+        }
+        stream = new ByteArrayInputStream(svgBytes);
+      }
     }
 
-    image = loadWithoutCache(url, svgBytes, scale, docSize);
+    image = loadWithoutCache(url, stream, scale, docSize);
     if (image != null && theme != null) {
       ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
@@ -108,9 +113,9 @@ public final class SVGLoader {
   }
 
   @ApiStatus.Internal
-  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull byte[] stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     try {
-      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, new ByteArrayInputStream(stream)));
+      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
       if (docSize != null) {
         docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
       }
