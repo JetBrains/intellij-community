@@ -106,7 +106,7 @@ public abstract class AbstractFix implements IntentionAction {
         }
 
         final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
-        if (!isAvailable(project, editor, psiFile)) {
+        if (!AbstractFix.this.isAvailable(project, editor, psiFile)) {
           return;
         }
         invoke(project, editor, psiFile);

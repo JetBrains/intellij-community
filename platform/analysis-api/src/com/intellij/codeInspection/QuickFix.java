@@ -34,6 +34,15 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
   String getFamilyName();
 
   /**
+   * Checks whether the fix is available on a given problem descriptor.
+   *
+   * @param descriptor problem reported by the tool which provided this quick fix action
+   */
+  default boolean isAvailable(@NotNull D descriptor) {
+    return true;
+  }
+
+  /**
    * Called to apply the fix.
    * <p>
    * Please call {@link com.intellij.profile.codeInspection.ProjectInspectionProfileManager#fireProfileChanged()} if inspection profile is changed as result of fix.
