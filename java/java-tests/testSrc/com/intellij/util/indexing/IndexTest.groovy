@@ -1109,11 +1109,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
     assertTrue(((VirtualFileSystemEntry)file2).isFileIndexed())
 
-    file.rename(this, 'intellij2.txt')
+//    file.rename(this, "intellij2.txt")
     file2.rename(this, "intellij2.jar")
 
     FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
-    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+//    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
     assertTrue(((VirtualFileSystemEntry)file2).isFileIndexed())
   }
 
