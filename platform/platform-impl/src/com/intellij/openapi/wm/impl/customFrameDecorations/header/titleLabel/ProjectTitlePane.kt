@@ -1,50 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
-import java.awt.Color
-import java.awt.Font
+import java.awt.FontMetrics
 import java.io.File
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.plaf.FontUIResource
 
 
 class ProjectTitlePane : ShrinkingTitlePart {
-  private val unparsed = object : DefaultPartTitle() {
-    override val label: TitleLabel = BoldTitleLabel()
-  }
-
+  private val unparsed = DefaultPartTitle()
   private val projectTitle = ProjectTitle()
+
   var parsed = false
   override var active: Boolean
     get() = projectTitle.active
     set(value) {
       projectTitle.active = value
     }
-
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0, hidemode 3", "[pref][pref]")){
-    override fun setForeground(fg: Color?) {
-      super.setForeground(fg)
-      projectTitle.component.foreground = fg
-      unparsed.component.foreground = fg
-    }
-  }.apply {
-    add(unparsed.component)
-    add(projectTitle.component)
-    isOpaque = false
-  }
-
-  override fun setToolTip(value: String?) {
-    unparsed.setToolTip(value)
-    projectTitle.setToolTip(value)
-  }
-
-  override val component: JComponent
-    get() = pane
-
-  private var state = TitlePart.State.LONG
 
   fun setProject(lng: String, short: String) {
     val long = if (lng.length > short.length) lng else short
@@ -75,10 +47,6 @@ class ProjectTitlePane : ShrinkingTitlePart {
       }
       else false
     } ?: false
-
-    unparsed.component.isVisible = !parsed
-    projectTitle.component.isVisible = parsed
-
   }
 
   override val longWidth: Int
@@ -87,49 +55,30 @@ class ProjectTitlePane : ShrinkingTitlePart {
     get() = if (parsed) projectTitle.shortWidth else unparsed.shortWidth
   override val toolTipPart: String
     get() = unparsed.toolTipPart
-  override val isClipped: Boolean
-    get() = if (parsed) projectTitle.isClipped else unparsed.isClipped
-
-
-  override fun hide() {
-    state = TitlePart.State.HIDE
-    unparsed.hide()
-    projectTitle.hide()
+  override fun getLong(): String {
+    return if(parsed) projectTitle.getLong() else unparsed.getLong()
   }
 
-  override fun showLong() {
-    state = TitlePart.State.LONG
-    unparsed.showLong()
-    projectTitle.showLong()
+  override fun getShort(): String {
+    return if(parsed) projectTitle.getShort() else unparsed.getShort()
   }
 
-  override fun showShort() {
-    state = TitlePart.State.SHORT
-    unparsed.showShort()
-    projectTitle.showShort()
+  override fun refresh(label: JComponent, fm: FontMetrics) {
+    unparsed.refresh(label, fm)
+    projectTitle.refresh(label, fm)
   }
 
-  override fun refresh() {
-    unparsed.refresh()
-    projectTitle.refresh()
-  }
-
-  override fun shrink(maxWidth: Int): Int {
+  override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
     return when {
       parsed -> {
-        projectTitle.shrink(maxWidth)
+        projectTitle.shrink(label, fm, maxWidth)
       }
       else -> {
-        unparsed.component.isVisible = true
-        projectTitle.component.isVisible = false
-
         return if (maxWidth > unparsed.longWidth) {
-          unparsed.showLong()
-          unparsed.longWidth
+          unparsed.getLong()
         }
         else {
-          unparsed.showShort()
-          unparsed.shortWidth
+          unparsed.getShort()
         }
       }
     }
@@ -137,38 +86,18 @@ class ProjectTitlePane : ShrinkingTitlePart {
 }
 
 class ProjectTitle : ShrinkingTitlePart {
-  private val label = DefaultPartTitle.TitleLabel()
+
+  private var text: String =""
   private val description = ClippingTitle()
 
   private var projectTextWidth: Int = 0
   private var longTextWidth: Int = 0
 
-  private var state = TitlePart.State.LONG
   override var active: Boolean
     get() = description.active
     set(value) {
       description.active = value
     }
-
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[pref][pref]")){
-    override fun setForeground(fg: Color?) {
-      super.setForeground(fg)
-      label.foreground = fg
-      description.component.foreground = fg
-    }
-  }.apply {
-    add(label)
-    add(description.component)
-    isOpaque = false
-  }
-
-  override fun setToolTip(value: String?) {
-    label.toolTipText = value
-    description.setToolTip(value)
-  }
-
-  override val component: JComponent
-    get() = pane
 
   var openChar: String
     get() = description.prefix
@@ -195,64 +124,39 @@ class ProjectTitle : ShrinkingTitlePart {
   override val shortWidth: Int
     get() = projectTextWidth
   override val toolTipPart: String
-    get() = if (state == TitlePart.State.IGNORED || project.isEmpty()) "" else project
+    get() = project+description.getLong()
 
-  override fun hide() {
-    state = TitlePart.State.HIDE
-    label.text = ""
+  override fun getLong(): String {
+    text = project + description.getLong()
+    return text
   }
 
-  override val isClipped: Boolean
-    get() = state != TitlePart.State.LONG || !description.active
-
-  override fun showLong() {
-    label.text = project
-    description.showLong()
-    state = TitlePart.State.LONG
+  override fun getShort(): String {
+    text = project
+    return text
   }
 
-  override fun showShort() {
-    label.text = project
-    description.hide()
-    state = TitlePart.State.SHORT
-  }
-
-  override fun shrink(maxWidth: Int): Int {
+  override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
     return when {
       maxWidth > longWidth -> {
-        label.text = project
-        description.showLong()
-        longWidth
+        text = project + description.getLong()
+        text
       }
       maxWidth > shortWidth + description.shortWidth -> {
-        label.text = project
-        description.shrink(maxWidth - shortWidth) + shortWidth
+        text = project + description.shrink(label, fm, maxWidth - shortWidth)
+        text
       }
       else -> {
-        label.text = project
-        description.hide()
-        shortWidth
+        text = project
+        text
       }
     }
   }
 
-  override fun refresh() {
-    description.refresh()
-    val fm = label.getFontMetrics(label.font)
+  override fun refresh(label: JComponent, fm: FontMetrics) {
+    description.refresh(label, fm)
 
     projectTextWidth = if (project.isEmpty()) 0 else SwingUtilities2.stringWidth(label, fm, project)
     longTextWidth = projectTextWidth + description.longWidth
-  }
-}
-
-class BoldTitleLabel : DefaultPartTitle.TitleLabel() {
-  private fun fontUIResource(font: Font) = FontUIResource(font.deriveFont(font.style or Font.BOLD))
-
-  override fun setFont(font: Font) {
-    super.setFont(fontUIResource(font))
-  }
-
-  init {
-    font = fontUIResource(font)
   }
 }
