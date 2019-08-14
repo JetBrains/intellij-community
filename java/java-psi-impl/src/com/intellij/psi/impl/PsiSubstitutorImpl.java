@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.UnmodifiableTHashMap;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -50,24 +50,27 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return element1.getManager().areElementsEquivalent(element1, element2);
     }
   };
+  private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
 
-  private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
+  private final UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
   private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, map);
+    mySubstitutionMap = UnmodifiableHashMap.fromMap(PSI_EQUIVALENCE, map);
   }
 
-  private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map, @NotNull PsiTypeParameter additionalKey, @Nullable PsiType additionalValue) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, map, additionalKey, additionalValue);
+  private PsiSubstitutorImpl(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> map,
+                             @NotNull PsiTypeParameter additionalKey,
+                             @Nullable PsiType additionalValue) {
+    mySubstitutionMap = map.with(additionalKey, additionalValue);
   }
 
   PsiSubstitutorImpl(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, typeParameter, mapping);
+    mySubstitutionMap = EMPTY_MAP.with(typeParameter, mapping);
   }
 
   PsiSubstitutorImpl(@NotNull PsiClass parentClass, PsiType[] mappings) {
-    this(putAllInternal(Collections.emptyMap(), parentClass, mappings));
+    this(putAllInternal(EMPTY_MAP, parentClass, mappings));
   }
 
   @Override
@@ -302,24 +305,25 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap, typeParameter, mapping);
   }
 
-  private static Map<PsiTypeParameter, PsiType> putAllInternal(Map<PsiTypeParameter, PsiType> originalMap, @NotNull PsiClass parentClass,
-                                                               PsiType[] mappings) {
+  private static UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
+                                                                               @NotNull PsiClass parentClass,
+                                                                               PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
     if (params.length == 0) return originalMap;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(originalMap);
+    UnmodifiableHashMap<PsiTypeParameter, PsiType> newMap = originalMap;
 
     for (int i = 0; i < params.length; i++) {
       PsiTypeParameter param = params[i];
       assert param != null;
       if (mappings != null && mappings.length > i) {
         PsiType mapping = mappings[i];
-        newMap.put(param, mapping);
+        newMap = newMap.with(param, mapping);
         if (mapping != null && !mapping.isValid()) {
           LOG.error("Invalid type in substitutor: " + mapping);
         }
       }
       else {
-        newMap.put(param, null);
+        newMap = newMap.with(param, null);
       }
     }
     return newMap;
