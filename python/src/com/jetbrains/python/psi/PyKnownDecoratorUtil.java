@@ -4,6 +4,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -149,7 +150,7 @@ public class PyKnownDecoratorUtil {
 
     if (context.maySwitchToAST(decorator)) {
       PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
-      if (resolved instanceof PyFunction && PyNames.INIT.equals(resolved.getName())) {
+      if (resolved instanceof PyFunction && ArrayUtil.contains(resolved.getName(), PyNames.INIT, PyNames.NEW)) {
         resolved = ((PyFunction)resolved).getContainingClass();
       }
 
