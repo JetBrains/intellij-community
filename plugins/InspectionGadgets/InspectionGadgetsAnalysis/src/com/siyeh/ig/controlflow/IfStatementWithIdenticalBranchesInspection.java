@@ -137,6 +137,15 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
+    public boolean isAvailable(@NotNull ProblemDescriptor descriptor) {
+      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement().getParent(), PsiIfStatement.class);
+      if (ifStatement == null || ifStatement.getCondition() == null) {
+        return false;
+      }
+      return ElseIf.from(ifStatement, unwrap(ifStatement.getThenBranch())) != null;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiIfStatement ifStatement = tryCast(descriptor.getStartElement().getParent(), PsiIfStatement.class);
       if (ifStatement == null) return;
