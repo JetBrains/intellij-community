@@ -172,9 +172,15 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     final boolean closeRequest = AbstractPopup.isCloseRequest(e);
 
     JBPopup popup = closeRequest ? findPopup() : getFocusedPopup();
-    return popup != null && popup.dispatchKeyEvent(e);
-  }
+    if (popup == null) return false;
 
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window instanceof Dialog && ((Dialog)window).isModal()) {
+      if (!SwingUtilities.isDescendingFrom(popup.getContent(), window)) return false;
+    }
+
+    return popup.dispatchKeyEvent(e);
+  }
 
   @Override
   @Nullable
