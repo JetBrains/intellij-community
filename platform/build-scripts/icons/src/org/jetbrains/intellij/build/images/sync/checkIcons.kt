@@ -192,7 +192,7 @@ private fun readIconsRepo(context: Context) = protectStdErr {
     // read icon hashes
     Icon(file).isValid
   }.also {
-    if (it.isEmpty()) error("${context.iconsRepoName} repo doesn't contain icons")
+    if (it.isEmpty()) log("${context.iconsRepoName} repo doesn't contain icons")
   }
 }
 
