@@ -29,7 +29,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   protected StubBase(StubElement parent, IStubElementType elementType) {
     super(parent);
-    myStubList = parent == null ? new MaterialStubList(10) : ((StubBase)parent).myStubList;
+    myStubList = parent == null ? new MaterialStubList(10) : ((StubBase<?>)parent).myStubList;
     myStubList.addStub(this, (StubBase<?>)parent, elementType);
   }
 
@@ -113,7 +113,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     int count = 0;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
-      StubElement childStub = childrenStubs.get(i);
+      StubElement<?> childStub = childrenStubs.get(i);
       if (childStub.getStubType() == elementType) count++;
     }
 
@@ -124,7 +124,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     int count = 0;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
-      StubElement childStub = childrenStubs.get(i);
+      StubElement<?> childStub = childrenStubs.get(i);
       if (types.contains(childStub.getStubType())) count++;
     }
 
@@ -133,7 +133,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   private static <E extends PsiElement> void fillFilteredChildren(IElementType type, E[] result, List<? extends StubElement> childrenStubs) {
     int count = 0;
-    for (StubElement childStub : childrenStubs) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
+      StubElement<?> childStub = childrenStubs.get(i);
       if (childStub.getStubType() == type) {
         //noinspection unchecked
         result[count++] = (E)childStub.getPsi();
@@ -145,7 +147,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   private static <E extends PsiElement> void fillFilteredChildren(TokenSet set, E[] result, List<? extends StubElement> childrenStubs) {
     int count = 0;
-    for (StubElement childStub : childrenStubs) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
+      StubElement<?> childStub = childrenStubs.get(i);
       if (set.contains(childStub.getStubType())) {
         //noinspection unchecked
         result[count++] = (E)childStub.getPsi();
@@ -172,7 +176,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   @Override
   @Nullable
   public <E extends PsiElement> E getParentStubOfType(@NotNull final Class<E> parentClass) {
-    StubElement parent = myParent;
+    StubElement<?> parent = myParent;
     while (parent != null) {
       PsiElement psi = parent.getPsi();
       if (parentClass.isInstance(psi)) {
@@ -202,8 +206,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   private void printTree(StringBuilder builder, int nestingLevel) {
     for (int i = 0; i < nestingLevel; i++) builder.append("  ");
     builder.append(this).append('\n');
-    for (StubElement child : getChildrenStubs()) {
-      ((StubBase)child).printTree(builder, nestingLevel + 1);
+    for (StubElement<?> child : getChildrenStubs()) {
+      ((StubBase<?>)child).printTree(builder, nestingLevel + 1);
     }
   }
 
