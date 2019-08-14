@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,7 +39,7 @@ public class InferenceVariablesOrder {
   public static Map<InferenceVariable, Set<InferenceVariable>> getDependencies(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
-    Map<InferenceVariable, Set<InferenceVariable>> map = new HashMap<>();
+    Map<InferenceVariable, Set<InferenceVariable>> map = new THashMap<>();
     for (InferenceVariable var : vars) {
       map.put(var, var.getDependencies(session));
     }
@@ -56,14 +57,15 @@ public class InferenceVariablesOrder {
   private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
     Collection<? extends InferenceVariable> vars, Map<InferenceVariable, Set<InferenceVariable>> depMap) {
 
-    Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = new LinkedHashMap<>();
+    Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = new LinkedHashMap<>(vars.size()*4/3);
     for (InferenceVariable var : vars) {
       nodes.put(var, new InferenceGraphNode<>(var));
     }
 
-    for (InferenceVariable var : vars) {
+    for (Map.Entry<InferenceVariable, InferenceGraphNode<InferenceVariable>> entry : nodes.entrySet()) {
+      InferenceVariable var = entry.getKey();
       if (var.getInstantiation() != PsiType.NULL) continue;
-      final InferenceGraphNode<InferenceVariable> node = nodes.get(var);
+      final InferenceGraphNode<InferenceVariable> node = entry.getValue();
       final Set<InferenceVariable> dependencies = depMap.get(var);
       for (InferenceVariable dependentVariable : dependencies) {
         final InferenceGraphNode<InferenceVariable> dependency = nodes.get(dependentVariable);
