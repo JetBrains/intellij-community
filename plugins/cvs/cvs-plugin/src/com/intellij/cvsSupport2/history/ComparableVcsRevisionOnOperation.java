@@ -50,12 +50,14 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
   }
 
   @Override
+  @NotNull
   public byte[] getContent() {
     LOG.assertTrue(myOperation.isLoaded());
     return myOperation.getFileBytes();
   }
 
   @Override
+  @NotNull
   public byte[] loadContent() throws IOException, VcsException {
     if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);

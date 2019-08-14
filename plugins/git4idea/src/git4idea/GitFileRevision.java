@@ -125,6 +125,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   @Override
+  @NotNull
   public synchronized byte[] loadContent() throws VcsException {
     VirtualFile root = myRoot != null ? myRoot : GitUtil.getRepositoryForFile(myProject, myPath).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));

@@ -48,30 +48,30 @@ public class GitFileUtils {
    */
   @Deprecated
   public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
-                            String... additionalOptions) throws VcsException {
+                            @NotNull String... additionalOptions) throws VcsException {
     deletePaths(project, root, files, additionalOptions);
   }
 
   public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
-                                 String... additionalOptions) throws VcsException {
+                                 @NotNull String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
   public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
-                                 String... additionalOptions) throws VcsException {
+                                 @NotNull String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, VirtualFile... files) throws VcsException {
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile... files) throws VcsException {
     deleteFiles(project, root, Arrays.asList(files));
   }
 
   private static void doDelete(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> paths,
-                               String... additionalOptions) throws VcsException {
+                               @NotNull String... additionalOptions) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RM);
     handler.addParameters(additionalOptions);
     handler.endOptions();
@@ -85,7 +85,7 @@ public class GitFileUtils {
     updateUntrackedFilesHolderOnFileRemove(project, root, files);
   }
 
-  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       addPaths(project, root, paths, false);
@@ -93,7 +93,7 @@ public class GitFileUtils {
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
-  public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+  public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       addPaths(project, root, paths, true);
@@ -102,7 +102,7 @@ public class GitFileUtils {
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
-                                                          @NotNull Collection<VirtualFile> addedFiles) {
+                                                          @NotNull Collection<? extends VirtualFile> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
@@ -121,7 +121,7 @@ public class GitFileUtils {
     repository.getUntrackedFilesHolder().add(removedFiles);
   }
 
-  public static void addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile... files) throws VcsException {
     addFiles(project, root, Arrays.asList(files));
   }
 
@@ -194,11 +194,14 @@ public class GitFileUtils {
    * @param project      the project
    * @param root         the vcs root
    * @param revisionOrBranch     the revision to find path in or branch 
-   * @param relativePath
    * @return the content of file if file is found, null if the file is missing in the revision
    * @throws VcsException if there is a problem with running git
    */
-  public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
+  @NotNull
+  public static byte[] getFileContent(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull String revisionOrBranch,
+                                      @NotNull String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
     if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
@@ -214,13 +217,5 @@ public class GitFileUtils {
     }
     h.addParameters(revisionOrBranch + ":" + relativePath);
     return h.run();
-  }
-
-  public static String stripFileProtocolPrefix(String path) {
-    final String FILE_PROTOCOL = "file://";
-    if (path.startsWith(FILE_PROTOCOL)) {
-      return path.substring(FILE_PROTOCOL.length());
-    }
-    return path;
   }
 }
