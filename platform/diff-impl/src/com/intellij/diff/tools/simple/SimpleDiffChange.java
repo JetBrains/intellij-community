@@ -29,7 +29,7 @@ public class SimpleDiffChange {
   private final boolean myIsSkipped;
 
   private boolean myIsValid = true;
-  private boolean myIsDestroyed = true;
+  private boolean myIsDestroyed;
   private final int[] myLineStartShifts = new int[2];
   private final int[] myLineEndShifts = new int[2];
 
