@@ -37,12 +37,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Map<IdeaPluginDescriptor, List<CellPluginComponent>> myListMap = new HashMap<>();
   private final Map<IdeaPluginDescriptor, List<CellPluginComponent>> myGridMap = new HashMap<>();
   private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
-  private PluginsGroupComponent myDownloadedPanel;
+  private PluginsGroupComponent myInstalledPanel;
   private PluginsGroup myDownloaded;
   private PluginsGroup myInstalling;
   private PluginsGroup myUpdates;
   private Configurable.TopComponentController myTopController;
   private List<String> myVendorsSorted;
+  private List<String> myTagsSorted;
 
   private static final Set<IdeaPluginDescriptor> myInstallingPlugins = new HashSet<>();
   private static final Set<IdeaPluginDescriptor> myInstallingWithUpdatesPlugins = new HashSet<>();
@@ -213,14 +214,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (install && myInstalling != null) {
       if (myInstalling.ui == null) {
         myInstalling.descriptors.add(descriptor);
-        myDownloadedPanel.addGroup(myInstalling, 0);
+        myInstalledPanel.addGroup(myInstalling, 0);
       }
       else {
-        myDownloadedPanel.addToGroup(myInstalling, descriptor);
+        myInstalledPanel.addToGroup(myInstalling, descriptor);
       }
 
       myInstalling.titleWithCount();
-      myDownloadedPanel.doLayout();
+      myInstalledPanel.doLayout();
     }
 
     List<CellPluginComponent> gridComponents = myGridMap.get(descriptor);
@@ -279,13 +280,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myInstalling != null && myInstalling.ui != null) {
         clearInstallingProgress(descriptor);
         if (myInstallingPlugins.isEmpty()) {
-          myDownloadedPanel.removeGroup(myInstalling);
+          myInstalledPanel.removeGroup(myInstalling);
         }
         else {
-          myDownloadedPanel.removeFromGroup(myInstalling, descriptor);
+          myInstalledPanel.removeFromGroup(myInstalling, descriptor);
           myInstalling.titleWithCount();
         }
-        myDownloadedPanel.doLayout();
+        myInstalledPanel.doLayout();
       }
       if (success) {
         appendOrUpdateDescriptor(descriptor, true);
@@ -357,7 +358,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public void setDownloadedGroup(@NotNull PluginsGroupComponent panel,
                                  @NotNull PluginsGroup downloaded,
                                  @NotNull PluginsGroup installing) {
-    myDownloadedPanel = panel;
+    myInstalledPanel = panel;
     myDownloaded = downloaded;
     myInstalling = installing;
   }
@@ -406,44 +407,61 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     myVendorsSorted = null;
+    myTagsSorted = null;
 
     if (myDownloaded.ui == null) {
       myDownloaded.descriptors.add(descriptor);
       myDownloaded.titleWithEnabled(this);
 
-      myDownloadedPanel.addGroup(myDownloaded, myInstalling == null || myInstalling.ui == null ? 0 : 1);
-      myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(0));
-      myDownloadedPanel.doLayout();
+      myInstalledPanel.addGroup(myDownloaded, myInstalling == null || myInstalling.ui == null ? 0 : 1);
+      myInstalledPanel.setSelection(myDownloaded.ui.plugins.get(0));
+      myInstalledPanel.doLayout();
 
       addEnabledGroup(myDownloaded);
     }
     else {
       CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
       if (component != null) {
-        myDownloadedPanel.setSelection(component);
+        myInstalledPanel.setSelection(component);
         component.enableRestart();
         return;
       }
 
-      myDownloadedPanel.addToGroup(myDownloaded, descriptor);
+      myInstalledPanel.addToGroup(myDownloaded, descriptor);
       myDownloaded.titleWithEnabled(this);
-      myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
-      myDownloadedPanel.doLayout();
+      myInstalledPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
+      myInstalledPanel.doLayout();
     }
   }
 
   @NotNull
   public List<String> getVendors() {
     if (ContainerUtil.isEmpty(myVendorsSorted)) {
-      assert myDownloadedPanel != null;
-
-      List<IdeaPluginDescriptor> descriptors =
-        myDownloadedPanel.getGroups().stream().flatMap(group -> group.plugins.stream()).map(plugin -> plugin.myPlugin)
-          .collect(Collectors.toList());
-
-      myVendorsSorted = getVendors(descriptors);
+      myVendorsSorted = getVendors(getInstalledDescriptors());
     }
     return myVendorsSorted;
+  }
+
+  @NotNull
+  public List<String> getTags() {
+    if (ContainerUtil.isEmpty(myTagsSorted)) {
+      Set<String> allTags = new HashSet<>();
+
+      for (IdeaPluginDescriptor descriptor : getInstalledDescriptors()) {
+        allTags.addAll(PluginManagerConfigurableNew.getTags(descriptor));
+      }
+
+      myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
+    }
+    return myTagsSorted;
+  }
+
+  @NotNull
+  public List<IdeaPluginDescriptor> getInstalledDescriptors() {
+    assert myInstalledPanel != null;
+
+    return myInstalledPanel.getGroups().stream().flatMap(group -> group.plugins.stream()).map(plugin -> plugin.myPlugin)
+      .collect(Collectors.toList());
   }
 
   @NotNull

@@ -78,7 +78,7 @@ public class PluginManagerConfigurableNew
 
   public static final int ITEMS_PER_GROUP = 9;
 
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
+  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
@@ -1434,7 +1434,8 @@ public class PluginManagerConfigurableNew
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+    throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1551,19 +1552,38 @@ public class PluginManagerConfigurableNew
   @NotNull
   public static List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
     List<String> tags = null;
+    String productCode = plugin.getProductCode();
 
     if (plugin instanceof PluginNode) {
       tags = ((PluginNode)plugin).getTags();
+
+      if (productCode != null && tags != null && !tags.contains("Paid")) {
+        tags = new ArrayList<>(tags);
+        tags.add(0, "Paid");
+      }
+    }
+    else if (productCode != null) {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance != null) {
+        String stamp = instance.getConfirmationStamp(productCode);
+        if (stamp != null) {
+          return Collections.singletonList(stamp.startsWith("eval:") ? "Trial" : "Purchased");
+        }
+      }
+      return Collections.singletonList("Paid");
     }
     if (ContainerUtil.isEmpty(tags)) {
       return Collections.emptyList();
     }
 
-    int eap = tags.indexOf("EAP");
-    if (eap > 0) {
+    if (tags.size() > 1) {
       tags = new ArrayList<>(tags);
-      tags.remove(eap);
-      tags.add(0, "EAP");
+      if (tags.remove("EAP")) {
+        tags.add(0, "EAP");
+      }
+      if (tags.remove("Paid")) {
+        tags.add(0, "Paid");
+      }
     }
 
     return tags;

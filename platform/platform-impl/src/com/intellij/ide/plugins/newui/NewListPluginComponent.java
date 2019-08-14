@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -10,10 +11,12 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +34,7 @@ import java.util.ListIterator;
  */
 public class NewListPluginComponent extends CellPluginComponent {
   private final MyPluginModel myPluginModel;
+  private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private boolean myUninstalled;
   private boolean myUninstalledWithoutRestart;
@@ -47,14 +51,19 @@ public class NewListPluginComponent extends CellPluginComponent {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
+  private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
   private JComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
 
-  public NewListPluginComponent(@NotNull MyPluginModel pluginModel, @NotNull IdeaPluginDescriptor plugin, boolean marketplace) {
+  public NewListPluginComponent(@NotNull MyPluginModel pluginModel,
+                                @NotNull IdeaPluginDescriptor plugin,
+                                @NotNull LinkListener<Object> searchListener,
+                                boolean marketplace) {
     super(plugin);
     myPluginModel = pluginModel;
+    mySearchListener = searchListener;
     myMarketplace = marketplace;
     pluginModel.addComponent(this);
 
@@ -69,8 +78,10 @@ public class NewListPluginComponent extends CellPluginComponent {
     myNameComponent.setText(myPlugin.getName());
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
+    createTag();
     createButtons();
     createMetricsPanel();
+    createLicensePanel();
 
     if (marketplace) {
       updateIcon(false, false);
@@ -173,6 +184,57 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
   }
 
+  private void createTag() {
+    if (myPlugin.getProductCode() != null) {
+      String tag = ContainerUtil.getFirstItem(PluginManagerConfigurableNew.getTags(myPlugin));
+      if (tag == null) {
+        return;
+      }
+
+      TagComponent component = new TagComponent(tag);
+      //noinspection unchecked
+      component.setListener(mySearchListener, component);
+
+      myLayout.setTagComponent(PluginManagerConfigurableNew.installTiny(component));
+    }
+  }
+
+  private void setTagTooltip(@Nullable String text) {
+    if (myLayout.myTagComponent != null) {
+      myLayout.myTagComponent.setToolTipText(text);
+    }
+  }
+
+  private void createLicensePanel() {
+    String productCode = myPlugin.getProductCode();
+    if (myMarketplace || productCode == null) {
+      return;
+    }
+
+    LicensingFacade instance = LicensingFacade.getInstance();
+    if (instance == null || instance.registerCallback == null) {
+      setTagTooltip("No license in EAP build");
+      return;
+    }
+
+    LicensePanel licensePanel = new LicensePanel(true);
+
+    String stamp = instance.getConfirmationStamp(productCode);
+    if (stamp == null) {
+      licensePanel.setText("No license.", true, false);
+    }
+    else {
+      licensePanel.setTextFromStamp(stamp);
+    }
+    setTagTooltip(licensePanel.getMessage());
+
+    if (licensePanel.isNotification()) {
+      licensePanel.setBorder(JBUI.Borders.emptyTop(3));
+      licensePanel.setLink("Manage licenses", () -> LicensingFacade.getInstance().register(), false);
+      myLayout.addLineComponent(licensePanel);
+    }
+  }
+
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
     if (myUpdateDescriptor == null && descriptor == null) {
       return;
@@ -184,6 +246,9 @@ public class NewListPluginComponent extends CellPluginComponent {
       if (myVersion != null) {
         myVersion.setText(myPlugin.getVersion());
       }
+      if (myUpdateLicensePanel != null) {
+        myUpdateLicensePanel.setVisible(false);
+      }
       if (myUpdateButton != null) {
         myUpdateButton.setVisible(false);
       }
@@ -191,6 +256,20 @@ public class NewListPluginComponent extends CellPluginComponent {
     else {
       if (myVersion != null) {
         myVersion.setText(myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+      }
+      if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null) {
+        if (myUpdateLicensePanel == null) {
+          myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
+          myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
+          if (myEventHandler != null) {
+            myEventHandler.addAll(myUpdateLicensePanel);
+          }
+        }
+
+        myUpdateLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
+        myUpdateLicensePanel.setLink("Buy plugin", () ->
+          BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myUpdateDescriptor.getProductCode()), true);
+        myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
@@ -277,8 +356,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
 
       if (addListeners) {
-        myEventHandler.add(myErrorPanel);
-        myEventHandler.add(myErrorComponent);
+        myEventHandler.addAll(myErrorPanel);
       }
     }
     else if (myErrorPanel != null) {
@@ -600,6 +678,7 @@ public class NewListPluginComponent extends CellPluginComponent {
     private JComponent myIconComponent;
     private JLabel myNameComponent;
     private JComponent myProgressComponent;
+    private JComponent myTagComponent;
     private final List<JComponent> myButtonComponents = new ArrayList<>();
     private final List<JComponent> myLineComponents = new ArrayList<>();
     private boolean[] myButtonEnableStates;
@@ -609,6 +688,12 @@ public class NewListPluginComponent extends CellPluginComponent {
       Dimension result = new Dimension(myNameComponent.getPreferredSize());
 
       if (myProgressComponent == null) {
+        if (myTagComponent != null) {
+          Dimension size = myTagComponent.getPreferredSize();
+          result.width += size.width + 2 * myHOffset.get();
+          result.height = Math.max(result.height, size.height);
+        }
+
         int count = myButtonComponents.size();
         if (count > 0) {
           int visibleCount = 0;
@@ -671,6 +756,10 @@ public class NewListPluginComponent extends CellPluginComponent {
       int width = getWidth();
 
       if (myProgressComponent == null) {
+        if (myTagComponent != null) {
+          setBaselineBounds(x + nameSize.width + myHOffset.get(), baseline, myTagComponent, myTagComponent.getPreferredSize());
+        }
+
         int lastX = width - insets.right;
 
         for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
@@ -706,6 +795,10 @@ public class NewListPluginComponent extends CellPluginComponent {
         return width - myProgressComponent.getPreferredSize().width - myHOffset.get();
       }
 
+      if (myTagComponent != null) {
+        width -= myTagComponent.getPreferredSize().width + 2 * myHOffset.get();
+      }
+
       int visibleCount = 0;
       for (Component component : myButtonComponents) {
         if (component.isVisible()) {
@@ -734,6 +827,11 @@ public class NewListPluginComponent extends CellPluginComponent {
     public void setNameComponent(@NotNull JLabel nameComponent) {
       assert myNameComponent == null;
       add(myNameComponent = nameComponent);
+    }
+
+    public void setTagComponent(@NotNull JComponent component) {
+      assert myTagComponent == null;
+      add(myTagComponent = component);
     }
 
     public void addLineComponent(@NotNull JComponent component) {
@@ -798,6 +896,10 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
 
     private void setVisibleOther(boolean value) {
+      if (myTagComponent != null) {
+        myTagComponent.setVisible(value);
+      }
+
       if (myButtonComponents.isEmpty()) {
         return;
       }

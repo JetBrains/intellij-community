@@ -280,8 +280,9 @@ public abstract class SearchQueryParser {
     }
   }
 
-  public static class InstalledWithVendor extends SearchQueryParser {
+  public static class InstalledWithVendorAndTag extends SearchQueryParser {
     public final Set<String> vendors = new HashSet<>();
+    public final Set<String> tags = new HashSet<>();
     public boolean enabled;
     public boolean disabled;
     public boolean bundled;
@@ -290,7 +291,7 @@ public abstract class SearchQueryParser {
     public boolean needUpdate;
     public boolean attributes;
 
-    public InstalledWithVendor(@NotNull String query) {
+    public InstalledWithVendorAndTag(@NotNull String query) {
       localParse(query);
     }
 
@@ -306,9 +307,9 @@ public abstract class SearchQueryParser {
       while (index < size) {
         String name = words.get(index++);
         if (name.startsWith("/")) {
-          if (name.equals("/vendor:")) {
+          if (name.equals("/vendor:") || name.equals("/tag:")) {
             if (index < size) {
-              handleAttribute("vendor", words.get(index++), false);
+              handleAttribute(name.substring(1, name.length() - 1), words.get(index++), false);
             }
             else {
               addToSearchQuery(query);
@@ -354,6 +355,10 @@ public abstract class SearchQueryParser {
 
         case "vendor":
           vendors.add(value);
+          break;
+
+        case "tag":
+          tags.add(value);
           break;
       }
     }

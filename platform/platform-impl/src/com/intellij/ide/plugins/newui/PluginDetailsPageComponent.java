@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -63,6 +64,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JLabel myDownloads;
   private JLabel mySize;
   private LinkPanel myVendor;
+  private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private JEditorPane myDescriptionComponent;
   private OneLineProgressIndicator myIndicator;
@@ -261,9 +263,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         }
       }
     });
-    if (myMarketplace) {
-      panel2.add(myTagPanel = new TagPanel(mySearchListener));
-    }
+    panel2.add(myTagPanel = new TagPanel(mySearchListener));
     panel2.add(myVersion);
     myDate =
       GridCellPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, CellPluginComponent.GRAY_COLOR, true);
@@ -280,6 +280,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     myPanel.add(scrollPane);
+
+    bottomPanel.add(myLicensePanel);
+    myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
 
     myHomePage = new LinkPanel(bottomPanel, true, null, null);
     bottomPanel.add(new JLabel());
@@ -406,9 +409,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
-    if (myMarketplace) {
-      myTagPanel.setTags(PluginManagerConfigurableNew.getTags(myPlugin));
+    myTagPanel.setTags(PluginManagerConfigurableNew.getTags(myPlugin));
 
+    if (myMarketplace) {
       String rating = PluginManagerConfigurableNew.getRating(myPlugin);
       myRating.setText(rating);
       myRating.setVisible(rating != null);
@@ -429,6 +432,43 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       myVendor.show(vendor, () -> mySearchListener
         .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
+    }
+
+    String productCode = myPlugin.getProductCode();
+    if (productCode == null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+        myLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
+        myLicensePanel.setLink("Buy plugin", () ->
+          BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myUpdateDescriptor.getProductCode()), true);
+      }
+      else {
+        myLicensePanel.setVisible(false);
+      }
+    }
+    else if (myMarketplace) {
+      myLicensePanel.setText("The 30-day trial is available.", false, false);
+      myLicensePanel.setLink("Buy plugin", () ->
+        BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myPlugin.getProductCode()), true);
+      myLicensePanel.setVisible(true);
+    }
+    else {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance == null || instance.registerCallback == null) {
+        myLicensePanel.setText("No license in EAP build.", false, false);
+      }
+      else {
+        String stamp = instance.getConfirmationStamp(productCode);
+        if (stamp == null) {
+          myLicensePanel.setText("No license.", true, false);
+        }
+        else {
+          myLicensePanel.setTextFromStamp(stamp);
+        }
+        myLicensePanel.setLink("Manage licenses", () -> LicensingFacade.getInstance().register(), false);
+      }
+      myLicensePanel.setVisible(true);
+
+      ((JComponent)myTagPanel.getComponent(0)).setToolTipText(myLicensePanel.getMessage());
     }
 
     if (bundled) {
