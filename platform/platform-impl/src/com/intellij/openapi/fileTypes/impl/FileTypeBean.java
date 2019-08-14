@@ -9,6 +9,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ public class FileTypeBean extends AbstractExtensionPointBean {
    */
   @Attribute("name")
   @RequiredElement
+  @NonNls
   public String name;
 
   /**
@@ -42,24 +44,28 @@ public class FileTypeBean extends AbstractExtensionPointBean {
    * must not be prefixed with a `.`.
    */
   @Attribute("extensions")
+  @NonNls
   public String extensions;
 
   /**
    * Semicolon-separated list of exact file names to be associated with the file type.
    */
   @Attribute("fileNames")
+  @NonNls
   public String fileNames;
 
   /**
    * Semicolon-separated list of patterns (strings containing ? and * characters) to be associated with the file type.
    */
   @Attribute("patterns")
+  @NonNls
   public String patterns;
 
   /**
    * Semicolon-separated list of exact file names (case-insensitive) to be associated with the file type.
    */
   @Attribute("fileNamesCaseInsensitive")
+  @NonNls
   public String fileNamesCaseInsensitive;
 
   /**
