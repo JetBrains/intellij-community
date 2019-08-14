@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.ui.JBColor
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.components.JBMenu
 import com.intellij.util.ui.JBUI
@@ -50,7 +49,6 @@ internal class GHCloneDialogAccountsPanel(
 
     val label = accountComponents.getOrPut(account, {
       JLabel().apply {
-        border = JBUI.Borders.customLine(JBColor.lightGray)
         icon = defaultIcon
         toolTipText = account.name
         isOpaque = !isOpaque
