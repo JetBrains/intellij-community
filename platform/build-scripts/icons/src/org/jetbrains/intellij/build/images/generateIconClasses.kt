@@ -20,7 +20,7 @@ internal fun generateIconsClasses() {
   project.modules.parallelStream().forEach(optimizer::optimizeIcons)
   optimizer.printStats()
 
-  val preCompiler = ImageSvgPreCompiler(home)
+  val preCompiler = ImageSvgPreCompiler()
   preCompiler.preCompileIcons(project.modules)
   preCompiler.printStats()
 

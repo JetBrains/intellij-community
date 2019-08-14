@@ -34,6 +34,7 @@ class BuildOptions {
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"

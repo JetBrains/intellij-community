@@ -226,6 +226,7 @@ class DistributionJARsBuilder {
   }
 
   void buildJARs() {
+    prebuildSVG()
     buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
@@ -237,6 +238,11 @@ class DistributionJARsBuilder {
     if (loadingOrderFilePath != null) {
       reorderJARs(loadingOrderFilePath)
     }
+  }
+
+  void prebuildSVG() {
+    def productLayout = buildContext.productProperties.productLayout
+    SVGPreBuilder.prebuildSVGIcons(buildContext, productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish)
   }
 
   /**
@@ -274,7 +280,8 @@ class DistributionJARsBuilder {
     getProductApiModules(productLayout) +
     getProductImplModules(productLayout) +
     productLayout.additionalPlatformJars.values() +
-    toolModules + buildContext.productProperties.additionalModulesToCompile
+    toolModules + buildContext.productProperties.additionalModulesToCompile +
+    SVGPreBuilder.getModulesToInclude()
   }
 
   List<String> getModulesForPluginsToPublish() {
@@ -362,6 +369,7 @@ class DistributionJARsBuilder {
     def productLayout = buildContext.productProperties.productLayout
 
     addSearchableOptions(layoutBuilder)
+    SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
