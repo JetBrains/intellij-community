@@ -99,7 +99,7 @@ fun PsiType?.isClosureTypeDeep(): Boolean {
 }
 
 
-fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
+tailrec fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {
     return type.accept(object : PsiTypeMapper() {
       override fun visitClassType(classType: PsiClassType?): PsiType? {
@@ -300,3 +300,11 @@ fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: Gr
   }
   return substitutor
 }
+
+
+fun PsiTypeParameter.upperBound(): PsiType =
+  when (extendsListTypes.size) {
+    0 -> getJavaLangObject(this)
+    1 -> extendsListTypes.single()
+    else -> PsiIntersectionType.createIntersection(*extendsListTypes)
+  }

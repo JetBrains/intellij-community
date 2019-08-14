@@ -9,7 +9,9 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.upperBound
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -21,16 +23,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import kotlin.LazyThreadSafetyMode.NONE
 
 
 internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
@@ -59,32 +60,48 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   private fun processMethod(result: GroovyResolveResult) {
-    val methodResult = result as? GroovyMethodResult
-    val candidate = methodResult?.candidate
-    val receiver = candidate?.smartReceiver()
-    receiver?.run {
-      val containingType = candidate.smartContainingType()
-      generateRequiredTypes(typeParameter() ?: return@run, containingType ?: return@run, UPPER)
+    val methodResult = result as? GroovyMethodResult ?: return
+    val candidate = methodResult.candidate ?: return
+    processReceiverConstraints(candidate)
+    processReturnTypeConstraints(methodResult, candidate.method)
+    val expectedTypes = candidate.argumentMapping?.expectedTypes ?: return
+    for ((type, argument) in expectedTypes) {
+      processArgumentConstraints(type, argument, methodResult)
     }
-    val invokedMethod = when (val method = methodResult?.element) {
-      is GrGdkMethod -> method.staticMethod
-      else -> method
-    }
-    methodResult?.substitutor?.substitute(invokedMethod?.returnType)?.run { covariantTypesCollector.add(this) }
-    for ((type, argument) in candidate?.argumentMapping?.expectedTypes ?: return) {
-      val argumentTypes = when (val argtype = argument.type) {
-        is PsiIntersectionType -> argtype.conjuncts
-        else -> arrayOf(argtype)
-      }.filterNotNull()
-      argumentTypes.forEach { argtype ->
-        processRequiredParameters(argtype, methodResult.substitutor.substitute(type))
+  }
+
+  private fun processReceiverConstraints(candidate: GroovyMethodCandidate) {
+    val receiverTypeParameter = candidate.smartReceiver()?.typeParameter() ?: return
+    val containingType = candidate.smartContainingType() ?: return
+    generateRequiredTypes(receiverTypeParameter, containingType, UPPER)
+  }
+
+  private fun processReturnTypeConstraints(methodResult: GroovyMethodResult, method: PsiMethod) {
+    methodResult.substitutor.substitute(method.returnType)?.run { covariantTypesCollector.add(this) }
+  }
+
+  private fun processArgumentConstraints(parameterType: PsiType, argument: Argument, resolveResult: GroovyMethodResult) {
+    val argumentTypes = when (val argtype = argument.type) {
+      is PsiIntersectionType -> argtype.conjuncts
+      else -> arrayOf(argtype)
+    }.filterNotNull()
+    val erasureSubstitutor = lazy(NONE) { methodTypeParametersErasureSubstitutor(resolveResult.element) }
+    val callContextSubstitutor = resolveResult.substitutor
+    argumentTypes.forEach { argtype ->
+      val upperType = callContextSubstitutor.substitute(parameterType).run {
+        if (argtype == this) callContextSubstitutor.substitute(erasureSubstitutor.value.substitute(parameterType)) else this
       }
-      val typeParameter = methodResult.substitutor.substitute(type).typeParameter() ?: continue
-      argumentTypes.forEach { argtype ->
-        generateRequiredTypes(typeParameter, methodResult.substitutor.substitute(argtype) ?: return@forEach, LOWER)
-      }
-      methodResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
+      processRequiredParameters(argtype, upperType)
     }
+    resolveResult.contextSubstitutor.substitute(parameterType)?.run { contravariantTypesCollector.add(this) }
+  }
+
+  private fun methodTypeParametersErasureSubstitutor(method: PsiMethod): PsiSubstitutor {
+    val typeParameters = method.typeParameters
+    val bounds = typeParameters.map { it.upperBound() }
+    val draftSubstitutor = PsiSubstitutor.EMPTY.putAll(typeParameters, bounds.toTypedArray())
+    val completeBounds = typeParameters.map { draftSubstitutor.recursiveSubstitute(it.type()) }
+    return PsiSubstitutor.EMPTY.putAll(typeParameters, completeBounds.toTypedArray())
   }
 
   /**
@@ -92,45 +109,63 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
    * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
   private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) {
-    var currentRestrictedType = lowerType as? PsiClassType ?: return
+    var currentLowerType = lowerType as? PsiClassType ?: return
     var firstVisit = true
     val context = lowerType.resolve()?.context ?: return
     upperType.accept(object : PsiTypeVisitor<Unit>() {
 
-      fun visitClassParameters(classType: PsiClassType) {
-        val properBoundTypes = if (currentRestrictedType.isTypeParameter()) {
-          currentRestrictedType.typeParameter()!!.extendsListTypes.filterIsInstance<PsiClassType>()
+      fun visitClassParameters(currentUpperType: PsiClassType) {
+        val candidateLowerTypes = if (currentLowerType.isTypeParameter()) {
+          currentLowerType.typeParameter()!!.extendsListTypes.asList()
         }
         else {
-          listOf(currentRestrictedType)
+          listOf(currentLowerType)
         }
-        val matchedBound =
-          properBoundTypes.find {
-            TypesUtil.canAssign(classType.rawType(), it.rawType(), context, METHOD_PARAMETER) == OK
+        val matchedLowerBound =
+          candidateLowerTypes.find { lowerType ->
+            TypesUtil.canAssign(currentUpperType.rawType(), lowerType.rawType(), context, METHOD_PARAMETER) == OK
           } ?: return
-        for (classParameterIndex in classType.parameters.indices) {
-          currentRestrictedType = matchedBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
-          classType.parameters[classParameterIndex].accept(this)
+        for (classParameterIndex in currentUpperType.parameters.indices) {
+          currentLowerType = matchedLowerBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
+          currentUpperType.parameters[classParameterIndex].accept(this)
         }
       }
 
       override fun visitClassType(classType: PsiClassType?) {
         classType ?: return
-        val primaryConstraint = if (firstVisit) UPPER else EQUAL
-        // firstVisit is necessary because parameters can accept their subtypes, while type arguments (without wildcard) are not
-        firstVisit = false
-        if (currentRestrictedType.isTypeParameter()) {
-          generateRequiredTypes(currentRestrictedType.typeParameter()!!, classType, primaryConstraint)
+        if (firstVisit) {
+          if (currentLowerType.isTypeParameter()) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, classType, UPPER)
+          }
+          if (classType.isTypeParameter()) {
+            generateRequiredTypes(classType.typeParameter()!!, currentLowerType, LOWER)
+          }
         }
+        else {
+          if (currentLowerType.isTypeParameter()) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, classType, EQUAL)
+          }
+        }
+        // firstVisit is necessary because java generics are invariant
+        firstVisit = false
         visitClassParameters(classType)
         super.visitClassType(classType)
+      }
+
+      override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
+        intersectionType ?: return
+        val memorizedFirstVisit = firstVisit
+        intersectionType.conjuncts.forEach {
+          firstVisit = memorizedFirstVisit
+          it.accept(this)
+        }
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?) {
         wildcardType ?: return
         val extendsBound = wildcardType.extendsBound as PsiClassType
-        if (currentRestrictedType.isTypeParameter()) {
-          generateRequiredTypes(currentRestrictedType.typeParameter()!!, extendsBound, UPPER)
+        if (currentLowerType.isTypeParameter()) {
+          generateRequiredTypes(currentLowerType.typeParameter()!!, extendsBound, UPPER)
         }
         visitClassParameters(extendsBound)
         super.visitWildcardType(wildcardType)
