@@ -58,13 +58,9 @@ public class ToggleCaseAction extends TextComponentEditorAction {
         VisualPosition caretPosition = c.getVisualPosition();
         int selectionStartOffset = c.getSelectionStart();
         int selectionEndOffset = c.getSelectionEnd();
-        VisualPosition selectionStartPosition = c.getSelectionStartPosition();
-        VisualPosition selectionEndPosition = c.getSelectionEndPosition();
-        c.removeSelection();
         editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
                                            toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
         c.moveToVisualPosition(caretPosition);
-        c.setSelection(selectionStartPosition, selectionStartOffset, selectionEndPosition, selectionEndOffset);
       });
     }
 
