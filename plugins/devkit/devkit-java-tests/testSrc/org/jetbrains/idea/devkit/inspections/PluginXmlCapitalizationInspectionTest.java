@@ -22,4 +22,17 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
     myFixture.testHighlighting("pluginXmlCapitalization_Action.xml",
                                "MyBundle.properties", "MyAction.java");
   }
+
+  public void testExtensionPoint() {
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\";}");
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Tag { String value() default \"\";}");
+    
+    myFixture.addClass("package org.jetbrains.annotations; public @interface NonNls {}");
+    myFixture.addClass("package org.jetbrains.annotations; public @interface Nls {" +
+                       "  enum Capitalization {NotSpecified,Title,Sentence}" +
+                       "  Capitalization capitalization() default Capitalization.NotSpecified;" +
+                       "}");
+    myFixture.testHighlighting("pluginXmlCapitalization_extensionPoint.xml", "MyExtensionPoint.java");
+
+  }
 }
