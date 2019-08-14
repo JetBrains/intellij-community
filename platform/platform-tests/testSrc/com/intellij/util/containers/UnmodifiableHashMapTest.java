@@ -23,21 +23,25 @@ public class UnmodifiableHashMapTest {
     assertNull(empty.get("foo"));
   }
 
+  @SuppressWarnings("deprecation")
   @Test(expected = UnsupportedOperationException.class)
   public void testPut() {
     UnmodifiableHashMap.empty().put("foo", "bar");
   }
 
+  @SuppressWarnings("deprecation")
   @Test(expected = UnsupportedOperationException.class)
   public void testRemove() {
     UnmodifiableHashMap.empty().remove("foo");
   }
 
+  @SuppressWarnings("deprecation")
   @Test(expected = UnsupportedOperationException.class)
   public void testPutAll() {
     UnmodifiableHashMap.empty().putAll(Collections.singletonMap("foo", "bar"));
   }
 
+  @SuppressWarnings("deprecation")
   @Test(expected = UnsupportedOperationException.class)
   public void testClear() {
     UnmodifiableHashMap.empty().clear();
@@ -196,7 +200,7 @@ public class UnmodifiableHashMapTest {
 
   private static UnmodifiableHashMap<Integer, String> create(int size) {
     UnmodifiableHashMap<Integer, String> map =
-      IntStreamEx.range(size / 4 * 4).mapToEntry(i -> i, String::valueOf).toMapAndThen(UnmodifiableHashMap::fromMap);
+      IntStreamEx.range(size < 4 ? size :size / 4 * 4).mapToEntry(i -> i, String::valueOf).toMapAndThen(UnmodifiableHashMap::fromMap);
     while (map.size() < size) {
       map = map.with(map.size(), String.valueOf(map.size()));
     }

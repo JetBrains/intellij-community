@@ -82,6 +82,28 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
         ((UnmodifiableHashMap<K, V>)map).strategy == strategy) {
       return (UnmodifiableHashMap<K, V>)map;
     }
+    if (map.size() <= 3) {
+      K k1 = null, k2 = null, k3 = null;
+      V v1 = null, v2 = null, v3 = null;
+      Iterator<Entry<K, V>> iterator = map.entrySet().iterator();
+      if (iterator.hasNext()) {
+        Entry<K, V> e = iterator.next();
+        k1 = e.getKey();
+        v1 = e.getValue();
+        if (iterator.hasNext()) {
+          e = iterator.next();
+          k2 = e.getKey();
+          v2 = e.getValue();
+          if (iterator.hasNext()) {
+            e = iterator.next();
+            k3 = e.getKey();
+            v3 = e.getValue();
+            assert !iterator.hasNext();
+          }
+        }
+      }
+      return new UnmodifiableHashMap<>(strategy, ArrayUtil.EMPTY_OBJECT_ARRAY, k1, v1, k2, v2, k3, v3);
+    }
     Object[] newData = new Object[map.size() * 4];
     map.forEach((k, v) -> insert(strategy, newData, Objects.requireNonNull(k), v));
     return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
@@ -250,7 +272,12 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
 
   @Override
   public V get(Object key) {
-    if (key == null) return null;
+    return getOrDefault(key, null);
+  }
+
+  @Override
+  public V getOrDefault(Object key, V defaultValue) {
+    if (key == null) return defaultValue;
     @SuppressWarnings("unchecked") K typedKey = (K)key;
     if (k1 != null) {
       if (strategy.equals(k1, typedKey)) {
@@ -267,10 +294,10 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
         }
       }
     }
-    if (data.length == 0) return null;
+    if (data.length == 0) return defaultValue;
     int pos = tablePos(strategy, data, typedKey);
     @SuppressWarnings("unchecked")
-    V v = pos < 0 ? null : (V)data[pos + 1];
+    V v = pos < 0 ? defaultValue : (V)data[pos + 1];
     return v;
   }
 
