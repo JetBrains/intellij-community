@@ -1,4 +1,5 @@
 <idea-plugin>
+    <module value="dependency.module"/>
     <extensionPoints>
         <extensionPoint name="myPlugin.lang.myExtPoint" beanClass="com.intellij.lang.LanguageExtensionPoint">
             <with attribute="implementationClass" implements="MyLanguageExtension"/>
