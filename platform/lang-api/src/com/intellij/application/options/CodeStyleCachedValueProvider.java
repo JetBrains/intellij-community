@@ -3,6 +3,8 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -13,6 +15,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -63,14 +66,9 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   }
 
   private void notifyCachedValueComputed(@NotNull PsiFile file) {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      application.invokeLater(() -> {
-        final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(file.getProject());
-        settingsManager.fireCodeStyleSettingsChanged(file);
-        myComputation.reset();
-      });
-    }
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(file.getProject());
+    settingsManager.fireCodeStyleSettingsChanged(file);
+    myComputation.reset();
   }
 
   private static void logCached(@NotNull PsiFile file, @NotNull CodeStyleSettings settings) {
@@ -97,13 +95,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
     private void start() {
       final Application application = ApplicationManager.getApplication();
-      Runnable computeSettingsInRA = () -> application.runReadAction(() -> computeSettings());
       if (!application.isUnitTestMode()) {
-        application.executeOnPooledThread(computeSettingsInRA);
+        ReadAction.nonBlocking(() -> computeSettings())
+          .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed(myFile))
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
       else {
-        computeSettingsInRA.run();
-        reset();
+        ReadAction.run((() -> computeSettings()));
+        notifyCachedValueComputed(myFile);
       }
     }
 
@@ -129,7 +128,6 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       if (LOG.isDebugEnabled()) {
         LOG.debug("Computation ended for " + myFile.getName());
       }
-      notifyCachedValueComputed(myFile);
     }
 
     @NotNull

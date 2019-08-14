@@ -6,6 +6,12 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +22,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
@@ -35,6 +42,9 @@ import static org.editorconfig.core.EditorConfig.OutPair;
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
   private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
 
+  private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
+  public static final EmptyProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
+
   static {
     addDependency("indent_size", "continuation_indent_size");
   }
@@ -52,20 +62,34 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         // Get editorconfig settings
         try {
           final MyContext context = new MyContext(settings, psiFile);
-          processEditorConfig(project, psiFile, context);
-          // Apply editorconfig settings for the current editor
-          if (applyCodeStyleSettings(context)) {
-            settings.addDependencies(context.getEditorConfigFiles());
-            EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()).updateEditorConfigFilePaths(context.getFilePaths());
-            return true;
-          }
+            return ApplicationUtil.runWithCheckCanceled(() -> {
+              processEditorConfig(project, psiFile, context);
+              // Apply editorconfig settings for the current editor
+              if (applyCodeStyleSettings(context)) {
+                settings.addDependencies(context.getEditorConfigFiles());
+                EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()).updateEditorConfigFilePaths(context.getFilePaths());
+                return true;
+              }
+              return false;
+            }, getIndicator());
         }
         catch (EditorConfigException e) {
           // TODO: Report an error, ignore for now
         }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
       }
     }
     return false;
+  }
+
+  @NotNull
+  private static ProgressIndicator getIndicator() {
+    return ObjectUtils.notNull(ProgressIndicatorProvider.getInstance().getProgressIndicator(), EMPTY_PROGRESS_INDICATOR);
   }
 
   @Nullable
