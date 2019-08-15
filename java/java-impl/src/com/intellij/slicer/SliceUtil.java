@@ -675,7 +675,7 @@ class SliceUtil {
             if (paramSynthetic.equals(syntheticField)) {
               PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
               int nesting = calcNewIndexNesting(indexNesting, anno);
-              if (!handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
+              if (substitutor != null && !handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
             }
           }
         }
@@ -688,7 +688,7 @@ class SliceUtil {
             int newNesting = calcNewIndexNesting(indexNesting, sourceAnno);
             PsiExpression sourceArgument = expressions[si];
             PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
-            if (!handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
+            if (substitutor != null && !handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
           }
         }
       }
