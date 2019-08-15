@@ -353,7 +353,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
-    boolean empty = iterable == null || iterable instanceof Collection && ((Collection)iterable).isEmpty();
+    boolean empty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
     return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
   }
 
@@ -2011,7 +2011,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
-    List<V> result = new ArrayList<>(iterable instanceof Collection ? ((Collection)iterable).size() : 10);
+    List<V> result = new ArrayList<>(iterable instanceof Collection ? ((Collection<?>)iterable).size() : 10);
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
@@ -2445,7 +2445,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
     int totalSize = 0;
     for (Iterable<E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection)list).size() : 10;
+      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
     }
     List<E> result = new ArrayList<>(totalSize);
     for (Iterable<E> list : collections) {
@@ -2546,7 +2546,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list.isEmpty()) return emptyList();
 
     if (list instanceof ArrayList) {
-      ((ArrayList)list).trimToSize();
+      ((ArrayList<?>)list).trimToSize();
     }
 
     return list;
@@ -2887,7 +2887,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(value = "null -> true", pure = true)
-  public static boolean isEmpty(@Nullable Map map) {
+  public static boolean isEmpty(@Nullable Map<?, ?> map) {
     return map == null || map.isEmpty();
   }
 
