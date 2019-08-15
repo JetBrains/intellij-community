@@ -87,7 +87,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   }
 
   @Nullable
-  public static With findWithElement(List<? extends With> elements, PsiField field) {
+  static With findWithElement(List<? extends With> elements, PsiField field) {
     for (With element : elements) {
       if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
         return element;
@@ -96,7 +96,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     return null;
   }
 
-  private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
+  private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, @Nullable With withElement) {
     final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
     final PsiMethod setter = PropertyUtilBase.findSetterForField(field);
     if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
@@ -188,15 +188,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   @Nullable
   static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
-      if (member != null) {
-        final PsiModifierList modifierList = member.getModifierList();
-        if (modifierList != null) {
-          final PsiAnnotation annotation = modifierList.findAnnotation(annotationClass.getName());
-          if (annotation != null) {
-            return annotation;
-          }
-        }
-      }
+      if (member == null) continue;
+
+      final PsiAnnotation annotation = member.getAnnotation(annotationClass.getName());
+      if (annotation != null) return annotation;
     }
     return null;
   }
