@@ -89,7 +89,7 @@ public class IoTestUtil {
     Assume.assumeTrue("Expected can create symlinks, but it seems '"+SystemInfo.getOsNameAndVersion()+"' is unwilling", isSymLinkCreationSupported);
   }
   public static void assumeWindows() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected windows but got: '" + SystemInfo.getOsNameAndVersion()+"'", !SystemInfo.isWindows);
+    Assume.assumeTrue("Expected windows but got: '" + SystemInfo.getOsNameAndVersion()+"'", SystemInfo.isWindows);
   }
 
   @NotNull
