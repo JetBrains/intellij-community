@@ -34,7 +34,7 @@ private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
 @State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportFile = KEYMAPS_DIR_PATH)
-class KeymapManagerImpl(factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
+class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val boundShortcuts = THashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
@@ -47,7 +47,7 @@ class KeymapManagerImpl(factory: SchemeManagerFactory) : KeymapManagerEx(), Pers
 
   init {
     val defaultKeymapManager = DefaultKeymap.instance
-    schemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
+    schemeManager = SchemeManagerFactory.getInstance().create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
                                 attributeProvider: Function<in String, String?>,
