@@ -292,7 +292,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       char next = path.charAt(slash + 1);
 
-      if (next == '/' || next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
+      if (next == '/' && !(i == 0 && SystemInfo.isWindows) ||
+          next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
       i = slash + 1;
