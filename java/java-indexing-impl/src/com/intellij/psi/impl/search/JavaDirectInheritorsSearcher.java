@@ -48,11 +48,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
       return AllClassesSearch.search(useScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
-        if (psiClass.isInterface()) {
-          return consumer.process(psiClass);
-        }
-        final PsiClass superClass = psiClass.getSuperClass();
-        return superClass == null || !JavaClassInheritorsSearcher.isJavaLangObject(superClass) || consumer.process(psiClass);
+        if (shortCircuitCandidate(psiClass)) return true;
+        return consumer.process(psiClass);
       });
     }
 
@@ -116,6 +113,20 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return true;
   }
 
+  // true if processor should return true, false if the processor should return result of consumer.process(psiClass)
+  private static boolean shortCircuitCandidate(@NotNull PsiClass psiClass) {
+    return ReadAction.compute(() -> {
+      if (psiClass.isInterface()) {
+        return false;
+      }
+      final PsiClass superClass = psiClass.getSuperClass();
+      if (superClass == null || !superClass.isValid()) {
+        return true;
+      }
+      boolean isJavaLangObject = CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName());
+      return !isJavaLangObject;
+    });
+  }
   private static PsiClass getClassToSearch(@NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     return ReadAction.compute(() -> (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess()));
   }
