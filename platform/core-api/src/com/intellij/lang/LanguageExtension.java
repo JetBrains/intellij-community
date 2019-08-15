@@ -13,6 +13,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +45,12 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   @Override
   protected String keyToString(@NotNull final Language key) {
     return key.getID();
+  }
+
+  @TestOnly
+  public void clearCache(@NotNull Language language) {
+    language.putUserData(IN_LANGUAGE_CACHE, null);
+    clearCache();
   }
 
   public T forLanguage(@NotNull Language l) {

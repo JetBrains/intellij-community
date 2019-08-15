@@ -136,10 +136,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
+    final Language language = definition.getFileNodeType().getLanguage();
     myLangParserDefinition.registerExtension(new KeyedLazyInstance<ParserDefinition>() {
       @Override
       public String getKey() {
-        return definition.getFileNodeType().getLanguage().getID();
+        return language.getID();
       }
 
       @NotNull
@@ -148,7 +149,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         return definition;
       }
     });
-    LanguageParserDefinitions.INSTANCE.clearCache();
+    LanguageParserDefinitions.INSTANCE.clearCache(language);
   }
 
   public void configureFromParserDefinition(@NotNull ParserDefinition definition, String extension) {
