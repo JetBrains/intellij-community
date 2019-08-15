@@ -508,7 +508,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     dialogManager.onMessage { Messages.CANCEL }
 
-    assertNoNotification()
+    assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
   }
