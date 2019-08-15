@@ -26,7 +26,7 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
     final IdeaPlugin ideaPlugin = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);
     if (ideaPlugin == null) return Collections.emptyList();
 
-    final Collection<String> dependencies = ExtensionDomExtender.getDependencies(ideaPlugin);
+    final Collection<String> dependencies = ExtensionsDomExtender.getDependencies(ideaPlugin);
     final List<IdeaPlugin> depPlugins = new ArrayList<>();
     for (String dependency : dependencies) {
       ContainerUtil.addIfNotNull(depPlugins, findById(ideaPlugin, dependency));

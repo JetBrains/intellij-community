@@ -47,7 +47,7 @@
                       rootTagName="idea-plugin"
                       stubVersion="12"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
-                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForAction"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Group"
