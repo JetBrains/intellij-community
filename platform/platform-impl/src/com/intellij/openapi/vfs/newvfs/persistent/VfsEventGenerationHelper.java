@@ -64,14 +64,19 @@ class VfsEventGenerationHelper {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     ChildInfo[] children = null;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
-      Path child = Paths.get(parent.getPath(), childName);
-      if (shouldScanDirectory(parent, child, childName)) {
-        Path[] relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
-             url -> {
-               Path path = Paths.get(VirtualFileManager.extractPath(url));
-               return path.startsWith(child) ? path : null;
-             }, new Path[0]);
-        children = scanChildren(child, relevantExcluded, checkCanceled);
+      try {
+        Path child = Paths.get(parent.getPath(), childName);
+        if (shouldScanDirectory(parent, child, childName)) {
+          Path[] relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
+               url -> {
+                 Path path = Paths.get(VirtualFileManager.extractPath(url));
+                 return path.startsWith(child) ? path : null;
+               }, new Path[0]);
+          children = scanChildren(child, relevantExcluded, checkCanceled);
+        }
+      }
+      catch (InvalidPathException ignored) {
+        // Paths.get() throws sometimes
       }
     }
     VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true,
