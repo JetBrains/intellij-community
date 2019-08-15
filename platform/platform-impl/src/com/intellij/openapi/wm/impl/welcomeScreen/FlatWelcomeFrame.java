@@ -512,7 +512,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             icon = JBUI.scale(EmptyIcon.create(16));
           }
           action = wrapGroups(action);
-          ActionLink link = new ActionLink(text, icon, action, null);
+          ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
           // Don't allow focus, as the containing panel is going to focusable.
           link.setFocusable(false);
           link.setPaintUnderline(false);

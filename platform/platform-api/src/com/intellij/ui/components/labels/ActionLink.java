@@ -24,7 +24,6 @@ import java.awt.event.InputEvent;
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
-  private final String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
   private Color myVisitedColor;
   private Color myActiveColor;
@@ -35,15 +34,15 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   }
 
   public ActionLink(String text, Icon icon, @NotNull AnAction action) {
-    this(text, icon, action, null);
+    this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable Runnable onDone) {
+  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable Runnable onDone, @NotNull String place) {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
+        ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);
     myAction = action;
