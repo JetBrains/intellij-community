@@ -262,10 +262,10 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.updateModel(myModule, model -> {
       ContentEntry content = model.addContentEntry(contDir);
       if (addSources) {
-        content.addSourceFolder(contDir.getPath() + "/src", false);
+        content.addSourceFolder(contDir.getUrl() + "/src", false);
       }
       if (addTests) {
-        content.addSourceFolder(contDir.getPath() + "/test", true);
+        content.addSourceFolder(contDir.getUrl() + "/test", true);
       }
       OrderEntry jdk = ContainerUtil.find(model.getOrderEntries(), o -> o instanceof JdkOrderEntry);
       model.removeOrderEntry(jdk);
