@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -161,6 +162,7 @@ public abstract class CodeStyleManager  {
    * @param file   the file to reformat.
    * @param offset the offset the line at which should be reformatted.
    * @throws IncorrectOperationException if the file is read-only.
+   * @see #scheduleIndentAdjustment(Document, int)
    */
   public abstract int adjustLineIndent(@NotNull PsiFile file, int offset) throws IncorrectOperationException;
 
@@ -171,8 +173,25 @@ public abstract class CodeStyleManager  {
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
    * @throws IncorrectOperationException if the file is read-only.
+   * @see #scheduleIndentAdjustment(Document, int)
    */
   public abstract int adjustLineIndent(@NotNull Document document, int offset);
+
+  /**
+   * Performs a delayed indent adjustment for large documents bigger than {@code FormatterBasedIndentAdjuster.MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE}
+   * by scheduling it to a time when the document is committed. Uses formatter to calculate the new indent on a
+   * background thread. Only the actual change is done on EDT: the old indent is replaced with a new indent string
+   * directly in the document. Doesn't commit the document, thus a subsequent {@link PsiDocumentManager#commitDocument(Document)}
+   * may be required.
+   * <p>
+   * <b>Note:</b> visually it may lead to a text jump which becomes more obvious, more time it takes to calculate the
+   * new indent using a formatting model. A better way to handle large documents is to implement {@link
+   * com.intellij.psi.codeStyle.lineIndent.LineIndentProvider} returning a non-null value when possible.
+   *
+   * @param document The document to be modified.
+   * @param offset   The offset in the line whose indent is to be adjusted.
+   */
+  public void scheduleIndentAdjustment(@NotNull Document document, int offset) {}
 
   /**
    * @deprecated this method is not intended to be used by plugins.
