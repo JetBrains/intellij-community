@@ -179,11 +179,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (isMainText) {
         myMainTextLastIndex = myFragments.size() - 1;
       }
+      myPreferredSizeCache = null;
     }
   }
 
   void revalidateAndRepaint() {
-    myPreferredSizeCache = null;
     if (myAutoInvalidate) {
       revalidate();
     }
@@ -201,6 +201,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     synchronized (myFragments) {
       append(fragment, attributes);
       if (tag != null) myCurrentFragment.tag = tag;
+      myPreferredSizeCache = null;
     }
   }
 
@@ -230,6 +231,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         myCurrentFragment.padding = padding;
         myCurrentFragment.alignment = align;
       }
+      myPreferredSizeCache = null;
     }
   }
 
@@ -253,6 +255,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       myFragments.clear();
       myCurrentFragment = null;
       myMainTextLastIndex = -1;
+      myPreferredSizeCache = null;
     }
   }
 
