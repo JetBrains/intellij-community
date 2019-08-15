@@ -64,7 +64,7 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(resourceStream, StandardCharsets.UTF_8))) {
         final List<String> values = FileUtil.loadLines(reader);
         if (!values.isEmpty()) {
-          return CachedWhitelistedItems.create(ContainerUtil.map2Set(values, value -> value.trim()));
+          return CachedWhitelistedItems.create(ContainerUtil.map2SetNotNull(values, value -> createValue(value)));
         }
       }
     }
@@ -72,6 +72,11 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
       LOG.info(e);
     }
     return CachedWhitelistedItems.empty();
+  }
+
+  @Nullable
+  protected String createValue(String value) {
+    return value.trim();
   }
 
   @NotNull
