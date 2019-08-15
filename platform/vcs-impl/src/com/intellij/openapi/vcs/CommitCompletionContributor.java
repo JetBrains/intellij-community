@@ -57,7 +57,8 @@ public class CommitCompletionContributor extends CompletionContributor {
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     if (count == 0 && prefix.length() < 5) return;
-    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
+    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(
+      count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
     CompletionResultSet prefixed = result.withPrefixMatcher(prefix);
     for (ChangeList list : lists) {
       ProgressManager.checkCanceled();
