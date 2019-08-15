@@ -4,9 +4,11 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
+import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
@@ -39,16 +41,18 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         val WINDOWS_VERSION = getWindowsReleaseId()
 
-        private fun getWindowsReleaseId(): String {
+        private fun getWindowsReleaseId(): String? {
             try {
-                return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                           "ReleaseId")
+                if (JnaLoader.isLoaded()) {
+                    return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
+                                                               "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                                                               "ReleaseId")
+                }
             }
             catch (e: Throwable) {
                 LOGGER.warn(e)
             }
-            return ""
+            return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
         }
 
         fun create(window: Window): CustomHeader {
@@ -283,7 +287,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
       private fun isAffectsBorder(): Boolean {
-          if (WINDOWS_VERSION.isEmpty()) return true
+          if (WINDOWS_VERSION.isNullOrEmpty()) return true
 
         val winVersion = WINDOWS_VERSION.toIntOrNull() ?: return affectsBorders
         return if(winVersion >= 1809) affectsBorders else true
