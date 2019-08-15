@@ -16,6 +16,7 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
@@ -48,7 +49,7 @@ public final class UpdateCheckerComponent implements Runnable {
   public UpdateCheckerComponent() {
     Application app = ApplicationManager.getApplication();
     if (!app.isCommandLine()) {
-      app.executeOnPooledThread(() -> {
+      NonUrgentExecutor.getInstance().execute(() -> {
         checkIfPreviousUpdateFailed();
 
         updateDefaultChannel();
