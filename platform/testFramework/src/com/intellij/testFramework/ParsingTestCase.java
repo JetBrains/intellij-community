@@ -150,6 +150,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
       }
     });
     LanguageParserDefinitions.INSTANCE.clearCache(language);
+    disposeOnTearDown(() -> LanguageParserDefinitions.INSTANCE.clearCache(language));
   }
 
   public void configureFromParserDefinition(@NotNull ParserDefinition definition, String extension) {
