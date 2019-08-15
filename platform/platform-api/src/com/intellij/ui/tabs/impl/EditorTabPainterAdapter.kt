@@ -35,19 +35,19 @@ class EditorTabPainterAdapter : TabPainterAdapter {
   }
 
   private fun paintBorders(g: Graphics2D, label: TabLabel, tabs: JBTabsImpl) {
-    if (tabs.position == JBTabsPosition.left || tabs.position == JBTabsPosition.right || !Registry.`is`("ide.new.editor.tabs.vertical.borders")) {
-      return
-    }
+    if(tabs.position == JBTabsPosition.top && (Registry.`is`("ide.new.editor.tabs.vertical.borders") || !tabs.isSingleRow) ||
+       (tabs.position == JBTabsPosition.bottom && Registry.`is`("ide.new.editor.tabs.vertical.borders"))) {
 
-    val rect = Rectangle(0, 0, label.width, label.height)
+      val rect = Rectangle(0, 0, label.width, label.height)
 
-    val bounds = label.bounds
-    if (bounds.x > magicOffset) {
-      painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
-    }
+      val bounds = label.bounds
+      if (bounds.x > magicOffset) {
+        painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
+      }
 
-    if (bounds.x + bounds.width < tabs.width - magicOffset) {
-      painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
+      if (bounds.x + bounds.width < tabs.width - magicOffset) {
+        painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
+      }
     }
   }
 }
