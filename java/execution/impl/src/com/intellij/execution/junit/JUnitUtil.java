@@ -229,6 +229,10 @@ public class JUnitUtil {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (psiClass.getQualifiedName() == null) return false; //skip local and anonymous classes
+    if (JavaPsiFacade.getInstance(psiClass.getProject())
+          .findClass(TEST_ANNOTATION, psiClass.getResolveScope()) == null) {
+      return false;
+    }
     PsiClass topLevelClass = getTopmostClass(psiClass);
 
     if (topLevelClass != null) {
@@ -272,6 +276,11 @@ public class JUnitUtil {
     if (modifierList == null) return false;
 
     if (psiClass.isAnnotationType()) return false;
+
+    if (JavaPsiFacade.getInstance(psiClass.getProject())
+          .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) == null) {
+      return false;
+    }
 
     if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
       return true;

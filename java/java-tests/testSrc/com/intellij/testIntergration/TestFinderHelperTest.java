@@ -3,8 +3,10 @@ package com.intellij.testIntergration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -19,6 +21,8 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
     super.setUp();
     myContentRootDir = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
     PsiTestUtil.addSourceRoot(myModule, myContentRootDir);
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
   }
 
   public void testNoTestsForClass() {

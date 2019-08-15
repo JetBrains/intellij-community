@@ -1,8 +1,10 @@
+import org.junit.Before;
+
 // "Move initializer to setUp method" "true"
 public class X {
   <caret>int i;
 
-    @org.junit.Before
+    @Before
     public void setUp() throws Exception {
         i = 7;
     }
