@@ -149,6 +149,16 @@ public class PsiUtil {
     return findNearestMethod(name, cls.getSuperClass());
   }
 
+  @Nullable
+  public static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+    for (PsiMember member : members) {
+      if (member == null) continue;
+
+      final PsiAnnotation annotation = member.getAnnotation(annotationClass.getName());
+      if (annotation != null) return annotation;
+    }
+    return null;
+  }
 
   public static boolean isIdeaProject(@Nullable Project project) {
     if (project == null) return false;

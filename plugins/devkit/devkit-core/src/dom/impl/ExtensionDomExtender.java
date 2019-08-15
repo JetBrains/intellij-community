@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +10,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.spellchecker.xml.NoSpellchecking;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 
@@ -105,10 +108,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     final String fieldName = field.getName();
     assert fieldName != null;
-    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
-    final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
+    final PsiAnnotation attrAnno = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
-      final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
+      final String attrName = getStringAttribute(attrAnno, "value", fieldName);
       if (attrName != null) {
         Class clazz = String.class;
         if (withElement != null || Extension.isClassField(fieldName)) {
@@ -119,10 +121,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
-        if (findAnnotation(RequiredElement.class, field) != null) {
+        if (PsiUtil.findAnnotation(RequiredElement.class, field) != null) {
           extension.addCustomAnnotation(MyRequired.INSTANCE);
         }
-        if (clazz == String.class && findAnnotation(NonNls.class, field) != null) {
+        if (clazz == String.class && PsiUtil.findAnnotation(NonNls.class, field) != null) {
           extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
         }
 
@@ -134,19 +136,19 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return;
     }
 
-    final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
-    final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
-    final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
+    final PsiAnnotation tagAnno = PsiUtil.findAnnotation(Tag.class, field, getter, setter);
+    final PsiAnnotation propAnno = PsiUtil.findAnnotation(Property.class, field, getter, setter);
+    final PsiAnnotation collectionAnnotation = PsiUtil.findAnnotation(XCollection.class, field, getter, setter);
     //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
-    final String tagName = tagAnno != null ? getStringAttribute(tagAnno, "value", evalHelper, fieldName) :
-                           propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper) ? Constants.OPTION : null;
+    final String tagName = tagAnno != null ? getStringAttribute(tagAnno, "value", fieldName) :
+                           propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag") ? Constants.OPTION : null;
     if (tagName != null) {
       if (collectionAnnotation == null) {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
             .setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
-        if (findAnnotation(NonNls.class, field) != null) {
+        if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
           extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
         }
       }
@@ -154,13 +156,13 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
+            registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
           }
         });
       }
     }
     else if (collectionAnnotation != null) {
-      registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
+      registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
     }
   }
 
@@ -185,25 +187,14 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  @Nullable
-  static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
-    for (PsiMember member : members) {
-      if (member == null) continue;
-
-      final PsiAnnotation annotation = member.getAnnotation(annotationClass.getName());
-      if (annotation != null) return annotation;
-    }
-    return null;
-  }
-
   private static void registerCollectionBinding(PsiType type,
                                                 DomExtensionsRegistrar registrar,
-                                                PsiAnnotation anno,
-                                                PsiConstantEvaluationHelper evalHelper) {
-    final boolean surroundWithTag = getBooleanAttribute(anno, "surroundWithTag", evalHelper);
+                                                PsiAnnotation anno) {
+    final boolean surroundWithTag = getBooleanAttribute(anno, "surroundWithTag");
     if (surroundWithTag) return; // todo Set, List, Array
-    final String tagName = getStringAttribute(anno, "elementTag", evalHelper, null);
-    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper, null);
+
+    final String tagName = getStringAttribute(anno, "elementTag", null);
+    final String attrName = getStringAttribute(anno, "elementValueAttribute", null);
     final PsiType elementType = getElementType(type);
     if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
         || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
@@ -225,7 +216,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       if (psiClass != null) {
         final PsiModifierList modifierList = psiClass.getModifierList();
         final PsiAnnotation tagAnno = modifierList == null ? null : modifierList.findAnnotation(Tag.class.getName());
-        final String classTagName = tagAnno == null ? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper, null);
+        final String classTagName = tagAnno == null ? psiClass.getName() : getStringAttribute(tagAnno, "value", null);
         if (classTagName != null) {
           registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
             @Override
@@ -239,49 +230,28 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   }
 
   @Nullable
-  static String getStringAttribute(final PsiAnnotation annotation,
-                                   final String name,
-                                   final PsiConstantEvaluationHelper evalHelper, String defaultValueIfEmpty) {
-    String value = getAttributeValue(annotation, name);
-    if (value != null) {
-      return value.isEmpty() ? defaultValueIfEmpty : value;
-    }
-    Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    if (!(o instanceof String)) return null;
-    return StringUtil.isNotEmpty((String)o) ? (String)o : defaultValueIfEmpty;
+  private static String getStringAttribute(final PsiAnnotation annotation,
+                                           final String name,
+                                           String defaultValueIfEmpty) {
+    final String value = AnnotationUtil.getDeclaredStringAttributeValue(annotation, name);
+    return StringUtil.defaultIfEmpty(value, defaultValueIfEmpty);
   }
 
   private static boolean getBooleanAttribute(final PsiAnnotation annotation,
-                                             final String name,
-                                             final PsiConstantEvaluationHelper evalHelper) {
-    String value = getAttributeValue(annotation, name);
-    if (value != null) return Boolean.parseBoolean(value);
-    final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof Boolean && ((Boolean)o).booleanValue();
+                                             final String name) {
+    return ObjectUtils.notNull(AnnotationUtil.getBooleanAttributeValue(annotation, name), Boolean.FALSE);
   }
 
   @Nullable
-  private static String getAttributeValue(PsiAnnotation annotation, String name) {
-    for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
-      if (name.equals(attribute.getName())) {
-        return attribute.getLiteralValue();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiType getElementType(final PsiType psiType) {
+  private static PsiType getElementType(final PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       return ((PsiArrayType)psiType).getComponentType();
     }
-    else if (psiType instanceof PsiClassType) {
+    if (psiType instanceof PsiClassType) {
       final PsiType[] types = ((PsiClassType)psiType).getParameters();
       return types.length == 1 ? types[0] : null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public interface SimpleTagValue extends GenericDomValue<String> {
