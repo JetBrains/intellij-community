@@ -692,6 +692,7 @@ public final class PsiUtil extends PsiUtilCore {
                                                   @NotNull PsiClass aClass,
                                                   @NotNull PsiSubstitutor s2,
                                                   @NotNull PsiClass bClass) {
+    if (s1 == s2 && aClass == bClass) return true;
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
     final PsiTypeParameter[] typeParameters1 = aClass.getTypeParameters();
