@@ -126,8 +126,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   }
 
 
+  @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
+  public GlobalSearchScope getDefaultResolveScope(@NotNull final VirtualFile vFile) {
     final PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject;
     return getResolveScopeFromProviders(vFile);
