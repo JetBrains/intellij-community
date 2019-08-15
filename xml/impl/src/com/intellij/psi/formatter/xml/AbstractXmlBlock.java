@@ -134,7 +134,14 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean canWrapTagEnd(final XmlTag tag) {
-    return tag.getSubTags().length > 0;
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlTag) {
+        return true;
+      }
+      child = child.getNextSibling();
+    }
+    return false;
   }
 
   protected XmlTag getTag() {
