@@ -72,14 +72,27 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-      .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
-      .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
-      .append(ThrowableRunnable { waitForPendingTasks() })
+      .append(selfTearDownRunnable())
       .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(testStartedIndicator) })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
+
+  }
+
+  private fun selfTearDownRunnable(): ThrowableRunnable<Throwable> = ThrowableRunnable {
+    try {
+      RunAll()
+        .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
+        .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
+        .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
+        .append(ThrowableRunnable { waitForPendingTasks() })
+        .run()
+    }
+    catch (e: Throwable) {
+      TestLoggerFactory.dumpLogToStdout(testStartedIndicator)
+      throw e
+    }
   }
 
   /**
