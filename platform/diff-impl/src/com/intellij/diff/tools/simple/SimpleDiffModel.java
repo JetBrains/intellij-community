@@ -59,7 +59,7 @@ public class SimpleDiffModel {
 
   public void clear() {
     for (SimpleDiffChangeUi changeUi : myPresentations) {
-      changeUi.destroyHighlighter();
+      if (changeUi != null) changeUi.destroyHighlighter();
     }
     myValidChanges.clear();
     myAllChanges.clear();
