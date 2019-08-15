@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachedValueProvider.class);
@@ -29,10 +32,26 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
   private final @NotNull PsiFile          myFile;
   private final @NotNull AsyncComputation myComputation;
+  private final @NotNull Lock             myComputationLock = new ReentrantLock();
 
   CodeStyleCachedValueProvider(@NotNull PsiFile file) {
     myFile = file;
     myComputation = new AsyncComputation();
+  }
+
+  CodeStyleSettings tryGetSettings() {
+    if (myComputationLock.tryLock()) {
+      try {
+        return CachedValuesManager.getCachedValue(myFile, this);
+      }
+      finally {
+        myComputationLock.unlock();
+      }
+    }
+    else {
+      //noinspection deprecation
+      return CodeStyleSettingsManager.getInstance(myFile.getProject()).getCurrentSettings();
+    }
   }
 
   @NotNull
@@ -106,27 +125,33 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       }
     }
 
-    private synchronized void computeSettings() {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Computation started for " + myFile.getName());
-      }
-      @SuppressWarnings("deprecation")
-      CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
-      if (currSettings != mySettingsManager.getTemporarySettings()) {
-        TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(myFile, currSettings);
-        for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
-          if (modifier.modifySettings(modifiableSettings, myFile)) {
-            LOG.debug("Modifier: " + modifier.getClass().getName());
-            modifiableSettings.setModifier(modifier);
-            currSettings = modifiableSettings;
-            break;
+    private void computeSettings() {
+      try {
+        myComputationLock.lock();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Computation started for " + myFile.getName());
+        }
+        @SuppressWarnings("deprecation")
+        CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
+        if (currSettings != mySettingsManager.getTemporarySettings()) {
+          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(myFile, currSettings);
+          for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
+            if (modifier.modifySettings(modifiableSettings, myFile)) {
+              LOG.debug("Modifier: " + modifier.getClass().getName());
+              modifiableSettings.setModifier(modifier);
+              currSettings = modifiableSettings;
+              break;
+            }
           }
         }
+        myCurrResult = currSettings;
+        myTracker.incModificationCount();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Computation ended for " + myFile.getName());
+        }
       }
-      myCurrResult = currSettings;
-      myTracker.incModificationCount();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Computation ended for " + myFile.getName());
+      finally {
+        myComputationLock.unlock();
       }
     }
 

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -87,7 +86,7 @@ public class CodeStyle {
     if (!file.isPhysical()) {
       return getSettings(project);
     }
-    return CachedValuesManager.getCachedValue(file, CodeStyleCachedValueProvider.getInstance(file));
+    return CodeStyleCachedValueProvider.getInstance(file).tryGetSettings();
   }
 
 
