@@ -34,11 +34,14 @@ public class JvmSymbolNameCompletionContributor implements SymbolNameCompletionC
         result.add(LookupElementBuilder.create(name).withIcon(aClass.getIcon(0)));
         String infix = getInfix(prefix, name);
         String memberPrefix = null;
+        String rest = null;
         if (infix != null) {
-          memberPrefix = prefix.substring(0, name.length() + infix.length());
+          int offset = name.length() + infix.length();
+          memberPrefix = prefix.substring(0, offset);
+          rest = prefix.substring(offset);
         }
         else if (invocationCount <= 0) continue;
-        processClassBody(invocationCount, result, aClass, infix, memberPrefix);
+        processClassBody(invocationCount, result, aClass, infix, memberPrefix, rest);
       }
     }
     return result;
@@ -61,7 +64,8 @@ public class JvmSymbolNameCompletionContributor implements SymbolNameCompletionC
                                        List<LookupElement> result,
                                        PsiClass aClass,
                                        String infix,
-                                       String memberPrefix) {
+                                       String memberPrefix,
+                                       String rest) {
     for (PsiMember[] members : new PsiMember[][] {aClass.getMethods(), aClass.getFields(), aClass.getInnerClasses()}) {
       for (PsiMember member : members) {
         if (!member.isPhysical()) continue;
@@ -75,6 +79,14 @@ public class JvmSymbolNameCompletionContributor implements SymbolNameCompletionC
         if (memberPrefix != null) {
           if (member instanceof PsiMethod || member instanceof PsiField && !infix.equals("::") || infix.equals(".")) {
             result.add(LookupElementBuilder.create(memberPrefix + memberName).withIcon(icon));
+            if (member instanceof PsiClass) {
+              String nestedInfix = getInfix(rest, memberName);
+              if (nestedInfix != null) {
+                int index = memberName.length() + nestedInfix.length();
+                String nestedPrefix = memberPrefix+rest.substring(0, index);
+                processClassBody(0, result, (PsiClass)member, nestedInfix, nestedPrefix, rest.substring(index));
+              }
+            }
           }
         }
       }

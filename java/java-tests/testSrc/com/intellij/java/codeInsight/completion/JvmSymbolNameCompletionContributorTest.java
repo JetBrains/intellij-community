@@ -22,7 +22,9 @@ public class JvmSymbolNameCompletionContributorTest extends LightJavaCodeInsight
                                                           "  class FooClass {}\n" +
                                                           "}\n" +
                                                           "class Bar {\n" +
-                                                          "  class Baz {}\n" +
+                                                          "  class Baz {\n" +
+                                                          "    void quxMethod() {}\n" +
+                                                          "  }\n" +
                                                           "}");
     checkCompletion(file, "", 0, "Foo", "Bar");
     checkCompletion(file, "F", 1, "Foo", "fooMethod", "fooField", "FooClass");
@@ -30,6 +32,8 @@ public class JvmSymbolNameCompletionContributorTest extends LightJavaCodeInsight
     checkCompletion(file, "Foo#", 0, "Foo#fooMethod", "Foo#fooField");
     checkCompletion(file, "Foo.", 0, "Foo.fooMethod", "Foo.fooField", "Foo.FooClass");
     checkCompletion(file, "B", 1, "Bar", "Baz");
+    checkCompletion(file, "Bar.", 1, "Bar.Baz");
+    checkCompletion(file, "Bar.Baz#", 1, "Bar.Baz#quxMethod");
   }
 
   private static void checkCompletion(PsiFile file, String prefix, int invocationCount, String... expected) {
