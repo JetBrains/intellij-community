@@ -13,10 +13,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -28,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PluginIdModuleIndex extends FileBasedIndexExtension<String, Void> {
+public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
   @NotNull
@@ -60,12 +58,6 @@ public class PluginIdModuleIndex extends FileBasedIndexExtension<String, Void> {
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<Void> getValueExternalizer() {
-    return VoidDataExternalizer.INSTANCE;
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,17 +29,18 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
     final Collection<String> dependencies = ExtensionDomExtender.getDependencies(ideaPlugin);
     final List<IdeaPlugin> depPlugins = new ArrayList<>();
     for (String dependency : dependencies) {
-      List<IdeaPlugin> byId = PluginIdModuleIndex.findPlugins(ideaPlugin, dependency);
-      if (!byId.isEmpty()) {
-        depPlugins.add(byId.get(0));
-      }
+      ContainerUtil.addIfNotNull(depPlugins, findById(ideaPlugin, dependency));
     }
     return depPlugins;
   }
 
   @Override
   public IdeaPlugin fromString(@Nullable @NonNls final String s, ConvertContext context) {
-    return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
+    return s == null ? null : findById(context.getInvocationElement(), s);
+  }
+
+  private static IdeaPlugin findById(@NotNull DomElement place, @NotNull String id) {
+    return ContainerUtil.find(PluginIdModuleIndex.findPlugins(place, id), plugin -> id.equals(plugin.getPluginId()));
   }
 
   @Override
