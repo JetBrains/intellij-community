@@ -1,6 +1,8 @@
 language: java
 sudo: false
 
+dist: trusty
+
 jdk:
   - oraclejdk8
 
@@ -13,6 +15,7 @@ cache:
 
 env:
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=2019.2
   - IDEA_VERSION=2019.1.1
   - IDEA_VERSION=2019.1
   - IDEA_VERSION=2018.3
