@@ -709,4 +709,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
                                    " not support assignment expressions", node);
   }
+
+  @Override
+  public void visitPyContinueStatement(PyContinueStatement node) {
+    super.visitPyContinueStatement(node);
+
+    if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                     " not support 'continue' inside 'finally' clause",
+                                     node);
+    }
+  }
 }

@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBreakStatement;
+import com.jetbrains.python.psi.PyContinueStatement;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -35,10 +35,6 @@ public class BreakContinueAnnotator extends PyAnnotator {
   public void visitPyContinueStatement(final PyContinueStatement node) {
     if (node.getLoopStatement() == null) {
       getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
-    }
-    else if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON38) &&
-             PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
-      getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
     }
   }
 }

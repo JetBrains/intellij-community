@@ -240,6 +240,18 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-36003
+  public void testContinueInFinallyBlock() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText("while True:\n" +
+                         "  try:\n" +
+                         "    print(\"a\")\n" +
+                         "  finally:\n" +
+                         "    <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
+    );
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
