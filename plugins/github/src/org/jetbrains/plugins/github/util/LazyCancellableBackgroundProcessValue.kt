@@ -26,4 +26,11 @@ abstract class LazyCancellableBackgroundProcessValue<T>(private val progressMana
     super.drop()
     progressIndicator.cancel()
   }
+
+  companion object {
+    fun <T> create(progressManager: ProgressManager,
+                   computer: (ProgressIndicator) -> T) = object : LazyCancellableBackgroundProcessValue<T>(progressManager) {
+      override fun compute(indicator: ProgressIndicator) = computer(indicator)
+    }
+  }
 }

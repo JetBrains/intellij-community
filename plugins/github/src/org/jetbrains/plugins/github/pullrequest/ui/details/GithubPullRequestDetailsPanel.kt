@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
@@ -27,7 +28,8 @@ import javax.swing.BorderFactory
 import javax.swing.JPanel
 
 
-internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullRequest?>,
+internal class GithubPullRequestDetailsPanel(project: Project,
+                                             model: SingleValueModel<GHPullRequest?>,
                                              securityService: GithubPullRequestsSecurityService,
                                              busyStateTracker: GithubPullRequestsBusyStateTracker,
                                              metadataService: GithubPullRequestsMetadataService,
@@ -39,7 +41,7 @@ internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullReque
     override fun isStatusVisible() = model.value == null
   }
 
-  private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService,
+  private val metaPanel = GithubPullRequestMetadataPanel(project, model, securityService, busyStateTracker, metadataService,
                                                          avatarIconsProviderFactory).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }

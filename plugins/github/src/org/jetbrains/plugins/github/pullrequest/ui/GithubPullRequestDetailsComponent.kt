@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
@@ -23,7 +24,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDeta
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.BorderLayout
 
-internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
+internal class GithubPullRequestDetailsComponent(project: Project,
+                                                 private val dataLoader: GithubPullRequestsDataLoader,
                                                  securityService: GithubPullRequestsSecurityService,
                                                  busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                  metadataService: GithubPullRequestsMetadataService,
@@ -32,7 +34,8 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
   : GithubDataLoadingComponent<GHPullRequest>(), Disposable {
 
   private val detailsModel = SingleValueModel<GHPullRequest?>(null)
-  private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
+  private val detailsPanel = GithubPullRequestDetailsPanel(project, detailsModel,
+                                                           securityService, busyStateTracker, metadataService, stateService,
                                                            avatarIconsProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
