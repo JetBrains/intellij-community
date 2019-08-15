@@ -122,6 +122,7 @@ public class PluginGroups {
       "JBoss jBPM:JBPM",
       "Struts:com.intellij.struts2",
       "com.intellij.hibernate",
+
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
       "com.intellij.spring.integration," +
@@ -130,6 +131,9 @@ public class PluginGroups {
       "com.intellij.spring," +
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
+
+      "Microservices:com.intellij.micronaut",
+
       "Java EE:com.intellij.javaee.batch," +
       "com.intellij.beanValidation," +
       "com.intellij.cdi," +
