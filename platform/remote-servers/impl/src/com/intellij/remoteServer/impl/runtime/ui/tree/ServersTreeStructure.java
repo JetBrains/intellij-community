@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -128,7 +114,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     return false;
   }
 
-  protected AbstractTreeNode createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment) {
+  protected AbstractTreeNode<?> createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment) {
     return new DeploymentNodeImpl(myProject, connection, serverNode, deployment, this::createDeploymentNode);
   }
 
@@ -147,7 +133,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
       result.addAll(ContainerUtil.map(myContribution.getRemoteServers(),
@@ -176,13 +162,13 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       final ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return Collections.emptyList();
       }
 
-      final List<AbstractTreeNode> children = new ArrayList<>();
+      final List<AbstractTreeNode<?>> children = new ArrayList<>();
       for (Deployment deployment : connection.getDeployments()) {
         if (deployment.getParentRuntime() == null) {
           children.add(myNodeProducer.createDeploymentNode(connection, this, deployment));
@@ -194,7 +180,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     protected void update(@NotNull PresentationData presentation) {
       RemoteServer<?> server = getServer();
-      ServerConnection connection = getConnection();
+      ServerConnection<?> connection = getConnection();
       presentation.setPresentableText(server.getName());
       presentation
         .setIcon(getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null));
@@ -227,7 +213,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final List<Object> runConfigsAndTypes = new LinkedList<>();
       final List<RunnerAndConfigurationSettings> runConfigs =
         ContainerUtil.filter(configurationManager.getDeploymentConfigurations(serverType), settings -> {
-          DeployToServerRunConfiguration configuration = (DeployToServerRunConfiguration)settings.getConfiguration();
+          DeployToServerRunConfiguration<?, ?> configuration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
           return StringUtil.equals(server.getName(), configuration.getServerName());
         });
       runConfigsAndTypes.addAll(runConfigs);
@@ -260,7 +246,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
           }
 
           @Override
-          public PopupStep onChosen(Object selectedRunConfigOrSourceType, boolean finalChoice) {
+          public PopupStep<?> onChosen(Object selectedRunConfigOrSourceType, boolean finalChoice) {
             return doFinalStep(() -> {
               if (selectedRunConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
                 ProgramRunnerUtil.executeConfiguration((RunnerAndConfigurationSettings)selectedRunConfigOrSourceType, executor);
@@ -289,7 +275,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Nullable
-    private Icon getStatusIcon(final ConnectionStatus status) {
+    private static Icon getStatusIcon(final ConnectionStatus status) {
       switch (status) {
         case CONNECTED:
           return RemoteServersIcons.ResumeScaled;
@@ -434,14 +420,14 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> result = new ArrayList<>();
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
       collectDeploymentChildren(result);
       collectLogChildren(result);
       return result;
     }
 
-    protected void collectDeploymentChildren(List<AbstractTreeNode> children) {
+    protected void collectDeploymentChildren(List<AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -454,7 +440,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       }
     }
 
-    protected void collectLogChildren(List<AbstractTreeNode> children) {
+    protected void collectLogChildren(List<AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -486,7 +472,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       return Collections.emptyList();
     }
 
@@ -515,6 +501,6 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
   @FunctionalInterface
   public interface DeploymentNodeProducer {
-    AbstractTreeNode createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment);
+    AbstractTreeNode<?> createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment);
   }
 }
