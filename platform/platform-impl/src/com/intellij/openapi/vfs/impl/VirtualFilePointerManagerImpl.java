@@ -559,8 +559,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     //noinspection SynchronizeOnThis
     synchronized (this) {
       for (FilePointerPartNode node : toUpdateUrls.values()) {
-        if (node.isDisposed()) continue;
-        String urlBefore = node.myFileAndUrl.second;
+        Pair<VirtualFile, String> pairBefore = node.myFileAndUrl;
+        if (pairBefore == null) continue; // disposed in the meantime
+        String urlBefore = pairBefore.second;
         Pair<VirtualFile,String> after = node.update();
         assert after != null : "can't invalidate inside modification";
         String urlAfter = after.second;

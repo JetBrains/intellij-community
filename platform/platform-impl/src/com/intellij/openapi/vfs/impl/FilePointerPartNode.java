@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,8 +58,7 @@ class FilePointerPartNode {
 
   // in case there is file pointer exists for this part, its info is saved here
   volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
-  private static final long DISPOSED = -2;
-  volatile long myLastUpdated = -1; // contains latest result of ManagingFS.getInstance().getStructureModificationCount() or DISPOSED if this node is removed
+  volatile long myLastUpdated = -1; // contains latest result of ManagingFS.getInstance().getStructureModificationCount()
   volatile int useCount;
 
   int pointersUnder;   // number of alive pointers in this node plus all nodes beneath
@@ -320,7 +318,7 @@ class FilePointerPartNode {
       int pointersAfter = node.pointersUnder-=pointersNumber;
       if (pointersAfter == 0) {
         node.parent.children = ArrayUtil.remove(node.parent.children, node);
-        node.myLastUpdated = DISPOSED;
+        node.myFileAndUrl = null;
       }
     }
     if ((node.pointersUnder-=pointersNumber) == 0) {
@@ -334,7 +332,7 @@ class FilePointerPartNode {
   Pair<VirtualFile, String> update() {
     final long lastUpdated = myLastUpdated;
     final Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    if (fileAndUrl == null || lastUpdated == DISPOSED) return null;
+    if (fileAndUrl == null) return null;
     final long fsModCount = ManagingFS.getInstance().getStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
@@ -370,12 +368,7 @@ class FilePointerPartNode {
     }
     Pair<VirtualFile, String> result;
     if (changed) {
-      result = Pair.create(file, url);
-      synchronized (VirtualFilePointerManager.getInstance()) {
-        Pair<VirtualFile, String> storedFileAndUrl = myFileAndUrl;
-        if (storedFileAndUrl == null || storedFileAndUrl != fileAndUrl) return null; // somebody splitted this node in the meantime, try to re-compute
-        myFileAndUrl = result;
-      }
+      myFileAndUrl = result = Pair.create(file, url);
     }
     else {
       result = fileAndUrl;
@@ -527,8 +520,5 @@ class FilePointerPartNode {
       if (file == null) break;
     }
     return file;
-  }
-  boolean isDisposed() {
-    return myLastUpdated == DISPOSED;
   }
 }
