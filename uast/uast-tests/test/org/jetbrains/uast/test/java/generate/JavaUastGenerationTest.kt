@@ -17,6 +17,8 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     get() = JavaPsiFacade.getElementFactory(myFixture.project)
   private val generatePlugin: UastCodeGenerationPlugin
     get() = UastCodeGenerationPlugin.byLanguage(JavaLanguage.INSTANCE)!!
+  private val uastElementFactory
+    get() = generatePlugin.getElementFactory(myFixture.project)
 
   fun `test logical and operation with simple operands`() {
     val left = psiFactory.createExpressionFromText("true", null).toUElementOfType<UExpression>()
@@ -24,7 +26,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val right = psiFactory.createExpressionFromText("false", null).toUElementOfType<UExpression>()
                 ?: fail("Cannot create right UExpression")
 
-    val expression = generatePlugin.createBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
+    val expression = uastElementFactory.createBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
                      ?: fail("Cannot create expression")
 
     TestCase.assertEquals("true && false", expression.sourcePsi?.text)
@@ -36,7 +38,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val right = psiFactory.createExpressionFromText("(false)", null).toUElementOfType<UExpression>()
                 ?: fail("Cannot create right UExpression")
 
-    val expression = generatePlugin.createFlatBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
+    val expression = uastElementFactory.createFlatBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
                      ?: fail("Cannot create expression")
 
     TestCase.assertTrue(expression.sourcePsi is PsiBinaryExpression)
@@ -49,7 +51,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val right = psiFactory.createExpressionFromText("(false)", null).toUElementOfType<UExpression>()
                 ?: fail("Cannot create right UExpression")
 
-    val expression = generatePlugin.createFlatBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
+    val expression = uastElementFactory.createFlatBinaryExpression(left, right, UastBinaryOperator.LOGICAL_AND)
                      ?: fail("Cannot create expression")
 
     TestCase.assertTrue(expression.sourcePsi is PsiPolyadicExpression)
@@ -63,19 +65,19 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
       , null
     ).declaredElements.getOrNull(0)?.toUElementOfType<UVariable>() ?: fail("cannot create variable")
 
-    val reference = generatePlugin.createSimpleReference(variable) ?: fail("cannot create reference")
+    val reference = uastElementFactory.createSimpleReference(variable) ?: fail("cannot create reference")
     TestCase.assertEquals("a", reference.identifier)
   }
 
   fun `test simple reference by name`() {
-    val reference = generatePlugin.createSimpleReference("a", myFixture.project) ?: fail("cannot create reference")
+    val reference = uastElementFactory.createSimpleReference("a") ?: fail("cannot create reference")
     TestCase.assertEquals("a", reference.identifier)
   }
 
   fun `test parenthesised expression`() {
     val expression = psiFactory.createExpressionFromText("a + b", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create expression")
-    val parenthesizedExpression = generatePlugin.createParenthesizedExpression(expression)
+    val parenthesizedExpression = uastElementFactory.createParenthesizedExpression(expression)
                                   ?: fail("cannot create parenthesized expression")
 
     TestCase.assertEquals("(a + b)", parenthesizedExpression.sourcePsi?.text)
@@ -85,7 +87,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("a + b", null).toUElementOfType<UExpression>()
                      ?: fail("Cannot find plugin")
 
-    val returnExpression = generatePlugin.createReturnExpresion(expression, myFixture.project) ?: fail("cannot create return expression")
+    val returnExpression = uastElementFactory.createReturnExpresion(expression) ?: fail("cannot create return expression")
 
     TestCase.assertEquals("return a + b;", returnExpression.sourcePsi?.text)
   }
@@ -94,7 +96,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("1 + 2", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = generatePlugin.createLocalVariable("a", null, expression) ?: fail("cannot create variable")
+    val declaration = uastElementFactory.createLocalVariable("a", null, expression) ?: fail("cannot create variable")
 
     TestCase.assertEquals("int a = 1 + 2;", declaration.sourcePsi?.text)
   }
@@ -103,7 +105,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("b", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = generatePlugin.createLocalVariable("a", PsiType.DOUBLE, expression) ?: fail("cannot create variable")
+    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression) ?: fail("cannot create variable")
 
     TestCase.assertEquals("double a = b;", declaration.sourcePsi?.text)
   }
@@ -112,7 +114,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("b", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = generatePlugin.createLocalVariable("a", PsiType.DOUBLE, expression, true)
+    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true)
                       ?: fail("cannot create variable")
 
     TestCase.assertEquals("final double a = b;", declaration.sourcePsi?.text)
@@ -123,7 +125,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("b", context).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = generatePlugin.createLocalVariable("a", PsiType.DOUBLE, expression, true)
+    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true)
                       ?: fail("cannot create variable")
 
     TestCase.assertEquals("final double a1 = b;", declaration.sourcePsi?.text)
@@ -135,7 +137,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val statement2 = psiFactory.createStatementFromText("System.out.println(2);", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create statement")
 
-    val block = generatePlugin.createBlockExpression(listOf(statement1, statement2), myFixture.project) ?: fail("cannot create block")
+    val block = uastElementFactory.createBlockExpression(listOf(statement1, statement2)) ?: fail("cannot create block")
 
     TestCase.assertEquals("{" +
                           "System.out.println();" +
@@ -147,7 +149,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val statement = psiFactory.createStatementFromText("System.out.println();", null).toUElementOfType<UExpression>()
                     ?: fail("cannot create statement")
 
-    val lambda = generatePlugin.createLambdaExpression(
+    val lambda = uastElementFactory.createLambdaExpression(
       listOf(
         UParameterInfo(PsiType.INT, "a"),
         UParameterInfo(null, "b")
@@ -162,7 +164,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val statement = psiFactory.createStatementFromText("System.out.println();", null).toUElementOfType<UExpression>()
                     ?: fail("cannot create statement")
 
-    val lambda = generatePlugin.createLambdaExpression(
+    val lambda = uastElementFactory.createLambdaExpression(
       listOf(
         UParameterInfo(PsiType.INT, "a"),
         UParameterInfo(PsiType.DOUBLE, "b")
@@ -177,7 +179,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val block = psiFactory.createStatementFromText("{ return \"10\"; }", null).toUElementOfType<UBlockExpression>()
                 ?: fail("cannot create block")
 
-    val lambda = generatePlugin.createLambdaExpression(listOf(UParameterInfo(null, "a")), block)
+    val lambda = uastElementFactory.createLambdaExpression(listOf(UParameterInfo(null, "a")), block)
                  ?: fail("cannot create lambda")
     TestCase.assertEquals("""a->"10"""", lambda.sourcePsi?.text)
   }
@@ -187,7 +189,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val block = psiFactory.createStatementFromText("{ return \"10\"; }", context).toUElementOfType<UBlockExpression>()
                 ?: fail("cannot create block")
 
-    val lambda = generatePlugin.createLambdaExpression(listOf(UParameterInfo(null, "a")), block)
+    val lambda = uastElementFactory.createLambdaExpression(listOf(UParameterInfo(null, "a")), block)
                  ?: fail("cannot create lambda")
     TestCase.assertEquals("""a1->"10"""", lambda.sourcePsi?.text)
   }
@@ -208,7 +210,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   fun `test suggested name`() {
     val expression = psiFactory.createExpressionFromText("f(a) + 1", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create expression")
-    val variable = generatePlugin.createLocalVariable(null, PsiType.INT, expression, true)
+    val variable = uastElementFactory.createLocalVariable(null, PsiType.INT, expression, true)
                    ?: fail("cannot create variable")
 
     TestCase.assertEquals("final int i = f(a) + 1;", variable.sourcePsi?.text)
@@ -221,11 +223,10 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
                ?: fail("cannot create arg1")
     val arg2 = psiFactory.createExpressionFromText("2", null).toUElementOfType<UExpression>()
                ?: fail("cannot create arg2")
-    val methodCall = generatePlugin.createCallExpression(
+    val methodCall = uastElementFactory.createCallExpression(
       receiver,
       "substring",
       listOf(arg1, arg2),
-      project,
       null,
       UastCallKind.METHOD_CALL) ?: fail("cannot create call")
 
@@ -237,11 +238,10 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
                ?: fail("cannot create arg1")
     val arg2 = psiFactory.createExpressionFromText("2", null).toUElementOfType<UExpression>()
                ?: fail("cannot create arg2")
-    val methodCall = generatePlugin.createCallExpression(
+    val methodCall = uastElementFactory.createCallExpression(
       null,
       "substring",
       listOf(arg1, arg2),
-      project,
       null,
       UastCallKind.METHOD_CALL) ?: fail("cannot create call")
 
@@ -251,27 +251,29 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   fun `test method call generation with generics restoring`() {
     val arrays = psiFactory.createExpressionFromText("java.util.Arrays", null).toUElementOfType<UExpression>()
                  ?: fail("cannot create receiver")
-    val methodCall = generatePlugin.createCallExpression(arrays,
-                                                         "asList",
-                                                         listOf(),
-                                                         project,
-                                                         psiFactory.createTypeFromText("java.util.List<java.lang.String>", null),
-                                                         UastCallKind.METHOD_CALL) ?: fail("cannot create call")
+    val methodCall = uastElementFactory.createCallExpression(
+      arrays,
+      "asList",
+      listOf(),
+      psiFactory.createTypeFromText("java.util.List<java.lang.String>", null),
+      UastCallKind.METHOD_CALL
+    ) ?: fail("cannot create call")
     TestCase.assertEquals("java.util.Arrays.<String>asList()", methodCall.sourcePsi?.text)
   }
 
   fun `test method call generation with generics restoring 2 parameters`() {
     val collections = psiFactory.createExpressionFromText("java.util.Collections", null).toUElementOfType<UExpression>()
                       ?: fail("cannot create receiver")
-    val methodCall = generatePlugin.createCallExpression(collections,
-                                                         "emptyMap",
-                                                         listOf(),
-                                                         project,
-                                                         psiFactory.createTypeFromText(
-                                                           "java.util.Map<java.lang.String, java.lang.Integer>",
-                                                           null
-                                                         ),
-                                                         UastCallKind.METHOD_CALL) ?: fail("cannot create call")
+    val methodCall = uastElementFactory.createCallExpression(
+      collections,
+      "emptyMap",
+      listOf(),
+      psiFactory.createTypeFromText(
+        "java.util.Map<java.lang.String, java.lang.Integer>",
+        null
+      ),
+      UastCallKind.METHOD_CALL
+    ) ?: fail("cannot create call")
     TestCase.assertEquals("java.util.Collections.<String, Integer>emptyMap()", methodCall.sourcePsi?.text)
   }
 
@@ -287,15 +289,16 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
             ?: fail("cannot create a receiver")
     val param = psiFactory.createExpressionFromText("\"a\"", null).toUElementOfType<UExpression>()
                 ?: fail("cannot create a parameter")
-    val methodCall = generatePlugin.createCallExpression(a,
-                                                         "kek",
-                                                         listOf(param),
-                                                         project,
-                                                         psiFactory.createTypeFromText(
-                                                           "java.util.Map<java.lang.String, java.lang.Integer>",
-                                                           null
-                                                         ),
-                                                         UastCallKind.METHOD_CALL) ?: fail("cannot create call")
+    val methodCall = uastElementFactory.createCallExpression(
+      a,
+      "kek",
+      listOf(param),
+      psiFactory.createTypeFromText(
+        "java.util.Map<java.lang.String, java.lang.Integer>",
+        null
+      ),
+      UastCallKind.METHOD_CALL
+    ) ?: fail("cannot create call")
 
     TestCase.assertEquals("A.<String, Integer>kek(\"a\")", methodCall.sourcePsi?.text)
   }
@@ -312,15 +315,16 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
             ?: fail("cannot create a receiver")
     val param = psiFactory.createExpressionFromText("\"a\"", null).toUElementOfType<UExpression>()
                 ?: fail("cannot create a parameter")
-    val methodCall = generatePlugin.createCallExpression(a,
-                                                         "kek",
-                                                         listOf(param),
-                                                         project,
-                                                         psiFactory.createTypeFromText(
-                                                           "java.util.Map<java.lang.String, java.lang.Integer>",
-                                                           null
-                                                         ),
-                                                         UastCallKind.METHOD_CALL) ?: fail("cannot create call")
+    val methodCall = uastElementFactory.createCallExpression(
+      a,
+      "kek",
+      listOf(param),
+      psiFactory.createTypeFromText(
+        "java.util.Map<java.lang.String, java.lang.Integer>",
+        null
+      ),
+      UastCallKind.METHOD_CALL
+    ) ?: fail("cannot create call")
 
     TestCase.assertEquals("A.<String, Object, Integer>kek(\"a\")", methodCall.sourcePsi?.text)
   }
@@ -332,7 +336,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
                      ?: fail("cannot create then branch")
     val elseBranch = psiFactory.createExpressionFromText("c++", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create else branch")
-    val ifExpression = generatePlugin.createIfExpression(condition, thenBranch, elseBranch)
+    val ifExpression = uastElementFactory.createIfExpression(condition, thenBranch, elseBranch)
                        ?: fail("cannot create if expression")
     TestCase.assertEquals("if (true) {a(b);} else c++;", ifExpression.sourcePsi?.text)
   }
