@@ -40,7 +40,7 @@ public class InferenceVariablesOrder {
                                                           Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     // Fast-path to find the first resolve group if it consists of single var
     InferenceVariable var = vars.get(0);
-    if (var.getInstantiation() == PsiType.NULL || depMap.get(var).isEmpty()) {
+    if (var.getInstantiation() != PsiType.NULL || depMap.get(var).isEmpty()) {
       return var;
     }
     Set<InferenceVariable> visited = new HashSet<>();
