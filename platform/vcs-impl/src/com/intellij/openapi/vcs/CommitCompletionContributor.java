@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -92,6 +93,13 @@ public class CommitCompletionContributor extends CompletionContributor {
           }
         }
       }
+
+      result.caseInsensitive()
+        .withPrefixMatcher(new PlainPrefixMatcher(prefix))
+        .addAllElements(
+          StreamEx.of(VcsConfiguration.getInstance(project).getRecentMessages())
+            .reverseSorted()
+            .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
     }
   }
 
