@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.DisposeUtils.createOrDisposable;
-
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
  * support codebase.
@@ -77,6 +75,7 @@ public abstract class AbstractExternalSystemSettings<
    *
    * @param listener  target generic listener to wrap to external system-specific implementation
    * @param parentDisposable is a disposable to unsubscribe from external system settings events
+   * @note lifetime of parentDisposable must be shorter of project lifetime
    *
    * @abstract at 2021
    */
@@ -101,8 +100,7 @@ public abstract class AbstractExternalSystemSettings<
   protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
     Project project = getProject();
     MessageBus messageBus = project.getMessageBus();
-    Disposable disposable = createOrDisposable(project, parentDisposable);
-    MessageBusConnection connection = messageBus.connect(disposable);
+    MessageBusConnection connection = messageBus.connect(parentDisposable);
     connection.subscribe(getChangesTopic(), listener);
   }
 
