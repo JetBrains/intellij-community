@@ -85,6 +85,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     for (PsiField field : fields) {
+      if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
       registerField(registrar, field, findWithElement(elements, field));
     }
   }
