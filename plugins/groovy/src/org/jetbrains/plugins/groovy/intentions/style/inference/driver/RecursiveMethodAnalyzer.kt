@@ -41,6 +41,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
   private val typeParameters = method.typeParameters.map { it.type() }
   private val dependentTypes = mutableSetOf<PsiTypeParameter>()
+  private val javaLangObject = getJavaLangObject(method)
 
   private fun generateRequiredTypes(typeParameter: PsiTypeParameter, type: PsiType, marker: ContainMarker) {
     val bindingTypes = expandWildcards(type, typeParameter)
@@ -134,7 +135,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       override fun visitClassType(classType: PsiClassType?) {
         classType ?: return
         if (firstVisit) {
-          if (currentLowerType.isTypeParameter()) {
+          if (classType != javaLangObject && currentLowerType.isTypeParameter()) {
             generateRequiredTypes(currentLowerType.typeParameter()!!, classType, UPPER)
           }
           if (classType.isTypeParameter()) {
@@ -163,11 +164,20 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?) {
         wildcardType ?: return
-        val extendsBound = wildcardType.extendsBound as PsiClassType
-        if (currentLowerType.isTypeParameter()) {
-          generateRequiredTypes(currentLowerType.typeParameter()!!, extendsBound, UPPER)
+        if (wildcardType.isExtends) {
+          val extendsBound = wildcardType.extendsBound as PsiClassType
+          if (currentLowerType.isTypeParameter()) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, extendsBound, UPPER)
+          }
+          visitClassParameters(extendsBound)
         }
-        visitClassParameters(extendsBound)
+        else if (wildcardType.isSuper) {
+          val superBound = wildcardType.superBound as PsiClassType
+          if (currentLowerType.isTypeParameter()) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, superBound, LOWER)
+          }
+          visitClassParameters(superBound)
+        }
         super.visitWildcardType(wildcardType)
       }
     })

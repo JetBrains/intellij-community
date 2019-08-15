@@ -460,4 +460,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testIntersectionAsParameter() {
     doTest(true)
   }
+
+  void testSuperWildcardAsParameter() {
+    doTest(true)
+  }
 }

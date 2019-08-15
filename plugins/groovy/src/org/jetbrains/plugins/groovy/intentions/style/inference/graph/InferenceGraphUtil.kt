@@ -109,7 +109,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
   val parameterType = parameter.type()
   val contravariantTypes = usageInformation.run {
     contravariantTypes.subtract(this.covariantTypes).subtract(dependentTypes.map { it.type() })
-  }
+  } + effectivelyContravariantTypes(usageInformation)
   val covariantTypes = usageInformation.run {
     covariantTypes.subtract(this.contravariantTypes).subtract(dependentTypes.map { it.type() })
   }
@@ -152,6 +152,20 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
       val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
       val invariantUpperBound = adjustedBound.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       invariantUpperBound
+    }
+  }
+}
+
+fun effectivelyContravariantTypes(usageInformation: TypeUsageInformation): List<PsiType> {
+  return usageInformation.requiredClassTypes.mapNotNull { (typeParameter, bounds) ->
+    val inhabitTypes = bounds.mapNotNull { if (it.marker == INHABIT) (it.type as? PsiClassType)?.rawType() else null }.toSet()
+    val pureSubtypes = bounds.mapNotNull { bound -> bound.takeIf { it.marker == LOWER }?.type }.subtract(
+      bounds.mapNotNull { bound -> bound.takeIf { it.marker == INHABIT }?.type })
+    if (bounds.all { it.marker != UPPER } && inhabitTypes.size > 1 && pureSubtypes.isNotEmpty()) {
+      typeParameter.type()
+    }
+    else {
+      null
     }
   }
 }
