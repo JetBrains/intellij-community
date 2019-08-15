@@ -18,7 +18,6 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 
@@ -44,10 +43,9 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
       assert handler != null;
       List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
       if (!children.isEmpty()) {
-        String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
         for (ExtensionPoints points : children) {
           for (ExtensionPoint point : points.getExtensionPoints()) {
-            registerExtensionPoint(registrar, point, epPrefix, pluginId);
+            registerExtensionPoint(registrar, point, epPrefix);
           }
         }
       }
@@ -81,16 +79,9 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
 
   private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
                                              final ExtensionPoint extensionPoint,
-                                             String epPrefix,
-                                             @Nullable String pluginId) {
-    String epName = extensionPoint.getName().getStringValue();
-    if (epName != null && StringUtil.isNotEmpty(pluginId)) {
-      epName = pluginId + "." + epName;
-    }
-    else {
-      epName = extensionPoint.getQualifiedName().getStringValue();
-    }
-    if (epName == null || !epName.startsWith(epPrefix)) return;
+                                             String epPrefix) {
+    String epName = extensionPoint.getEffectiveQualifiedName();
+    if (!StringUtil.startsWith(epName, epPrefix)) return;
 
     registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class)
       .setDeclaringElement(extensionPoint)
