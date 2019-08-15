@@ -12,6 +12,7 @@ class JavaUBreakExpression(
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
 
-  override val jumpTarget: UElement? =
-    sourcePsi.findExitedStatement()?.let { JavaConverter.convertStatement(it, null) }
+  override val jumpTarget: UElement? by lz {
+    sourcePsi.findExitedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null) }
+  }
 }

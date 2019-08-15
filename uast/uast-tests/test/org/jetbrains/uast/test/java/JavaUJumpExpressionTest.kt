@@ -2,20 +2,30 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.*
 
-class JavaUJumpExpressionTest : AbstractJavaUastLightTest() {
-  private inline fun <reified TElement : UElement, reified TJumpFromElement> doTest(fileSource: String) {
+abstract class JavaUJumpExpressionBase : AbstractJavaUastLightTest() {
+  protected inline fun <reified TElement : UElement, reified TJumpFromElement> doTest(fileSource: String) {
     val file = myFixture.configureByText("File.java", fileSource)
     val element = file.findElementAt(myFixture.editor.caretModel.offset)?.parent?.toUElementOfType<TElement>()
                   ?: fail("cannot find element")
     UsefulTestCase.assertInstanceOf((element as? UJumpExpression)?.jumpTarget, TJumpFromElement::class.java)
   }
 
+  protected inline fun <reified TElement : UJumpExpression> doTestWithNullTarget(fileSource: String) {
+    val file = myFixture.configureByText("File.java", fileSource)
+    val element = file.findElementAt(myFixture.editor.caretModel.offset)?.parent?.toUElementOfType<TElement>()
+                  ?: fail("cannot find element")
+    TestCase.assertNull(element.jumpTarget)
+  }
+}
+
+class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
   fun `test break`() = doTest<UBreakExpression, JavaUForExpression>("""
       class Break {
         static void a() {
@@ -113,4 +123,47 @@ class JavaUJumpExpressionTest : AbstractJavaUastLightTest() {
     val returnExpr = (lambda.body as? UBlockExpression)?.expressions?.singleOrNull()?.castSafelyTo<UReturnExpression>()
     TestCase.assertEquals((returnExpr as? UJumpExpression)?.jumpTarget, lambda)
   }
+
+  fun `test strange break`() = doTestWithNullTarget<UBreakExpression>("""
+    class Break {
+      static void a() {
+         while (true) {
+          for (int i = 0; i < 10; i++) {  
+            a: brea<caret>k a;
+          }
+        }
+      }
+    }
+  """)
+
+  fun `test strange continue`() = doTestWithNullTarget<UContinueExpression>("""
+    class Break {
+      static void a() {
+         while (true) {
+          for (int i = 0; i < 10; i++) {  
+            a: continu<caret>e a;
+          }
+        }
+      }
+    }
+  """)
+}
+
+class Java13UJumpExpressionTest : JavaUJumpExpressionBase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_13
+  }
+
+  fun `test break in switch`() = doTest<UYieldExpression, JavaUSwitchExpression>("""
+      class Break {
+        static void a() {
+          while (true) {
+            int a = switch (1) {
+              case 2: yie<caret>ld 10;
+              default: yield 15;
+            }
+          }
+        }
+      }
+    """)
 }
