@@ -14,13 +14,13 @@ class CircletIdeaJobExecutionProvider(
     private val logCallback: (String) -> Unit,
     private val notifyProcessTerminated: (Int) -> Unit,
     private val storage: CircletIdeaAutomationGraphStorage
-) : JobExecutionProvider, JobExecutionScheduler {
+) : JobExecutionProvider<CircletIdeaGraphStorageTransaction>, JobExecutionScheduler {
 
     companion object : KLogging()
 
     private val runningJobs = mutableMapOf<Long, DummyContainer>()
 
-    private lateinit var savedHandler: (tx: GraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit
+    private lateinit var savedHandler: JobExecutionStatusUpdateHandler<CircletIdeaGraphStorageTransaction>
 
     override fun scheduleExecution(jobExecs: Iterable<JobExecutionData<*>>) {
         jobExecs.forEach {
@@ -74,21 +74,21 @@ class CircletIdeaJobExecutionProvider(
         TODO("startTermination not implemented")
     }
 
-    override fun subscribeIdempotently(handler: (tx: GraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit) {
+    override fun subscribeIdempotently(handler: JobExecutionStatusUpdateHandler<CircletIdeaGraphStorageTransaction>) {
         this.savedHandler = handler
     }
 
-    override fun onBeforeGraphStatusChanged(tx: GraphStorageTransaction, entity: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
+    override fun onBeforeGraphStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
         if (newStatus.isFinished()) {
             notifyProcessTerminated(0)
         }
     }
 
-    override fun onBeforeJobStatusChanged(tx: GraphStorageTransaction, entity: AJobExecutionEntity<*>, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
+    override fun onBeforeJobStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AJobExecutionEntity<*>, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
         //todo
     }
 
-    private fun changeState(tx: GraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
+    private fun changeState(tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
         savedHandler(tx, job, newStatus)
     }
 
