@@ -35,6 +35,11 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private final DataIndexer<String, Void, FileContent> myIndexer =
     data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
 
+  @Override
+  public boolean indexDirectories() {
+    return true;
+  }
+
   @NotNull
   @Override
   public ID<String, Void> getName() {
