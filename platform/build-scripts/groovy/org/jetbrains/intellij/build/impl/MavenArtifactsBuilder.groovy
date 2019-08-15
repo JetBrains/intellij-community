@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.NameUtilCore
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
@@ -139,13 +140,7 @@ class MavenArtifactsBuilder {
   }
 
   private static List<String> splitByCamelHumpsMergingNumbers(String s) {
-    String[] words
-    try {
-      words = Class.forName("com.intellij.util.text.NameUtilCore").getDeclaredMethod("splitNameIntoWords", String.class).invoke(null, s) as String[]
-    }
-    catch (Throwable ignore) {
-      words = Class.forName("com.intellij.psi.codeStyle.NameUtil").getDeclaredMethod("splitNameIntoWords", String.class).invoke(null, s) as String[]
-    }
+    def words = NameUtilCore.splitNameIntoWords(s)
 
     def result = new ArrayList<String>()
     for (int i = 0; i < words.length; i++) {
