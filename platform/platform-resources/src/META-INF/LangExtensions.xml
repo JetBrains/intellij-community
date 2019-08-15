@@ -940,7 +940,6 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithIdValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector$InspectionToolValidator"/>
 
@@ -955,7 +954,7 @@
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="1"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
-    <statistics.counterUsagesCollector groupId="surround.with" version="1"/>
+    <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="1"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
 
