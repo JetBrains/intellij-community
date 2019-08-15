@@ -107,9 +107,9 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
   val typeLattice = TypeLattice(context)
   val javaLangObject = getJavaLangObject(parameter)
   val parameterType = parameter.type()
-  val contravariantTypes = usageInformation.run {
+  val contravariantTypes = /*usageInformation.run {
     contravariantTypes.subtract(this.covariantTypes).subtract(dependentTypes.map { it.type() })
-  } + effectivelyContravariantTypes(usageInformation)
+  } +*/ effectivelyContravariantTypes(usageInformation)
   val covariantTypes = usageInformation.run {
     covariantTypes.subtract(this.contravariantTypes).subtract(dependentTypes.map { it.type() })
   }
@@ -148,7 +148,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 
     else -> {
       val upperBound = typeLattice.meet(superClasses)
-      val lowerBound = typeLattice.join(subClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
+      val lowerBound = typeLattice.join(subClasses + inhabitingClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
       val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
       val invariantUpperBound = adjustedBound.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       invariantUpperBound
@@ -159,9 +159,19 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 fun effectivelyContravariantTypes(usageInformation: TypeUsageInformation): List<PsiType> {
   return usageInformation.requiredClassTypes.mapNotNull { (typeParameter, bounds) ->
     val inhabitTypes = bounds.mapNotNull { if (it.marker == INHABIT) (it.type as? PsiClassType)?.rawType() else null }.toSet()
-    val pureSubtypes = bounds.mapNotNull { bound -> bound.takeIf { it.marker == LOWER }?.type }.subtract(
-      bounds.mapNotNull { bound -> bound.takeIf { it.marker == INHABIT }?.type })
-    if (bounds.all { it.marker != UPPER } && inhabitTypes.size > 1 && pureSubtypes.isNotEmpty()) {
+    if (bounds.all { it.marker != UPPER } /*&& inhabitTypes.size > 1*/ && bounds.count { it.marker == LOWER } > 0) {
+      typeParameter.type()
+    }
+    else {
+      null
+    }
+  }
+}
+
+fun effectivelyCovariantTypes(usageInformation: TypeUsageInformation): List<PsiType> {
+  return usageInformation.requiredClassTypes.mapNotNull { (typeParameter, bounds) ->
+    val inhabitTypes = bounds.mapNotNull { if (it.marker == INHABIT) (it.type as? PsiClassType)?.rawType() else null }.toSet()
+    if (bounds.all { it.marker != LOWER } && inhabitTypes.size > 1 && bounds.count { it.marker == UPPER } > 0) {
       typeParameter.type()
     }
     else {

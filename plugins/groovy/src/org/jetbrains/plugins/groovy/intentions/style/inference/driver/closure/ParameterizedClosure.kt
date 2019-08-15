@@ -6,6 +6,7 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
+import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -39,10 +40,11 @@ class ParameterizedClosure(val parameter: GrParameter,
         .filter { it.key.type() != parameterType }
         .flatMap { it.value.map(PsiTypeParameter::type) }.toSet()
       if (dependencies.contains(parameterType) || !resultSubstitutor.substitute(parameterType).equalsToText(parameterType.canonicalText)) {
-        resultSubstitutor.substitute(parameterType)
+        resultSubstitutor.recursiveSubstitute(parameterType)
       }
       else {
-        resultSubstitutor.substitute(parameterType).typeParameter()?.extendsListTypes?.firstOrNull() ?: getJavaLangObject(parameter)
+        resultSubstitutor.recursiveSubstitute(parameterType).typeParameter()?.extendsListTypes?.firstOrNull() ?: getJavaLangObject(
+          parameter)
       }
     }
     types.clear()

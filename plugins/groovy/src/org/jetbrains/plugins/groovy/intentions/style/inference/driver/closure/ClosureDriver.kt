@@ -10,6 +10,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.setConstraints
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>) : InferenceDriver {
@@ -95,7 +97,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       val newTypeParameters = mutableListOf<PsiTypeParameter>()
       closureParameter.typeParameters.forEach { directInnerParameter ->
         val innerParameterType = manager.createDeeplyParameterizedType(
-          substitutor.substitute(directInnerParameter)!!)
+          substitutor.substitute(directInnerParameter)?.forceWildcardsAsTypeArguments()!!)
         newTypes.add(innerParameterType.type)
         newTypeParameters.addAll(innerParameterType.typeParameters)
         innerParameterType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
@@ -131,7 +133,9 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         val mapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
         val newUsageInformation = usageInformation.run {
           TypeUsageInformation(contravariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
-                               requiredClassTypes.map { (param, list) -> mapping.getValue(param) to list }.toMap(),
+                               requiredClassTypes.map { (param, list) ->
+                                 mapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
+                               }.toMap(),
                                constraints,
                                covariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
                                dependentTypes.map { mapping.getValue(it) }.toSet())
@@ -167,7 +171,8 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
             val argumentCorrespondence =
               closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
             argumentCorrespondence.forEach { (type, argument) ->
-              setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet())
+              constraintCollector.add(TypeConstraint(type, argument.type, method))
+              setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(), LOWER)
             }
           }
         }
@@ -175,7 +180,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     }
     val closureParamsTypeInformation = TypeUsageInformation(
       closureParameters.flatMap { it.value.types }.toSet(),
-      requiredTypesCollector,
+      requiredTypesCollector.filter { it.key in closureParameters.flatMap { parameterizedClosure -> parameterizedClosure.value.typeParameters } },
       constraintCollector,
       emptySet(),
       dependentTypes)

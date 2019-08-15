@@ -10,6 +10,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.compose
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -115,7 +116,10 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
     val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, scope)
     val subst = closureDriver.collectSignatureSubstitutor()
-    val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod, subst)
+    val virtualToActual = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
+    val erasureSubstitutor = RecursiveMethodAnalyzer.methodTypeParametersErasureSubstitutor(targetMethod)
+    val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod,
+                                                                   subst compose (virtualToActual compose erasureSubstitutor))
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
                         parameterMapping[varargParameter],
                         newClosureDriver,
@@ -224,7 +228,8 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
           else {
             actualParameter.typeElementGroovy!!.replace(typeElement)
           }
-        } catch (e : IncorrectOperationException) {
+        }
+        catch (e: IncorrectOperationException) {
           actualParameter.typeElementGroovy?.delete()
         }
       }

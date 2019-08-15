@@ -64,7 +64,8 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     if (core.flexible) {
       when {
         parent != null -> return parent!!.type to REIFIED_AS_PROPER_TYPE
-        subtypes.isNotEmpty() || typeInstantiation is PsiIntersectionType -> return typeInstantiation to NEW_TYPE_PARAMETER
+        subtypes.isNotEmpty() || typeInstantiation is PsiIntersectionType || (equivalenceClasses[type]?.size
+                                                                              ?: 0) > 1 -> return typeInstantiation to NEW_TYPE_PARAMETER
         else -> return typeInstantiation to REIFIED_AS_PROPER_TYPE
       }
     }

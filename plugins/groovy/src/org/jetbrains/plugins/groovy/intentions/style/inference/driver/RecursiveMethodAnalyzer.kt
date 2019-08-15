@@ -97,13 +97,6 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     resolveResult.contextSubstitutor.substitute(parameterType)?.run { contravariantTypesCollector.add(this) }
   }
 
-  private fun methodTypeParametersErasureSubstitutor(method: PsiMethod): PsiSubstitutor {
-    val typeParameters = method.typeParameters
-    val bounds = typeParameters.map { it.upperBound() }
-    val draftSubstitutor = PsiSubstitutor.EMPTY.putAll(typeParameters, bounds.toTypedArray())
-    val completeBounds = typeParameters.map { draftSubstitutor.recursiveSubstitute(it.type()) }
-    return PsiSubstitutor.EMPTY.putAll(typeParameters, completeBounds.toTypedArray())
-  }
 
   /**
    * Visits every parameter of [lowerType] (which is probably parameterized with type parameters) and sets restrictions found in [upperType]
@@ -248,7 +241,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val calls = ReferencesSearch.search(originalMethod, scope).findAll()
     for (parameter in method.parameters) {
       setConstraints(parameter.type, parameter.initializerGroovy?.type ?: continue, dependentTypes, requiredTypesCollector,
-                     method.typeParameters.toSet())
+                     method.typeParameters.toSet(), INHABIT)
     }
     for (usage in calls.mapNotNull { it.element.parent }) {
       val resolveResult = when (usage) {
@@ -268,7 +261,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
             else -> argtype
           }
           setConstraints(param.type, correctArgumentType ?: PsiType.NULL, dependentTypes, requiredTypesCollector,
-                         method.typeParameters.toSet())
+                         method.typeParameters.toSet(), INHABIT)
         }
       }
     }
@@ -293,7 +286,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     fun setConstraints(leftType: PsiType, rightType: PsiType,
                        dependentTypes: MutableSet<PsiTypeParameter>,
                        requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
-                       variableParameters: Set<PsiTypeParameter>) {
+                       variableParameters: Set<PsiTypeParameter>,
+                       targetMarker: ContainMarker) {
       if (rightType == PsiType.NULL) {
         return
       }
@@ -308,8 +302,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
           rightType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
         }
         val typeSet = expandWildcards(correctRightType, typeParameter)
-        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, LOWER)) }
-        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, INHABIT)) }
+        //typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, LOWER)) }
+        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, targetMarker)) }
         val newLeftType = leftType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
         newLeftType
       }
@@ -317,12 +311,22 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         leftType
       }
       if (leftType is PsiArrayType && rightType is PsiArrayType) {
-        setConstraints(leftType.componentType, rightType.componentType, dependentTypes, requiredTypesCollector, variableParameters)
+        setConstraints(leftType.componentType, rightType.componentType, dependentTypes, requiredTypesCollector, variableParameters,
+                       targetMarker)
       }
       (leftBound as? PsiClassType)?.parameters?.zip((rightType as? PsiClassType)?.parameters ?: return)?.forEach {
-        setConstraints(it.first ?: return, it.second ?: return, dependentTypes, requiredTypesCollector, variableParameters)
+        setConstraints(it.first ?: return, it.second ?: return, dependentTypes, requiredTypesCollector, variableParameters, targetMarker)
       }
     }
+
+    fun methodTypeParametersErasureSubstitutor(method: PsiMethod): PsiSubstitutor {
+      val typeParameters = method.typeParameters
+      val bounds = typeParameters.map { it.upperBound() }
+      val draftSubstitutor = PsiSubstitutor.EMPTY.putAll(typeParameters, bounds.toTypedArray())
+      val completeBounds = typeParameters.map { draftSubstitutor.recursiveSubstitute(it.type()) }
+      return PsiSubstitutor.EMPTY.putAll(typeParameters, completeBounds.toTypedArray())
+    }
+
   }
 
   fun runAnalyzer(method: GrMethod) {

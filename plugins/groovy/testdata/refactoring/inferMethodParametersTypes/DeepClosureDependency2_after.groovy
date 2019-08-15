@@ -1,11 +1,12 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-def <T0 extends A> Object foo(T0 a, @ClosureParams(value = FromString, options = ["? super java.util.List<T0>,T0"]) Closure<Void> c) {
+def <U1 extends A> Object foo(U1 a, @ClosureParams(value = FromString, options = ["? super java.util.List<U1>,U1"]) Closure<Void> c) {
   c([a], a)
+  a.x()
 }
 
-class A{}
+class A{def x(){}}
 
 def bar(A x) {
   foo(x) {a, b ->}

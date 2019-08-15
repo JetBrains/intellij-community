@@ -4,8 +4,13 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
@@ -56,8 +61,8 @@ fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
   val condensedGraph = condense(graph)
   val sortedGraph = topologicalOrder(condensedGraph)
   val tree = setTreeStructure(sortedGraph)
-  val collapsedTree = collapseTreeEdges(tree)
-  return collapsedTree
+  val assembledTree = propagateTypeInstantiations(tree)
+  return assembledTree
 }
 
 /**
@@ -206,19 +211,29 @@ private tailrec fun merge(anchorUnit: InferenceUnitNode,
 
 
 /**
- * Tree branches may be shortened for nodes representing covariant types
+ * Inference units may depend on each other, and they have their type instantiations.
+ * But we cannot express these relations simultaneously because of java grammar limitations.
+ * So we need to gather all types from dependent nodes into their greatest parent node.
  */
-private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
+private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
   val builder = InferenceUnitGraphBuilder()
   val instantiations = mutableMapOf<InferenceUnit, PsiType>()
 
   for (unit in unitGraph.units) {
     if (unit.typeInstantiation != PsiType.NULL && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
-      var currentUnit: InferenceUnitNode? = unit
-      while (currentUnit?.parent != null) {
-        currentUnit = currentUnit.parent
+      var currentUnit: InferenceUnitNode = unit
+      while (currentUnit.parent != null) {
+        currentUnit = currentUnit.parent!!
       }
-      instantiations[currentUnit!!.core] = unit.typeInstantiation
+      if (currentUnit != unit) {
+        instantiations[unit.core] = currentUnit.type
+      }
+      if (currentUnit.core in instantiations) {
+        instantiations[currentUnit.core] = mergeTypes(instantiations[currentUnit.core]!!, unit.typeInstantiation)
+      }
+      else {
+        instantiations[currentUnit.core] = unit.typeInstantiation
+      }
     }
   }
   for (unit in unitGraph.units) {
@@ -229,4 +244,19 @@ private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph
     }
   }
   return builder.build()
+}
+
+private fun mergeTypes(firstType: PsiType, secondType: PsiType): PsiType {
+  // it is possible to diagnose errors here
+  val context = firstType.resolve() ?: return firstType
+  if (firstType is PsiWildcardType && secondType is PsiWildcardType) {
+    if (firstType.isExtends && secondType.isExtends) {
+      return if (canAssign(firstType.bound!!, secondType.bound!!, context, METHOD_PARAMETER) == OK) firstType else secondType
+    }
+    if (firstType.isExtends) return firstType
+    if (secondType.isExtends) return secondType
+    return if (canAssign(firstType.bound!!, secondType.bound!!, context, METHOD_PARAMETER) == OK) secondType else firstType
+  }
+  else if (firstType !is PsiWildcardType) return firstType
+  else return secondType
 }

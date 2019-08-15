@@ -1,12 +1,11 @@
-def foo(a, c) {
-  B b = new B()
-  c([b], b)
+def Object foo(a, c) {
   c([a], a)
 }
 
-class A{}
-class B{}
+class A{def x(){}}
+class B{def x(){}}
 
-def bar(A x) {
+def bar(A x, B y) {
   foo(x) {a, b -> a.add(b)}
+  foo(y) {a, b -> a.add(b)}
 }
