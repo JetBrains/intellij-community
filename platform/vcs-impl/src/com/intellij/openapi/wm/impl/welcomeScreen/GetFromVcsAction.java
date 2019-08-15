@@ -10,7 +10,7 @@ import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated superseded by {@link RunVcsCloneDialogAction}
+ * @deprecated superseded by {@link GetFromVersionControlAction}
  */
 @Deprecated
 public class GetFromVcsAction extends WelcomePopupAction {

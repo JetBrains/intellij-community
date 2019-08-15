@@ -11,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
-class RunVcsCloneDialogAction : DumbAwareAction() {
+class GetFromVersionControlAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions() && Registry.`is`("vcs.use.new.clone.dialog")
