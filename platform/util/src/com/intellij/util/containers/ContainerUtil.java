@@ -1492,6 +1492,48 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Iterable<T> concat(@NotNull Iterable<? extends T> it1, @NotNull Iterable<? extends T> it2) {
+    return new Iterable<T>() {
+      @Override
+      public void forEach(java.util.function.Consumer<? super T> action) {
+        it1.forEach(action);
+        it2.forEach(action);
+      }
+
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          Iterator<? extends T> it = it1.iterator();
+          boolean firstFinished;
+
+          { advance(); }
+
+          @Override
+          public boolean hasNext() {
+            return !firstFinished || it.hasNext();
+          }
+
+          @Override
+          public T next() {
+            T value = it.next(); // it.next() will throw NSEE if no elements remaining
+            advance();
+            return value;
+          }
+
+          private void advance() {
+            if (!firstFinished && !it.hasNext()) {
+              it = it2.iterator();
+              firstFinished = true;
+            }
+          }
+        };
+      }
+    };
+  }
+
   @SafeVarargs
   @NotNull
   @Contract(pure=true)

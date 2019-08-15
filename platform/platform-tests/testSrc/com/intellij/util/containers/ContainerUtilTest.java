@@ -23,6 +23,28 @@ public class ContainerUtilTest extends TestCase {
     assertEquals("1", string);
   }
 
+  public void testConcatTwo() {
+    Iterable<Object> concat = ContainerUtil.concat(Collections.emptySet(), Collections.emptySet());
+    assertFalse(concat.iterator().hasNext());
+    Iterable<Object> foo = ContainerUtil.concat(Collections.emptySet(), Collections.singletonList("foo"));
+    Iterator<Object> iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertFalse(iterator.hasNext());
+    foo = ContainerUtil.concat(Collections.singletonList("foo"), Collections.emptySet());
+    iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertFalse(iterator.hasNext());
+    foo = ContainerUtil.concat(Collections.singletonList("foo"), Collections.singleton("bar"));
+    iterator = foo.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("foo", iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals("bar", iterator.next());
+    assertFalse(iterator.hasNext());
+  }
+
   public void testConcatMulti() {
     List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.emptyList(), Arrays.asList(3, 4));
     assertEquals(4, l.size());

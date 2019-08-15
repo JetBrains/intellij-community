@@ -958,15 +958,30 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
-    List<PsiTypeParameter> result = null;
+    Iterable<PsiTypeParameter> result = null;
 
     PsiTypeParameterListOwner currentOwner = owner;
     while (currentOwner != null) {
       PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
       if (typeParameters.length > 0) {
-        if (result == null) result = new ArrayList<>(typeParameters.length);
-        for (int i = typeParameters.length - 1; i >= 0; i--) {
-          result.add(typeParameters[i]);
+        Iterable<PsiTypeParameter> iterable = () -> new Iterator<PsiTypeParameter>() {
+          int idx = typeParameters.length - 1;
+
+          @Override
+          public boolean hasNext() {
+            return idx >= 0;
+          }
+
+          @Override
+          public PsiTypeParameter next() {
+            if (idx < 0) throw new NoSuchElementException();
+            return typeParameters[idx--];
+          }
+        };
+        if (result == null) {
+          result = iterable;
+        } else {
+          result = ContainerUtil.concat(result, iterable);
         }
       }
 
