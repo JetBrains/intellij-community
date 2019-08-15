@@ -79,6 +79,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
+           !SystemInfo.isMacOSCatalina && // workaround for JBR-1721 (will be removed when catalina's problem is fixed)
            !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
