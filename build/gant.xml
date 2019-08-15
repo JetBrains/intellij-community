@@ -43,16 +43,10 @@
 
   <target name="doGant" depends="init">
     <path id="gant.classpath">
-      <fileset dir="${project.home}/build/lib/jps">
-        <include name="*.jar"/>
-      </fileset>
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
       <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps">
         <include name="*.jar"/>
-      </fileset>
-      <fileset dir="${idea.lib}">
-        <include name="snappy-in-java-*.jar"/>
       </fileset>
     </path>
 

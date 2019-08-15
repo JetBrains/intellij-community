@@ -549,6 +549,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("JPS"),
+    jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("kotlin-reflect"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-stdlib-jdk8"),

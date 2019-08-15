@@ -900,8 +900,8 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
-    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.platform.buildScripts", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.platform.buildScripts", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
