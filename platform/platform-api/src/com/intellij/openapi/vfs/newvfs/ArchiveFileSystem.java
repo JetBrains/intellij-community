@@ -43,7 +43,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   @Nullable
   public VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
-    return entry.getFileSystem() != this ? null : VfsUtilCore.getRootFile(entry);
+    return entry.getFileSystem() == this ? VfsUtilCore.getRootFile(entry) : null;
   }
 
   /**

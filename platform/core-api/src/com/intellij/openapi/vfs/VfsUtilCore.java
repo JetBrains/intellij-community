@@ -148,8 +148,7 @@ public class VfsUtilCore {
     char[] chars = new char[length];
     int index = chars.length;
     parent = file;
-    while (true) {
-      if (parent.equals(ancestor)) break;
+    while (!parent.equals(ancestor)) {
       if (index < length) {
         chars[--index] = separator;
       }
@@ -284,7 +283,7 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
-  @SuppressWarnings({"UnsafeVfsRecursion"})
+  @SuppressWarnings("UnsafeVfsRecursion")
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
@@ -342,7 +341,7 @@ public class VfsUtilCore {
   }
 
   public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                                         @NotNull VirtualFileVisitor visitor,
+                                                                                         @NotNull VirtualFileVisitor<?> visitor,
                                                                                          @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
@@ -608,7 +607,6 @@ public class VfsUtilCore {
       if (!base.isDirectory()) base = base.getParent();
       if (base == null) return StandardFileSystems.local().findFileByPath(uri);
       file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
-      if (file == null) return null;
     }
 
     return file;
@@ -720,11 +718,11 @@ public class VfsUtilCore {
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection() { }
 
-    public DistinctVFilesRootsCollection(Collection<? extends VirtualFile> virtualFiles) {
+    public DistinctVFilesRootsCollection(@NotNull Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
 
-    public DistinctVFilesRootsCollection(VirtualFile[] collection) {
+    public DistinctVFilesRootsCollection(@NotNull VirtualFile[] collection) {
       super(collection);
     }
 

@@ -974,6 +974,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     };
     Set<String> middleDirs = new THashSet<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
+    BulkFileListener publisher = getPublisher();
     while (startIndex != events.size()) {
       applyEvents.clear();
       files.clear();
@@ -984,11 +985,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (!validated.isEmpty()) {
         // do defensive copy to cope with ill-written listeners that save passed list for later processing
         List<VFileEvent> toSend = ContainerUtil.immutableList(validated.toArray(new VFileEvent[0]));
-        getPublisher().before(toSend);
+        publisher.before(toSend);
 
         applyEvents.forEach(Runnable::run);
 
-        getPublisher().after(toSend);
+        publisher.after(toSend);
       }
     }
   }

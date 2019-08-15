@@ -315,7 +315,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionWatchRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -336,7 +336,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionAboveWatchRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -392,7 +392,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 */
 
   @Test fun testSubst() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
 
     val target = tempDir.newFolder("top")
     val file = tempDir.newFile("top/sub/test.txt")
@@ -501,7 +501,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testLineBreaksInName() {
-    assumeTrue("Expected Unix", SystemInfo.isUnix)
+    assumeTrue("Expected Unix but got: " + SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix)
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname")
@@ -512,7 +512,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testHiddenFiles() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/dir/file")
@@ -553,7 +553,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDisplacementByIsomorphicTree() {
-    assumeTrue("not mac again", !SystemInfo.isMac)
+    assumeTrue("Expected not Mac but got: " + SystemInfo.getOsNameAndVersion(), !SystemInfo.isMac)
 
     val top = tempDir.newFolder("top")
     val root = tempDir.newFolder("top/root")
@@ -610,7 +610,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testUncRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
     watch(File("\\\\SRV\\share\\path"), checkRoots = WatchStatus.CHECK_NOT_WATCHED)
   }
 
