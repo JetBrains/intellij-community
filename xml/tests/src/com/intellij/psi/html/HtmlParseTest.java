@@ -490,7 +490,6 @@ public class HtmlParseTest extends LightIdeaTestCase {
     assertResult("Angular2.txt", result);
   }
 
-  @Bombed(year = 2100, month = Calendar.JANUARY, day = 1, user = "TC")
   public void testParsePerformance() throws Exception {
     final Ref<String> result = Ref.create();
     PlatformTestUtil.startPerformanceTest("Parsing", 500, () -> result.set(getTreeTextByFile("index-all.html"))).assertTiming();
