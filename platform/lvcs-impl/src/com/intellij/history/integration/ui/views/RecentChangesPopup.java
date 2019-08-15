@@ -35,17 +35,17 @@ public class RecentChangesPopup {
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {
-    private final JPanel myPanel = new JPanel(new BorderLayout());
+    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,2,2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
-    private final JLabel myDateLabel = new JLabel("", JLabel.RIGHT);
+    private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
     private final JPanel mySpacePanel = new JPanel();
 
     RecentChangesListCellRenderer() {
-      myPanel.add(myActionLabel, BorderLayout.WEST);
-      myPanel.add(myDateLabel, BorderLayout.EAST);
-      myPanel.add(mySpacePanel, BorderLayout.CENTER);
+      myPanel.add(myDateLabel);
+      myPanel.add(mySpacePanel);
+      myPanel.add(myActionLabel);
 
-      Dimension d = new Dimension(40, mySpacePanel.getPreferredSize().height);
+      Dimension d = new Dimension(30, mySpacePanel.getPreferredSize().height);
       mySpacePanel.setMinimumSize(d);
       mySpacePanel.setMaximumSize(d);
       mySpacePanel.setPreferredSize(d);
@@ -63,7 +63,7 @@ public class RecentChangesPopup {
 
     private void updateColors(boolean isSelected) {
       Color bg = isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
     }
