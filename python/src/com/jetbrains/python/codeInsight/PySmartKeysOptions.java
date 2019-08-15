@@ -17,14 +17,15 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.options.BeanConfigurable;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> implements Configurable {
+public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> implements SearchableConfigurable {
   public PySmartKeysOptions() {
     super(CodeInsightSettings.getInstance());
     //CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;   //TODO: remove combobox from settings
@@ -41,5 +42,11 @@ public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> im
   @Override
   public String getDisplayName() {
     return "Python";
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "editor.preferences.pyOptions";
   }
 }

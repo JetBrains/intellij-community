@@ -25,7 +25,7 @@
     <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
     <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
     <copyPastePreProcessor implementation="com.intellij.json.editor.JsonCopyPasteProcessor"/>
-    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable"/>
+    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>
     <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
 
     <!-- Codeinsight -->
