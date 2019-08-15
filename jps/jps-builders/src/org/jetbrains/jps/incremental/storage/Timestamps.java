@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus;
 
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-public interface TimestampStorage<T extends StampsStorage.Stamp> extends Timestamps<T> {
+public interface Timestamps<T extends StampsStorage.Stamp> extends StampsStorage<T> {
 }
