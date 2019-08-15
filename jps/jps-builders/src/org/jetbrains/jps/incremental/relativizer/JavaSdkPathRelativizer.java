@@ -19,7 +19,7 @@ public class JavaSdkPathRelativizer implements PathRelativizer {
       myJavaSdkPathMap = javaSdks.stream()
         .collect(Collectors.toMap(sdk -> {
           JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
-          return "$JDK_" + (version != null ? version.toString() : "0") + "$";
+          return "$JDK_" + (version != null ? version.feature : "0") + "$";
         }, sdk -> sdk.getHomePath(), (sdk1, sdk2) -> sdk1));
     }
   }
@@ -28,21 +28,21 @@ public class JavaSdkPathRelativizer implements PathRelativizer {
   public boolean isAcceptableAbsolutePath(@NotNull String path) {
     return myJavaSdkPathMap != null &&
            !myJavaSdkPathMap.isEmpty() &&
-           myJavaSdkPathMap.values().stream().anyMatch(sdkPath -> path.contains(sdkPath));
+           myJavaSdkPathMap.values().stream().anyMatch(path::startsWith);
   }
 
   @Override
   public boolean isAcceptableRelativePath(@NotNull String path) {
     return myJavaSdkPathMap != null &&
            !myJavaSdkPathMap.isEmpty() &&
-           myJavaSdkPathMap.keySet().stream().anyMatch(identifier -> path.contains(identifier));
+           myJavaSdkPathMap.keySet().stream().anyMatch(path::startsWith);
   }
 
   @Override
   public String toRelativePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return path;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(it -> path.contains(it.getValue())).findFirst();
+      .filter(it -> path.startsWith(it.getValue())).findFirst();
     if (!optionalEntry.isPresent()) return path;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
@@ -55,7 +55,7 @@ public class JavaSdkPathRelativizer implements PathRelativizer {
   public String toAbsolutePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return path;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(it -> path.contains(it.getKey())).findFirst();
+      .filter(it -> path.startsWith(it.getKey())).findFirst();
     if (!optionalEntry.isPresent()) return path;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();

@@ -29,13 +29,13 @@ class MavenPathRelativizer implements PathRelativizer {
   @Override
   public boolean isAcceptableAbsolutePath(@NotNull String path) {
     initializeMavenRepositoryPath();
-    return myMavenRepositoryPath != null && path.contains(myMavenRepositoryPath);
+    return myMavenRepositoryPath != null && path.startsWith(myMavenRepositoryPath);
   }
 
   @Override
   public boolean isAcceptableRelativePath(@NotNull String path) {
     initializeMavenRepositoryPath();
-    return myMavenRepositoryPath != null && path.contains(IDENTIFIER);
+    return myMavenRepositoryPath != null && path.startsWith(IDENTIFIER);
   }
 
   @Override
