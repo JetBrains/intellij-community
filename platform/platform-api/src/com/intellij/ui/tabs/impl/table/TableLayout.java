@@ -156,7 +156,7 @@ public class TableLayout extends TabLayout {
       final int componentY = eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top;
       if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         final int toolbarWidth = selectedToolbar.getPreferredSize().width;
-        final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
+        final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
         if (myTabs.isSideComponentBefore()) {
           Rectangle compRect = myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
           myTabs.layout(selectedToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);

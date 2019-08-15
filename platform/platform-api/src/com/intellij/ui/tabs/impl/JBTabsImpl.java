@@ -95,6 +95,8 @@ public class JBTabsImpl extends JComponent
 
   private boolean mySideComponentBefore = true;
 
+  private final int mySeparatorWidth = JBUI.scale(1);
+
   private DataProvider myDataProvider;
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<>();
@@ -1712,6 +1714,26 @@ public class JBTabsImpl extends JComponent
 
     myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
     drawBorder(g);
+    drawToolbarSeparator(g);
+  }
+
+  private void drawToolbarSeparator(Graphics g) {
+    Toolbar toolbar = myInfo2Toolbar.get(getSelectedInfo());
+    if (toolbar != null && toolbar.getParent() == this && !mySideComponentOnTabs && !myHorizontalSide) {
+      Rectangle bounds = toolbar.getBounds();
+      if (bounds.width > 0) {
+        if (mySideComponentBefore) {
+          getTabPainter().paintBorderLine((Graphics2D)g, mySeparatorWidth,
+                                          new Point(bounds.x + bounds.width, bounds.y),
+                                          new Point(bounds.x + bounds.width, bounds.y + bounds.height));
+        }
+        else {
+          getTabPainter().paintBorderLine((Graphics2D)g, mySeparatorWidth,
+                                          new Point(bounds.x - mySeparatorWidth, bounds.y),
+                                          new Point(bounds.x - mySeparatorWidth, bounds.y + bounds.height));
+        }
+      }
+    }
   }
 
   protected TabLabel getSelectedLabel() {
@@ -2420,6 +2442,10 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
 
     return this;
+  }
+
+  public int getSeparatorWidth() {
+    return mySeparatorWidth;
   }
 
   public boolean useSmallLabels() {
