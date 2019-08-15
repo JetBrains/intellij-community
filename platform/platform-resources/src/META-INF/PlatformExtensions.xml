@@ -24,7 +24,7 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
+    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
@@ -269,7 +269,7 @@
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
     <statistics.counterUsagesCollector groupId="ide.script.engine" version="1"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
