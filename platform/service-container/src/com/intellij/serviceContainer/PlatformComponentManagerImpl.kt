@@ -125,7 +125,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
   }
 
-  final override fun handleInitComponentError(t: Throwable, componentClassName: String, pluginId: PluginId) {
+  final override fun handleInitComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
     }
