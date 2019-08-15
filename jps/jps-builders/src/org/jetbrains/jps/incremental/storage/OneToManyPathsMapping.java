@@ -4,7 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterator;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.ObjectLinkedOpenHashSet;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +93,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
 
     @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
-      final Set<String> result = new OrderedSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> result = new ObjectLinkedOpenHashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String str = IOUtil.readUTF(stream);

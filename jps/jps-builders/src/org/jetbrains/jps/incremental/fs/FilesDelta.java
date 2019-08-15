@@ -38,7 +38,7 @@ public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
   private final ReentrantLock myDataLock = new ReentrantLock();
 
-  private final Set<String> myDeletedPaths = new ObjectLinkedOpenHashSet<>();
+  private final Set<String> myDeletedPaths = new ObjectLinkedOpenHashSet<>(FileUtil.PATH_HASHING_STRATEGY);
   private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = new LinkedHashMap<>();
 
   public void lockData(){
@@ -110,13 +110,13 @@ public final class FilesDelta {
         if (descriptor != null) {
           files = myFilesToRecompile.get(descriptor);
           if (files == null) {
-            files = new ObjectLinkedOpenHashSet<>();
+            files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             myFilesToRecompile.put(descriptor, files);
           }
         }
         else {
           LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
-          files = new ObjectLinkedOpenHashSet<>();
+          files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         }
         int filesCount = in.readInt();
         while (filesCount-- > 0) {
@@ -222,7 +222,7 @@ public final class FilesDelta {
   private boolean _addToRecompiled(BuildRootDescriptor root, Collection<? extends File> filesToAdd) {
     Set<File> files = myFilesToRecompile.get(root);
     if (files == null) {
-      files = new ObjectLinkedOpenHashSet<>();
+      files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       myFilesToRecompile.put(root, files);
     }
     return files.addAll(filesToAdd);
@@ -260,7 +260,7 @@ public final class FilesDelta {
     lockData();
     try {
       try {
-        return new ObjectLinkedOpenHashSet<>(myDeletedPaths) ;
+        return new ObjectLinkedOpenHashSet<>(myDeletedPaths, FileUtil.PATH_HASHING_STRATEGY) ;
       }
       finally {
         myDeletedPaths.clear();

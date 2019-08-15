@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.TObjectHashingStrategy;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -69,10 +70,34 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    */
   private static final float DEFAULT_LOAD_FACTOR = .75f;
 
+  private final TObjectHashingStrategy<K> defaultHashingStrategy = new TObjectHashingStrategy<K>() {
+    /**
+     * The default implementation of TObjectHashingStrategy:
+     * it delegates hashing to the Object's hashCode method.
+     */
+    @Override
+    public final int computeHashCode(K o) {
+      return o != null ? o.hashCode() : 0;
+    }
+
+    /**
+     * The default implementation of TObjectHashingStrategy:
+     * it delegates equality comparisons to the {@link Objects#equals(Object, Object)}
+     */
+    @Override
+    public final boolean equals(K o1, K o2) {
+      return Objects.equals(o1, o2);
+    }
+  };
+
   /**
    * The array of keys.
    */
   transient K[] key;
+  /**
+   * The strategy used to hash objects in this collection.
+   */
+  protected final TObjectHashingStrategy<K> hashingStrategy;
   /**
    * The mask for wrapping a position counter.
    */
@@ -121,10 +146,32 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   private final float f;
 
   /**
-   * Creates a new hash set.
+   * Creates a new hash set. The actual table size will be the least power of two greater than
+   * {@code expected}/{@code f}.
    *
-   * <p>
-   * The actual table size will be the least power of two greater than
+   * @param expected the expected number of elements in the hash set.
+   * @param f        the load factor.
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  @SuppressWarnings("unchecked")
+  public ObjectLinkedOpenHashSet(final int expected, final float f, TObjectHashingStrategy<K> strategy) {
+    if (f <= 0 || f > 1) {
+      throw new IllegalArgumentException("Load factor must be greater than 0 and smaller than or equal to 1");
+    }
+    if (expected < 0) {
+      throw new IllegalArgumentException("The expected number of elements must be nonnegative");
+    }
+    this.f = f;
+    minN = n = arraySize(expected, f);
+    mask = n - 1;
+    maxFill = maxFill(n, f);
+    key = (K[])new Object[n + 1];
+    link = new long[n + 1];
+    hashingStrategy = strategy;
+  }
+
+  /**
+   * Creates a new hash set. The actual table size will be the least power of two greater than
    * {@code expected}/{@code f}.
    *
    * @param expected the expected number of elements in the hash set.
@@ -144,6 +191,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     maxFill = maxFill(n, f);
     key = (K[])new Object[n + 1];
     link = new long[n + 1];
+    hashingStrategy = defaultHashingStrategy;
   }
 
   /**
@@ -156,12 +204,30 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   }
 
   /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
+   *
+   * @param expected the expected number of elements in the hash set.
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(final int expected, TObjectHashingStrategy<K> strategy) {
+    this(expected, DEFAULT_LOAD_FACTOR, strategy);
+  }
+
+  /**
    * Creates a new hash set with initial expected
    * {@link ObjectLinkedOpenHashSet#DEFAULT_INITIAL_SIZE} elements and
    * {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
    */
   public ObjectLinkedOpenHashSet() {
     this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
+  }
+
+  /**
+   * Creates a new hash set with initial expected
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(TObjectHashingStrategy<K> strategy) {
+    this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR, strategy);
   }
 
   /**
@@ -172,6 +238,18 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    */
   public ObjectLinkedOpenHashSet(final Collection<? extends K> c) {
     this(c.size(), DEFAULT_LOAD_FACTOR);
+    addAll(c);
+  }
+
+  /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
+   * copying a given collection.
+   *
+   * @param c a {@link Collection} to be copied into the new hash set.
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(final Collection<? extends K> c, TObjectHashingStrategy<K> strategy) {
+    this(c.size(), DEFAULT_LOAD_FACTOR , strategy);
     addAll(c);
   }
 
@@ -220,12 +298,12 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       K curr;
       final K[] key = this.key;
       // The starting point.
-      if ((curr = key[pos = mix(k.hashCode()) & mask]) != null) {
-        if (curr.equals(k)) {
+      if ((curr = key[pos = mix(hashingStrategy.computeHashCode(k)) & mask]) != null) {
+        if (hashingStrategy.equals(curr,k)) {
           return false;
         }
         while ((curr = key[pos = pos + 1 & mask]) != null) {
-          if (curr.equals(k)) {
+          if (hashingStrategy.equals(curr, k)) {
             return false;
           }
         }
@@ -275,12 +353,12 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       K curr;
       final K[] key = this.key;
       // The starting point.
-      if ((curr = key[pos = mix(k.hashCode()) & mask]) != null) {
-        if (curr.equals(k)) {
+      if ((curr = key[pos = mix(hashingStrategy.computeHashCode(k)) & mask]) != null) {
+        if (hashingStrategy.equals(curr, k)) {
           return curr;
         }
         while ((curr = key[pos = pos + 1 & mask]) != null) {
-          if (curr.equals(k)) {
+          if (hashingStrategy.equals(curr, k)) {
             return curr;
           }
         }
@@ -322,7 +400,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
           key[last] = null;
           return;
         }
-        slot = mix(curr.hashCode()) & mask;
+        slot = mix(hashingStrategy.computeHashCode(curr)) & mask;
         if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
           break;
         }
@@ -361,14 +439,15 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       return false;
     }
     K curr;
-    final K[] key = this.key;
+    K key = (K)k;
+    final K[] keyArray = this.key;
     int pos;
     // The starting point.
-    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return false;
-    if (k.equals(curr)) return removeEntry(pos);
+    if ((curr = keyArray[pos = mix(hashingStrategy.computeHashCode(key)) & mask]) == null) return false;
+    if (hashingStrategy.equals(key, curr)) return removeEntry(pos);
     while (true) {
-      if ((curr = key[pos = pos + 1 & mask]) == null) return false;
-      if (k.equals(curr)) return removeEntry(pos);
+      if ((curr = keyArray[pos = pos + 1 & mask]) == null) return false;
+      if (hashingStrategy.equals(key, curr)) return removeEntry(pos);
     }
   }
 
@@ -378,14 +457,15 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
       return containsNull;
     }
     K curr;
-    final K[] key = this.key;
+    K key = (K)k;
+    final K[] keyArray = this.key;
     int pos;
     // The starting point.
-    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return false;
-    if (k.equals(curr)) return true;
+    if ((curr = keyArray[pos = mix(hashingStrategy.computeHashCode(key)) & mask]) == null) return false;
+    if (hashingStrategy.equals(key, curr)) return true;
     while (true) {
-      if ((curr = key[pos = pos + 1 & mask]) == null) return false;
-      if (k.equals(curr)) return true;
+      if ((curr = keyArray[pos = pos + 1 & mask]) == null) return false;
+      if (hashingStrategy.equals(key, curr)) return true;
     }
   }
 
@@ -400,15 +480,16 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     if (k == null) return key[n]; // This is correct independently of the value of containsNull and of the set
     // being custom
     K curr;
-    final K[] key = this.key;
+    K key = (K)k;
+    final K[] keyArray = this.key;
     int pos;
     // The starting point.
-    if ((curr = key[pos = mix(k.hashCode()) & mask]) == null) return null;
-    if (k.equals(curr)) return curr;
+    if ((curr = keyArray[pos = mix(hashingStrategy.computeHashCode(key)) & mask]) == null) return null;
+    if (hashingStrategy.equals(key, curr)) return curr;
     // There's always an unused entry.
     while (true) {
-      if ((curr = key[pos = pos + 1 & mask]) == null) return null;
-      if (k.equals(curr)) return curr;
+      if ((curr = keyArray[pos = pos + 1 & mask]) == null) return null;
+      if (hashingStrategy.equals(key, curr)) return curr;
     }
   }
 
@@ -662,7 +743,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
               key[last] = null;
               return;
             }
-            slot = mix(curr.hashCode()) & mask;
+            slot = mix(hashingStrategy.computeHashCode(curr)) & mask;
             if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
               break;
             }
@@ -749,7 +830,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         pos = newN;
       }
       else {
-        pos = mix(key[i].hashCode()) & mask;
+        pos = mix(hashingStrategy.computeHashCode(key[i])) & mask;
         while (newKey[pos] != null) {
           pos = pos + 1 & mask;
         }
@@ -825,7 +906,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         i++;
       }
       if (this != key[i]) {
-        h += key[i].hashCode();
+        h += hashingStrategy.computeHashCode(key[i]);
       }
       i++;
     }
@@ -901,7 +982,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
         containsNull = true;
       }
       else {
-        if (key[pos = mix(k.hashCode()) & mask] != null) {
+        if (key[pos = mix(hashingStrategy.computeHashCode(k)) & mask] != null) {
           while (key[pos = pos + 1 & mask] != null) ;
         }
       }

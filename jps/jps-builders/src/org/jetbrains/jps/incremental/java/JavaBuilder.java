@@ -220,7 +220,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                           @NotNull OutputConsumer outputConsumer,
                           @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
-      final Set<File> filesToCompile = new ObjectLinkedOpenHashSet<>();
+      final Set<File> filesToCompile = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
         if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {

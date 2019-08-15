@@ -11,7 +11,8 @@ import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.containers.ObjectLinkedOpenHashSet;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -61,7 +62,7 @@ public class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Set<File> formsToCompile = new ObjectLinkedOpenHashSet<>();
+    final Set<File> formsToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (Collection<File> files : srcToForms.values()) {
       formsToCompile.addAll(files);
     }
@@ -124,7 +125,7 @@ public class FormsInstrumenter extends FormsBuilder {
     CompileContext context, ModuleChunk chunk, final Map<File, String> chunkSourcePath, final InstrumentationClassFinder finder, Collection<File> forms, OutputConsumer outConsumer
   ) throws ProjectBuildException {
 
-    final Map<File, Collection<File>> instrumented = new LinkedHashMap<>();
+    final Map<File, Collection<File>> instrumented = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<String, File> class2form = new HashMap<>();
 
     final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk), finder);
