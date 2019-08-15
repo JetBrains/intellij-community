@@ -121,7 +121,17 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       }
       else {
         ReadAction.run((() -> computeSettings()));
+        notifyOnEdt();
+      }
+    }
+
+    private void notifyOnEdt() {
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
         notifyCachedValueComputed(myFile);
+      }
+      else {
+        application.invokeLater(() -> notifyCachedValueComputed(myFile));
       }
     }
 
