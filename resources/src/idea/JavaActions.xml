@@ -20,7 +20,7 @@
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Project from Existing Sources..."/>
       <group id="NewProjectFromVCS" class="com.intellij.openapi.vcs.checkout.NewProjectFromVCSGroup" text="Project from Version Control"
              popup="true"/>
-      <action class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction" text="Project from Version Control..."/>
+      <action class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction" text="Project from Version Control..."/>
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="Module..."/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Module from Existing Sources..."/>

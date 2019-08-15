@@ -11,14 +11,21 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
-class GetFromVersionControlAction : DumbAwareAction() {
-
+open class GetFromVersionControlAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions() && Registry.`is`("vcs.use.new.clone.dialog")
-    e.presentation.isEnabledAndVisible = isEnabled
+    val presentation = e.presentation
+    presentation.isEnabledAndVisible = isEnabled
     if (!isEnabled)
       return
-    e.presentation.icon = if (e.place == ActionPlaces.WELCOME_SCREEN) AllIcons.Vcs.Clone else null
+    if (e.place == ActionPlaces.WELCOME_SCREEN) {
+      presentation.icon = AllIcons.Vcs.Clone
+      presentation.text = "Get from Version Control"
+    }
+    else {
+      presentation.icon = null
+      presentation.text = "Get from Version Control..."
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -29,3 +36,12 @@ class GetFromVersionControlAction : DumbAwareAction() {
     }
   }
 }
+
+class ProjectFromVersionControlAction : GetFromVersionControlAction() {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.text = "Project form Version Control..."
+  }
+}
+
+
