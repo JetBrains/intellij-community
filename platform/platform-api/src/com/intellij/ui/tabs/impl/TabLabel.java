@@ -29,8 +29,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class TabLabel extends JPanel implements Accessible, Disposable {
-  public static final int UNSCALED_PREF_HEIGHT = 28;
-
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
