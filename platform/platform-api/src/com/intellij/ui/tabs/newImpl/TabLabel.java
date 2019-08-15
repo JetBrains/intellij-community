@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -30,8 +29,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class TabLabel extends JPanel implements Accessible, Disposable {
-  public static final int UNSCALED_PREF_HEIGHT = 28;
-
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -150,19 +147,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         }
       });
     }
-  }
-
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    Insets insets = getInsets();
-    return new Dimension(size.width, getPreferredHeight());
-  }
-
-
-  protected int getPreferredHeight() {
-    return JBUI.scale(UNSCALED_PREF_HEIGHT);
   }
 
   @Override
