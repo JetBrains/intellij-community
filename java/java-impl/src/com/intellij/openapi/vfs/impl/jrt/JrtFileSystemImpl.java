@@ -63,7 +63,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
   @Override
   protected String extractRootPath(@NotNull String entryPath) {
     int separatorIndex = entryPath.indexOf(SEPARATOR);
-    assert separatorIndex >= 0 : "Path passed to JrtFileSystem must have a separator '!/': " + entryPath;
+    assert separatorIndex >= 0 : "Path passed to JrtFileSystem must have a separator '!/' but got: " + entryPath;
     return entryPath.substring(0, separatorIndex + SEPARATOR.length());
   }
 
