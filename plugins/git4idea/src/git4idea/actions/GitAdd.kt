@@ -1,105 +1,53 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension
+import com.intellij.openapi.vcs.changes.actions.confirmAddFilePaths
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Functions.identity
-import com.intellij.util.PairConsumer
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isEmpty
-import com.intellij.util.containers.notNullize
-import com.intellij.util.containers.stream
-import com.intellij.vcsUtil.VcsFileUtil
-import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitVcs
+import git4idea.i18n.GitBundle.getString
+import git4idea.i18n.GitBundle.message
 import git4idea.util.GitFileUtils
-import java.util.*
-import java.util.stream.Stream
-import kotlin.streams.toList
 
-class GitAdd : ScheduleForAdditionAction() {
-  override fun isEnabled(e: AnActionEvent): Boolean {
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return false
+class GitAdd : ScheduleForAdditionActionExtension {
+  override fun getSupportedVcs(project: Project) = GitVcs.getInstance(project)
 
-    if (!ScheduleForAdditionAction.getUnversionedFiles(e, project).isEmpty()) return true
+  override fun isStatusForAddition(status: FileStatus) =
+    status === FileStatus.MODIFIED ||
+    status === FileStatus.MERGED_WITH_CONFLICTS ||
+    status === FileStatus.ADDED ||
+    status === FileStatus.DELETED ||
+    status === FileStatus.IGNORED
 
-    val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
-    if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true
-
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
-    return if (!collectPathsFromFiles(project, filesStream).isEmpty()) true else false
-
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-
-    val toAdd = HashSet<FilePath>()
-
-    val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
-    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
-
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
-    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
-
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project).toList()
-
-    ScheduleForAdditionAction.addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
-                                             if (!toAdd.isEmpty()) PairConsumer<ProgressIndicator, MutableList<VcsException>> { _, exceptions ->
-                                               addPathsToVcs(project, toAdd, exceptions)
-                                             }
-                                             else null)
-  }
-
-  private fun addPathsToVcs(project: Project, toAdd: Collection<FilePath>, exceptions: MutableList<VcsException>) {
-    VcsUtil.groupByRoots(project, toAdd, identity()).forEach { (vcsRoot, paths) ->
-      try {
-        if (vcsRoot.vcs !is GitVcs) return
-
-        GitFileUtils.addPaths(project, vcsRoot.path, paths)
-        VcsFileUtil.markFilesDirty(project, paths)
-      }
-      catch (ex: VcsException) {
-        exceptions.add(ex)
-      }
-    }
-  }
-
-  private fun collectPathsFromChanges(project: Project, allChanges: Stream<out Change>): Stream<FilePath> {
-    val vcsManager = ProjectLevelVcsManager.getInstance(project)
-
-    return allChanges
-      .filter { change ->
-        val filePath = ChangesUtil.getFilePath(change)
-        vcsManager.getVcsFor(filePath) is GitVcs && isStatusForAddition(change.fileStatus)
-      }
-      .map { ChangesUtil.getFilePath(it) }
-  }
-
-  private fun collectPathsFromFiles(project: Project, allFiles: Stream<out VirtualFile>): Stream<FilePath> {
-    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  @Throws(VcsException::class)
+  override fun doAddFiles(project: Project, vcsRoot: VirtualFile, paths: List<FilePath>, containsIgnored: Boolean) {
+    // In some cases directories with FileStatus.NOT_CHANGED may require force add flag.
+    // E.g. if some ignored directory contains staged files, Git will not return such directory as ignored.
+    // But in fact such directories may contain ignored files and hence required force flag to add.
     val changeListManager = ChangeListManager.getInstance(project)
-
-    return allFiles
-      .filter { file ->
-        vcsManager.getVcsFor(file) is GitVcs && (file.isDirectory || isStatusForAddition(changeListManager.getStatus(file)))
+    val (dirs, otherPathToAdd) = paths.partition { path -> isDirWithNotChangedStatus(changeListManager, path) }
+    val confirmedDirs =
+      invokeAndWaitIfNeeded {
+        confirmAddFilePaths(project, dirs,
+                            { getString("confirmation.title.force.add.dir") },
+                            { dirPath ->
+                              message("confirmation.message.force.add.dir",
+                                      FileUtil.getLocationRelativeToUserHome(dirPath.presentableUrl))
+                            },
+                            getString("confirmation.title.force.add.dirs"))
       }
-      .map{ VcsUtil.getFilePath(it) }
+
+    val needForceAdd = containsIgnored || confirmedDirs.isNotEmpty()
+    GitFileUtils.addPaths(project, vcsRoot, otherPathToAdd + confirmedDirs, needForceAdd)
   }
 
-  private fun isStatusForAddition(status: FileStatus): Boolean {
-    return status === FileStatus.MODIFIED ||
-           status === FileStatus.MERGED_WITH_CONFLICTS ||
-           status === FileStatus.ADDED ||
-           status === FileStatus.DELETED
-  }
+  private fun isDirWithNotChangedStatus(changeListManager: ChangeListManager, path: FilePath) =
+    path.virtualFile?.let { file -> file.isDirectory && changeListManager.getStatus(file) == FileStatus.NOT_CHANGED } ?: false
 }

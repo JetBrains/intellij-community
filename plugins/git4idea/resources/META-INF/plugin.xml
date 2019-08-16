@@ -65,7 +65,8 @@
 
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
+              text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -258,7 +259,6 @@
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
-    <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
     <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
     <codeInsight.linkHandler prefix="#git_commit/" handlerClass="git4idea.log.GitCommitTooltipLinkHandler"/>
 
@@ -277,6 +277,8 @@
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
+
+    <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
   </extensions>
 
   <extensionPoints>

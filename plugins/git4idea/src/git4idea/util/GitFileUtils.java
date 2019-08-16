@@ -113,6 +113,16 @@ public class GitFileUtils {
     repository.getUntrackedFilesHolder().remove(ContainerUtil.map(addedFiles, VcsUtil::getFilePath));
   }
 
+  private static void updateIgnoredFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
+                                                          @NotNull Collection<VirtualFile> addedFiles) {
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
+    }
+    repository.getIgnoredFilesHolder().removeIgnoredFiles(ContainerUtil.mapNotNull(addedFiles, VcsUtil::getFilePath));
+  }
+
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
                                                              @NotNull Collection<? extends VirtualFile> removedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
@@ -129,10 +139,18 @@ public class GitFileUtils {
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<? extends FilePath> files) throws VcsException {
+    addPaths(project, root, files, false);
+  }
+
+  public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
+                              @NotNull Collection<? extends FilePath> files, boolean force) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      addPaths(project, root, paths, false);
+      addPaths(project, root, paths, force);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    if (force) {
+      updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    }
   }
 
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
@@ -141,6 +159,7 @@ public class GitFileUtils {
       addPaths(project, root, paths, true);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
   }
 
   @NotNull
