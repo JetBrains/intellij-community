@@ -109,5 +109,6 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"/>
 
+    <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension" interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"/>
   </extensionPoints>
 </idea-plugin>

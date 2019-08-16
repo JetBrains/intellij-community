@@ -129,7 +129,8 @@
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="$Delete"/>
-      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
+      <action id="ChangesView.AddUnversioned"
+              class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"

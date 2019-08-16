@@ -2,10 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -88,20 +85,28 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   public static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
-    boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+    return getUnversionedFiles(e.getDataContext(), project);
+  }
+
+  @NotNull
+  public static Stream<VirtualFile> getUnversionedFiles(@NotNull DataContext context, @NotNull Project project) {
+    boolean hasExplicitUnversioned = !isEmpty(context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+
     if (hasExplicitUnversioned) {
-      return e.getRequiredData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).map(FilePath::getVirtualFile).filter(Objects::nonNull);
+      Stream<FilePath> fileStream = context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
+      assert fileStream != null;
+      return fileStream.map(FilePath::getVirtualFile).filter(Objects::nonNull);
     }
 
     // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
     // not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
     // {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
     // check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
-    if (!ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))) return Stream.empty();
+    if (!ArrayUtil.isEmpty(context.getData(VcsDataKeys.CHANGES))) return Stream.empty();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager));
+    return notNullize(context.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager));
   }
 
   private static boolean isFileUnversioned(@NotNull VirtualFile file,
