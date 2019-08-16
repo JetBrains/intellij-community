@@ -66,6 +66,11 @@
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
+    <searchScopesProvider implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileSearchScopeProvider"/>
+    <registryKey key="devkit.enable.plugin.descriptor.files.scope"
+                 description="Enable 'Plugin Descriptor Files' default scope"
+                 defaultValue="false"/>
+
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
