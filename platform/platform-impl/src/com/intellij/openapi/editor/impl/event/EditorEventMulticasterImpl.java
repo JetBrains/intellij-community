@@ -66,6 +66,16 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
       public void mouseReleased(@NotNull EditorMouseEvent event) {
         MOUSE_EP.forEachExtensionSafe(it -> it.mouseReleased(event));
       }
+
+      @Override
+      public void mouseEntered(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseEntered(event));
+      }
+
+      @Override
+      public void mouseExited(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseExited(event));
+      }
     });
 
     editor.addEditorMouseMotionListener(myEditorMouseMotionMulticaster.getMulticaster());
