@@ -17,7 +17,7 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
 
   override fun createSettings(): Settings = Settings()
 
-  data class Settings(var showInferredParameterTypes: Boolean = true, var showTypeParameterList: Boolean = false)
+  data class Settings(var showInferredParameterTypes: Boolean = true, var showTypeParameterList: Boolean = true)
   companion object {
 
     val ourKey: SettingsKey<Settings> = SettingsKey("groovy.parameters.hints")
