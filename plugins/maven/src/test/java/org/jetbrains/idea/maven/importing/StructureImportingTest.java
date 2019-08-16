@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -611,7 +597,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                     "<artifactId>module</artifactId>" +
                     "<version>1</version>");
 
-    updateProjectsAndImport(p2); // should not fail to map module names. 
+    updateProjectsAndImport(p2); // should not fail to map module names.
 
     assertModules("project1", "project2", "module", "module (1)");
 
@@ -847,7 +833,19 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule());
   }
 
-  public void testPreviewLanguageLevel() {
+  public void testPreviewLanguageLevelOneLine() {
+    doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelArg() {
+    doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n");
+  }
+
+  public void testPreviewLanguageLevelCompilerArg() {
+    doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n");
+  }
+
+  private void doTestPreview(String compilerArgs) {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -859,19 +857,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <artifactId>maven-compiler-plugin</artifactId>\n" +
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
-                  "          <release>12</release>\n" +
-                  "          <compilerArgs>\n" +
-                  "              <arg>--enable-preview</arg>\n" +
-                  "          </compilerArgs>\n" +
-                  "          <source>12</source>\n" +
-                  "          <target>12</target>\n" +
+                  "          <release>13</release>\n" +
+                             compilerArgs +
+                  "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
                   "      </configuration>\n" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_12_PREVIEW, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_13_PREVIEW, getLanguageLevelForModule());
   }
 
   public void testInheritingLanguageLevelFromPluginManagementSection() {
