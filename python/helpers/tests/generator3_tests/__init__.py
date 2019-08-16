@@ -48,8 +48,16 @@ class GeneratorTestCase(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))
 
     def tearDown(self):
-        if not self._test_has_failed():
-            shutil.rmtree(self.temp_dir)
+        if self._test_has_failed():
+            self.tearDownForFailedTest()
+        else:
+            self.tearDownForSuccessfulTest()
+
+    def tearDownForSuccessfulTest(self):
+        shutil.rmtree(self.temp_dir)
+
+    def tearDownForFailedTest(self):
+        pass
 
     def _test_has_failed(self):
         try:
