@@ -8,8 +8,10 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
@@ -76,7 +78,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (instruction.isWrite()) {
       updateVariableType(
         state, instruction, descriptor,
-        () -> DFAType.create(TypeInferenceHelper.getInitializerType(element))
+        () -> {
+          PsiType initializerType = TypeInferenceHelper.getInitializerType(element);
+          if (initializerType == null && descriptor instanceof ResolvedVariableDescriptor) {
+            GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
+            PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
+            return DFAType.create(augmentedType);
+          }
+          else {
+            return DFAType.create(initializerType);
+          }
+        }
       );
     }
     else {
