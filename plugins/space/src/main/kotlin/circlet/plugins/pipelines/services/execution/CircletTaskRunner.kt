@@ -1,6 +1,5 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.plugins.pipelines.services.*
@@ -60,17 +59,20 @@ class CircletTaskRunner(val project: Project) {
         val storage = CircletIdeaAutomationGraphStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
         val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
-        val automationGraphEngineCommon = AutomationGraphEngineCommon(
+        val tracer = CircletIdeaAutomationTracer()
+        val automationGraphEngineCommon = AutomationGraphEngineImpl(
             provider,
             provider,
             SystemTimeTicker(),
+            tracer,
             listOf(provider))
-        val automationStarterCommon = AutomationStarterCommon(
+        val automationStarterCommon = AutomationStarterImpl(
             orgInfo,
             storage,
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
-            CircletIdeaAutomationTracer())
+            tracer
+        )
 
         val currentTime = System.currentTimeMillis()
         val metaTaskId : Long = 1

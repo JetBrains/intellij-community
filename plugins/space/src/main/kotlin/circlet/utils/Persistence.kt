@@ -7,6 +7,10 @@ import runtime.persistence.*
 import runtime.reactive.*
 
 object IdeaPasswordSafePersistence : Persistence {
+    override suspend fun batchGetJson(keys: List<String>): List<Pair<String, JsonElement?>> {
+       return keys.map { it to get(it)?.let { jsonElement(it) } }
+    }
+
     override suspend fun putJson(key: String, value: JsonElement) {
         put(key, value.text())
     }
