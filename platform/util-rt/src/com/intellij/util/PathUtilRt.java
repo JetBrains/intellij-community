@@ -50,7 +50,15 @@ public class PathUtilRt {
     if (end == path.length() - 1) {
       end = getLastIndexOfPathSeparator(path, end);
     }
-    return end == -1 ? "" : path.substring(0, end);
+    if (end == -1 || end == 0) {
+      return "";
+    }
+    // parent of '//host' is root
+    char prev = path.charAt(end - 1);
+    if (prev == '/' || prev == '\\') {
+      end--;
+    }
+    return path.substring(0, end);
   }
 
   private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {

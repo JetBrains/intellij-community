@@ -1173,6 +1173,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
+    // avoid creating zillion of roots which are not actual roots
+    String parentPath = fs instanceof LocalFileSystem ? PathUtilRt.getParentPath(rootPath) : "";
+    if (!parentPath.isEmpty()) {
+      FileAttributes parentAttributes = fs.getAttributes(new StubVirtualFile() {
+        @NotNull @Override public String getPath() { return parentPath; }
+        @Nullable @Override public VirtualFile getParent() { return null; }
+      });
+      if (parentAttributes != null) {
+        throw new IllegalArgumentException("Must pass FS root path, but got: '"+path+"' , which has a parent '"+parentPath+"'). Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
+      }
+    }
+
     int rootId = FSRecords.findRootRecord(rootUrl);
 
     VfsData.Segment segment = myVfsData.getSegment(rootId, true);
