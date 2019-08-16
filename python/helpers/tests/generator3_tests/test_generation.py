@@ -20,7 +20,7 @@ TEST_GENERATOR_VERSION = '1000.0'
 _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
 
 
-class SkeletonCachingTest(GeneratorTestCase):
+class SkeletonGenerationTest(GeneratorTestCase):
     PYTHON_STUBS_DIR = 'python_stubs'
     SDK_SKELETONS_DIR = 'sdk_skeletons'
 
