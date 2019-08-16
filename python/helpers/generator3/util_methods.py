@@ -3,7 +3,6 @@ import errno
 import functools
 import hashlib
 import keyword
-import queue
 import shutil
 from contextlib import contextmanager
 
@@ -850,8 +849,12 @@ def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result
     def wrapper(q, func, *args, **kwargs):
         q.put(func(*args, **kwargs))
 
+    extra_process_kwargs = {}
+    if sys.version_info[0] >= 3:
+        extra_process_kwargs['daemon'] = True
+
     q = mp.Queue(1)
-    p = mp.Process(name=name, target=wrapper, args=(q, func) + args, kwargs=kwargs, daemon=True)
+    p = mp.Process(name=name, target=wrapper, args=(q, func) + args, kwargs=kwargs, **extra_process_kwargs)
     p.start()
     p.join()
     try:
