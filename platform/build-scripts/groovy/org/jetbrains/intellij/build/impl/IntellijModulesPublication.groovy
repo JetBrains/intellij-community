@@ -37,6 +37,10 @@ class IntellijModulesPublication {
     String repositoryPassword = property('intellij.modules.publication.repository.password')
     /**
      * URL where the artifacts will be deployed
+     *
+     *  <p>
+     *  Note: Append /;publish=1; for Bintray
+     *  </p>
      */
     String repositoryUrl = property('intellij.modules.publication.repository.url')
     /**
@@ -114,7 +118,7 @@ class IntellijModulesPublication {
                      'deploy:deploy-file',
                      '-DrepositoryId=server-id',
                      "-Dfile=$file.absolutePath",
-                     "-Durl=$options.repositoryUrl/;publish=1;",
+                     "-Durl=$options.repositoryUrl",
                      "-DretryFailedDeploymentCount=$options.uploadRetryCount"
                    ] + args).execute()
     def output = process.text
