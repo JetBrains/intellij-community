@@ -21,6 +21,7 @@ class VmOptionsGenerator {
       '-XX:-OmitStackTraceInFastThrow',
       '-Djdk.attach.allowAttachSelf',
       '-Dkotlinx.coroutines.debug=off',
+      '-Djdk.module.illegalAccess.silent=true',
     ]
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
