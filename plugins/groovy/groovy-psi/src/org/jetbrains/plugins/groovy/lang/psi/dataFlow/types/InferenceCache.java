@@ -74,27 +74,30 @@ class InferenceCache {
 
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
+      Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
+      Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
+      if (dfaResult == null) {
+        myTooComplexInstructions.addAll(interesting.first);
+      }
+      else {
+        Set<Instruction> stored = interesting.first;
+        stored.add(instruction);
+        cacheDfaResult(dfaResult, stored);
+      }
+    }
+    DFAType dfaType = getCachedInferredType(descriptor, instruction);
+    if (dfaType == null || dfaType.getResultType() == null) {
       final PsiType augmentedType = getAugmentedType(descriptor);
       if (augmentedType != null) {
         cache.putType(descriptor, DFAType.create(augmentedType));
         myVarTypes.get().set(instruction.num(), cache);
       }
-      else {
-        Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-        Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
-        List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
-        if (dfaResult == null) {
-          myTooComplexInstructions.addAll(interesting.first);
-        }
-        else {
-          Set<Instruction> stored = interesting.first;
-          stored.add(instruction);
-          cacheDfaResult(dfaResult, stored);
-        }
-      }
+      return augmentedType;
     }
-    DFAType dfaType = getCachedInferredType(descriptor, instruction);
-    return dfaType == null ? null : dfaType.getResultType();
+    else {
+      return dfaType.getResultType();
+    }
   }
 
   @Nullable

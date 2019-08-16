@@ -1378,4 +1378,16 @@ foo { a, b ->
     <caret>a
 }''', "? super $JAVA_LANG_INTEGER"
   }
+
+  void 'test DFA priority is higher than signature inference'() {
+    doTest '''
+def foo(a) {
+  if (a instanceof Integer) {
+    <caret>a
+  }
+}
+
+foo(null as Number)
+''', JAVA_LANG_INTEGER
+  }
 }
