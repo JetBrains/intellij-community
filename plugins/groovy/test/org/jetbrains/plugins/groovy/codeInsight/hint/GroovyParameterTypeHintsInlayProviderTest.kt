@@ -19,7 +19,7 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
 
   fun testSingleType() {
     val text = """
-def foo(<# Integer #>a) {}
+def foo(<# [Integer  ] #>a) {}
 
 foo(1)
     """.trimIndent()
@@ -28,7 +28,7 @@ foo(1)
 
   fun testWildcard() {
     val text = """
-def foo(<# [List < [? [ super  Number]] >] #>a) {
+def foo(<# [[List < [? [ super  Number]] >]  ] #>a) {
   a.add(1)
 }
 
@@ -40,12 +40,27 @@ foo(null as List<Number>)
 
   fun testTypeParameters() {
     val text = """
-def<# <V0> #> foo(<# [List < V0 >] #>a,<# [List < [? [ extends  V0]] >] #> b) {
+def<# [< V0 >] #> foo(<# [[List < V0 >]  ] #>a, <# [[List < [? [ extends  V0]] >]  ] #>b) {
   a.add(b[0])
 }
 
 foo([1], [1])
 foo(['q'], ['q'])
+    """.trimIndent()
+    testTypeHints(text)
+  }
+
+  fun testClosure() {
+    val text = """
+def<# [< [X0 extends  A] >] #> foo(<# [X0  ] #>a, <# [[Closure < [?  ] >]  ] #>c) {
+  c(a)
+}
+
+interface A{def foo()}
+
+foo(null as A) {
+  it.foo()
+}
     """.trimIndent()
     testTypeHints(text)
   }
