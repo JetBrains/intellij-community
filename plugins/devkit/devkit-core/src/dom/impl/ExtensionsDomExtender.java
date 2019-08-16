@@ -20,6 +20,7 @@ import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -107,7 +108,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
             final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
             if (psiFile instanceof XmlFile) {
               final XmlFile xmlFile = (XmlFile)psiFile;
-              final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
+              final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(xmlFile);
               if (fileElement != null) {
                 final IdeaPlugin mainPlugin = fileElement.getRootElement();
                 ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());

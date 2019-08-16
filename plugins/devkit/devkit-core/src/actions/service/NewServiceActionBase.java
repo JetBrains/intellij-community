@@ -25,7 +25,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -349,7 +348,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
     private void patchPluginXml(@Nullable PsiClass createdInterface, @NotNull PsiClass createdImplementation, XmlFile pluginXml) {
       DescriptorUtil.checkPluginXmlsWritable(getProject(), pluginXml);
 
-      DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(getProject()).getFileElement(pluginXml, IdeaPlugin.class);
+      DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
       if (fileElement == null) {
         throw new IncorrectOperationException(DevKitBundle.message("error.cannot.process.plugin.xml", pluginXml));
       }
