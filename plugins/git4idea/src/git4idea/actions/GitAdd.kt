@@ -1,125 +1,105 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package git4idea.actions;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.UtilKt;
-import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitVcs;
-import git4idea.util.GitFileUtils;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Functions.identity
+import com.intellij.util.PairConsumer
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.notNullize
+import com.intellij.util.containers.stream
+import com.intellij.vcsUtil.VcsFileUtil
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitVcs
+import git4idea.util.GitFileUtils
+import java.util.*
+import java.util.stream.Stream
+import kotlin.streams.toList
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class GitAdd : ScheduleForAdditionAction() {
+  override fun isEnabled(e: AnActionEvent): Boolean {
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return false
 
-import static com.intellij.util.Functions.identity;
-import static com.intellij.util.containers.UtilKt.isEmpty;
+    if (!ScheduleForAdditionAction.getUnversionedFiles(e, project).isEmpty()) return true
 
-public class GitAdd extends ScheduleForAdditionAction {
-  @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return false;
+    val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
+    if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true
 
-    if (!isEmpty(getUnversionedFiles(e, project))) return true;
+    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
+    return if (!collectPathsFromFiles(project, filesStream).isEmpty()) true else false
 
-    Stream<Change> changeStream = UtilKt.stream(e.getData(VcsDataKeys.CHANGES));
-    if (!isEmpty(collectPathsFromChanges(project, changeStream))) return true;
-
-    Stream<VirtualFile> filesStream = UtilKt.notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
-    if (!isEmpty(collectPathsFromFiles(project, filesStream))) return true;
-
-    return false;
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.getRequiredData(CommonDataKeys.PROJECT)
 
-    Set<FilePath> toAdd = new HashSet<>();
+    val toAdd = HashSet<FilePath>()
 
-    Stream<Change> changeStream = UtilKt.stream(e.getData(VcsDataKeys.CHANGES));
-    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator());
+    val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
+    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
 
-    Stream<VirtualFile> filesStream = UtilKt.notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
-    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator());
+    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
+    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
 
-    List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
+    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project).toList()
 
-    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
-                   !toAdd.isEmpty() ? (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions) : null);
+    ScheduleForAdditionAction.addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY),
+                                             if (!toAdd.isEmpty()) PairConsumer<ProgressIndicator, MutableList<VcsException>> { _, exceptions ->
+                                               addPathsToVcs(project, toAdd, exceptions)
+                                             }
+                                             else null)
   }
 
-  private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<? extends FilePath> toAdd, @NotNull List<? super VcsException> exceptions) {
-    VcsUtil.groupByRoots(project, toAdd, identity()).forEach((vcsRoot, paths) -> {
+  private fun addPathsToVcs(project: Project, toAdd: Collection<FilePath>, exceptions: MutableList<VcsException>) {
+    VcsUtil.groupByRoots(project, toAdd, identity()).forEach { (vcsRoot, paths) ->
       try {
-        if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
+        if (vcsRoot.vcs !is GitVcs) return
 
-        GitFileUtils.addPaths(project, vcsRoot.getPath(), paths);
-        VcsFileUtil.markFilesDirty(project, paths);
+        GitFileUtils.addPaths(project, vcsRoot.path, paths)
+        VcsFileUtil.markFilesDirty(project, paths)
       }
-      catch (VcsException ex) {
-        exceptions.add(ex);
+      catch (ex: VcsException) {
+        exceptions.add(ex)
       }
-    });
+    }
   }
 
-  @NotNull
-  private static Stream<FilePath> collectPathsFromChanges(@NotNull Project project, @NotNull Stream<? extends Change> allChanges) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+  private fun collectPathsFromChanges(project: Project, allChanges: Stream<out Change>): Stream<FilePath> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
     return allChanges
-      .filter(change -> {
-        FilePath filePath = ChangesUtil.getFilePath(change);
-        return vcsManager.getVcsFor(filePath) instanceof GitVcs &&
-               isStatusForAddition(change.getFileStatus());
-      })
-      .map(ChangesUtil::getFilePath);
+      .filter { change ->
+        val filePath = ChangesUtil.getFilePath(change)
+        vcsManager.getVcsFor(filePath) is GitVcs && isStatusForAddition(change.fileStatus)
+      }
+      .map { ChangesUtil.getFilePath(it) }
   }
 
-  @NotNull
-  private static Stream<FilePath> collectPathsFromFiles(@NotNull Project project, @NotNull Stream<? extends VirtualFile> allFiles) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+  private fun collectPathsFromFiles(project: Project, allFiles: Stream<out VirtualFile>): Stream<FilePath> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val changeListManager = ChangeListManager.getInstance(project)
 
     return allFiles
-      .filter(file -> vcsManager.getVcsFor(file) instanceof GitVcs &&
-                    (file.isDirectory() || isStatusForAddition(changeListManager.getStatus(file))))
-      .map(VcsUtil::getFilePath);
+      .filter { file ->
+        vcsManager.getVcsFor(file) is GitVcs && (file.isDirectory || isStatusForAddition(changeListManager.getStatus(file)))
+      }
+      .map{ VcsUtil.getFilePath(it) }
   }
 
-  private static boolean isStatusForAddition(FileStatus status) {
-    return status == FileStatus.MODIFIED ||
-           status == FileStatus.MERGED_WITH_CONFLICTS ||
-           status == FileStatus.ADDED ||
-           status == FileStatus.DELETED;
+  private fun isStatusForAddition(status: FileStatus): Boolean {
+    return status === FileStatus.MODIFIED ||
+           status === FileStatus.MERGED_WITH_CONFLICTS ||
+           status === FileStatus.ADDED ||
+           status === FileStatus.DELETED
   }
 }
