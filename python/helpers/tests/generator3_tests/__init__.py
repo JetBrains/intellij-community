@@ -33,7 +33,7 @@ class GeneratorTestCase(unittest.TestCase):
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(logging.Formatter(fmt='%(levelname)s:%(name)s:%(message)s'))
         cls.log.addHandler(handler)
-        cls.log.setLevel(logging.DEBUG)
+        cls.log.setLevel(logging.WARN)
 
         os.environ[ENV_TEST_MODE_FLAG] = 'True'
 
