@@ -36,8 +36,6 @@ import kotlin.LazyThreadSafetyMode.NONE
 
 internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
   private val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
-  private val contravariantTypesCollector = mutableSetOf<PsiType>()
-  private val covariantTypesCollector = mutableSetOf<PsiType>()
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
   private val typeParameters = method.typeParameters.map { it.type() }
   private val dependentTypes = mutableSetOf<PsiTypeParameter>()
@@ -64,7 +62,6 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val methodResult = result as? GroovyMethodResult ?: return
     val candidate = methodResult.candidate ?: return
     processReceiverConstraints(candidate)
-    processReturnTypeConstraints(methodResult, candidate.method)
     val expectedTypes = candidate.argumentMapping?.expectedTypes ?: return
     for ((type, argument) in expectedTypes) {
       processArgumentConstraints(type, argument, methodResult)
@@ -75,10 +72,6 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val receiverTypeParameter = candidate.smartReceiver()?.typeParameter() ?: return
     val containingType = candidate.smartContainingType() ?: return
     generateRequiredTypes(receiverTypeParameter, containingType, UPPER)
-  }
-
-  private fun processReturnTypeConstraints(methodResult: GroovyMethodResult, method: PsiMethod) {
-    methodResult.substitutor.substitute(method.returnType)?.run { covariantTypesCollector.add(this) }
   }
 
   private fun processArgumentConstraints(parameterType: PsiType, argument: Argument, resolveResult: GroovyMethodResult) {
@@ -94,7 +87,6 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
       processRequiredParameters(argtype, upperType)
     }
-    resolveResult.contextSubstitutor.substitute(parameterType)?.run { contravariantTypesCollector.add(this) }
   }
 
 
@@ -338,12 +330,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
     constraintsCollector.add(ExpressionConstraint(returnType, expression))
     val typeParameter = expression.type.typeParameter() ?: return
-    contravariantTypesCollector.add(typeParameter.type())
-    covariantTypesCollector.add(typeParameter.type())
     addRequiredType(typeParameter, BoundConstraint(returnType, UPPER))
   }
 
 
   fun buildUsageInformation(): TypeUsageInformation =
-    TypeUsageInformation(contravariantTypesCollector, requiredTypesCollector, constraintsCollector, covariantTypesCollector, dependentTypes)
+    TypeUsageInformation(requiredTypesCollector, constraintsCollector, dependentTypes)
 }

@@ -52,10 +52,7 @@ private fun setUpGraph(driver: InferenceDriver,
   val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  val forbiddingTypes = typeUsage.contravariantTypes.filter { it in typeUsage.dependentTypes.map { deptype -> deptype.type() } } +
-                        virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
-                        driver.forbiddingTypes()
-  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, forbiddingTypes, typeUsage, constantTypes)
+  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, driver.forbiddingTypes(), typeUsage, constantTypes)
 }
 
 private fun inferTypeParameters(driver: InferenceDriver,
@@ -176,9 +173,9 @@ class TypeParameterCollector(context: PsiElement) {
   fun createBoundedTypeParameter(name: String,
                                  resultSubstitutor: PsiSubstitutor,
                                  advice: PsiType): PsiTypeParameter {
-    val mappedSupertypes = when (advice) {
-      is PsiClassType -> resultSubstitutor.substitute(advice)
-      is PsiIntersectionType -> createIntersection(flatten(advice.conjuncts, mutableSetOf()).map {
+    val mappedSupertypes = when (val newAdvice = removeWildcard(advice)) {
+      is PsiClassType -> resultSubstitutor.substitute(newAdvice)
+      is PsiIntersectionType -> createIntersection(flatten(newAdvice.conjuncts, mutableSetOf()).map {
         resultSubstitutor.substitute(it)
       })
       else -> null
@@ -188,3 +185,10 @@ class TypeParameterCollector(context: PsiElement) {
     }
   }
 }
+
+
+internal fun removeWildcard(advice: PsiType): PsiType =
+  when (advice) {
+    is PsiWildcardType -> advice.extendsBound
+    else -> advice
+  }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import kotlin.LazyThreadSafetyMode.NONE
@@ -46,7 +47,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
   val type = core.type
 
   fun smartTypeInstantiation(usage: TypeUsageInformation,
-                             equivalenceClasses: Map<out PsiType, List<InferenceUnitNode>>): Pair<PsiType, InstantiationHint> {
+                             equivalenceClasses: Map<PsiType, List<InferenceUnitNode>>): Pair<PsiType, InstantiationHint> {
 
     if (core.constant) {
       return if (core.initialTypeParameter.extendsListTypes.isEmpty()) {
@@ -62,16 +63,18 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     }
 
     if (core.flexible) {
+      val fixedBound = removeWildcard(typeInstantiation)
       when {
         parent != null -> return parent!!.type to REIFIED_AS_PROPER_TYPE
-        subtypes.isNotEmpty() || typeInstantiation is PsiIntersectionType || (equivalenceClasses[type]?.size
-                                                                              ?: 0) > 1 -> return typeInstantiation to NEW_TYPE_PARAMETER
-        else -> return typeInstantiation to REIFIED_AS_PROPER_TYPE
+        subtypes.isNotEmpty() ||
+        fixedBound is PsiIntersectionType ||
+        (equivalenceClasses[type]?.size ?: 0) > 1 -> return fixedBound to NEW_TYPE_PARAMETER
+        else -> return fixedBound to REIFIED_AS_PROPER_TYPE
       }
     }
 
     if (parent != null) {
-      if (!usage.contravariantTypes.contains(core.initialTypeParameter.type())) {
+      if (!usage.contravariantTypes.contains(core.initialTypeParameter.type()) && subtypes.isEmpty()) {
         return parent!!.type to EXTENDS_WILDCARD
       }
       else {
@@ -92,7 +95,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       }
     }
 
-    if (equivalenceClasses[type]?.any { usage.contravariantTypes.contains(it.type) } == true) {
+    if (equivalenceClasses[type]?.any { usage.invariantTypes.contains(it.type) || it.subtypes.isNotEmpty() } == true) {
       val advice = parent?.type ?: typeInstantiation
       return if (advice == typeInstantiation) {
         (if (advice == PsiType.NULL) type else advice) to ENDPOINT_TYPE_PARAMETER

@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>) : InferenceDriver {
 
@@ -132,13 +131,9 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         val usageInformation = commonDriver.collectInnerConstraints()
         val mapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
         val newUsageInformation = usageInformation.run {
-          TypeUsageInformation(contravariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
-                               requiredClassTypes.map { (param, list) ->
-                                 mapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
-                               }.toMap(),
-                               constraints,
-                               covariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
-                               dependentTypes.map { mapping.getValue(it) }.toSet())
+          TypeUsageInformation(requiredClassTypes.map { (param, list) ->
+            mapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
+          }.toMap(), constraints, dependentTypes.map { mapping.getValue(it) }.toSet())
         }
         newUsageInformation
       }
@@ -179,10 +174,8 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       }
     }
     val closureParamsTypeInformation = TypeUsageInformation(
-      closureParameters.flatMap { it.value.types }.toSet(),
       requiredTypesCollector.filter { it.key in closureParameters.flatMap { parameterizedClosure -> parameterizedClosure.value.typeParameters } },
       constraintCollector,
-      emptySet(),
       dependentTypes)
     return TypeUsageInformation.merge(listOf(closureParamsTypeInformation, closureBodyAnalysisResult))
   }

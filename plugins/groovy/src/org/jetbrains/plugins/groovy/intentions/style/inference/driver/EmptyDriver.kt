@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 object EmptyDriver : InferenceDriver {
   override fun typeParameters(): Collection<PsiTypeParameter> = emptyList()
 
-  override fun collectInnerConstraints(): TypeUsageInformation = TypeUsageInformation(emptySet(), emptyMap(), emptyList())
+  override fun collectInnerConstraints(): TypeUsageInformation = TypeUsageInformation(emptyMap(), emptyList())
 
   override fun createParameterizedDriver(manager: ParameterizationManager,
                                          targetMethod: GrMethod,

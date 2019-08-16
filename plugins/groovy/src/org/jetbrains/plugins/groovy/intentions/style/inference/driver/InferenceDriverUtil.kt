@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import kotlin.LazyThreadSafetyMode.NONE
 
 
 data class BoundConstraint(val type: PsiType, val marker: ContainMarker) {
@@ -35,13 +36,40 @@ data class BoundConstraint(val type: PsiType, val marker: ContainMarker) {
   }
 }
 
-data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
-                                val requiredClassTypes: Map<PsiTypeParameter, List<BoundConstraint>>,
+data class TypeUsageInformation(val requiredClassTypes: Map<PsiTypeParameter, List<BoundConstraint>>,
                                 val constraints: Collection<ConstraintFormula>,
-                                val covariantTypes: Set<PsiType> = emptySet(),
                                 val dependentTypes: Set<PsiTypeParameter> = emptySet()) {
   operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
     return merge(listOf(this, typeUsageInformation))
+  }
+
+  val contravariantTypes: List<PsiType> by lazy(NONE) {
+    requiredClassTypes.mapNotNull { (typeParameter, bounds) ->
+      if (bounds.all { it.marker != UPPER } && bounds.count { it.marker == LOWER } > 0) {
+        typeParameter.type()
+      }
+      else {
+        null
+      }
+    }
+  }
+
+  val invariantTypes: List<PsiType> by lazy(NONE) {
+    requiredClassTypes.filter { (_, bounds) ->
+      bounds.all { it.marker == INHABIT }
+    }.map { it.key.type() }
+  }
+
+  val covariantTypes: List<PsiType> by lazy(NONE) {
+    requiredClassTypes.mapNotNull { (typeParameter, bounds) ->
+      val inhabitTypes = bounds.filter { it.marker == INHABIT }.toSet()
+      if (bounds.all { it.marker != LOWER } && inhabitTypes.size > 1 && bounds.count { it.marker == UPPER } > 0) {
+        typeParameter.type()
+      }
+      else {
+        null
+      }
+    }
   }
 
   companion object {
@@ -55,12 +83,10 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
 
 
     fun merge(data: Collection<TypeUsageInformation>): TypeUsageInformation {
-      val contravariantTypes = data.flatMap { it.contravariantTypes }.toSet()
       val requiredClassTypes = flattenMap(data.map { it.requiredClassTypes })
       val constraints = data.flatMap { it.constraints }
-      val covariantTypes = data.flatMap { it.covariantTypes }.toSet()
       val dependentTypes = data.flatMap { it.dependentTypes }.toSet()
-      return TypeUsageInformation(contravariantTypes, requiredClassTypes, constraints, covariantTypes, dependentTypes)
+      return TypeUsageInformation(requiredClassTypes, constraints, dependentTypes)
     }
   }
 }
