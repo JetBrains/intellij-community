@@ -101,8 +101,8 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
       final VirtualFile file = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
       if (file != null) {
         final String fileName = file.getName();
-        if (!"plugin.xml".equals(fileName)) {
-          final VirtualFile mainPluginXml = file.findFileByRelativePath("../plugin.xml");
+        if (!PluginManagerCore.PLUGIN_XML.equals(fileName)) {
+          final VirtualFile mainPluginXml = file.findFileByRelativePath("../" + PluginManagerCore.PLUGIN_XML);
           if (mainPluginXml != null) {
             final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
             if (psiFile instanceof XmlFile) {

@@ -10,6 +10,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -164,11 +165,11 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       if (metaInf == null) {
         return false;
       }
-      if (metaInf.findChild("plugin.xml") != null) {
+      if (metaInf.findChild(PluginManagerCore.PLUGIN_XML) != null) {
         return true;
       }
       Project project = module.getProject();
-      VirtualFile pluginXml = metaInf.createChildData(this, "plugin.xml");
+      VirtualFile pluginXml = metaInf.createChildData(this, PluginManagerCore.PLUGIN_XML);
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
 
