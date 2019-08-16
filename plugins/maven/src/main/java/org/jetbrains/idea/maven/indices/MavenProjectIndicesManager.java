@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -290,6 +291,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
       @Override
       protected boolean condition() {
+        ProgressManager.checkCanceled();
         return !result.isNull();
       }
     };
