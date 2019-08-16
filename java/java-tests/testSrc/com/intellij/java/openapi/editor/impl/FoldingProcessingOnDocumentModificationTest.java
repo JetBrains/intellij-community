@@ -16,15 +16,26 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author Denis Zhdanov
@@ -118,9 +129,51 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     executeAction(IdeActions.ACTION_EDITOR_DELETE);
     checkFoldingState("[]");
   }
-  
+
+  public void testCollapsedFoldRegionIsUpdatedIfPlaceholderIsChanging() {
+    int[] valuePlaceholder = new int[] {0};
+    FoldingBuilder builder = new FoldingBuilder() {
+      @NotNull
+      @Override
+      public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+        int pos = document.getText().indexOf("value");
+        if (pos >= 0) {
+          return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
+                                                                Collections.singleton(ModificationTracker.EVER_CHANGED))};
+        }
+        return FoldingDescriptor.EMPTY;
+      }
+
+      @Nullable
+      @Override
+      public String getPlaceholderText(@NotNull ASTNode node) {
+        return Integer.toString(valuePlaceholder[0]);
+      }
+
+      @Override
+      public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+        return true;
+      }
+    };
+    LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, builder);
+    try {
+      openEditor("<caret>\nvalue", TestFileType.TEXT);
+      checkFoldingState("[FoldRegion +(1:6), placeholder='0']");
+      valuePlaceholder[0] = 1;
+      runFoldingPass();
+      checkFoldingState("[FoldRegion +(1:6), placeholder='1']");
+    }
+    finally {
+      LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, builder);
+    }
+  }
+
   private void openJavaEditor(String text) {
-    init(text, TestFileType.JAVA);
+    openEditor(text, TestFileType.JAVA);
+  }
+
+  private void openEditor(String text, TestFileType fileType) {
+    init(text, fileType);
     buildInitialFoldRegions();
     runFoldingPass(true);
     runFoldingPass();
