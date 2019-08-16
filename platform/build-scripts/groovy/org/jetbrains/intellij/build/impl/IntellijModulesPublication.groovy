@@ -15,35 +15,35 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
  */
 @CompileStatic
 @SuppressWarnings("unused")
-class IntellijModulesPreview {
+class IntellijModulesPublication {
   private final CompilationContext context
   private final File mavenSettings
   private final Options options
 
-  IntellijModulesPreview(CompilationContext context, Options options) {
+  IntellijModulesPublication(CompilationContext context, Options options) {
     this.context = context
     this.options = options
     this.mavenSettings = mavenSettings()
   }
 
-  IntellijModulesPreview(CompilationContext context) {
+  IntellijModulesPublication(CompilationContext context) {
     this(context, new Options(version: context.options.buildNumber))
   }
 
   static class Options {
     String version
     int uploadRetryCount = 3
-    String repositoryUser = property('intellij.modules.preview.repository.user')
-    String repositoryPassword = property('intellij.modules.preview.repository.password')
+    String repositoryUser = property('intellij.modules.publication.repository.user')
+    String repositoryPassword = property('intellij.modules.publication.repository.password')
     /**
      * URL where the artifacts will be deployed
      */
-    String repositoryUrl = property('intellij.modules.preview.repository.url')
+    String repositoryUrl = property('intellij.modules.publication.repository.url')
     /**
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
-    File outputDir = property('intellij.modules.preview.prebuilt.artifacts.dir')?.with { new File(it) }
-    Collection<String> modulesToPublish = property('intellij.modules.preview.list')
+    File outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { new File(it) }
+    Collection<String> modulesToPublish = property('intellij.modules.publication.list')
                                             ?.split(',')?.toList()
                                             ?.collect { it.trim() }
                                             ?.findAll { !it.isEmpty() } ?: []
@@ -55,10 +55,15 @@ class IntellijModulesPreview {
 
   void publish() {
     def modules = new HashSet<JpsModule>()
-    options.modulesToPublish.each {
-      def module = context.findRequiredModule(it)
-      modules << module
-      transitiveModuleDependencies(module, modules)
+    if (options.modulesToPublish == ['*']) {
+      modules += context.project.modules
+    }
+    else {
+      options.modulesToPublish.each {
+        def module = context.findRequiredModule(it)
+        modules << module
+        transitiveModuleDependencies(module, modules)
+      }
     }
     if (modules.isEmpty()) context.messages.warning('Nothing to publish')
     modules.each {
@@ -67,7 +72,9 @@ class IntellijModulesPreview {
       def pom = new File(dir, coordinates.getFileName('', 'pom'))
       def jar = new File(dir, coordinates.getFileName('', 'jar'))
       def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
-      deployJar(jar, pom)
+      if (jar.exists()) {
+        deployJar(jar, pom)
+      }
       if (sources.exists()) {
         deploySources(sources, coordinates)
       }
