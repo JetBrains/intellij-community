@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,12 +44,9 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
       if (plugin == null) return Collections.emptyMap();
 
       List<String> ids = new ArrayList<>();
-      ContainerUtil.addIfNotNull(ids, plugin.getPluginId());
+      ids.add(StringUtil.notNullize(plugin.getPluginId()));
       for (PluginModule module : plugin.getModules()) {
         ContainerUtil.addIfNotNull(ids, module.getValue().getStringValue());
-      }
-      if (ids.isEmpty()) {
-        ids.add("");
       }
       return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
     };
@@ -62,7 +60,7 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
