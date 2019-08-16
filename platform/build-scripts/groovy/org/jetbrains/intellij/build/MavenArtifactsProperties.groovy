@@ -25,6 +25,11 @@ class MavenArtifactsProperties {
   List<String> additionalModules = []
 
   /**
+   * Names of proprietary modules for which Maven artifacts should be generated.
+   */
+  List<String> proprietaryModules = []
+
+  /**
    * A predicate which returns {@code true} for modules which sources should be published as Maven artifacts.
    */
   BiPredicate<JpsModule, BuildContext> publishSourcesFilter = { JpsModule module, BuildContext context ->

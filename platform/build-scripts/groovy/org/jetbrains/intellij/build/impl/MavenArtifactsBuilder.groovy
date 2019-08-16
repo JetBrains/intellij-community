@@ -39,19 +39,17 @@ class MavenArtifactsBuilder {
     this.buildContext = buildContext
   }
 
-  void generateMavenArtifacts(List<String> ideModuleNames) {
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    Map<JpsModule, MavenArtifactData> modulesToPublish = generateMavenArtifactData((mavenArtifacts.forIdeModules ? ideModuleNames : [])
-                                                                                     + mavenArtifacts.additionalModules)
+  void generateMavenArtifacts(List<String> namesOfModulesToPublish, String outputDir) {
+    Map<JpsModule, MavenArtifactData> modulesToPublish = generateMavenArtifactData(namesOfModulesToPublish)
     buildContext.messages.progress("Generating Maven artifacts for ${modulesToPublish.size()} modules")
     buildContext.messages.debug("Generate artifacts for the following modules:")
     modulesToPublish.each {module, data -> buildContext.messages.debug("  $module.name -> $data.coordinates")}
-    layoutMavenArtifacts(modulesToPublish)
+    layoutMavenArtifacts(modulesToPublish, outputDir)
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  private void layoutMavenArtifacts(Map<JpsModule, MavenArtifactData> modulesToPublish) {
+  private void layoutMavenArtifacts(Map<JpsModule, MavenArtifactData> modulesToPublish, String outputDir) {
     def ant = buildContext.ant
     def publishSourcesFilter = buildContext.productProperties.mavenArtifacts.publishSourcesFilter
     def buildContext = this.buildContext
@@ -61,7 +59,7 @@ class MavenArtifactsBuilder {
       pomXmlFiles[module] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
-    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/maven-artifacts") {
+    new LayoutBuilder(buildContext, true).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { aModule, artifactData ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[aModule])

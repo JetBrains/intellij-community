@@ -325,11 +325,22 @@ idea.fatal.error.notification=disabled
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
-        def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
-        new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
+        def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
+        def moduleNames
+        if (mavenArtifacts.forIdeModules) {
+          def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
+          moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+        } else {
+          moduleNames = mavenArtifacts.additionalModules
+        }
+        if (!moduleNames.isEmpty()) {
+          mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+        }
+        if (!mavenArtifacts.proprietaryModules.isEmpty()) {
+          mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+        }
       }
     }
 
