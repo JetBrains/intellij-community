@@ -18,6 +18,7 @@ version = (
 if version[0] >= 3:
     #noinspection PyUnresolvedReferences
     import builtins as the_builtins
+    import queue
 
     string = "".__class__
 
@@ -32,6 +33,7 @@ if version[0] >= 3:
 
 else: # < 3.0
     import __builtin__ as the_builtins
+    import Queue as queue
 
     STR_TYPES = (getattr(the_builtins, "unicode"), str)
 
