@@ -3,13 +3,13 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -27,7 +27,7 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
   @NotNull
   @Override
   public List<SearchScope> getSearchScopes(@NotNull Project project) {
-    if (!Registry.is("devkit.enable.plugin.descriptor.files.scope")) return Collections.emptyList();
+    if (!PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
     final Collection<VirtualFile> pluginDescriptorFiles =
       DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScopesCore.projectProductionScope(project));
