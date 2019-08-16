@@ -1085,6 +1085,7 @@ public class EditorPainter implements TextDrawingCallback {
           for (Inlay inlay : inlaysAbove) {
             int height = inlay.getHeightInPixels();
             int newY = curY - height;
+            if (attributes == null) attributes = new TextAttributes();
             inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, newY, inlay.getWidthInPixels(), height), attributes);
             curY = newY;
           }
@@ -1095,6 +1096,7 @@ public class EditorPainter implements TextDrawingCallback {
           TextAttributes attributes = myBetweenLinesAttributes.get(visualLine + 1);
           for (Inlay inlay : inlaysBelow) {
             int height = inlay.getHeightInPixels();
+            if (attributes == null) attributes = new TextAttributes();
             inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, curY, inlay.getWidthInPixels(), height), attributes);
             curY += height;
           }
