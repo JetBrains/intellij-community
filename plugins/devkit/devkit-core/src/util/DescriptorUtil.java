@@ -63,17 +63,6 @@ public final class DescriptorUtil {
     }
   }
 
-  @Nullable
-  public static String getPluginId(Module plugin) {
-    assert PluginModuleType.isOfType(plugin);
-
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
-    if (pluginXml == null) return null;
-
-    final IdeaPlugin ideaPlugin = getIdeaPlugin(pluginXml);
-    return ideaPlugin == null ? null : ideaPlugin.getPluginId();
-  }
-
   public static List<String> getPluginAndOptionalDependenciesIds(Module module) {
     XmlFile xml = PluginModuleType.getPluginXml(module);
     if (xml == null) return Collections.emptyList();
