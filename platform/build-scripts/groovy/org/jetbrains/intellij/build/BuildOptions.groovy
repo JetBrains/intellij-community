@@ -34,6 +34,7 @@ class BuildOptions {
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
   static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
