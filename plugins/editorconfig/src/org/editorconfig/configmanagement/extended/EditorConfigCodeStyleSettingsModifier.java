@@ -6,6 +6,7 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
@@ -62,7 +65,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         // Get editorconfig settings
         try {
           final MyContext context = new MyContext(settings, psiFile);
-            return ApplicationUtil.runWithCheckCanceled(() -> {
+            return runWithCheckCancelled(() -> {
               processEditorConfig(project, psiFile, context);
               // Apply editorconfig settings for the current editor
               if (applyCodeStyleSettings(context)) {
@@ -85,6 +88,18 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       }
     }
     return false;
+  }
+
+  private static boolean runWithCheckCancelled(@NotNull Callable<Boolean> callable,
+                                               @NotNull ProgressIndicator progressIndicator) throws Exception {
+      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+      try {
+        return ApplicationUtil.runWithCheckCanceled(future, progressIndicator);
+      }
+      catch (ProcessCanceledException pce) {
+        future.cancel(true);
+        throw pce;
+      }
   }
 
   @NotNull
