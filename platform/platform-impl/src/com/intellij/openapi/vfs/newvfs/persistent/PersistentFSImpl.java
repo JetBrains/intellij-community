@@ -285,6 +285,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                  @NotNull FileAttributes attributes,
                                                  @Nullable String symlinkTarget) {
     assert id > 0 : id;
+    assert parentId >= 0 : parentId; // 0 means there's no parent
     if (name.length() != 0) {
       if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
@@ -334,11 +335,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static int getFileId(@NotNull VirtualFile file) {
-    final int id = ((VirtualFileWithId)file).getId();
-    if (id <= 0) {
-      throw new InvalidVirtualFileAccessException(file);
-    }
-    return id;
+    return ((VirtualFileWithId)file).getId();
   }
 
   @Override

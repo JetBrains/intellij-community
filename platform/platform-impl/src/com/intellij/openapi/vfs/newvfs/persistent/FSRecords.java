@@ -906,6 +906,7 @@ public class FSRecords {
   // returns NameId[] sorted by NameId.id
   @NotNull
   public static NameId[] listAll(int parentId) {
+    assert parentId > 0 : parentId;
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
         if (input == null) return NameId.EMPTY_ARRAY;
@@ -973,6 +974,7 @@ public class FSRecords {
   }
 
   static void updateList(int id, @NotNull int[] childIds) {
+    assert id > 0 : id;
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {
       DbConnection.markDirty();

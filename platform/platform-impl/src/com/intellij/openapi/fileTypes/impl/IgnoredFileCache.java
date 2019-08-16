@@ -45,9 +45,7 @@ final class IgnoredFileCache {
             VirtualFile file = event.getFile();
             if (file instanceof NewVirtualFile) {
               int id = ((NewVirtualFile)file).getId();
-              if (id >= 0) {
-                myNonIgnoredIds.clear(id);
-              }
+              myNonIgnoredIds.clear(id);
             }
           }
         }
@@ -60,13 +58,17 @@ final class IgnoredFileCache {
   }
 
   boolean isFileIgnored(@NotNull VirtualFile file) {
-    int id = myVfsEventNesting == 0 && file instanceof NewVirtualFile ? ((NewVirtualFile)file).getId() : -1;
-    if (id > 0 && myNonIgnoredIds.get(id)) {
+    boolean idable = myVfsEventNesting == 0 && file instanceof NewVirtualFile;
+    if (!idable) {
+      return myIgnoredPatterns.isIgnored(file.getNameSequence());
+    }
+    int id = ((NewVirtualFile)file).getId();
+    if (myNonIgnoredIds.get(id)) {
       return false;
     }
 
     boolean result = myIgnoredPatterns.isIgnored(file.getNameSequence());
-    if (!result && id > 0) {
+    if (!result) {
       myNonIgnoredIds.set(id);
     }
     return result;

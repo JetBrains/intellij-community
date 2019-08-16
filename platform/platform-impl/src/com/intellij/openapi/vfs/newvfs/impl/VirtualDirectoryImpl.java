@@ -202,7 +202,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   private VirtualFileSystemEntry[] getArraySafely() {
-    if (myId < 0) throw new InvalidVirtualFileAccessException(this);
     return myData.getFileChildren(this);
   }
 
@@ -550,7 +549,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private void insertChildAt(@NotNull VirtualFileSystemEntry file, int negativeIndex) {
     int i = -negativeIndex -1;
     int id = file.getId();
-    assert id > 0 : file;
+    assert id > 0 : file +": "+id;
     myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
   }
 
@@ -618,11 +617,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     int id = getId();
     synchronized (myData) {
-      if (id >= 0) {
-        FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
-        for (FSRecords.NameId nameId : persistentIds) {
-          existingNames.add(nameId.name);
-        }
+      FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
+      for (FSRecords.NameId nameId : persistentIds) {
+        existingNames.add(nameId.name);
       }
 
       validateAgainst(childrenToCreate, existingNames);
