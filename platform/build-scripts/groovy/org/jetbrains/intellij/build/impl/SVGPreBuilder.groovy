@@ -3,10 +3,13 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
+@CompileStatic
 class SVGPreBuilder {
   static final List<String> getModulesToInclude() {
     return ["intellij.platform.images.build"]
@@ -26,11 +29,11 @@ class SVGPreBuilder {
       resultDir.mkdirs()
       File requestFile = new File(resultDir, "request.txt")
 
-      resultDir.withPrintWriter("UTF-8") { writer ->
+      requestFile.withPrintWriter("UTF-8") { writer ->
         for (String moduleName : modulesToProcess) {
-          def module = buildContext.findModule(moduleName)
-          def outputFile = new File(buildContext.getModuleOutputPath(module))
-          def resultFile = new File(resultDir, moduleName)
+          JpsModule module = buildContext.findRequiredModule(moduleName)
+          File outputFile = new File(buildContext.getModuleOutputPath(module))
+          File resultFile = new File(resultDir, moduleName)
 
           writer.println(outputFile.absolutePath)
           writer.println(resultFile.absolutePath)
@@ -43,6 +46,7 @@ class SVGPreBuilder {
     })
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, File requestFile) {
     buildContext.ant.java(classname: "org.jetbrains.intellij.build.images.ImageSvgPreCompiler", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
