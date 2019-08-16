@@ -47,6 +47,11 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
+fun Path.safeOutputStream(): OutputStream {
+  parent?.createDirectories()
+  return SafeFileOutputStream(this)
+}
+
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
