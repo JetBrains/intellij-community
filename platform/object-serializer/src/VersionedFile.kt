@@ -31,29 +31,28 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
   fun <T> writeList(data: Collection<T>, itemClass: Class<T>, configuration: WriteConfiguration = versionedFileDefaultWriteConfiguration) {
     file.safeOutputStream().use {
       val out = if (isCompressed) LZ4FrameOutputStream(it, LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB) else it
-
-      ObjectSerializer.instance.serializer.writeVersioned(data, out, version, originalType = ParameterizedTypeImpl(data.javaClass, itemClass), configuration = configuration)
+      ObjectSerializer.instance.serializer.writeVersioned(data, out, version, configuration, ParameterizedTypeImpl(data.javaClass, itemClass))
     }
   }
 
   @Throws(IOException::class, SerializationException::class)
   @JvmOverloads
-  fun <T> readList(itemClass: Class<T>, configuration: ReadConfiguration = ReadConfiguration(), renameToCorruptedOnError: Boolean = true): List<T>? {
-    @Suppress("UNCHECKED_CAST")
-    return readAndHandleErrors(ArrayList::class.java, configuration, originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass), renameToCorruptedOnError = renameToCorruptedOnError) as List<T>?
-  }
+  @Suppress("UNCHECKED_CAST")
+  fun <T> readList(itemClass: Class<T>, configuration: ReadConfiguration = ReadConfiguration(), renameToCorruptedOnError: Boolean = true): List<T>? =
+    readAndHandleErrors(ArrayList::class.java, configuration, ParameterizedTypeImpl(ArrayList::class.java, itemClass), renameToCorruptedOnError) as List<T>?
 
   @Throws(IOException::class, SerializationException::class)
   @JvmOverloads
-  fun <T : Any> read(objectClass: Class<T>, beanConstructed: BeanConstructed? = null): T? {
-    return readAndHandleErrors(objectClass, ReadConfiguration(beanConstructed = beanConstructed))
-  }
+  fun <T : Any> read(objectClass: Class<T>, beanConstructed: BeanConstructed? = null): T? =
+    readAndHandleErrors(objectClass, ReadConfiguration(beanConstructed = beanConstructed))
 
-  private fun <T : Any> readAndHandleErrors(objectClass: Class<T>, configuration: ReadConfiguration, originalType: Type? = null, renameToCorruptedOnError: Boolean = true): T? {
-    return readPossiblyCompressedIonFile(file) { input ->
+  private fun <T : Any> readAndHandleErrors(objectClass: Class<T>,
+                                            configuration: ReadConfiguration,
+                                            originalType: Type? = null,
+                                            renameToCorruptedOnError: Boolean = true): T? =
+    readPossiblyCompressedIonFile(file) { input ->
       val result = try {
-        ObjectSerializer.instance.serializer.readVersioned(objectClass, input, file, version, originalType = originalType,
-                                                           configuration = configuration)
+        ObjectSerializer.instance.serializer.readVersioned(objectClass, input, file, version, configuration, originalType)
       }
       catch (e: Exception) {
         if (renameToCorruptedOnError) {
@@ -63,13 +62,11 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
         LOG.error(e)
         return null
       }
-
       if (result == null && renameToCorruptedOnError) {
         renameSilentlyToCorrupted()
       }
       return result
     }
-  }
 
   private fun renameSilentlyToCorrupted() {
     try {
@@ -102,7 +99,6 @@ internal inline fun <T : Any> readPossiblyCompressedIonFile(file: Path, consumer
       LZ4_MAGIC -> LZ4FrameInputStream(input)
       else -> input.buffered(fileBufferSize)
     }
-
     return consumer(input)
   }
 }
