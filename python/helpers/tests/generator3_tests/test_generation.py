@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import subprocess
 import sys
@@ -5,7 +7,7 @@ import textwrap
 import unittest
 
 import generator3.core
-from generator3_tests import GeneratorTestCase, python3_only, python2_only
+import six
 from generator3.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
@@ -14,6 +16,7 @@ from generator3.constants import (
     ENV_VERSION,
 )
 from generator3.util_methods import mkdir
+from generator3_tests import GeneratorTestCase, python3_only, python2_only
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
@@ -23,6 +26,20 @@ _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__fil
 class SkeletonGenerationTest(GeneratorTestCase):
     PYTHON_STUBS_DIR = 'python_stubs'
     SDK_SKELETONS_DIR = 'sdk_skeletons'
+
+    def setUp(self):
+        super(SkeletonGenerationTest, self).setUp()
+        self.process_stdout = six.StringIO()
+        self.process_stderr = six.StringIO()
+
+    def tearDown(self):
+        super(SkeletonGenerationTest, self).tearDown()
+        self.process_stdout.close()
+        self.process_stderr.close()
+
+    def tearDownForFailedTest(self):
+        print("Launched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80, file=sys.stdout)
+        print("Launched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80, file=sys.stderr)
 
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
@@ -67,13 +84,17 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 args.append(mod_path)
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
+        process = self.run_process(args, env=env)
+        return process.returncode == 0
+
+    def run_process(self, args, env=None):
         process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process.wait()
-        sys.stdout.write(process.stdout.read().decode('utf-8'))
+        self.process_stdout.write(process.stdout.read().decode('utf-8'))
         process.stdout.close()
-        sys.stderr.write(process.stderr.read().decode('utf-8'))
+        self.process_stderr.write(process.stderr.read().decode('utf-8'))
         process.stderr.close()
-        return process.returncode == 0
+        return process
 
     @property
     def temp_skeletons_dir(self):
