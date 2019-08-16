@@ -154,6 +154,21 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testPointerForFileSystemRoot1() {
+    File rootDir = new File("/");
+    assertTrue(rootDir.exists());
+
+    VirtualFilePointer pointer = createPointerByFile(rootDir, null);
+    assertTrue(pointer.isValid());
+  }
+
+  @Test
+  public void testPointerForFileSystemRoot2() {
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(LocalFileSystem.PROTOCOL_PREFIX + "/", disposable, null);
+    assertTrue(pointer.isValid());
+  }
+
+  @Test
   public void testPathNormalization() throws IOException {
     checkFileName("///", "");
   }

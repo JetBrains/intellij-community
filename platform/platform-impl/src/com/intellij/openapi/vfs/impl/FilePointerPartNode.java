@@ -32,11 +32,11 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -271,12 +271,12 @@ class FilePointerPartNode {
   }
 
   private void doCheckConsistency(boolean dotDotOccurred) {
-    CharSequence part = getName();
-    int dotDotIndex = StringUtil.indexOf(part, "..");
+    String name = getName().toString();
+    int dotDotIndex = StringUtil.indexOf(name, "..");
     if (dotDotIndex != -1) {
       // part must not contain "/.." nor "../" nor be just ".."
       // (except when the pointer was created from URL of non-existing file with ".." inside)
-      dotDotOccurred |= part.equals("..") || dotDotIndex != 0 && part.charAt(dotDotIndex - 1) == '/' || dotDotIndex < part.length() - 2 && part.charAt(dotDotIndex + 2) == '/';
+      dotDotOccurred |= name.equals("..") || dotDotIndex != 0 && name.charAt(dotDotIndex - 1) == '/' || dotDotIndex < name.length() - 2 && name.charAt(dotDotIndex + 2) == '/';
     }
     int childSum = 0;
     for (int i = 0; i < children.length; i++) {
@@ -294,16 +294,20 @@ class FilePointerPartNode {
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
     if (fileAndUrl != null && fileAndUrl.second != null) {
       String url = fileAndUrl.second;
-      String path = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-      assert StringUtilRt.equal(path.substring(path.length() - part.length()), part, SystemInfo.isFileSystemCaseSensitive) : "part is: '" + part + "' but url is: '" + url + "'";
-      assert StringUtilRt.equal(new File(path).getName(), getName(), SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + fileAndUrl + "; but this: " + this;
+      String path = VfsUtilCore.urlToPath(url);
+      path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
+      String nameFromPath = PathUtil.getFileName(path);
+      if (!path.isEmpty() && nameFromPath.isEmpty() && SystemInfo.isUnix) {
+        nameFromPath = "/";
+      }
+      assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + fileAndUrl + "; but this: " + this+"; nameFromPath: "+nameFromPath+"; name: "+name+"; parent: "+parent+"; path: "+path+"; url: "+url;
     }
     boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
     if (hasFile) {
-      assert fileAndUrl.first.getName().equals(getName().toString()) : "fileAndUrl: "+fileAndUrl +"; but this: "+this;
+      assert fileAndUrl.first.getName().equals(name) : "fileAndUrl: " + fileAndUrl + "; but this: " + this;
     }
     // when the node contains real file its path should be canonical
-    assert !hasFile || !dotDotOccurred : "Path is not canonical: '" + getUrl() + "'; my part: '" + part + "'";
+    assert !hasFile || !dotDotOccurred : "Path is not canonical: '" + getUrl() + "'; my part: '" + name + "'";
   }
 
   // returns root node
@@ -489,6 +493,7 @@ class FilePointerPartNode {
   private static List<String> splitNames(@NotNull String path) {
     List<String> names = new ArrayList<>(20);
     int end = path.length();
+    if (end == 0) return names;
     while (true) {
       int startIndex = extractName(path, end);
       assert startIndex != end : "startIndex: "+startIndex+"; end: "+end+"; path:'"+path+"'; toExtract: '"+path.substring(0, end)+"'";
