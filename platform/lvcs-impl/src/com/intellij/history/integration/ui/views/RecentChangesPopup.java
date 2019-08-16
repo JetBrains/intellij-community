@@ -35,7 +35,7 @@ public class RecentChangesPopup {
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {
-    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,2,2));
+    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,UIUtil.DEFAULT_HGAP,2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
     private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
     private final JPanel mySpacePanel = new JPanel();
@@ -45,7 +45,7 @@ public class RecentChangesPopup {
       myPanel.add(mySpacePanel);
       myPanel.add(myActionLabel);
 
-      Dimension d = new Dimension(30, mySpacePanel.getPreferredSize().height);
+      Dimension d = new Dimension(10, mySpacePanel.getPreferredSize().height);
       mySpacePanel.setMinimumSize(d);
       mySpacePanel.setMaximumSize(d);
       mySpacePanel.setPreferredSize(d);
