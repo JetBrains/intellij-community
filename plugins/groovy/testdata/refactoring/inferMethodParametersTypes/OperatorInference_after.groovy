@@ -5,7 +5,7 @@ class Custom {
   }
 }
 
-def void f<caret>oo(Custom a) {
+void f<caret>oo(Custom a) {
   Custom x = new Custom()
   x+a
 }

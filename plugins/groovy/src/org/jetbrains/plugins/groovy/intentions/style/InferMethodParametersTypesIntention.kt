@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style
 
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
@@ -18,11 +17,9 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLan
 import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 
 
@@ -38,35 +35,21 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val returnType = if (!method.isConstructor && method.returnTypeElement == null) {
-      val inferredType = method.inferredReturnType
-      val returnType = TypesUtil.unboxPrimitiveTypeWrapper(
-        if (inferredType == null || inferredType == PsiType.NULL) {
-          getJavaLangObject(method)
-        }
-        else {
-          inferredType
-        })
-      GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(getJavaLangObject(method)))
-      method.modifierList.setModifierProperty(DEF, false)
-      returnType
-    }
-    else {
-      null
-    }
     MethodParameterAugmenter.produceTypedMethod(method, GlobalSearchScope.allScope(project)) { virtualMethod ->
       substituteMethodSignature(virtualMethod, method)
-      if (returnType != null && method.annotations.all { it.qualifiedName != CommonClassNames.JAVA_LANG_OVERRIDE }) {
-        GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
-      }
     }
   }
 
 
   private fun substituteMethodSignature(sourceMethod: GrMethod, sinkMethod: GrMethod) {
     if (!sinkMethod.isConstructor) {
-      sinkMethod.returnType = sourceMethod.returnType
-      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.returnTypeElementGroovy)
+      val returnType = if (sinkMethod.annotations.all { it.qualifiedName != CommonClassNames.JAVA_LANG_OVERRIDE }) {
+        sourceMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
+      }
+      else {
+        sourceMethod.returnType
+      }
+      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
     }
     if (sourceMethod.hasTypeParameters()) {
       when {
@@ -94,9 +77,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
       }
     }
     sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
-    if ((sinkMethod.isConstructor && !sinkMethod.hasTypeParameters()) || sinkMethod.hasModifier(JvmModifier.STATIC)) {
-      sinkMethod.modifierList.setModifierProperty("def", false)
-    }
+    sinkMethod.modifierList.setModifierProperty("def", false)
   }
 
   private fun collectParameterSubstitutor(virtualMethod: GrMethod): PsiSubstitutor {

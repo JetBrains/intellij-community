@@ -1,4 +1,4 @@
-def void f<caret>oo(Integer a, String b) {
+void f<caret>oo(Integer a, String b) {
   bar(bar(bar(baz(a))))
 
   if (1 > 2) {
