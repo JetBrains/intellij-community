@@ -11,7 +11,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.setConstraints
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.induceDeepConstraints
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -167,7 +167,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
               closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
             argumentCorrespondence.forEach { (type, argument) ->
               constraintCollector.add(TypeConstraint(type, argument.type, method))
-              setConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(), LOWER)
+              induceDeepConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(), LOWER)
             }
           }
         }

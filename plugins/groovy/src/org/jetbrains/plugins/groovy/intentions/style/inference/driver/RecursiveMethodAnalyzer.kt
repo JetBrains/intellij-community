@@ -14,15 +14,16 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.upperBound
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -107,10 +108,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         else {
           listOf(currentLowerType)
         }
-        val matchedLowerBound =
-          candidateLowerTypes.find { lowerType ->
-            TypesUtil.canAssign(currentUpperType.rawType(), lowerType.rawType(), context, METHOD_PARAMETER) == OK
-          } ?: return
+        val matchedLowerBound = candidateLowerTypes.find { lowerType ->
+          TypesUtil.canAssign(currentUpperType.rawType(), lowerType.rawType(), context, METHOD_PARAMETER) == OK
+        } ?: return
         for (classParameterIndex in currentUpperType.parameters.indices) {
           currentLowerType = matchedLowerBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
           currentUpperType.parameters[classParameterIndex].accept(this)
@@ -149,20 +149,16 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?) {
         wildcardType ?: return
-        if (wildcardType.isExtends) {
-          val extendsBound = wildcardType.extendsBound as PsiClassType
-          if (currentLowerType.isTypeParameter()) {
-            generateRequiredTypes(currentLowerType.typeParameter()!!, extendsBound, UPPER)
+        val bound = wildcardType.bound as? PsiClassType ?: return
+        if (currentLowerType.isTypeParameter()) {
+          if (wildcardType.isExtends) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, bound, UPPER)
           }
-          visitClassParameters(extendsBound)
-        }
-        else if (wildcardType.isSuper) {
-          val superBound = wildcardType.superBound as PsiClassType
-          if (currentLowerType.isTypeParameter()) {
-            generateRequiredTypes(currentLowerType.typeParameter()!!, superBound, LOWER)
+          else if (wildcardType.isSuper) {
+            generateRequiredTypes(currentLowerType.typeParameter()!!, bound, LOWER)
           }
-          visitClassParameters(superBound)
         }
+        visitClassParameters(bound)
         super.visitWildcardType(wildcardType)
       }
     })
@@ -176,23 +172,27 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
-    run {
-      val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference
-      val accessorResult = lValueReference?.advancedResolve() as? GroovyMethodResult
-      val mapping = accessorResult?.candidate?.argumentMapping
-      mapping?.expectedTypes?.forEach { (type, argument) ->
-        processRequiredParameters(argument.type ?: return@forEach, type)
-      }
-      val fieldResult = lValueReference?.resolve() as? GrField
-      if (fieldResult != null) {
-        val leftType = fieldResult.type
-        val rightType = expression.rValue?.type
-        processRequiredParameters(rightType ?: return@run, leftType)
-        constraintsCollector.add(TypeConstraint(leftType, rightType, method))
-      }
-    }
     constraintsCollector.add(ExpressionConstraint(null, expression))
-    super.visitAssignmentExpression(expression)
+    val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference ?: return
+    processSetter(lValueReference)
+    processFieldAssignment(lValueReference, expression)
+  }
+
+  private fun processSetter(setterReference: GroovyReference) {
+    val accessorResult = setterReference.advancedResolve() as? GroovyMethodResult ?: return
+    val mapping = accessorResult.candidate?.argumentMapping ?: return
+    for ((expectedType, argument) in mapping.expectedTypes) {
+      val argumentType = argument.type ?: continue
+      processRequiredParameters(argumentType, expectedType)
+    }
+  }
+
+  private fun processFieldAssignment(fieldReference: GroovyReference, expression: GrAssignmentExpression) {
+    val fieldResult = fieldReference.resolve() as? GrField ?: return
+    val leftType = fieldResult.type
+    val rightType = expression.rValue?.type ?: return
+    processRequiredParameters(rightType, leftType)
+    constraintsCollector.add(TypeConstraint(leftType, rightType, method))
   }
 
   override fun visitReturnStatement(returnStatement: GrReturnStatement) {
@@ -201,23 +201,21 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
-    variableDeclaration.variables.forEach {
-      processRequiredParameters(it.initializerGroovy?.type ?: return@forEach, it.type)
+    for (variable in variableDeclaration.variables) {
+      val initializer = variable.initializerGroovy ?: continue
+      val initializerType = initializer.type ?: continue
+      processRequiredParameters(initializerType, variable.type)
+      constraintsCollector.add(ExpressionConstraint(variable.declaredType, initializer))
     }
     super.visitVariableDeclaration(variableDeclaration)
   }
 
-  override fun visitVariable(variable: GrVariable) {
-    variable.initializerGroovy?.run {
-      constraintsCollector.add(ExpressionConstraint(variable.declaredType, this))
-    }
-    super.visitVariable(variable)
-  }
 
   override fun visitExpression(expression: GrExpression) {
     if (expression is GrOperatorExpression) {
-      run {
-        processMethod(expression.reference?.advancedResolve() ?: return@run)
+      val operatorMethodResolveResult = expression.reference?.advancedResolve()
+      if (operatorMethodResolveResult != null) {
+        processMethod(operatorMethodResolveResult)
       }
       constraintsCollector.add(OperatorExpressionConstraint(expression))
     }
@@ -230,33 +228,44 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   fun visitOuterCalls(originalMethod: GrMethod, scope: SearchScope) {
     val mapping = originalMethod.parameters.map { it.name }.zip(method.parameters).toMap()
+    processCallInitializers()
     val calls = ReferencesSearch.search(originalMethod, scope).findAll()
+    for (outerCall in calls.mapNotNull { it.element.parent }) {
+      val candidate = (outerCall.properResolve() as? GroovyMethodResult)?.candidate ?: continue
+      val argumentMapping = candidate.argumentMapping ?: continue
+      argumentMapping.expectedTypes.forEach { (_, argument) ->
+        val param = mapping[argumentMapping.targetParameter(argument)?.name] ?: return@forEach
+        processOuterArgument(argument, param)
+      }
+    }
+  }
+
+  private fun processCallInitializers() {
     for (parameter in method.parameters) {
-      setConstraints(parameter.type, parameter.initializerGroovy?.type ?: continue, dependentTypes, requiredTypesCollector,
-                     method.typeParameters.toSet(), INHABIT)
+      val initializerType = parameter.initializerGroovy?.type ?: continue
+      induceDeepConstraints(parameter.type,
+                            initializerType, dependentTypes, requiredTypesCollector,
+                            method.typeParameters.toSet(), INHABIT)
     }
-    for (usage in calls.mapNotNull { it.element.parent }) {
-      val resolveResult = when (usage) {
-        is GrAssignmentExpression -> (usage.lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve()
-        is GrConstructorInvocation -> usage.advancedResolve()
-        else -> (usage as? GrCall)?.advancedResolve()
-      }
-      val methodResult = resolveResult as? GroovyMethodResult
-      val candidate = methodResult?.candidate
-      candidate?.argumentMapping?.expectedTypes?.forEach { (_, argument) ->
-        run {
-          val param = mapping[candidate.argumentMapping?.targetParameter(argument)?.name] ?: return@run
-          val argtype = argument.type
-          val correctArgumentType = when {
-            argtype.isTypeParameter() -> PsiIntersectionType.createIntersection(
-              *argtype.typeParameter()!!.extendsListTypes.takeIf { it.isNotEmpty() } ?: arrayOf(argtype))
-            else -> argtype
-          }
-          setConstraints(param.type, correctArgumentType ?: PsiType.NULL, dependentTypes, requiredTypesCollector,
-                         method.typeParameters.toSet(), INHABIT)
-        }
-      }
+  }
+
+  private fun PsiElement.properResolve(): GroovyResolveResult? {
+    return when (this) {
+      is GrAssignmentExpression -> (lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve()
+      is GrConstructorInvocation -> advancedResolve()
+      else -> (this as? GrCall)?.advancedResolve()
     }
+  }
+
+  private fun processOuterArgument(argument: Argument, parameter: GrParameter) {
+    val argtype = argument.type ?: return
+    val correctArgumentType = when {
+      argtype.isTypeParameter() -> PsiIntersectionType.createIntersection(
+        *argtype.typeParameter()!!.extendsListTypes.takeIf { it.isNotEmpty() } ?: arrayOf(argtype))
+      else -> argtype
+    }
+    induceDeepConstraints(parameter.type, correctArgumentType, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(),
+                          INHABIT)
   }
 
   companion object {
@@ -275,39 +284,36 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
 
 
-    fun setConstraints(leftType: PsiType, rightType: PsiType,
-                       dependentTypes: MutableSet<PsiTypeParameter>,
-                       requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
-                       variableParameters: Set<PsiTypeParameter>,
-                       targetMarker: ContainMarker) {
-      if (rightType == PsiType.NULL) {
-        return
-      }
-      val leftBound = if (leftType.isTypeParameter()) {
-        val typeParameter = leftType.typeParameter()!!
-        val correctRightType = if (rightType.typeParameter() !in variableParameters) {
-          rightType
+    fun induceDeepConstraints(leftType: PsiType, rightType: PsiType,
+                              dependentTypes: MutableSet<PsiTypeParameter>,
+                              requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
+                              variableParameters: Set<PsiTypeParameter>,
+                              targetMarker: ContainMarker) {
+      val leftTypeParameter = leftType.typeParameter()
+      val rightTypeParameter = rightType.typeParameter()
+      if (leftTypeParameter != null && rightTypeParameter != null && rightTypeParameter in variableParameters) {
+        dependentTypes.run {
+          add(leftTypeParameter)
+          add(rightTypeParameter)
         }
-        else {
-          dependentTypes.add(typeParameter)
-          dependentTypes.add(rightType.typeParameter()!!)
-          rightType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
-        }
-        val typeSet = expandWildcards(correctRightType, typeParameter)
-        //typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, LOWER)) }
-        typeSet.forEach { requiredTypesCollector.safePut(typeParameter, BoundConstraint(it, targetMarker)) }
-        val newLeftType = leftType.typeParameter()!!.extendsListTypes.firstOrNull() ?: return
-        newLeftType
+        rightTypeParameter.extendsListTypes.firstOrNull()
       }
-      else {
-        leftType
+      else if (leftTypeParameter != null) {
+        val typeSet = expandWildcards(rightType, leftTypeParameter)
+        typeSet.forEach { requiredTypesCollector.safePut(leftTypeParameter, BoundConstraint(it, targetMarker)) }
       }
       if (leftType is PsiArrayType && rightType is PsiArrayType) {
-        setConstraints(leftType.componentType, rightType.componentType, dependentTypes, requiredTypesCollector, variableParameters,
-                       targetMarker)
+        induceDeepConstraints(leftType.componentType, rightType.componentType, dependentTypes, requiredTypesCollector, variableParameters,
+                              targetMarker)
       }
-      (leftBound as? PsiClassType)?.parameters?.zip((rightType as? PsiClassType)?.parameters ?: return)?.forEach {
-        setConstraints(it.first ?: return, it.second ?: return, dependentTypes, requiredTypesCollector, variableParameters, targetMarker)
+      val leftBound = leftTypeParameter?.upperBound() ?: leftType
+      val rightBound = rightTypeParameter?.upperBound() ?: rightType
+      val leftTypeArguments = (leftBound as? PsiClassType)?.parameters ?: return
+      val rightTypeArguments = (rightBound as? PsiClassType)?.parameters ?: return
+      for ((leftTypeArgument, rightTypeArgument) in leftTypeArguments.zip(rightTypeArguments)) {
+        leftTypeArgument ?: continue
+        rightTypeArgument ?: continue
+        induceDeepConstraints(leftTypeArgument, rightTypeArgument, dependentTypes, requiredTypesCollector, variableParameters, targetMarker)
       }
     }
 
