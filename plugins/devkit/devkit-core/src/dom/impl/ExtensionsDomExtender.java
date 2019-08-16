@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
@@ -108,9 +107,8 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
             final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
             if (psiFile instanceof XmlFile) {
               final XmlFile xmlFile = (XmlFile)psiFile;
-              final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(xmlFile);
-              if (fileElement != null) {
-                final IdeaPlugin mainPlugin = fileElement.getRootElement();
+              final IdeaPlugin mainPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
+              if (mainPlugin != null) {
                 ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
                 for (Dependency dependency : mainPlugin.getDependencies()) {
                   ContainerUtil.addIfNotNull(result, dependency.getStringValue());

@@ -31,7 +31,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.Compressor;
-import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -150,11 +149,10 @@ public class PrepareToDeployAction extends AnAction {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) return Collections.emptyMap();
 
-    DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
-    if (fileElement == null) return Collections.emptyMap();
+    IdeaPlugin plugin = DescriptorUtil.getIdeaPlugin(pluginXml);
+    if (plugin == null) return Collections.emptyMap();
 
     Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
-    IdeaPlugin plugin = fileElement.getRootElement();
     List<Extensions> extensions = plugin.getExtensions();
     for (Extensions extensionGroup : extensions) {
       XmlTag extensionsTag = extensionGroup.getXmlTag();

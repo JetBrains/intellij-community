@@ -17,6 +17,6 @@ class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
     val xmlFile = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return null
 
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile) ?: return null
-    return "${PluginDescriptorConstants.META_DATA.fileName} (${ideaPlugin.rootElement.pluginId})"
+    return "${PluginDescriptorConstants.META_DATA.fileName} (${ideaPlugin.pluginId})"
   }
 }

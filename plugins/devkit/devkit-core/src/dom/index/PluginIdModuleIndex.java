@@ -83,7 +83,6 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
       .filter(XmlFile.class)
       .map(DescriptorUtil::getIdeaPlugin)
       .filter(Condition.NOT_NULL)
-      .map(fe -> fe.getRootElement())
       .toList();
   }
 }

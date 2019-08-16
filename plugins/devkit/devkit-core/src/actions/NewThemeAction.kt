@@ -93,7 +93,7 @@ class NewThemeAction: AnAction() {
 
     val pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(dir) ?: return
     DescriptorUtil.checkPluginXmlsWritable(module.project, pluginXml)
-    val domFileElement = DescriptorUtil.getIdeaPlugin(pluginXml)
+    val domFileElement = DescriptorUtil.getIdeaPluginFileElement(pluginXml)
 
     WriteCommandAction.writeCommandAction(module.project, pluginXml).run<Throwable> {
       val extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(domFileElement, THEME_PROVIDER_EP_NAME)

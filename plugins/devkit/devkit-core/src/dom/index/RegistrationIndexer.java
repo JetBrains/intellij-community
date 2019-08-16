@@ -25,7 +25,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +66,7 @@ class RegistrationIndexer {
     PsiFile file = content.getPsiFile();
     if (!(file instanceof XmlFile)) return null;
 
-    DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
-    return fileElement == null ? null : fileElement.getRootElement();
+    return DescriptorUtil.getIdeaPlugin((XmlFile)file);
   }
 
   private void process(IdeaPlugin ideaPlugin) {

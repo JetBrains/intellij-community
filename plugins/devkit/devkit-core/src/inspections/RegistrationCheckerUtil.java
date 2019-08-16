@@ -108,7 +108,7 @@ class RegistrationCheckerUtil {
         if (!(resolve instanceof XmlFile)) continue;
         final XmlFile depPluginXml = (XmlFile)resolve;
 
-        final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
+        final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPluginFileElement(depPluginXml);
         if (dependentIdeaPlugin != null) {
           if (!finder.processScope(GlobalSearchScope.fileScope(dependentIdeaPlugin.getFile()))) {
             return finder.getTypes();
@@ -147,7 +147,7 @@ class RegistrationCheckerUtil {
     if (pluginXml == null) {
       return null;
     }
-    return DescriptorUtil.getIdeaPlugin(pluginXml);
+    return DescriptorUtil.getIdeaPluginFileElement(pluginXml);
   }
 
 

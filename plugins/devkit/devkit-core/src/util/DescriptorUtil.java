@@ -68,25 +68,20 @@ public final class DescriptorUtil {
     assert PluginModuleType.isOfType(plugin);
 
     final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
-    if (pluginXml == null) {
-      return null;
-    }
-    final DomFileElement<IdeaPlugin> ideaPlugin = getIdeaPlugin(pluginXml);
-    if (ideaPlugin == null) {
-      return null;
-    }
+    if (pluginXml == null) return null;
 
-    return ideaPlugin.getRootElement().getPluginId();
+    final IdeaPlugin ideaPlugin = getIdeaPlugin(pluginXml);
+    return ideaPlugin == null ? null : ideaPlugin.getPluginId();
   }
 
   public static List<String> getPluginAndOptionalDependenciesIds(Module module) {
     XmlFile xml = PluginModuleType.getPluginXml(module);
     if (xml == null) return Collections.emptyList();
-    DomFileElement<IdeaPlugin> plugin = getIdeaPlugin(xml);
+    IdeaPlugin plugin = getIdeaPlugin(xml);
     if (plugin == null) return Collections.emptyList();
     List<String> result = new ArrayList<>();
-    ContainerUtil.addIfNotNull(result, plugin.getRootElement().getPluginId());
-    for (Dependency dependency : plugin.getRootElement().getDependencies()) {
+    ContainerUtil.addIfNotNull(result, plugin.getPluginId());
+    for (Dependency dependency : plugin.getDependencies()) {
       if (Boolean.TRUE.equals(dependency.getOptional().getValue())) {
         ContainerUtil.addIfNotNull(result, dependency.getRawText());
       }
@@ -96,11 +91,17 @@ public final class DescriptorUtil {
 
   public static boolean isPluginXml(@Nullable PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
-    return getIdeaPlugin((XmlFile)file) != null;
+    return getIdeaPluginFileElement((XmlFile)file) != null;
   }
 
   @Nullable
-  public static DomFileElement<IdeaPlugin> getIdeaPlugin(@NotNull XmlFile file) {
+  public static DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
+  }
+
+  @Nullable
+  public static IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
+    final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
+    return plugin != null ? plugin.getRootElement() : null;
   }
 }

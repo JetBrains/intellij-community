@@ -302,8 +302,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       final XmlFile mainPluginXml = PluginModuleType.getPluginXml(module);
       if (mainPluginXml == null) return null;
 
-      final DomFileElement<IdeaPlugin> mainDomFileElement = DescriptorUtil.getIdeaPlugin(mainPluginXml);
-      return mainDomFileElement != null ? mainDomFileElement.getRootElement() : null;
+      return DescriptorUtil.getIdeaPlugin(mainPluginXml);
   }
 
   private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
@@ -1073,9 +1072,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiFile file = descriptor.getPsiElement().getContainingFile();
-      DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
-      if (fileElement != null) {
-        IdeaPlugin root = fileElement.getRootElement();
+      IdeaPlugin root = DescriptorUtil.getIdeaPlugin((XmlFile)file);
+      if (root != null) {
         XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
         XmlTag rootTag = root.getXmlTag();
         XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
