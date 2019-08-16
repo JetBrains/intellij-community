@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogRangeFilter;
+import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitVcs;
@@ -29,6 +31,8 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -129,8 +133,9 @@ class GitBrancherImpl implements GitBrancher {
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
     VcsLogContentUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
-      VcsLogRangeFilter filters = VcsLogFilterObject.fromRange("HEAD", branchName);
-      log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters));
+      VcsLogRangeFilter range = VcsLogFilterObject.fromRange("HEAD", branchName);
+      VcsLogRootFilter roots = repositories.size() == 1 ? VcsLogFilterObject.fromRoot(selectedRepository.getRoot()) : null;
+      log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(range, roots));
     });
   }
 
