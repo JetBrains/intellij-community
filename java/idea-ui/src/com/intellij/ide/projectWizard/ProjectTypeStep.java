@@ -436,6 +436,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return true;
   }
 
+  @TestOnly
+  public ModuleWizardStep getFrameworksStep() {
+    return getCustomStep();
+  }
+
   @Nullable
   private ModuleWizardStep getCustomStep() {
     return myCustomSteps.get(myCurrentCard);
