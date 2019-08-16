@@ -52,7 +52,11 @@ public class FileNameCache {
 
   private static void assertShortFileName(@NotNull String name) {
     if (name.length() <= 1) return;
-    int start = SystemInfo.isWindows && name.startsWith("//") ? 2 : 0;
+    int start = 0;
+    if (SystemInfo.isWindows && name.startsWith("//")) {  // Windows UAC: //Network/Ubuntu
+      final int idx = name.indexOf('/', 2);
+      start = idx == -1 ? 2 : idx + 1;
+    }
     if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, name.length())) {
       throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
     }
