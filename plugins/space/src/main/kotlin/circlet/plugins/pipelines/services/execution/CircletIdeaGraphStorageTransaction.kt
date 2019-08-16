@@ -106,4 +106,8 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun findSnapshotForJobExecution(jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
