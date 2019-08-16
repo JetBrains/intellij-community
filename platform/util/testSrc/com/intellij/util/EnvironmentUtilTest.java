@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void loadingBatEnv() throws Exception {
-    assumeTrue("windows only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "set FOO_TEST_1=123\r\nset FOO_TEST_2=%1");
@@ -66,7 +67,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void loadingBatEnv_ErrorHandling() throws Exception {
-    assumeTrue("windows only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "echo some error\r\nexit /B 1");

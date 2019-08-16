@@ -331,7 +331,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenDir() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File dir = tempDir.newFolder("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
@@ -342,7 +342,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenFile() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File file = tempDir.newFile("file");
     FileAttributes attributes = getAttributes(file);
     assertFalse(attributes.isHidden());
@@ -371,7 +371,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void wellHiddenFile() {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file +" is not there", file.exists());
 
@@ -425,7 +425,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void subst() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     tempDir.newFile("file.txt");  // just to populate a directory
     File substRoot = IoTestUtil.createSubst(tempDir.getRoot().getPath());

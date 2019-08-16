@@ -43,8 +43,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
-import static org.junit.Assume.assumeTrue;
-
 public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
@@ -645,7 +643,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   }
 
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
-    assumeTrue("Windows is required", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File temp = createTempDir("", false);
     File file = new File(temp, "rename.txt");
     FileUtil.createParentDirs(file);

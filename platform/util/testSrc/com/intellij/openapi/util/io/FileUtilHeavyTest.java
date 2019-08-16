@@ -19,7 +19,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Irina.Chernushina, lene
@@ -223,7 +222,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testJunctionDeletion() throws IOException {
-    assumeTrue("Windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     File targetDir = tempDir.newFolder("target");
     File targetFile = tempDir.newFile("target/file");
