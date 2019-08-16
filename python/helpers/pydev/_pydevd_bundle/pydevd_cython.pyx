@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 20
+version = 21
 
 if not hasattr(sys, '_current_frames'):
 
@@ -336,7 +336,8 @@ cdef class PyDBFrame:
                         frame = trace.tb_frame
                         while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
                             frame = frame.f_back
-                    if ignore_exception_trace(trace):
+
+                    if ignore_exception_trace(trace) or frame is None:
                         return False, frame
 
                     was_just_raised = just_raised(trace)
