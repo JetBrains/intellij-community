@@ -24,7 +24,7 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
 
   @NotNull
   public Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
-    CodeStyleSettings settings = CodeStyle.getSettings(file.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
     if (settings.getExcludedFiles().contains(file)) {
       return Collections.emptySet();
     }
