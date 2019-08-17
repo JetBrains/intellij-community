@@ -13,29 +13,17 @@ abstract class CommonPathRelativizer implements PathRelativizer{
     myIdentifier = identifier;
   }
 
-  @Override
-  public boolean isAcceptableAbsolutePath(@NotNull String path) {
-    return myPath != null && path.startsWith(myPath);
-  }
-
-  @Override
-  public boolean isAcceptableRelativePath(@NotNull String path) {
-    return myPath != null && path.startsWith(myIdentifier);
-  }
-
+  @Nullable
   @Override
   public String toRelativePath(@NotNull String path) {
-    if (myPath == null) return path;
-    int i = path.indexOf(myPath);
-    if (i < 0) return path;
-    return myIdentifier + path.substring(i + myPath.length());
+    if (myPath == null || !path.startsWith(myPath)) return null;
+    return myIdentifier + path.substring(myPath.length());
   }
 
+  @Nullable
   @Override
   public String toAbsolutePath(@NotNull String path) {
-    if (myPath == null) return path;
-    int i = path.indexOf(myIdentifier);
-    if (i < 0) return path;
-    return myPath + path.substring(i + myIdentifier.length());
+    if (myPath == null || !path.startsWith(myIdentifier)) return null;
+    return myPath + path.substring(myIdentifier.length());
   }
 }

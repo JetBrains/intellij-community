@@ -230,7 +230,7 @@ public class Mappings {
 
   @NotNull
   private String toRelative(File file) {
-    return myRelativizer.toRelative(file.getPath());
+    return FileUtil.toSystemIndependentName(myRelativizer.toRelative(file.getAbsolutePath()));
   }
 
   @Nullable
@@ -241,7 +241,7 @@ public class Mappings {
 
   @NotNull
   private File toFull(String relativePath) {
-    return new File(myRelativizer.toFull(relativePath));
+    return new File(FileUtil.toSystemDependentName(myRelativizer.toFull(relativePath)));
   }
 
   public void clean() throws IOException {
@@ -2680,7 +2680,7 @@ public class Mappings {
               for (final ClassFileRepr aClass : fileClasses) {
                 cleanupRemovedClass(delta, aClass, deletedFile, aClass.getUsages(), dependenciesTrashBin);
               }
-              myRelativeSourceFilePathToClasses.remove(myRelativizer.toRelative(file));
+              myRelativeSourceFilePathToClasses.remove(FileUtil.toSystemIndependentName(myRelativizer.toRelative(file)));
             }
           }
         }
@@ -2869,15 +2869,14 @@ public class Mappings {
       @Override
       public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
         synchronized (myLock) {
-          String relativePath = myRelativizer.toRelative(classFileName);
-          final int classFileNameS = myContext.get(relativePath);
+          final int classFileNameS = myContext.get(classFileName);
           final ClassFileRepr result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           if (result != null) {
             // since java9 'repr' can represent either a class or a compiled module-info.java
             final int className = result.name;
 
             for (String sourceFileName : sources) {
-              String relative = myRelativizer.toRelative(sourceFileName);
+              String relative = FileUtil.toSystemIndependentName(myRelativizer.toRelative(sourceFileName));
               myClassToRelativeSourceFilePath.put(className, relative);
               myRelativeSourceFilePathToClasses.put(relative, result);
             }

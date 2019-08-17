@@ -69,7 +69,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   public final void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
-    final Collection<String> outputPaths = getState(FileUtil.toSystemIndependentName(keyPath));
+    final Collection<String> outputPaths = getState(keyPath);
     if (outputPaths != null) {
       final boolean removed = outputPaths.remove(normalizePath(boundPath));
       if (outputPaths.isEmpty()) {
@@ -116,8 +116,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   private Collection<String> normalizePaths(Collection<String> outputs) {
     Collection<String> normalized = new ArrayList<>(outputs.size());
     for (String out : outputs) {
-      String relativePath = myRelativizer.toRelative(out);
-      normalized.add(FileUtil.toSystemIndependentName(relativePath));
+      normalized.add(normalizePath(out));
     }
     return normalized;
   }

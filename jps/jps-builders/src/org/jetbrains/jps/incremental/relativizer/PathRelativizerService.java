@@ -51,10 +51,10 @@ public class PathRelativizerService {
 
   @NotNull
   public String toRelative(@NotNull String path) {
+    String relativePath;
     for (PathRelativizer relativizer : myRelativizers) {
-      if (relativizer.isAcceptableAbsolutePath(path)) {
-        return relativizer.toRelativePath(path);
-      }
+      relativePath = relativizer.toRelativePath(path);
+      if (relativePath != null) return relativePath;
     }
     myUnhandledPaths.add(path);
     return path;
@@ -62,10 +62,10 @@ public class PathRelativizerService {
 
   @NotNull
   public String toFull(@NotNull String path) {
+    String fullPath;
     for (PathRelativizer relativizer : myRelativizers) {
-      if (relativizer.isAcceptableRelativePath(path)) {
-        return relativizer.toAbsolutePath(path);
-      }
+      fullPath = relativizer.toAbsolutePath(path);
+      if (fullPath != null) return fullPath;
     }
     return path;
   }

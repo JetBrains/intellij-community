@@ -255,7 +255,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
 
     for (File file : enumerator.classes().getRoots()) {
-      String path = relativizer.toRelative(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+      String path = FileUtil.toSystemIndependentName(relativizer.toRelative(file.getAbsolutePath()));
 
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");

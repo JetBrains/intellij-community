@@ -26,33 +26,21 @@ class MavenPathRelativizer implements PathRelativizer {
   private boolean myPathInitialized;
   private String myMavenRepositoryPath;
 
-  @Override
-  public boolean isAcceptableAbsolutePath(@NotNull String path) {
-    initializeMavenRepositoryPath();
-    return myMavenRepositoryPath != null && path.startsWith(myMavenRepositoryPath);
-  }
-
-  @Override
-  public boolean isAcceptableRelativePath(@NotNull String path) {
-    initializeMavenRepositoryPath();
-    return myMavenRepositoryPath != null && path.startsWith(IDENTIFIER);
-  }
-
+  @Nullable
   @Override
   public String toRelativePath(@NotNull String path) {
-    if (myMavenRepositoryPath == null) return path;
-    int i = path.indexOf(myMavenRepositoryPath);
-    if (i < 0) return path;
-    return IDENTIFIER + path.substring(i + myMavenRepositoryPath.length());
+    initializeMavenRepositoryPath();
+    if (myMavenRepositoryPath == null || !path.startsWith(myMavenRepositoryPath)) return null;
+    return IDENTIFIER + path.substring(myMavenRepositoryPath.length());
 
   }
 
+  @Nullable
   @Override
   public String toAbsolutePath(@NotNull String path) {
-    if (myMavenRepositoryPath == null) return path;
-    int i = path.indexOf(IDENTIFIER);
-    if (i < 0) return path;
-    return myMavenRepositoryPath + path.substring(i + IDENTIFIER.length());
+    initializeMavenRepositoryPath();
+    if (myMavenRepositoryPath == null || !path.startsWith(IDENTIFIER)) return null;
+    return myMavenRepositoryPath + path.substring(IDENTIFIER.length());
   }
 
   private void initializeMavenRepositoryPath() {

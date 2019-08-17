@@ -2,7 +2,6 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;

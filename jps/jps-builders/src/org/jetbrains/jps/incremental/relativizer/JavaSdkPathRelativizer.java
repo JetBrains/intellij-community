@@ -11,7 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JavaSdkPathRelativizer implements PathRelativizer {
+/**
+ * For now, it doesn't convert any paths related to JDK  during producing portable caches, because
+ * they skipped in {@link ModuleBuildTarget#getDependenciesFingerprint}. But it stays to be included in
+ * {@link PathRelativizerService} to get an opportunity to handle such paths due to manual call of
+ * {@link PathRelativizerService#toRelative} or {@link PathRelativizerService#toFull} with any path.
+ */
+class JavaSdkPathRelativizer implements PathRelativizer {
   @Nullable private Map<String, String> myJavaSdkPathMap;
 
   JavaSdkPathRelativizer(@Nullable Set<JpsSdk<?>> javaSdks) {
@@ -19,48 +25,32 @@ public class JavaSdkPathRelativizer implements PathRelativizer {
       myJavaSdkPathMap = javaSdks.stream()
         .collect(Collectors.toMap(sdk -> {
           JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
-          return "$JDK_" + (version != null ? version.feature : "0") + "$";
+          return "$JDK_" + (version != null ? version.toString() : "0") + "$";
         }, sdk -> sdk.getHomePath(), (sdk1, sdk2) -> sdk1));
     }
   }
 
-  @Override
-  public boolean isAcceptableAbsolutePath(@NotNull String path) {
-    return myJavaSdkPathMap != null &&
-           !myJavaSdkPathMap.isEmpty() &&
-           myJavaSdkPathMap.values().stream().anyMatch(path::startsWith);
-  }
-
-  @Override
-  public boolean isAcceptableRelativePath(@NotNull String path) {
-    return myJavaSdkPathMap != null &&
-           !myJavaSdkPathMap.isEmpty() &&
-           myJavaSdkPathMap.keySet().stream().anyMatch(path::startsWith);
-  }
-
+  @Nullable
   @Override
   public String toRelativePath(@NotNull String path) {
-    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return path;
+    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(it -> path.startsWith(it.getValue())).findFirst();
-    if (!optionalEntry.isPresent()) return path;
+    if (!optionalEntry.isPresent()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
-    int i = path.indexOf(javaSdkEntry.getValue());
-    if (i < 0) return path;
-    return javaSdkEntry.getKey() + path.substring(i + javaSdkEntry.getValue().length());
+    return javaSdkEntry.getKey() + path.substring(javaSdkEntry.getValue().length());
   }
 
+  @Nullable
   @Override
   public String toAbsolutePath(@NotNull String path) {
-    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return path;
+    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(it -> path.startsWith(it.getKey())).findFirst();
-    if (!optionalEntry.isPresent()) return path;
+    if (!optionalEntry.isPresent()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
-    int i = path.indexOf(javaSdkEntry.getKey());
-    if (i < 0) return path;
-    return javaSdkEntry.getValue() + path.substring(i + javaSdkEntry.getKey().length());
+    return javaSdkEntry.getValue() + path.substring(javaSdkEntry.getKey().length());
   }
 }

@@ -69,27 +69,10 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
    * The default load factor of a hash table.
    */
   private static final float DEFAULT_LOAD_FACTOR = .75f;
-
-  private final TObjectHashingStrategy<K> defaultHashingStrategy = new TObjectHashingStrategy<K>() {
-    /**
-     * The default implementation of TObjectHashingStrategy:
-     * it delegates hashing to the Object's hashCode method.
-     */
-    @Override
-    public final int computeHashCode(K o) {
-      return o != null ? o.hashCode() : 0;
-    }
-
-    /**
-     * The default implementation of TObjectHashingStrategy:
-     * it delegates equality comparisons to the {@link Objects#equals(Object, Object)}
-     */
-    @Override
-    public final boolean equals(K o1, K o2) {
-      return Objects.equals(o1, o2);
-    }
-  };
-
+  /**
+   * The default object hashing strategy
+   */
+  private static final TObjectHashingStrategy DEFAULT_HASHING_STRATEGY = TObjectHashingStrategy.CANONICAL;
   /**
    * The array of keys.
    */
@@ -146,6 +129,79 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   private final float f;
 
   /**
+   * Creates a new hash set with initial expected
+   * {@link ObjectLinkedOpenHashSet#DEFAULT_INITIAL_SIZE} elements and
+   * {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
+   * {@link ObjectLinkedOpenHashSet#DEFAULT_HASHING_STRATEGY} default hashing strategy
+   */
+  public ObjectLinkedOpenHashSet() {
+    this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
+  }
+
+  /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
+   * and with default hashing strategy {@link ObjectLinkedOpenHashSet#DEFAULT_HASHING_STRATEGY}
+   *
+   * @param expected the expected number of elements in the hash set.
+   */
+  public ObjectLinkedOpenHashSet(final int expected) {
+    this(expected, DEFAULT_LOAD_FACTOR);
+  }
+
+  /**
+   * Creates a new hash set with initial expected
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(TObjectHashingStrategy<K> strategy) {
+    this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR, strategy);
+  }
+
+  /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
+   * copying a given collection and with default hashing strategy {@link ObjectLinkedOpenHashSet#DEFAULT_HASHING_STRATEGY}
+   *
+   * @param c a {@link Collection} to be copied into the new hash set.
+   */
+  public ObjectLinkedOpenHashSet(final Collection<? extends K> c) {
+    this(c.size(), DEFAULT_LOAD_FACTOR);
+    addAll(c);
+  }
+
+  /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
+   *
+   * @param expected the expected number of elements in the hash set.
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(final int expected, TObjectHashingStrategy<K> strategy) {
+    this(expected, DEFAULT_LOAD_FACTOR, strategy);
+  }
+
+  /**
+   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
+   * copying a given collection.
+   *
+   * @param c a {@link Collection} to be copied into the new hash set.
+   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
+   */
+  public ObjectLinkedOpenHashSet(final Collection<? extends K> c, TObjectHashingStrategy<K> strategy) {
+    this(c.size(), DEFAULT_LOAD_FACTOR , strategy);
+    addAll(c);
+  }
+
+  /**
+   * Creates a new hash set. The actual table size will be the least power of two greater than
+   * {@code expected}/{@code f}.
+   *
+   * @param expected the expected number of elements in the hash set.
+   * @param f        the load factor.
+   */
+  @SuppressWarnings("unchecked")
+  public ObjectLinkedOpenHashSet(final int expected, final float f) {
+    this(expected, f, DEFAULT_HASHING_STRATEGY);
+  }
+
+  /**
    * Creates a new hash set. The actual table size will be the least power of two greater than
    * {@code expected}/{@code f}.
    *
@@ -168,89 +224,6 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
     key = (K[])new Object[n + 1];
     link = new long[n + 1];
     hashingStrategy = strategy;
-  }
-
-  /**
-   * Creates a new hash set. The actual table size will be the least power of two greater than
-   * {@code expected}/{@code f}.
-   *
-   * @param expected the expected number of elements in the hash set.
-   * @param f        the load factor.
-   */
-  @SuppressWarnings("unchecked")
-  public ObjectLinkedOpenHashSet(final int expected, final float f) {
-    if (f <= 0 || f > 1) {
-      throw new IllegalArgumentException("Load factor must be greater than 0 and smaller than or equal to 1");
-    }
-    if (expected < 0) {
-      throw new IllegalArgumentException("The expected number of elements must be nonnegative");
-    }
-    this.f = f;
-    minN = n = arraySize(expected, f);
-    mask = n - 1;
-    maxFill = maxFill(n, f);
-    key = (K[])new Object[n + 1];
-    link = new long[n + 1];
-    hashingStrategy = defaultHashingStrategy;
-  }
-
-  /**
-   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
-   *
-   * @param expected the expected number of elements in the hash set.
-   */
-  public ObjectLinkedOpenHashSet(final int expected) {
-    this(expected, DEFAULT_LOAD_FACTOR);
-  }
-
-  /**
-   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
-   *
-   * @param expected the expected number of elements in the hash set.
-   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
-   */
-  public ObjectLinkedOpenHashSet(final int expected, TObjectHashingStrategy<K> strategy) {
-    this(expected, DEFAULT_LOAD_FACTOR, strategy);
-  }
-
-  /**
-   * Creates a new hash set with initial expected
-   * {@link ObjectLinkedOpenHashSet#DEFAULT_INITIAL_SIZE} elements and
-   * {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor.
-   */
-  public ObjectLinkedOpenHashSet() {
-    this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
-  }
-
-  /**
-   * Creates a new hash set with initial expected
-   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
-   */
-  public ObjectLinkedOpenHashSet(TObjectHashingStrategy<K> strategy) {
-    this(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR, strategy);
-  }
-
-  /**
-   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
-   * copying a given collection.
-   *
-   * @param c a {@link Collection} to be copied into the new hash set.
-   */
-  public ObjectLinkedOpenHashSet(final Collection<? extends K> c) {
-    this(c.size(), DEFAULT_LOAD_FACTOR);
-    addAll(c);
-  }
-
-  /**
-   * Creates a new hash set with {@link ObjectLinkedOpenHashSet#DEFAULT_LOAD_FACTOR} as load factor
-   * copying a given collection.
-   *
-   * @param c a {@link Collection} to be copied into the new hash set.
-   * @param strategy {@link TObjectHashingStrategy} used to compute hash codes and to compare objects.
-   */
-  public ObjectLinkedOpenHashSet(final Collection<? extends K> c, TObjectHashingStrategy<K> strategy) {
-    this(c.size(), DEFAULT_LOAD_FACTOR , strategy);
-    addAll(c);
   }
 
   private int realSize() {

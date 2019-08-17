@@ -51,11 +51,6 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   };
 
-  @NotNull
-  public String relativePath(@NotNull String path) {
-    return myRelativizer.toRelative(path);
-  }
-
   OutputToTargetRegistry(File storePath, PathRelativizerService relativizer) throws IOException {
     super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
     myRelativizer = relativizer;
@@ -119,5 +114,10 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       }
     }
     return result;
+  }
+
+  @NotNull
+  private String relativePath(@NotNull String path) {
+    return myRelativizer.toRelative(path);
   }
 }
