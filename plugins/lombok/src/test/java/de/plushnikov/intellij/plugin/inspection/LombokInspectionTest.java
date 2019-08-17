@@ -13,14 +13,12 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import static com.intellij.testFramework.LightPlatformTestCase.getModule;
-
-public abstract class LombokInspectionTest extends LightInspectionTestCase {
+public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
   static final String TEST_DATA_INSPECTION_DIRECTORY = "testData/inspection";
 
   @Override

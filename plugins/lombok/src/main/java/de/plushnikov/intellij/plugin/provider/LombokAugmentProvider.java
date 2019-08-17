@@ -104,10 +104,8 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       cachedValue = CachedValuesManager.getCachedValue(element, new FieldLombokCachedValueProvider<>(type, psiClass));
     } else if (type == PsiMethod.class) {
       cachedValue = CachedValuesManager.getCachedValue(element, new MethodLombokCachedValueProvider<>(type, psiClass));
-    } else if (type == PsiClass.class) {
-      cachedValue = CachedValuesManager.getCachedValue(element, new ClassLombokCachedValueProvider<>(type, psiClass));
     } else {
-      return emptyResult;
+      cachedValue = CachedValuesManager.getCachedValue(element, new ClassLombokCachedValueProvider<>(type, psiClass));
     }
     return null != cachedValue ? cachedValue : emptyResult;
   }

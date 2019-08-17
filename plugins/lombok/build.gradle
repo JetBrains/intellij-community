@@ -55,9 +55,7 @@ intellij {
   sameSinceUntilBuild false
   sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${ideaVersion}"
 
-  if(version.matches("2019\\.2.*")) {
-    plugins 'java'
-  }
+  plugins 'java'
 }
 
 patchPluginXml {
