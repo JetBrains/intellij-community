@@ -7,7 +7,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -15,27 +15,27 @@ import java.util.List;
 /**
  * Based on logic from com.intellij.codeInsight.ExceptionCheckingTest
  */
-public class SneakyThrowsTest extends LightCodeInsightTestCase {
+public class SneakyThrowsTest extends LightJavaCodeInsightTestCase {
 
-  public void testCatchAllException() throws Exception {
+  public void testCatchAllException() {
     PsiMethodCallExpression methodCall = createCall("@lombok.SneakyThrows void foo() {  throwsMyException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCatchSpecificException() throws Exception {
+  public void testCatchSpecificException() {
     PsiMethodCallExpression methodCall = createCall("@lombok.SneakyThrows(MyException.class) void foo() {  throwsMyException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testCatchGeneralException() throws Exception {
+  public void testCatchGeneralException() {
     PsiMethodCallExpression methodCall = createCall("@lombok.SneakyThrows(Exception.class) void foo() {  throwsMyException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertTrue(exceptions.isEmpty());
   }
 
-  public void testNotCatchException() throws Exception {
+  public void testNotCatchException() {
     PsiMethodCallExpression methodCall = createCall("@lombok.SneakyThrows(SomeException.class) void foo() {  throwsMyException(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);
     assertEquals(1, exceptions.size());
@@ -47,7 +47,7 @@ public class SneakyThrowsTest extends LightCodeInsightTestCase {
     return JavaSdk.getInstance().createJdk("java 1.8", "lib/mockJDK-1.8", false);
   }
 
-  private static PsiMethodCallExpression createCall(@NonNls final String body) {
+  private PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "void throwsMyException() throws MyException {}" +
       "void throwsSomeException() throws SomeException {}" +
