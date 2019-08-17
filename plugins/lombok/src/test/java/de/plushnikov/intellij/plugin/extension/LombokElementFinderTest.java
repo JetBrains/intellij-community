@@ -1,10 +1,11 @@
 package de.plushnikov.intellij.plugin.extension;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.impl.file.impl.JavaFileManager;
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import lombok.Builder;
 import org.junit.Before;
@@ -12,12 +13,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
+
+import java.util.Collections;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,20 +36,24 @@ public class LombokElementFinderTest {
   private LombokElementFinder elementFinder;
 
   @Mock
-  private JavaFileManager javaFileManager;
+  private JavaFullClassNameIndex javaFullClassNameIndex;
 
   @Mock
   private GlobalSearchScope scope;
 
+  @Mock
+  private Project project;
+
   @Before
   public void setUp() {
-    doReturn(javaFileManager).when(elementFinder).getServiceManager(any(GlobalSearchScope.class));
+    doReturn(project).when(scope).getProject();
+    doReturn(javaFullClassNameIndex).when(elementFinder).getJavaFullClassNameIndexInstance();
   }
 
   @Test
   public void findClass() {
     final PsiClass psiBaseClass = mock(PsiClass.class);
-    when(javaFileManager.findClass(BASE_CLASS, scope)).thenReturn(psiBaseClass);
+    when(javaFullClassNameIndex.get(eq(BASE_CLASS.hashCode()), any(Project.class), eq(scope))).thenReturn(Collections.singleton(psiBaseClass));
 
     final PsiModifierList psiModifierList = mock(PsiModifierList.class);
     when(psiBaseClass.getModifierList()).thenReturn(psiModifierList);
@@ -68,24 +72,6 @@ public class LombokElementFinderTest {
 
     final PsiClass psiClass = elementFinder.findClass(BASE_CLASS + SOME_CLASS_BUILDER, scope);
     assertNotNull(psiClass);
-    verify(javaFileManager).findClass(BASE_CLASS, scope);
+    verify(javaFullClassNameIndex).get(eq(BASE_CLASS.hashCode()), any(Project.class), eq(scope));
   }
-
-  @Test
-  public void findClassRecursion() {
-    // setup recursive calls of elementFinder
-    when(javaFileManager.findClass(BASE_CLASS, scope)).thenAnswer(new Answer<PsiClass>() {
-      @Override
-      public PsiClass answer(InvocationOnMock invocation) {
-        final String fqn = (String) invocation.getArguments()[0];
-        final GlobalSearchScope searchScope = (GlobalSearchScope) invocation.getArguments()[1];
-        return elementFinder.findClass(fqn + SOME_CLASS_BUILDER, searchScope);
-      }
-    });
-
-    final PsiClass psiClass = elementFinder.findClass(BASE_CLASS + SOME_CLASS_BUILDER, scope);
-    assertNull(psiClass);
-    verify(javaFileManager).findClass(BASE_CLASS, scope);
-  }
-
 }
