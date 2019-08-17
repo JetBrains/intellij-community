@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -38,6 +40,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -45,6 +48,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -71,6 +75,7 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameF
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
 
@@ -408,8 +413,12 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                                    boolean markToBeDeleted,
                                                    boolean honorExcludedFromCommit)
     throws IOException, VcsException {
+
+    LOG.debug("Shelving of " + changes.size() + " changes...");
+    StopWatch totalSW = StopWatch.start("Total shelving");
+
     File schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
-    final List<Change> textChanges = new ArrayList<>();
+    List<Change> textChanges = new ArrayList<>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
     for (Change change : changes) {
       if (ChangesUtil.getFilePath(change).isDirectory()) {
@@ -422,16 +431,48 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         textChanges.add(change);
       }
     }
-    File patchFile = getPatchFileInConfigDir(schemePatchDir);
-    ProgressManager.checkCanceled();
-    final List<FilePatch> patches =
-      IdeaTextPatchBuilder
-        .buildPatch(myProject, textChanges, PathUtil.toSystemDependentName(myProject.getBasePath()), false, honorExcludedFromCommit);
-    ProgressManager.checkCanceled();
 
-    CommitContext commitContext = new CommitContext();
-    baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
-    ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
+
+    File patchFile = getPatchFileInConfigDir(schemePatchDir);
+    List<FilePatch> patches = new ArrayList<>();
+    int batchIndex = 0;
+    int baseContentsPreloadSize = Registry.intValue("git.shelve.load.base.in.batches", -1);
+    int partitionSize = baseContentsPreloadSize > 0 ? baseContentsPreloadSize : textChanges.size();
+    List<List<Change>> partition = Lists.partition(textChanges, partitionSize);
+    for (List<Change> list : partition) {
+      batchIndex++;
+      String inbatch = partition.size() > 1 ? " in batch #" + batchIndex : "";
+      StopWatch totalSw = StopWatch.start("Total shelving" + inbatch);
+      try {
+        StopWatch iterSw;
+        if (baseContentsPreloadSize > 0) {
+          iterSw = StopWatch.start("Preloading base revisions for " + list.size() + " changes");
+          preloadBaseRevisions(list);
+          iterSw.report(LOG);
+        }
+
+        ProgressManager.checkCanceled();
+        iterSw = StopWatch.start("Building patches" + inbatch);
+        patches.addAll(IdeaTextPatchBuilder
+                         .buildPatch(myProject, list, PathUtil.toSystemDependentName(myProject.getBasePath()), false,
+                                     honorExcludedFromCommit));
+        iterSw.report(LOG);
+        ProgressManager.checkCanceled();
+
+        iterSw = StopWatch.start("Storing base revisions" + inbatch);
+        CommitContext commitContext = new CommitContext();
+        baseRevisionsOfDvcsIntoContext(list, commitContext);
+        iterSw.report(LOG);
+
+        iterSw = StopWatch.start("Saving patch file" + inbatch);
+        ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
+        iterSw.report(LOG);
+      }
+      finally {
+        ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache().clearConstantCache();
+        totalSw.report(LOG);
+      }
+    }
 
     final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
                                                                createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
@@ -440,14 +481,41 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     changeList.setName(schemePatchDir.getName());
     ProgressManager.checkCanceled();
     mySchemeManager.addScheme(changeList, false);
+    totalSW.report(LOG);
     return changeList;
+  }
+
+  private void preloadBaseRevisions(@NotNull List<Change> textChanges) {
+    MultiMap<VcsRoot, Change> changesGroupedByRoot = MultiMap.create();
+    for (Change change : textChanges) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null) {
+        FilePath file = beforeRevision.getFile();
+        VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
+        if (vcsRoot == null || vcsRoot.getVcs() == null) {
+          LOG.error(file + " is not under VCS");
+        }
+        else {
+          changesGroupedByRoot.putValue(vcsRoot, change);
+        }
+      }
+    }
+
+    for (VcsRoot vcsRoot : changesGroupedByRoot.keySet()) {
+      AbstractVcs vcs = notNull(vcsRoot.getVcs());
+      if (vcs.getDiffProvider() != null) {
+        vcs.getDiffProvider().preloadBaseRevisions(notNull(vcsRoot.getPath()), changesGroupedByRoot.get(vcsRoot));
+      }
+    }
   }
 
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
+    StopWatch sw = StopWatch.start("Rollback after shelve");
     new RollbackWorker(myProject, operationName, modalContext)
       .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
+    sw.report(LOG);
   }
 
   @NotNull

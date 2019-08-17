@@ -26,10 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitBinaryHandler;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -225,6 +222,12 @@ public class GitFileUtils {
                                       @NotNull String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
+    addTextConvParameters(project, h, true);
+    h.addParameters(revisionOrBranch + ":" + relativePath);
+    return h.run();
+  }
+
+  public static void addTextConvParameters(@NotNull Project project, @NotNull GitBinaryHandler h, boolean addp) {
     if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
         Registry.is("git.read.content.with.textconv")) {
       h.addParameters("--textconv");
@@ -233,10 +236,8 @@ public class GitFileUtils {
              Registry.is("git.read.content.with.filters")) {
       h.addParameters("--filters");
     }
-    else {
+    else if (addp) {
       h.addParameters("-p");
     }
-    h.addParameters(revisionOrBranch + ":" + relativePath);
-    return h.run();
   }
 }

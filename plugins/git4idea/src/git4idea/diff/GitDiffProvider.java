@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffMixin;
@@ -26,9 +27,11 @@ import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.stash.GitRevisionContentPreLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -194,5 +197,10 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     // todo
     return null;
+  }
+
+  @Override
+  public void preloadBaseRevisions(@NotNull VirtualFile root, @NotNull Collection<Change> revisions) {
+    new GitRevisionContentPreLoader(myProject).preload(root, revisions);
   }
 }
