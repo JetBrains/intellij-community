@@ -56,6 +56,10 @@ inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
   return null
 }
 
+val <T> List<T>.tail: List<T> get() = this.subList(1, this.size)
+
+fun <T> List<T>.toHeadAndTail(): Pair<T, List<T>>? = if (this.isEmpty()) null else this.first() to this.tail
+
 fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
