@@ -1445,15 +1445,6 @@ public final class TreeUtil {
   }
 
   /**
-   * Selects a node specified by {@code visitor} in the {@code tree}.
-   */
-  public static Promise<TreePath> select(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
-    return promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelectPath(tree, path);
-    });
-  }
-
-  /**
    * Selects a node in the specified tree.
    *
    * @param tree     a tree, which nodes should be selected
