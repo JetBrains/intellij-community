@@ -108,7 +108,7 @@ internal class GHCloneDialogAccountsPanel(
   }
 
   private fun scaleIcon(icon: Icon): Icon {
-    val scale = 20.toFloat() / icon.iconWidth.toFloat()
+    val scale = JBUI.scale(20).toFloat() / icon.iconWidth.toFloat()
     return IconUtil.scale(icon, null, scale)
   }
 }
