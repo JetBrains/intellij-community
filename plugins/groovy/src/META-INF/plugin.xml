@@ -147,7 +147,6 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
-    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
                       namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
@@ -193,8 +192,6 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultUnaryExpressionTypeCalculator"/>
-
-    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
@@ -367,12 +364,7 @@
     <fileType name="DGM"
               implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 
-    <projectConfigurable groupId="build.tools" groupWeight="100" instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"
-                         id="reference.settingsdialog.project.gant"
-                         displayName="Gant"/>
-
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
@@ -1270,11 +1262,6 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
-    <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
-            text="Gant Script" description="Create new Gant script">
-      <add-to-group group-id="NewGroup" anchor="last"/>
-    </action>
-
     <action id="ConvertGroovyToJava"
             class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
             text="Convert to Java"
@@ -1398,4 +1385,5 @@
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="geb-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="spock-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="gant-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
