@@ -335,7 +335,7 @@
     <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
-    <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider"/>
+    <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider"/>
 
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
