@@ -386,7 +386,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {
-      if (!mainTextOnly && myPreferredSizeCache != null) return new Dimension(myPreferredSizeCache);
+      if (!mainTextOnly && myPreferredSizeCache != null && getBaseFont().equals(myLayoutFont)) return new Dimension(myPreferredSizeCache);
       // Calculate width
       int width = myIpad.left;
 
