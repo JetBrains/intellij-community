@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.components.JBMenu
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import icons.GithubIcons
@@ -85,7 +86,7 @@ internal class GHCloneDialogAccountsPanel(
         val pair = userDetails[account]
         if (pair == null) {
           text = account.name
-          icon = defaultIcon
+          icon = scaleIcon(defaultIcon)
           add("Log in").addActionListener { loginController.reLogin(account) }
           addSeparator()
           add("Remove account").addActionListener { loginController.logout(account) }
@@ -93,7 +94,7 @@ internal class GHCloneDialogAccountsPanel(
         else {
           val (user, avatar) = pair
           text = if (account.server.isGithubDotCom) account.name else ("${account.server.host}/${user.login}")
-          icon = avatar
+          icon = scaleIcon(avatar)
           add("Open on GitHub").addActionListener { BrowserUtil.browse(user.htmlUrl) }
           addSeparator()
           add("Log Out\u2026").addActionListener { loginController.logout(account) }
@@ -104,5 +105,10 @@ internal class GHCloneDialogAccountsPanel(
     popupMenu.addSeparator()
     popupMenu.add("Add Account\u2026").addActionListener { loginController.addAccount() }
     popupMenu.show(this, 0, bounds.maxY.toInt())
+  }
+
+  private fun scaleIcon(icon: Icon): Icon {
+    val scale = 20.toFloat() / icon.iconWidth.toFloat()
+    return IconUtil.scale(icon, null, scale)
   }
 }
