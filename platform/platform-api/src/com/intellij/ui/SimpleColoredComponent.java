@@ -91,7 +91,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private boolean myIconOnTheRight;
   private boolean myTransparentIconBackground;
-  private volatile Dimension myPreferredSizeCache = null;
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<>(3);
@@ -179,7 +178,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (isMainText) {
         myMainTextLastIndex = myFragments.size() - 1;
       }
-      myPreferredSizeCache = null;
     }
   }
 
@@ -201,7 +199,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     synchronized (myFragments) {
       append(fragment, attributes);
       if (tag != null) myCurrentFragment.tag = tag;
-      myPreferredSizeCache = null;
     }
   }
 
@@ -231,7 +228,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         myCurrentFragment.padding = padding;
         myCurrentFragment.alignment = align;
       }
-      myPreferredSizeCache = null;
     }
   }
 
@@ -255,7 +251,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       myFragments.clear();
       myCurrentFragment = null;
       myMainTextLastIndex = -1;
-      myPreferredSizeCache = null;
     }
   }
 
@@ -386,7 +381,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {
-      if (!mainTextOnly && myPreferredSizeCache != null && getBaseFont().equals(myLayoutFont)) return new Dimension(myPreferredSizeCache);
       // Calculate width
       int width = myIpad.left;
 
@@ -410,9 +404,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       int height = computePreferredHeight();
 
-      return !mainTextOnly
-             ? myPreferredSizeCache = new Dimension(width, height)
-             : new Dimension(width, height);
+      return new Dimension(width, height);
     }
   }
 
