@@ -16,18 +16,13 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.List;
 
 public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/performance";
@@ -70,6 +65,10 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .usesAllCPUCores().assertTiming();
     assertEmpty(highlightErrors());
+  }
+
+  public void testLongQualifiersChainInsideLambda() {
+    PlatformTestUtil.startPerformanceTest("long qualifiers chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
   private void doTest() {
