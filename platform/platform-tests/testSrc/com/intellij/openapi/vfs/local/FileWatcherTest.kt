@@ -116,7 +116,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     files.forEach { watch(it, false) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
-    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.map { it to 'D' }.toMap())
     assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
@@ -126,7 +126,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     files.forEach { watch(it, true) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
-    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.map { it to 'D' }.toMap())
     assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
@@ -138,7 +138,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(File(file.path.toUpperCase(Locale.US)))
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
@@ -151,9 +151,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top)
     assertEvents({ sub.mkdir() }, mapOf(sub to 'C'))
     refresh(sub)
-    assertEvents({ file.createNewFile() }, mapOf(file to 'C'))
+    assertEvents({ assertTrue(file.createNewFile()) }, mapOf(file to 'C'))
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
@@ -241,7 +241,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-      { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
+      { arrayOf(topFile, subFile, sideFile).forEach { assertTrue(it.delete()) } },
       mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
@@ -279,7 +279,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(bLink)
     watch(cLink)
     assertEvents({ file.writeText("new content") }, mapOf(bFilePath to 'U', cFilePath to 'U'))
-    assertEvents({ file.delete() }, mapOf(bFilePath to 'D', cFilePath to 'D'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(bFilePath to 'D', cFilePath to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(bFilePath to 'C', cFilePath to 'C'))
   }
 
@@ -294,7 +294,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(link)
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
   }
 
@@ -310,7 +310,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(watchRoot)
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
   }
 
@@ -327,7 +327,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
       watch(junction)
       assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
       assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
     }
     finally {
@@ -350,7 +350,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       watch(watchRoot)
 
       assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D'))
       assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
     }
     finally {
@@ -412,7 +412,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
       val request = watch(target)
       assertEvents({ file.writeText("updated content") }, mapOf(file to 'U', substFile to 'U'))
-      assertEvents({ file.delete() }, mapOf(file to 'D', substFile to 'D'))
+      assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D', substFile to 'D'))
       unwatch(request)
 
       assertEvents({ file.writeText("re-creation") }, mapOf(substFile to 'C'))
@@ -433,7 +433,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-      { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
+      {
+        assertTrue(dir.deleteRecursively());
+        assertTrue(dir.mkdir());
+        arrayOf(file1, file2).forEach { it.writeText("text") } },
       mapOf(file1 to 'U', file2 to 'U'))
   }
 
@@ -446,9 +449,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(root)
     assertEvents(
       {
-        root.deleteRecursively(); root.mkdir()
+        assertTrue(root.deleteRecursively());
+        assertTrue(root.mkdir())
         if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
-        arrayOf(file1, file2).forEach { it.writeText("text") }
+        arrayOf (file1, file2).forEach { it.writeText("text") }
       },
       mapOf(file1 to 'U', file2 to 'U'))
   }
@@ -459,22 +463,22 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     refresh(tempDir.root)
 
     watch(root)
-    assertEvents({ root.mkdirs() }, mapOf(top to 'C'))
+    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(top to 'C'))
   }
 
   @Test fun testWatchRootRenameRemove() {
     val top = tempDir.newFolder("top")
     val root = tempDir.newFolder("top/d1/d2/d3/root")
-    val root2 = File(top, "_root")
+    val root2 = File(top, "root2")
     refresh(top)
 
     watch(root)
-    assertEvents({ root.renameTo(root2) }, mapOf(root to 'D', root2 to 'C'))
-    assertEvents({ root2.renameTo(root) }, mapOf(root to 'C', root2 to 'D'))
-    assertEvents({ root.deleteRecursively() }, mapOf(root to 'D'))
-    assertEvents({ root.mkdirs() }, mapOf(root to 'C'))
-    assertEvents({ top.deleteRecursively() }, mapOf(top to 'D'))
-    assertEvents({ root.mkdirs() }, mapOf(top to 'C'))
+    assertEvents({ assertTrue(root.renameTo(root2)) }, mapOf(root to 'D', root2 to 'C'))
+    assertEvents({ assertTrue(root2.renameTo(root)) }, mapOf(root to 'C', root2 to 'D'))
+    assertEvents({ assertTrue(root.deleteRecursively()) }, mapOf(root to 'D'))
+    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(root to 'C'))
+    assertEvents({ assertTrue(top.deleteRecursively()) }, mapOf(top to 'D'))
+    assertEvents({ assertTrue(root.mkdirs()) }, mapOf(top to 'C'))
   }
 
   @Test fun testSwitchingToFsRoot() {
@@ -531,7 +535,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     refresh(root)
 
     watch(root)
-    assertEvents({ file.renameTo(newFile) }, mapOf(newFile to 'P'))
+    assertEvents({ assertTrue(file.renameTo(newFile)) }, mapOf(newFile to 'P'))
   }
 
   // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
@@ -568,7 +572,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("new content")
 
     watch(root)
-    assertEvents({ root.renameTo(root_bak); root_copy.renameTo(root) }, mapOf(file to 'U'))
+    assertEvents({
+                   assertTrue(root.renameTo(root_bak));
+                   assertTrue(root_copy.renameTo(root))
+                 }, mapOf(file to 'U'))
     assertTrue(vFile.isValid)
     assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("original content")
   }
