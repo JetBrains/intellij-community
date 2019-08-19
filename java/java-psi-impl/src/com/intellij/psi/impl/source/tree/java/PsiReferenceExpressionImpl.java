@@ -45,6 +45,7 @@ import java.util.*;
 
 public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
+  private static final ThreadLocal<Map<PsiReferenceExpression, ResolveResult[]>> ourQualifiersCache = ThreadLocal.withInitial(() -> new HashMap<>());
 
   private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
@@ -183,28 +184,44 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-
-      List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
-      JavaResolveResult[] result = expression.resolve(parentType, containingFile);
-
-      if (result.length == 0 && incompleteCode && !EXACT_REFS.contains(parentType)) {
-        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+      if (!incompleteCode) {
+        //optimization:
+        //for the expression foo().bar().baz(), first foo() is resolved during resolveAllQualifiers traversal
+        //then next qualifier is picked: foo().bar(); to resolve bar(), foo() should be resolved again
+        //if the global cache worked, then the result is already in ResolveCache
+        //if top level resolve was started in the context where caching is prohibited,
+        //foo() is already in the local cache ourQualifiersCache
+        ResolveResult[] result = ourQualifiersCache.get().get(ref);
+        if (result != null) {
+          return result;
+        }
       }
 
-      JavaResolveUtil.substituteResults(expression, result);
+      boolean empty = ourQualifiersCache.get().isEmpty();
+      try {
+        resolveAllQualifiers(expression, containingFile);
+        JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-      qualifiers.clear(); // hold qualifier target list until this moment to avoid psi elements inside to GC
+        if (result.length == 0 && incompleteCode && !EXACT_REFS.contains(parentType)) {
+          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+        }
 
-      return result;
+        JavaResolveUtil.substituteResults(expression, result);
+        return result;
+      }
+      finally {
+        //clear cache for the top level expression
+        if (empty) {
+          ourQualifiersCache.remove();
+        }
+      }
     }
 
-    @NotNull
-    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
+    private static void resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
-      if (qualifier == null) return Collections.emptyList();
+      if (qualifier == null) return;
 
-      final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -223,8 +240,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
-          PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
+          PsiReferenceExpressionImpl chainedQualifier = (PsiReferenceExpressionImpl)element;
+          ourQualifiersCache.get()
+            .put(chainedQualifier, resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile));
         }
 
         // walk only qualifiers, not their argument and other associated stuff
@@ -238,7 +256,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         public void visitClass(PsiClass aClass) { }
       });
-      return qualifiers;
     }
   }
 
