@@ -69,6 +69,7 @@
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
+    <terminal.commandHandler implementation="com.intellij.vcs.log.impl.GitLogTerminalCustomCommandHandler"/>
   </extensions>
 
   <actions>

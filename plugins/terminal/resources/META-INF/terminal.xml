@@ -20,10 +20,14 @@
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
+
+    <terminal.commandHandler implementation="org.jetbrains.plugins.terminal.impl.DiffCustomCommandHandler"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>
+    <extensionPoint qualifiedName="com.intellij.terminal.commandHandler"
+                    interface="com.intellij.terminal.TerminalCustomCommandHandler"/>
   </extensionPoints>
 </idea-plugin>
