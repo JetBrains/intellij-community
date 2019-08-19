@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.serviceContainer.ServiceManagerImpl
@@ -44,8 +45,7 @@ object DynamicPlugins {
   }
 
   private fun isUnloadSafe(containerDescriptor: ContainerDescriptor): Boolean {
-    return containerDescriptor.components.isNullOrEmpty() &&
-           containerDescriptor.extensionsPoints.isNullOrEmpty()
+    return containerDescriptor.components.isNullOrEmpty()
   }
 
   @JvmStatic
@@ -54,8 +54,7 @@ object DynamicPlugins {
 
     val openProjects = ProjectManager.getInstance().openProjects
 
-    val extensions = pluginDescriptor.extensions
-    if (extensions != null) {
+    pluginDescriptor.extensions?.let { extensions ->
       for (epName in extensions.keySet()) {
         val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
         if (appEp != null) {
@@ -66,6 +65,20 @@ object DynamicPlugins {
             val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
             projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
           }
+        }
+      }
+    }
+
+    pluginDescriptor.app.extensionsPoints?.let {
+      for (extensionPointElement in it) {
+        Extensions.getRootArea().unregisterExtensionPoint(ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor))
+      }
+    }
+    pluginDescriptor.project.extensionsPoints?.let {
+      for (extensionPointElement in it) {
+        val extensionPointName = ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor)
+        for (openProject in openProjects) {
+          openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
         }
       }
     }

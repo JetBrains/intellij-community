@@ -60,15 +60,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   public void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull Element extensionPointElement,
                                      @NotNull MutablePicoContainer picoContainer) {
-    String pointName = extensionPointElement.getAttributeValue("qualifiedName");
-    if (pointName == null) {
-      final String name = extensionPointElement.getAttributeValue("name");
-      if (name == null) {
-        throw new ExtensionInstantiationException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor);
-      }
-      assert pluginDescriptor.getPluginId() != null;
-      pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
-    }
+    String pointName = getExtensionPointName(extensionPointElement, pluginDescriptor);
 
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
     String interfaceClassName = extensionPointElement.getAttributeValue("interface");
@@ -107,6 +99,21 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       }
     }
     registerExtensionPoint(point);
+  }
+
+  @NotNull
+  public static String getExtensionPointName(@NotNull Element extensionPointElement,
+                                             @NotNull PluginDescriptor pluginDescriptor) {
+    String pointName = extensionPointElement.getAttributeValue("qualifiedName");
+    if (pointName == null) {
+      final String name = extensionPointElement.getAttributeValue("name");
+      if (name == null) {
+        throw new ExtensionInstantiationException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor);
+      }
+      assert pluginDescriptor.getPluginId() != null;
+      pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
+    }
+    return pointName;
   }
 
   @Override
