@@ -19,12 +19,22 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @deprecated Unused, can be replaced with AtomicInteger. If you write your own {@link com.intellij.openapi.vfs.VirtualFileWithId},
+ * ensure you comply with the contract from its documentation.
+ */
+@Deprecated
 public class DummyFileIdGenerator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.ex.dummy.DummyFileIdGenerator");
   private static final AtomicInteger ourId = new AtomicInteger(Integer.MAX_VALUE / 2);
 
-  private DummyFileIdGenerator() {}
+  private DummyFileIdGenerator() {
+    LOG.warn("com.intellij.openapi.vfs.ex.dummy.DummyFileIdGenerator should not be used");
+  }
 
   public static int next() {
     return ourId.getAndIncrement();
