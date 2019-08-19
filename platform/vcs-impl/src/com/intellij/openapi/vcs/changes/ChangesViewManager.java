@@ -277,7 +277,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       myView.addTreeSelectionListener(e -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
-        ApplicationManager.getApplication().invokeLater(() -> updatePreview(fromModelRefresh));
+        invokeLater(() -> updatePreview(fromModelRefresh));
       });
       myView.addGroupingChangeListener(e -> {
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
@@ -429,12 +429,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void updateProgressComponent(@Nullable Factory<? extends JComponent> progress) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      invokeLaterIfNeeded(() -> {
         if (myDisposed) return;
         JComponent component = progress != null ? progress.create() : null;
         myProgressLabel.setContent(component);
         myProgressLabel.setMinimumSize(JBUI.emptySize());
-      }, ModalityState.any());
+      });
     }
 
     public void updateProgressText(String text, boolean isError) {
@@ -442,7 +442,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void setBusy(final boolean b) {
-      UIUtil.invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
+      invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
     }
 
     public void scheduleRefresh() {
@@ -490,7 +490,7 @@ public class ChangesViewManager implements ChangesViewEx,
         }
         DefaultTreeModel newModel = treeModelBuilder.build();
 
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
           indicator.checkCanceled();
 
@@ -503,7 +503,7 @@ public class ChangesViewManager implements ChangesViewEx,
             myModelUpdateInProgress = false;
           }
           updatePreview(true);
-        }, ModalityState.NON_MODAL);
+        });
       }, indicator);
     }
 
@@ -539,8 +539,8 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
 
-    public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
-      ApplicationManager.getApplication().invokeLater(() -> refreshChangesViewNode(file), myProject.getDisposed());
+    public void refreshChangesViewNodeAsync(@NotNull VirtualFile file) {
+      invokeLater(() -> refreshChangesViewNode(file));
     }
 
     private void refreshChangesViewNode(@NotNull VirtualFile file) {
@@ -555,6 +555,14 @@ public class ChangesViewManager implements ChangesViewEx,
           myView.getModel().nodeChanged(node);
         }
       }
+    }
+
+    private void invokeLater(Runnable runnable) {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+    }
+
+    private void invokeLaterIfNeeded(Runnable runnable) {
+      GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
     }
 
     private class MyChangeListListener extends ChangeListAdapter {
