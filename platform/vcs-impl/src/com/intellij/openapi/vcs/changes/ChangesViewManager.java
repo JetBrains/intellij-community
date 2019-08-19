@@ -7,6 +7,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -35,6 +36,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -245,25 +247,24 @@ public class ChangesViewManager implements ChangesViewEx,
   private static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private final Project myProject;
     @NotNull private final ChangesViewManager myChangesViewManager;
+    @NotNull private final VcsConfiguration myVcsConfiguration;
 
     @NotNull private final ChangesListView myView;
-    private ChangesViewCommitPanel myCommitPanel;
-    private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
-    private final VcsConfiguration myVcsConfiguration;
-    private final Wrapper myProgressLabel = new Wrapper();
+    @NotNull private final List<AnAction> myToolbarActions;
 
-    private final Alarm myTreeUpdateAlarm;
-    private final Object myTreeUpdateIndicatorLock = new Object();
+    @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
+    @NotNull private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
+    @NotNull private final Wrapper myProgressLabel = new Wrapper();
+
+    @Nullable private ChangesViewCommitPanel myCommitPanel;
+    @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
+
+    @NotNull private final Alarm myTreeUpdateAlarm;
+    @NotNull private final Object myTreeUpdateIndicatorLock = new Object();
     @NotNull private ProgressIndicator myTreeUpdateIndicator = new EmptyProgressIndicator();
+    private boolean myModelUpdateInProgress;
 
     private boolean myDisposed = false;
-
-    private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
-
-    private boolean myModelUpdateInProgress;
-    private final MyTreeExpander myTreeExpander;
-    private final List<AnAction> myToolbarActions;
 
     private ChangesViewToolWindowPanel(@NotNull Project project, @NotNull ChangesViewManager changesViewManager) {
       super(false, true);
@@ -271,38 +272,13 @@ public class ChangesViewManager implements ChangesViewEx,
       myChangesViewManager = changesViewManager;
 
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-      myView = new ChangesListView(project, false);
-      myTreeExpander = new MyTreeExpander();
-      myView.setTreeExpander(myTreeExpander);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-      ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
-
-      myToolbarActions = createChangesToolbarActions();
-      ActionToolbar changesToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR,
-                                                                                     new DefaultActionGroup(myToolbarActions), false);
-      changesToolbar.setTargetComponent(myView);
-
-      UIUtil.addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
-      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
-
-      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
-      myCommitPanelSplitter.setFirstComponent(changesPanel);
-      BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
-        @Override
-        public Dimension getMinimumSize() {
-          return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
-        }
-      };
-      contentPanel.addToCenter(myCommitPanelSplitter);
-
-      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
-      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                                               myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
+      myView = new ChangesListView(project, false);
+      TreeExpander treeExpander = new MyTreeExpander(myView);
+      myView.setTreeExpander(treeExpander);
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
-      ChangesDnDSupport.install(myProject, myView);
       myView.addTreeSelectionListener(e -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
         ApplicationManager.getApplication().invokeLater(() -> updatePreview(fromModelRefresh));
@@ -311,12 +287,41 @@ public class ChangesViewManager implements ChangesViewEx,
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
         scheduleRefresh();
       });
+      ChangesDnDSupport.install(myProject, myView);
 
-      setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
+      myToolbarActions = createChangesToolbarActions(treeExpander);
       registerShortcuts(this);
 
-      scheduleRefresh();
+      ActionToolbar changesToolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, new DefaultActionGroup(myToolbarActions), false);
+      changesToolbar.setTargetComponent(myView);
+      JComponent toolbarComponent = simplePanel(changesToolbar.getComponent())
+        .withBorder(createBorder(JBColor.border(), SideBorder.RIGHT));
+
+      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(toolbarComponent);
+
+      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
+      myCommitPanelSplitter.setFirstComponent(changesPanel);
+
+      BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+        @Override
+        public Dimension getMinimumSize() {
+          return isMinimumSizeSet() ? super.getMinimumSize() : toolbarComponent.getPreferredSize();
+        }
+      };
+      contentPanel.addToCenter(myCommitPanelSplitter);
+
+      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
+      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                               myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+      BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
+      setContent(mainPanel);
+
       myProject.getMessageBus().connect(this).subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
+      ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+
+      scheduleRefresh();
       updatePreview(false);
       updateCommitWorkflow(CommitWorkflowManager.getInstance(myProject).isNonModal());
     }
@@ -394,7 +399,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     @NotNull
-    private List<AnAction> createChangesToolbarActions() {
+    private List<AnAction> createChangesToolbarActions(@NotNull TreeExpander treeExpander) {
       List<AnAction> actions = new ArrayList<>();
       actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
 
@@ -407,8 +412,8 @@ public class ChangesViewManager implements ChangesViewEx,
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
 
       actions.add(viewOptionsGroup);
-      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
-      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
+      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(treeExpander, myView));
+      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, myView));
       actions.add(Separator.getInstance());
       actions.add(new ToggleDetailsAction());
 
@@ -495,9 +500,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void updatePreview(boolean fromModelRefresh) {
-      if (myDiffPreviewSplitter != null) {
-        myDiffPreviewSplitter.updatePreview(fromModelRefresh);
-      }
+      myDiffPreviewSplitter.updatePreview(fromModelRefresh);
     }
 
 
@@ -554,10 +557,11 @@ public class ChangesViewManager implements ChangesViewEx,
 
       @Override
       public void changeListUpdateDone() {
+        setBusy(false);
         scheduleRefresh();
+
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
         VcsException updateException = changeListManager.getUpdateException();
-        setBusy(false);
         if (updateException == null) {
           updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
         }
@@ -567,15 +571,18 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    private class MyTreeExpander extends DefaultTreeExpander {
-      MyTreeExpander() {
-        super(myView);
+    private static class MyTreeExpander extends DefaultTreeExpander {
+      @NotNull private final Tree myTree;
+
+      MyTreeExpander(@NotNull Tree tree) {
+        super(tree);
+        myTree = tree;
       }
 
       @Override
       public void collapseAll() {
-        TreeUtil.collapseAll(myView, 2);
-        TreeUtil.expand(myView, 1);
+        TreeUtil.collapseAll(myTree, 2);
+        TreeUtil.expand(myTree, 1);
       }
     }
 
