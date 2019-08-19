@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.concurrency;
+package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Executes tasks synchronously immediately after they submitted
  */
-public final class SameThreadExecutorService extends AbstractExecutorService {
+class SameThreadExecutorService extends AbstractExecutorService {
   private volatile boolean isTerminated;
 
   @Override

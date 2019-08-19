@@ -3,7 +3,6 @@ package com.intellij.idea;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.CliResult;
@@ -34,10 +33,7 @@ import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
@@ -161,7 +157,7 @@ public class StartupUtil {
 
     boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
     List<Future<?>> futures = new SmartList<>();
-    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
+    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : ConcurrencyUtil.newSameThreadExecutorService();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
       setupSystemLibraries();

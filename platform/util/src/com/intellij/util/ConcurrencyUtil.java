@@ -125,6 +125,14 @@ public class ConcurrencyUtil {
     return executor;
   }
 
+  /**
+   * Service which executes tasks synchronously immediately after they submitted
+   */
+  @NotNull
+  public static ExecutorService newSameThreadExecutorService() {
+    return new SameThreadExecutorService();
+  }
+
   @NotNull
   public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name, final boolean isDaemon, final int priority) {
     return r -> {

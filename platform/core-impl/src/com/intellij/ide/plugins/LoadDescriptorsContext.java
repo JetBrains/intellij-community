@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -24,18 +24,19 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
   private final ThreadLocal<SafeJdomFactory> myThreadLocalXmlFactory;
+  private final int myMaxThreads;
 
   LoadDescriptorsContext(boolean isParallel) {
-    int maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
-    if (maxThreads > 1) {
+    myMaxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
+    if (myMaxThreads > 1) {
       BoundedTaskExecutor executor =
-        (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads);
+        (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", myMaxThreads);
       executor.setChangeThreadName(false);
       myExecutorService = executor;
-      myInterners = Collections.newSetFromMap(ContainerUtil.newConcurrentMap(maxThreads));
+      myInterners = Collections.newSetFromMap(ContainerUtil.newConcurrentMap(myMaxThreads));
     }
     else {
-      myExecutorService = new SameThreadExecutorService();
+      myExecutorService = ConcurrencyUtil.newSameThreadExecutorService();
       myInterners = new SmartList<>();
     }
 
@@ -58,7 +59,7 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
   @Override
   public void close() {
-    if (myExecutorService instanceof SameThreadExecutorService) {
+    if (myMaxThreads <= 1) {
       myThreadLocalXmlFactory.remove();
       return;
     }
