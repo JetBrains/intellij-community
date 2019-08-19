@@ -263,6 +263,9 @@ public class GitBranchUtil {
     else if (state == GitRepository.State.GRAFTING) {
       prefix = "Cherry-picking in ";
     }
+    else if (state == GitRepository.State.REVERTING) {
+      prefix = "Reverting in ";
+    }
 
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branch.getName());

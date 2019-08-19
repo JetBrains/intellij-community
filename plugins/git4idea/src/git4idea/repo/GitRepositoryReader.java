@@ -160,8 +160,11 @@ class GitRepositoryReader {
     if (!headInfo.isBranch) {
       return Repository.State.DETACHED;
     }
-    if (isCherryPickInProgress() || isRevertInProgress()) {
+    if (isCherryPickInProgress()) {
       return Repository.State.GRAFTING;
+    }
+    if (isRevertInProgress()) {
+      return Repository.State.REVERTING;
     }
     return Repository.State.NORMAL;
   }
