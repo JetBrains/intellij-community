@@ -177,7 +177,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   public void selectContent(@NotNull String tabName, boolean requestFocus) {
     if (myContentManager == null) return;
-    Content toSelect = ContainerUtil.find(myContentManager.getContents(), content -> content.getDisplayName().equals(tabName));
+    Content toSelect = ContainerUtil.find(myContentManager.getContents(), content -> content.getTabName().equals(tabName));
     if (toSelect != null) {
       myContentManager.setSelectedContent(toSelect, requestFocus);
     }
