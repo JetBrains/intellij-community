@@ -16,8 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -56,7 +54,9 @@ public class FileContentUtilCore {
       // files must be processed under one write action to prevent firing event for invalid files.
       final Set<VFilePropertyChangeEvent> events = new THashSet<>();
       for (VirtualFile file : files) {
-        saveOrReload(file, events);
+        if (file != null && !file.isDirectory() && file.isValid()) {
+          events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, file, VirtualFile.PROP_NAME, file.getName(), file.getName(), false));
+        }
       }
 
       BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
@@ -64,21 +64,5 @@ public class FileContentUtilCore {
       publisher.before(eventList);
       publisher.after(eventList);
     });
-  }
-
-  private static void saveOrReload(VirtualFile file, @NotNull Collection<? super VFilePropertyChangeEvent> events) {
-    if (file == null || file.isDirectory() || !file.isValid()) {
-      return;
-    }
-
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    if (documentManager.isFileModified(file)) {
-      Document document = documentManager.getDocument(file);
-      if (document != null) {
-        documentManager.saveDocumentAsIs(document); // this can be called e.g. in context of undo, so we shouldn't modify document
-      }
-    }
-
-    events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, file, VirtualFile.PROP_NAME, file.getName(), file.getName(), false));
   }
 }
