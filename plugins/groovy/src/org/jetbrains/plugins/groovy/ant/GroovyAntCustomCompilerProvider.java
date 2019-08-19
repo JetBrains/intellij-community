@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ant;
 
 import com.intellij.compiler.ant.*;
@@ -28,16 +14,18 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 /**
  * Groovy provider for custom compilation task
@@ -110,17 +98,17 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
    */
   @Override
   public boolean hasCustomCompile(ModuleChunk chunk) {
-    for (Module m : chunk.getModules()) {
+    final Module[] modules = chunk.getModules();
+    if (modules.length == 0) {
+      return false;
+    }
+    final PsiManager manager = PsiManager.getInstance(chunk.getProject());
+    final ContentIterator groovyFileSearcher = fileOrDir -> {
+      ProgressManager.checkCanceled();
+      return !isCompilableGroovyFile(manager, fileOrDir);
+    };
+    for (Module m : modules) {
       if (LibrariesUtil.hasGroovySdk(m)) {
-        final Set<String> scriptExtensions = GroovyFileTypeLoader.getCustomGroovyScriptExtensions();
-        final ContentIterator groovyFileSearcher = fileOrDir -> {
-          ProgressManager.checkCanceled();
-          if (isCompilableGroovyFile(fileOrDir, scriptExtensions)) {
-            return false;
-          }
-          return true;
-        };
-
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(m);
         final ModuleFileIndex fileIndex = rootManager.getFileIndex();
         for (VirtualFile file : rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES)) {
@@ -133,7 +121,20 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     return false;
   }
 
-  private static boolean isCompilableGroovyFile(VirtualFile file, Set<String> scriptExtensions) {
-    return !file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE) && !scriptExtensions.contains(file.getExtension());
+  /**
+   * @return {@code true} if the file is in Groovy and it doesn't have custom script type
+   */
+  private static boolean isCompilableGroovyFile(PsiManager manager, VirtualFile file) {
+    if (file.isDirectory()) {
+      return false;
+    }
+    if (!FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
+      return false;
+    }
+    PsiFile psiFile = manager.findFile(file);
+    if (!(psiFile instanceof GroovyFile)) {
+      return false;
+    }
+    return GroovyScriptUtil.isPlainGroovyScript((GroovyFile)psiFile);
   }
 }
