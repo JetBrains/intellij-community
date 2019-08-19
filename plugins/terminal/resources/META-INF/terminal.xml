@@ -22,6 +22,7 @@
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
     <terminal.commandHandler implementation="org.jetbrains.plugins.terminal.impl.DiffCustomCommandHandler"/>
+    <experimentalFeature id="terminal.custom.command.handling" percentOfUsers="100"/>
   </extensions>
 
   <extensionPoints>

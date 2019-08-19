@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement
 
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalCustomCommandHandler
 import com.intellij.ui.content.Content
@@ -19,6 +20,11 @@ class TerminalCustomCommandManager internal constructor() : TerminalWatchManager
 
     commandListener = object : KeyAdapter() {
       override fun keyPressed(e: KeyEvent?) {
+        if (!Experiments.getInstance().isFeatureEnabled("terminal.custom.command.handling")) {
+          super.keyPressed(e)
+          return
+        }
+
         if (e!!.keyCode == KeyEvent.VK_ENTER) {
 
           val command: String = fetchCommand(
