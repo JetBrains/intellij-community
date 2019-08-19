@@ -15,6 +15,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,12 +53,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   public void setUp(ToolWindow toolWindow) {
     myContentManager = toolWindow.getContentManager();
     myContentManager.addContentManagerListener(myContentManagerListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myContentManager.removeContentManagerListener(myContentManagerListener);
-      }
-    });
+    Disposer.register(this, () -> myContentManager.removeContentManagerListener(myContentManagerListener));
 
     loadExtensionTabs();
 
@@ -71,14 +68,13 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   }
 
   private void loadExtensionTabs() {
-    final List<Content> contentList = new ArrayList<>();
     for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
       final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
-      if (predicate == null || predicate.fun(myProject)) {
-        contentList.add(createExtensionTab(ep));
+      boolean shouldShowTab = predicate == null || predicate.fun(myProject);
+      if (shouldShowTab) {
+        myAddedContents.add(createExtensionTab(ep));
       }
     }
-    myAddedContents.addAll(0, contentList);
   }
 
   @NotNull
@@ -94,38 +90,26 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
       final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null) continue;
-      Content epContent = findEPContent(ep);
-      boolean predicateResult = predicate.fun(myProject);
-      if (predicateResult && epContent == null) {
+      Content epContent = ContainerUtil.find(myContentManager.getContents(), content -> content.getUserData(myEPKey) == ep);
+      boolean shouldShowTab = predicate.fun(myProject);
+      if (shouldShowTab && epContent == null) {
         Content tab = createExtensionTab(ep);
         addIntoCorrectPlace(tab);
       }
-      else if (!predicateResult && epContent != null) {
+      else if (!shouldShowTab && epContent != null) {
         myContentManager.removeContent(epContent, true);
       }
     }
   }
 
-  @Nullable
-  private Content findEPContent(final ChangesViewContentEP ep) {
-    final Content[] contents = myContentManager.getContents();
-    for(Content content: contents) {
-      if (content.getUserData(myEPKey) == ep) {
-        return content;
-      }
-    }
-    return null;
-  }
-
   private void updateToolWindowAvailability() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (toolWindow != null) {
-      boolean available = isAvailable();
-      if (available && !toolWindow.isAvailable()) {
-        toolWindow.setShowStripeButton(true);
-      }
-      toolWindow.setAvailable(available, null);
+    if (toolWindow == null) return;
+    boolean available = isAvailable();
+    if (available && !toolWindow.isAvailable()) {
+      toolWindow.setShowStripeButton(true);
     }
+    toolWindow.setAvailable(available, null);
   }
 
   @Override
@@ -174,12 +158,9 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {
     if (myContentManager == null) return null;
-    final Content content = myContentManager.getSelectedContent();
-    if (content != null && aClass.isInstance(content.getComponent())) {
-      //noinspection unchecked
-      return (T) content.getComponent();
-    }
-    return null;
+    Content selectedContent = myContentManager.getSelectedContent();
+    if (selectedContent == null) return null;
+    return ObjectUtils.tryCast(selectedContent.getComponent(), aClass);
   }
 
   public boolean isContentSelected(@NotNull String contentName) {
@@ -196,11 +177,9 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   public void selectContent(@NotNull String tabName, boolean requestFocus) {
     if (myContentManager == null) return;
-    for(Content content: myContentManager.getContents()) {
-      if (content.getDisplayName().equals(tabName)) {
-        myContentManager.setSelectedContent(content, requestFocus);
-        break;
-      }
+    Content toSelect = ContainerUtil.find(myContentManager.getContents(), content -> content.getDisplayName().equals(tabName));
+    if (toSelect != null) {
+      myContentManager.setSelectedContent(toSelect, requestFocus);
     }
   }
 
@@ -233,16 +212,10 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     public void selectionChanged(@NotNull final ContentManagerEvent event) {
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {
-        ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();
-        final ChangesViewContentProvider provider = ep.getInstance(myProject);
-        final JComponent contentComponent = provider.initContent();
-        content.setComponent(contentComponent);
-        content.setDisposer(new Disposable() {
-          @Override
-          public void dispose() {
-            provider.disposeContent();
-          }
-        });
+        ChangesViewContentEP ep = ((ContentStub)content.getComponent()).getEP();
+        ChangesViewContentProvider provider = ep.getInstance(myProject);
+        content.setComponent(provider.initContent());
+        content.setDisposer(() -> provider.disposeContent());
       }
     }
   }
