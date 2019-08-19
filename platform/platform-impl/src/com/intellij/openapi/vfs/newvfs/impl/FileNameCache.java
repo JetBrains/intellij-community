@@ -51,9 +51,13 @@ public class FileNameCache {
   }
 
   private static void assertShortFileName(@NotNull String name) {
+    assertShortFileName(name, SystemInfo.isWindows);
+  }
+
+  static void assertShortFileName(@NotNull String name, boolean isWindows) {
     if (name.length() <= 1) return;
     int start = 0;
-    if (SystemInfo.isWindows && name.startsWith("//")) {  // Windows UAC: //Network/Ubuntu
+    if (isWindows && name.startsWith("//")) {  // Windows UNC: //Network/Ubuntu
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }

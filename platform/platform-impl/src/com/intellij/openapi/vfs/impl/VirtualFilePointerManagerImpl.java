@@ -283,6 +283,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   // trim trailing /
   @NotNull
   private static String cleanupPath(@NotNull String path) {
+    return cleanupPath(path, SystemInfo.isWindows);
+  }
+
+  static String cleanupPath(@NotNull String path, boolean isWindows) {
     path = FileUtilRt.toSystemIndependentName(path);
     path = trimTrailingSeparators(path);
     for (int i = 0; i < path.length(); ) {
@@ -292,7 +296,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       char next = path.charAt(slash + 1);
 
-      if (next == '/' && !(i == 0 && SystemInfo.isWindows) ||
+      if (next == '/' && !(i == 0 && isWindows) || // additional condition for Windows UNC
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
