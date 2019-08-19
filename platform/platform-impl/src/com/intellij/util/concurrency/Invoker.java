@@ -158,13 +158,19 @@ public abstract class Invoker implements Disposable {
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else if (getApplication().isReadAccessAllowed()) {
-          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) {
+            offerRestart(task, promise, attempt);
+            return;
+          }
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else {
           // try to execute a task until it stops throwing ProcessCanceledException
           while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
-            if (!is("invoker.can.yield.to.pending.write.actions")) throw new ProcessCanceledException();
+            if (!is("invoker.can.yield.to.pending.write.actions")) {
+              offerRestart(task, promise, attempt);
+              return;
+            }
             if (!canInvoke(task, promise)) return; // stop execution of obsolete task
             ProgressIndicatorUtils.yieldToPendingWriteActions();
             if (!canRestart(task, promise, attempt)) return;
@@ -176,12 +182,7 @@ public abstract class Invoker implements Disposable {
       }
     }
     catch (ProcessCanceledException | IndexNotReadyException exception) {
-      if (canRestart(task, promise, attempt)) {
-        count.incrementAndGet();
-        int nextAttempt = attempt + 1;
-        offer(() -> invokeSafely(task, promise, nextAttempt), 10);
-        LOG.debug("Task is restarted");
-      }
+      offerRestart(task, promise, attempt);
     }
     catch (Throwable throwable) {
       try {
@@ -193,6 +194,19 @@ public abstract class Invoker implements Disposable {
     }
     finally {
       count.decrementAndGet();
+    }
+  }
+
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @param attempt an attempt to run the specified task
+   */
+  private void offerRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
+    if (canRestart(task, promise, attempt)) {
+      count.incrementAndGet();
+      offer(() -> invokeSafely(task, promise, attempt + 1), 10);
+      LOG.debug("Task is restarted");
     }
   }
 
