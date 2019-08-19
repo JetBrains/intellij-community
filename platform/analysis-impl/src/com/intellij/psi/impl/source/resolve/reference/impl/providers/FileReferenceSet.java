@@ -51,7 +51,7 @@ public class FileReferenceSet {
   private final String myPathStringNonTrimmed;
   private final String myPathString;
 
-  private Collection<PsiFileSystemItem> myDefaultContexts;
+  private volatile Collection<PsiFileSystemItem> myDefaultContexts;
 
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
@@ -298,10 +298,11 @@ public class FileReferenceSet {
 
   @NotNull
   public Collection<PsiFileSystemItem> getDefaultContexts() {
-    if (myDefaultContexts == null) {
-      myDefaultContexts = computeDefaultContexts();
+    Collection<PsiFileSystemItem> result = myDefaultContexts;
+    if (result == null) {
+      myDefaultContexts = result = computeDefaultContexts();
     }
-    return myDefaultContexts;
+    return result;
   }
 
   @NotNull
@@ -530,11 +531,11 @@ public class FileReferenceSet {
     final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
     if (module == null) return emptyList();
 
-    final List<PsiFileSystemItem> list = new ArrayList<>();
+    Set<PsiFileSystemItem> result = new LinkedHashSet<>();
     final Project project = file.getProject();
     for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
-        if (helper.isFallback() && !list.isEmpty()) {
+        if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
         Collection<PsiFileSystemItem> roots = helper.getRoots(module);
@@ -543,10 +544,10 @@ public class FileReferenceSet {
             LOG.error("Helper " + helper + " produced a null root for " + file);
           }
         }
-        list.addAll(roots);
+        result.addAll(roots);
       }
     }
-    return list;
+    return new ArrayList<>(result);
   }
 
   @NotNull
