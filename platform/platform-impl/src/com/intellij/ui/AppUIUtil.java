@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -437,7 +436,7 @@ public final class AppUIUtil {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
         else {
-          ((ApplicationImpl)application).exit(true, true, false);
+          application.exit(true, true, false);
         }
       }
     };
