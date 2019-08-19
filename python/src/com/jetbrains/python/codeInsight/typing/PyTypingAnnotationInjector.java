@@ -25,10 +25,7 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
-import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +59,8 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   public Language getInjectedLanguage(@NotNull PsiElement context) {
     if (context instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
-      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true) != null && isTypingAnnotation(expr.getStringValue())) {
+      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true, PyCallExpression.class) != null &&
+          isTypingAnnotation(expr.getStringValue())) {
         return PyDocstringLanguageDialect.getInstance();
       }
     }
