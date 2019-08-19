@@ -9,7 +9,9 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.function.BiPredicate
 
 /**
- * Specifies how Maven artifacts for IDE modules should be generated. Artifacts are generated in directory under {@link BuildPaths#artifacts}.
+ * Specifies how Maven artifacts for IDE modules should be generated.
+ * Public artifacts are generated under {@link BuildPaths#artifacts}/maven-artifacts directory.
+ * Proprietary artifacts are generated under {@link BuildPaths#artifacts}/proprietary-maven-artifacts directory.
  * @see ProductProperties#mavenArtifacts
  * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
  */
