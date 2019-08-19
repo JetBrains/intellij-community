@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ChangesViewEx extends ChangesViewI {
   void refreshImmediately();
 
-  void updateCommitWorkflow(boolean isNonModal);
+  void updateCommitWorkflow();
 
   @Nullable
   ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();

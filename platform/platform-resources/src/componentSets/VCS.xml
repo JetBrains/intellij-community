@@ -42,6 +42,9 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
+      <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>

@@ -214,8 +214,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
       if (content.getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub)content.getComponent()).getEP();
         ChangesViewContentProvider provider = ep.getInstance(myProject);
-        content.setComponent(provider.initContent());
-        content.setDisposer(() -> provider.disposeContent());
+        provider.initTabContent(content);
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -21,11 +22,11 @@ import java.util.*
 private val isNonModalCommit = Registry.get("vcs.non.modal.commit")
 private val appSettings = VcsApplicationSettings.getInstance()
 
-internal class CommitWorkflowManager(private val project: Project) {
+class CommitWorkflowManager(private val project: Project) : ProjectComponent {
   private val changesViewManager = ChangesViewManager.getInstanceEx(project)
   private val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
-  init {
+  override fun projectOpened() {
     vcsManager.addInitializationRequest(VcsInitObject.AFTER_COMMON) {
       runInEdt {
         subscribeToChanges()
@@ -34,9 +35,9 @@ internal class CommitWorkflowManager(private val project: Project) {
     }
   }
 
-  private fun updateWorkflow() = changesViewManager.updateCommitWorkflow(isNonModal())
+  private fun updateWorkflow() = changesViewManager.updateCommitWorkflow()
 
-  private fun isNonModal(): Boolean {
+  fun isNonModal(): Boolean {
     if (isNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
@@ -61,7 +62,7 @@ internal class CommitWorkflowManager(private val project: Project) {
     val SETTINGS: Topic<SettingsListener> = Topic.create("Commit Workflow Settings", SettingsListener::class.java)
 
     @JvmStatic
-    fun install(project: Project) = CommitWorkflowManager(project)
+    fun getInstance(project: Project): CommitWorkflowManager = project.getComponent(CommitWorkflowManager::class.java)
   }
 
   interface SettingsListener : EventListener {

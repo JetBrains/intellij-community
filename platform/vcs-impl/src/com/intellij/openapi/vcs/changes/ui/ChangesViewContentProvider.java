@@ -15,12 +15,24 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
  * @author yole
  */
 public interface ChangesViewContentProvider {
-  JComponent initContent();
-  void disposeContent();
+  default void initTabContent(@NotNull Content content) {
+    content.setComponent(initContent());
+    content.setDisposer(() -> disposeContent());
+  }
+
+  default JComponent initContent() {
+    throw new UnsupportedOperationException();
+  }
+
+  default void disposeContent() {
+  }
 }
