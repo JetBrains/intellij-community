@@ -30,6 +30,28 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
                                "/main/java/pkg/ClassWithFileReference.java")
   }
 
+  fun testCreatePathExcludesGeneratedSources() {
+    myFixture.configureFromTempProjectFile("/main/java/pkg/ClassWithFileReference.java")
+    myFixture.testHighlighting(true, false, true)
+
+    withFileReferenceInStringLiteral {
+      val ref = myFixture.getReferenceAtCaretPosition()
+      val fileReference = (ref as PsiMultiReference).references.filterIsInstance<FileReference>()[0]
+
+      assertEquals("my.properties", fileReference.fileNameToCreate)
+      val intention = fileReference.quickFixes!![0]
+
+      val options = (intention as CreateFilePathFix).myDirectories
+
+      assertEquals(4, options.size)
+
+      assertEquals("/src/main/resources", getPresentableText(options[0]))
+      assertEquals("/src/test/resources", getPresentableText(options[1]))
+      assertEquals("/src/main/java", getPresentableText(options[2]))
+      assertEquals("/src/test/java", getPresentableText(options[3]))
+    }
+  }
+
   fun testCreatePathInSources() {
     ApplicationManager.getApplication().runWriteAction {
       // only src/main/java and /src/test/java will be available for new files
@@ -90,5 +112,9 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
 
       myFixture.checkResult("", true)
     }
+  }
+
+  private fun getPresentableText(dir: TargetDirectory) : String {
+    return dir.directory!!.virtualFile.presentableUrl
   }
 }

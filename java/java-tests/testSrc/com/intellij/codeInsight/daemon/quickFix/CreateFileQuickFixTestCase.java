@@ -17,6 +17,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 public abstract class CreateFileQuickFixTestCase extends LightJavaCodeInsightFixtureTestCase {
@@ -37,6 +38,10 @@ public abstract class CreateFileQuickFixTestCase extends LightJavaCodeInsightFix
 
       contentEntry.addSourceFolder(contentEntryUrl + "/main/java", JavaSourceRootType.SOURCE);
       contentEntry.addSourceFolder(contentEntryUrl + "/main/resources", JavaResourceRootType.RESOURCE);
+
+      JavaSourceRootProperties generatedProperties = JavaSourceRootType.SOURCE.createDefaultProperties();
+      generatedProperties.setForGeneratedSources(true);
+      contentEntry.addSourceFolder(contentEntryUrl + "/main/gen", JavaSourceRootType.SOURCE, generatedProperties);
 
       contentEntry.addSourceFolder(contentEntryUrl + "/test/java", JavaSourceRootType.TEST_SOURCE);
       contentEntry.addSourceFolder(contentEntryUrl + "/test/resources", JavaResourceRootType.TEST_RESOURCE);
