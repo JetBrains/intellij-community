@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -33,7 +18,7 @@ import java.util.*;
  * @author peter
  */
 public class FileContentUtilCore {
-  @NonNls public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
+  public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
   /**
    * Forces a reparse of the specified array of files.
@@ -49,10 +34,10 @@ public class FileContentUtilCore {
    *
    * @param files the files to reparse.
    */
-  public static void reparseFiles(@NotNull final Collection<? extends VirtualFile> files) {
+  public static void reparseFiles(@NotNull Collection<? extends VirtualFile> files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       // files must be processed under one write action to prevent firing event for invalid files.
-      final Set<VFilePropertyChangeEvent> events = new THashSet<>();
+      Set<VFilePropertyChangeEvent> events = new THashSet<>();
       for (VirtualFile file : files) {
         if (file != null && !file.isDirectory() && file.isValid()) {
           events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, file, VirtualFile.PROP_NAME, file.getName(), file.getName(), false));
