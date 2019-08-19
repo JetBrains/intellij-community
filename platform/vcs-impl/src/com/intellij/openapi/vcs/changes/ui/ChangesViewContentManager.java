@@ -27,7 +27,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
 
-  private MyContentManagerListener myContentManagerListener;
+  private final MyContentManagerListener myContentManagerListener;
   @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
 
@@ -43,31 +43,31 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     myProject = project;
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+    myContentManagerListener = new MyContentManagerListener();
     myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
   }
 
   @Override
   public void setUp(ToolWindow toolWindow) {
-    final ContentManager contentManager = toolWindow.getContentManager();
-    myContentManagerListener = new MyContentManagerListener();
-    contentManager.addContentManagerListener(myContentManagerListener);
-
+    myContentManager = toolWindow.getContentManager();
+    myContentManager.addContentManagerListener(myContentManagerListener);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
-        contentManager.removeContentManagerListener(myContentManagerListener);
+        myContentManager.removeContentManagerListener(myContentManagerListener);
       }
     });
 
     loadExtensionTabs();
-    myContentManager = contentManager;
+
     for (Content content : myAddedContents) {
       addIntoCorrectPlace(content);
     }
     myAddedContents.clear();
-    if (contentManager.getContentCount() > 0) {
-      contentManager.setSelectedContent(contentManager.getContent(0));
-    }
+
+    // Ensure that first tab is selected after tabs reordering
+    Content firstContent = myContentManager.getContent(0);
+    if (firstContent != null) myContentManager.setSelectedContent(firstContent);
   }
 
   private void loadExtensionTabs() {
