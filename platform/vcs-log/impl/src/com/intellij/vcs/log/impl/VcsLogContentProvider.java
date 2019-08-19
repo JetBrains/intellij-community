@@ -125,7 +125,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Nullable
   public static VcsLogContentProvider getInstance(@NotNull Project project) {
-    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensionList(project)) {
+    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(project)) {
       if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
         return (VcsLogContentProvider)ep.getCachedInstance();
       }

@@ -74,8 +74,8 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   private void loadExtensionTabs() {
     final List<Content> contentList = new ArrayList<>();
-    for(ChangesViewContentEP ep: ChangesViewContentEP.EP_NAME.getExtensionList(myProject)) {
-      final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
+    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
+      final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
         final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
         content.setCloseable(false);
@@ -95,9 +95,8 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   private void updateExtensionTabs() {
     if (myContentManager == null) return;
-    final ChangesViewContentEP[] contentEPs = ChangesViewContentEP.EP_NAME.getExtensions(myProject);
-    for(ChangesViewContentEP ep: contentEPs) {
-      final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
+    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
+      final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null) continue;
       Content epContent = findEPContent(ep);
       final Boolean predicateResult = predicate.fun(myProject);
