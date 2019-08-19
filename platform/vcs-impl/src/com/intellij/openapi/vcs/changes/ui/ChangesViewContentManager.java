@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
@@ -41,7 +40,6 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   private ContentManager myContentManager;
   private final Alarm myVcsChangeAlarm;
   private final List<Content> myAddedContents = new ArrayList<>();
-  @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -72,7 +70,6 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     if (contentManager.getContentCount() > 0) {
       contentManager.setSelectedContent(contentManager.getContent(0));
     }
-    myInitializationWaiter.countDown();
   }
 
   private void loadExtensionTabs() {
