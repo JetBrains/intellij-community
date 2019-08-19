@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -10,9 +11,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,9 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   public Language getInjectedLanguage(@NotNull PsiElement context) {
     if (context instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
+      if (isTypingLiteralArgument(expr)) {
+        return null;
+      }
       if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true, PyCallExpression.class) != null &&
           isTypingAnnotation(expr.getStringValue())) {
         return PyDocstringLanguageDialect.getInstance();
@@ -79,6 +84,15 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       }
     }
     return PyInjectionUtil.InjectionResult.EMPTY;
+  }
+
+  private static boolean isTypingLiteralArgument(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PyTupleExpression) parent = parent.getParent();
+    if (!(parent instanceof PySubscriptionExpression)) return false;
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
+    return Ref.deref(PyTypingTypeProvider.getType((PySubscriptionExpression)parent, context)) instanceof PyLiteralType;
   }
 
   private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {
