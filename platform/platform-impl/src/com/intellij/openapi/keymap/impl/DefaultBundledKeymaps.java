@@ -19,29 +19,28 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultBundledKeymaps implements BundledKeymapProvider {
   @NotNull
   @Override
   public List<String> getKeymapFileNames() {
-    return Arrays.asList(
-      "$default.xml",
-      "Mac OS X 10.5+.xml",
-      "Mac OS X.xml",
-      "Emacs.xml",
-      "Visual Studio.xml",
-      "Default for XWin.xml",
-      "Default for GNOME.xml",
-      "Default for KDE.xml",
-      "Eclipse.xml",
-      "Eclipse (Mac OS X).xml",
-      "NetBeans 6.5.xml",
-      "Sublime Text.xml",
-      "Sublime Text (Mac OS X).xml"
-    );
+    ArrayList<String> result = new ArrayList<>();
+    result.add("$default.xml");
+    result.add("Mac OS X 10.5+.xml");
+    result.add("Mac OS X.xml");
+    if (!PlatformUtils.isAppCode()) {
+      result.add("Default for XWin.xml");
+      result.add("Default for GNOME.xml");
+      result.add("Default for KDE.xml");
+    }
+    result.add("Emacs.xml");
+    result.add("Sublime Text.xml");
+    result.add("Sublime Text (Mac OS X).xml");
+    return result;
   }
 }
