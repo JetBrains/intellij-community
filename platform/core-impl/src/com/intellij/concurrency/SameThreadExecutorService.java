@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
 
-// class is used during app start-up,
-// so, don't want to use Guava (MoreExecutors.newDirectExecutorService()) here to avoid Guava classes loading
+/**
+ * Executes tasks synchronously immediately after they submitted
+ */
 public final class SameThreadExecutorService extends AbstractExecutorService {
   private volatile boolean isTerminated;
 
