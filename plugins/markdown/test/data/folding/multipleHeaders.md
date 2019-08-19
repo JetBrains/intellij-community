@@ -1,10 +1,10 @@
-<fold text='h1: # Simage Plugins'># Simage Plugins
+<fold text='h1: # Simage Plugins'># Si<fold text='...'>mage Plugins
 
 The repository contains sources code of SimagePlugins as well as demo maya project.
 
-<!-- TOC depthFrom:2 -->
+<!-- TOC depthFrom:2 </fold>-->
 
-[What is this repository for](#what-is-this-repository-for)
+[W<fold text='...'>hat is this repository for](#what-is-this-repository-for)
 
 <fold text='unordered list: - [What is this reposi...k-to)'>- [What is this repository for](#what-is-this-repository-for)
 - [How do I get set up](#how-do-i-get-set-up)
@@ -17,7 +17,7 @@ The repository contains sources code of SimagePlugins as well as demo maya proje
     - [SmoothDeformer](#smoothdeformer)</fold>
 - [Who do I talk to](#who-do-i-talk-to)</fold>
 
-<!-- /TOC -->
+<!-- /TOC </fold>-->
 
 <fold text='h2: ## What is this repository for'><fold text='h2: ## What is this repository for'>## What is this repository for
 
