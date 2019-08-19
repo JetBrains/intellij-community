@@ -94,6 +94,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     Dimension linkSize = myLink.getPreferredSize();
     myLinkWidth = linkSize.width;
     myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
+    myLink.setSize(myLinkWidth, getHeight()); // actually we only set width here, height is not yet ready
   }
 
   @Override
@@ -117,7 +118,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
-      myLink.setHeight(getHeight());
+      myLink.setSize(myLink.getWidth(), getHeight());
       myLink.doPaint(g);
       g.translate(-myLinkOffset, 0);
     }
@@ -156,8 +157,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
-    private int myHeight;
-
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -170,15 +169,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
-    }
-
-    public void setHeight(int height) {
-      myHeight = height;
-    }
-
-    @Override
-    public int getHeight() {
-      return myHeight;
     }
   }
 
