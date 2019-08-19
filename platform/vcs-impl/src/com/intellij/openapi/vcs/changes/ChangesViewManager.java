@@ -481,11 +481,17 @@ public class ChangesViewManager implements ChangesViewEx, ProjectComponent, Pers
   }
 
   public static class State {
-
+    /**
+     * @deprecated Use {@link #groupingKeys} instead.
+     */
     @Deprecated
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Attribute("flattened_view")
     public boolean myShowFlatten = true;
 
+    /**
+     * @see ChangesGroupingSupport
+     */
     @XCollection
     public Set<String> groupingKeys = new HashSet<>();
 
