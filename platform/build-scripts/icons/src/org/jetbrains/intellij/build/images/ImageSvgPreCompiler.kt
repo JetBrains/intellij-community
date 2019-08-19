@@ -23,8 +23,15 @@ class ImageSvgPreCompiler {
   /// the expected scales of images that we have
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
-  private val scales = doubleArrayOf(1.0, 2.0, 2.5)
-  private val productIconScales = doubleArrayOf(1.0, 2.0, 2.5, 4.0)
+  private val scales = doubleArrayOf(1.0,
+                                     1.25, /*Windows*/
+                                     1.5, /*Windows*/
+                                     2.0,
+                                     2.5 /*macOS touchBar*/
+  )
+
+  /// the 4.0 scale is used on retina macOS for product icon, adds few more scales for few icons
+  private val productIconScales = (scales + scales.map { it * 2 }).toSortedSet().toDoubleArray()
 
   private val productIconPrefixes = mutableListOf<String>()
 
@@ -100,7 +107,7 @@ class ImageSvgPreCompiler {
       SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
 
       val length = targetFile.length()
-      require(length > 0) { "File ${targetFile} is empty!"}
+      require(length > 0) { "File ${targetFile} is empty!" }
       generatedSize.addAndGet(length)
     }
   }
