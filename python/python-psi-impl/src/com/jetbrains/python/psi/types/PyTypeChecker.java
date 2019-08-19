@@ -148,6 +148,15 @@ public class PyTypeChecker {
       }
     }
 
+    // remove after making PyNoneType inheriting PyClassType
+    if (expected instanceof PyNoneType) {
+      return Optional.of(actual instanceof PyNoneType);
+    }
+
+    if (expected instanceof PyModuleType) {
+      return Optional.of(actual instanceof PyModuleType && ((PyModuleType)expected).getModule() == ((PyModuleType)actual).getModule());
+    }
+
     return Optional.of(matchNumericTypes(expected, actual));
   }
 
@@ -531,21 +540,23 @@ public class PyTypeChecker {
   }
 
   private static boolean matchNumericTypes(PyType expected, PyType actual) {
-    final String superName = expected.getName();
-    final String subName = actual.getName();
-    final boolean subIsBool = "bool".equals(subName);
-    final boolean subIsInt = PyNames.TYPE_INT.equals(subName);
-    final boolean subIsLong = PyNames.TYPE_LONG.equals(subName);
-    final boolean subIsFloat = "float".equals(subName);
-    final boolean subIsComplex = "complex".equals(subName);
-    if (superName == null || subName == null ||
-        superName.equals(subName) ||
-        (PyNames.TYPE_INT.equals(superName) && subIsBool) ||
-        ((PyNames.TYPE_LONG.equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
-        (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
-        (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
-        (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
-      return true;
+    if (expected instanceof PyClassType && actual instanceof PyClassType) {
+      final String superName = ((PyClassType)expected).getPyClass().getName();
+      final String subName = ((PyClassType)actual).getPyClass().getName();
+      final boolean subIsBool = "bool".equals(subName);
+      final boolean subIsInt = PyNames.TYPE_INT.equals(subName);
+      final boolean subIsLong = PyNames.TYPE_LONG.equals(subName);
+      final boolean subIsFloat = "float".equals(subName);
+      final boolean subIsComplex = "complex".equals(subName);
+      if (superName == null || subName == null ||
+          superName.equals(subName) ||
+          (PyNames.TYPE_INT.equals(superName) && subIsBool) ||
+          ((PyNames.TYPE_LONG.equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
+          (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
+          (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
+          (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
+        return true;
+      }
     }
     return false;
   }
