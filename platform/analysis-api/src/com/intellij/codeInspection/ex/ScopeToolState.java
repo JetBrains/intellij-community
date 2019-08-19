@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -152,7 +153,7 @@ public class ScopeToolState {
     try {
       entry.writeSettings(node);
     }
-    catch (WriteExternalException e) {
+    catch (WriteExternalException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {
