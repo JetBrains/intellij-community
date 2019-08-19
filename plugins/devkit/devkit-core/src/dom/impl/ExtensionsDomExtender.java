@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
@@ -41,10 +42,10 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
         (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
       DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
       assert handler != null;
-      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
+      List<? extends DomElement> children = handler.getCollectionChildren(collectionChildDescription, false);
       if (!children.isEmpty()) {
-        for (ExtensionPoints points : children) {
-          for (ExtensionPoint point : points.getExtensionPoints()) {
+        for (DomElement points : children) {
+          for (ExtensionPoint point : ((ExtensionPoints)points).getExtensionPoints()) {
             registerExtensionPoint(registrar, point, epPrefix);
           }
         }

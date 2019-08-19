@@ -45,8 +45,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl, S extends DomStub> extends UserDataHolderBase implements InvocationHandler, DomElement,
-                                                                                                                                               SemElement {
+public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement, SemElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -55,7 +54,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final Type myType;
   private final DomManagerImpl myManager;
   private final EvaluatedXmlName myTagName;
-  private final T myChildDescription;
+  private final AbstractDomChildDescriptionImpl myChildDescription;
   private DomParentStrategy myParentStrategy;
   private volatile long myLastModCount;
 
@@ -64,14 +63,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable protected S myStub;
+  @Nullable protected DomStub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  @NotNull final EvaluatedXmlName tagName,
-                                 final T childDescription,
+                                 AbstractDomChildDescriptionImpl childDescription,
                                  final DomManagerImpl manager,
                                  boolean dynamic,
-                                 @Nullable S stub) {
+                                 @Nullable DomStub stub) {
     myManager = manager;
     myParentStrategy = parentStrategy;
     myTagName = tagName;
@@ -112,7 +111,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  public S getStub() {
+  public DomStub getStub() {
     return myStub;
   }
 
@@ -463,7 +462,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Override
-  public final T getChildDescription() {
+  public AbstractDomChildDescriptionImpl getChildDescription() {
     return myChildDescription;
   }
 
@@ -701,7 +700,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public final String toString() {
     if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
-      return ((GenericValue)getProxy()).getStringValue();
+      return ((GenericValue<?>)getProxy()).getStringValue();
     }
     return myType.toString() + " @" + hashCode();
   }

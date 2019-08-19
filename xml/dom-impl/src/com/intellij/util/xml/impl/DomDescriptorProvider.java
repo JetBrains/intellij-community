@@ -35,7 +35,7 @@ public class DomDescriptorProvider implements XmlElementDescriptorProvider {
     Project project = tag.getProject();
     if (project.isDefault()) return null;
     
-    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomManager(project).getDomHandler(tag);
+    final DomInvocationHandler handler = DomManagerImpl.getDomManager(project).getDomHandler(tag);
     if (handler != null) {
       final DefinesXml definesXml = handler.getAnnotation(DefinesXml.class);
       if (definesXml != null) {

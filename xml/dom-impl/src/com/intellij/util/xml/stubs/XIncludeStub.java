@@ -52,7 +52,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     return DomElementTypeHolder.XIncludeStub;
   }
 
-  public void resolve(DomInvocationHandler<?, ?> parent, List<DomElement> included, XmlName xmlName) {
+  public void resolve(DomInvocationHandler parent, List<DomElement> included, XmlName xmlName) {
 
     XmlFile file = parent.getFile();
     if (myCachedValue == null) {
@@ -77,7 +77,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   @Nullable
-  private DomElement computeValue(DomInvocationHandler<?, ?> parent) {
+  private DomElement computeValue(DomInvocationHandler parent) {
     if (StringUtil.isEmpty(myHref) || StringUtil.isEmpty(myXpointer)) {
       return null;
     }

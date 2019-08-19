@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl, ElementStub>{
+public class IndexedElementInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
@@ -59,7 +59,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
   @Nullable
   @Override
   protected String getValue() {
-    return myStub == null ? super.getValue() : myStub.getValue();
+    return myStub == null ? super.getValue() : ((ElementStub)myStub).getValue();
   }
 
   @Override
@@ -96,6 +96,11 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
       }
     });
     return newTag[0];
+  }
+
+  @Override
+  public FixedChildDescriptionImpl getChildDescription() {
+    return (FixedChildDescriptionImpl)super.getChildDescription();
   }
 
   @Override

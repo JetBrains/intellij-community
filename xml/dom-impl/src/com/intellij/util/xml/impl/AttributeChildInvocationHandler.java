@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl, AttributeStub> {
+public class AttributeChildInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
 
   protected AttributeChildInvocationHandler(final EvaluatedXmlName attributeName,
@@ -148,7 +148,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   @Nullable
   protected String getValue() {
     if (myStub != null) {
-      return myStub.getValue();
+      return ((AttributeStub)myStub).getValue();
     }
     final XmlAttribute attribute = (XmlAttribute)getXmlElement();
     if (attribute != null) {
@@ -186,7 +186,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Override
   public void copyFrom(final DomElement other) {
-    setValue(((GenericAttributeValue) other).getStringValue());
+    setValue(((GenericAttributeValue<?>) other).getStringValue());
   }
 
 }
