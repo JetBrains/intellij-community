@@ -82,11 +82,6 @@ public final class SVGLoader {
     BufferedImage image;
 
     if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true)) {
-      image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
-      if (image != null) {
-        return image;
-      }
-
       theme = DEFAULT_THEME;
       if (ourColorPatcher != null && url != null) {
         SvgElementColorPatcher subPatcher = ourColorPatcher.forURL(url);
@@ -94,6 +89,14 @@ public final class SVGLoader {
           theme = subPatcher.digest();
         }
       }
+
+      if (theme == DEFAULT_THEME) {
+        image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
+        if (image != null) {
+          return image;
+        }
+      }
+
 
       if (theme != null) {
         svgBytes = FileUtil.loadBytes(stream);
