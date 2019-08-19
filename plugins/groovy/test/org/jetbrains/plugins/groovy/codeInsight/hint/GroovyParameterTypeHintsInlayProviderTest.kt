@@ -52,7 +52,7 @@ foo(['q'], ['q'])
 
   fun testClosure() {
     val text = """
-def<# [< [X0 extends  A] >] #> foo(<# [X0  ] #>a, <# [[Closure < [?  ] >]  ] #>c) {
+def<# [< [X0 extends  A] >] #> foo(<# [X0  ] #>a, <# [[Closure < Object >]  ] #>c) {
   c(a)
 }
 

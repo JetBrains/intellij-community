@@ -17,19 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
 class MethodParameterAugmenter : TypeAugmenter() {
 
   companion object {
-    private val reentrancyMark: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
-
-    internal inline fun produceTypedMethod(untypedMethod: GrMethod,
-                                           scope: GlobalSearchScope,
-                                           postProcessing: (GrMethod) -> Unit = {}): GrMethod? {
-      try {
-        reentrancyMark.set(true)
-        return runInferenceProcess(untypedMethod, scope).apply(postProcessing)
-      }
-      finally {
-        reentrancyMark.set(false)
-      }
-    }
 
     @Suppress("RemoveExplicitTypeArguments")
     internal fun getOriginalMethod(method: GrMethod): GrMethod {
@@ -49,10 +36,8 @@ class MethodParameterAugmenter : TypeAugmenter() {
         if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
       }
       return CachedValuesManager.getCachedValue(method) {
-        val typedMethod = produceTypedMethod(method, scope)
-        val typeParameterSubstitutor = typedMethod?.run {
-          createVirtualToActualSubstitutor(typedMethod, method)
-        } ?: PsiSubstitutor.EMPTY
+        val typedMethod = runInferenceProcess(method, scope)
+        val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
         CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
       }
     }
@@ -63,7 +48,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
 
   override fun inferType(variable: GrVariable): PsiType? {
-    if (variable is GrParameter && variable.typeElement == null && !reentrancyMark.get()) {
+    if (variable is GrParameter && variable.typeElement == null) {
       if (getBlock(variable) != null) {
         return inferTypeFromTypeHint(variable)
       }
