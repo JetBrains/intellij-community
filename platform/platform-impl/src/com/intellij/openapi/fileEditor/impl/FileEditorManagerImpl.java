@@ -19,6 +19,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -173,6 +176,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     });
+
+    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
+      new ExtensionPointListener<FileEditorProvider>() {
+        @Override
+        public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          for (EditorComposite editor : myOpenedEditors) {
+            for (FileEditorProvider provider : editor.getProviders()) {
+              if (provider.equals(extension)) {
+                closeFile(editor.getFile());
+                break;
+              }
+            }
+          }
+        }
+      }, false, this);
   }
 
   @Override
