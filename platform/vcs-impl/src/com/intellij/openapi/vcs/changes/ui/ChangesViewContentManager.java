@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -132,8 +130,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   @Override
   public boolean isAvailable() {
-    final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
+    return myVcsManager.hasAnyMappings();
   }
 
   @Override
