@@ -3,6 +3,7 @@ package org.jetbrains.uast.test.java.generate
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.search.ProjectScope
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -339,5 +340,10 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val ifExpression = uastElementFactory.createIfExpression(condition, thenBranch, elseBranch)
                        ?: fail("cannot create if expression")
     TestCase.assertEquals("if (true) {a(b);} else c++;", ifExpression.sourcePsi?.text)
+  }
+
+  fun `test qualified reference`() {
+    val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file.toUElement())
+    TestCase.assertEquals("java.util.List", reference?.sourcePsi?.text)
   }
 }

@@ -41,6 +41,8 @@ interface UastElementFactory {
 
   fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression?
 
+  fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression?
+
   fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression?
 
   fun createReturnExpresion(expression: UExpression?,
