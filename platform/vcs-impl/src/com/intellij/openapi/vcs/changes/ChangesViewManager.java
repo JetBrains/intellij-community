@@ -69,7 +69,6 @@ import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.util.ui.UIUtil.addBorder;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -253,11 +252,10 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @NotNull private final ChangesListView myView;
     private ChangesViewCommitPanel myCommitPanel;
-    private BorderLayoutPanel myContentPanel;
-    private ChangesViewCommitPanelSplitter myCommitPanelSplitter;
+    private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
     private final VcsConfiguration myVcsConfiguration;
-    private JPanel myProgressLabel;
+    private final JPanel myProgressLabel;
 
     private final Alarm myTreeUpdateAlarm;
     private final Object myTreeUpdateIndicatorLock = new Object();
@@ -265,13 +263,13 @@ public class ChangesViewManager implements ChangesViewEx,
 
     private boolean myDisposed = false;
 
-    private PreviewDiffSplitterComponent myDiffPreviewSplitter;
+    private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
 
     @NotNull private final TreeSelectionListener myTsl;
     @NotNull private final PropertyChangeListener myGroupingChangeListener;
     private boolean myModelUpdateInProgress;
     private final MyTreeExpander myTreeExpander;
-    private DefaultActionGroup myToolbarActionGroup;
+    private final List<AnAction> myToolbarActions;
 
     private ChangesViewToolWindowPanel(@NotNull Project project, @NotNull ChangesViewManager changesViewManager) {
       super(false, true);
@@ -309,7 +307,37 @@ public class ChangesViewManager implements ChangesViewEx,
 
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
-      createChangeViewComponent();
+      myToolbarActions = createChangesToolbarActions();
+      ActionToolbar changesToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR,
+                                                                                     new DefaultActionGroup(myToolbarActions), false);
+      changesToolbar.setTargetComponent(myView);
+
+      UIUtil.addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
+      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
+
+      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
+      myCommitPanelSplitter.setFirstComponent(changesPanel);
+      BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+        @Override
+        public Dimension getMinimumSize() {
+          return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
+        }
+      };
+      contentPanel.addToCenter(myCommitPanelSplitter);
+
+      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
+      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                               myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+      myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
+      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
+      ChangesDnDSupport.install(myProject, myView);
+      myView.addTreeSelectionListener(myTsl);
+      myView.addGroupingChangeListener(myGroupingChangeListener);
+
+      myProgressLabel = simplePanel();
+      setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
+      registerShortcuts(this);
 
       scheduleRefresh();
       myProject.getMessageBus().connect(this).subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -369,40 +397,10 @@ public class ChangesViewManager implements ChangesViewEx,
       return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, () -> isAllowExcludeFromCommit());
     }
 
-    private void createChangeViewComponent() {
-      ActionToolbar changesToolbar = createChangesToolbar();
-      addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
-      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
-
-      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
-      myCommitPanelSplitter.setFirstComponent(changesPanel);
-      myContentPanel = new BorderLayoutPanel() {
-        @Override
-        public Dimension getMinimumSize() {
-          return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
-        }
-      };
-      myContentPanel.addToCenter(myCommitPanelSplitter);
-
-      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
-      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                                               myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
-      myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
-      ChangesDnDSupport.install(myProject, myView);
-      myView.addTreeSelectionListener(myTsl);
-      myView.addGroupingChangeListener(myGroupingChangeListener);
-
-      myProgressLabel = simplePanel();
-      setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
-      registerShortcuts(this);
-    }
-
     @NotNull
     @Override
     public List<AnAction> getActions(boolean originalProvider) {
-      return Arrays.asList(myToolbarActionGroup.getChildren(null));
+      return Collections.unmodifiableList(myToolbarActions);
     }
 
     @Nullable
@@ -422,28 +420,25 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     @NotNull
-    private ActionToolbar createChangesToolbar() {
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
+    private List<AnAction> createChangesToolbarActions() {
+      List<AnAction> actions = new ArrayList<>();
+      actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
 
-      group.addSeparator();
-      group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+      actions.add(Separator.getInstance());
+      actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
       DefaultActionGroup viewOptionsGroup = new DefaultActionGroup("View Options", true);
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
 
-      group.add(viewOptionsGroup);
-      group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
-      group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
-      group.addSeparator();
-      group.add(new ToggleDetailsAction());
+      actions.add(viewOptionsGroup);
+      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
+      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
+      actions.add(Separator.getInstance());
+      actions.add(new ToggleDetailsAction());
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
-      toolbar.setTargetComponent(myView);
-      myToolbarActionGroup = group;
-      return toolbar;
+      return actions;
     }
 
     private void updateProgressComponent(@NotNull final Factory<? extends JComponent> progress) {
