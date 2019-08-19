@@ -1,32 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.Patches;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.font.CompositeGlyphMapper;
 import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.List;
-import java.util.*;
+import java.util.Collections;
 
 /**
  * @author max
  */
 public class FontInfo {
-  private static final Logger LOG = Logger.getInstance(FontInfo.class);
-
   private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
   private static final Font DUMMY_FONT = new Font(null);
 
@@ -42,7 +33,7 @@ public class FontInfo {
    */
   @Deprecated
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    this(familyName, size, style, style, false, null);
+    this(familyName, size, style, false, null);
   }
 
   /**
@@ -58,83 +49,11 @@ public class FontInfo {
    */
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures,
                   FontRenderContext fontRenderContext) {
-    this(familyName, size, style, style, useLigatures, fontRenderContext);
-  }
-
-  FontInfo(final String familyName, final int size,
-           @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle, boolean useLigatures, FontRenderContext context) {
     mySize = size;
     myStyle = style;
     Font font = new Font(familyName, style, size);
-    myFont = useLigatures ? getFontWithLigaturesEnabled(font, realStyle) : font;
-    myContext = context;
-  }
-
-  @NotNull
-  private static Font getFontWithLigaturesEnabled(Font font, @JdkConstants.FontStyle int fontStyle) {
-    if (Patches.JDK_BUG_ID_7162125) {
-      // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
-      String familyName = font.getFamily();
-      File fontFile = findFileForFont(familyName, fontStyle);
-      if (fontFile == null) {
-        LOG.info(font + "(style=" + fontStyle + ") not located");
-        return font;
-      }
-      LOG.info(font + "(style=" + fontStyle + ") located at " + fontFile);
-      try {
-        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(fontStyle, font.getSize());
-      }
-      catch (Exception e) {
-        LOG.warn("Couldn't load font", e);
-        return font;
-      }
-    }
-    return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
-  }
-
-  private static final Comparator<File> BY_NAME = Comparator.comparing(File::getName);
-
-  @Nullable
-  private static File findFileForFont(@NotNull String familyName, int style) {
-    File fontFile = doFindFileForFont(familyName, style);
-    if (fontFile == null && style != Font.PLAIN) fontFile = doFindFileForFont(familyName, Font.PLAIN);
-    if (fontFile == null) fontFile = doFindFileForFont(familyName, -1);
-    return fontFile;
-  }
-
-  @Nullable
-  private static File doFindFileForFont(@NotNull String familyName, final int style) {
-    final String normalizedFamilyName = familyName.toLowerCase(Locale.getDefault()).replace(" ", "");
-    FilenameFilter filter = (file, name) -> {
-      String normalizedName = name.toLowerCase(Locale.getDefault());
-      return normalizedName.startsWith(normalizedFamilyName) &&
-             (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-             (style == -1 || style == getFontStyle(normalizedName));
-    };
-    List<File> files = new ArrayList<>();
-
-    File[] userFiles = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(filter);
-    if (userFiles != null) files.addAll(Arrays.asList(userFiles));
-
-    File[] localFiles = new File("/Library/Fonts").listFiles(filter);
-    if (localFiles != null) files.addAll(Arrays.asList(localFiles));
-
-    if (files.isEmpty()) return null;
-
-    if (style == Font.PLAIN) {
-      // prefer font containing 'regular' in its name
-      List<File> regulars = ContainerUtil.filter(files, file -> file.getName().toLowerCase(Locale.getDefault()).contains("regular"));
-      if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
-    }
-
-    return Collections.min(files, BY_NAME);
-  }
-
-  private static int getFontStyle(@NotNull String fontFileNameLowercase) {
-    String baseName = fontFileNameLowercase.substring(0, fontFileNameLowercase.length() - 4);
-    if (baseName.endsWith("-it")) return Font.ITALIC;
-    else if (baseName.endsWith("-boldit")) return Font.BOLD | Font.ITALIC;
-    else return ComplementaryFontsRegistry.getFontStyle(fontFileNameLowercase);
+    myFont = useLigatures ? font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)) : font;
+    myContext = fontRenderContext;
   }
 
   public boolean canDisplay(int codePoint) {

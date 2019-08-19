@@ -26,13 +26,21 @@ public class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
   
   private static final Object lock = new Object();
-  private static final List<String> ourFontNames;
+  @SuppressWarnings("unchecked")
+  private static final List<String>[] ourFontNames = new List[4]; // per font style
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<>();
-  private static final LinkedHashMap<FontFaceKey, FallBackInfo> ourUsedFonts;
+  @SuppressWarnings("unchecked")
+  private static final LinkedHashMap<String, FallBackInfo>[] ourUsedFonts = new LinkedHashMap[] { // per font style
+    new LinkedHashMap<String, FallBackInfo>(), new LinkedHashMap<String, FallBackInfo>(),
+    new LinkedHashMap<String, FallBackInfo>(), new LinkedHashMap<String, FallBackInfo>()
+  };
   public static final FallBackInfo DEFAULT_FONT_INFO = new FallBackInfo("", Font.PLAIN, Font.PLAIN);
-  private static final FontFaceKey ourSharedKeyInstance = new FontFaceKey("", Font.PLAIN);
-  private static FallBackInfo ourSharedFallBackInfo = DEFAULT_FONT_INFO;
-  private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
+  private static final TIntHashSet[] ourUndisplayableChars = new TIntHashSet[] { // per font style
+    new TIntHashSet(), new TIntHashSet(), new TIntHashSet(), new TIntHashSet()
+  };
+  private static String ourLastFontFamily = "";
+  private static int ourLastFontStyle = Font.PLAIN;
+  private static FallBackInfo ourLastFallBackInfo = DEFAULT_FONT_INFO;
 
   // This matches style detection in JDK (class sun.font.Font2D)
   private static final String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
@@ -64,21 +72,24 @@ public class ComplementaryFontsRegistry {
   private static final String ADOBE_BLANK = "Adobe Blank";
 
   static {
-    ourFontNames = new ArrayList<>();
+    List<String> fontNames = new ArrayList<>();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourFontNames.add("Monospaced");
+      fontNames.add("Monospaced");
     } else {
       if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND) {
         fillStyledFontMap();
       }
-      String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-      for (final String fontName : fontNames) {
+      String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+      for (final String fontName : families) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX) && !fontName.equals(ADOBE_BLANK)) {
-          ourFontNames.add(fontName);
+          fontNames.add(fontName);
         }
       }
     }
-    ourUsedFonts = new LinkedHashMap<>();
+    ourFontNames[0] = fontNames;
+    for (int i = 1; i < 4; i++) {
+      ourFontNames[i] = new ArrayList<>(fontNames);
+    }
   }
 
   private static void fillStyledFontMap() {
@@ -285,26 +296,26 @@ public class ComplementaryFontsRegistry {
         }
       }
       FallBackInfo fallBackInfo;
-      if (ourSharedKeyInstance.myStyle == style &&
-          ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
-          ourSharedFallBackInfo.canDisplay(codePoint, disableFontFallback)) {
-        fallBackInfo = ourSharedFallBackInfo;
+      if (ourLastFontStyle == style &&
+          ourLastFontFamily.equals(defaultFontFamily) &&
+          ourLastFallBackInfo.canDisplay(codePoint, disableFontFallback)) {
+        fallBackInfo = ourLastFallBackInfo;
       }
       else {
-        ourSharedKeyInstance.myFamilyName = defaultFontFamily;
-        ourSharedKeyInstance.myStyle = style;
-
-        fallBackInfo = ourUsedFonts.get(ourSharedKeyInstance);
+        LinkedHashMap<String, FallBackInfo> usedFonts = ourUsedFonts[style];
+        fallBackInfo = usedFonts.get(defaultFontFamily);
         if (fallBackInfo == null) {
           fallBackInfo = new FallBackInfo(defaultFontFamily, style, originalStyle);
-          ourUsedFonts.put(ourSharedKeyInstance.clone(), fallBackInfo);
+          usedFonts.put(defaultFontFamily, fallBackInfo);
         }
+        ourLastFontFamily = defaultFontFamily;
+        ourLastFontStyle = style;
+        ourLastFallBackInfo = fallBackInfo;
       }
-      ourSharedFallBackInfo = fallBackInfo;
       return fallBackInfo.canDisplay(codePoint, disableFontFallback) ? fallBackInfo.getFontInfo(size, useLigatures, context) : null;
     }
   }
-  
+
   @NotNull
   private static FontInfo doGetFontAbleToDisplay(int codePoint, char[] remainingText, int start, int end, 
                                                  int size, @JdkConstants.FontStyle int style, boolean useLigatures,
@@ -312,9 +323,11 @@ public class ComplementaryFontsRegistry {
     if (style < 0 || style > 3) style = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = DEFAULT_FONT_INFO;
-      if (!ourUndisplayableChars.contains(codePoint)) {
+      TIntHashSet undisplayableChars = ourUndisplayableChars[style];
+      if (!undisplayableChars.contains(codePoint)) {
         boolean canDisplayFirst = false;
-        final Collection<FallBackInfo> descriptors = ourUsedFonts.values();
+        LinkedHashMap<String, FallBackInfo> usedFonts = ourUsedFonts[style];
+        final Collection<FallBackInfo> descriptors = usedFonts.values();
         for (FallBackInfo info : descriptors) {
           if (info.myOriginalStyle == style && info.canDisplay(codePoint, false)) {
             canDisplayFirst = true;
@@ -325,65 +338,26 @@ public class ComplementaryFontsRegistry {
           }
         }
         if (fallBackInfo == DEFAULT_FONT_INFO) {
-          for (int i = 0; i < ourFontNames.size(); i++) {
-            String name = ourFontNames.get(i);
+          List<String> fontNames = ourFontNames[style];
+          for (int i = 0; i < fontNames.size(); i++) {
+            String name = fontNames.get(i);
             FallBackInfo info = new FallBackInfo(name, style, style);
             if (info.canDisplay(codePoint, false)) {
               canDisplayFirst = true;
               if (remainingText == null || info.myBaseFont.canDisplayUpTo(remainingText, start, end) == -1) {
-                ourUsedFonts.put(new FontFaceKey(name, style), info);
-                ourFontNames.remove(i);
+                usedFonts.put(name, info);
+                fontNames.remove(i);
                 fallBackInfo = info;
                 break;
               }
             }
           }
           if (fallBackInfo == DEFAULT_FONT_INFO && !canDisplayFirst) {
-            ourUndisplayableChars.add(codePoint);
+            undisplayableChars.add(codePoint);
           }
         }
       }
       return fallBackInfo.getFontInfo(size, useLigatures, context);
-    }
-  }
-
-  private static class FontFaceKey implements Cloneable {
-    private String myFamilyName;
-    private int myStyle;
-
-    private FontFaceKey(String familyName, int style) {
-      myFamilyName = familyName;
-      myStyle = style;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      FontFaceKey key = (FontFaceKey)o;
-
-      if (myStyle != key.myStyle) return false;
-      if (!myFamilyName.equals(key.myFamilyName)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFamilyName.hashCode();
-      result = 31 * result + myStyle;
-      return result;
-    }
-
-    @Override
-    protected FontFaceKey clone() {
-      try {
-        return (FontFaceKey)super.clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
@@ -407,7 +381,7 @@ public class ComplementaryFontsRegistry {
 
       if (mySize != key.mySize) return false;
       if (myUseLigatures != key.myUseLigatures) return false;
-      if (myContext != null ? !myContext.equals(key.myContext) : key.myContext != null) return false;
+      if (!Objects.equals(myContext, key.myContext)) return false;
 
       return true;
     }
@@ -458,7 +432,7 @@ public class ComplementaryFontsRegistry {
       myLastFontKey.myContext = fontRenderContext;
       FontInfo fontInfo = myFontInfoMap.get(myLastFontKey);
       if (fontInfo == null) {
-        fontInfo = new FontInfo(myBaseFont.getName(), size, myBaseFont.getStyle(), myOriginalStyle, useLigatures, fontRenderContext);
+        fontInfo = new FontInfo(myBaseFont.getName(), size, myBaseFont.getStyle(), useLigatures, fontRenderContext);
         myFontInfoMap.put(myLastFontKey.clone(), fontInfo);
       }
       myLastFontInfo = fontInfo;
