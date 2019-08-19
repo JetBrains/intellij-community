@@ -58,7 +58,7 @@ final class DomSemContributor extends SemContributor {
     final SemService semService = SemService.getSemService(project);
     registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())),
                                          xmlTag -> {
-                                           DomFileElementImpl element = semService.getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, xmlTag.getContainingFile());
+                                           DomFileElementImpl<?> element = semService.getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, xmlTag.getContainingFile());
                                            if (element != null) {
                                              final DomRootInvocationHandler handler = element.getRootHandler();
                                              if (handler.getXmlTag() == xmlTag) {
@@ -175,13 +175,13 @@ final class DomSemContributor extends SemContributor {
   }
 
   @Nullable
-  private static DomFileElementImpl createFileElement(XmlFile xmlFile) {
+  private static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
     VirtualFile file = xmlFile.getVirtualFile();
     if (!(xmlFile.getFileType() instanceof DomSupportEnabled) || file != null && ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       return null;
     }
 
-    DomFileDescription description = findFileDescription(xmlFile);
+    DomFileDescription<?> description = findFileDescription(xmlFile);
     if (description == null) {
       return null;
     }
@@ -194,15 +194,15 @@ final class DomSemContributor extends SemContributor {
     DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
     if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed(xmlFile)) {
       if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
-        ObjectStubTree stubTree = StubTreeLoader.getInstance().readFromVFile(xmlFile.getProject(), file);
+        ObjectStubTree<?> stubTree = StubTreeLoader.getInstance().readFromVFile(xmlFile.getProject(), file);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();
         }
       }
     }
 
-    //noinspection unchecked
-    DomFileElementImpl element = new DomFileElementImpl(xmlFile, rootTagName1, description, stub);
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    DomFileElementImpl<?> element = new DomFileElementImpl(xmlFile, rootTagName1, description, stub);
     xmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, new WeakReference<>(element));
     return element;
   }
@@ -213,19 +213,19 @@ final class DomSemContributor extends SemContributor {
 
   @Nullable
   private static DomFileDescription<?> findFileDescription(XmlFile file) {
-    DomFileDescription mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
+    DomFileDescription<?> mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
     Project project = file.getProject();
     XmlFile originalFile = (XmlFile)file.getOriginalFile();
     if (!originalFile.equals(file)) {
-      DomFileElementImpl element = SemService.getSemService(project).getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, originalFile);
+      DomFileElementImpl<?> element = SemService.getSemService(project).getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, originalFile);
       return element == null ? null : element.getFileDescription();
     }
 
     DomManagerImpl domManager = DomManagerImpl.getDomManager(project);
     Module module = ModuleUtilCore.findModuleForFile(file);
-    Condition<DomFileDescription> condition = d -> d.isMyFile(file, module);
+    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
     String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
     DomFileDescription<?> description = ContainerUtil.find(domManager.getFileDescriptions(rootTagLocalName), condition);
     return description != null ? description : ContainerUtil.find(domManager.getAcceptingOtherRootTagNameDescriptions(), condition);

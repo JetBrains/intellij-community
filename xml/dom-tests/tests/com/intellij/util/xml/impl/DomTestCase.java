@@ -57,7 +57,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
     assertEquals(element, cachedElement.getProxy());
   }
 
-  protected void assertCached(final DomFileElementImpl element, final XmlFile file) {
+  protected void assertCached(DomFileElementImpl<?> element, final XmlFile file) {
     assertNotNull(file);
     assertEquals(element, getDomManager().getFileElement(file));
   }
@@ -85,9 +85,11 @@ public abstract class DomTestCase extends LightIdeaTestCase {
   public static <T extends DomElement> T createElement(final DomManager domManager, final String xml, final Class<T> aClass)
     throws IncorrectOperationException {
     final String name = "a.xml";
+    //noinspection deprecation
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(domManager.getProject()).createFileFromText(name, xml);
     final XmlTag tag = file.getDocument().getRootTag();
     final String rootTagName = tag != null ? tag.getName() : "root";
+    //noinspection deprecation
     final T element = domManager.getFileElement(file, aClass, rootTagName).getRootElement();
     assertNotNull(element);
     assertSame(tag, element.getXmlTag());

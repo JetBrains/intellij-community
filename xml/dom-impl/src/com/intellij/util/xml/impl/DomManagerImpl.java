@@ -60,9 +60,9 @@ import java.util.*;
 public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
-  static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
-  static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
-  static final SemKey<DomFileElementImpl> FILE_ELEMENT_KEY = SemKey.createKey("FILE_ELEMENT_KEY");
+  static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
+  static final Key<DomFileDescription<?>> MOCK_DESCRIPTION = Key.create("MockDescription");
+  static final SemKey<DomFileElementImpl<?>> FILE_ELEMENT_KEY = SemKey.createKey("FILE_ELEMENT_KEY");
   static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
   static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
@@ -157,7 +157,7 @@ public final class DomManagerImpl extends DomManager {
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {
           PsiFile psiFile = fileManager.getCachedPsiFile(file);
-          DomFileElementImpl domElement = psiFile instanceof XmlFile ? getCachedFileElement((XmlFile)psiFile) : null;
+          DomFileElementImpl<?> domElement = psiFile instanceof XmlFile ? getCachedFileElement((XmlFile)psiFile) : null;
           if (domElement != null) {
             events.add(new DomEvent(domElement, false));
           }
@@ -239,8 +239,8 @@ public final class DomManagerImpl extends DomManager {
     return handler;
   }
 
-  public static StableInvocationHandler getStableInvocationHandler(Object proxy) {
-    return (StableInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
+  public static StableInvocationHandler<?> getStableInvocationHandler(Object proxy) {
+    return (StableInvocationHandler<?>)AdvancedProxy.getInvocationHandler(proxy);
   }
 
   public DomApplicationComponent getApplicationComponent() {
@@ -264,11 +264,11 @@ public final class DomManagerImpl extends DomManager {
     return fileElement;
   }
 
-  public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+  public final Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
     return myApplicationComponent.getFileDescriptions(rootTagName);
   }
 
-  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
+  public final Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
     return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
   }
 
@@ -302,19 +302,19 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
     //noinspection unchecked
-    return mySemService.getSemElement(FILE_ELEMENT_KEY, file);
+    return (DomFileElementImpl<T>)mySemService.getSemElement(FILE_ELEMENT_KEY, file);
   }
 
   @Nullable
   static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
     //noinspection unchecked
-    return SoftReference.dereference(file.getUserData(CACHED_FILE_ELEMENT));
+    return (DomFileElementImpl<T>)SoftReference.dereference(file.getUserData(CACHED_FILE_ELEMENT));
   }
 
   @Override
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
-    final DomFileDescription description = getDomFileDescription(file);
+    DomFileDescription<?> description = getDomFileDescription(file);
     if (description != null && myApplicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
     }
@@ -332,11 +332,11 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @Nullable
-  public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
+  public GenericAttributeValue<?> getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
 
     final AttributeChildInvocationHandler handler = mySemService.getSemElement(DOM_ATTRIBUTE_HANDLER_KEY, attribute);
-    return handler == null ? null : (GenericAttributeValue)handler.getProxy();
+    return handler == null ? null : (GenericAttributeValue<?>)handler.getProxy();
   }
 
   @Nullable
@@ -364,6 +364,7 @@ public final class DomManagerImpl extends DomManager {
     return file instanceof XmlFile && getFileElement((XmlFile)file) != null;
   }
 
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   @Nullable
   public final DomFileDescription<?> getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
@@ -377,7 +378,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
+    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
     file.putUserData(MOCK, new Object());
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
@@ -397,9 +398,9 @@ public final class DomManagerImpl extends DomManager {
   public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
-    final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);
+    StableInvocationHandler<?> handler = new StableInvocationHandler<>(initial, provider, validator);
 
-    final Set<Class> intf = new HashSet<>();
+    Set<Class<?>> intf = new HashSet<>();
     ContainerUtil.addAll(intf, initial.getClass().getInterfaces());
     intf.add(StableElement.class);
     //noinspection unchecked
@@ -415,7 +416,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final void registerFileDescription(final DomFileDescription description) {
+  public final void registerFileDescription(DomFileDescription<?> description) {
     mySemService.clearCache();
 
     myApplicationComponent.registerFileDescription(description);
@@ -423,7 +424,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @NotNull
-  public final DomElement getResolvingScope(GenericDomValue element) {
+  public final DomElement getResolvingScope(GenericDomValue<?> element) {
     final DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
@@ -431,7 +432,7 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @NotNull
   public final DomElement getIdentityScope(DomElement element) {
-    final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
+    DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }
 

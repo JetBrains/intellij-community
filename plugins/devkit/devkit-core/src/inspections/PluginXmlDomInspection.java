@@ -1038,8 +1038,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class, false);
-      //noinspection unchecked
-      final GenericAttributeValue<String> domElement = DomManager.getDomManager(project).getDomElement(attribute);
+      GenericAttributeValue<?> domElement = DomManager.getDomManager(project).getDomElement(attribute);
       LOG.assertTrue(domElement != null);
       domElement.setStringValue(myCorrectValue);
     }
