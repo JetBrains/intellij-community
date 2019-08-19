@@ -66,7 +66,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
       () -> {
-        configureMultiFile("abc");
         multiFileTestHelper(".foo_method", true);
       }
     );
