@@ -5,6 +5,8 @@ import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.getString
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -14,6 +16,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -27,15 +30,23 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.cloneDialog.AccountMenuItem
+import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
+import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
+import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
+import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
+import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import icons.GithubIcons
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepo
@@ -46,12 +57,18 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.*
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
+import java.awt.FlowLayout
 import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.nio.file.Paths
+import javax.swing.Icon
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSeparator
 import javax.swing.event.DocumentEvent
@@ -63,29 +80,28 @@ internal class GHCloneDialogExtensionComponent(
   private val executorManager: GithubApiRequestExecutorManager,
   private val apiExecutorFactory: GithubApiRequestExecutor.Factory,
   private val accountInformationProvider: GithubAccountInformationProvider,
-  avatarLoader: CachingGithubUserAvatarLoader,
-  imageResizer: GithubImageResizer
+  private val avatarLoader: CachingGithubUserAvatarLoader,
+  private val imageResizer: GithubImageResizer
 ) : VcsCloneDialogExtensionComponent() {
   private val LOG = logger<GHCloneDialogExtensionComponent>()
 
   private val progressManager: ProgressVisibilityManager
 
   // UI
+  private val defaultAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize.get())
+  private val defaultPopupAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize.get())
+
   private val wrapper: Wrapper = Wrapper()
   private val repositoriesPanel: DialogPanel
   private val repositoryList: GHRepositoryList
 
-  private val accountsPanel: GHCloneDialogAccountsPanel = GHCloneDialogAccountsPanel(
-    object : GHLoginController {
-      override fun addAccount() = switchToLogin()
-      override fun reLogin(account: GithubAccount) = switchToLogin(account)
-      override fun logout(account: GithubAccount) = authenticationManager.removeAccount(account)
-    },
-    authenticationManager,
-    executorManager,
-    avatarLoader,
-    imageResizer
-  )
+  private val popupMenuMouseAdapter = object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent?) = showPopupMenu()
+  }
+
+  private val accountsPanel: JPanel = JPanel(FlowLayout(FlowLayout.LEADING, JBUI.scale(1), 0)).apply {
+    addMouseListener(popupMenuMouseAdapter)
+  }
 
   private val searchField: SearchTextField = SearchTextField(false).apply {
     textEditor.emptyText.appendText("Search or enter a GitHub repository URL")
@@ -108,6 +124,10 @@ internal class GHCloneDialogExtensionComponent(
   private val originListModel = CollectionListModel<GHRepositoryListItem>()
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
+
+  // popup menu
+  private val accountComponents = hashMapOf<GithubAccount, JLabel>()
+  private val avatarsByAccount = hashMapOf<GithubAccount, Icon>()
 
   init {
     val speedSearch = SpeedSearch()
@@ -214,7 +234,16 @@ internal class GHCloneDialogExtensionComponent(
 
   private fun addAccount(account: GithubAccount) {
     repositoriesByAccount.remove(account)
-    accountsPanel.addAccount(account)
+
+    val label = accountComponents.getOrPut(account) {
+      JLabel().apply {
+        icon = defaultAvatar
+        toolTipText = account.name
+        isOpaque = !isOpaque
+        addMouseListener(popupMenuMouseAdapter)
+      }
+    }
+    accountsPanel.add(label)
 
     try {
       val executor = executorManager.getExecutor(account)
@@ -232,7 +261,11 @@ internal class GHCloneDialogExtensionComponent(
 
   private fun removeAccount(account: GithubAccount) {
     repositoriesByAccount.remove(account)
-    accountsPanel.removeAccount(account)
+    accountComponents.remove(account).let {
+      accountsPanel.remove(it)
+      accountsPanel.revalidate()
+      accountsPanel.repaint()
+    }
     refillRepositories()
     if (!authenticationManager.hasAccounts()) switchToLogin()
   }
@@ -241,14 +274,20 @@ internal class GHCloneDialogExtensionComponent(
                               executor: GithubApiRequestExecutor.WithTokenAuth) {
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
       lateinit var user: GithubAuthenticatedUser
+      lateinit var iconProvider: CachingGithubAvatarIconsProvider
 
       override fun run(indicator: ProgressIndicator) {
         user = accountInformationProvider.getInformation(executor, indicator, account)
+        iconProvider = CachingGithubAvatarIconsProvider
+          .Factory(avatarLoader, imageResizer, executor)
+          .create(VcsCloneDialogUiSpec.Components.popupMenuAvatarSize, accountsPanel)
       }
 
       override fun onSuccess() {
         userDetailsByAccount[account] = user
-        accountsPanel.updateUserDetails(account, user)
+        val avatar = iconProvider.getIcon(user.avatarUrl)
+        avatarsByAccount[account] = avatar
+        accountComponents[account]?.icon = resizeIcon(avatar, VcsCloneDialogUiSpec.Components.avatarSize.get())
         refillRepositories()
       }
 
@@ -451,5 +490,42 @@ internal class GHCloneDialogExtensionComponent(
       // Contract is "true if this set did not already contain the specified element"
       return !wasThere
     }
+  }
+
+  private fun resizeIcon(icon: Icon, size: Int): Icon {
+    val scale = JBUI.scale(size).toFloat() / icon.iconWidth.toFloat()
+    return IconUtil.scale(icon, null, scale)
+  }
+
+  private fun showPopupMenu() {
+    val menuItems = mutableListOf<AccountMenuItem>()
+    val project = ProjectManager.getInstance().defaultProject
+
+    for ((index, account) in authenticationManager.getAccounts().withIndex()) {
+      val user = userDetailsByAccount[account]
+
+      val accountTitle = user?.login ?: account.name
+      val serverInfo = account.server.toUrl().removePrefix("http://").removePrefix("https://")
+      val avatar = avatarsByAccount[account] ?: defaultPopupAvatar
+      val accountActions = mutableListOf<Action>()
+      val showSeparatorAbove = index != 0
+
+      if (user == null) {
+        accountActions += Action("Log in\u2026", { switchToLogin(account) })
+        accountActions += Action("Remove account", { authenticationManager.removeAccount(account) }, showSeparatorAbove = true)
+      }
+      else {
+        if (account != authenticationManager.getDefaultAccount(project)) {
+          accountActions += Action("Set as Default", { authenticationManager.setDefaultAccount(project, account) })
+        }
+        accountActions += Action("Open on GitHub", { BrowserUtil.browse(user.htmlUrl) }, AllIcons.Ide.External_link_arrow)
+        accountActions += Action("Log Out\u2026", { authenticationManager.removeAccount(account) }, showSeparatorAbove = true)
+      }
+
+      menuItems += Account(accountTitle, serverInfo, avatar, accountActions, showSeparatorAbove)
+    }
+    menuItems += Action("Add Account\u2026", { switchToLogin() }, showSeparatorAbove = true)
+
+    AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems)).showUnderneathOf(accountsPanel)
   }
 }
