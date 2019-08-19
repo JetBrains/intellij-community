@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -828,7 +827,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       final PsiWildcardType wildcardType = PsiWildcardType.createExtends(method.getManager(), bound);
       map.put(parameter, wildcardType);
     }
-    final PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(map);
+    final PsiSubstitutor substitutor = PsiSubstitutor.createSubstitutor(map);
 
     for (GrParameter parameter : method.getParameterList().getParameters()) {
       final GrExpression initializer = parameter.getInitializerGroovy();

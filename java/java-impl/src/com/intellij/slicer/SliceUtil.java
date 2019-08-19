@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.SearchScope;
@@ -713,7 +712,7 @@ class SliceUtil {
     if (map == null) return substitutor;
     Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
-    return PsiSubstitutorImpl.createSubstitutor(newMap);
+    return PsiSubstitutor.createSubstitutor(newMap);
   }
 
   @Nullable

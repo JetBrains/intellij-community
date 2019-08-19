@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
@@ -231,7 +230,7 @@ public class InferenceSessionContainer {
       }
     }
 
-    return new CompoundInitialState(PsiSubstitutorImpl.createSubstitutor(map), nestedStates);
+    return new CompoundInitialState(PsiSubstitutor.createSubstitutor(map), nestedStates);
   }
 
   @Nullable
@@ -271,7 +270,7 @@ public class InferenceSessionContainer {
       }
       newVariable.putUserData(InferenceSession.ORIGINAL_CAPTURE, variable.getUserData(InferenceSession.ORIGINAL_CAPTURE));
     }
-    PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(map);
+    PsiSubstitutor substitutor = PsiSubstitutor.createSubstitutor(map);
 
     for (int i = 0; i < targetVars.size(); i++) {
       InferenceVariable var = targetVars.get(i);

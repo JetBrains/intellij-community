@@ -105,6 +105,19 @@ public interface PsiSubstitutor {
   PsiSubstitutor putAll(@NotNull PsiSubstitutor another);
 
   /**
+   * Creates a substitutor instance containing all mappings from this substitutor and the
+   * specified map.
+   *
+   * @param map a map which contains additional mappings
+   * @return the new substitutor instance.
+   */
+  @NotNull
+  @Contract(pure = true)
+  default PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    return putAll(createSubstitutor(map));
+  }
+
+  /**
    * Returns the map from type parameters to types used for substitution by this substitutor.
    *
    * @return the substitution map instance.
@@ -112,6 +125,12 @@ public interface PsiSubstitutor {
   @NotNull
   @Contract(pure = true)
   Map<PsiTypeParameter, PsiType> getSubstitutionMap();
+
+  @NotNull
+  static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+    if (map == null || map.isEmpty()) return EMPTY;
+    return EMPTY.putAll(map);
+  }
 
   /**
    * Checks if all types which the substitutor can substitute are valid.

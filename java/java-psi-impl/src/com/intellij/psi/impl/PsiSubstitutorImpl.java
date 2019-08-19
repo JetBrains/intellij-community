@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +54,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private final UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
-  private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
     mySubstitutionMap = UnmodifiableHashMap.fromMap(PSI_EQUIVALENCE, map);
   }
 
@@ -220,7 +219,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }
-      PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
+      PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject())
+        .createType(aClass, PsiSubstitutor.createSubstitutor(hashMap), classType.getLanguageLevel());
       PsiUtil.ensureValidType(result);
       return result.annotate(classType.getAnnotationProvider());
     }
@@ -333,9 +333,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return this;
     }
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(mySubstitutionMap, PSI_EQUIVALENCE);
-    newMap.putAll(anotherImpl.mySubstitutionMap);
-    return createSubstitutor(newMap);
+    return putAll(anotherImpl.mySubstitutionMap);
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    if (map.isEmpty()) return this;
+    return new PsiSubstitutorImpl(mySubstitutionMap.withAll(map));
   }
 
   @Override
@@ -367,12 +372,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       buffer.append('\n');
     }
     return buffer.toString();
-  }
-
-  @NotNull
-  public static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
-    if (map == null || map.isEmpty()) return EMPTY;
-    return new PsiSubstitutorImpl(map);
   }
 
   @Override
