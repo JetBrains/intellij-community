@@ -145,6 +145,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initDefaultSchemes();
     loadBundledSchemes();
     loadSchemesFromThemes();
+    loadAdditionalTextAttributes();
     mySchemeManager.loadSchemes();
 
     initEditableDefaultSchemesCopies();
@@ -157,7 +158,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
       mySchemeManager.addScheme(defaultScheme);
     }
-    loadAdditionalTextAttributes();
   }
 
   private void initEditableDefaultSchemesCopies() {
