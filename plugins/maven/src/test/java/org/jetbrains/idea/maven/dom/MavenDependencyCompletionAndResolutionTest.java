@@ -825,6 +825,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting();
   }
 
+  public void testHighlightingVersionIfVersionIsWrong() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version><error>4.0.wrong</error></version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+
   public void testHighlightingArtifactIdAndVersionIfGroupIsUnknown() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
