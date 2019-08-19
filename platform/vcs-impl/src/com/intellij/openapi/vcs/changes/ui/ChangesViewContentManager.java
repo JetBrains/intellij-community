@@ -94,6 +94,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   }
 
   private void updateExtensionTabs() {
+    if (myContentManager == null) return;
     final ChangesViewContentEP[] contentEPs = ChangesViewContentEP.EP_NAME.getExtensions(myProject);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
@@ -164,9 +165,8 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   @Override
   public void removeContent(final Content content) {
-    if (myContentManager != null && (! myContentManager.isDisposed())) { // for unit tests
-      myContentManager.removeContent(content, true);
-    }
+    if (myContentManager == null || myContentManager.isDisposed()) return;
+    myContentManager.removeContent(content, true);
   }
 
   @Override
@@ -216,9 +216,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
       myVcsChangeAlarm.addRequest(() -> {
         if (myProject.isDisposed()) return;
         updateToolWindowAvailability();
-        if (myContentManager != null) {
-          updateExtensionTabs();
-        }
+        updateExtensionTabs();
       }, 100, ModalityState.NON_MODAL);
     }
   }
