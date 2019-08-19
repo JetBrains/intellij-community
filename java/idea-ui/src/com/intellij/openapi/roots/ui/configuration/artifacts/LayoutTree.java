@@ -33,6 +33,7 @@ import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
@@ -143,7 +144,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<PackagingElementNode<?>> childFilter) {
     List<Predicate<PackagingElementNode<?>>> parentElementFilters = ContainerUtil.map(StringUtil.split(parentPath, "/"),
                                                                                       LayoutTree::createCompositeNodeByNameFilter);
-    TreePath predicatesPath = new TreePath(ContainerUtil.append(parentElementFilters, childFilter).toArray(new Predicate[0]));
+    TreePath predicatesPath = TreePathUtil.convertCollectionToTreePath(ContainerUtil.append(parentElementFilters, childFilter));
     return new TreeVisitor.ByTreePath<PackagingElementNode<?>>(true, predicatesPath, node -> TreeUtil.getUserObject(PackagingElementNode.class, node)) {
       @Override
       protected boolean matches(@NotNull PackagingElementNode<?> pathComponent, @NotNull Object thisComponent) {
