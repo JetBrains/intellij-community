@@ -76,21 +76,19 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     final List<Content> contentList = new ArrayList<>();
     for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
       final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
-      if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
-        content.setCloseable(false);
-        content.putUserData(myEPKey, ep);
-        contentList.add(content);
+      if (predicate == null || predicate.fun(myProject)) {
+        contentList.add(createExtensionTab(ep));
       }
     }
     myAddedContents.addAll(0, contentList);
   }
 
-  private void addExtensionTab(final ChangesViewContentEP ep) {
+  @NotNull
+  private static Content createExtensionTab(@NotNull ChangesViewContentEP ep) {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
     content.setCloseable(false);
     content.putUserData(myEPKey, ep);
-    addIntoCorrectPlace(content);
+    return content;
   }
 
   private void updateExtensionTabs() {
@@ -99,11 +97,12 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
       final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null) continue;
       Content epContent = findEPContent(ep);
-      final Boolean predicateResult = predicate.fun(myProject);
-      if (predicateResult.equals(Boolean.TRUE) && epContent == null) {
-        addExtensionTab(ep);
+      boolean predicateResult = predicate.fun(myProject);
+      if (predicateResult && epContent == null) {
+        Content tab = createExtensionTab(ep);
+        addIntoCorrectPlace(tab);
       }
-      else if (predicateResult.equals(Boolean.FALSE) && epContent != null) {
+      else if (!predicateResult && epContent != null) {
         myContentManager.removeContent(epContent, true);
       }
     }
