@@ -87,7 +87,6 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler {
     final XmlTag tag = getXmlTag();
     if (tag == null) return;
 
-    getManager().cacheHandler(getCacheKey(), tag, null);
     setXmlElement(null);
     deleteTag(tag);
     getManager().fireEvent(new DomEvent(parent, false));
@@ -95,7 +94,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler {
 
   @Override
   public DomElement createPathStableCopy() {
-    AbstractDomChildDescriptionImpl description = (AbstractDomChildDescriptionImpl)getChildDescription();
+    AbstractDomChildDescriptionImpl description = getChildDescription();
     final DomElement parent = getParent();
     assert parent != null;
     final DomElement parentCopy = parent.createStableCopy();

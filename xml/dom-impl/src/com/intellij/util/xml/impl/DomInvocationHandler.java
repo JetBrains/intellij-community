@@ -20,12 +20,14 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemElement;
-import com.intellij.semantic.SemKey;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.stubs.*;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -247,7 +249,6 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     final DomElement element = getProxy();
     myManager.fireEvent(new DomEvent(element, true));
     addRequiredChildren();
-    myManager.cacheHandler(getCacheKey(), tag, this);
     return getXmlTag();
   }
 
@@ -723,13 +724,6 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   protected final void detach() {
     setXmlElement(null);
-  }
-
-  final SemKey getCacheKey() {
-    if (this instanceof AttributeChildInvocationHandler) {
-      return DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY;
-    }
-    return DomManagerImpl.DOM_HANDLER_KEY;
   }
 
   protected final void setXmlElement(final XmlElement element) {

@@ -256,7 +256,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   private void assertNoCache(XmlTag tag) {
-    assertNull(tag.getText(), getCachedHandler(tag));
+    assertNull(tag.getText(), getDomManager().getDomHandler(tag));
     if (tag.isValid()) {
       for (XmlTag xmlTag : tag.getSubTags()) {
         assertNoCache(xmlTag);

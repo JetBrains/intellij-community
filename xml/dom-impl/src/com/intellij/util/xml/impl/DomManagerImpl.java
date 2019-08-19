@@ -137,10 +137,6 @@ public final class DomManagerImpl extends DomManager {
     return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
   }
 
-  public <T extends DomInvocationHandler> void cacheHandler(SemKey<T> key, XmlElement element, T handler) {
-    mySemService.setCachedSemElement(key, element, handler);
-  }
-
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
     if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
       return Collections.emptyList();

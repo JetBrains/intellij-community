@@ -93,7 +93,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     try {
       attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), "");
       setXmlElement(attribute);
-      getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
       final DomElement element = getProxy();
       manager.fireEvent(new DomEvent(element, true));
       return attribute;
@@ -172,9 +171,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
     getManager().runChange(() -> {
       try {
-        XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
-        setXmlElement(attribute);
-        getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
+        setXmlElement(tag.setAttribute(attributeName, namespace, newValue));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
