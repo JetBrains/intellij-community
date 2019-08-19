@@ -98,7 +98,7 @@ abstract class PlatformComponentManagerImpl(parent: ComponentManager?) : Compone
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingPhase.isStartupComplete() /* loading plugin on the fly */) {
+    if (picoContainer.parent == null && !LoadingPhase.PROJECT_OPENED.isComplete() /* loading plugin on the fly */) {
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED)
     }
 
