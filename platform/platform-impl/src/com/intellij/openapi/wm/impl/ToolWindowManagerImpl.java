@@ -2218,6 +2218,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         Window frame = decorator != null ? decorator.getFrame() : null;
         if (frame == null || !frame.isShowing()) return;
         info.setFloatingBounds(getRootBounds((JFrame)frame));
+        info.setMaximized(((JFrame)frame).getExtendedState() == Frame.MAXIMIZED_BOTH);
       }
       else { // docked and sliding windows
         ToolWindowAnchor anchor = info.getAnchor();
