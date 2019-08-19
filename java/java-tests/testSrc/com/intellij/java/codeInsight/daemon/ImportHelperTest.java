@@ -415,7 +415,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       //caret is too close
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      caretRight();
+      type(" ");
 
       doHighlighting();
 
