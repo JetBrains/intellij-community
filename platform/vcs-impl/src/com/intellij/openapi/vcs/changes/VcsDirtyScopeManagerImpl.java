@@ -1,10 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -48,6 +53,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myDirtBuilder = new DirtBuilder();
 
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
+
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+      }
+    });
   }
 
   @Override

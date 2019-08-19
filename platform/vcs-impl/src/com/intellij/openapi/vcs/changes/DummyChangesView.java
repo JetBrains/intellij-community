@@ -29,10 +29,6 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
-  public void refreshChangesViewNodeAsync(VirtualFile file) {
-  }
-
-  @Override
   public void scheduleRefresh() {
   }
 

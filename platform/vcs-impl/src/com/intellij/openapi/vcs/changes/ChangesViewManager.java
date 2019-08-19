@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
@@ -39,6 +40,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -190,12 +192,6 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @Override
-  public void refreshChangesViewNodeAsync(VirtualFile file) {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.refreshChangesViewNodeAsync(file);
-  }
-
-  @Override
   public void updateProgressText(String text, boolean isError) {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.updateProgressText(text, isError);
@@ -318,7 +314,19 @@ public class ChangesViewManager implements ChangesViewEx,
       BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
       setContent(mainPanel);
 
-      myProject.getMessageBus().connect(this).subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+      busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
+      busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
+        @Override
+        public void problemsAppeared(@NotNull VirtualFile file) {
+          refreshChangesViewNodeAsync(file);
+        }
+
+        @Override
+        public void problemsDisappeared(@NotNull VirtualFile file) {
+          refreshChangesViewNodeAsync(file);
+        }
+      });
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
       scheduleRefresh();
