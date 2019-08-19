@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.function.BiConsumer;
 
 /**
  * An immutable unordered hash-based map which optimizes incremental growth and may have custom equals/hashCode strategy.
- * This map doesn't support null keys, but supports null values.
+ * This map doesn't support null keys, but supports null values. This map is not serializable.
  *
  * @param <K> type of the map keys
  * @param <V> type of the map values
@@ -68,7 +69,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   /**
-   * Returns an {@code UnmodifiableHashMap} which contains all the entries of the supplied map.
+   * Returns an {@code UnmodifiableHashMap} which contains all the entries of the supplied map. It's assumed that the supplied
+   * map remains unchanged during the {@code fromMap} call.
    * @param strategy strategy to compare keys
    * @param map map to copy values from
    * @param <K> type of map keys
@@ -173,7 +175,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param key a key to add/replace
    * @param value a value to associate with the key
    * @return an {@code UnmodifiableHashMap} which contains all the entries as this map plus the supplied mapping.
-   * Map return the same map if given key is already associated with the same value. Note however that if value is
+   * May return the same map if given key is already associated with the same value. Note however that if value is
    * not the same but equal object, the new map will be created as sometimes it's desired to replace the object with
    * another one which is equal to the old object.
    */
@@ -216,6 +218,28 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     insert(strategy, newData, k3, v3);
     insert(strategy, newData, key, value);
     return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
+  }
+
+  /**
+   * Returns an {@code UnmodifiableHashMap} which contains all the entries as this map plus all the mappings
+   * of the supplied map.
+   * @param map to add entries from
+   * @return an {@code UnmodifiableHashMap} which contains all the entries as this map plus all the mappings
+   * of the supplied map. May (but not guaranteed) return the same map if the supplied map is empty or all its
+   * mappings already exist in this map (assuming values are compared by reference). The equals/hashCode strategy
+   * of the resulting map is the same as the strategy of this map.
+   */
+  @NotNull
+  public UnmodifiableHashMap<K, V> withAll(@NotNull Map<? extends K, ? extends V> map) {
+    if (map.isEmpty()) return this;
+    if (map.size() == 1) {
+      Entry<? extends K, ? extends V> entry = map.entrySet().iterator().next();
+      return with(entry.getKey(), entry.getValue());
+    }
+    // Could be optimized further for map.size() == 2 or 3.
+    THashMap<K, V> newMap = new THashMap<>(this, strategy);
+    newMap.putAll(map);
+    return fromMap(strategy, newMap);
   }
 
   private static <K> void insert(TObjectHashingStrategy<K> strategy, Object[] data, K k, Object v) {
@@ -359,7 +383,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   /**
-   * @deprecated Unsupported operation: this map is immutable
+   * @deprecated Unsupported operation: this map is immutable. Use {@link #with(Object, Object)} to create a new
+   * {@code UnmodifiableHashMap} with an additional element.
    */
   @Deprecated
   @Override
@@ -368,7 +393,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   /**
-   * @deprecated Unsupported operation: this map is immutable
+   * @deprecated Unsupported operation: this map is immutable. Use {@link #without(Object)} to create a new
+   * {@code UnmodifiableHashMap} without some element.
    */
   @Deprecated
   @Override
@@ -377,7 +403,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   /**
-   * @deprecated Unsupported operation: this map is immutable
+   * @deprecated Unsupported operation: this map is immutable. Use {@link #withAll(Map)} to create a new
+   * {@code UnmodifiableHashMap} with additional elements from the specified Map.
    */
   @Deprecated
   @Override
@@ -386,7 +413,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   /**
-   * @deprecated Unsupported operation: this map is immutable
+   * @deprecated Unsupported operation: this map is immutable. Use {@link #empty()} to get an empty {@code UnmodifiableHashMap}.
    */
   @Deprecated
   @Override

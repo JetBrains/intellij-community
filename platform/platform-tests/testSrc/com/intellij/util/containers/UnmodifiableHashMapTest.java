@@ -198,6 +198,24 @@ public class UnmodifiableHashMapTest {
     assertSame(map, UnmodifiableHashMap.fromMap(map));
   }
 
+  @Test
+  public void testWithAll() {
+    UnmodifiableHashMap<Integer, String> map = UnmodifiableHashMap.<Integer, String>empty()
+      .with(1, "One").with(2, "Two").with(3, "Three");
+    UnmodifiableHashMap<Integer, String> map2 = map.withAll(Collections.emptyMap());
+    assertSame(map, map2);
+    map2 = map.withAll(Collections.singletonMap(4, "Four"));
+    assertEquals(4, map2.size());
+    assertEquals("Four", map2.get(4));
+    assertTrue(map2.entrySet().containsAll(map.entrySet()));
+
+    map2 = map.withAll(UnmodifiableHashMap.<Integer, String>empty().with(0, "Zero").with(4, "Four"));
+    assertEquals(5, map2.size());
+    assertEquals("Four", map2.get(4));
+    assertEquals("Zero", map2.get(0));
+    assertTrue(map2.entrySet().containsAll(map.entrySet()));
+  }
+
   private static UnmodifiableHashMap<Integer, String> create(int size) {
     UnmodifiableHashMap<Integer, String> map =
       IntStreamEx.range(size < 4 ? size :size / 4 * 4).mapToEntry(i -> i, String::valueOf).toMapAndThen(UnmodifiableHashMap::fromMap);
