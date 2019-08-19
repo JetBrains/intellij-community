@@ -549,38 +549,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
   }
 
-
-  @Override
-  public void flipTabs() {
-    /*
-    if (myTabs == null) {
-      myTabs = new EditorTabs (this, UISettings.getInstance().getEditorTabPlacement());
-      remove (mySplitters);
-      add (myTabs, BorderLayout.CENTER);
-      initTabs ();
-    } else {
-      remove (myTabs);
-      add (mySplitters, BorderLayout.CENTER);
-      myTabs.dispose ();
-      myTabs = null;
-    }
-    */
-    myPanels.revalidate();
-  }
-
-  @Override
-  public boolean tabsMode() {
-    return false;
-  }
-
-  private void setTabsMode(final boolean mode) {
-    if (tabsMode() != mode) {
-      flipTabs();
-    }
-    //LOG.assertTrue (tabsMode () == mode);
-  }
-
-
   @Override
   public boolean isInSplitter() {
     final EditorWindow currentWindow = getSplitters().getCurrentWindow();
@@ -1507,7 +1475,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (myProject.isDisposed()) return;
-      setTabsMode(UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
 
       ToolWindowManager.getInstance(myProject).invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -1925,8 +1892,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleUiSettingChange(UISettings uiSettings) {
-      setTabsMode(uiSettings.getEditorTabPlacement() != UISettings.TABS_NONE && !uiSettings.getPresentationMode());
-
+      myPanels.revalidate();
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize(uiSettings.getEditorTabLimit());
