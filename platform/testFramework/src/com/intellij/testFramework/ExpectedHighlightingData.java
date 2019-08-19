@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -259,13 +260,15 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
-    Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
-    int pos = 0;
-    Ref<Integer> textOffset = Ref.create(0);
-    while (matcher.find(pos)) {
-      textOffset.set(textOffset.get() + matcher.start() - pos);
-      pos = extractExpectedHighlight(matcher, text, document, textOffset);
-    }
+    DocumentUtil.executeInBulk(document, true, () -> {
+      Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
+      Ref<Integer> textOffset = Ref.create(0);
+      int pos = 0;
+      while (matcher.find(pos)) {
+        textOffset.set(textOffset.get() + matcher.start() - pos);
+        pos = extractExpectedHighlight(matcher, text, document, textOffset);
+      }
+    });
   }
 
   private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
