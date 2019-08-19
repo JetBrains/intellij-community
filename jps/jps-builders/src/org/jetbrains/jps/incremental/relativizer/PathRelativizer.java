@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * on project location on filesystem or the location of the JDK for example.
  * JPS caches contains paths to the sources and all its dependencies e.g path to JDK libs, maven jars, build directory, etc.
  * In order to support this conversion we created several relativizers each of them supports conversion of the certain
- * types of paths {@link ProjectPathRelativizer} {@link JavaSdkPathRelativizer} {@link MavenPathRelativizer}. To leave
+ * types of paths {@link CommonPathRelativizer} {@link JavaSdkPathRelativizer} {@link MavenPathRelativizer}. To leave
  * the opportunity to work with caches with relative paths aboard we should also provide a method to convert relative
  * paths back and get the paths to the files on the filesystem itself.
  *
@@ -19,26 +19,29 @@ import org.jetbrains.annotations.Nullable;
  * interface and add the instance of class to the {@link PathRelativizerService#myRelativizers} list. For now it's not
  * supported to add the relativizers at the runtime because this feature is experimental for now.</p>
  *
- * <p><b>NOTE: It's preferred to pass the path to the relativizer before any actions on the path e.g. conversion to the
- * filesystem independent path</b></p>
+ * <p><b>NOTE: Relativizer works with system-independent paths. You shouldn't do any explicit conversion before passing
+ * path to the methods if you are working via {@link PathRelativizerService}, all necessary things done in
+ * {@link PathRelativizerService#toRelative} and {@link PathRelativizerService#toFull}</b></p>
  */
 public interface PathRelativizer {
   /**
-   * Convert concrete path to the relative. Returns {@code null} in specified path can't be converted to the relative
-   * by this relativizer.
+   * Convert concrete absolute path to the relative
    *
-   * <p><b>NOTE: It's preferred to pass the path to the relativizer before any actions on it e.g. conversion to the
-   * filesystem independent path</b></p>
+   * @param path absolute path to the file, path should be system-independent.
+   *
+   * @return system-independent relative path. Returns {@code null} if specified path can't be converted to
+   * the relative by this relativizer.
    */
   @Nullable
   String toRelativePath(@NotNull String path);
 
   /**
-   * Convert concrete path to the absolute. Returns {@code null} in specified path can't be converted to the absolute
-   * by this relativizer
+   * Convert concrete relative path to the absolute
    *
-   * <p><b>NOTE: It's preferred to pass the path to the relativizer before any actions on it e.g. conversion to the
-   * filesystem dependent path</b></p>
+   * @param path relative path to the file, path should be system-independent.
+   *
+   * @return system-independent absolute path. Returns {@code null} if specified path can't be converted to
+   * the absolute by this relativizer.
    */
   @Nullable
   String toAbsolutePath(@NotNull String path);

@@ -109,8 +109,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   private String normalizePath(@NotNull String path) {
-    String relativePath = myRelativizer.toRelative(path);
-    return FileUtil.toSystemIndependentName(relativePath);
+    return myRelativizer.toRelative(path);
   }
 
   private Collection<String> normalizePaths(Collection<String> outputs) {

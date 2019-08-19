@@ -17,8 +17,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+
 public class PathRelativizerService {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.relativizer.PathRelativizerService");
+  private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
+  private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
   private List<PathRelativizer> myRelativizers;
   private Set<String> myUnhandledPaths;
@@ -42,32 +46,46 @@ public class PathRelativizerService {
   }
 
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
-    myRelativizers = ContainerUtil.newSmartList(new ProjectPathRelativizer(projectPath),
+    String systemIndependentProjectPath = projectPath != null ? toSystemIndependentName(projectPath) : null;
+    String systemIndependentBuildDirPath = buildDirPath != null ? toSystemIndependentName(buildDirPath) : null;
+    myRelativizers = ContainerUtil.newSmartList(new CommonPathRelativizer(systemIndependentProjectPath, PROJECT_DIR_IDENTIFIER),
                                                 new JavaSdkPathRelativizer(javaSdks),
-                                                new BuildDataPathRelativizer(buildDirPath),
+                                                new CommonPathRelativizer(systemIndependentBuildDirPath, BUILD_DIR_IDENTIFIER),
                                                 new MavenPathRelativizer());
     myUnhandledPaths = new LinkedHashSet<>();
   }
 
+  /**
+   * @param path absolute path which should be converted. It may use forward or backward slashes as separators
+   *             so there is no need to convert it before passing to the method
+   * @return system-independent relative path
+   */
   @NotNull
   public String toRelative(@NotNull String path) {
+    String systemIndependentPath = toSystemIndependentName(path);
     String relativePath;
     for (PathRelativizer relativizer : myRelativizers) {
-      relativePath = relativizer.toRelativePath(path);
+      relativePath = relativizer.toRelativePath(systemIndependentPath);
       if (relativePath != null) return relativePath;
     }
     myUnhandledPaths.add(path);
-    return path;
+    return systemIndependentPath;
   }
 
+  /**
+   * @param path relative path which should be converted. It may use forward or backward slashes as separators
+   *             so there is no need to convert it before passing to the method
+   * @return system-independent absolute path
+   */
   @NotNull
   public String toFull(@NotNull String path) {
+    String systemIndependentPath = toSystemIndependentName(path);
     String fullPath;
     for (PathRelativizer relativizer : myRelativizers) {
-      fullPath = relativizer.toAbsolutePath(path);
+      fullPath = relativizer.toAbsolutePath(systemIndependentPath);
       if (fullPath != null) return fullPath;
     }
-    return path;
+    return systemIndependentPath;
   }
 
   public void reportUnhandledPaths() {

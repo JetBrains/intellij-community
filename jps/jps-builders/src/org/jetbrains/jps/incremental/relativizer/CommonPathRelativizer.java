@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.relativizer;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class CommonPathRelativizer implements PathRelativizer{
+class CommonPathRelativizer implements PathRelativizer{
   protected final String myPath;
   private final String myIdentifier;
 
@@ -16,7 +17,7 @@ abstract class CommonPathRelativizer implements PathRelativizer{
   @Nullable
   @Override
   public String toRelativePath(@NotNull String path) {
-    if (myPath == null || !path.startsWith(myPath)) return null;
+    if (myPath == null || !FileUtil.startsWith(path, myPath)) return null;
     return myIdentifier + path.substring(myPath.length());
   }
 

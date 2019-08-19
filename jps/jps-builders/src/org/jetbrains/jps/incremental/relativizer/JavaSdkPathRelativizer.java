@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.relativizer;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ class JavaSdkPathRelativizer implements PathRelativizer {
         .collect(Collectors.toMap(sdk -> {
           JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
           return "$JDK_" + (version != null ? version.toString() : "0") + "$";
-        }, sdk -> sdk.getHomePath(), (sdk1, sdk2) -> sdk1));
+        }, sdk -> FileUtil.toSystemIndependentName(sdk.getHomePath()), (sdk1, sdk2) -> sdk1));
     }
   }
 
@@ -35,7 +36,7 @@ class JavaSdkPathRelativizer implements PathRelativizer {
   public String toRelativePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(it -> path.startsWith(it.getValue())).findFirst();
+      .filter(it -> FileUtil.startsWith(path, it.getValue())).findFirst();
     if (!optionalEntry.isPresent()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();

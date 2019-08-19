@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
@@ -70,8 +69,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
   }
 
   private String normalizePath(@NotNull String path) {
-    String relativePath = myRelativizer.toRelative(path);
-    return FileUtil.toSystemIndependentName(relativePath);
+    return myRelativizer.toRelative(path);
   }
 
   private List<SourcePathAndRootIndex> normalizePaths(@NotNull List<SourcePathAndRootIndex> state) {
@@ -85,7 +83,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     private final int myRootIndex;
 
     private SourcePathAndRootIndex(String path, int rootIndex) {
-      myPath = FileUtil.toSystemIndependentName(path);
+      myPath = path;
       myRootIndex = rootIndex;
     }
 

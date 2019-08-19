@@ -230,7 +230,7 @@ public class Mappings {
 
   @NotNull
   private String toRelative(File file) {
-    return FileUtil.toSystemIndependentName(myRelativizer.toRelative(file.getAbsolutePath()));
+    return myRelativizer.toRelative(file.getAbsolutePath());
   }
 
   @Nullable
@@ -241,7 +241,7 @@ public class Mappings {
 
   @NotNull
   private File toFull(String relativePath) {
-    return new File(FileUtil.toSystemDependentName(myRelativizer.toFull(relativePath)));
+    return new File(myRelativizer.toFull(relativePath));
   }
 
   public void clean() throws IOException {
@@ -2680,7 +2680,7 @@ public class Mappings {
               for (final ClassFileRepr aClass : fileClasses) {
                 cleanupRemovedClass(delta, aClass, deletedFile, aClass.getUsages(), dependenciesTrashBin);
               }
-              myRelativeSourceFilePathToClasses.remove(FileUtil.toSystemIndependentName(myRelativizer.toRelative(file)));
+              myRelativeSourceFilePathToClasses.remove(myRelativizer.toRelative(file));
             }
           }
         }
@@ -2876,7 +2876,7 @@ public class Mappings {
             final int className = result.name;
 
             for (String sourceFileName : sources) {
-              String relative = FileUtil.toSystemIndependentName(myRelativizer.toRelative(sourceFileName));
+              String relative = myRelativizer.toRelative(sourceFileName);
               myClassToRelativeSourceFilePath.put(className, relative);
               myRelativeSourceFilePathToClasses.put(relative, result);
             }

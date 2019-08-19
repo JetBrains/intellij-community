@@ -30,7 +30,7 @@ class MavenPathRelativizer implements PathRelativizer {
   @Override
   public String toRelativePath(@NotNull String path) {
     initializeMavenRepositoryPath();
-    if (myMavenRepositoryPath == null || !path.startsWith(myMavenRepositoryPath)) return null;
+    if (myMavenRepositoryPath == null || !FileUtil.startsWith(path, myMavenRepositoryPath)) return null;
     return IDENTIFIER + path.substring(myMavenRepositoryPath.length());
 
   }
@@ -52,7 +52,7 @@ class MavenPathRelativizer implements PathRelativizer {
     if (userSettingsFile.exists()) {
       String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (isNotEmpty(fromUserSettings) && new File(fromUserSettings).exists()) {
-        myMavenRepositoryPath = fromUserSettings;
+        myMavenRepositoryPath = FileUtil.toSystemIndependentName(fromUserSettings);
         myPathInitialized = true;
         return;
       }
@@ -63,7 +63,7 @@ class MavenPathRelativizer implements PathRelativizer {
     if (globalSettingsFile.exists()) {
       String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
       if (isNotEmpty(fromGlobalSettings) && new File(fromGlobalSettings).exists()) {
-        myMavenRepositoryPath = fromGlobalSettings;
+        myMavenRepositoryPath = FileUtil.toSystemIndependentName(fromGlobalSettings);
         myPathInitialized = true;
         return;
       }
@@ -71,7 +71,7 @@ class MavenPathRelativizer implements PathRelativizer {
 
     String defaultMavenRepository = defaultMavenFolder + File.separator + REPOSITORY_PATH;
     if (FileUtil.exists(defaultMavenFolder)) {
-      myMavenRepositoryPath = defaultMavenRepository;
+      myMavenRepositoryPath = FileUtil.toSystemIndependentName(defaultMavenRepository);
       myPathInitialized = true;
     }
   }
