@@ -64,8 +64,7 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    final Object historyPanel = e.getData(VcsDataKeys.FILE_HISTORY_PANEL);
-    if (project == null || vcsKey == null || historyPanel == null) {
+    if (project == null || vcsKey == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
