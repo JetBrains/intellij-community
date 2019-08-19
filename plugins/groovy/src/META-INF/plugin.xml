@@ -293,7 +293,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Groovy" language="Groovy" extensions="groovy"
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy;gdsl"
               implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
 
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
@@ -363,7 +363,6 @@
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
 
-    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <fileType name="DGM"
               implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 

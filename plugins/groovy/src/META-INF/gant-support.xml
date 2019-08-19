@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Groovy" extensions="gant"/>
     <projectConfigurable id="reference.settingsdialog.project.gant"
                          groupId="build.tools" groupWeight="100" displayName="Gant"
                          instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
