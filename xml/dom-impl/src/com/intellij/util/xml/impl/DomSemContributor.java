@@ -7,18 +7,16 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemContributor;
@@ -55,123 +53,123 @@ final class DomSemContributor extends SemContributor {
   public void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_ELEMENT_KEY, xmlFile(), DomSemContributor::createFileElement);
 
-    final SemService semService = SemService.getSemService(project);
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())),
-                                         xmlTag -> {
-                                           DomFileElementImpl<?> element = semService.getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, xmlTag.getContainingFile());
-                                           if (element != null) {
-                                             final DomRootInvocationHandler handler = element.getRootHandler();
-                                             if (handler.getXmlTag() == xmlTag) {
-                                               return handler;
-                                             }
-                                           }
-                                           return null;
-                                         });
-
-    final ElementPattern<XmlTag> nonRootTag = xmlTag().withParent(or(xmlTag(), xmlEntityRef().withParent(xmlTag())));
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, nonRootTag, tag -> {
-      final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-      assert parentTag != null;
-      DomInvocationHandler parent = getParentDom(parentTag);
-      if (parent == null) return null;
-
-      final String localName = tag.getLocalName();
-      final String namespace = tag.getNamespace();
-
-      final DomFixedChildDescription description =
-        findChildrenDescription(parent.getGenericInfo().getFixedChildrenDescriptions(), tag, parent);
-
-      if (description != null) {
-
-        final int totalCount = description.getCount();
-
-        int index = 0;
-        PsiElement current = tag;
-        while (true) {
-          current = current.getPrevSibling();
-          if (current == null) {
-            break;
-          }
-          if (current instanceof XmlTag) {
-            final XmlTag xmlTag = (XmlTag)current;
-            if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
-              index++;
-              if (index >= totalCount) {
-                return null;
-              }
-            }
-          }
-        }
-
-        final DomManagerImpl myDomManager = parent.getManager();
-        return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                            new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
-      }
-      return null;
-    });
-
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, nonRootTag, tag -> {
-      final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-      assert parentTag != null;
-      DomInvocationHandler parent = getParentDom(parentTag);
-      if (parent == null) return null;
-
-      final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
-      if (description != null) {
-        DomStub parentStub = parent.getStub();
-        if (parentStub != null) {
-          int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
-          ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
-          if (stub != null) {
-            XmlName name = description.getXmlName();
-            EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
-            return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
-          }
-        }
-        return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
-      }
-      return null;
-    });
-
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, tag -> {
-      if (StringUtil.isEmpty(tag.getName())) return null;
-
-      XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-      assert parentTag != null;
-
-      DomInvocationHandler parent = RecursionManager.doPreventingRecursion(tag, true, () -> getParentDom(parentTag));
-      if (parent == null) return null;
-
-      DomGenericInfoEx info = parent.getGenericInfo();
-      List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
-      if (customs.isEmpty()) return null;
-
-      if (semService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
-          semService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
-
-        String localName = tag.getLocalName();
-        XmlFile file = parent.getFile();
-        for (DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
-          XmlName xmlName = description.getXmlName();
-          if (localName.equals(xmlName.getLocalName()) && DomImplUtil.isNameSuitable(xmlName, tag, parent, file)) {
-            return null;
-          }
-        }
-        for (CustomDomChildrenDescription description : customs) {
-          if (description.getTagNameDescriptor() != null) {
-           AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)description;
-           Type type = description.getType();
-           return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
-          }
-        }
-      }
-
-      return null;
-    });
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag(), DomSemContributor::createTagHandler);
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY,
                                          xmlAttribute(),
                                          DomSemContributor::createAttributeHandler);
+  }
+
+  @Nullable
+  private static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
+    PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
+    if (!(candidate instanceof XmlTag)) {
+      return createRootHandler(tag);
+    }
+
+    XmlTag parentTag = (XmlTag)candidate;
+
+    DomInvocationHandler parent = getParentDom(parentTag);
+    if (parent == null) return null;
+
+    String localName = tag.getLocalName();
+    if (StringUtil.isEmpty(localName)) return null;
+
+    DomGenericInfoEx info = parent.getGenericInfo();
+    DomFixedChildDescription fixedDescription = findChildrenDescription(info.getFixedChildrenDescriptions(), tag, parent);
+    if (fixedDescription != null) {
+      return createIndexedHandler(parent, localName, tag.getNamespace(), fixedDescription, tag);
+    }
+    DomCollectionChildDescription collectionDescription = findChildrenDescription(info.getCollectionChildrenDescriptions(), tag, parent);
+    if (collectionDescription != null) {
+      return createCollectionHandler(tag, collectionDescription, parent, parentTag);
+    }
+
+    return createCustomHandler(tag, parent, localName, info);
+  }
+
+  @Nullable
+  private static DomInvocationHandler createRootHandler(XmlTag xmlTag) {
+    PsiFile file = xmlTag.getContainingFile();
+    DomFileElementImpl<?> element = SemService.getSemService(file.getProject()).getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, file);
+    if (element != null) {
+      final DomRootInvocationHandler handler = element.getRootHandler();
+      if (handler.getXmlTag() == xmlTag) {
+        return handler;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static DomInvocationHandler createIndexedHandler(DomInvocationHandler parent,
+                                                           String localName,
+                                                           String namespace,
+                                                           DomFixedChildDescription description, XmlTag tag) {
+    final int totalCount = description.getCount();
+
+    int index = 0;
+    PsiElement current = tag;
+    while (true) {
+      current = current.getPrevSibling();
+      if (current == null) {
+        break;
+      }
+      if (current instanceof XmlTag) {
+        final XmlTag xmlTag = (XmlTag)current;
+        if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
+          index++;
+          if (index >= totalCount) {
+            return null;
+          }
+        }
+      }
+    }
+
+    final DomManagerImpl myDomManager = parent.getManager();
+    return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
+                                               new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
+  }
+
+  @NotNull
+  private static CollectionElementInvocationHandler createCollectionHandler(XmlTag tag,
+                                                                            DomCollectionChildDescription description,
+                                                                            DomInvocationHandler parent,
+                                                                            XmlTag parentTag) {
+    DomStub parentStub = parent.getStub();
+    if (parentStub != null) {
+      int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
+      ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+      if (stub != null) {
+        XmlName name = description.getXmlName();
+        EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
+        return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
+      }
+    }
+    return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
+  }
+
+  @Nullable
+  private static DomInvocationHandler createCustomHandler(XmlTag tag, DomInvocationHandler parent, String localName, DomGenericInfoEx info) {
+    List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
+    if (customs.isEmpty()) return null;
+
+    XmlFile file = parent.getFile();
+    for (DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
+      XmlName xmlName = description.getXmlName();
+      if (localName.equals(xmlName.getLocalName()) && DomImplUtil.isNameSuitable(xmlName, tag, parent, file)) {
+        return null;
+      }
+    }
+    for (CustomDomChildrenDescription description : customs) {
+      if (description.getTagNameDescriptor() != null) {
+        AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)description;
+        Type type = description.getType();
+        return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
+      }
+    }
+
+    return null;
   }
 
   @Nullable

@@ -588,7 +588,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @NotNull
-  final IndexedElementInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
+  final DomInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
     XmlName xmlName = description.getXmlName();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
@@ -604,10 +604,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
         final XmlTag child = tags.get(index);
-        final IndexedElementInvocationHandler semElement = myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, child);
-        if (semElement == null) {
-          final IndexedElementInvocationHandler take2 = myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, child);
-          throw new AssertionError("No DOM at XML. Parent=" + tag + "; child=" + child + "; index=" + index+ "; second attempt=" + take2);
+        DomInvocationHandler semElement = myManager.getDomHandler(child);
+        if (!(semElement instanceof IndexedElementInvocationHandler)) {
+          DomInvocationHandler take2 = myManager.getDomHandler(child);
+          throw new AssertionError("Expected indexed DO, but got " + semElement +
+                                   ". Parent=" + tag + "; child=" + child + "; index=" + index+ "; second attempt=" + take2);
 
         }
         return semElement;
@@ -728,18 +729,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     if (this instanceof AttributeChildInvocationHandler) {
       return DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY;
     }
-    if (this instanceof DomRootInvocationHandler) {
-      return DomManagerImpl.DOM_HANDLER_KEY;
-    }
-    if (this instanceof IndexedElementInvocationHandler) {
-      return DomManagerImpl.DOM_INDEXED_HANDLER_KEY;
-    }
-
-    if (getChildDescription() instanceof CustomDomChildrenDescription) {
-      return DomManagerImpl.DOM_CUSTOM_HANDLER_KEY;
-    }
-
-    return DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
+    return DomManagerImpl.DOM_HANDLER_KEY;
   }
 
   protected final void setXmlElement(final XmlElement element) {
@@ -845,10 +835,9 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
     List<DomElement> elements = new ArrayList<>(subTags.size());
     for (XmlTag subTag : subTags) {
-      final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
-      final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
+      DomInvocationHandler semElement = myManager.getDomHandler(subTag);
       if (semElement == null) {
-        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size() + ", description=" + description + ", subtag.class=" + subTag.getClass().getName();
+        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "'; subtag count=" + subTags.size() + ", description=" + description + ", subtag.class=" + subTag.getClass().getName();
         DomInvocationHandler anyDom = myManager.getDomHandler(subTag);
         if (anyDom != null) {
           msg += "\n sub-dom=" + anyDom + " with " + anyDom.getChildDescription();

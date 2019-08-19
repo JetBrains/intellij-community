@@ -64,9 +64,6 @@ public final class DomManagerImpl extends DomManager {
   static final Key<DomFileDescription<?>> MOCK_DESCRIPTION = Key.create("MockDescription");
   static final SemKey<DomFileElementImpl<?>> FILE_ELEMENT_KEY = SemKey.createKey("FILE_ELEMENT_KEY");
   static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
-  static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
-  static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
-  static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
@@ -340,16 +337,8 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Nullable
-  public DomInvocationHandler getDomHandler(final XmlElement tag) {
-    if (tag == null) return null;
-
-    List<DomInvocationHandler> cached = mySemService.getCachedSemElements(DOM_HANDLER_KEY, tag);
-    if (cached != null && !cached.isEmpty()) {
-      return cached.get(0);
-    }
-
-
-    return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
+  public DomInvocationHandler getDomHandler(@Nullable XmlElement tag) {
+    return tag == null ? null : mySemService.getSemElement(DOM_HANDLER_KEY, tag);
   }
 
   @Override
