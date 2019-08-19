@@ -396,4 +396,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return mySubstitutionMap;
   }
+
+  /**
+   * @deprecated use {@link PsiSubstitutor#createSubstitutor(Map)}
+   */
+  @Deprecated
+  public static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+    return PsiSubstitutor.createSubstitutor(map);
+  }
 }

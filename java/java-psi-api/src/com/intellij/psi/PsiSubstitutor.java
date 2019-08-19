@@ -126,6 +126,11 @@ public interface PsiSubstitutor {
   @Contract(pure = true)
   Map<PsiTypeParameter, PsiType> getSubstitutionMap();
 
+  /**
+   * Create a substitutor from the supplied map
+   * @param map a map to create a substitutor from
+   * @return a substitutor backed by the supplied map
+   */
   @NotNull
   static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
     if (map == null || map.isEmpty()) return EMPTY;
