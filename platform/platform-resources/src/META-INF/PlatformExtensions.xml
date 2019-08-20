@@ -462,6 +462,13 @@
     </projectConfigurable>
 
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
+    <bundledKeymap file="$default.xml"/>
+    <bundledKeymap file="Mac OS X 10.5+.xml"/>
+    <bundledKeymap file="Mac OS X.xml"/>
+    <bundledKeymap file="Default for XWin.xml"/>
+    <bundledKeymap file="Default for GNOME.xml"/>
+    <bundledKeymap file="Default for KDE.xml"/>
+    <bundledKeymap file="Emacs.xml"/>
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 

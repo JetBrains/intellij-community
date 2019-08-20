@@ -527,7 +527,10 @@
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
     <postStartupActivity implementation="com.intellij.lang.java.JavaModuleRenameListener"/>
 
-    <bundledKeymapProvider implementation="com.intellij.ide.JavaBundledKeymapProvider"/>
+    <bundledKeymap file="Visual Studio.xml"/>
+    <bundledKeymap file="Eclipse.xml"/>
+    <bundledKeymap file="Eclipse (Mac OS X).xml"/>
+    <bundledKeymap file="NetBeans 6.5.xml"/>
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
