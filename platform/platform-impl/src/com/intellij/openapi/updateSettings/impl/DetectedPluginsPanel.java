@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginHeaderPanel;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
@@ -49,7 +46,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         if (downloader != null) {
           String pluginName = downloader.getPluginName();
           append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+          IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(downloader.getPluginId()));
           if (ideaPluginDescriptor != null) {
             String oldPluginName = ideaPluginDescriptor.getName();
             if (!Comparing.strEqual(pluginName, oldPluginName)) {

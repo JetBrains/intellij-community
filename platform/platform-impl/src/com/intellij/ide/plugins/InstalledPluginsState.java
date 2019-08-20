@@ -66,7 +66,7 @@ public final class InstalledPluginsState {
    */
   public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId id = descriptor.getPluginId();
-    IdeaPluginDescriptor existing = PluginManager.getPlugin(id);
+    IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(id);
     if (existing == null || (existing.isBundled() && !existing.allowBundledUpdate()) || wasUpdated(id)) {
       return;
     }

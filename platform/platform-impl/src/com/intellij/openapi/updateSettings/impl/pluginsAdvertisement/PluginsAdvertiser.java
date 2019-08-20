@@ -105,7 +105,7 @@ public final class PluginsAdvertiser {
           final IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
           if (fromServerPluginDescription == null && !isBundled) continue;
 
-          final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+          final IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
           if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
 
           if (loadedPlugin != null && fromServerPluginDescription != null &&
@@ -187,7 +187,7 @@ public final class PluginsAdvertiser {
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
       if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
-        return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
+        return PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
       }
     }
     return null;
@@ -197,7 +197,7 @@ public final class PluginsAdvertiser {
     if (PlatformUtils.isIdeaUltimate()) return null;
     final List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
-      if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
+      if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
       }
     }

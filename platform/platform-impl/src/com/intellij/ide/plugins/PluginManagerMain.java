@@ -624,7 +624,7 @@ public abstract class PluginManagerMain implements Disposable {
         Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
-          IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+          IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
           if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
             disabledDependants.add(pluginDescriptor);
           }

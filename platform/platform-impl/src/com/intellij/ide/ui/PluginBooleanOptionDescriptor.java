@@ -3,7 +3,6 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -39,7 +38,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   public PluginBooleanOptionDescriptor(PluginId id) {
     //noinspection ConstantConditions
-    super(PluginManager.getPlugin(id).getName(), PluginManagerConfigurable.ID);
+    super(PluginManagerCore.getPlugin(id).getName(), PluginManagerConfigurable.ID);
     myId = id;
   }
 
@@ -120,7 +119,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   private static Optional<IdeaPluginDescriptor> optionalDescriptor(PluginId id) {
-    return Optional.ofNullable(PluginManager.getPlugin(id));
+    return Optional.ofNullable(PluginManagerCore.getPlugin(id));
   }
 
   private static Collection<PluginId> getPluginsIdsToEnable(PluginId id) {
@@ -131,7 +130,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
     Collection<PluginId> res = new HashSet<>();
     IdeaPluginDescriptor descriptor = maybeDescriptor.get();
-    PluginManagerCore.checkDependants(descriptor, PluginManager::getPlugin, pluginId -> {
+    PluginManagerCore.checkDependants(descriptor, id1 -> PluginManagerCore.getPlugin(id1), pluginId -> {
       boolean enabled = optionalDescriptor(pluginId).map(IdeaPluginDescriptor::isEnabled).orElse(true);
       if (!enabled) {
         res.add(pluginId);
@@ -145,7 +144,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Collection<PluginId> res = new HashSet<>();
     Arrays.stream(PluginManagerCore.getPlugins())
           .filter(IdeaPluginDescriptor::isEnabled)
-          .forEach(descriptor -> PluginManagerCore.checkDependants(descriptor, PluginManager::getPlugin, pluginId -> {
+          .forEach(descriptor -> PluginManagerCore.checkDependants(descriptor, id1 -> PluginManagerCore.getPlugin(id1), pluginId -> {
             if (pluginId.equals(id)) {
               res.add(descriptor.getPluginId());
               return false;

@@ -89,7 +89,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   private static void updateStatus(final IdeaPluginDescriptor descr) {
     if (descr instanceof PluginNode) {
-      IdeaPluginDescriptor existing = PluginManager.getPlugin(descr.getPluginId());
+      IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(descr.getPluginId());
       if (existing != null) {
         PluginNode node = (PluginNode)descr;
         node.setStatus(PluginNode.Status.INSTALLED);

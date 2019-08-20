@@ -147,7 +147,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     }
 
     myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
-    myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
+    myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
     add(myLastComponent = myInstallButton);
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {

@@ -58,14 +58,4 @@ public final class PluginManager extends PluginManagerCore {
       throw new MainRunner.StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
     }
   }
-
-  /**
-   * @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)} directly.
-   */
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Nullable
-  @Deprecated
-  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
-    return PluginManagerCore.getPlugin(id);
-  }
 }

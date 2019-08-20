@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -143,7 +143,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       // plugin state-dependent rendering
 
       PluginId pluginId = myPluginDescriptor.getPluginId();
-      IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginId);
+      IdeaPluginDescriptor installed = PluginManagerCore.getPlugin(pluginId);
       Color initialNameForeground = myName.getForeground();
 
       if (installed != null && ((IdeaPluginDescriptorImpl)installed).isDeleted()) {
@@ -224,7 +224,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         }
         else {
           String deps = StringUtil.join(required, id -> {
-            IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+            IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
             return plugin != null ? plugin.getName() : id.getIdString();
           }, ", ");
           sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required.size(), deps));

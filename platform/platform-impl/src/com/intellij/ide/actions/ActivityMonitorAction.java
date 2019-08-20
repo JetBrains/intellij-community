@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,7 +54,7 @@ class ActivityMonitorAction extends DumbAwareAction {
           pkg = pkg.substring(prefix.length()) + " (in " + StringUtil.trimEnd(prefix, ".") + ")";
         }
 
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManagerCore.getPluginByClassName(className));
+        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(className));
         return plugin != null ? "Plugin " + plugin.getName() + ": " + pkg : pkg;
       });
 

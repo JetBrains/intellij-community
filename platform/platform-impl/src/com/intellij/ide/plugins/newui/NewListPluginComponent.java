@@ -104,7 +104,7 @@ public class NewListPluginComponent extends CellPluginComponent {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
         myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
-        myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
         ColorButton.setWidth72(myInstallButton);
       }
     }

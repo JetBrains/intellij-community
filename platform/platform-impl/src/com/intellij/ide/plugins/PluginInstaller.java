@@ -145,7 +145,7 @@ public class PluginInstaller {
       final List<PluginNode> optionalDeps = new ArrayList<>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
-        if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
+        if (PluginManagerCore.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
             pluginIds != null && pluginIds.contains(depPluginId)) {
           // ignore installed or installing plugins
@@ -212,7 +212,7 @@ public class PluginInstaller {
     PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
       r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
     if (pluginReplacement != null) {
-      IdeaPluginDescriptor oldPlugin = PluginManager.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
+      IdeaPluginDescriptor oldPlugin = PluginManagerCore.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
       if (oldPlugin == null) {
         LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
       }
@@ -255,8 +255,8 @@ public class PluginInstaller {
    */
   public static boolean prepareToUninstall(PluginId pluginId) throws IOException {
     synchronized (ourLock) {
-      if (PluginManager.isPluginInstalled(pluginId)) {
-        IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+      if (PluginManagerCore.isPluginInstalled(pluginId)) {
+        IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
         if (pluginDescriptor == null) {
           PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
         }

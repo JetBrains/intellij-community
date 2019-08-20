@@ -202,7 +202,7 @@ public class ListPluginComponent extends CellPluginComponent {
       String oldVersion = null;
 
       if (pluginForUpdate) {
-        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(myPlugin.getPluginId());
+        IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myPlugin.getPluginId());
         oldVersion = installedPlugin == null ? null : StringUtil.defaultIfEmpty(installedPlugin.getVersion(), null);
       }
       if (oldVersion == null) {

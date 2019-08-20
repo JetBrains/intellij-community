@@ -308,7 +308,7 @@ object UpdateChecker {
     if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
-    val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
+    val installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
     if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
@@ -498,7 +498,7 @@ object UpdateChecker {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed && !app.isDisposeInProgress && UpdateSettings.getInstance().isCheckNeeded) {
-        val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
+        val pluginDescriptor = PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
           updateAndShowResult()

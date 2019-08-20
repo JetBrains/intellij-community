@@ -75,7 +75,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
-    if (!PluginManager.isPluginInstalled(id)) {
+    if (!PluginManagerCore.isPluginInstalled(id)) {
       List<IdeaPluginDescriptor> list = isPluginDescriptorAccepted(descriptor) ? view : filtered;
       int i = list.indexOf(descriptor);
       if (i < 0) {
@@ -124,7 +124,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       if (descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted()) continue;
       final Boolean enabled = myEnabled.get(pluginId);
       if (enabled == null || enabled.booleanValue()) {
-        PluginManagerCore.checkDependants(descriptor, pluginId1 -> PluginManager.getPlugin(pluginId1), dependantPluginId -> {
+        PluginManagerCore.checkDependants(descriptor, pluginId1 -> PluginManagerCore.getPlugin(pluginId1), dependantPluginId -> {
           final Boolean enabled1 = myEnabled.get(dependantPluginId);
           if ((enabled1 == null && !ourState.wasUpdated(dependantPluginId)) ||
               (enabled1 != null && !enabled1.booleanValue())) {
@@ -305,7 +305,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     for (final IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
-      PluginManagerCore.checkDependants(descriptorToCheckDependencies, pluginId -> PluginManager.getPlugin(pluginId), dependencyPluginId -> {
+      PluginManagerCore.checkDependants(descriptorToCheckDependencies, pluginId -> PluginManagerCore.getPlugin(pluginId), dependencyPluginId -> {
         Boolean enabled = myEnabled.get(dependencyPluginId);
         if (enabled == null) {
           return false;
@@ -336,7 +336,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final String listOfSelectedPlugins = StringUtil.join(descriptorsWithChangedEnabledState, pluginDescriptor -> pluginDescriptor.getName(), ", ");
       final Set<IdeaPluginDescriptor> pluginDependencies = new HashSet<>();
       final String listOfDependencies = StringUtil.join(deps, pluginId -> {
-        final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+        final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
         assert pluginDescriptor != null;
         pluginDependencies.add(pluginDescriptor);
         return pluginDescriptor.getName();

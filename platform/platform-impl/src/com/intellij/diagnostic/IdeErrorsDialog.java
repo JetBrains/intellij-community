@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -102,7 +101,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
+    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
@@ -633,7 +632,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static void confirmDisablePlugins(Project project, Collection<IdeaPluginDescriptor> plugins) {
     Ref<Boolean> hasDependants = new Ref<>(false);
     for (IdeaPluginDescriptor plugin: plugins) {
-      PluginManagerCore.checkDependants(plugin, PluginManager::getPlugin, dependantId -> {
+      PluginManagerCore.checkDependants(plugin, PluginManagerCore::getPlugin, dependantId -> {
         if (PluginManagerCore.CORE_PLUGIN_ID.equals(dependantId.getIdString())) {
           return true;
         }
@@ -827,7 +826,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     private MessageCluster(AbstractMessage message) {
       first = message;
       pluginId = findPluginId(message.getThrowable());
-      plugin = PluginManager.getPlugin(pluginId);
+      plugin = PluginManagerCore.getPlugin(pluginId);
       submitter = getSubmitter(message.getThrowable(), plugin);
       detailsText = detailsText();
     }
@@ -881,7 +880,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else {
       Throwable t = event.getThrowable();
       if (t != null) {
-        plugin = PluginManager.getPlugin(findPluginId(t));
+        plugin = PluginManagerCore.getPlugin(findPluginId(t));
       }
     }
     return plugin;
@@ -963,7 +962,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static void logPluginDetection(String className, PluginId id) {
     if (LOG.isDebugEnabled()) {
       String message = "Detected a plugin " + id + " by class " + className;
-      IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
+      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
       if (descriptor != null) {
         ClassLoader loader = descriptor.getPluginClassLoader();
         message += "; loader=" + loader + '/' + loader.getClass();
@@ -976,7 +975,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, @Nullable PluginId pluginId) {
-    return getSubmitter(t, PluginManager.getPlugin(pluginId));
+    return getSubmitter(t, PluginManagerCore.getPlugin(pluginId));
   }
 
   private static ErrorReportSubmitter getSubmitter(Throwable t, @Nullable IdeaPluginDescriptor plugin) {

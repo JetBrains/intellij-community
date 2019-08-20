@@ -1443,7 +1443,7 @@ public class PluginManagerConfigurableNewLayout
 
       for (PluginId dependId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(dependId)) {
-          IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
+          IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
           if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
               !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
             dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");

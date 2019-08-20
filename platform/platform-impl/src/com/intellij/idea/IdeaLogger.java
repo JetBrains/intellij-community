@@ -4,7 +4,6 @@ package com.intellij.idea;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -152,6 +151,6 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
   private static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
-    return PluginManagerCore.arePluginsInitialized() ? PluginManager.getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
+    return PluginManagerCore.arePluginsInitialized() ? PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
   }
 }

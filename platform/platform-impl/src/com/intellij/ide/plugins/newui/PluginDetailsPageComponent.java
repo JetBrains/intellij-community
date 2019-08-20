@@ -349,7 +349,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
       myRestartButton.setVisible(installed);
 
-      myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
+      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
       myInstallButton.setVisible(!installed);
 
       myUpdateButton.setVisible(false);

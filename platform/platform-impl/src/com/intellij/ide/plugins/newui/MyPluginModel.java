@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -646,7 +646,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @Nullable
   public static IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+    IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
     if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {

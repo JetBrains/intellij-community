@@ -103,7 +103,7 @@ public class PluginHeaderPanel {
         myUpdated.setVisible(false);
       }
 
-      final IdeaPluginDescriptor installed = PluginManager.getPlugin(plugin.getPluginId());
+      final IdeaPluginDescriptor installed = PluginManagerCore.getPlugin(plugin.getPluginId());
       if ((PluginManagerColumnInfo.isDownloaded(node)) ||
           (installed != null && ourState.wasUpdated(installed.getPluginId())) ||
           (installed instanceof IdeaPluginDescriptorImpl && !plugin.isBundled() && ((IdeaPluginDescriptorImpl)installed).isDeleted())) {

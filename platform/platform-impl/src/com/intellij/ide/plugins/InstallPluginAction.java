@@ -122,7 +122,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
           else {
             boolean needToRestart = false;
             for (PluginNode node : list) {
-              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+              final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(node.getPluginId());
               if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
                 needToRestart = true;
                 break;

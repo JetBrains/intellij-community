@@ -117,9 +117,10 @@ public class PluginDownloader {
     }
 
     IdeaPluginDescriptor descriptor = null;
-    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
+    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) &&
+        PluginManagerCore.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
-      descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
+      descriptor = PluginManagerCore.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
       if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);

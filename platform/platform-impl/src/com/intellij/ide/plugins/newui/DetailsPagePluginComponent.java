@@ -197,7 +197,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     }
     else if (myPlugin instanceof PluginNode) {
       buttons.add(myInstallButton = new InstallButton(true));
-      myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
+      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
     }
     else if (myPlugin.isBundled()) {
       myEnableDisableButton = new JButton(myPluginsModel.getEnabledTitle(myPlugin));

@@ -141,7 +141,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
 
       File oldFile = null;
-      IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
       if (installedPlugin != null && !installedPlugin.isBundled()) {
         oldFile = installedPlugin.getPath();
       }
@@ -410,7 +410,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       return "<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
              (dependentToRequiredListMap.size() == 1 ? " " : "s ") +
              StringUtil.join(dependentToRequiredListMap.keySet(), pluginId -> {
-               final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
+               final IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(pluginId);
                return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
              }, ", ") +
              " won't be able to load.</body></html>";

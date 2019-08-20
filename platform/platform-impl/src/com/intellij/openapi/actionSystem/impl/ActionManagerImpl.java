@@ -10,7 +10,6 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -186,7 +185,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       ClassLoader classLoader = actionClass.getClassLoader();
 
       if (stub.getPluginId() != null) {
-        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(stub.getPluginId());
+        final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(stub.getPluginId());
         if (plugin != null) {
           classLoader = plugin.getPluginClassLoader();
         }
@@ -394,7 +393,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {
@@ -608,7 +607,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String descriptionValue = element.getAttributeValue(DESCRIPTION);
 
     ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
-      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
       ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
       String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
@@ -679,7 +678,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private AnAction processGroupElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
