@@ -246,7 +246,7 @@ public class FileUtilRt {
     do {
       index = path.indexOf('/', index+1);
       char next = index == path.length() - 1 ? 0 : path.charAt(index + 1);
-      if (next == '.' || (next == '/' && !(index == 0 && SystemInfoRt.isWindows))) {
+      if (next == '.' || next == '/') {
         break;
       }
     }
@@ -255,7 +255,7 @@ public class FileUtilRt {
       if (removeLastSlash) {
         int start = processRoot(path, NullAppendable.INSTANCE);
         int slashIndex = path.lastIndexOf('/');
-        return slashIndex != -1 && slashIndex >= start && slashIndex == path.length() - 1 ? path.substring(0, path.length() - 1) : path;
+        return slashIndex != -1 && slashIndex > start && slashIndex == path.length() - 1 ? path.substring(0, path.length() - 1) : path;
       }
       return path;
     }
