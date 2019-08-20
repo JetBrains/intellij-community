@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.*
 import java.nio.charset.Charset
 
@@ -25,7 +26,6 @@ object ExecUtil {
   private val hasUrxvt = PathExecLazyValue("urxvt")
   private val hasXTerm = PathExecLazyValue("xterm")
   private val hasSetsid = PathExecLazyValue("setsid")
-  private val hasEnv = PathExecLazyValue("env")
 
   private const val nicePath = "/usr/bin/nice"
   private val hasNice by lazy { File(nicePath).exists() }
@@ -264,14 +264,13 @@ object ExecUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  @Deprecated("use {@link #execAndGetOutput(GeneralCommandLine)} instead (to be removed in IDEA 2019) ")
+  @Deprecated("use {@link #execAndGetOutput(GeneralCommandLine)} instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   @JvmStatic
   @Throws(ExecutionException::class)
   fun execAndGetOutput(command: List<String>, workDir: String?): ProcessOutput {
     val commandLine = GeneralCommandLine(command).withWorkDirectory(workDir)
     return CapturingProcessHandler(commandLine).runProcess()
   }
-
   //</editor-fold>
 }
