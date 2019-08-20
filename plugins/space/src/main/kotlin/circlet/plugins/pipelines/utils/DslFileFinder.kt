@@ -1,5 +1,6 @@
 package circlet.plugins.pipelines.utils
 
+import circlet.pipelines.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 
@@ -12,7 +13,7 @@ object DslFileFinder {
     }
 
     fun checkFileNameIsApplicable(name: String): Boolean {
-        return "circlet.kts".equals(name, true)
+        return DefaultDslFileName.equals(name, true)
     }
 
     private fun find(baseDirFile: VirtualFile) : VirtualFile? {

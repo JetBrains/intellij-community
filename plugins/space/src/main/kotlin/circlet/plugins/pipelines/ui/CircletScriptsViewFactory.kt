@@ -1,6 +1,7 @@
 package circlet.plugins.pipelines.ui
 
 import circlet.messages.*
+import circlet.pipelines.*
 import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.services.run.*
@@ -249,7 +250,7 @@ class CircletScriptsViewFactory : KLogging() {
                 if (baseDirFile != null) {
                     val application = ApplicationManager.getApplication()
                     application.runWriteAction {
-                        val file = baseDirFile.createChildData(this, "circlet.kts")
+                        val file = baseDirFile.createChildData(this, DefaultDslFileName)
                         val newLine = System.getProperty("line.separator", "\n")
                         val newFileContent = "//todo add link to help/tutorial${newLine}task(\"My First Task\") {$newLine  run(\"hello-world\")$newLine}"
                         VfsUtil.saveText(file, newFileContent)
