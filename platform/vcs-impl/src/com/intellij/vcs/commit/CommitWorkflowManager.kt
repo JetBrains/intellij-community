@@ -23,11 +23,9 @@ private val isNonModalCommit = Registry.get("vcs.non.modal.commit")
 private val appSettings = VcsApplicationSettings.getInstance()
 
 class CommitWorkflowManager(private val project: Project) : ProjectComponent {
-  private val changesViewManager = ChangesViewManager.getInstanceEx(project)
-  private val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
   override fun projectOpened() {
-    vcsManager.addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+    (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
       runInEdt {
         subscribeToChanges()
         updateWorkflow()
@@ -35,13 +33,13 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     }
   }
 
-  private fun updateWorkflow() = changesViewManager.updateCommitWorkflow()
+  private fun updateWorkflow() = ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
 
   fun isNonModal(): Boolean {
     if (isNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
-    val activeVcses = vcsManager.allActiveVcss
+    val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }
 
