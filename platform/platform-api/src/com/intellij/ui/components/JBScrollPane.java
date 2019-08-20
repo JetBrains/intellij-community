@@ -4,6 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
@@ -65,6 +66,10 @@ public class JBScrollPane extends JScrollPane {
 
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
+
+  private final MouseWheelSmoothScroll mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
+    return ScrollSettings.isEligibleFor(this);
+  });
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -173,7 +178,9 @@ public class JBScrollPane extends JScrollPane {
                 if (pane.isWheelScrollingEnabled()) {
                   JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
                   if (bar != null && bar.isVisible()) {
-                    if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
+                    if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
+                      mySmoothScroll.processMouseWheelEvent(event, oldListener::mouseWheelMoved);
+                    } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
                       oldListener.mouseWheelMoved(event);
                     }
                   }
