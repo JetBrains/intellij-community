@@ -72,7 +72,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
-  @NotNull private final VcsLogClassicFilterUi myFilterUi;
+  @NotNull private final VcsLogFilterUi myFilterUi;
 
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;

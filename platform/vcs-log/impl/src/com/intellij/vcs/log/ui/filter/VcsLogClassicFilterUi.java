@@ -101,8 +101,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  public void updateDataPack(@NotNull VcsLogDataPack dataPack) {
-    myDataPack = dataPack;
+  @Override
+  public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
+    myDataPack = newDataPack;
   }
 
   @Override
@@ -111,9 +112,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     return myFilterField;
   }
 
-  /**
-   * Returns filter components which will be added to the Log toolbar.
-   */
+  @Override
   @NotNull
   public ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
