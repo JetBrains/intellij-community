@@ -18,15 +18,6 @@ import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.jps.idea.IdeaProjectLoader
 
 target("default": "Run UI tests") {
-  runUiTests(withCoverage: false)
-}
-
-target("coverage": "Run UI tests with coverage instrumentation") {
-  runUiTests(withCoverage: true)
-}
-
-private runUiTests(Map args) { runUiTests(args.withCoverage) }
-private runUiTests(boolean withCoverage) {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/tests"
   def context = CompilationContextImpl.create(home, home, outputDir)
@@ -46,16 +37,6 @@ private runUiTests(boolean withCoverage) {
     "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
     "-XX:+UseCodeCacheFlushing"
   ]
-  if (withCoverage) {
-    def agent = "${home}/plugins/coverage/lib/jacocoagent.jar"
-    def destfile = "destfile=${home}/../../out/uicoverage/jacoco.exec"
-    def classdumpdir = "classdumpdir=${home}/../../out/uicoverage/classes"
-    def includes = "includes=org.jetbrains.android.*:com.android.tools.idea.*:com.android.tools.ndk.*:com.google.gct.*"
-    def excludes = "excludes=*Test:*Test\$*:*TestCase:*TestCase\$*:*\$\$EnhancerBy*:org.jetbrains.android.maven.*:org.jetbrains.android.compiler.*"
-    def jacocoAgent = "-javaagent:${agent}=${destfile},${classdumpdir},inclnolocationclasses=true,${includes},${excludes}"
-
-    jvmArgs << jacocoAgent
-  }
 
   TestingTasks.create(context, options).runTests(jvmArgs, "android-uitests", null)
 }

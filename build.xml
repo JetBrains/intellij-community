@@ -87,66 +87,6 @@
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
-  <target name="uicoverage">
-    <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant" target="coverage"/>
-    <typedef uri="antlib:org.jacoco.ant" classpath="${project.home}/plugins/coverage/lib/jacocoant.jar"/>
-    <jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
-      <executiondata>
-        <file file="${project.home}/../../out/uicoverage/jacoco.exec"/>
-      </executiondata>
-      <structure name="UI Test Coverage">
-        <classfiles>
-          <fileset dir="${project.home}/../../out/uicoverage/classes/"/>
-        </classfiles>
-        <sourcefiles>
-          <fileset dir="${project.home}/../adt/idea/adt-branding/src"/>
-          <fileset dir="${project.home}/../adt/idea/android-adb/src"/>
-          <fileset dir="${project.home}/../adt/idea/android-common/src"/>
-          <fileset dir="${project.home}/../adt/idea/android-debuggers/src"/>
-          <fileset dir="${project.home}/../adt/idea/android/gen"/>
-          <fileset dir="${project.home}/../adt/idea/android-lang/gen"/>
-          <fileset dir="${project.home}/../adt/idea/android-lang/src"/>
-          <fileset dir="${project.home}/../adt/idea/android-layout-inspector/src"/>
-          <fileset dir="${project.home}/../adt/idea/android/src"/>
-          <fileset dir="${project.home}/../adt/idea/apkanalyzer/src"/>
-          <fileset dir="${project.home}/../adt/idea/assistant/src"/>
-          <fileset dir="${project.home}/../adt/idea/build-common/src"/>
-          <fileset dir="${project.home}/../adt/idea/connection-assistant/src"/>
-          <fileset dir="${project.home}/../adt/idea/designer/src"/>
-          <fileset dir="${project.home}/../adt/idea/jps-plugin/src"/>
-          <fileset dir="${project.home}/../adt/idea/kotlin-integration/testData/callgraph"/>
-          <fileset dir="${project.home}/../adt/idea/layoutlib/src"/>
-          <fileset dir="${project.home}/../adt/idea/observable-demo/src"/>
-          <fileset dir="${project.home}/../adt/idea/observable/src"/>
-          <fileset dir="${project.home}/../adt/idea/observable-ui/src"/>
-          <fileset dir="${project.home}/../adt/idea/profilers-android/src"/>
-          <fileset dir="${project.home}/../adt/idea/project-system-gradle/src"/>
-          <fileset dir="${project.home}/../adt/idea/project-system/src"/>
-          <fileset dir="${project.home}/../adt/idea/rt/src"/>
-          <fileset dir="${project.home}/../adt/idea/sdk-updates/src"/>
-          <fileset dir="${project.home}/../adt/idea/smali/gen"/>
-          <fileset dir="${project.home}/../adt/idea/smali/src"/>
-          <fileset dir="${project.home}/../adt/idea/uitest-framework/src"/>
-          <fileset dir="${project.home}/../adt/idea/ultimate/src"/>
-          <fileset dir="${project.home}/../adt/idea/updater-ui/src"/>
-          <fileset dir="${project.home}/../adt/idea/whats-new-assistant/src"/>
-          <fileset dir="${project.home}/../adt/idea/wizard-model/src"/>
-          <fileset dir="${project.home}/../adt/idea/wizard/src"/>
-          <fileset dir="${project.home}/../studio/google/cloud/testing/firebase-testing/src"/>
-          <fileset dir="${project.home}/../studio/google/cloud/testing/test-recorder/src"/>
-          <fileset dir="${project.home}/../studio/google/cloud/tools/android-studio-plugin/src"/>
-          <fileset dir="${project.home}/../studio/google/cloud/tools/core-plugin/src"/>
-          <fileset dir="${project.home}/../studio/google/cloud/tools/google-login-plugin/src"/>
-          <fileset dir="${project.home}/../vendor/google/android-apk/src"/>
-          <fileset dir="${project.home}/../vendor/google/android-ndk/src"/>
-          <fileset dir="${project.home}/../vendor/google/dogfood/plugin/src"/>
-          <fileset dir="${project.home}/../vendor/google/GooglePlayLog"/>
-        </sourcefiles>
-      </structure>
-      <html destdir="${project.home}/../../out/uicoverage/report/"/>
-    </jacoco:report>
-  </target>
-
   <!-- Creates an updater-full.jar in ${intellij.build.output.root}/artifacts, it includes 'intellij.platform.updater' module with all its dependencies -->
   <target name="fullupdater" depends="init">
     <call_gant script="${project.home}/build/scripts/idea_community.gant" target="updater-full"/>
