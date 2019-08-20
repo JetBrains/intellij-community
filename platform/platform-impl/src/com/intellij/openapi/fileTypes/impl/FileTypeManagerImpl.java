@@ -290,6 +290,28 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }, false, this);
+
+    EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
+      @Override
+      public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        fireBeforeFileTypesChanged();
+        initializeMatchers(extension);
+        instantiateFileTypeBean(extension);
+        fireFileTypesChanged();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        final FileType fileType = findFileTypeByName(extension.name);
+        unregisterFileType(fileType);
+        if (fileType instanceof LanguageFileType) {
+          final LanguageFileType languageFileType = (LanguageFileType)fileType;
+          if (!languageFileType.isSecondary()) {
+            Language.unregisterLanguage(languageFileType.getLanguage());
+          }
+        }
+      }
+    }, false, this);
   }
 
   @VisibleForTesting
@@ -392,11 +414,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     final List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
-      bean.addMatchers(ContainerUtil.concat(
-        parse(bean.extensions),
-        parse(bean.fileNames, token -> new ExactFileNameMatcher(token)),
-        parse(bean.fileNamesCaseInsensitive, token -> new ExactFileNameMatcher(token, true)),
-        parse(bean.patterns, token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+      initializeMatchers(bean);
     }
 
     for (FileTypeBean bean : fileTypeBeans) {
@@ -426,6 +444,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         myPendingAssociations.addAssociation(matcher, oldBean);
       }
     }
+  }
+
+  private static void initializeMatchers(FileTypeBean bean) {
+    bean.addMatchers(ContainerUtil.concat(
+      parse(bean.extensions),
+      parse(bean.fileNames, token -> new ExactFileNameMatcher(token)),
+      parse(bean.fileNamesCaseInsensitive, token -> new ExactFileNameMatcher(token, true)),
+      parse(bean.patterns, token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
   }
 
   private void instantiatePendingFileTypes() {
@@ -1195,12 +1221,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
+      myStandardFileTypes.remove(fileType.getName());
       fireFileTypesChanged();
     });
   }
 
   private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
     myPatternsTable.removeAllAssociations(fileType);
+    myInitialAssociations.removeAllAssociations(fileType);
     mySchemeManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;

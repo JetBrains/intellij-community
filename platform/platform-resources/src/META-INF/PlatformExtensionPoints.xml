@@ -42,7 +42,8 @@
     </extensionPoint>
 
     <extensionPoint name="fileType"
-                    beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean">
+                    beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
     </extensionPoint>
 

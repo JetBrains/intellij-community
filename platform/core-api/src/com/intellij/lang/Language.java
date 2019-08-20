@@ -107,6 +107,18 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
+  public static void unregisterLanguage(@NotNull Language language) {
+    ourRegisteredLanguages.remove(language.getClass());
+    ourRegisteredIDs.remove(language.getID());
+    for (String mimeType : language.getMimeTypes()) {
+      ourRegisteredMimeTypes.remove(mimeType);
+    }
+    final Language baseLanguage = language.getBaseLanguage();
+    if (baseLanguage != null) {
+      baseLanguage.myDialects.remove(language);
+    }
+  }
+
   /**
    * @param klass {@code java.lang.Class} of the particular language. Serves key purpose.
    * @return instance of the {@code klass} language registered if any.
