@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
@@ -189,9 +190,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     UISettings.setupAntialiasing(graphics);
   }
 
+  @NotNull
   @Override
-  protected void setCopyContents(StringSelection selection) {
-    CopyPasteManager.getInstance().setContents(selection);
+  protected TerminalCopyPasteHandler createCopyPasteHandler() {
+    return new IdeTerminalCopyPasteHandler();
   }
 
   @Override

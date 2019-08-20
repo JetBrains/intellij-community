@@ -301,7 +301,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/jruby/jcodings", licenseUrl: "https://github.com/jruby/jcodings/blob/master/pom.xml"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.21", license: "LGPL 3",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.22", license: "LGPL 3",
                        url: "https://github.com/JetBrains/jediterm",
                        licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "17.0.0", license: "Apache 2.0",
