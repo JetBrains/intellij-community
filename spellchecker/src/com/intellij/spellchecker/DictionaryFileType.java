@@ -18,7 +18,7 @@ public class DictionaryFileType implements FileType {
   @NotNull
   @Override
   public String getName() {
-    return SpellCheckerBundle.message("dictionary.filetype.name");
+    return "Dictionary";
   }
 
   @NotNull

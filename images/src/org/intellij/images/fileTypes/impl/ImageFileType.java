@@ -4,15 +4,23 @@ package org.intellij.images.fileTypes.impl;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public final class ImageFileType extends UserBinaryFileType {
   public static final ImageFileType INSTANCE = new ImageFileType();
 
-  public ImageFileType() {
-    setName("Image");
-    setDescription(ImagesBundle.message("images.filetype.description"));
+  @NotNull
+  @Override
+  public String getName() {
+    return "Image";
+  }
+
+  @NotNull
+  @Override
+  public String getDescription() {
+    return ImagesBundle.message("images.filetype.description");
   }
 
   @Override
