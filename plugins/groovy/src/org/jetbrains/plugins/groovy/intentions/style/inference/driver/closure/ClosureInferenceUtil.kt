@@ -4,8 +4,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
-import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
@@ -52,68 +50,18 @@ fun collectClosureParametersConstraints(collector: MutableList<ConstraintFormula
   }
 }
 
-fun GrMethod.forEachParameterUsage(action: (GrParameter, List<ReadWriteVariableInstruction>) -> Unit) {
+inline fun GrMethod.forEachParameterUsage(action: (GrParameter, List<ReadWriteVariableInstruction>) -> Unit) {
   val usages =
     block
       ?.controlFlow
       ?.filterIsInstance<ReadWriteVariableInstruction>()
-      ?.groupBy { it.element?.reference?.resolve() } ?: return
+      ?.groupBy { it.element?.reference?.resolve() as? GrParameter } ?: return
   parameters
     .filter { usages.containsKey(it) }
     .forEach {
       val instructions = usages.getValue(it)
       action(it, instructions)
     }
-}
-
-fun collectClosureArguments(method: GrMethod, virtualMethod: GrMethod, scope: SearchScope): Map<GrParameter, List<GrExpression>> {
-  val allArgumentExpressions = extractArgumentExpressions(method,
-                                                          method.parameters.filter { it.typeElement == null },
-                                                          mutableSetOf(), scope)
-  val proxyMapping = method.parameters.zip(virtualMethod.parameters).toMap()
-  return allArgumentExpressions
-    .filter { (_, arguments) ->
-      val hasClosableBlock = arguments.fold(false) { meetBlockBefore, expression ->
-        when {
-          expression is GrClosableBlock -> true
-          expression.type?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) != true -> return@filter false
-          else -> meetBlockBefore
-        }
-      }
-      hasClosableBlock
-    }
-    .map { (parameter, expressions) -> proxyMapping.getValue(parameter)!! to expressions.filterIsInstance<GrClosableBlock>() }
-    .toMap()
-
-}
-
-private fun extractArgumentExpressions(method: GrMethod,
-                                       targetParameters: Collection<GrParameter>,
-                                       visitedMethods: MutableSet<GrMethod>, scope: SearchScope): Map<GrParameter, List<GrExpression>> {
-  if (targetParameters.isEmpty()) {
-    return emptyMap()
-  }
-  visitedMethods.add(method)
-  val expressionStorage = mutableMapOf<GrParameter, MutableList<GrExpression>>()
-  targetParameters.forEach { expressionStorage[it] = mutableListOf() }
-  //todo: rewrite to ArgumentMapping usage (or delete this part at all, it might be quite slow)
-  for (call in ReferencesSearch.search(method, scope).findAll().mapNotNull { it.element.parent as? GrCall }) {
-    val argumentList = call.expressionArguments + call.closureArguments
-    val targetExpressions = argumentList.zip(method.parameters).filter { it.second in targetParameters }
-    val objectTypedExpressions = targetExpressions.filter { it.first.type?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ?: true }
-    (targetExpressions - objectTypedExpressions).forEach { expressionStorage[it.second]!!.add(it.first) }
-    val enclosingMethodParameterMapping = objectTypedExpressions.mapNotNull { (expression, targetParameter) ->
-      val resolved = expression.reference?.resolve() as? GrParameter
-      resolved?.run { this to targetParameter }
-    }.toMap()
-    val enclosingMethod = call.parentOfType(GrMethod::class)
-    if (enclosingMethod != null && !visitedMethods.contains(enclosingMethod)) {
-      val argumentsForEnclosingParameters =
-        extractArgumentExpressions(enclosingMethod, enclosingMethodParameterMapping.keys, visitedMethods, scope)
-      argumentsForEnclosingParameters.forEach { expressionStorage[enclosingMethodParameterMapping[it.key]]!!.addAll(it.value) }
-    }
-  }
-  return expressionStorage
 }
 
 fun collectClosureParamsDependencies(constraintCollector: MutableList<ConstraintFormula>,
@@ -236,7 +184,7 @@ private fun List<ReadWriteVariableInstruction>.forEachClosureForwarding(action: 
 }
 
 
-fun availableParameterNumber(annotation: GrAnnotation): Int {
+fun availableParameterNumber(annotation: PsiAnnotation): Int {
   val value = (annotation.parameterList.attributes.find { it.name == "value" }?.value?.reference?.resolve() as? PsiClass) ?: return 0
   val options = lazy {
     annotation.parameterList.attributes.find { it.name == "options" }?.value as? GrAnnotationArrayInitializer

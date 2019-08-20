@@ -8,79 +8,42 @@ import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
+import org.jetbrains.plugins.groovy.intentions.style.inference.collectDependencies
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.induceDeepConstraints
+import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
+import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureTypeDeep
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 
-class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>) : InferenceDriver {
-
-  val method = closureParameters.keys.first().parentOfType<GrMethod>()!!
-
+class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>,
+                                        private val method: GrMethod) : InferenceDriver {
 
   companion object {
     fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator, scope: SearchScope): InferenceDriver {
-      val closureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
-      val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
-
-      val produceParameterizedClosure =
-        { parameter: GrParameter, parametersAmount: Int, closureArguments: List<GrClosableBlock> ->
-          val typeParameters = mutableListOf<PsiTypeParameter>()
-          repeat(parametersAmount) {
-            val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
-            virtualMethod.typeParameterList!!.add(newTypeParameter)
-            typeParameters.add(newTypeParameter)
-          }
-          val parameterizedClosure = ParameterizedClosure(parameter, typeParameters, closureArguments, emptyList())
-          closureParameters[parameter] = parameterizedClosure
-        }
-
-      collectClosureArguments(method, virtualMethod, scope).forEach { (parameter, calls) ->
-        // todo: default-valued parameters
-        produceParameterizedClosure(parameter, (calls.first() as GrClosableBlock).allParameters.size, calls.map { it as GrClosableBlock })
-      }
-      val alreadyCreatedClosureParameters = closureParameters.keys
+      val builder = ClosureParametersStorageBuilder(generator, virtualMethod)
+      val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, scope)
       virtualMethod.forEachParameterUsage { parameter, instructions ->
-        if (!(parameter.type.isClosureTypeDeep() && parameter !in alreadyCreatedClosureParameters)) {
+        if (!parameter.type.isClosureTypeDeep() || parameter in visitedParameters) {
           return@forEachParameterUsage
         }
         val callUsages = instructions.mapNotNull { it.element?.parentOfType<GrCall>() }
-        val directClosureCall = callUsages.firstOrNull {
-          (it.advancedResolve() as? GroovyMethodResult)?.candidate?.receiver == parameter.type
-        }
-        if (directClosureCall != null) {
-          produceParameterizedClosure(parameter, directClosureCall.expressionArguments.size, emptyList())
-        }
-        else {
-          callUsages.find { call ->
-            val argument = call.argumentList?.allArguments?.find { it.reference?.resolve() == parameter } ?: return@find false
-            val parameterIndex = call.argumentList?.getExpressionArgumentIndex(argument as? GrExpression) ?: return@find false
-            val targetParameter = call.resolveMethod()?.parameters?.get(parameterIndex) as? GrParameter ?: return@find false
-            val closureParamsAnno = targetParameter.modifierList.annotations.find {
-              it.qualifiedName == ClosureParamsCombiner.CLOSURE_PARAMS_FQ
-            } ?: return@find false
-            produceParameterizedClosure(parameter, availableParameterNumber(closureParamsAnno), emptyList())
-            return@find true
-          }
+        if (!builder.extractClosuresFromCallInvocation(callUsages, parameter)) {
+          builder.extractClosuresFromOtherMethodInvocations(callUsages, parameter)
         }
       }
-      if (closureParameters.isEmpty()) {
-        return EmptyDriver
-      }
-      else {
-        return ClosureDriver(closureParameters)
-      }
+      val closureParameters = builder.build()
+      return if (closureParameters.isEmpty()) EmptyDriver else ClosureDriver(closureParameters, virtualMethod)
     }
   }
 
@@ -104,7 +67,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       val newClosureParameter = ParameterizedClosure(newParameter, newTypeParameters, closureParameter.closureArguments, newTypes)
       newClosureParameters[newParameter] = newClosureParameter
     }
-    return ClosureDriver(newClosureParameters)
+    return ClosureDriver(newClosureParameters, targetMethod)
   }
 
   override fun typeParameters(): Collection<PsiTypeParameter> {
