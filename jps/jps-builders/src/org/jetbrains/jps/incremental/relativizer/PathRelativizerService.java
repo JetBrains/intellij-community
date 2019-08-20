@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ public class PathRelativizerService {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.relativizer.PathRelativizerService");
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
+  private static final char FORWARD_SLASH = '/';
 
   private List<PathRelativizer> myRelativizers;
   private Set<String> myUnhandledPaths;
@@ -46,11 +48,11 @@ public class PathRelativizerService {
   }
 
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
-    String systemIndependentProjectPath = projectPath != null ? toSystemIndependentName(projectPath) : null;
-    String systemIndependentBuildDirPath = buildDirPath != null ? toSystemIndependentName(buildDirPath) : null;
-    myRelativizers = ContainerUtil.newSmartList(new CommonPathRelativizer(systemIndependentProjectPath, PROJECT_DIR_IDENTIFIER),
+    String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
+    String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
+    myRelativizers = ContainerUtil.newSmartList(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
                                                 new JavaSdkPathRelativizer(javaSdks),
-                                                new CommonPathRelativizer(systemIndependentBuildDirPath, BUILD_DIR_IDENTIFIER),
+                                                new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
                                                 new MavenPathRelativizer());
     myUnhandledPaths = new LinkedHashSet<>();
   }
@@ -94,5 +96,10 @@ public class PathRelativizerService {
     myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
     LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
     myUnhandledPaths = new LinkedHashSet<>();
+  }
+
+  @NotNull
+  static String normalizePath(@NotNull String path) {
+    return StringUtil.trimTrailing(toSystemIndependentName(path), FORWARD_SLASH);
   }
 }
