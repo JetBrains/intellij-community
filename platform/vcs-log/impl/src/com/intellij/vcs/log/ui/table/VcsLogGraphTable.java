@@ -358,7 +358,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
     else if (index == DATE_COLUMN) {
       // all dates have nearly equal sizes
-      String dateSample = DateFormatUtil.formatDateTime(new Date());
+      String dateSample = DateFormatUtil.formatDateTime(DateFormatUtil.getSampleDateTime());
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(dateSample) +
              VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
