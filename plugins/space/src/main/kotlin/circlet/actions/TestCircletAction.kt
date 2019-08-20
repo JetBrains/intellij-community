@@ -1,13 +1,10 @@
 package circlet.actions
 
 import circlet.components.*
-import circlet.platform.client.*
-import circlet.workspaces.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.components.*
 import kotlinx.coroutines.*
-import libraries.common.*
+import platform.common.*
 import runtime.*
 
 class TestCircletAction : AnAction() {

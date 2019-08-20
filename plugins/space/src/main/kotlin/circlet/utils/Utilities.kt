@@ -7,7 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.xml.util.*
-import libraries.common.*
+import platform.common.*
 import runtime.reactive.*
 
 val application: Application
