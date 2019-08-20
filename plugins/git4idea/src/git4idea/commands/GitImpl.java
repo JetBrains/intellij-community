@@ -378,18 +378,6 @@ public class GitImpl extends GitImplBase {
     return runCommand(h);
   }
 
-  /**
-   * Get branches containing the commit.
-   * {@code git branch --contains <commit>}
-   */
-  @Override
-  @NotNull
-  public GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
-    h.addParameters("--contains", commit);
-    return runCommand(h);
-  }
-
   @Override
   @NotNull
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint) {

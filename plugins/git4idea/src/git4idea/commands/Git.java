@@ -139,9 +139,6 @@ public interface Git {
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                 @NotNull GitLineHandlerListener... listeners);
 
-  @NotNull
-  GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit);
-
   /**
    * Create branch without checking it out: <br/>
    * <pre>    git branch &lt;branchName&gt; &lt;startPoint&gt;</pre>
