@@ -4,6 +4,7 @@ package com.intellij.execution.wsl;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,9 @@ public class WSLDistributionWithRoot extends WSLDistribution {
 
   public WSLDistributionWithRoot(@NotNull WSLDistribution wslDistribution) {
     super(wslDistribution);
-    String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
+    VirtualFile uncRoot = wslDistribution.getUNCRootVirtualFile(false);
+    String wslRootInHost = uncRoot != null && uncRoot.isValid() ? FileUtil.toSystemDependentName(uncRoot.getPath()) :
+                           DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
 
     if (wslRootInHost == null) {
       LOG.warn("WSL (" + wslDistribution.getPresentableName() +") rootfs is null");
