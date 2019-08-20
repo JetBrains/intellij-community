@@ -233,7 +233,7 @@ object ExecUtil {
       else listOf("xterm", "-e", command)
     }
     else -> {
-      throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfo.OS_NAME}/${SystemInfo.SUN_DESKTOP}")
+      throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfo.OS_NAME}/${System.getenv("XDG_CURRENT_DESKTOP")}")
     }
   }
 
