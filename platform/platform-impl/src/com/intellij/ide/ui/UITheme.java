@@ -155,7 +155,7 @@ public class UITheme {
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
           @Nullable
           @Override
-          public SVGLoader.SvgElementColorPatcher forURL(@NotNull URL url) {
+          public SVGLoader.SvgElementColorPatcher forURL(@Nullable URL url) {
             PaletteScope scope = paletteScopeManager.getScopeByURL(url);
             if (scope == null) {
               return null;
@@ -168,7 +168,7 @@ public class UITheme {
               }
 
               @Override
-              public void patchColors(Element svg) {
+              public void patchColors(@NotNull Element svg) {
                 String fill = svg.getAttribute("fill");
                 if (fill != null) {
                   String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
@@ -521,7 +521,8 @@ public class UITheme {
       return null;
     }
 
-    PaletteScope getScopeByURL(URL url) {
+    @Nullable
+    PaletteScope getScopeByURL(@Nullable URL url) {
       if (url != null) {
         String path = url.toString();
         String file = path.substring(path.lastIndexOf('/') + 1);

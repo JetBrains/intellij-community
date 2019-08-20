@@ -83,8 +83,9 @@ public final class SVGLoader {
 
     if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true)) {
       theme = DEFAULT_THEME;
-      if (ourColorPatcher != null && url != null) {
-        SvgElementColorPatcher subPatcher = ourColorPatcher.forURL(url);
+      SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+      if (colorPatcher != null) {
+        SvgElementColorPatcher subPatcher = colorPatcher.forURL(url);
         if (subPatcher != null) {
           theme = subPatcher.digest();
         }
@@ -225,9 +226,10 @@ public final class SVGLoader {
     return myTranscoderInput;
   }
 
-  private static void patchColors(URL url, Document document) {
-    if (ourColorPatcher != null) {
-      final SvgElementColorPatcher patcher = ourColorPatcher.forURL(url);
+  private static void patchColors(@Nullable URL url, @NotNull Document document) {
+    SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+    if (colorPatcher != null) {
+      final SvgElementColorPatcher patcher = colorPatcher.forURL(url);
       if (patcher != null) {
         patcher.patchColors(document.getDocumentElement());
       }
@@ -246,10 +248,10 @@ public final class SVGLoader {
 
     setColorPatcherProvider(new SvgElementColorPatcherProvider() {
       @Override
-      public SvgElementColorPatcher forURL(@NotNull final URL url) {
+      public SvgElementColorPatcher forURL(@Nullable final URL url) {
         return new SvgElementColorPatcher() {
           @Override
-          public void patchColors(Element svg) {
+          public void patchColors(@NotNull Element svg) {
             colorPatcher.patchColors(url, svg);
           }
 
@@ -277,7 +279,7 @@ public final class SVGLoader {
   }
 
   public interface SvgElementColorPatcher {
-    void patchColors(Element svg);
+    void patchColors(@NotNull Element svg);
 
     /**
      * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
@@ -288,7 +290,7 @@ public final class SVGLoader {
 
   public interface SvgElementColorPatcherProvider {
     @Nullable
-    SvgElementColorPatcher forURL(@NotNull URL url);
+    SvgElementColorPatcher forURL(@Nullable URL url);
   }
 
   /**
@@ -301,9 +303,9 @@ public final class SVGLoader {
      * @deprecated use {@link #patchColors(URL, Element)}
      */
     @Deprecated
-    default void patchColors(@SuppressWarnings("unused") Element svg) {}
+    default void patchColors(@SuppressWarnings("unused") @NotNull Element svg) {}
 
-    default void patchColors(URL url, Element svg) {
+    default void patchColors(@Nullable @SuppressWarnings("unused") URL url, @NotNull Element svg) {
       patchColors(svg);
     }
   }
