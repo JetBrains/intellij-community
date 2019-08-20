@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -324,7 +325,8 @@ public class AddImportHelper {
     }
 
     if (resolvedFileOrDir instanceof PyiFile) {
-      resolvedFileOrDir = as(PyiUtil.getOriginalElement((PyiFile)resolvedFileOrDir), PsiFileSystemItem.class);
+      final PsiElement original = PyiUtil.getOriginalElement((PyiFile)resolvedFileOrDir);
+      resolvedFileOrDir = ObjectUtils.notNull(as(original, PsiFileSystemItem.class), resolvedFileOrDir);
     }
 
     if (resolvedFileOrDir == null) {
