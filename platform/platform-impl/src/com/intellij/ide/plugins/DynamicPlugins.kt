@@ -50,49 +50,51 @@ object DynamicPlugins {
 
   @JvmStatic
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
+    val application = ApplicationManager.getApplication() as ApplicationImpl
+    application.runWriteAction {
+      (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
-    val openProjects = ProjectManager.getInstance().openProjects
+      val openProjects = ProjectManager.getInstance().openProjects
 
-    pluginDescriptor.extensions?.let { extensions ->
-      for (epName in extensions.keySet()) {
-        val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
-        if (appEp != null) {
-          appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
-        }
-        else {
-          for (openProject in openProjects) {
-            val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-            projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
+      pluginDescriptor.extensions?.let { extensions ->
+        for (epName in extensions.keySet()) {
+          val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
+          if (appEp != null) {
+            appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
+          }
+          else {
+            for (openProject in openProjects) {
+              val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+              projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
+            }
           }
         }
       }
-    }
 
-    pluginDescriptor.app.extensionsPoints?.let {
-      for (extensionPointElement in it) {
-        Extensions.getRootArea().unregisterExtensionPoint(ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor))
-      }
-    }
-    pluginDescriptor.project.extensionsPoints?.let {
-      for (extensionPointElement in it) {
-        val extensionPointName = ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor)
-        for (openProject in openProjects) {
-          openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
+      pluginDescriptor.app.extensionsPoints?.let {
+        for (extensionPointElement in it) {
+          Extensions.getRootArea().unregisterExtensionPoint(ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor))
         }
       }
-    }
+      pluginDescriptor.project.extensionsPoints?.let {
+        for (extensionPointElement in it) {
+          val extensionPointName = ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor)
+          for (openProject in openProjects) {
+            openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
+          }
+        }
+      }
 
-    val application = ApplicationManager.getApplication() as ApplicationImpl
-    val appServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.app, application)
-    for (appServiceInstance in appServiceInstances) {
-      application.stateStore.unloadComponent(appServiceInstance)
-    }
+      val appServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.app, application)
+      for (appServiceInstance in appServiceInstances) {
+        application.stateStore.unloadComponent(appServiceInstance)
+      }
 
-    for (project in openProjects) {
-      val projectServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.project, project as ProjectImpl)
-      for (projectServiceInstance in projectServiceInstances) {
-        project.stateStore.unloadComponent(projectServiceInstance)
+      for (project in openProjects) {
+        val projectServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.project, project as ProjectImpl)
+        for (projectServiceInstance in projectServiceInstances) {
+          project.stateStore.unloadComponent(projectServiceInstance)
+        }
       }
     }
 
@@ -105,10 +107,13 @@ object DynamicPlugins {
     val coreLoader = ReflectionUtil.findCallerClass(1)!!.classLoader
     PluginManagerCore.initClassLoader(coreLoader, idToDescriptorMap, pluginDescriptor)
 
-    (ApplicationManager.getApplication() as ApplicationImpl).registerComponents(listOf(pluginDescriptor))
-    for (openProject in ProjectManager.getInstance().openProjects) {
-      (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor))
+    val application = ApplicationManager.getApplication() as ApplicationImpl
+    application.runWriteAction {
+      application.registerComponents(listOf(pluginDescriptor))
+      for (openProject in ProjectManager.getInstance().openProjects) {
+        (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor))
+      }
+      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
-    (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
   }
 }
