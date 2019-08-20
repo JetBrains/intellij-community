@@ -353,6 +353,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     private final CrumbView parent;
     private Crumb crumb;
     private Icon icon;
+    private int crumbIconWidth;
+    private int crumbIconHeight;
     private String text;
     private Path2D path;
     private Font font;
@@ -368,6 +370,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     void initialize(Crumb crumb) {
       this.crumb = crumb;
+      crumbIconWidth = 0;
+      crumbIconHeight = 0;
       icon = null;
       text = null;
       path = null;
@@ -379,6 +383,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void update() {
       icon = crumb.getIcon();
+      crumbIconWidth = icon.getIconWidth();
+      crumbIconHeight = icon.getIconHeight();
       text = crumb.getText();
       font = getFont(crumb);
       foreground = getForeground(crumb);
@@ -413,7 +419,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private String layout(FontMetrics fm, Rectangle iconR, Rectangle textR, Rectangle viewR) {
-      int gap = icon == null ? 0 : icon.getIconWidth() / 4;
+      int gap = icon == null ? 0 : Math.min(icon.getIconHeight(), icon.getIconWidth()) / 4; // an icon can have two or more images: [][]
       return layoutCompoundLabel(fm, text, icon, CENTER, LEFT, CENTER, RIGHT, viewR, iconR, textR, gap);
     }
 
@@ -456,6 +462,13 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private void paint(Graphics2D g) {
+      final Icon crumbIcon = crumb.getIcon();
+      if (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight) {
+        // process size change for IconDeferrer (lazy calculated on pool thread)
+        Breadcrumbs.this.layout(true);
+        Breadcrumbs.this.repaint();
+        return;
+      }
       int scale = getScale();
       if (path != null) {
         if (background != null) {
