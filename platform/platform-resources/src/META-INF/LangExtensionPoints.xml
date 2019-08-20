@@ -144,6 +144,11 @@
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.syntaxHighlighter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.refactoringSupport"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.RefactoringSupportProvider"/>

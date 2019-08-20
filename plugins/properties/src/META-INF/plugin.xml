@@ -44,6 +44,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
 
+    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>

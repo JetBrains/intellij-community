@@ -19,10 +19,23 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.NotNull;
 
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   SyntaxHighlighterLanguageFactory() {
-    super("com.intellij.lang.syntaxHighlighterFactory", new PlainSyntaxHighlighterFactory());
+    super("com.intellij.lang.syntaxHighlighterFactory");
+  }
+
+  @Override
+  protected SyntaxHighlighterFactory getDefaultImplementationForKey(@NotNull Language language) {
+    return new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @NotNull
+      @Override
+      protected SyntaxHighlighter createHighlighter() {
+        return LanguageSyntaxHighlighters.INSTANCE.forLanguage(language);
+      }
+    };
   }
 }
