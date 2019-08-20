@@ -60,4 +60,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testLambda() = doTest("Simple/Lambda.java")
+
+  @Test
+  fun testBlock() = doTest("Simple/Block.java")
 }

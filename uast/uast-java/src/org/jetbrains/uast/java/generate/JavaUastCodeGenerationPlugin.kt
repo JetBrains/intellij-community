@@ -51,6 +51,7 @@ class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     }
     val updNewPsi = when {
       updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpresionStatement(newPsi) ?: return null
+      updOldPsi is PsiCodeBlock && newPsi is PsiBlockStatement -> newPsi.codeBlock
       else -> newPsi
     }
     return when (val replaced = updOldPsi.replace(updNewPsi)) {
