@@ -124,12 +124,12 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
 
     @NotNull
     @Override
-    protected String getItemText(String s) {
+    protected String getItemText(@NotNull String s) {
       return "";
     }
 
     @Override
-    protected boolean hasChildren(String s) {
+    protected boolean hasChildren(@NotNull String s) {
       return false;
     }
 
