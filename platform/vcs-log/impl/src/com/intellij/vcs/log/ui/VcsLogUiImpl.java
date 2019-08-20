@@ -52,7 +52,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @Nullable VcsLogFilterCollection filters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, myVisiblePack, filters);
+    myMainFrame = new MainFrame(logData, this, uiProperties, filters);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));

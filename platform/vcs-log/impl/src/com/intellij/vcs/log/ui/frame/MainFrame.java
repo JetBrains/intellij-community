@@ -83,14 +83,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
 
-  public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VisiblePack initialDataPack, @Nullable VcsLogFilterCollection filters) {
+  public MainFrame(@NotNull VcsLogData logData,
+                   @NotNull VcsLogUiImpl logUi,
+                   @NotNull MainVcsLogUiProperties uiProperties,
+                   @Nullable VcsLogFilterCollection filters) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, initialDataPack, filters);
+    myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, filters);
 
-    myGraphTable = new MyVcsLogGraphTable(logUi, logData, initialDataPack);
+    myGraphTable = new MyVcsLogGraphTable(logUi, logData);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
@@ -374,8 +376,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
     @NotNull private final Runnable myRefresh;
 
-    MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
-      super(ui, logData, initialDataPack, ui::requestMore);
+    MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData) {
+      super(ui, logData, VisiblePack.EMPTY, ui::requestMore);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 

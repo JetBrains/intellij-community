@@ -30,6 +30,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcsUtil.VcsUtil;
@@ -71,12 +72,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogData logData,
                                @NotNull MainVcsLogUiProperties uiProperties,
-                               @NotNull VcsLogDataPack initialDataPack,
                                @Nullable VcsLogFilterCollection filters) {
     myUi = ui;
     myLogData = logData;
     myUiProperties = uiProperties;
-    myDataPack = initialDataPack;
+    myDataPack = VisiblePack.EMPTY;
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
