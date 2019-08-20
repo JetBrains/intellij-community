@@ -84,7 +84,7 @@ object UpdateChecker {
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
-   * (the latter action may pass customised update settings).
+   * (the latter action may pass customized update settings).
    */
   @JvmStatic
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
@@ -227,7 +227,7 @@ object UpdateChecker {
   }
 
   /**
-   * Returns a list of plugins which are currently installed or were installed in the previous installation from which
+   * Returns a list of plugins that are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
@@ -332,7 +332,7 @@ object UpdateChecker {
       }
     }
 
-    // collect plugins which were not updated and would be incompatible with new version
+    // collect plugins that were not updated and would be incompatible with the new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
         !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
