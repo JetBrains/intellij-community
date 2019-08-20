@@ -8,14 +8,15 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -72,7 +73,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
-  @NotNull private final SearchTextField myTextFilter;
 
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
@@ -114,7 +114,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
 
-    myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
@@ -202,7 +201,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
-    Wrapper textFilter = new Wrapper(myTextFilter);
+    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     textFilter.setBorder(JBUI.Borders.emptyLeft(5));
 
@@ -286,11 +285,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myToolbar;
   }
 
-  @NotNull
-  public SearchTextField getTextFilter() {
-    return myTextFilter;
-  }
-
   public void showDetails(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
@@ -306,6 +300,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.dispose();
   }
 
+  public void toggleTextFilterFocus() {
+    Project project = myLogData.getProject();
+    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(getToolbar()) != null) {
+      IdeFocusManager.getInstance(project).requestFocus(getGraphTable(), true);
+    }
+    else {
+      IdeFocusManager.getInstance(project).requestFocus(myFilterUi.getTextFilterComponent(), true);
+    }
+  }
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
     @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
@@ -364,7 +367,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return Arrays.asList(myGraphTable,
                            myChangesBrowser.getPreferredFocusedComponent(),
                            myPreviewDiff.getPreferredFocusedComponent(),
-                           myTextFilter.getTextEditor());
+                           myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
 

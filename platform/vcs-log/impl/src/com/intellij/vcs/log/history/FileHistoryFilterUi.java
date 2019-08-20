@@ -17,6 +17,7 @@ package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SearchTextField;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -46,6 +47,12 @@ public class FileHistoryFilterUi implements VcsLogFilterUi {
 
   @Override
   public void setFilter(@Nullable VcsLogFilter filter) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public SearchTextField getTextFilterComponent() {
     throw new UnsupportedOperationException();
   }
 }

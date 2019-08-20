@@ -66,6 +66,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final FilterModel<VcsLogDateFilter> myDateFilterModel;
   @NotNull private final FileFilterModel myStructureFilterModel;
   @NotNull private final TextFilterModel myTextFilterModel;
+  @NotNull private final TextFilterField myFilterField;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogData logData,
@@ -83,6 +84,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myDateFilterModel = new DateFilterModel(myUiProperties, filters);
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, ui);
+
+    myFilterField = new TextFilterField(myTextFilterModel);
 
     updateUiOnFilterChange();
     myUi.applyFiltersAndUpdateUi(getFilters());
@@ -102,9 +105,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myDataPack = dataPack;
   }
 
+  @Override
   @NotNull
-  public SearchTextField createTextFilter() {
-    return new TextFilterField(myTextFilterModel);
+  public SearchTextField getTextFilterComponent() {
+    return myFilterField;
   }
 
   /**
