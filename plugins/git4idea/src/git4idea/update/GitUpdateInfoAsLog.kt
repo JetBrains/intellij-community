@@ -97,19 +97,23 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     log.dataManager?.addDataPackChangeListener(listener)
 
-    val cancelled = Ref.create(false)
+    val pce = Ref.create<ProcessCanceledException>()
     ApplicationManager.getApplication().invokeLater {
       // the log may be refreshed before we subscribe to the listener
       try {
         createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
       }
       catch (e: ProcessCanceledException) {
-        cancelled.set(true)
+        pce.set(e)
+        dataSupplier.completeExceptionally(e)
       }
     }
-    if (cancelled.get()) throw ProcessCanceledException()
 
     BackgroundTaskUtil.awaitWithCheckCanceled(dataSupplier)
+    if (!pce.isNull) {
+      LOG.warn("Failed to create a log tab.")
+      throw pce.get()
+    }
     return dataSupplier.get()
   }
 
@@ -143,8 +147,18 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun createLogTabInEdtAndWait(logManager: VcsLogManager): LogUiAndFactory {
     val logUi = Ref.create<LogUiAndFactory>()
+    val pce = Ref.create<ProcessCanceledException>()
     ApplicationManager.getApplication().invokeAndWait {
-      logUi.set(createLogTab(logManager, null))
+      try {
+        logUi.set(createLogTab(logManager, null))
+      }
+      catch (e: ProcessCanceledException) {
+        pce.set(e)
+      }
+    }
+    if (!pce.isNull) {
+      LOG.warn("Failed to create a log tab.")
+      throw pce.get()
     }
     return logUi.get()
   }
