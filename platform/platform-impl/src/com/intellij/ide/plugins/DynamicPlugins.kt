@@ -11,8 +11,24 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.IconLoader
 import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.messages.Topic
+
+interface DynamicPluginListener {
+  @JvmDefault
+  fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+  }
+
+  @JvmDefault
+  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor) {
+  }
+
+  companion object {
+    @JvmField val TOPIC = Topic.create("DynamicPluginListener", DynamicPluginListener::class.java)
+  }
+}
 
 object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
@@ -51,6 +67,10 @@ object DynamicPlugins {
   @JvmStatic
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
+
+    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor)
+    IconLoader.clearCache()
+
     application.runWriteAction {
       (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
@@ -115,5 +135,7 @@ object DynamicPlugins {
       }
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
+
+    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 }
