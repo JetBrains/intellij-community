@@ -281,6 +281,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     final Component decorator = getDecoratorById(id);
     LOG.assertTrue(decorator != null, "Decorator not found: id = " + id);
     final WindowInfoImpl info = getDecoratorInfoById(id);
+    LOG.assertTrue(info != null, "WindowInfo not found: id = " + id);
 
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
