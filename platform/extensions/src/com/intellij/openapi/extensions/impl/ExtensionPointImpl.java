@@ -854,6 +854,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   private synchronized void removeAdapter(@NotNull ExtensionComponentAdapter adapter, int index) {
+    final T[] extensions = getExtensions();
     if (adapter instanceof ComponentAdapter) {
       myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
     }
@@ -866,13 +867,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       extensionInstance = castComponentInstance(adapter);
     }
     else {
-      T[] array = myExtensionsCacheAsArray;
-      if (array == null) {
-        return;
-      }
-      else {
-        extensionInstance = array[index];
-      }
+      extensionInstance = extensions[index];
     }
     notifyListenersOnRemove(extensionInstance, adapter.getPluginDescriptor(), myListeners);
   }
