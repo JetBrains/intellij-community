@@ -24,6 +24,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
@@ -80,6 +81,7 @@ class GitApplyChangesProcess(private val project: Project,
                              commits: List<VcsFullCommitDetails>,
                              successfulCommits: MutableList<VcsFullCommitDetails>,
                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+    val startHash = GitUtil.getHead(repository)
     for (commit in commits) {
       val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
       val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
@@ -98,6 +100,9 @@ class GitApplyChangesProcess(private val project: Project,
         if (result.success()) {
           if (autoCommit) {
             successfulCommits.add(commit)
+            val currentHash = GitUtil.getHead(repository)
+            val changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false)
+            if (changes != null) refreshVfsAndMarkDirty(changes) else refreshVfsAndMarkDirty(repository)
           }
           else {
             refreshVfsAndMarkDirty(repository)
