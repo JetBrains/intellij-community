@@ -6,11 +6,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author peter
  */
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
+  private static final AtomicLong ourWriteActionCounter = new AtomicLong();
+
+  public AsyncExecutionServiceImpl() {
+    Application app = ApplicationManager.getApplication();
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void writeActionStarted(@NotNull Object action) {
+        ourWriteActionCounter.incrementAndGet();
+      }
+    }, app);
+  }
+
   @NotNull
   @Override
   protected ExpirableExecutor createExecutor(@NotNull Executor executor) {
@@ -27,5 +40,9 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   @Override
   public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
     return new NonBlockingReadActionImpl<>(computation);
+  }
+
+  static long getWriteActionCounter() {
+    return ourWriteActionCounter.get();
   }
 }

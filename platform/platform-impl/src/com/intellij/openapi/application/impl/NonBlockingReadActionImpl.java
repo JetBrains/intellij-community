@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import kotlin.collections.ArraysKt;
@@ -159,40 +158,51 @@ public class NonBlockingReadActionImpl<T>
         final ProgressIndicator indicator = new EmptyProgressIndicator(creationModality);
         currentIndicator = indicator;
         try {
-          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator), indicator);
+          ReadAction.run(() -> {
+            boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> insideReadAction(previousAttempt, indicator), indicator);
+            if (!success && Promises.isPending(promise)) {
+              reschedule(previousAttempt);
+            }
+          });
         }
         finally {
           currentIndicator = null;
         }
-
-        if (Promises.isPending(promise)) {
-          // using a blocking read action here for simplicity
-          // but nothing expensive should happen inside, just constraint checks that need read action
-          ReadAction.run(() -> {
-            if (!checkObsolete()) {
-              doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
-            }
-          });
-        }
       });
     }
 
-    void insideReadAction(ProgressIndicator indicator) {
+    private void reschedule(ReschedulingAttempt previousAttempt) {
+      if (!checkObsolete()) {
+        doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
+      }
+    }
+
+    void insideReadAction(ReschedulingAttempt previousAttempt, ProgressIndicator indicator) {
       try {
-        if (checkObsolete() || !constraintsAreSatisfied()) return;
+        if (checkObsolete()) {
+          return;
+        }
+        if (!constraintsAreSatisfied()) {
+          reschedule(previousAttempt);
+          return;
+        }
 
         T result = myComputation.call();
 
         if (myEdtFinish != null) {
-          safeTransferToEdt(result, myEdtFinish, indicator);
+          safeTransferToEdt(result, myEdtFinish, previousAttempt);
         } else {
           promise.setResult(result);
         }
       }
-      catch (Throwable e) {
+      catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {
-          promise.setError(e);
+          promise.setError(e); // don't restart after a manually thrown PCE
         }
+        throw e;
+      }
+      catch (Throwable e) {
+        promise.setError(e);
       }
     }
 
@@ -201,7 +211,7 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private boolean checkObsolete() {
-      if (promise.isCancelled()) return true;
+      if (Promises.isRejected(promise)) return true;
       if (myExpireCondition != null && myExpireCondition.getAsBoolean()) {
         promise.cancel();
         return true;
@@ -209,39 +219,28 @@ public class NonBlockingReadActionImpl<T>
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ProgressIndicator indicator) {
+    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ReschedulingAttempt previousAttempt) {
       if (Promises.isRejected(promise)) return;
 
-      Semaphore semaphore = new Semaphore(1);
+      long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
+
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (indicator.isCanceled()) {
-          // a write action has managed to sneak in before us, or the whole computation got canceled;
-          // anyway, nobody waits for us on bg thread, so we just exit
+        if (stamp != AsyncExecutionServiceImpl.getWriteActionCounter()) {
+          reschedule(previousAttempt);
           return;
         }
 
         if (checkObsolete()) {
-          semaphore.up();
           return;
         }
 
         // complete the promise now to prevent write actions inside custom callback from cancelling it
         promise.setResult(result);
 
-        // now background thread may release its read lock, and we continue on EDT, invoking custom callback
-        semaphore.up();
-
         if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           edtFinish.second.accept(result);
         }
       }, edtFinish.first);
-
-      // don't release read action until we're on EDT, to avoid result invalidation in between
-      while (!semaphore.waitFor(10)) {
-        if (indicator.isCanceled()) { // checkCanceled isn't enough, because some smart developers disable it
-          throw new ProcessCanceledException();
-        }
-      }
     }
 
   }
