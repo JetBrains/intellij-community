@@ -15,6 +15,9 @@
     <extensionPoint qualifiedName="qualifiedName" beanClass="BeanClass"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <myPlugin.myEP implementation="a"/>
+  </extensions>
   <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
 
   <actions>

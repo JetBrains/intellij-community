@@ -89,7 +89,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     }
     finally {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.FALSE);
-      DomManagerImpl.getDomManager(project).clearCache();
     }
   }
 

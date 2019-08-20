@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -41,6 +42,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -64,6 +66,10 @@ public final class DomManagerImpl extends DomManager {
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription<?>> MOCK_DESCRIPTION = Key.create("MockDescription");
+  private static final Key<CachedValue<DomFileElementImpl<?>>> FILE_ELEMENT_KEY = Key.create("DomFileElement");
+  private static final Key<CachedValue<DomFileElementImpl<?>>> FILE_ELEMENT_KEY_FOR_INDEX = Key.create("DomFileElementForIndex");
+  private static final Key<CachedValue<DomInvocationHandler>> HANDLER_KEY = Key.create("DomInvocationHandler");
+  private static final Key<CachedValue<DomInvocationHandler>> HANDLER_KEY_FOR_INDEX = Key.create("DomInvocationHandlerForIndex");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
@@ -297,8 +303,12 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
     //noinspection unchecked
-    return (DomFileElementImpl<T>)CachedValuesManager.getCachedValue(file, () ->
+    return (DomFileElementImpl<T>)CachedValuesManager.getCachedValue(file, chooseKey(FILE_ELEMENT_KEY, FILE_ELEMENT_KEY_FOR_INDEX), () ->
       CachedValueProvider.Result.create(DomCreator.createFileElement(file), PsiModificationTracker.MODIFICATION_COUNT, this));
+  }
+
+  private static <T> T chooseKey(T base, T forIndex) {
+    return FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null ? forIndex : base;
   }
 
   @Nullable
@@ -338,11 +348,11 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   public DomInvocationHandler getDomHandler(@Nullable XmlElement xml) {
     if (xml instanceof XmlTag) {
-      return CachedValuesManager.getCachedValue(xml, () ->
+      return CachedValuesManager.getCachedValue(xml, chooseKey(HANDLER_KEY, HANDLER_KEY_FOR_INDEX), () ->
         CachedValueProvider.Result.create(DomCreator.createTagHandler((XmlTag)xml), PsiModificationTracker.MODIFICATION_COUNT, this));
     }
     if (xml instanceof XmlAttribute) {
-      return CachedValuesManager.getCachedValue(xml, () ->
+      return CachedValuesManager.getCachedValue(xml, chooseKey(HANDLER_KEY, HANDLER_KEY_FOR_INDEX), () ->
         CachedValueProvider.Result.create(DomCreator.createAttributeHandler((XmlAttribute)xml), PsiModificationTracker.MODIFICATION_COUNT, this));
     }
     return null;

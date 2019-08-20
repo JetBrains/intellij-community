@@ -15,20 +15,30 @@
  */
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.DomStubTest;
+import com.intellij.util.xml.stubs.index.DomElementClassIndex;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.Actions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.ProductDescriptor;
 
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @TestDataPath("$CONTENT_ROOT/testData/pluginXmlDomStubs")
 public class PluginXmlDomStubsTest extends DomStubTest {
@@ -57,6 +67,8 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Element:extensionPoint\n" +
                   "        Attribute:qualifiedName:qualifiedName\n" +
                   "        Attribute:beanClass:BeanClass\n" +
+                  "    Element:extensions\n" +
+                  "      Attribute:defaultExtensionNs:com.intellij\n" +
                   "    Element:extensions\n" +
                   "      Attribute:defaultExtensionNs:defaultExtensionNs\n" +
                   "      Attribute:xmlns:extensionXmlNs\n" +
@@ -108,6 +120,30 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     assertNotNull(handler.getStub());
 
     assertNotNull(DomTarget.getTarget(action));
+  }
+
+  public void testStubIndexingThreadDoesNotLeaveExtensionsEmptyForEveryone() throws Exception {
+    XmlFile file = prepareFile("pluginXmlStubs.xml");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    DomManager manager = DomManager.getDomManager(getProject());
+
+    for (int i = 0; i < 10; i++) {
+      myFixture.type(' ');
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+        for (XmlTag tag : SyntaxTraverser.psiTraverser(file).filter(XmlTag.class)) {
+          assertNotNull(tag.getText(), manager.getDomElement(tag));
+        }
+      }));
+
+      // index the file
+      DomFileElement<IdeaPlugin> ideaPlugin = manager.getFileElement(file, IdeaPlugin.class);
+      assertFalse(DomElementClassIndex.getInstance().hasStubElementsOfType(ideaPlugin, ProductDescriptor.class));
+
+      future.get(20, TimeUnit.SECONDS);
+    }
   }
 
   @Override
