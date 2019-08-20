@@ -2826,6 +2826,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ToolbarTerminated = load("/runConfigurations/toolbarTerminated.svg");
     /** 16x16 */ public static final Icon TrackCoverage = load("/runConfigurations/trackCoverage.svg");
     /** 16x16 */ public static final Icon Web_app = load("/runConfigurations/web_app.svg");
+    /** 16x16 */ public static final Icon Wsl = load("/runConfigurations/wsl.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
     @SuppressWarnings("unused")
