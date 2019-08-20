@@ -72,15 +72,15 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(selfTearDownRunnable())
-      .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(testStartedIndicator) })
+      .append(ThrowableRunnable { selfTearDownRunnable() })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
 
   }
 
-  private fun selfTearDownRunnable(): ThrowableRunnable<Throwable> = ThrowableRunnable {
+  private fun selfTearDownRunnable() {
+    var tearDownErrorDetected = false
     try {
       RunAll()
         .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
@@ -90,8 +90,13 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
         .run()
     }
     catch (e: Throwable) {
-      TestLoggerFactory.dumpLogToStdout(testStartedIndicator)
+      tearDownErrorDetected = true
       throw e
+    }
+    finally {
+      if (myAssertionsInTestDetected || tearDownErrorDetected) {
+        TestLoggerFactory.dumpLogToStdout(testStartedIndicator)
+      }
     }
   }
 
