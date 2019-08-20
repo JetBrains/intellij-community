@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -161,7 +160,8 @@ public class BootstrapClassLoaderUtil {
       }
     }
     else if (!ext) {
-      parseClassPathString(ManagementFactory.getRuntimeMXBean().getClassPath(), classpath);
+      // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
+      parseClassPathString(System.getProperty("java.class.path"), classpath);
     }
   }
 
