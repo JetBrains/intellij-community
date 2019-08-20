@@ -22,7 +22,6 @@ import java.util.zip.ZipOutputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 @RunFirst
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
@@ -92,13 +91,13 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
-    assumeTrue("Windows-only", Utils.IS_WINDOWS);
+    IoTestUtil.assumeWindows();
     doLockedFileTest();
   }
 
   @Test
   public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
-    assumeTrue("Windows-only", Utils.IS_WINDOWS);
+    IoTestUtil.assumeWindows();
     FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
     doLockedFileTest();
   }
