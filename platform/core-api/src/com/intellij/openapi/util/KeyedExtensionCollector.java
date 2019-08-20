@@ -66,16 +66,14 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
           if (bean.getKey() == null) {
             throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
           }
-          myCache.remove(bean.getKey());
-          myTracker.incModificationCount();
+          invalidateCacheForExtension(bean.getKey());
         }
       }
 
       @Override
       public void extensionRemoved(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
         synchronized (myLock) {
-          myCache.remove(bean.getKey());
-          myTracker.incModificationCount();
+          invalidateCacheForExtension(bean.getKey());
         }
       }
 
@@ -87,6 +85,11 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }, false, myParentDisposable);
   }
 
+  protected void invalidateCacheForExtension(String key) {
+    myCache.remove(key);
+    myTracker.incModificationCount();
+  }
+
   public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (myLock) {
       final String stringKey = keyToString(key);
@@ -95,8 +98,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       }
       List<T> list = myExplicitExtensions.computeIfAbsent(stringKey, __ -> new SmartList<>());
       list.add(t);
-      myCache.remove(stringKey);
-      myTracker.incModificationCount();
+      invalidateCacheForExtension(stringKey);
     }
   }
 
@@ -115,8 +117,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
           myExplicitExtensions.remove(stringKey);
         }
       }
-      myCache.remove(stringKey);
-      myTracker.incModificationCount();
+      invalidateCacheForExtension(stringKey);
     }
   }
 

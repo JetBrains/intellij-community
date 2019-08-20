@@ -25,7 +25,7 @@ import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   private final T myDefaultImplementation;
-  private final /* non static!!! */ Key<T> IN_LANGUAGE_CACHE;
+  private final /* non static!!! */ Key<T> myCacheKey;
 
   public LanguageExtension(@NonNls final String epName) {
     this(epName, null);
@@ -38,7 +38,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation, @Nullable Disposable parentDisposable) {
     super(epName, parentDisposable);
     myDefaultImplementation = defaultImplementation;
-    IN_LANGUAGE_CACHE = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
+    myCacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
   }
 
   @NotNull
@@ -49,17 +49,26 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @TestOnly
   public void clearCache(@NotNull Language language) {
-    language.putUserData(IN_LANGUAGE_CACHE, null);
+    language.putUserData(myCacheKey, null);
     clearCache();
   }
 
+  @Override
+  protected void invalidateCacheForExtension(String key) {
+    super.invalidateCacheForExtension(key);
+    final Language language = Language.findLanguageByID(key);
+    if (language != null) {
+      language.putUserData(myCacheKey, null);
+    }
+  }
+
   public T forLanguage(@NotNull Language l) {
-    T cached = l.getUserData(IN_LANGUAGE_CACHE);
+    T cached = l.getUserData(myCacheKey);
     if (cached != null) return cached;
 
     T result = findForLanguage(l);
     if (result == null) return null;
-    result = l.putUserDataIfAbsent(IN_LANGUAGE_CACHE, result);
+    result = l.putUserDataIfAbsent(myCacheKey, result);
     return result;
   }
 
@@ -70,6 +79,10 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
         return extensions.get(0);
       }
     }
+    return getDefaultImplementationForKey(language);
+  }
+
+  protected T getDefaultImplementationForKey(@NotNull Language language) {
     return myDefaultImplementation;
   }
 
@@ -123,13 +136,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @Override
   public void addExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(IN_LANGUAGE_CACHE, null);
+    key.putUserData(myCacheKey, null);
     super.addExplicitExtension(key, t);
   }
 
   @Override
   public void removeExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(IN_LANGUAGE_CACHE, null);
+    key.putUserData(myCacheKey, null);
     super.removeExplicitExtension(key, t);
   }
 
