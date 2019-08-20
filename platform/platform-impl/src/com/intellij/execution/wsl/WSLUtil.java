@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -33,7 +34,6 @@ import java.util.List;
  * - file system is unavailable form windows (for now at least)
  */
 public class WSLUtil {
-
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
 
   /**
@@ -163,5 +163,14 @@ public class WSLUtil {
       return null;
     }
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
+  }
+
+  /**
+   * @return list of UNC roots for known WSL distributions
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static Collection<File> getUNCRoots() {
+    return isSystemCompatible() ? ContainerUtil.map(getAvailableDistributions(), WSLDistribution::getUNCRoot) : Collections.emptyList();
   }
 }

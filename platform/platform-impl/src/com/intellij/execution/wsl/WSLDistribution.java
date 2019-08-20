@@ -11,9 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +39,7 @@ public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
+  private static final String UNC_PREFIX = "\\\\wsl$\\";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -403,5 +407,24 @@ public class WSLDistribution {
   @Override
   public int hashCode() {
     return myDescriptor.hashCode();
+  }
+
+  /**
+   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  File getUNCRoot() {
+    return new File(UNC_PREFIX + myDescriptor.getMsId());
+  }
+
+  /**
+   * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
+   * @see VfsUtil#findFileByIoFile(java.io.File, boolean)
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
+    return VfsUtil.findFileByIoFile(getUNCRoot(), refreshIfNeed);
   }
 }

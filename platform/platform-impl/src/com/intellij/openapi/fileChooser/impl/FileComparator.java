@@ -28,7 +28,26 @@ public final class FileComparator implements Comparator<NodeDescriptor> {
       return weight1 - weight2;
     }
 
-    return nodeDescriptor1.toString().compareToIgnoreCase(nodeDescriptor2.toString());
+    String node1Text = nodeDescriptor1.toString();
+    String node2Text = nodeDescriptor2.toString();
+
+    if (node1Text == null) {
+      return node2Text == null ? 0 : 1;
+    }
+    else if (node2Text == null) {
+      return -1;
+    }
+
+    boolean isNode1Unc = node1Text.startsWith("\\\\");
+    boolean isNode2Unc = node2Text.startsWith("\\\\");
+    if (isNode1Unc && !isNode2Unc) {
+      return 1;
+    }
+    else if (isNode2Unc && !isNode1Unc) {
+      return -1;
+    }
+
+    return node1Text.compareToIgnoreCase(node2Text);
   }
 
    private static int getWeight(NodeDescriptor descriptor) {
