@@ -3,6 +3,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -29,13 +30,14 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.reference.SoftReference;
-import com.intellij.semantic.SemKey;
-import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,22 +64,18 @@ public final class DomManagerImpl extends DomManager {
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription<?>> MOCK_DESCRIPTION = Key.create("MockDescription");
-  static final SemKey<DomFileElementImpl<?>> FILE_ELEMENT_KEY = SemKey.createKey("FILE_ELEMENT_KEY");
-  static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
-  static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
   private final Project myProject;
-  private final SemService mySemService;
   private final DomApplicationComponent myApplicationComponent;
 
   private boolean myChanging;
+  private boolean myBulkChange;
 
   public DomManagerImpl(Project project) {
     super(project);
     myProject = project;
-    mySemService = SemService.getSemService(project);
     myApplicationComponent = DomApplicationComponent.getInstance();
 
     final PomModel pomModel = PomManager.getModel(project);
@@ -166,6 +164,10 @@ public final class DomManagerImpl extends DomManager {
     return events;
   }
 
+  boolean isInsideAtomicChange() {
+    return myBulkChange;
+  }
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DomManagerImpl getDomManager(Project project) {
     return (DomManagerImpl)DomManager.getDomManager(project);
@@ -187,8 +189,8 @@ public final class DomManagerImpl extends DomManager {
   }
 
   final void fireEvent(@NotNull DomEvent event) {
-    if (mySemService.isInsideAtomicChange()) return;
-    incModificationCount();
+    if (isInsideAtomicChange()) return;
+    clearCache();
     myListeners.getMulticaster().eventOccured(event);
   }
 
@@ -250,7 +252,7 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
-      mySemService.clearCache();
+      clearCache();
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;
@@ -295,7 +297,8 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
     //noinspection unchecked
-    return (DomFileElementImpl<T>)mySemService.getSemElement(FILE_ELEMENT_KEY, file);
+    return (DomFileElementImpl<T>)CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(DomCreator.createFileElement(file), PsiModificationTracker.MODIFICATION_COUNT, this));
   }
 
   @Nullable
@@ -328,13 +331,21 @@ public final class DomManagerImpl extends DomManager {
   public GenericAttributeValue<?> getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
 
-    final AttributeChildInvocationHandler handler = mySemService.getSemElement(DOM_ATTRIBUTE_HANDLER_KEY, attribute);
+    DomInvocationHandler handler = getDomHandler(attribute);
     return handler == null ? null : (GenericAttributeValue<?>)handler.getProxy();
   }
 
   @Nullable
-  public DomInvocationHandler getDomHandler(@Nullable XmlElement tag) {
-    return tag == null ? null : mySemService.getSemElement(DOM_HANDLER_KEY, tag);
+  public DomInvocationHandler getDomHandler(@Nullable XmlElement xml) {
+    if (xml instanceof XmlTag) {
+      return CachedValuesManager.getCachedValue(xml, () ->
+        CachedValueProvider.Result.create(DomCreator.createTagHandler((XmlTag)xml), PsiModificationTracker.MODIFICATION_COUNT, this));
+    }
+    if (xml instanceof XmlAttribute) {
+      return CachedValuesManager.getCachedValue(xml, () ->
+        CachedValueProvider.Result.create(DomCreator.createAttributeHandler((XmlAttribute)xml), PsiModificationTracker.MODIFICATION_COUNT, this));
+    }
+    return null;
   }
 
   @Override
@@ -402,7 +413,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   public final void registerFileDescription(DomFileDescription<?> description) {
-    mySemService.clearCache();
+    clearCache();
 
     myApplicationComponent.registerFileDescription(description);
   }
@@ -426,14 +437,27 @@ public final class DomManagerImpl extends DomManager {
     return myApplicationComponent.getTypeChooserManager();
   }
 
-  public void performAtomicChange(@NotNull Runnable change) {
-    mySemService.performAtomicChange(change);
-    if (!mySemService.isInsideAtomicChange()) {
-      incModificationCount();
+  void performAtomicChange(@NotNull Runnable change) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    final boolean oldValue = myBulkChange;
+    myBulkChange = true;
+    try {
+      change.run();
+    }
+    finally {
+      myBulkChange = oldValue;
+      if (!oldValue) {
+        clearCache();
+      }
+    }
+
+    if (!isInsideAtomicChange()) {
+      clearCache();
     }
   }
 
-  public SemService getSemService() {
-    return mySemService;
+  public void clearCache() {
+    incModificationCount();
   }
 }

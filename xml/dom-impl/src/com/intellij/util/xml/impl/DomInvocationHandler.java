@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.SemElement;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -47,7 +46,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement, SemElement {
+public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -183,7 +182,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       }
     });
 
-    if (!myManager.getSemService().isInsideAtomicChange()) {
+    if (!myManager.isInsideAtomicChange()) {
       myManager.fireEvent(new DomEvent(getProxy(), false));
     }
   }
@@ -605,21 +604,21 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
         final XmlTag child = tags.get(index);
-        DomInvocationHandler semElement = myManager.getDomHandler(child);
-        if (!(semElement instanceof IndexedElementInvocationHandler)) {
+        DomInvocationHandler handler = myManager.getDomHandler(child);
+        if (!(handler instanceof IndexedElementInvocationHandler)) {
           DomInvocationHandler take2 = myManager.getDomHandler(child);
-          throw new AssertionError("Expected indexed DO, but got " + semElement +
+          throw new AssertionError("Expected indexed DOM, but got " + handler +
                                    ". Parent=" + tag + "; child=" + child + "; index=" + index+ "; second attempt=" + take2);
 
         }
-        return semElement;
+        return handler;
       }
     }
     return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, null);
   }
 
   @NotNull
-  final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
+  final DomInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     if (myStub != null && description.isStubbed()) {
       AttributeStub stub = myStub.getAttributeStub(description.getXmlName());
@@ -635,18 +634,17 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
       if (attribute != null) {
         PsiUtilCore.ensureValid(attribute);
-        AttributeChildInvocationHandler semElement =
-          myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
-        if (semElement == null) {
-          throw new AssertionError("No DOM at XML. Parent=" + tag +
+        DomInvocationHandler handler = myManager.getDomHandler(attribute);
+        if (!(handler instanceof AttributeChildInvocationHandler)) {
+          throw new AssertionError("Expected indexed DOM, but got " + handler +
                                    "; ns=" + ns +
                                    "; description=" + description +
                                    "; attribute=" + attribute.getName() +
                                    "; XML consistent=" + (PhysicalDomParentStrategy.getParentTag(attribute) == tag) +
-                                   "; DOM consistent =" + equals(DomSemContributor.getParentDom(tag)) +
-                                   "; re-creation=" + DomSemContributor.createAttributeHandler(attribute));
+                                   "; DOM consistent =" + equals(DomCreator.getParentDom(tag)) +
+                                   "; re-creation=" + DomCreator.createAttributeHandler(attribute));
         }
-        return semElement;
+        return handler;
       }
     }
     return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this), null);
@@ -829,8 +827,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
     List<DomElement> elements = new ArrayList<>(subTags.size());
     for (XmlTag subTag : subTags) {
-      DomInvocationHandler semElement = myManager.getDomHandler(subTag);
-      if (semElement == null) {
+      DomInvocationHandler handler = myManager.getDomHandler(subTag);
+      if (handler == null) {
         String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "'; subtag count=" + subTags.size() + ", description=" + description + ", subtag.class=" + subTag.getClass().getName();
         DomInvocationHandler anyDom = myManager.getDomHandler(subTag);
         if (anyDom != null) {
@@ -839,7 +837,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
         throw new AssertionError(msg);
       }
       else {
-        elements.add(semElement.getProxy());
+        elements.add(handler.getProxy());
       }
     }
     return Collections.unmodifiableList(elements);

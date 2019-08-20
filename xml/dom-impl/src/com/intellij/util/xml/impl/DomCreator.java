@@ -19,9 +19,6 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.SemContributor;
-import com.intellij.semantic.SemRegistrar;
-import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -43,25 +40,13 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static com.intellij.patterns.XmlPatterns.*;
-
 /**
  * @author peter
  */
-final class DomSemContributor extends SemContributor {
-  @Override
-  public void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project) {
-    registrar.registerSemElementProvider(DomManagerImpl.FILE_ELEMENT_KEY, xmlFile(), DomSemContributor::createFileElement);
-
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag(), DomSemContributor::createTagHandler);
-
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY,
-                                         xmlAttribute(),
-                                         DomSemContributor::createAttributeHandler);
-  }
+final class DomCreator {
 
   @Nullable
-  private static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
+  static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
     PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
     if (!(candidate instanceof XmlTag)) {
       return createRootHandler(tag);
@@ -91,7 +76,7 @@ final class DomSemContributor extends SemContributor {
   @Nullable
   private static DomInvocationHandler createRootHandler(XmlTag xmlTag) {
     PsiFile file = xmlTag.getContainingFile();
-    DomFileElementImpl<?> element = SemService.getSemService(file.getProject()).getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, file);
+    DomFileElementImpl<?> element = file instanceof XmlFile ? DomManagerImpl.getDomManager(file.getProject()).getFileElement((XmlFile)file) : null;
     if (element != null) {
       final DomRootInvocationHandler handler = element.getRootHandler();
       if (handler.getXmlTag() == xmlTag) {
@@ -173,7 +158,7 @@ final class DomSemContributor extends SemContributor {
   }
 
   @Nullable
-  private static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
+  static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
     VirtualFile file = xmlFile.getVirtualFile();
     if (!(xmlFile.getFileType() instanceof DomSupportEnabled) || file != null && ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       return null;
@@ -216,12 +201,12 @@ final class DomSemContributor extends SemContributor {
 
     Project project = file.getProject();
     XmlFile originalFile = (XmlFile)file.getOriginalFile();
+    DomManagerImpl domManager = DomManagerImpl.getDomManager(project);
     if (!originalFile.equals(file)) {
-      DomFileElementImpl<?> element = SemService.getSemService(project).getSemElement(DomManagerImpl.FILE_ELEMENT_KEY, originalFile);
+      DomFileElementImpl<?> element = domManager.getFileElement(originalFile);
       return element == null ? null : element.getFileDescription();
     }
 
-    DomManagerImpl domManager = DomManagerImpl.getDomManager(project);
     Module module = ModuleUtilCore.findModuleForFile(file);
     Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
     String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();

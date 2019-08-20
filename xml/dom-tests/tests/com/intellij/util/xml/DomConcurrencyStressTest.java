@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.ConcurrencyUtil;
@@ -123,7 +122,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
         });
 
         if (random.nextInt(20) == 0) {
-          SemService.getSemService(getProject()).clearCache();
+          getDomManager().clearCache();
         }
       }
     });
