@@ -520,6 +520,10 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
+class ExceedingArrayDimensionsException(Exception):
+    pass
+
+
 def array_to_meta_xml(array, name, format):
     type = array.dtype.kind
     slice = name
@@ -543,7 +547,7 @@ def array_to_meta_xml(array, name, format):
     l = len(array.shape)
     reslice = ""
     if l > 2:
-        raise Exception("%s has more than 2 dimensions." % slice)
+        raise ExceedingArrayDimensionsException()
     elif l == 1:
         # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
