@@ -362,7 +362,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     Sdk sdk = getSdk();
     if (sdk != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
-      patchCommandLineForVirtualenv(commandLine, interpreterPath);
+      patchCommandLineForVirtualenv(commandLine, sdk);
       patchCommandLineForBuildout(commandLine, interpreterPath);
       patchCommandLineLast(commandLine, interpreterPath);
     }
@@ -391,7 +391,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   /**
-   * Gets called after {@link #patchCommandLineForVirtualenv(GeneralCommandLine, String)}
+   * Gets called after {@link #patchCommandLineForVirtualenv(GeneralCommandLine, Sdk)}
    * Does nothing here, real implementations should use alter running script name or use engulfer.
    *
    * @param commandLine
@@ -404,10 +404,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Alters PATH so that a virtualenv is activated, if present.
    *
    * @param commandLine
-   * @param sdkHome
+   * @param sdk
    */
-  protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome) {
-    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdkHome, isPassParentEnvs());
+  protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
+    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
   }
 
   protected void setUnbufferedEnv() {

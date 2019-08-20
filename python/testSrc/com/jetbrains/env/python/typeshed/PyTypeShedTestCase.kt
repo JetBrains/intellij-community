@@ -85,7 +85,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     })
     val sdk = sdkVar ?: return null
     val modificator = sdk.sdkModificator
-    val paths = PythonSdkType.getSysPathsFromScript(sdkPath)
+    val paths = PythonSdkType.getSysPathsFromScript(sdk)
     PythonSdkUpdater.filterRootPaths(sdk, paths, project).forEach {
       modificator.addRoot(it, OrderRootType.CLASSES)
     }

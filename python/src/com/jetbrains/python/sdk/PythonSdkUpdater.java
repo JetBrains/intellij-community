@@ -450,7 +450,7 @@ public class PythonSdkUpdater implements StartupActivity {
       throw new IllegalArgumentException("Cannot evaluate sys.path for remote Python interpreter " + sdk);
     }
     final long startTime = System.currentTimeMillis();
-    final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
+    final List<String> sysPath = PythonSdkType.getSysPath(sdk);
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
     return sysPath;
   }

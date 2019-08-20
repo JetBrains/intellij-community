@@ -165,7 +165,7 @@ public class SphinxBaseCommand {
 
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdkHomePath, true);
+    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
     BuildoutFacet facet = BuildoutFacet.getInstance(module);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);

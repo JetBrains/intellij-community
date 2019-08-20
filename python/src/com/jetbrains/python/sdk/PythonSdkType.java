@@ -342,12 +342,11 @@ public final class PythonSdkType extends SdkType {
   /**
    * Alters PATH so that a virtualenv is activated, if present.
    *
-   * @param commandLine           what to patch
-   * @param sdkHome               home of SDK we're using
-   * @param passParentEnvironment iff true, include system paths in PATH
+   * @param commandLine what to patch
+   * @param sdk         SDK we're using
    */
-  public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvironment) {
-    final Map<String, String> virtualEnv = activateVirtualEnv(sdkHome);
+  public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
+    final Map<String, String> virtualEnv = activateVirtualEnv(sdk);
     if (!virtualEnv.isEmpty()) {
       final Map<String, String> environment = commandLine.getEnvironment();
 
@@ -361,7 +360,7 @@ public final class PythonSdkType extends SdkType {
           }
         }
         else {
-          environment.put(key,value);
+          environment.put(key, value);
         }
       }
     }
@@ -544,11 +543,11 @@ public final class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  public static List<String> getSysPath(String bin_path) throws InvalidSdkException {
-    String working_dir = new File(bin_path).getParent();
+  public static List<String> getSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
+    String working_dir = new File(sdk.getHomePath()).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && (!application.isUnitTestMode() || ApplicationInfoImpl.isInStressTest())) {
-      return getSysPathsFromScript(bin_path);
+      return getSysPathsFromScript(sdk);
     }
     else { // mock sdk
       List<String> ret = new ArrayList<>(1);
@@ -558,12 +557,13 @@ public final class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
+  public static List<String> getSysPathsFromScript(@NotNull Sdk sdk) throws InvalidSdkException {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
+    final String binaryPath = sdk.getHomePath();
     GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
-                                                               activateVirtualEnv(binaryPath), MINUTE);
+                                                               activateVirtualEnv(sdk), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
                                                   runResult.getStdout(),
