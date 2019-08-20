@@ -301,4 +301,8 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                  "def foo(ab: Union[A, B]):\n" +
                  "    print(ab.x)");
   }
+
+  public void testClassLevelDunderAll() {
+    doMultiFileTest("a.py");
+  }
 }
