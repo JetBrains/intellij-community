@@ -266,23 +266,18 @@ class FilePointerPartNode {
 
   void checkConsistency() {
     if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
-      doCheckConsistency(false);
+      doCheckConsistency();
     }
   }
 
-  private void doCheckConsistency(boolean dotDotOccurred) {
+  private void doCheckConsistency() {
     String name = getName().toString();
-    int dotDotIndex = StringUtil.indexOf(name, "..");
-    if (dotDotIndex != -1) {
-      // part must not contain "/.." nor "../" nor be just ".."
-      // (except when the pointer was created from URL of non-existing file with ".." inside)
-      dotDotOccurred |= name.equals("..") || dotDotIndex != 0 && name.charAt(dotDotIndex - 1) == '/' || dotDotIndex < name.length() - 2 && name.charAt(dotDotIndex + 2) == '/';
-    }
+    assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
     int childSum = 0;
     for (int i = 0; i < children.length; i++) {
       FilePointerPartNode child = children[i];
       childSum += child.pointersUnder;
-      child.doCheckConsistency(dotDotOccurred);
+      child.doCheckConsistency();
       assert child.parent == this;
       if (i != 0) {
         assert !FileUtil.namesEqual(child.getName().toString(), children[i-1].getName().toString()) : "child["+i+"] = "+child+"; [-1] = "+children[i-1];
@@ -306,8 +301,6 @@ class FilePointerPartNode {
     if (hasFile) {
       assert fileAndUrl.first.getName().equals(name) : "fileAndUrl: " + fileAndUrl + "; but this: " + this;
     }
-    // when the node contains real file its path should be canonical
-    assert !hasFile || !dotDotOccurred : "Path is not canonical: '" + getUrl() + "'; my part: '" + name + "'";
   }
 
   // returns root node

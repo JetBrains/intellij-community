@@ -579,8 +579,12 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile dir1 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir1"));
     VirtualFile file = WriteAction.computeAndWait(() -> dir1.createChildData(this, "x.txt"));
     VirtualFile dir2 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir2"));
+    VirtualFilePointer fpointer = myVirtualFilePointerManager.create(file.getUrl(), disposable, null);
+    assertTrue(fpointer.isValid());
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
     assertEquals(file, pointer.getFile());
+    VirtualFilePointer nonExistingPointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/nonexisting.txt", disposable, null);
+    assertNull(nonExistingPointer.getFile());
   }
 
   @Test
@@ -749,16 +753,13 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile file = WriteAction.computeAndWait(() -> deep.createChildData(this, "x..txt"));
     VirtualFilePointer ptr = myVirtualFilePointerManager.create(file, disposable, null);
     assertTrue(ptr.isValid());
-    assertTrue(ptr.getUrl(), ptr.getUrl().contains(".."));
 
     WriteAction.runAndWait(() -> vDir.createChildData(this, "existing.txt"));
     VirtualFilePointer ptr2 = myVirtualFilePointerManager.create(deep.getUrl() + "/../existing.txt", disposable, null);
     assertTrue(ptr2.isValid());
-    assertFalse(ptr2.getUrl(), ptr2.getUrl().contains(".."));
 
     VirtualFilePointer ptr3 = myVirtualFilePointerManager.create(deep.getUrl() + "/../madeUp.txt", disposable, null);
     assertFalse(ptr3.isValid());
-    assertTrue(ptr3.getUrl(), ptr3.getUrl().contains(".."));
   }
 
   @Test

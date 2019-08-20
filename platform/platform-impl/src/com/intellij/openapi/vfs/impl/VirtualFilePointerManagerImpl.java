@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -217,6 +218,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         if (file != null) {
           url = file.getUrl();
           path = file.getPath();
+        }
+        else {
+          // when someone is crazy enough to create VFP for not-yet existing file from the path with "..", ignore all symlinks
+          path = FileUtil.toCanonicalPath(path);
+          url = VirtualFileManager.constructUrl(protocol, path + (fileSystem instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : ""));
         }
       }
     }
