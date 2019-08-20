@@ -227,7 +227,7 @@ public class LazyParseableElement extends CompositeElement {
   @Override
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
     if (!isParsed()) {
-      LOG.error("Mutating collapsed chameleon");
+      LOG.error("Mutating collapsed chameleon " + this.getClass());
     }
     super.rawAddChildrenWithoutNotifications(first);
   }
