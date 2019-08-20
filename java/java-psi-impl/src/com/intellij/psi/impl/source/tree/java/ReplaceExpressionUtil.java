@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -38,14 +38,15 @@ public class ReplaceExpressionUtil {
     else if (i == JavaElementType.BINARY_EXPRESSION || i == JavaElementType.POLYADIC_EXPRESSION) {
       if (priority < parentPriority) return true;
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(oldParent);
+      assert element != null;
       IElementType opType = ((PsiPolyadicExpression)element).getOperationTokenType();
       IElementType newI = newExpr.getElementType();
+      if (((CompositeElement)oldParent).getChildRole(oldExpr) == ChildRole.LOPERAND) return false;
       if (newI == JavaElementType.BINARY_EXPRESSION || newI == JavaElementType.POLYADIC_EXPRESSION) {
         IElementType newType = ((PsiPolyadicExpression)newExpr).getOperationTokenType();
-        if (newType == JavaTokenType.DIV || newExpr == JavaTokenType.PERC) return true;
+        if (newType == JavaTokenType.DIV || newType == JavaTokenType.PERC) return true;
       }
-      return ((CompositeElement)oldParent).getChildRole(oldExpr) != ChildRole.LOPERAND &&
-             opType != JavaTokenType.PLUS &&
+      return opType != JavaTokenType.PLUS &&
              opType != JavaTokenType.ASTERISK &&
              opType != JavaTokenType.ANDAND &&
              opType != JavaTokenType.OROR;
