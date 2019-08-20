@@ -47,8 +47,9 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
-  @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
+  @Nullable private VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
+  private boolean myDisposed;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
     this(project, uiProperties, findLogProviders(roots, project), true, null);
@@ -66,7 +67,6 @@ public class VcsLogManager implements Disposable {
     MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
     myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
@@ -120,6 +120,7 @@ public class VcsLogManager implements Disposable {
 
     Disposable disposable;
     if (isToolWindowTab) {
+      if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
       disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
     }
     else {
@@ -165,8 +166,9 @@ public class VcsLogManager implements Disposable {
 
   @CalledInAwt
   void disposeUi() {
+    myDisposed = true;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-    Disposer.dispose(myTabsLogRefresher);
+    if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
   }
 
   /**
@@ -195,7 +197,7 @@ public class VcsLogManager implements Disposable {
   }
 
   public boolean isDisposed() {
-    return Disposer.isDisposed(myTabsLogRefresher);
+    return myDisposed;
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
