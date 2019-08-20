@@ -17,14 +17,16 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
 * @author irengrig
 */
-class DummyChangesView implements ChangesViewI {
+class DummyChangesView implements ChangesViewEx {
   DummyChangesView(Project project) {
   }
 
@@ -50,5 +52,24 @@ class DummyChangesView implements ChangesViewI {
 
   @Override
   public void setGrouping(@NotNull String groupingKey) {
+  }
+
+  @Override
+  public void refreshImmediately() {
+  }
+
+  @Override
+  public void updateCommitWorkflow() {
+  }
+
+  @Nullable
+  @Override
+  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return null;
+  }
+
+  @Override
+  public boolean isAllowExcludeFromCommit() {
+    return false;
   }
 }
