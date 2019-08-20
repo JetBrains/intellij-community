@@ -415,11 +415,11 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       //caret is too close
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      type(" ");
+      caretRight();
 
       doHighlighting();
 
-      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
     }
     finally {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
