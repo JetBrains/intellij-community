@@ -19,9 +19,6 @@ public abstract class ConversionService {
   }
 
   @NotNull
-  public abstract ConversionResult convertSilently(@NotNull Path projectPath);
-
-  @NotNull
   public abstract ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener conversionListener);
 
   @NotNull

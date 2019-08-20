@@ -28,12 +28,6 @@ public final class DummyConversionService extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convertSilently(@NotNull Path projectPath) {
-    return CONVERSION_RESULT;
-  }
-
-  @NotNull
-  @Override
   public ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener conversionListener) {
     return CONVERSION_RESULT;
   }

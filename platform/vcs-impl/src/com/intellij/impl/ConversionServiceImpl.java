@@ -42,28 +42,6 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convertSilently(@NotNull Path projectPath) {
-    return convertSilently(projectPath, new ConversionListener() {
-      @Override
-      public void conversionNeeded() {
-      }
-
-      @Override
-      public void successfullyConverted(@NotNull File backupDir) {
-      }
-
-      @Override
-      public void error(@NotNull String message) {
-      }
-
-      @Override
-      public void cannotWriteToFiles(@NotNull List<? extends File> readonlyFiles) {
-      }
-    });
-  }
-
-  @NotNull
-  @Override
   public ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener listener) {
     try {
       if (!isConversionNeeded(projectPath)) {
