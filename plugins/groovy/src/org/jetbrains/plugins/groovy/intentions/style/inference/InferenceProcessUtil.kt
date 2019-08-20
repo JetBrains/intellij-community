@@ -11,6 +11,11 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLan
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
@@ -308,3 +313,11 @@ fun PsiTypeParameter.upperBound(): PsiType =
     1 -> extendsListTypes.single()
     else -> PsiIntersectionType.createIntersection(*extendsListTypes)
   }
+
+fun PsiElement.properResolve(): GroovyResolveResult? {
+  return when (this) {
+    is GrAssignmentExpression -> (lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve()
+    is GrConstructorInvocation -> advancedResolve()
+    else -> (this as? GrCall)?.advancedResolve()
+  }
+}

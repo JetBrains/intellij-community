@@ -16,7 +16,7 @@ class ParameterizedClosure(val parameter: GrParameter,
                            val typeParameters: List<PsiTypeParameter>,
                            val closureArguments: List<GrClosableBlock>,
                            newTypes: List<PsiType>) {
-  val types: MutableList<PsiType> = mutableListOf(*newTypes.toTypedArray())
+  val types: MutableList<PsiType> = newTypes.toMutableList()
   val delegatesToCombiner: DelegatesToCombiner = DelegatesToCombiner()
   private val closureParamsCombiner: ClosureParamsCombiner = ClosureParamsCombiner()
 

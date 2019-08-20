@@ -92,9 +92,10 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
 
   }
 
-
-  private fun Argument?.isReferenceTo(element: PsiElement) =
-    this is ExpressionArgument && expression.reference?.resolve() == element
+  companion object {
+    fun Argument?.isReferenceTo(element: PsiElement) =
+      this is ExpressionArgument && expression.reference?.resolve() == element
+  }
 
   private fun extractArgumentExpressions(method: GrMethod,
                                          targetParameters: Collection<GrParameter>,

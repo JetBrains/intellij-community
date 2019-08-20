@@ -11,20 +11,15 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.collectDependencies
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer.Companion.induceDeepConstraints
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.UPPER
 import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
 import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureTypeDeep
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>,
                                         private val method: GrMethod) : InferenceDriver {
@@ -48,24 +43,34 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   }
 
 
+  private fun produceParameterizedClosure(parameterMapping: Map<GrParameter, GrParameter>,
+                                          closureParameter: ParameterizedClosure,
+                                          substitutor: PsiSubstitutor,
+                                          manager: ParameterizationManager): ParameterizedClosure {
+    val newParameter = parameterMapping.getValue(closureParameter.parameter)
+    val newTypes = mutableListOf<PsiType>()
+    val newTypeParameters = mutableListOf<PsiTypeParameter>()
+    for (directInnerParameter in closureParameter.typeParameters) {
+      val substitutedType = substitutor.substitute(directInnerParameter)?.forceWildcardsAsTypeArguments()
+      val generifiedType = substitutedType ?: getJavaLangObject(closureParameter.parameter)
+      val (createdType, createdTypeParameters) = manager.createDeeplyParameterizedType(generifiedType)
+      newTypes.add(createdType)
+      newTypeParameters.addAll(createdTypeParameters)
+    }
+    return ParameterizedClosure(newParameter, newTypeParameters, closureParameter.closureArguments, newTypes)
+  }
+
+
   override fun createParameterizedDriver(manager: ParameterizationManager,
                                          targetMethod: GrMethod,
-                                         substitutor: PsiSubstitutor): ClosureDriver {
+                                         substitutor: PsiSubstitutor): InferenceDriver {
     val parameterMapping = setUpParameterMapping(method, targetMethod)
     val newClosureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
-    for ((parameter, closureParameter) in closureParameters) {
-      val newParameter = parameterMapping.getValue(parameter)
-      val newTypes = mutableListOf<PsiType>()
-      val newTypeParameters = mutableListOf<PsiTypeParameter>()
-      closureParameter.typeParameters.forEach { directInnerParameter ->
-        val innerParameterType = manager.createDeeplyParameterizedType(
-          substitutor.substitute(directInnerParameter)?.forceWildcardsAsTypeArguments()!!)
-        newTypes.add(innerParameterType.type)
-        newTypeParameters.addAll(innerParameterType.typeParameters)
-        innerParameterType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
-      }
-      val newClosureParameter = ParameterizedClosure(newParameter, newTypeParameters, closureParameter.closureArguments, newTypes)
-      newClosureParameters[newParameter] = newClosureParameter
+    val typeParameterList = targetMethod.typeParameterList ?: return EmptyDriver
+    for ((_, closureParameter) in closureParameters) {
+      val newClosureParameter = produceParameterizedClosure(parameterMapping, closureParameter, substitutor, manager)
+      newClosureParameter.typeParameters.forEach { typeParameterList.add(it) }
+      newClosureParameters[newClosureParameter.parameter] = newClosureParameter
     }
     return ClosureDriver(newClosureParameters, targetMethod)
   }
@@ -78,30 +83,33 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {
     val constraintCollector = mutableListOf<ConstraintFormula>()
     method.forEachParameterUsage { parameter, instructions ->
-      if (parameter in closureParameters.keys) {
-        collectClosureParametersConstraints(constraintCollector, closureParameters.getValue(parameter), instructions)
+      if (parameter in closureParameters) {
+        constraintCollector.addAll(extractConstraintsFromClosureInvocations(closureParameters.getValue(parameter), instructions))
       }
     }
     return constraintCollector
   }
 
 
-  override fun collectInnerConstraints(): TypeUsageInformation {
-    val typeInformation = closureParameters.values.flatMap { parameter ->
+  private fun collectDeepClosureArgumentsConstraints(): List<TypeUsageInformation> {
+    return closureParameters.values.flatMap { parameter ->
       parameter.closureArguments.map { closureBlock ->
         val newMethod = createMethodFromClosureBlock(closureBlock, parameter)
         val commonDriver = CommonDriver.createDirectlyFromMethod(newMethod)
         val usageInformation = commonDriver.collectInnerConstraints()
-        val mapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
+        val typeParameterMapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
+        val shiftedRequiredTypes = usageInformation.requiredClassTypes.map { (param, list) ->
+          typeParameterMapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
+        }.toMap()
         val newUsageInformation = usageInformation.run {
-          TypeUsageInformation(requiredClassTypes.map { (param, list) ->
-            mapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
-          }.toMap(), constraints, dependentTypes.map { mapping.getValue(it) }.toSet())
+          TypeUsageInformation(shiftedRequiredTypes, constraints, dependentTypes.map { typeParameterMapping.getValue(it) }.toSet())
         }
         newUsageInformation
       }
     }
-    val closureBodyAnalysisResult = TypeUsageInformation.merge(typeInformation)
+  }
+
+  private fun collectClosureInvocationConstraints(): TypeUsageInformation {
     val constraintCollector = mutableListOf<ConstraintFormula>()
     val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
     val dependentTypes = mutableSetOf<PsiTypeParameter>()
@@ -109,38 +117,18 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       if (parameter !in closureParameters.keys) {
         return@forEachParameterUsage
       }
-      collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes,
-                                       requiredTypesCollector)
-      collectDelegatesToDependencies(closureParameters.getValue(parameter), instructions)
-      val delegatesToCombiner = closureParameters.getValue(parameter).delegatesToCombiner
-      for (usage in instructions) {
-        val nearestCall = usage.element!!.parentOfType<GrCall>()
-        if (nearestCall != usage.element?.parent && nearestCall != usage.element?.parent?.parent) {
-          val reference = (usage.element!!.parentOfType<GrAssignmentExpression>()?.lValue as? GrReferenceExpression)?.lValueReference
-          val accessorResult = (reference?.advancedResolve() as? GroovyMethodResult) ?: continue
-          delegatesToCombiner.acceptResolveResult(accessorResult)
-        }
-        nearestCall ?: continue
-        if (nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
-          val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
-          delegatesToCombiner.acceptResolveResult(resolveResult)
-          if (nearestCall.resolveMethod()?.name == "call") {
-            val candidate = resolveResult.candidate ?: continue
-            val argumentCorrespondence =
-              closureParameters[parameter]?.types?.zip(candidate.argumentMapping?.arguments ?: continue) ?: continue
-            argumentCorrespondence.forEach { (type, argument) ->
-              constraintCollector.add(TypeConstraint(type, argument.type, method))
-              induceDeepConstraints(type, argument.type!!, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(), LOWER)
-            }
-          }
-        }
-      }
+      analyzeClosureUsages(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes, requiredTypesCollector)
     }
-    val closureParamsTypeInformation = TypeUsageInformation(
-      requiredTypesCollector.filter { it.key in closureParameters.flatMap { parameterizedClosure -> parameterizedClosure.value.typeParameters } },
+    return TypeUsageInformation(
+      requiredTypesCollector.filter { it.key in closureParameters.flatMap { (_, parameterizedClosure) -> parameterizedClosure.typeParameters } },
       constraintCollector,
       dependentTypes)
-    return TypeUsageInformation.merge(listOf(closureParamsTypeInformation, closureBodyAnalysisResult))
+  }
+
+  override fun collectInnerConstraints(): TypeUsageInformation {
+    val closureBodyAnalysisResult = TypeUsageInformation.merge(collectDeepClosureArgumentsConstraints())
+    val closureInvocationConstraints = collectClosureInvocationConstraints()
+    return closureInvocationConstraints + closureBodyAnalysisResult
   }
 
   private fun createMethodFromClosureBlock(body: GrClosableBlock,
