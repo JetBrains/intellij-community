@@ -855,4 +855,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                  "# no warning because `Literal[10]` as an expression has type `Any`\n" +
                  "a = Literal[10]  # type: Literal[0]");
   }
+
+  // PY-35235
+  public void testLiteralAgainstTypeVarBoundedWithTypingLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Literal\n" +
+                         "from typing import TypeVar\n" +
+                         "T = TypeVar('T', Literal[\"a\"], Literal[\"b\"], Literal[\"c\"])\n" +
+                         "\n" +
+                         "def repeat(x: T, n: int):\n" +
+                         "    return [x] * n\n" +
+                         "\n" +
+                         "repeat(\"c\", 2)")
+    );
+  }
 }
