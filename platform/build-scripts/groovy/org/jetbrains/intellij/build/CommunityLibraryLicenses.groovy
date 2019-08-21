@@ -461,13 +461,15 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
 
+    new LibraryLicense(libraryName: "ngram-slp", license: "MIT License", url: "https://github.com/SLP-team/SLP-Core",
+                       licenseUrl: "https://github.com/SLP-team/SLP-Core/blob/master/LICENSE"),
     new LibraryLicense(libraryName: "nosyncbuilder", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Okio", libraryName: "okio", license: "Apache 2.0",
                        url: "https://github.com/square/okio"),
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
-    
+
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", license: "Apache 2.0",
                        url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-classworlds", attachedTo: "intellij.maven.server.m30.impl", version: "2.4", license: "Apache 2.0",
