@@ -19,10 +19,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * <p>Takes extra caution w.r.t. an existing content. Specifically, if the operation fails for whatever reason
- * (like not enough disk space left), the prior content shall not be overwritten.</p>
+ * <p>Attempts to prevent data loss if OS crash happens during write.</p>
  *
- * <p><b>The class is not thread-safe</b> - use try-with-resources or equivalent try/finally statements to handle.</p>
+ * <p>The class creates a backup copy before overwriting the target file, and issues {@code fsync()} afterwards. The behavior is based
+ * on an assumption that after a crash either a target remains unmodified (i.e. unfinished write doesn't reach the disc),
+ * or a backup file exists along with a partially overwritten target file.</p>
+ *
+ * <p><b>The class is not thread-safe</b>; expected to be used within try-with-resources or an equivalent statement.</p>
  */
 public class SafeFileOutputStream extends OutputStream {
   private static final String DEFAULT_BACKUP_EXT = "~";
