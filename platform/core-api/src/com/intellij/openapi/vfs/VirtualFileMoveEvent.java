@@ -32,7 +32,7 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
                               @NotNull VirtualFile file,
                               @NotNull VirtualFile oldParent,
                               @NotNull VirtualFile newParent) {
-    super(requestor, file, file.getName(), file.getParent());
+    super(requestor, file, file.getParent(),0,0);
     myOldParent = oldParent;
     myNewParent = newParent;
   }

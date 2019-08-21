@@ -32,7 +32,7 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
   private final Object myNewValue;
 
   public VirtualFilePropertyEvent(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue){
-    super(requestor, file, file.getName(), file.getParent());
+    super(requestor, file, file.getParent(),0,0);
     myPropertyName = propertyName;
     myOldValue = oldValue;
     myNewValue = newValue;

@@ -14,14 +14,17 @@ import java.util.EventObject;
 public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final VirtualFile myFile;
-  private final String myFileName;
   private final VirtualFile myParent;
 
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
+  /**
+   * @deprecated Use {@link #VirtualFileEvent(Object, VirtualFile, VirtualFile, long, long)} instead
+   */
+  @Deprecated
   public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
-    this(requestor, file, fileName, parent, 0, 0);
+    this(requestor, file, parent, 0, 0);
   }
 
   public VirtualFileEvent(@Nullable Object requestor,
@@ -29,19 +32,9 @@ public class VirtualFileEvent extends EventObject {
                           @Nullable VirtualFile parent,
                           long oldModificationStamp,
                           long newModificationStamp) {
-    this(requestor, file, file.getName(), parent, oldModificationStamp, newModificationStamp);
-  }
-
-  private VirtualFileEvent(@Nullable Object requestor,
-                           @NotNull VirtualFile file,
-                           @NotNull String fileName,
-                           @Nullable VirtualFile parent,
-                           long oldModificationStamp,
-                           long newModificationStamp) {
     super(file);
     myRequestor = requestor;
     myFile = file;
-    myFileName = fileName;
     myParent = parent;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp;
@@ -60,7 +53,7 @@ public class VirtualFileEvent extends EventObject {
    */
   @NotNull
   public String getFileName() {
-    return myFileName;
+    return myFile.getName();
   }
 
   /**

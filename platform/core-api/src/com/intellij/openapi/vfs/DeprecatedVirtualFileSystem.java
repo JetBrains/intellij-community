@@ -67,13 +67,13 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   protected void fireFileCreated(@Nullable Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(),0,0);
     myEventDispatcher.getMulticaster().fileCreated(event);
   }
 
   protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, parent,0,0);
     myEventDispatcher.getMulticaster().fileDeleted(event);
   }
 
@@ -101,13 +101,13 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(),0,0);
     myEventDispatcher.getMulticaster().beforeContentsChange(event);
   }
 
   protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(),0,0);
     myEventDispatcher.getMulticaster().beforeFileDeletion(event);
   }
 
