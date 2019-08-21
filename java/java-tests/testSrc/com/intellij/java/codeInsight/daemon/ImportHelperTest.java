@@ -416,10 +416,11 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
       caretRight();
+      type(" ");
 
       doHighlighting();
 
-      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
     }
     finally {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
