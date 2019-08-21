@@ -360,7 +360,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @TestOnly
   public boolean isDefaultProjectInitialized() {
     return myDefaultProject.isCached();
   }
@@ -510,6 +509,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
+  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "deprecation"})
   void updateTheOnlyProjectField() {
     boolean isDefaultInitialized = isDefaultProjectInitialized();
     synchronized (lock) {
