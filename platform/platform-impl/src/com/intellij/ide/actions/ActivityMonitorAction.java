@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.management.*;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,10 +41,13 @@ class ActivityMonitorAction extends DumbAwareAction {
     ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
     List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();
+    OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+    Method getProcessCpuTime = Objects.requireNonNull(ReflectionUtil.getMethod(osBean.getClass().getInterfaces()[0], "getProcessCpuTime"));
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
       final TLongLongHashMap lastThreadTimes = new TLongLongHashMap();
       final TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
       long lastGcTime = totalGcTime();
+      long lastProcessTime = totalProcessTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
       long lastUiUpdate = System.currentTimeMillis();
 
@@ -78,6 +83,15 @@ class ActivityMonitorAction extends DumbAwareAction {
 
       private long totalGcTime() {
         return gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
+      }
+
+      private long totalProcessTime() {
+        try {
+          return (long)getProcessCpuTime.invoke(osBean);
+        }
+        catch (Exception ex) {
+          return 0;
+        }
       }
 
       @NotNull
@@ -198,6 +212,13 @@ class ActivityMonitorAction extends DumbAwareAction {
           times.add(Pair.create("<JIT compiler>", jitTime - lastJitTime));
           lastJitTime = jitTime;
         }
+
+        long processTime = totalProcessTime();
+        if (processTime != lastProcessTime) {
+          times.add(Pair.create("<Process total CPU usage>", TimeUnit.NANOSECONDS.toMillis(processTime - lastProcessTime)));
+          lastProcessTime = processTime;
+        }
+
         return times;
       }
 
