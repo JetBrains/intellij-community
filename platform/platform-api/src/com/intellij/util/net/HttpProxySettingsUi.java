@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
@@ -194,6 +196,19 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       myOtherWarning.setText(oldStyleText);
       myOtherWarning.setIcon(Messages.getWarningIcon());
     }
+  }
+
+  private void createUIComponents() {
+    myProxyExceptions = new RawCommandLineEditor(text -> {
+      List<String> result = new ArrayList<>();
+      for (String token : text.split(",")) {
+        String trimmedToken = token.trim();
+        if (!trimmedToken.isEmpty()) {
+          result.add(trimmedToken);
+        }
+      }
+      return result;
+    }, strings -> StringUtil.join(strings, ", "));
   }
 
   @NotNull
