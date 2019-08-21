@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -144,6 +145,8 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<? extends VcsRoot> roots, @NotNull Project project) {
+    if (roots.isEmpty()) return Collections.emptyMap();
+
     Map<VirtualFile, VcsLogProvider> logProviders = new HashMap<>();
     VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
     for (VcsRoot root : roots) {
