@@ -472,4 +472,15 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testSuperWildcardAsParameter() {
     doTest(true)
   }
+
+  void testWideSearch() {
+    myFixture.addFileToProject 'other.groovy', '''
+AA.foo(1)
+'''
+    doTextTest """
+class AA { static def fo<caret>o(a) {} }
+""", """
+class AA { static void fo<caret>o(Integer a) {} }
+"""
+  }
 }

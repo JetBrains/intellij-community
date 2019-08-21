@@ -226,7 +226,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
-      return compress(intersectionType?.conjuncts?.map { it.accept(this) })
+      return compress(intersectionType?.conjuncts?.filterNotNull()?.map { it.accept(this) })
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {

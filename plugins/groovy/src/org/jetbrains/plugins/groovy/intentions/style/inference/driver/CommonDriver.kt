@@ -37,7 +37,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
                                         searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
   private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
-
+  private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll() }
 
   companion object {
 
@@ -123,7 +123,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
                         parameterMapping[varargParameter],
                         newClosureDriver,
-                        originalMethod, typeParameters)
+                        originalMethod, typeParameters, scope)
   }
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {
@@ -139,7 +139,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
     val definitelySamParameters = mutableSetOf<GrParameter>()
     val mapping = setUpParameterMapping(originalMethod, method)
-    for (call in ReferencesSearch.search(originalMethod, scope).findAll().mapNotNull { it.element.parent }) {
+    for (call in calls.value.mapNotNull { it.element.parent }) {
       if (call is GrExpression) {
         constraintCollector.add(ExpressionConstraint(null, call))
         fetchSamCoercions(candidateSamParameters, definitelySamParameters, call, mapping)
@@ -199,7 +199,7 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     val typeUsageInformation = closureDriver.collectInnerConstraints()
     val analyzer = RecursiveMethodAnalyzer(method)
     analyzer.runAnalyzer(method)
-    analyzer.visitOuterCalls(originalMethod, scope)
+    analyzer.visitOuterCalls(originalMethod, calls.value)
     return analyzer.buildUsageInformation() + typeUsageInformation
   }
 

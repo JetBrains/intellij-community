@@ -3,8 +3,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
-import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
@@ -176,6 +174,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         visitClassParameters(bound)
         super.visitWildcardType(wildcardType)
       }
+
+      override fun visitPrimitiveType(primitiveType: PsiPrimitiveType?) {
+        primitiveType?.getBoxedType(context)?.accept(this)
+      }
     })
   }
 
@@ -241,10 +243,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     super.visitExpression(expression)
   }
 
-  fun visitOuterCalls(originalMethod: GrMethod, scope: SearchScope) {
+  fun visitOuterCalls(originalMethod: GrMethod, calls: Collection<PsiReference>) {
     val mapping = originalMethod.parameters.map { it.name }.zip(method.parameters).toMap()
     processCallInitializers()
-    val calls = ReferencesSearch.search(originalMethod, scope).findAll()
     for (outerCall in calls.mapNotNull { it.element.parent }) {
       val candidate = (outerCall.properResolve() as? GroovyMethodResult)?.candidate ?: continue
       val argumentMapping = candidate.argumentMapping ?: continue
