@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.junit.Assert;
 import org.junit.Test;
-import org.testng.TestNGForkedSplitter;
+import org.testng_rt.TestNGForkedSplitter;
 
 import java.io.File;
 import java.io.IOException;

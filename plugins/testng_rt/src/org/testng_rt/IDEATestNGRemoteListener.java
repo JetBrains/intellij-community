@@ -1,6 +1,8 @@
-package org.testng;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.testng_rt;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.testng.*;
 import org.testng.annotations.Test;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlClass;

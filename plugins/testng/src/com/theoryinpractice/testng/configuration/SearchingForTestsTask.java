@@ -17,11 +17,11 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.testng.TestNGXmlSuiteHelper;
 import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
 import org.testng.xml.XmlSuite;
+import org.testng_rt.TestNGXmlSuiteHelper;
 
 import java.io.*;
 import java.net.ServerSocket;

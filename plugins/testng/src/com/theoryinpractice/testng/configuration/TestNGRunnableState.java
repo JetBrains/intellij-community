@@ -40,8 +40,8 @@ import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
-import org.testng.IDEATestNGListener;
-import org.testng.RemoteTestNGStarter;
+import org.testng_rt.IDEATestNGListener;
+import org.testng_rt.RemoteTestNGStarter;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
+    javaParameters.setMainClass("org.testng_rt.RemoteTestNGStarter");
 
     try {
       port = NetUtils.findAvailableSocketPort();
