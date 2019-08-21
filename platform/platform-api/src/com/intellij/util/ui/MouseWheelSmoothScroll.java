@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
@@ -120,13 +119,7 @@ public class MouseWheelSmoothScroll {
     }
 
     public int getRefreshRate() {
-      int rate = 60;
-      if (!GraphicsEnvironment.isHeadless()) {
-        for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-          rate = max(device.getDisplayMode().getRefreshRate(), rate);
-        }
-      }
-      return rate;
+      return 60;
     }
 
     public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
