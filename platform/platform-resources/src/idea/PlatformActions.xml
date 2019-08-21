@@ -704,7 +704,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" popup="true" compact="true">
+      <group id="ToolsMenu" popup="true" compact="true" class="com.intellij.ide.IdeDependentActionGroup">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
