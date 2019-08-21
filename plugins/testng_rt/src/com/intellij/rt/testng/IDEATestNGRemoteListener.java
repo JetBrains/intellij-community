@@ -2,6 +2,7 @@
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.testng.*;
 import org.testng.annotations.Test;
 import org.testng.internal.ConstructorOrMethod;
@@ -250,7 +251,7 @@ public class IDEATestNGRemoteListener {
       attrs.put("message", "");
     }
     myPrintStream.println();
-    myPrintStream.println(MapSerializerUtil.asString("testFailed", attrs));
+    myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_FAILED, attrs));
     onTestFinished(result);
   }
 
