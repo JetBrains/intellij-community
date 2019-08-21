@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" />
   </component>
 </module>
