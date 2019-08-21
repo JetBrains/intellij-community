@@ -52,12 +52,17 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
      * otherwise returns type inferred by [context].
      */
     fun promoteToLiteral(expression: PyExpression, expected: PyType?, context: TypeEvalContext): PyType? {
-      return if (PyTypeUtil.toStream(if (expected is PyGenericType) expected.bound else expected).any { it is PyLiteralType }) {
-        fromLiteralValue(expression, context) ?: context.getType(expression)
+      if (PyTypeUtil.toStream(if (expected is PyGenericType) expected.bound else expected).any { it is PyLiteralType }) {
+        val value = if (expression is PyKeywordArgument) expression.valueExpression else expression
+        if (value != null) {
+          val literalType = fromLiteralValue(value, context)
+          if (literalType != null) {
+            return literalType
+          }
+        }
       }
-      else {
-        context.getType(expression)
-      }
+
+      return context.getType(expression)
     }
 
     private fun newInstance(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {

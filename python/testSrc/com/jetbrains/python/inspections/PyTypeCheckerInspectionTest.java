@@ -870,4 +870,16 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "repeat(\"c\", 2)")
     );
   }
+
+  // PY-35235
+  public void testKeywordArgumentAgainstTypingLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Literal\n" +
+                         "def f(a: Literal[\"b\"]):\n" +
+                         "    pass\n" +
+                         "f(a='b')\n" +
+                         "f(<warning descr=\"Expected type 'Literal[\\\"b\\\"]', got 'Literal['c']' instead\">a='c'</warning>)")
+    );
+  }
 }
