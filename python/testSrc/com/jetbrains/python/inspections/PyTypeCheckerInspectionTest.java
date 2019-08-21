@@ -893,4 +893,16 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "expects_str(var)")
     );
   }
+
+  // PY-35235
+  public void testNonPlainStringAsTypingLiteralValue() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import Literal\n" +
+                         "a: Literal[\"22\"] = f\"22\"\n" +
+                         "b: Literal[\"22\"] = <warning descr=\"Expected type 'Literal[\\\"22\\\"]', got 'Literal[f\\\"32\\\"]' instead\">f\"32\"</warning>\n" +
+                         "two = \"2\"\n" +
+                         "c: Literal[\"22\"] = <warning descr=\"Expected type 'Literal[\\\"22\\\"]', got 'str' instead\">f\"2{two}\"</warning>")
+    );
+  }
 }
