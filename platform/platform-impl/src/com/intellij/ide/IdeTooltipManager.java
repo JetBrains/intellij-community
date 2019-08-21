@@ -675,11 +675,16 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
+    return initPane(html, hintHint, layeredPane, true);
+  }
+
+  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
+                                     boolean limitWidthToScreen) {
     final Ref<Dimension> prefSize = new Ref<>(null);
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
 
     final boolean[] prefSizeWasComputed = {false};
-    final JEditorPane pane = new JEditorPane() {
+    final JEditorPane pane = limitWidthToScreen ? new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
@@ -706,7 +711,7 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
             setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
             Dimension fixedWidthSize = super.getPreferredSize();
             Dimension minSize = super.getMinimumSize();
-            prefSize.set(new Dimension(fitWidth > minSize.width ? fitWidth : minSize.width, fixedWidthSize.height));
+            prefSize.set(new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height));
           }
           else {
             prefSize.set(new Dimension(prefSizeOriginal));
@@ -726,7 +731,7 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
         super.setPreferredSize(preferredSize);
         prefSize.set(preferredSize);
       }
-    };
+    } : new JEditorPane();
 
     HTMLEditorKit kit = new JBHtmlEditorKit() {
       final HTMLFactory factory = new HTMLFactory() {
@@ -786,6 +791,8 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
     final boolean opaque = hintHint.isOpaqueAllowed();
     pane.setOpaque(opaque);
     pane.setBackground(hintHint.getTextBackground());
+
+    if (!limitWidthToScreen) AppUIUtil.targetToDevice(pane, layeredPane);
 
     return pane;
   }

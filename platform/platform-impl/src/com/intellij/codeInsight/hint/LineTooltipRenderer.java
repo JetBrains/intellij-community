@@ -79,7 +79,32 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                         boolean newLayout,
                                         boolean highlightActions,
                                         boolean hasSeparators) {
-    JPanel grid = new JPanel(new GridBagLayout()) {
+    int leftBorder = newLayout ? 10 : 8;
+    int rightBorder = 12;
+    class MyPanel extends JPanel implements WidthBasedLayout {
+      private MyPanel() {
+        super(new GridBagLayout());
+      }
+
+      @Override
+      public int getPreferredWidth() {
+        return getPreferredSize().width;
+      }
+
+      @Override
+      public int getPreferredHeight(int width) {
+        Dimension size = editorPane.getSize();
+        editorPane.setSize(width - leftBorder - rightBorder, Math.max(1, size.height));
+        int height;
+        try {
+          height = getPreferredSize().height;
+        }
+        finally {
+          editorPane.setSize(size);
+        }
+        return height;
+      }
+
       @Override
       public AccessibleContext getAccessibleContext() {
         return new AccessibleContextDelegate(editorPane.getAccessibleContext()) {
@@ -89,7 +114,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
         };
       }
-    };
+    }
+    JPanel grid = new MyPanel();
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
       //weight is required for correct working scrollpane inside gridbaglayout
@@ -98,9 +124,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .fillCell();
 
     pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6,
-                                      newLayout ? 10 : 8,
+                                      leftBorder,
                                       newLayout ? (highlightActions ? 10 : (hasSeparators ? 8 : 3)) : 6,
-                                      12));
+                                      rightBorder));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -115,7 +141,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
-    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, Registry.is("editor.new.mouse.hover.popups"), true, null);
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, Registry.is("editor.new.mouse.hover.popups"), true, true,
+                                      null);
     if (hint != null) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                                         HintManager.HIDE_BY_TEXT_CHANGE |
@@ -132,6 +159,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                     @NotNull final HintHint hintHint,
                                     boolean newLayout,
                                     boolean highlightActions,
+                                    boolean limitWidthToScreen,
                                     @Nullable TooltipReloader tooltipReloader) {
     if (myText == null) return null;
 
@@ -148,7 +176,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane);
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane,
+                                                        limitWidthToScreen);
     editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
