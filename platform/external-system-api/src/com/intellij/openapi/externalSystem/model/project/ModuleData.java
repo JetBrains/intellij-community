@@ -255,7 +255,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     } else {
       final String name = getInternalName();
       if (name.lastIndexOf(".") > 0) {
-        return substringBeforeLast(name, ".");
+        return substringBeforeLast(name, "." + getExternalName());
       } else {
         return null;
       }
