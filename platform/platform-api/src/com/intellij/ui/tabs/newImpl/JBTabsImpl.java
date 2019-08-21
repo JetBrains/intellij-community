@@ -2664,7 +2664,7 @@ public class JBTabsImpl extends JComponent
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
     }
-    c.revalidate();
+    c.doLayout();
     c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
 
     return bounds;
