@@ -32,7 +32,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();
 
-  private final Map<Language, ModificationTracker> myLanguageTrackers =
+  private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
+  private final Map<Language, SimpleModificationTracker> myLanguageTrackers =
     ConcurrentFactoryMap.createMap(language -> new SimpleModificationTracker());
 
   private final Listener myPublisher;
@@ -94,15 +95,12 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private void incLanguageCounters(@NotNull PsiTreeChangeEventImpl event) {
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     String propertyName = event.getPropertyName();
-    boolean allLanguages =
-      code == PROPERTY_CHANGED && (propertyName == PsiTreeChangeEvent.PROP_UNLOADED_PSI ||
-                                   propertyName == PsiTreeChangeEvent.PROP_ROOTS ||
-                                   propertyName == PsiTreeChangeEvent.PROP_FILE_TYPES);
 
-    if (allLanguages) {
-      for (ModificationTracker tracker : myLanguageTrackers.values()) {
-        ((SimpleModificationTracker)tracker).incModificationCount();
-      }
+    if (code == PROPERTY_CHANGED &&
+        (propertyName == PsiTreeChangeEvent.PROP_UNLOADED_PSI ||
+         propertyName == PsiTreeChangeEvent.PROP_ROOTS ||
+         propertyName == PsiTreeChangeEvent.PROP_FILE_TYPES)) {
+      myAllLanguagesTracker.incModificationCount();
       return;
     }
     PsiElement[] elements = {
@@ -160,20 +158,22 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;
-    ((SimpleModificationTracker)myLanguageTrackers.get(language)).incModificationCount();
+    myLanguageTrackers.get(language).incModificationCount();
   }
 
   @ApiStatus.Experimental
   @NotNull
   public ModificationTracker forLanguage(@NotNull Language language) {
-    return myLanguageTrackers.get(language);
+    SimpleModificationTracker languageTracker = myLanguageTrackers.get(language);
+    return () -> languageTracker.getModificationCount() +
+                 myAllLanguagesTracker.getModificationCount();
   }
 
   @ApiStatus.Experimental
   @NotNull
   public ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
     return () -> {
-      long result = 0;
+      long result = myAllLanguagesTracker.getModificationCount();
       for (Language l : myLanguageTrackers.keySet()) {
         if (!condition.value(l)) continue;
         result += myLanguageTrackers.get(l).getModificationCount();
