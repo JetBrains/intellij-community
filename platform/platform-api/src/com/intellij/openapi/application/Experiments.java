@@ -22,6 +22,10 @@ public final class Experiments {
 
   @NotNull
   public static Experiments getInstance() {
+    if (ApplicationManager.getApplication() == null) {
+      //usages from UI Designer preview where no application available
+      return new Experiments();
+    }
     return ServiceManager.getService(Experiments.class);
   }
 
