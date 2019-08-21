@@ -85,4 +85,10 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     super.disposeUIResources();
     myBuilder.disposeUIResources();
   }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "Import_from_Gradle_Page_1";
+  }
 }
