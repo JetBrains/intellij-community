@@ -1,8 +1,8 @@
 package com.intellij.coverage.listeners;
 
+import com.intellij.rt.testng.IDEATestNGListener;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
-import org.testng_rt.IDEATestNGListener;
 
 public class IDEATestNGCoverageListener extends CoverageListener implements IDEATestNGListener {
 

@@ -78,10 +78,10 @@
       <externalSystem.runConfigurationImporter implementation="com.theoryinpractice.testng.configuration.TestNGRunConfigurationImporter"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
-    <listener implementation="org.testng_rt.TestNGTestDiscoveryListener"/>
+    <listener implementation="com.intellij.rt.testng.TestNGTestDiscoveryListener"/>
   </extensions>
     <extensionPoints >
-      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng_rt.IDEATestNGListener"/>
+      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="com.intellij.rt.testng.IDEATestNGListener"/>
     </extensionPoints>
 
   <actions>

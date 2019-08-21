@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.testng_rt;
+package com.intellij.rt.testng;
 
 
 import org.testng.CommandLineArgs;
@@ -81,11 +81,11 @@ public class IDEARemoteTestNG extends TestNG {
     addListener((Object)new IDEATestNGSuiteListener(listener));
     addListener((Object)new IDEATestNGTestListener(listener));
     try {
-      Class<?> configClass = Class.forName("org.testng_rt.IDEATestNGConfigurationListener");
+      Class<?> configClass = Class.forName("com.intellij.rt.testng.IDEATestNGConfigurationListener");
       Object configurationListener = configClass.getConstructor(new Class[] {IDEATestNGRemoteListener.class}).newInstance(listener);
       addListener(configurationListener);
 
-      Class<?> invokeClass = Class.forName("org.testng_rt.IDEATestNGInvokedMethodListener");
+      Class<?> invokeClass = Class.forName("com.intellij.rt.testng.IDEATestNGInvokedMethodListener");
       Object invokedMethodListener = invokeClass.getConstructor(new Class[]{IDEATestNGRemoteListener.class}).newInstance(listener);
       addListener(invokedMethodListener);
 

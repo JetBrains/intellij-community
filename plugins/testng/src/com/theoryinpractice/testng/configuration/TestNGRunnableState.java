@@ -34,14 +34,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
+import com.intellij.rt.testng.IDEATestNGListener;
+import com.intellij.rt.testng.RemoteTestNGStarter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
-import org.testng_rt.IDEATestNGListener;
-import org.testng_rt.RemoteTestNGStarter;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass("org.testng_rt.RemoteTestNGStarter");
+    javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
 
     try {
       port = NetUtils.findAvailableSocketPort();

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.rt.testng.TestNGXmlSuiteHelper;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -21,7 +22,6 @@ import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
 import org.testng.xml.XmlSuite;
-import org.testng_rt.TestNGXmlSuiteHelper;
 
 import java.io.*;
 import java.net.ServerSocket;

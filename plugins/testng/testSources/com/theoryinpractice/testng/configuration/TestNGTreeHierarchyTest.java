@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.testng.IDEATestNGRemoteListener;
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,6 @@ import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
-import org.testng_rt.IDEATestNGRemoteListener;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
