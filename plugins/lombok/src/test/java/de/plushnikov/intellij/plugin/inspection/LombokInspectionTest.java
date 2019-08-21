@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -29,6 +30,8 @@ public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
     final Disposable projectDisposable = myFixture.getProjectDisposable();
     VfsRootAccess.allowRootAccess(projectDisposable, lombokLibPath);
     PsiTestUtil.addLibrary(projectDisposable, getModule(), "Lombok Library", lombokLibPath, "lombok.jar");
+
+    Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
   }
 
   @NotNull

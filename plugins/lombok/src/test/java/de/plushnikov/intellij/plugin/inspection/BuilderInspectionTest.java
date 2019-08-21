@@ -14,6 +14,10 @@ public class BuilderInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
+  public void testBuilderDefaultValue() {
+    doTest();
+  }
+
   public void testBuilderInvalidIdentifier() {
     doTest();
   }
@@ -22,19 +26,15 @@ public class BuilderInspectionTest extends LombokInspectionTest {
     doTest();
   }
 
+  public void testBuilderDefaultsWarnings() {
+    doTest();
+  }
+
   public void testBuilderInvalidUse() {
     doTest();
   }
 
   public void testBuilderObtainVia() {
-    doTest();
-  }
-
-  public void testBuilderDefaultsWarnings() {
-    doTest();
-  }
-
-  public void testBuilderDefaultValue() {
     doTest();
   }
 }
