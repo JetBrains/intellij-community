@@ -14,6 +14,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -44,7 +45,8 @@ public class GitCherryPicker extends VcsCherryPicker {
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
-      Git.getInstance().cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit)),
+      Git.getInstance().cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
+                                   listeners.toArray(new GitLineHandlerListener[0])),
       result -> isNothingToCommitMessage(result),
       (repository, commit) -> createCommitMessage(repository, commit),
       true,
