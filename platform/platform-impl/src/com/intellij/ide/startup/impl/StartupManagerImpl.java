@@ -26,22 +26,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
@@ -49,7 +44,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -79,7 +73,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
-  private boolean myInitialRefreshScheduled;
   private ScheduledFuture<?> myBackgroundPostStartupScheduledFuture;
 
   public StartupManagerImpl(@NotNull Project project) {
@@ -316,33 +309,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
   }
 
-  public void scheduleInitialVfsRefresh() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed() || myInitialRefreshScheduled) return;
-
-      myInitialRefreshScheduled = true;
-      ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
-
-      Application app = ApplicationManager.getApplication();
-      if (!app.isCommandLine()) {
-        long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-        MessageBusConnection connection = app.getMessageBus().connect();
-        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-          @Override
-          public void afterProjectClosed(@NotNull Project project) {
-            if (project == myProject) {
-              RefreshQueue.getInstance().cancelSession(sessionId);
-              connection.disconnect();
-            }
-          }
-        });
-      }
-      else {
-        VirtualFileManager.getInstance().syncRefresh();
-      }
-    }, ModalityState.defaultModalityState());
-  }
-
   private void checkFsSanity() {
     try {
       String path = myProject.getProjectFilePath();
@@ -416,36 +382,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       ProjectFsStatsCollector.watchedRoots(myProject, pctNonWatched);
     });
-  }
-
-  public void startCacheUpdate() {
-    if (myProject.isDisposed()) return;
-
-    try {
-      DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        // pre-startup activities have registered dumb tasks that load VFS (scanning files to index)
-        // only after these tasks pass does VFS refresh make sense
-        dumbService.queueTask(new DumbModeTask() {
-          @Override
-          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-            scheduleInitialVfsRefresh();
-          }
-
-          @Override
-          public String toString() {
-            return "initial refresh";
-          }
-        });
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
   }
 
   private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {

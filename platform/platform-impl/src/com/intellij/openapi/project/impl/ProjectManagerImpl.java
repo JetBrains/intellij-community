@@ -420,12 +420,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
         StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
         startupManager.runStartupActivities();
-
-        // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
-        // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
-        // Post-startup activities should not ever see unindexed and at the same time non-dumb state
-        TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
-
         startupManager.runPostStartupActivitiesFromExtensions();
 
         GuiUtils.invokeLaterIfNeeded(() -> {
