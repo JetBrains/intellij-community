@@ -191,7 +191,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.testng") {
       mainJarName = "testng-plugin.jar"
-      withModule("intellij.testng.rt", mainJarName)
+      withModule("intellij.testng.rt", "testng-rt.jar")
       withProjectLibrary("TestNG")
     },
     plugin("intellij.devkit") {
