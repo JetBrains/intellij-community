@@ -816,7 +816,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       builders = null;
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      long startM = System.nanoTime();
+
+      openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
+
+      long endM = System.nanoTime();
+      System.out.println("open4: " + (endM - startM) / 1_000_000.);
+
+    });
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
