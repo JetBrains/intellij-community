@@ -461,6 +461,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
 
+    new LibraryLicense(libraryName: "ngram-slp", license: "MIT License", url: "https://github.com/SLP-team/SLP-Core",
+                       licenseUrl: "https://github.com/SLP-team/SLP-Core/blob/master/LICENSE"),
     new LibraryLicense(libraryName: "nosyncbuilder", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
