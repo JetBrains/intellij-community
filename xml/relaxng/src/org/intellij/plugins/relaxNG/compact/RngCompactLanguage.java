@@ -22,8 +22,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -141,14 +139,6 @@ public class RngCompactLanguage extends Language {
         }
       }
       return null;
-    }
-  }
-
-  public static class MySyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-    @Override
-    @NotNull
-    protected SyntaxHighlighter createHighlighter() {
-      return new RncHighlighter();
     }
   }
 }

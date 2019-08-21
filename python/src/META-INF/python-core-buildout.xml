@@ -8,6 +8,7 @@
     <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
 
     <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
+    <lang.syntaxHighlighter language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgSyntaxHighlighter"/>
     <fileType name="BuildoutCfg"
               language="BuildoutCfg"
               fileNamesCaseInsensitive="buildout.cfg"
