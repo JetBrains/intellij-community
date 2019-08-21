@@ -21,27 +21,24 @@ class InferredDelegatesToProvider : GrDelegatesToProvider {
   override fun getDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
     val call = getContainingCall(expression) ?: return null
     val result = call.advancedResolve() as? GroovyMethodResult ?: return null
-    val method = (result.element as? GrMethod)
-                   ?.takeIf { method -> method.parameters.any { it.typeElement == null } } ?: return null
-
-    val (virtualMethod, substitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
-    if (virtualMethod == null) {
+    val method = result.element as? GrMethod ?: return null
+    if (method.parameters.all { it.typeElement != null }) {
       return null
     }
+    val (virtualMethod, substitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
+    virtualMethod ?: return null
     val argumentMapping = result.candidate?.argumentMapping ?: return null
     val parameterMapping = setUpParameterMapping(method, virtualMethod)
     val targetParameter = argumentMapping.targetParameter(ExpressionArgument(expression)) as? GrParameter ?: return null
-    val virtualParameter = virtualMethod.parameters[method.parameterList.getParameterNumber(targetParameter)]!!
+    val virtualParameter = virtualMethod.parameters[method.parameterList.getParameterNumber(targetParameter)] ?: return null
     val delegatesTo = virtualParameter.modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO) ?: return null
     val strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"))
-    val delegateType = if (strategyValue == Closure.OWNER_ONLY || strategyValue == Closure.TO_SELF) {
-      null
-    }
-    else {
+    val delegateType = if (strategyValue != Closure.OWNER_ONLY && strategyValue != Closure.TO_SELF) {
       getFromValue(delegatesTo)
       ?: getFromVirtualTarget(virtualMethod.parameterList, delegatesTo, argumentMapping, parameterMapping)
       ?: getFromType(call, result, delegatesTo)
     }
+    else null
     return DelegatesToInfo(substitutor.substitute(delegateType), strategyValue)
   }
 

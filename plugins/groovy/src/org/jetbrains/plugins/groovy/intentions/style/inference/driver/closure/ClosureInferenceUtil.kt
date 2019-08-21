@@ -324,26 +324,37 @@ private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClos
   }
 }
 
+private val closureParamsShort = GROOVY_TRANSFORM_STC_CLOSURE_PARAMS.substringAfterLast('.')
+
 fun inferTypeFromTypeHint(parameter: GrParameter): PsiType? {
   val closureBlock = getBlock(parameter) ?: return null
   val index = if (parameter is ClosureSyntheticParameter) 0 else closureBlock.parameterList.getParameterNumber(parameter)
   val methodCall = closureBlock.parentOfType<GrCall>() ?: return null
   val method = (methodCall.resolveMethod() as? GrMethod)
-                 ?.takeIf { method -> method.parameters.any { it.typeElement == null } } ?: return null
-  val (virtualMethod, substitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
+  method?.takeIf { it.parameters.any { parameter -> parameter.typeElement == null } } ?: return null
+  val (virtualMethod, virtualToActualSubstitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
+  virtualMethod ?: return null
   val resolveResult = methodCall.advancedResolve() as? GroovyMethodResult ?: return null
+  val virtualParameter = getVirtualParameter(resolveResult, closureBlock, virtualMethod) ?: return null
+  val completeContextSubstitutor = virtualToActualSubstitutor compose resolveResult.substitutor
+  val anno = virtualParameter.modifierList.annotations.find { it.shortName == closureParamsShort } ?: return null
+  val signatures = getSignatures(anno, completeContextSubstitutor, virtualMethod) ?: return null
+  val parameters = closureBlock.allParameters
+  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(index)
+}
+
+private fun getVirtualParameter(resolveResult: GroovyMethodResult, closureBlock: GrClosableBlock, virtualMethod: GrMethod): GrParameter? {
+  val method = resolveResult.candidate?.method ?: return null
   val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
     ExpressionArgument(closureBlock)) as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
-  val virtualParameter = virtualMethod?.parameters?.getOrNull(method.parameterList.getParameterNumber(methodParameter)) ?: return null
-  val anno = virtualParameter.modifierList.annotations.find { it.qualifiedName == GROOVY_TRANSFORM_STC_CLOSURE_PARAMS }
-             ?: return null
+  return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter)) ?: return null
+}
+
+private fun getSignatures(anno: PsiAnnotation, substitutor: PsiSubstitutor, virtualMethod: GrMethod): List<Array<out PsiType>>? {
   val className = (anno.findAttributeValue("value") as? GrReferenceExpression)?.qualifiedReferenceName ?: return null
   val processor = SignatureHintProcessor.getHintProcessor(className) ?: return null
   val options = AnnotationUtil.arrayAttributeValues(anno.findAttributeValue("options")).mapNotNull { (it as? PsiLiteral)?.stringValue() }
-  val completeContextSubstitutor = substitutor compose resolveResult.substitutor
-  val signatures = processor.inferExpectedSignatures(virtualMethod, completeContextSubstitutor, options.toTypedArray())
-  val parameters = closureBlock.allParameters
-  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(index)
+  return processor.inferExpectedSignatures(virtualMethod, substitutor, options.toTypedArray())
 }
 
 
