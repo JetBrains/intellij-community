@@ -727,12 +727,14 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<ModuleData> findModuleData(@NotNull Module module,
                                                     @NotNull ProjectSystemId systemId) {
+    String moduleId = getExternalProjectId(module);
+    if (moduleId == null) return null;
     String externalProjectPath = getExternalProjectPath(module);
     if (externalProjectPath == null) return null;
     Project project = module.getProject();
     DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
     if (projectNode == null) return null;
-    return find(projectNode, ProjectKeys.MODULE, node -> externalProjectPath.equals(node.getData().getLinkedExternalProjectPath()));
+    return find(projectNode, ProjectKeys.MODULE, node -> node.getData().getId() == moduleId);
   }
 
   @ApiStatus.Experimental
@@ -753,9 +755,8 @@ public class ExternalSystemApiUtil {
     AbstractExternalSystemSettings settings = getSettings(project, systemId);
     ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return null;
-    return ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
-      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
-      .findFirst().orElse(null);
+    String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
+    return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
   }
 
   /**
