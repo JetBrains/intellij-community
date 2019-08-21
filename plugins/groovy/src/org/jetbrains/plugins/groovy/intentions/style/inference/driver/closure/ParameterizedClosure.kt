@@ -5,12 +5,9 @@ import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class ParameterizedClosure(val parameter: GrParameter,
                            val typeParameters: List<PsiTypeParameter>,
@@ -21,9 +18,8 @@ class ParameterizedClosure(val parameter: GrParameter,
   private val closureParamsCombiner: ClosureParamsCombiner = ClosureParamsCombiner()
 
   fun renderTypes(outerParameters: PsiParameterList,
-                  substitutor: PsiSubstitutor,
-                  typeParameters: Map<PsiTypeParameter, List<PsiTypeParameter>>): List<AnnotatingResult> {
-    substituteTypes(substitutor, typeParameters)
+                  substitutor: PsiSubstitutor): List<AnnotatingResult> {
+    substituteTypes(substitutor)
     val closureParamsAnnotation = closureParamsCombiner.instantiateAnnotation(outerParameters, types)
     val delegatesToAnnotations = delegatesToCombiner.instantiateAnnotation(outerParameters)
     val primaryAnnotations = listOf(delegatesToAnnotations.first, closureParamsAnnotation).mapNotNull {
@@ -33,19 +29,9 @@ class ParameterizedClosure(val parameter: GrParameter,
   }
 
 
-  private fun substituteTypes(resultSubstitutor: PsiSubstitutor,
-                              typeParametersDependencies: Map<PsiTypeParameter, List<PsiTypeParameter>>) {
+  private fun substituteTypes(resultSubstitutor: PsiSubstitutor) {
     val substitutedTypes = types.map { parameterType ->
-      val dependencies = typeParametersDependencies
-        .filter { it.key.type() != parameterType }
-        .flatMap { it.value.map(PsiTypeParameter::type) }.toSet()
-      if (dependencies.contains(parameterType) || !resultSubstitutor.substitute(parameterType).equalsToText(parameterType.canonicalText)) {
-        resultSubstitutor.recursiveSubstitute(parameterType)
-      }
-      else {
-        resultSubstitutor.recursiveSubstitute(parameterType).typeParameter()?.extendsListTypes?.firstOrNull() ?: getJavaLangObject(
-          parameter)
-      }
+      resultSubstitutor.recursiveSubstitute(parameterType)
     }
     types.clear()
     types.addAll(substitutedTypes)

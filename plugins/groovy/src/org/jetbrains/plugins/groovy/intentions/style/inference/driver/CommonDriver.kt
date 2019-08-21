@@ -115,11 +115,11 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     }
     val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
     val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, scope)
-    val subst = closureDriver.collectSignatureSubstitutor()
-    val virtualToActual = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
+    val signatureSubstitutor = closureDriver.collectSignatureSubstitutor()
+    val virtualToActualSubstitutor = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
     val erasureSubstitutor = RecursiveMethodAnalyzer.methodTypeParametersErasureSubstitutor(targetMethod)
     val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod,
-                                                                   subst compose (virtualToActual compose erasureSubstitutor))
+                                                                   signatureSubstitutor compose (virtualToActualSubstitutor compose erasureSubstitutor))
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
                         parameterMapping[varargParameter],
                         newClosureDriver,

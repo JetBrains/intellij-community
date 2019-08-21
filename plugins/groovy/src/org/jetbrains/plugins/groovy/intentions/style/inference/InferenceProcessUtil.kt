@@ -130,41 +130,6 @@ fun unreachable(): Nothing {
 fun <T, U> cartesianProduct(leftRange: Iterable<T>, rightRange: Iterable<U>): List<Pair<T, U>> =
   leftRange.flatMap { left -> rightRange.map { left to it } }
 
-
-fun collectDependencies(typeParameterList: PsiTypeParameterList,
-                        resultSubstitutor: PsiSubstitutor): Map<PsiTypeParameter, List<PsiTypeParameter>> {
-  class LocalVisitor : PsiTypeVisitor<Unit>() {
-    val collector = mutableListOf<PsiTypeParameter>()
-    override fun visitClassType(classType: PsiClassType?) {
-      classType ?: return
-      val clazz = classType.resolve()
-      if (clazz is PsiTypeParameter) {
-        if (clazz !in collector) {
-          collector.add(clazz)
-          resultSubstitutor.substitute(clazz)!!.accept(this)
-        }
-      }
-      else {
-        classType.parameters.forEach { it?.accept(this) }
-      }
-      super.visitClassType(classType)
-    }
-
-    override fun visitWildcardType(wildcardType: PsiWildcardType?) {
-      wildcardType ?: return
-      wildcardType.bound?.accept(this)
-      super.visitWildcardType(wildcardType)
-    }
-
-    fun collect(type: PsiType): List<PsiTypeParameter> {
-      type.accept(this)
-      return collector
-    }
-  }
-
-  return typeParameterList.typeParameters.map { it to LocalVisitor().collect(resultSubstitutor.substitute(it)!!) }.toMap()
-}
-
 fun PsiType?.isTypeParameter(): Boolean {
   return this.resolve() is PsiTypeParameter
 }

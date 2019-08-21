@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.Cl
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -241,6 +242,23 @@ private fun findTargetParameter(annotation: PsiAnnotation, methodParameters: Ite
   else {
     return delegatingParameters.firstOrNull()?.first
   }
+}
+
+internal fun createMethodFromClosureBlock(body: GrClosableBlock,
+                                          param: ParameterizedClosure,
+                                          typeParameterList: PsiTypeParameterList): GrMethod {
+  val enrichedBodyParameters = if (param.types.size == 1 && body.parameters.isEmpty()) listOf("it") else body.parameters.map { it.name }
+  val parameters = param.types
+    .zip(enrichedBodyParameters)
+    .joinToString { (type, name) -> type.canonicalText + " " + name }
+  val statements = body.statements.joinToString("\n") { it.text }
+  return GroovyPsiElementFactory
+    .getInstance(typeParameterList.project)
+    .createMethodFromText("""
+        def ${typeParameterList.text} void unique_named_method($parameters) {
+          $statements
+        }
+      """.trimIndent(), typeParameterList)
 }
 
 private fun extractIntRepresentation(attribute: PsiAnnotationMemberValue): String? {
