@@ -70,7 +70,8 @@ public final class PreviewFormAction extends AnAction{
    * The problem is that this class is in a default package so it's not
    * import this class to refer
    */
-  private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
+  private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
+  private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
@@ -167,11 +168,11 @@ public final class PreviewFormAction extends AnAction{
       try {
         PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, finder);
 
-        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
+        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME, true);
         //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyExitAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyPackAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MySetLafAction", true);
 
         Locale locale = Locale.getDefault();
         if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
@@ -297,7 +298,7 @@ public final class PreviewFormAction extends AnAction{
       );
       return;
     }
-    parameters.setMainClass("FormPreviewFrame");
+    parameters.setMainClass(CLASS_TO_BIND_NAME);
     parameters.setWorkingDirectory(tempPath);
     if (stringDescriptorLocale != null && stringDescriptorLocale.getDisplayName().length() > 0) {
       parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
