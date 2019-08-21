@@ -137,9 +137,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createCheckinEnvironment} method
-   * this method wraps created environment with a listener
-   *
    * Returns the interface for performing checkin / commit / submit operations.
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
@@ -158,9 +155,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createRollbackEnvironment()} method
-   * this method wraps created environment with a listener
-   *
    * @return the rollback interface, or null if rollbacks are not supported by the VCS.
    */
   @Nullable
@@ -191,9 +185,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createUpdateEnvironment()} method
-   * this method wraps created environment with a listener
-   *
    * @return the update interface, or null if the updates are not supported by the VCS.
    */
   @Nullable

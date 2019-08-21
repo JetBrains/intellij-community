@@ -37,7 +37,10 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
-import git4idea.config.*;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableProblemsNotifier;
+import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -73,15 +76,9 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  @Nullable private final ChangeProvider myChangeProvider;
-  @Nullable private final GitCheckinEnvironment myCheckinEnvironment;
-  private final GitUpdateEnvironment myUpdateEnvironment;
-  private final GitCommittedChangeListProvider myCommittedChangeListProvider;
-
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-  @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private GitBranchWidget myBranchWidget;
 
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
@@ -93,13 +90,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   public GitVcs(@NotNull Project project) {
     super(project, NAME);
-
-    myChangeProvider = project.isDefault() ? null : project.getService(GitChangeProvider.class);
-    myCheckinEnvironment = project.isDefault() ? null : ServiceManager.getService(project, GitCheckinEnvironment.class);
-    myUpdateEnvironment = new GitUpdateEnvironment(myProject, GitVcsSettings.getInstance(project));
-    myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
-    myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
-    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor() : null;
   }
 
   public ReadWriteLock getCommandLock() {
@@ -117,7 +107,7 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return myCommittedChangeListProvider;
+    return myProject.getService(GitCommittedChangeListProvider.class);
   }
 
   @Override
@@ -128,8 +118,9 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @Nullable
-  public CheckinEnvironment createCheckinEnvironment() {
-    return myCheckinEnvironment;
+  public CheckinEnvironment getCheckinEnvironment() {
+    if (myProject.isDefault()) return null;
+    return myProject.getService(GitCheckinEnvironment.class);
   }
 
   @NotNull
@@ -140,7 +131,7 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public RollbackEnvironment createRollbackEnvironment() {
+  public RollbackEnvironment getRollbackEnvironment() {
     return myProject.getService(GitRollbackEnvironment.class);
   }
 
@@ -163,8 +154,8 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @Nullable
-  public UpdateEnvironment createUpdateEnvironment() {
-    return myUpdateEnvironment;
+  public UpdateEnvironment getUpdateEnvironment() {
+    return myProject.getService(GitUpdateEnvironment.class);
   }
 
   @Override
@@ -257,7 +248,8 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @Nullable
   public ChangeProvider getChangeProvider() {
-    return myChangeProvider;
+    if (myProject.isDefault()) return null;
+    return myProject.getService(GitChangeProvider.class);
   }
 
   /**
@@ -312,11 +304,9 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
     return VcsType.distributed;
   }
 
-  private final VcsOutgoingChangesProvider<CommittedChangeList> myOutgoingChangesProvider;
-
   @Override
   protected VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
-    return myOutgoingChangesProvider;
+    return myProject.getService(GitOutgoingChangesProvider.class);
   }
 
   @Override
@@ -326,9 +316,8 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return myCommitAndPushExecutor != null
-           ? Collections.singletonList(myCommitAndPushExecutor)
-           : Collections.emptyList();
+    if (myProject.isDefault()) return Collections.emptyList();
+    return Collections.singletonList(myProject.getService(GitCommitAndPushExecutor.class));
   }
 
 
