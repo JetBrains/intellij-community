@@ -40,8 +40,8 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
     PlatformTestUtil.startPerformanceTest("7 unrelated intersection conjuncts", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
-  public void testLongQualifiersChainInsideLambda() {
-    PlatformTestUtil.startPerformanceTest("long qualifiers chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
+  public void testLongQualifierChainInsideLambda() {
+    PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
   private void doTest() {
