@@ -128,7 +128,10 @@ public class ProgressSuspender implements AutoCloseable {
   }
 
   private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+    if (current == null ||
+        current instanceof NonCancelableIndicator ||
+        ourApp.isReadAccessAllowed() ||
+        !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
       return false;
     }
 
