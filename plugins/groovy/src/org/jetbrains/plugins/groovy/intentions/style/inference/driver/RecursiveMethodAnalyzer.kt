@@ -45,6 +45,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private val javaLangObject = getJavaLangObject(method)
 
   private fun generateRequiredTypes(typeParameter: PsiTypeParameter, type: PsiType, marker: ContainMarker) {
+    if (type == javaLangObject && marker == UPPER) return
     val bindingTypes = expandWildcards(type, typeParameter)
     bindingTypes.forEach { addRequiredType(typeParameter, BoundConstraint(it, marker)) }
   }
@@ -338,7 +339,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
     constraintsCollector.add(ExpressionConstraint(returnType, expression))
     val typeParameter = expression.type.typeParameter() ?: return
-    addRequiredType(typeParameter, BoundConstraint(returnType, UPPER))
+    generateRequiredTypes(typeParameter, returnType, UPPER)
   }
 
 
