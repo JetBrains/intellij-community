@@ -25,9 +25,12 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.changes.GitChangeUtils
-import git4idea.commands.*
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitLineHandlerListener
+import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -53,7 +56,6 @@ class GitApplyChangesProcess(private val project: Project,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
-  private val git = Git.getInstance()
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
@@ -113,9 +115,9 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (conflictDetector.hasHappened()) {
-          val mergeCompleted = ConflictResolver(project, git, repository.root,
-                                                commit.id.toShortString(), VcsUserUtil.getShortPresentation(commit.author),
-                                                commit.subject, operationName).merge()
+          val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
+                                                VcsUserUtil.getShortPresentation(commit.author), commit.subject,
+                                                operationName).merge()
           refreshVfsAndMarkDirty(repository)
           changeListManager.waitForUpdate(operationName)
 
@@ -199,7 +201,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
-    changeListManagerEx.changeLists.map { it -> "[${it.name}] ${it.changes}" }
+    changeListManagerEx.changeLists.map { "[${it.name}] ${it.changes}" }
 
   private fun refreshVfsAndMarkDirty(repository: GitRepository) {
     VfsUtil.markDirtyAndRefresh(false, true, false, repository.root)
@@ -268,7 +270,7 @@ class GitApplyChangesProcess(private val project: Project,
     if (skipped.isEmpty()) {
       vcsNotifier.notifySuccess("${operationName.capitalize()} successful", getCommitsDetails(successfulCommits))
     }
-    else if (!successfulCommits.isEmpty()) {
+    else if (successfulCommits.isNotEmpty()) {
       val title = String.format("${operationName.capitalize()}ed %d commits from %d", successfulCommits.size,
                                 successfulCommits.size + skipped.size)
       val description = getCommitsDetails(successfulCommits) + "<hr/>" + formSkippedDescription(skipped, true)
@@ -311,7 +313,7 @@ class GitApplyChangesProcess(private val project: Project,
 
   private fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsFullCommitDetails>): String {
     var description = ""
-    if (!successfulCommits.isEmpty()) {
+    if (successfulCommits.isNotEmpty()) {
       description += "<hr/>However ${operationName} succeeded for the following " + pluralize("commit", successfulCommits.size) + ":<br/>"
       description += getCommitsDetails(successfulCommits)
     }
@@ -355,20 +357,19 @@ class GitApplyChangesProcess(private val project: Project,
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
-          GitApplyChangesProcess.ConflictResolver(project, git, root, hash, author, message, operationName).mergeNoProceed()
+          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
         }
       }
     }
   }
 
   class ConflictResolver(project: Project,
-                         git: Git,
                          root: VirtualFile,
                          commitHash: String,
                          commitAuthor: String,
                          commitMessage: String,
                          operationName: String
-  ) : GitConflictResolver(project, git, setOf(root), makeParams(project, commitHash, commitAuthor, commitMessage, operationName)) {
+  ) : GitConflictResolver(project, setOf(root), makeParams(project, commitHash, commitAuthor, commitMessage, operationName)) {
     override fun notifyUnresolvedRemain() {/* we show a [possibly] compound notification after applying all commits.*/
     }
   }
