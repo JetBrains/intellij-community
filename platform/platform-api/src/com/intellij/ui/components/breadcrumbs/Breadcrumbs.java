@@ -379,8 +379,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void update() {
       icon = crumb.getIcon();
-      crumbIconWidth = icon.getIconWidth();
-      crumbIconHeight = icon.getIconHeight();
+      if (icon != null) {
+        crumbIconWidth = icon.getIconWidth();
+        crumbIconHeight = icon.getIconHeight();
+      }
+      else {
+        crumbIconWidth = 0;
+        crumbIconHeight = 0;
+      }
       text = crumb.getText();
       font = getFont(crumb);
       foreground = getForeground(crumb);
