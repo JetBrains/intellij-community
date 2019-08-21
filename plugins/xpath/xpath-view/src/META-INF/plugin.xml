@@ -160,6 +160,8 @@
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
 
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
+    <lang.findUsagesProvider language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltFindUsagesProvider"/>
+    <lang.refactoringSupport language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltRefactoringSupportProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
