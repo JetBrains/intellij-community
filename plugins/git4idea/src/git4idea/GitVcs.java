@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
@@ -77,7 +76,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable private final ChangeProvider myChangeProvider;
   @Nullable private final GitCheckinEnvironment myCheckinEnvironment;
   private final GitUpdateEnvironment myUpdateEnvironment;
-  private final RevisionSelector myRevSelector;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
@@ -98,7 +96,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
     myChangeProvider = project.isDefault() ? null : project.getService(GitChangeProvider.class);
     myCheckinEnvironment = project.isDefault() ? null : ServiceManager.getService(project, GitCheckinEnvironment.class);
-    myRevSelector = new GitRevisionSelector();
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, GitVcsSettings.getInstance(project));
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
@@ -180,12 +177,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public DiffProvider getDiffProvider() {
     return myProject.getService(GitDiffProvider.class);
-  }
-
-  @Override
-  @Nullable
-  public RevisionSelector getRevisionSelector() {
-    return myRevSelector;
   }
 
   @Override
