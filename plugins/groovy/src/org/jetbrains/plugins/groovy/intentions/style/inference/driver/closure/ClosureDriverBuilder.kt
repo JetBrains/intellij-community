@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
@@ -64,7 +65,7 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
       val argumentMapping = (call.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: continue
       val argument = argumentMapping.expectedTypes.find { it.second.isReferenceTo(parameter) }?.second ?: continue
       val targetParameter = argumentMapping.targetParameter(argument) as? GrParameter ?: continue
-      val closureParamsAnno = targetParameter.modifierList.findAnnotation(ClosureParamsCombiner.CLOSURE_PARAMS_FQ) ?: continue
+      val closureParamsAnno = targetParameter.modifierList.findAnnotation(GROOVY_TRANSFORM_STC_CLOSURE_PARAMS) ?: continue
       acceptParameter(parameter, availableParameterNumber(closureParamsAnno), emptyList())
       break
     }

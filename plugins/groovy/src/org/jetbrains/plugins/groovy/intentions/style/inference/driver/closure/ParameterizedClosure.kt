@@ -21,11 +21,15 @@ class ParameterizedClosure(val parameter: GrParameter,
                   substitutor: PsiSubstitutor): List<AnnotatingResult> {
     substituteTypes(substitutor)
     val closureParamsAnnotation = closureParamsCombiner.instantiateAnnotation(outerParameters, types)
-    val delegatesToAnnotations = delegatesToCombiner.instantiateAnnotation(outerParameters)
-    val primaryAnnotations = listOf(delegatesToAnnotations.first, closureParamsAnnotation).mapNotNull {
-      it?.run { AnnotatingResult(parameter, it) }
+    val (delegatesToAnnotation, parameterAnnotatingResult) = delegatesToCombiner.instantiateAnnotation(outerParameters)
+    val primaryAnnotatingResults = listOfNotNull(delegatesToAnnotation, closureParamsAnnotation)
+      .map { annotationText -> AnnotatingResult(parameter, annotationText) }
+    if (parameterAnnotatingResult != null) {
+      return primaryAnnotatingResults + parameterAnnotatingResult
     }
-    return primaryAnnotations + delegatesToAnnotations.second
+    else {
+      return primaryAnnotatingResults
+    }
   }
 
 

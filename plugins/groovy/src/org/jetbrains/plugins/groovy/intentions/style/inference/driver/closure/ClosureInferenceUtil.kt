@@ -9,15 +9,14 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCallMethod
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParametersStorageBuilder.Companion.isReferenceTo
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_ABSTRACT_TYPE_METHODS
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.FROM_STRING
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.MAP_ENTRY_OR_KEY_VALUE
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParamsCombiner.Companion.SIMPLE_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -280,13 +279,13 @@ fun availableParameterNumber(annotation: PsiAnnotation): Int {
   val options = lazy {
     annotation.parameterList.attributes.find { it.name == "options" }?.value as? GrAnnotationArrayInitializer
   }
-  return when (value.name) {
-    SIMPLE_TYPE -> parseSimpleType(options.value ?: return 0)
-    FROM_STRING -> parseFromString(options.value ?: return 0)
-    in ClosureParamsCombiner.availableHints -> return 1
-    FROM_ABSTRACT_TYPE_METHODS -> /*todo*/ return 0
-    MAP_ENTRY_OR_KEY_VALUE -> /*todo*/ return 2
-    else -> unreachable()
+  return when (value.qualifiedName) {
+    GROOVY_TRANSFORM_STC_SIMPLE_TYPE -> parseSimpleType(options.value ?: return 0)
+    GROOVY_TRANSFORM_STC_FROM_STRING -> parseFromString(options.value ?: return 0)
+    in ClosureParamsCombiner.availableHints -> 1
+    GROOVY_TRANSFORM_STC_FROM_ABSTRACT_TYPE_METHODS -> /*todo*/ 0
+    GROOVY_TRANSFORM_STC_MAP_ENTRY_OR_KEY_VALUE -> /*todo*/ 2
+    else -> 0
   }
 }
 
@@ -336,7 +335,7 @@ fun inferTypeFromTypeHint(parameter: GrParameter): PsiType? {
   val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
     ExpressionArgument(closureBlock)) as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
   val virtualParameter = virtualMethod?.parameters?.getOrNull(method.parameterList.getParameterNumber(methodParameter)) ?: return null
-  val anno = virtualParameter.modifierList.annotations.find { it.shortName == ClosureParamsCombiner.CLOSURE_PARAMS }
+  val anno = virtualParameter.modifierList.annotations.find { it.qualifiedName == GROOVY_TRANSFORM_STC_CLOSURE_PARAMS }
              ?: return null
   val className = (anno.findAttributeValue("value") as? GrReferenceExpression)?.qualifiedReferenceName ?: return null
   val processor = SignatureHintProcessor.getHintProcessor(className) ?: return null
@@ -357,7 +356,7 @@ infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor {
   return newSubstitutor
 }
 
-fun PsiType.any(predicate: (PsiType) -> Boolean): Boolean {
+inline fun PsiType.anyComponent(crossinline predicate: (PsiType) -> Boolean): Boolean {
   var mark = false
   accept(object : PsiTypeVisitor<Unit>() {
     override fun visitClassType(classType: PsiClassType?) {

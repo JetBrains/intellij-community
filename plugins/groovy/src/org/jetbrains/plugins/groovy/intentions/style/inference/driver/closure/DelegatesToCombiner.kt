@@ -2,12 +2,17 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
@@ -17,11 +22,6 @@ class DelegatesToCombiner {
   private var delegateType: PsiType = PsiType.NULL
   private var delegationStrategy: String? = null
   private var delegateParameter: GrParameter? = null
-
-  companion object {
-    const val DELEGATES_TO = "DelegatesTo"
-    const val TARGET = "Target"
-  }
 
   fun acceptResolveResult(methodResult: GroovyMethodResult) {
     val candidate = methodResult.candidate
@@ -71,34 +71,32 @@ class DelegatesToCombiner {
     setDelegateByArgument(candidate.argumentMapping?.arguments?.firstOrNull() ?: return)
   }
 
+  private fun getName(parameter: PsiParameter): String =
+    parameter.name ?: parameter.parentOfType<GrParameterList>()?.getParameterIndex(parameter)?.toString() ?: "self"
 
-  fun instantiateAnnotation(outerParameters: PsiParameterList): Pair<String?, List<AnnotatingResult>> {
-    val parameter = delegateParameter
+
+  fun instantiateAnnotation(outerParameters: PsiParameterList): Pair<String?, AnnotatingResult?> {
     if (delegationStrategy == null && delegateType == PsiType.NULL) {
-      return null to emptyList()
+      return null to null
     }
-    val additionalParameter = instantiateAnnotationForParameter(outerParameters)
     val strategy = delegationStrategy?.run { "strategy = ${this}" } ?: ""
     val delegateTypeRepresentation = delegateType.takeIf { it != PsiType.NULL }?.canonicalText ?: ""
-    val type = when {
-      parameter != null -> "target = '${parameter.name}'"
-      delegateTypeRepresentation.isEmpty() -> ""
-      else -> when {
-        delegateType.isTypeParameter() -> "type = '$delegateTypeRepresentation'"
-        strategy.isNotEmpty() -> "value = $delegateTypeRepresentation"
-        else -> delegateTypeRepresentation
-      }
+    val parameter = delegateParameter
+    val typeRepresentation = when {
+      parameter != null -> "target = '${getName(parameter)}'"
+      delegateType.anyComponent { it.isTypeParameter() } -> "type = '$delegateTypeRepresentation'"
+      strategy.isNotEmpty() -> "value = $delegateTypeRepresentation"
+      else -> delegateTypeRepresentation
     }
-    return "@$DELEGATES_TO(${listOf(type, strategy).filter { it.isNotEmpty() }.joinToString()})" to additionalParameter
+    val parameterResult = instantiateAnnotationForParameter(outerParameters)
+    val annotationText = "@$GROOVY_LANG_DELEGATES_TO(${listOf(typeRepresentation, strategy).filter { it.isNotEmpty() }.joinToString()})"
+    return annotationText to parameterResult
   }
 
-  private fun instantiateAnnotationForParameter(outerParameters: PsiParameterList): List<AnnotatingResult> {
-    val parameter = delegateParameter
-    if (parameter == null) {
-      return emptyList()
-    }
-    val realParameter = outerParameters.parameters.find { it.name == parameter.name } ?: return emptyList()
-    return listOf(AnnotatingResult(realParameter as? GrParameter ?: return emptyList(),
-                                   "@$DELEGATES_TO.$TARGET('${parameter.name}')"))
+  private fun instantiateAnnotationForParameter(outerParameters: PsiParameterList): AnnotatingResult? {
+    val parameter = delegateParameter ?: return null
+    val parameterList = parameter.parentOfType<PsiParameterList>() ?: return null
+    val actualParameter = outerParameters.parameters[parameterList.getParameterIndex(parameter)] ?: return null
+    return AnnotatingResult(actualParameter as? GrParameter ?: return null, "@$GROOVY_LANG_DELEGATES_TO_TARGET('${getName(parameter)}')")
   }
 }
