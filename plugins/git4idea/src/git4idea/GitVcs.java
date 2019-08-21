@@ -38,10 +38,7 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
-import git4idea.config.GitExecutableManager;
-import git4idea.config.GitExecutableValidator;
-import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersion;
+import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -87,7 +84,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
-  private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
@@ -107,7 +103,6 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor() : null;
-    myExecutableValidator = new GitExecutableValidator(myProject);
   }
 
   public ReadWriteLock getCommandLock() {
@@ -345,10 +340,14 @@ public final class GitVcs extends AbstractVcs<CommittedChangeList> {
            : Collections.emptyList();
   }
 
+
+  /**
+   * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
+   */
   @Deprecated
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
-    return myExecutableValidator;
+    return new GitExecutableValidator(myProject);
   }
 
   @Override
