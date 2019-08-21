@@ -37,6 +37,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String targetCompatibility;
   @Nullable private String sdkName;
   @Nullable private String productionModuleId;
+  @NotNull private String moduleName;
 
   @Nullable
   @Property(allowedTypes = {LibraryData.class, ProjectId.class})
@@ -58,6 +59,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.externalConfigPath = externalConfigPath;
     artifacts = Collections.emptyList();
     this.moduleFileDirectoryPath = moduleFileDirectoryPath;
+    this.moduleName = externalName;
   }
 
   protected ModuleData(@NotNull String id,
@@ -73,6 +75,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.externalConfigPath = externalConfigPath;
     artifacts = Collections.emptyList();
     this.moduleFileDirectoryPath = moduleFileDirectoryPath;
+    this.moduleName = externalName;
   }
 
   @NotNull
@@ -239,6 +242,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     properties.put(key, value);
   }
 
+  @NotNull
+  public String getModuleName() {
+    return moduleName;
+  }
+
+  public void setModuleName(@NotNull String moduleName) {
+    this.moduleName = moduleName;
+  }
+
   @Nullable
   public String getIdeGrouping() {
     if (ideModuleGroup != null) {
@@ -255,7 +267,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     } else {
       final String name = getInternalName();
       if (name.lastIndexOf(".") > 0) {
-        return substringBeforeLast(name, "." + getExternalName());
+        return substringBeforeLast(name, "." + moduleName);
       } else {
         return null;
       }
