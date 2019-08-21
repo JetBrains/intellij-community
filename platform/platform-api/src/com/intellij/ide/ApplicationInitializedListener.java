@@ -4,9 +4,9 @@ package com.intellij.ide;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Use extension point `com.intellij.applicationInitializedListener` to register listener.
+ * Use extension point {@code com.intellij.applicationInitializedListener} to register listener.
  * Please note - you cannot use {@link ExtensionPointName#findExtension)} because this extension point is cleared up after app loading.
- *
+ * <p>
  * Not part of {@link ApplicationLoadListener} to avoid class loading before application initialization.
  */
 public interface ApplicationInitializedListener {
