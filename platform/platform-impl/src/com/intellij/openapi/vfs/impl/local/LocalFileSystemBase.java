@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Dmitry Avdeev
@@ -64,12 +66,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   private static File convertToIOFile(@NotNull VirtualFile file) {
+    return convertToPath(file).toFile();
+  }
+
+  @NotNull
+  private static Path convertToPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
-    return new File(path);
+    return Paths.get(path);
   }
 
   @NotNull
@@ -151,6 +158,36 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     String[] names = convertToIOFile(file).list();
     return names == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : names;
+  }
+
+  @Override
+  @NotNull
+  public Stream<String> listStream(@NotNull VirtualFile file) {
+    try {
+      if (file.getParent() == null) {
+        Iterable<Path> roots = FileSystems.getDefault().getRootDirectories();
+
+        // return drive letter names for the 'fake' root on windows
+        if (SystemInfo.isWindows && file.getName().isEmpty()) {
+          return StreamSupport.stream(roots.spliterator(), false).
+                  map(p -> StringUtil.trimTrailing(p.toString(), File.separatorChar));
+        }
+        else {
+          for (Path path : roots) {
+            if (path.getNameCount() == 0) {
+              return DirectoryAccessChecker.getCheckedStream(path).map(p -> p.getFileName().toString());
+            }
+            else
+              return Stream.empty();
+          }
+        }
+      }
+
+      return DirectoryAccessChecker.getCheckedStream(convertToPath(file)).map(p -> p.getFileName().toString());
+    }
+    catch (IOException ignored) {
+      return Stream.empty();
+    }
   }
 
   @Override

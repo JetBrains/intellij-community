@@ -20,12 +20,15 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 public interface FileSystemInterface {
   // default values for missing files (same as in corresponding java.io.File methods)
@@ -36,6 +39,12 @@ public interface FileSystemInterface {
 
   @NotNull
   String[] list(@NotNull VirtualFile file);
+
+  @ApiStatus.Experimental
+  @NotNull
+  default Stream<String> listStream(@NotNull VirtualFile file) {
+    return Arrays.stream(list(file));
+  }
 
   boolean isDirectory(@NotNull VirtualFile file);
 

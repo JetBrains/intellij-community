@@ -110,6 +110,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
    */
   public boolean hasChildren(@NotNull VirtualFile file) {
-    return list(file).length != 0;
+    return listStream(file).count() != 0;
   }
 }

@@ -29,11 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
@@ -150,9 +148,9 @@ public class RefreshWorker {
     String[] persistedNames = snapshot.getFirst();
     VirtualFile[] children = snapshot.getSecond();
 
-    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
+    Collection<String> upToDateNames = fs.listStream(dir).filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
     Set<String> newNames = newTroveSet(strategy, upToDateNames);
-    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
+    if (dir.allChildrenLoaded() && children.length < upToDateNames.size()) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
       }
@@ -162,9 +160,9 @@ public class RefreshWorker {
     }
 
     Set<String> deletedNames = newTroveSet(strategy, persistedNames);
-    ContainerUtil.removeAll(deletedNames, upToDateNames);
+    deletedNames.removeAll(upToDateNames);
 
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
+    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(upToDateNames, strategy);
     if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
 
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
