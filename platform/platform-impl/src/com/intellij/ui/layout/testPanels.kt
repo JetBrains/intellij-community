@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.CommonBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import java.awt.Dimension
 import java.awt.GridLayout
@@ -147,7 +147,7 @@ fun noteRowInTheDialog(): JPanel {
   return panel {
     noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
     row("Sudo password:") { passwordField() }
-    row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
+    row { CheckBox(UIBundle.message("auth.remember.cb"), true)() }
     noteRow("Should be an empty row above as a gap. <a href=''>Click me</a>.") {
       System.out.println("Hello")
     }
@@ -161,7 +161,7 @@ fun jbTextField(): JPanel {
     row("Username:") { JTextField("develar")() }
     row("Password:") { passwordField() }
     row {
-      JBCheckBox(CommonBundle.message("checkbox.remember.password"), true)()
+      JBCheckBox(UIBundle.message("auth.remember.cb"), true)()
     }
   }
 }

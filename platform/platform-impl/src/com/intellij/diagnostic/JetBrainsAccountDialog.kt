@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
-import com.intellij.CommonBundle
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.RememberCheckBoxState
@@ -9,6 +8,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
@@ -29,7 +29,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
                else DiagnosticBundle.message("error.report.auth.prompt")
   val userField = JTextField(credentials?.userName)
   val passwordField = JPasswordField(credentials?.password?.toString())
-  val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), remember)
+  val rememberCheckBox = CheckBox(UIBundle.message("auth.remember.cb"), remember)
 
   val panel = panel {
     noteRow(prompt)
@@ -84,7 +84,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
     // if user name set, but no password, so, previously was stored without password
     !credentials.password.isNullOrEmpty()
   }
-  val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), isSelected)
+  val rememberCheckBox = CheckBox(UIBundle.message("auth.remember.cb"), isSelected)
 
   val panel = panel {
     noteRow("Use JetBrains Account to be notified\nwhen reported exceptions are fixed.\n" +

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
-import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
@@ -9,6 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -272,7 +272,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (!labeled && components.size == 1 && component is JCheckBox) {
       val siblings = parent!!.subRows
       if (siblings != null && siblings.size > 1) {
-        if (siblings.get(siblings.size - 2).labeled && component.text == CommonBundle.message("checkbox.remember.password")) {
+        if (siblings.get(siblings.size - 2).labeled && component.text == UIBundle.message("auth.remember.cb")) {
           cc.value.skip(1)
           cc.value.horizontal.gapBefore = BoundSize.NULL_SIZE
         }
