@@ -9,16 +9,24 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FilePathReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+
+import java.util.List;
 
 public abstract class CreateFileQuickFixTestCase extends LightJavaCodeInsightFixtureTestCase {
 
@@ -76,5 +84,20 @@ public abstract class CreateFileQuickFixTestCase extends LightJavaCodeInsightFix
     finally {
       referenceProvidersRegistry.unregisterReferenceProvider(PsiLiteralExpression.class, fileReferenceProvider);
     }
+  }
+
+  @NotNull
+  protected FileReference findFileReference(@Nullable PsiReference ref) {
+    if (ref instanceof FileReference) {
+      return (FileReference)ref;
+    }
+    if (ref instanceof PsiMultiReference) {
+      List<PsiReference> filtered = ContainerUtil.filter(((PsiMultiReference)ref).getReferences(),
+                                                         value -> value instanceof FileReference);
+      if (!filtered.isEmpty()) {
+        return (FileReference)filtered.get(0);
+      }
+    }
+    throw new AssertionFailedError("Unable to find FileReference");
   }
 }
