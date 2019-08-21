@@ -513,8 +513,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
       if (writableStatus.hasReadonlyFiles()) {
         return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
       }
-      assert document.isWritable();
-      return WriteAccessStatus.WRITABLE;
+      assert file.isWritable();
     }
     if (document.isWritable()) {
       return WriteAccessStatus.WRITABLE;
