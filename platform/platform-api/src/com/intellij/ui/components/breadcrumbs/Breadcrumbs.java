@@ -231,13 +231,13 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private void layout(boolean update) {
+  private void layoutMe() {
     Rectangle bounds = new Rectangle(getWidth(), getHeight());
     JBInsets.removeFrom(bounds, getInsets());
     int scale = getScale();
     for (CrumbView view : views) {
       if (view.crumb != null) {
-        if (update || view.font == null) view.update();
+        view.update();
         view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
         bounds.x += view.preferred.width;
       }
@@ -292,7 +292,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     public void layoutContainer(Container container) {
       if (container instanceof Breadcrumbs) {
         Breadcrumbs breadcrumbs = (Breadcrumbs)container;
-        breadcrumbs.layout(false);
+        breadcrumbs.layoutMe();
       }
     }
   };
@@ -339,7 +339,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         if (consumer != null) {
           consumer.accept(crumb, event);
           event.consume();
-          layout(true);
+          revalidate();
           repaint();
         }
       }
@@ -463,9 +463,10 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void paint(Graphics2D g) {
       final Icon crumbIcon = crumb.getIcon();
-      if (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight) {
+      if (crumbIcon != null
+          && (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight)) {
         // process size change for IconDeferrer (lazy calculated on pool thread)
-        Breadcrumbs.this.layout(true);
+        Breadcrumbs.this.revalidate();
         Breadcrumbs.this.repaint();
         return;
       }
