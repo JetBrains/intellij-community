@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
@@ -27,7 +28,7 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
   @NotNull
   @Override
   public List<SearchScope> getSearchScopes(@NotNull Project project) {
-    if (!PsiUtil.isIdeaProject(project)) return Collections.emptyList();
+    if (DumbService.isDumb(project) || !PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
     final Collection<VirtualFile> pluginDescriptorFiles =
       DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScopesCore.projectProductionScope(project));
