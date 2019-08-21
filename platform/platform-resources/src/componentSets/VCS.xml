@@ -57,7 +57,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
+      <headless-implementation-class/>
       <option name="workspace" value="true"/>
     </component>
     <component>
