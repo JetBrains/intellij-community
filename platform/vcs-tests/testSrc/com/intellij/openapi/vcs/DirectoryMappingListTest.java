@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -45,9 +45,8 @@ public class DirectoryMappingListTest extends HeavyPlatformTestCase {
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
+    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
-    startupManager.startCacheUpdate();
     AllVcsesI vcses = AllVcses.getInstance(myProject);
     vcses.registerManually(new MockAbstractVcs(myProject, "mock"));
     vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));

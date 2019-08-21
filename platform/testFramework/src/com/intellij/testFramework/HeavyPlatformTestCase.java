@@ -365,9 +365,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void runStartupActivities() {
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
+    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
-    startupManager.startCacheUpdate();
     startupManager.runPostStartupActivities();
   }
 
