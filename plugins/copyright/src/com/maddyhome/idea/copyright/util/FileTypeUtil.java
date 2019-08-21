@@ -4,6 +4,7 @@ package com.maddyhome.idea.copyright.util;
 
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.messages.MessageBus;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +25,9 @@ public class FileTypeUtil {
     return ServiceManager.getService(FileTypeUtil.class);
   }
 
-  public FileTypeUtil(MessageBus bus) {
+  public FileTypeUtil() {
     createMappings();
-    bus.connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
         types = null;
