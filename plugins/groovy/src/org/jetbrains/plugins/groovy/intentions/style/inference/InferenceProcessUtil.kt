@@ -286,3 +286,15 @@ fun PsiElement.properResolve(): GroovyResolveResult? {
     else -> (this as? GrCall)?.advancedResolve()
   }
 }
+
+@Suppress("RemoveExplicitTypeArguments")
+internal fun getOriginalMethod(method: GrMethod): GrMethod {
+  return method.containingFile?.originalFile?.run {
+    if (method.containingFile == this) {
+      method
+    }
+    else {
+      findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
+    }
+  } ?: method
+}

@@ -310,6 +310,9 @@
                  description="Whether to skip substitutor computation if return type doesn't depend on it"/>
     <registryKey key="groovy.assert.element.kind.in.resolve" defaultValue="true"
                  description="Whether to throw error if the element is unexpected in resolve processor"/>
+    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
+                 description="Allows to collect method usages for more precise type inference"/>
+
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>

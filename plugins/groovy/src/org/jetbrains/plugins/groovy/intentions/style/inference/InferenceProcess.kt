@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  * 3. Inferring dependencies between new type parameters and instantiating them.
  */
 fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
-  val originalMethod = MethodParameterAugmenter.getOriginalMethod(method)
+  val originalMethod = getOriginalMethod(method)
   val overridableMethod = findOverridableMethod(originalMethod)
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod)

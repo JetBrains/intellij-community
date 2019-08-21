@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
@@ -18,19 +19,10 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
   companion object {
 
-    @Suppress("RemoveExplicitTypeArguments")
-    internal fun getOriginalMethod(method: GrMethod): GrMethod {
-      return method.containingFile?.originalFile?.run {
-        if (method.containingFile == this) {
-          method
-        }
-        else {
-          findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
-        }
-      } ?: method
-    }
-
     internal fun createInferenceResult(method: GrMethod): InferenceResult? {
+      if (!Registry.`is`("groovy.collect.method.calls.for.inference", false)) {
+        return null
+      }
       val originalMethod = getOriginalMethod(method)
       val scope = with(originalMethod.containingFile?.virtualFile) {
         if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
