@@ -14,11 +14,11 @@ public class Issue648 {
   private String firstName;
 
   @Singular
-  private List< String> cars;
+  private List<String> cars;
 
   public static void main(String[] args) {
     final Issue648 issue648 = Issue648.builder()
-      .id("saasd")
+      .id("id")
       .firstName("name")
       .car("sss")
       .cars(Collections.singletonList("some"))
