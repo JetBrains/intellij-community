@@ -12,5 +12,6 @@
     <orderEntry type="library" scope="PROVIDED" name="TestNG" level="project" />
     <orderEntry type="library" name="intellij-coverage" level="project" />
     <orderEntry type="library" name="intellij-test-discovery" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
   </component>
 </module>

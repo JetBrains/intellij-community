@@ -64,7 +64,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NonNls public static final String FORK_KLASS = "class";
   @NonNls public static final String FORK_REPEAT = "repeat";
   // See #26522
-  @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
+  @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.junit.JUnitStarter";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";

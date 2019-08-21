@@ -44,7 +44,7 @@ import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
-import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
