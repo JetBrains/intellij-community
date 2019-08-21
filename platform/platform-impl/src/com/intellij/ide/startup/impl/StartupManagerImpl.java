@@ -152,10 +152,9 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
   public void runPostStartupActivitiesFromExtensions() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    // strictly speaking, it is not a sequential activity,
-    // because sub activities performed in a different threads (depends on dumb awareness),
-    // but because there is no any other concurrent phase and timeline end equals to last dumb-aware activity,
-    // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
+    // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
+    // (depending on dumb-awareness), but because there is no other concurrent phase and timeline end equals to last dumb-aware activity,
+    // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
     Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
@@ -275,7 +274,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
             break;
           }
 
-          // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+          // queue each activity in smart mode separately so that if one of them starts the dumb mode, the next ones just wait for it to finish
           for (Runnable activity : dumbUnaware) {
             dumbService.runWhenSmart(() -> runActivity(activity));
           }
@@ -386,8 +385,9 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
   private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {
     Activity activity = StartUpMeasurer.start(phaseName);
-    Runnable runnable;
+
     while (true) {
+      Runnable runnable;
       synchronized (myLock) {
         runnable = activities.pollFirst();
       }
@@ -405,6 +405,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, runnable.getClass(), null, pluginId);
     }
+
     activity.end();
   }
 
@@ -458,8 +459,8 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       //noinspection SynchronizeOnThis
       synchronized (this) {
-        // in tests which simulate project opening, post-startup activities could have been run already.
-        // Then we should act as if the project was initialized
+        // in tests that simulate project opening, post-startup activities could have been run already
+        // then we should act as if the project was initialized
         boolean initialized = myProject.isInitialized() || myProject.isDefault() || (myPostStartupActivitiesPassed && application.isUnitTestMode());
         if (!initialized) {
           registerPostStartupActivity(action);

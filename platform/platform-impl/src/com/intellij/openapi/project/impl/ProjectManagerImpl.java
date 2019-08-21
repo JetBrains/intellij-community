@@ -35,10 +35,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,8 +71,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
 
-  @NotNull
-  private Project[] myOpenProjects = {}; // guarded by lock
+  private @NotNull Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
 
@@ -156,7 +152,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       throw (ProcessCanceledException)e;
     }
     else {
-      LOG.error("From listener " + listener + " (" + listener.getClass() + ")", e);
+      LOG.error("From the listener " + listener + " (" + listener.getClass() + ")", e);
     }
   }
 
@@ -213,7 +209,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     ProjectImpl project = doCreateProject(projectName, projectFile);
     try {
-      initProject(projectFile, project, isRefreshVfsNeeded, useDefaultProjectSettings ? getDefaultProject() : null, ProgressManager.getInstance().getProgressIndicator());
+      Project template = useDefaultProjectSettings ? getDefaultProject() : null;
+      initProject(projectFile, project, isRefreshVfsNeeded, template, ProgressManager.getInstance().getProgressIndicator());
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -281,7 +278,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   private Collection<Project> getLeakedProjects() {
     myProjects.remove(DummyProject.getInstance()); // process queue
-    return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
+    return myProjects.keySet().stream()
+      .filter(p -> p.isDisposed() && !((ProjectImpl)p).isTemporarilyDisposed())
+      .collect(Collectors.toCollection(UnsafeWeakList::new));
   }
 
   @TestOnly
@@ -290,7 +289,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull Path file, @NotNull ProjectImpl project, boolean isRefreshVfsNeeded, @Nullable Project template, @Nullable ProgressIndicator indicator) {
+  private static void initProject(@NotNull Path file,
+                                  @NotNull ProjectImpl project,
+                                  boolean isRefreshVfsNeeded,
+                                  @Nullable Project template,
+                                  @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
     if (indicator != null) {
       indicator.setIndeterminate(false);
@@ -345,12 +348,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static String toCanonicalName(@NotNull final String filePath) {
+  private static String toCanonicalName(@NotNull String filePath) {
     try {
       return FileUtil.resolveShortWindowsName(filePath);
     }
     catch (IOException e) {
-      // OK. File does not yet exist so it's canonical path will be equal to its original path.
+      // OK. File does not yet exist, so its canonical path will be equal to its original path.
     }
 
     return filePath;
@@ -704,12 +707,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
                                boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
-      throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
+      throw new IllegalStateException(
+        "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
     }
     app.assertIsDispatchThread();
 
     if (isLight(project)) {
-      // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
+      // if we close project at the end of the test, just mark it closed;
+      // if we are shutting down the entire test framework, proceed to full dispose
       ProjectImpl projectImpl = (ProjectImpl)project;
       if (!projectImpl.isTemporarilyDisposed()) {
         projectImpl.setTemporarilyDisposed(true);
@@ -857,7 +862,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     activity.end();
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
     ProjectImpl.ourClassesAreLoaded = true;
   }
 
@@ -892,8 +896,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
-        //noinspection deprecation
-        boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
+        @SuppressWarnings("deprecation") boolean canClose =
+          listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
         if (!canClose) {
           LOG.debug("close canceled by " + listener);
           return false;
@@ -907,8 +911,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  // both lists are thread-safe (LockFreeCopyOnWriteArrayList), but ContainerUtil.concat cannot handle situation when list size is changed during iteration
-  // so, we have to create list.
   @NotNull
   private List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
     List<ProjectManagerListener> projectLevelListeners = getListeners(project);
@@ -965,14 +967,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myFiles = files;
     }
 
-    public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
-                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
+    public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
+      super("Project Settings", "Could not save project",
+            "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
+            " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
             (notification, event) -> {
-              final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-              final Project _project = unableToSaveProjectNotification.myProject;
+              UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+              Project _project = unableToSaveProjectNotification.myProject;
               notification.expire();
-
               if (_project != null && !_project.isDisposed()) {
                 _project.save();
               }
