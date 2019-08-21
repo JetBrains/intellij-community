@@ -231,19 +231,6 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private void layoutMe() {
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    int scale = getScale();
-    for (CrumbView view : views) {
-      if (view.crumb != null) {
-        view.update();
-        view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
-        bounds.x += view.preferred.width;
-      }
-    }
-  }
-
   private void updatePreferredSize(Dimension size, int scale) {
     for (CrumbView view : views) {
       if (view.crumb != null) {
@@ -292,7 +279,16 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     public void layoutContainer(Container container) {
       if (container instanceof Breadcrumbs) {
         Breadcrumbs breadcrumbs = (Breadcrumbs)container;
-        breadcrumbs.layoutMe();
+        Rectangle bounds = new Rectangle(breadcrumbs.getWidth(), breadcrumbs.getHeight());
+        JBInsets.removeFrom(bounds, breadcrumbs.getInsets());
+        int scale = breadcrumbs.getScale();
+        for (CrumbView view : breadcrumbs.views) {
+          if (view.crumb != null) {
+            view.update();
+            view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
+            bounds.x += view.preferred.width;
+          }
+        }
       }
     }
   };
