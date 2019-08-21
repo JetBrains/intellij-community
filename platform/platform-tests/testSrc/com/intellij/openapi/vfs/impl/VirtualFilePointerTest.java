@@ -36,17 +36,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -637,7 +632,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<Throwable> exception = new AtomicReference<>(null);
     int i;
-    for (i = 0; !t.timedOut(); i++) {
+    int nThreads = Runtime.getRuntime().availableProcessors();
+    for (i = 0; !t.timedOut(i) && i<50_000; i++) {
       Disposable disposable = Disposer.newDisposable();
       // supply listener to separate pointers under one root so that it will be removed on dispose
       VirtualFilePointerImpl bb =
@@ -645,7 +641,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
       if (i % 1000 == 0) LOG.info("i = " + i);
 
-      int nThreads = Runtime.getRuntime().availableProcessors();
       CountDownLatch ready = new CountDownLatch(nThreads);
       Runnable read = () -> {
         try {
@@ -661,14 +656,18 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader " + n)).collect(Collectors.toList());
-      threads.forEach(Thread::start);
+      List<Job<?>> jobs = new ArrayList<>(nThreads);
+      for (int it = 0; it < nThreads; it++) {
+        jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
+      }
       ready.await();
 
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run.set(false);
-      ConcurrencyUtil.joinAll(threads);
+      for (Job<?> job : jobs) {
+        job.waitForCompletion(2_000);
+      }
       ExceptionUtil.rethrowAll(exception.get());
       Disposer.dispose(disposable);
     }
