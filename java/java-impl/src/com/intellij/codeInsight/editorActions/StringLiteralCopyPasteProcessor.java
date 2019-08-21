@@ -113,7 +113,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
 
-    if (rawText != null && wasUnescaped(text, rawText.rawText)) return rawText.rawText;
+    if (rawText != null && wasUnescaped(text, rawText.rawText) && isSuitableForContext(rawText.rawText, token)) return rawText.rawText;
     
     if (isStringLiteral(token)) {
       text = escapeAndSplit(text, token);
@@ -127,6 +127,36 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return escapeTextBlock(text, "\"".equals(before), "\"".equals(after));
     }
     return text;
+  }
+
+  private boolean isSuitableForContext(String text, PsiElement context) {
+    if (isStringLiteral(context)) {
+      return !containsUnescapedChar(text, '"');
+    }
+    else if (isCharLiteral(context)) {
+      return !containsUnescapedChar(text, '\'');
+    }
+    else if (isTextBlock(context)) {
+      return !text.contains("\"\"\"");
+    }
+    else {
+      return true;
+    }
+  }
+
+  private static boolean containsUnescapedChar(String text, char c) {
+    boolean slash = false;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '\\') {
+        slash = !slash;
+      }
+      else {
+        if (!slash && ch == c) return true;
+        slash = false;
+      }
+    }
+    return false;
   }
 
   public String escapeAndSplit(String text, PsiElement token) {
