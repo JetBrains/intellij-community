@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageI
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
+import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
@@ -114,8 +115,7 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 
     in usageInformation.contravariantTypes -> {
       val lowerBound = when {
-        superClasses.isNotEmpty() -> typeLattice.meet(superClasses)
-        inhabitingClasses.isNotEmpty() -> typeLattice.meet(inhabitingClasses)
+        inhabitingClasses.isNotEmpty() && subClasses.all { !it.isTypeParameter() } -> typeLattice.meet(inhabitingClasses)
         else -> typeLattice.join(subClasses)
       }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
@@ -126,12 +126,8 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 
     in usageInformation.covariantTypes -> {
       val upperBound = when {
-        (superClasses.all {
-          it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
-        } || superClasses.isEmpty()) && inhabitingClasses.isNotEmpty() -> {
-          typeLattice.join(inhabitingClasses)
-        }
-        else -> typeLattice.meet(superClasses)
+        superClasses.any { it != javaLangObject } -> typeLattice.meet(superClasses)
+        else -> typeLattice.join(inhabitingClasses)
       }.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       when {
         upperBound.resolve()?.modifierList?.hasModifierProperty("final") ?: false -> upperBound
@@ -167,7 +163,7 @@ private fun PsiType.mapConjuncts(action: (PsiType) -> PsiType): PsiType {
   }
 }
 
-private class TypeLattice(val context: PsiElement) {
+private class TypeLattice(context: PsiElement) {
   private val manager = context.manager
   private val top = getJavaLangObject(context) as PsiType
   private val bottom = PsiType.NULL as PsiType

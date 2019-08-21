@@ -119,8 +119,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       override fun visitClassType(classType: PsiClassType?) {
         classType ?: return
         val lowerTypeParameter = currentLowerType.typeParameter()
+        val upperTypeParameter = classType.typeParameter()
         if (firstVisit) {
-          val upperTypeParameter = classType.typeParameter()
           if (classType != javaLangObject && lowerTypeParameter != null) {
             generateRequiredTypes(lowerTypeParameter, classType, UPPER)
           }
@@ -131,6 +131,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         else {
           if (lowerTypeParameter != null) {
             generateRequiredTypes(lowerTypeParameter, classType, EQUAL)
+          }
+          if (upperTypeParameter != null) {
+            generateRequiredTypes(upperTypeParameter, currentLowerType, EQUAL)
           }
         }
         // firstVisit is necessary because java generics are invariant
@@ -152,12 +155,21 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         wildcardType ?: return
         val bound = wildcardType.bound as? PsiClassType ?: return
         val lowerTypeParameter = currentLowerType.typeParameter()
-        if (lowerTypeParameter != null) {
-          if (wildcardType.isExtends) {
+        val upperTypeParameter = bound.typeParameter()
+        if (wildcardType.isExtends) {
+          if (lowerTypeParameter != null) {
             generateRequiredTypes(lowerTypeParameter, bound, UPPER)
           }
-          else if (wildcardType.isSuper) {
+          if (upperTypeParameter != null) {
+            generateRequiredTypes(upperTypeParameter, currentLowerType, LOWER)
+          }
+        }
+        else if (wildcardType.isSuper) {
+          if (lowerTypeParameter != null) {
             generateRequiredTypes(lowerTypeParameter, bound, LOWER)
+          }
+          if (upperTypeParameter != null) {
+            generateRequiredTypes(upperTypeParameter, currentLowerType, UPPER)
           }
         }
         visitClassParameters(bound)
