@@ -24,7 +24,6 @@ public class PathRelativizerService {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.relativizer.PathRelativizerService");
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
-  private static final char FORWARD_SLASH = '/';
 
   private List<PathRelativizer> myRelativizers;
   private Set<String> myUnhandledPaths;
@@ -100,6 +99,6 @@ public class PathRelativizerService {
 
   @NotNull
   static String normalizePath(@NotNull String path) {
-    return StringUtil.trimTrailing(toSystemIndependentName(path), FORWARD_SLASH);
+    return StringUtil.trimTrailing(toSystemIndependentName(path), '/');
   }
 }

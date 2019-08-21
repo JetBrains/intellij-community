@@ -81,10 +81,11 @@ public class CompilerReferenceIndex<Input> {
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(String path) throws IOException {
+          String caseAwarePath = convertToCaseAwarePath(path);
           if (relativizer != null) {
-            return super.enumerate(relativizer.toRelative(path));
+            return super.enumerate(relativizer.toRelative(caseAwarePath));
           }
-          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path));
+          return super.enumerate(caseAwarePath);
         }
 
         @Nullable
@@ -92,9 +93,14 @@ public class CompilerReferenceIndex<Input> {
         public String valueOf(int idx) throws IOException {
           String path = super.valueOf(idx);
           if (relativizer != null && path != null) {
-            return relativizer.toFull(path);
+            return convertToCaseAwarePath(relativizer.toFull(path));
           }
           return path;
+        }
+
+        @NotNull
+        private String convertToCaseAwarePath(@NotNull String path) {
+          return SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path);
         }
       };
 
