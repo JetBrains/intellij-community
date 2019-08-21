@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static java.lang.Math.*;
@@ -58,8 +58,7 @@ public class MouseWheelSmoothScroll {
     int maximum = bar.getMaximum();
     if (abs(delta) > 0.01) { // ignore small delta event
       animator.start(value, value + delta, bar::setValue, (v) -> {
-        if (minimum != bar.getMinimum() || maximum != bar.getMaximum()) return true;
-        return v <= minimum || v >= maximum - bar.getModel().getExtent();
+        return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum();
       });
     }
   }
@@ -98,8 +97,8 @@ public class MouseWheelSmoothScroll {
 
     private final Consumer<Integer> BLACK_HOLE = (x) -> {};
     private @NotNull Consumer<Integer> myConsumer = BLACK_HOLE;
-    private final Function<Integer, Boolean> NEVER = (value) -> false;
-    private @NotNull Function<Integer, Boolean> myCancel = NEVER;
+    private final Predicate<Integer> FALSE_PREDICATE = (value) -> false;
+    private @NotNull Predicate<Integer> myShouldStop = FALSE_PREDICATE;
 
     private final Timer myTimer = new Timer(REFRESH_TIME, this);
     private final AverageDiff<Long> myAvgDiff = new AverageDiff<>(8);
@@ -130,7 +129,7 @@ public class MouseWheelSmoothScroll {
       return rate;
     }
 
-    public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Function<Integer, Boolean> cancel) {
+    public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
       if (getDuration() == 0) {
         stop();
         consumer.accept(targetValue);
@@ -141,30 +140,28 @@ public class MouseWheelSmoothScroll {
       double multiplierFactor = myAvgDiff.getAverage() <= HI_POLLING_TIME ? getTouchpadVelocityFactor() : getVelocityFactor();
       myVelocity = multiplierFactor * (targetValue - initValue) / getDuration();
       myConsumer = Objects.requireNonNull(consumer);
-      myCancel = cancel == null ? NEVER : cancel;
+      myShouldStop = shouldStop == null ? FALSE_PREDICATE : shouldStop;
       myCurrentValue = initValue;
       myTimer.start();
     }
 
     @Override
     public final void actionPerformed(ActionEvent e) {
-      if (abs(myVelocity) >= 0.001) {
-        myCurrentValue += myVelocity * REFRESH_TIME;
-        int nextValue = (int)round(myCurrentValue);
-        myConsumer.accept(nextValue);
-        myVelocity *= exp(getVelocityDecayFactor() * REFRESH_TIME);
-        if (myCancel.apply(nextValue)) {
-          stop();
-        }
-      } else {
+      if (abs(myVelocity) < 0.001 || myShouldStop.test((int)round(myCurrentValue))) {
         stop();
+        return;
       }
+
+      myCurrentValue += myVelocity * REFRESH_TIME;
+      int nextValue = (int)round(myCurrentValue);
+      myConsumer.accept(nextValue);
+      myVelocity *= exp(getVelocityDecayFactor() * REFRESH_TIME);
     }
 
     public final void stop() {
       myTimer.stop();
       myConsumer = BLACK_HOLE;
-      myCancel = NEVER;
+      myShouldStop = FALSE_PREDICATE;
       myVelocity = 0.0;
       myAvgDiff.clear();
     }
@@ -199,7 +196,7 @@ public class MouseWheelSmoothScroll {
     }
 
     public double getAverage() {
-      if (myValues.isEmpty()) return Double.NaN;
+      if (myValues.size() < myCapacity) return Double.NaN;
       return myValues.stream().reduce(0.0, Double::sum) / myValues.size();
     }
 
