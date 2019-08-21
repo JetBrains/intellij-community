@@ -22,6 +22,8 @@ import java.util.Collections;
 
 public class ValProcessor extends AbstractProcessor {
 
+  private static final String LOMBOK_VAL_NANE = "val";
+  private static final String LOMBOK_VAR_NAME = "var";
   private static final String LOMBOK_VAL_FQN = "lombok.val";
   private static final String LOMBOK_VAR_FQN = "lombok.var";
   private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
@@ -32,32 +34,55 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
-    return psiLocalVariable.getInitializer() != null && isVal(resolveQualifiedName(psiLocalVariable.getTypeElement()));
+    if (psiLocalVariable.getInitializer() != null) {
+      final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
+      return isPossibleVal(typeElement.getText()) && isVal(resolveQualifiedName(typeElement));
+    }
+    return false;
   }
 
-  private static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
-    return psiLocalVariable.getInitializer() != null && isValOrVar(psiLocalVariable.getTypeElement());
+  private boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
+    if (psiLocalVariable.getInitializer() != null) {
+      final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
+      return isPossibleValOrVar(typeElement.getText()) && isValOrVar(resolveQualifiedName(typeElement));
+    }
+    return false;
+  }
+
+  private boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
+    if (psiParameter.getParent() instanceof PsiForeachStatement) {
+      final PsiTypeElement typeElement = psiParameter.getTypeElement();
+      return null != typeElement && isPossibleValOrVar(typeElement.getText()) && isValOrVar(resolveQualifiedName(typeElement));
+    }
+    return false;
+  }
+
+  private boolean isValOrVar(@Nullable String fullQualifiedName) {
+    return isVal(fullQualifiedName) || isVar(fullQualifiedName);
+  }
+
+  private boolean isPossibleValOrVar(@Nullable String shortName) {
+    return isPossibleVal(shortName) || isPossibleVar(shortName);
+  }
+
+  private static boolean isPossibleVal(@Nullable String shortName) {
+    return LOMBOK_VAL_NANE.equals(shortName);
   }
 
   private static boolean isVal(@Nullable String fullQualifiedName) {
     return LOMBOK_VAL_FQN.equals(fullQualifiedName);
   }
 
-  private static boolean isVar(@Nullable String fullQualifiedName) {
+  private boolean isPossibleVar(@Nullable String shortName) {
+    return LOMBOK_VAR_NAME.equals(shortName);
+  }
+
+  private boolean isVar(@Nullable String fullQualifiedName) {
     return LOMBOK_VAR_FQN.equals(fullQualifiedName) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(fullQualifiedName);
   }
 
-  private static boolean isValOrVar(@Nullable PsiTypeElement typeElement) {
-    String className = resolveQualifiedName(typeElement);
-    return isVal(className) || isVar(className);
-  }
-
   @Nullable
-  private static String resolveQualifiedName(@Nullable PsiTypeElement typeElement) {
-    if (typeElement == null) {
-      return null;
-    }
-
+  private static String resolveQualifiedName(@NotNull PsiTypeElement typeElement) {
     PsiJavaCodeReferenceElement reference = typeElement.getInnermostComponentReferenceElement();
     if (reference == null) {
       return null;
@@ -88,9 +113,10 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   public void verifyVariable(@NotNull final PsiLocalVariable psiLocalVariable, @NotNull final ProblemsHolder holder) {
-    final String qualifiedName = resolveQualifiedName(psiLocalVariable.getTypeElement());
-    boolean isVal = isVal(qualifiedName);
-    boolean isVar = isVar(qualifiedName);
+    final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
+    final String typeElementText = typeElement.getText();
+    boolean isVal = isPossibleVal(typeElementText) && isVal(resolveQualifiedName(typeElement));
+    boolean isVar = isPossibleVar(typeElementText) && isVar(resolveQualifiedName(typeElement));
     final String ann = isVal ? "val" : "var";
     if (isVal || isVar) {
       final PsiExpression initializer = psiLocalVariable.getInitializer();
@@ -110,9 +136,10 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   public void verifyParameter(@NotNull final PsiParameter psiParameter, @NotNull final ProblemsHolder holder) {
-    final String qualifiedName = resolveQualifiedName(psiParameter.getTypeElement());
-    boolean isVal = isVal(qualifiedName);
-    boolean isVar = isVar(qualifiedName);
+    final PsiTypeElement typeElement = psiParameter.getTypeElement();
+    final String typeElementText = null != typeElement ? typeElement.getText() : null;
+    boolean isVal = isPossibleVal(typeElementText) && isVal(resolveQualifiedName(typeElement));
+    boolean isVar = isPossibleVar(typeElementText) && isVar(resolveQualifiedName(typeElement));
     if (isVar || isVal) {
       PsiElement scope = psiParameter.getDeclarationScope();
       boolean isForeachStatement = scope instanceof PsiForeachStatement;
@@ -123,10 +150,6 @@ public class ValProcessor extends AbstractProcessor {
         holder.registerProblem(psiParameter, "'var' works only on local variables and on for/foreach loops", ProblemHighlightType.ERROR);
       }
     }
-  }
-
-  private boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
-    return psiParameter.getParent() instanceof PsiForeachStatement && isValOrVar(psiParameter.getTypeElement());
   }
 
   @Nullable
