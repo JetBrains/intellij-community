@@ -469,6 +469,8 @@
     <bundledKeymap file="Default for GNOME.xml"/>
     <bundledKeymap file="Default for KDE.xml"/>
     <bundledKeymap file="Emacs.xml"/>
+    <bundledKeymap file="Sublime Text.xml"/>
+    <bundledKeymap file="Sublime Text (Mac OS X).xml"/>
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
