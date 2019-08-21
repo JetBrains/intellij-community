@@ -6,12 +6,14 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import kotlin.collections.ArraysKt;
@@ -30,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -40,6 +43,7 @@ import java.util.function.Consumer;
 public class NonBlockingReadActionImpl<T>
   extends ExpirableConstrainedExecution<NonBlockingReadActionImpl<T>>
   implements NonBlockingReadAction<T> {
+  private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
   private final @Nullable List<Object> myCoalesceEquality;
@@ -47,6 +51,7 @@ public class NonBlockingReadActionImpl<T>
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<Object>, CancellablePromise<?>> ourTasksByEquality = ContainerUtil.newConcurrentMap();
+  private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
     this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null);
@@ -110,19 +115,41 @@ public class NonBlockingReadActionImpl<T>
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     AsyncPromise<T> promise = new AsyncPromise<>();
-    if (myCoalesceEquality != null) {
-      CancellablePromise<?> previous = ourTasksByEquality.put(myCoalesceEquality, promise);
-      if (previous != null) {
-        previous.cancel();
-      }
-      promise.onProcessed(__ -> ourTasksByEquality.remove(myCoalesceEquality, promise));
-    }
+    trackSubmission(backgroundThreadExecutor, promise);
     new Submission(promise, backgroundThreadExecutor).transferToBgThread();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourTasks.add(promise);
-      promise.onProcessed(__ -> ourTasks.remove(promise));
-    }
     return promise;
+  }
+
+  private void trackSubmission(@NotNull Executor backgroundThreadExecutor, AsyncPromise<T> promise) {
+    if (myCoalesceEquality != null) {
+      setupCoalescing(promise, myCoalesceEquality);
+    }
+    if (backgroundThreadExecutor == AppExecutorUtil.getAppExecutorService()) {
+      preventTooManySubmissions(promise);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      rememberSubmissionInTests(promise);
+    }
+  }
+
+  private static void setupCoalescing(AsyncPromise<?> promise, List<Object> coalesceEquality) {
+    CancellablePromise<?> previous = ourTasksByEquality.put(coalesceEquality, promise);
+    if (previous != null) {
+      previous.cancel();
+    }
+    promise.onProcessed(__ -> ourTasksByEquality.remove(coalesceEquality, promise));
+  }
+
+  private static void preventTooManySubmissions(AsyncPromise<?> promise) {
+    if (ourUnboundedSubmissionCount.incrementAndGet() % 100 == 0) {
+      LOG.error("Too many non-blocking read actions submitted at once");
+    }
+    promise.onProcessed(__ -> ourUnboundedSubmissionCount.decrementAndGet());
+  }
+
+  private static void rememberSubmissionInTests(AsyncPromise<?> promise) {
+    ourTasks.add(promise);
+    promise.onProcessed(__ -> ourTasks.remove(promise));
   }
 
   private class Submission {
