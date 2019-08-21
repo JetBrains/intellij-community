@@ -48,7 +48,6 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -91,7 +90,6 @@ public class ShelvedChangesViewManager implements Disposable {
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
-  private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   final ShelfTree myTree;
@@ -117,14 +115,12 @@ public class ShelvedChangesViewManager implements Disposable {
     return project.getComponent(ShelvedChangesViewManager.class);
   }
 
-  public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
-                                   final MessageBus bus, StartupManager startupManager) {
+  public ShelvedChangesViewManager(Project project) {
     myProject = project;
-    myContentManager = contentManager;
-    myShelveChangesManager = shelveChangesManager;
+    myShelveChangesManager = ShelveChangesManager.getInstance(project);
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
+    project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
         myUpdateQueue.queue(new MyContentUpdater());
@@ -170,11 +166,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     myTree.addSelectionListener(() -> mySplitterComponent.updatePreview(false));
-    if (startupManager == null) {
-      LOG.error("Couldn't start loading shelved changes");
-      return;
-    }
-    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
+
+    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
   }
 
   private boolean hasExactlySelectedChanges() {
@@ -185,8 +178,9 @@ public class ShelvedChangesViewManager implements Disposable {
   void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
-        myContentManager.removeContent(myContent);
-        myContentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+        ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+        contentManager.removeContent(myContent);
+        contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
         VcsNotifier.getInstance(myProject).hideAllNotificationsByType(ShelfNotification.class);
       }
       myContent = null;
@@ -197,7 +191,8 @@ public class ShelvedChangesViewManager implements Disposable {
         JPanel rootPanel = createRootPanel();
         myContent = new MyShelfContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
-        myContentManager.addContent(myContent);
+        ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+        contentManager.addContent(myContent);
         DnDSupport.createBuilder(myTree)
           .setImageProvider(this::createDraggedImage)
           .setBeanProvider(this::createDragStartBean)
@@ -313,7 +308,8 @@ public class ShelvedChangesViewManager implements Disposable {
       if (list != null) {
         selectShelvedList(list);
       }
-      myContentManager.setSelectedContent(myContent);
+      ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+      contentManager.setSelectedContent(myContent);
       ToolWindow window = getVcsToolWindow();
       if (window != null && !window.isVisible()) {
         window.activate(null);
@@ -524,7 +520,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
-        List cantRestoreList = findAll(myListDateMap.keySet(), l -> !myShelveChangesManager.getDeletedLists().contains(l));
+        List<ShelvedChangeList> cantRestoreList = findAll(myListDateMap.keySet(), l -> !manager.getDeletedLists().contains(l));
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
         if (!cantRestoreList.isEmpty()) {
