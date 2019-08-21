@@ -45,8 +45,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   protected final Project myProject;
   private final String myName;
   private final VcsKey myKey;
-  private VcsShowSettingOption myUpdateOption;
-  private VcsShowSettingOption myStatusOption;
 
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
@@ -297,24 +295,15 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  public VcsShowSettingOption getUpdateOptions() {
-    return myUpdateOption;
-  }
-
-
-  public VcsShowSettingOption getStatusOptions() {
-    return myStatusOption;
-  }
-
   public void loadSettings() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     if (getUpdateEnvironment() != null) {
-      myUpdateOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
+      vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
     }
 
     if (getStatusEnvironment() != null) {
-      myStatusOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
+      vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
     }
   }
 
