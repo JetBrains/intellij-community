@@ -139,6 +139,8 @@ class ActivityMonitorAction extends DumbAwareAction {
                className.startsWith("com.intellij.openapi.util.") ||
                className.startsWith("com.intellij.util.") ||
                className.startsWith("com.intellij.concurrency.") ||
+               className.startsWith("com.intellij.semantic.") ||
+               className.startsWith("com.intellij.jam.") ||
                className.startsWith("com.intellij.psi.stubs.") ||
                className.startsWith("com.intellij.ide.IdeEventQueue") ||
                className.startsWith("com.intellij.openapi.fileTypes.") ||
