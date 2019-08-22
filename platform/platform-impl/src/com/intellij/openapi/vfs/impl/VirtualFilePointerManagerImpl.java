@@ -70,7 +70,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull
   private final FileTypeManager myFileTypeManager;
 
-  private final SimpleModificationTracker myPointerSetTracker = new SimpleModificationTracker();
+  private int myPointerSetModCount;
 
   VirtualFilePointerManagerImpl(@NotNull MessageBus messageBus, VirtualFileManager virtualFileManager, @NotNull FileTypeManager fileTypeManager) {
     myVirtualFileManager = virtualFileManager;
@@ -345,7 +345,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     root.checkConsistency();
     DelegatingDisposable.registerDisposable(parentDisposable, pointer);
-    myPointerSetTracker.incModificationCount();
+    myPointerSetModCount++;
     return pointer;
   }
 
@@ -427,7 +427,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
-      startModCount = myPointerSetTracker.getModificationCount();
+      startModCount = myPointerSetModCount;
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         if (!(event.getFileSystem() instanceof VirtualFilePointerCapableFileSystem)) continue;
@@ -508,7 +508,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       public void beforeVfsChange() {
         //noinspection SynchronizeOnThis
         synchronized (VirtualFilePointerManagerImpl.this) {
-          if (startModCount != myPointerSetTracker.getModificationCount()) {
+          if (startModCount != myPointerSetModCount) {
             delegate = prepareChange(events);
           } else {
             incModificationCount();
@@ -649,7 +649,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     pointer.myNode = null;
     assertConsistency();
-    myPointerSetTracker.incModificationCount();
+    myPointerSetModCount++;
   }
 
   @Override
