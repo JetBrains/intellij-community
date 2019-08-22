@@ -1,0 +1,17 @@
+<idea-plugin>
+  <id>com.jetbrains.jps.cache</id>
+  <vendor>JetBrains</vendor>
+  <name>JPS Cache</name>
+
+  <description><![CDATA[
+  Adds support for working with JPS portable caches
+]]></description>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+</idea-plugin>
