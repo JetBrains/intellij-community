@@ -9,6 +9,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import com.intellij.util.Function
 import com.intellij.xml.XmlBundle
 
 private val model = WebEditorOptions.getInstance()
@@ -89,7 +90,7 @@ class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConf
     }
   }
 
-  override fun getOptionDescriptors(configurableId: String) = webEditorOptionDescriptors
+  override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String, String>) = webEditorOptionDescriptors
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
     return ConfigurableWrapper.createConfigurables(EP_NAME)

@@ -2,6 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,5 +10,6 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface ConfigurableWithOptionDescriptors {
-  List<OptionDescription> getOptionDescriptors(@NotNull String configurableId);
+  @NotNull
+  List<OptionDescription> getOptionDescriptors(@NotNull String configurableId, @NotNull Function<? super String, String> nameConverter);
 }

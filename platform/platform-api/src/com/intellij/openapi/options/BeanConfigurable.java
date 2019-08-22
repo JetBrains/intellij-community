@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -282,11 +283,13 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myFields.add(field);
   }
 
+  @NotNull
   @Override
-  public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId) {
+  public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                      @NotNull Function<? super String, String> nameConverter) {
     List<BeanConfigurable.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
-    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(box.getTitle(), configurableId) {
+    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.fun(box.getTitle()), configurableId) {
       @Override
       public boolean isOptionEnabled() {
         return box.getValue(instance);
