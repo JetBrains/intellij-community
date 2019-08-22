@@ -189,6 +189,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     });
 
     myLayout.copyFrom(WindowManagerEx.getInstanceEx().getLayout());
+    myLayout.getInfos().forEach(info -> myLayout.unregister(Objects.requireNonNull(info.getId())));
 
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
