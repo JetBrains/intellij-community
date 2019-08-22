@@ -12,6 +12,8 @@
   </extensions>
 
   <actions>
-    <!-- Add your actions here -->
+    <action id="com.intellij.jps.cache.JpsCacheSimpleAction" class="com.intellij.jps.cache.JpsCacheSimpleAction" text="Pull JPS Chache ">
+      <add-to-group group-id="BuildMenu" anchor="first"/>
+    </action>
   </actions>
 </idea-plugin>
