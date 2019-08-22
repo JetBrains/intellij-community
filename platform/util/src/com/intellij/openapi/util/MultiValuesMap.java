@@ -6,17 +6,20 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
- * @deprecated use {@link com.intellij.util.containers.MultiMap} directly
+ * @deprecated use {@link com.intellij.util.containers.MultiMap} directly.
+ * <p></p>On migration please note that MultiMap has few differences:<ul>
+ * <li>{@link MultiMap#get(java.lang.Object)} method returns non-null value. In case there is no value for the key - empty collection is returned.</li>
+ * <li>{@link MultiMap#values} method returns a real values collection, not a copy. Be careful with modifications.</li>
+ * </ul></p>
  */
 @Debug.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @Deprecated
 public class MultiValuesMap<K, V>{
   private final MultiMap<K, V> myDelegate;
+  private final boolean myOrdered;
 
   /**
    * @deprecated Use {@link MultiMap#createSet()}
@@ -27,6 +30,7 @@ public class MultiValuesMap<K, V>{
   }
 
   public MultiValuesMap(boolean ordered) {
+    myOrdered = ordered;
     if (ordered) {
       myDelegate = MultiMap.createLinkedSet();
     }
@@ -64,7 +68,7 @@ public class MultiValuesMap<K, V>{
 
   @NotNull
   public Collection<V> values() {
-    return (Collection<V>)myDelegate.values();
+    return myOrdered ? new LinkedHashSet<>(myDelegate.values()) : new HashSet<>(myDelegate.values());
   }
 
   public void remove(K key, V value) {
