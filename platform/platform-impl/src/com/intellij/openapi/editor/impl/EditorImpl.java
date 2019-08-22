@@ -2675,7 +2675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setBlinkPeriod(int blinkPeriod) {
-      mySleepTime = blinkPeriod > 10 ? blinkPeriod : 10;
+      mySleepTime = Math.max(blinkPeriod, 10);
       start();
     }
 
@@ -4047,7 +4047,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) return false;
     Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) return false;
     MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
     String[] mappedActions = keymap.getActionIds(mouseShortcut);
     if (!ArrayUtil.contains(actionId, mappedActions)) return false;
