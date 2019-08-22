@@ -20,8 +20,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -33,7 +31,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
@@ -54,14 +51,6 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public class DomServiceImpl extends DomService {
-  private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
-  private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
-    @Override
-    protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
-      return CachedValuesManager.getManager(file.getProject()).createCachedValue(
-        () -> new CachedValueProvider.Result<>(calcXmlFileHeader(file), file), false);
-    }
-  };
 
   @NotNull
   private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
@@ -73,7 +62,7 @@ public class DomServiceImpl extends DomService {
     if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
-        ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
+        ObjectStubTree<?> tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
         if (tree != null) {
           Stub root = tree.getRoot();
           if (root instanceof FileStub) {
@@ -144,7 +133,7 @@ public class DomServiceImpl extends DomService {
   @NotNull
   public XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {
-      return ((DomFileElement)domElement).getFile();
+      return ((DomFileElement<?>)domElement).getFile();
     }
     return DomManagerImpl.getNotNullHandler(domElement).getFile();
   }
@@ -158,7 +147,11 @@ public class DomServiceImpl extends DomService {
   @Override
   @NotNull
   public XmlFileHeader getXmlFileHeader(XmlFile file) {
-    return file.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, file, null).getValue() : XmlFileHeader.EMPTY;
+    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) {
+      return calcXmlFileHeader(file);
+    }
+
+    return CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(calcXmlFileHeader(file), file));
   }
 
   @Override

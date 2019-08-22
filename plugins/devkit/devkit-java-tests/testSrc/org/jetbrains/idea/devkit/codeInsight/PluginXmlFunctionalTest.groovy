@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
@@ -55,6 +56,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myTempDirFixture.setUp()
     myInspection = new PluginXmlDomInspection()
     myFixture.enableInspections(myInspection)
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
   }
 
   @Override
