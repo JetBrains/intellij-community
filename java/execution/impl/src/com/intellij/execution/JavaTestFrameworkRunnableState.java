@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
@@ -29,24 +30,32 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -323,7 +332,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
       if (enabled) {
         if (buf.length() > 0) buf.append(delimiter);
-        final Class classListener = listener.getClass();
+        final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
       }
@@ -332,15 +341,79 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     configureRTClasspath(javaParameters);
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
+    RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (configureByModule(module.getModule())) {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
+    Module module = configurationModule.getModule();
+    if (configureByModule(module)) {
+      JavaParametersUtil.configureModule(configurationModule, javaParameters, pathType, jreHome);
+      LOG.assertTrue(module != null);
+      if (JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
+        configureModulePath(javaParameters, module);
+      }
     }
     else {
       JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
     }
+  }
+
+  private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+    DumbService dumbService = DumbService.getInstance(module.getProject());
+    CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+    PsiJavaModule currentModule =
+      dumbService.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, true));
+    if (currentModule == null) {
+      List<PsiJavaModule> modules = new ArrayList<>();
+      OrderEnumerator.orderEntries(module).recursively().runtimeOnly().forEachModule(m -> {
+        ContainerUtil.addIfNotNull(modules,
+                                   dumbService.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(m, false)));
+        return true;
+      });
+
+      if (!modules.isEmpty()) {
+        ParametersList vmParametersList = javaParameters.getVMParametersList();
+        for (PsiJavaModule javaModule : modules) {
+          String javaModuleName = javaModule.getName();
+          vmParametersList.add("--add-modules");
+          vmParametersList.add(javaModuleName);
+
+          VirtualFile testsOutput = compilerModuleExtension != null ? compilerModuleExtension.getCompilerOutputPathForTests() : null;
+          if (testsOutput != null) {
+            vmParametersList.add("--patch-module");
+            vmParametersList.add(javaModuleName + "=" + testsOutput.getPath());
+          }
+
+
+          for (String targetModule : getAdditionalTargetModules()) {
+            vmParametersList.add("--add-modules");
+            vmParametersList.add(targetModule);
+            vmParametersList.addParametersString("--add-reads " + javaModuleName + "=" + targetModule);
+          }
+        }
+      }
+      else {
+        //no modules found on the classpath
+        return;
+      }
+    }
+    else {
+      ParametersList vmParametersList = javaParameters.getVMParametersList();
+      for (String targetModule : getAdditionalTargetModules()) {
+        String javaModuleName = currentModule.getName();
+        vmParametersList.add("--add-modules");
+        vmParametersList.add(targetModule);
+        vmParametersList.add("--add-reads");
+        vmParametersList.add(javaModuleName + "=" + targetModule);
+      }
+    }
+    PathsList classPath = javaParameters.getClassPath();
+    PathsList modulePath = javaParameters.getModulePath();
+    modulePath.addAll(classPath.getPathList());
+    classPath.clear();
+  }
+
+  protected List<String> getAdditionalTargetModules() {
+    return Collections.emptyList();
   }
 
   protected void createServerSocket(JavaParameters javaParameters) {
