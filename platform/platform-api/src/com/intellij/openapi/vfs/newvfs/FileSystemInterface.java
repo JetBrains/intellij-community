@@ -40,6 +40,13 @@ public interface FileSystemInterface {
   @NotNull
   String[] list(@NotNull VirtualFile file);
 
+  /**
+   * @param file to get children for
+   * @return List of all children of the given <code>file</code> if it represents a directory.
+   * Each entry in the returned <code>Stream</code> represents basename of the file or
+   * directory without the path prefix. <code>Stream.empty()</code> is returned if
+   * <code>file</code> has no children.
+   */
   @ApiStatus.Experimental
   @NotNull
   default Stream<String> listStream(@NotNull VirtualFile file) {

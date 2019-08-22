@@ -23,16 +23,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileSystems;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class RootFileElement extends FileElement {
-  private Stream<VirtualFile> myFiles;
+  private List<VirtualFile> myFiles;
   private Object[] myChildren;
 
   public RootFileElement(@NotNull List<VirtualFile> files, String name, boolean showFileSystemRoots) {
     super(files.size() == 1 ? files.get(0) : null, name);
-    myFiles = files.size() == 0 && showFileSystemRoots ? null : files.stream();
+    myFiles = files.size() == 0 && showFileSystemRoots ? null : files;
   }
 
   public Object[] getChildren() {
@@ -41,7 +41,7 @@ public class RootFileElement extends FileElement {
         myFiles = getFileSystemRoots();
       }
 
-      myChildren = myFiles.
+      myChildren = myFiles.stream().
         filter(file -> file != null).
         map(file -> new FileElement(file, file.getPresentableUrl())).
         toArray();
@@ -49,11 +49,12 @@ public class RootFileElement extends FileElement {
     return myChildren;
   }
 
-  private static Stream<VirtualFile> getFileSystemRoots() {
+  private static List<VirtualFile> getFileSystemRoots() {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
 
     return StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false).
       map(root -> localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(root.toString()))).
-      filter(file -> file != null);
+      filter(file -> file != null).
+      collect(Collectors.toList());
   }
 }
