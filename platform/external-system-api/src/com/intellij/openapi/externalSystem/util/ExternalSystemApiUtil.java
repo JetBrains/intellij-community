@@ -320,6 +320,17 @@ public class ExternalSystemApiUtil {
     return result;
   }
 
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> findFirstRecursively(@NotNull DataNode<?> parentNode,
+                                                     @NotNull Key<T> key,
+                                                     @NotNull BooleanFunction<? super DataNode<T>> predicate) {
+    return (DataNode<T>)findFirstRecursively(parentNode, node -> {
+      if (!node.getKey().equals(key)) return false;
+      return predicate.fun((DataNode<T>)node);
+    });
+  }
+
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
                                                  @NotNull BooleanFunction<? super DataNode<?>> predicate) {
@@ -734,7 +745,7 @@ public class ExternalSystemApiUtil {
     Project project = module.getProject();
     DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
     if (projectNode == null) return null;
-    return find(projectNode, ProjectKeys.MODULE, node -> node.getData().getId() == moduleId);
+    return findFirstRecursively(projectNode, ProjectKeys.MODULE, node -> node.getData().getId() == moduleId);
   }
 
   @ApiStatus.Experimental
