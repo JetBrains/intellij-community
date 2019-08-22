@@ -15,8 +15,12 @@ object IdeaPasswordSafePersistence : Persistence {
         put(key, value.text())
     }
 
+    override suspend fun getJson(key: String): JsonElement? {
+        return get(key)?.let { jsonElement(it) }
+    }
+
     override suspend fun batchPutJson(keyValuePairs: List<Pair<String, JsonElement>>) {
-        batchPut(keyValuePairs.map { it.first to it.second.text() })
+        TODO("not implemented")
     }
 
     override suspend fun put(key: String, value: String) {
@@ -30,13 +34,6 @@ object IdeaPasswordSafePersistence : Persistence {
         PasswordSafe.instance.setPassword(createCredentialAttributes(key), null)
     }
 
-    override suspend fun batchPut(keyValuePairs: List<Pair<String, String>>) {
-        TODO("not implemented")
-    }
-
-    override suspend fun batchGet(keys: List<String>): List<Pair<String, String?>> {
-        TODO("not implemented")
-    }
 
     override suspend fun batchDelete(keys: List<String>) {
         TODO("not implemented")
