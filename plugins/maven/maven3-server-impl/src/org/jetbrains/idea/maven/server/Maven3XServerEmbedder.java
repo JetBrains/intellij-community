@@ -570,7 +570,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
     ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
-    myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
+
+    myContainer.addComponent(getComponent(org.apache.maven.project.path.PathTranslator.class),
+                             org.apache.maven.project.path.PathTranslator.ROLE);
+    myContainer.addComponent(getComponent(org.apache.maven.model.path.PathTranslator.class),
+                             org.apache.maven.model.path.PathTranslator.class.getName());
+
+
+    myContainer.addComponent(getComponent(org.apache.maven.model.path.UrlNormalizer.class),
+                             org.apache.maven.model.path.UrlNormalizer.class.getName());
+
+    //myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
     myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
                              org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
     ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
@@ -1054,10 +1064,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                                 @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+  public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
+                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories, MavenToken token)
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
+    final MavenExecutionRequest request =
+      createRequest(null, null, null, null);
+    final List<MavenArtifact>[] mavenArtifacts = new List[]{null};
+    executeWithMavenSession(request, new RunnableThrownRemote() {
+      @Override
+      public void run() throws RemoteException {
+        mavenArtifacts[0] = Maven3XServerEmbedder.this.doResolveTransitively(artifacts, remoteRepositories);
+      }
+    });
+    return mavenArtifacts[0];
+  }
+
+  @NotNull
+  private List<MavenArtifact> doResolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+                                                    @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
 
     try {
       Set<Artifact> toResolve = new LinkedHashSet<Artifact>();

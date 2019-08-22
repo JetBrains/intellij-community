@@ -597,7 +597,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
+  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) throws RemoteException {
     super.executeWithMavenSessionLegacy(request, runnable);
   }
 
