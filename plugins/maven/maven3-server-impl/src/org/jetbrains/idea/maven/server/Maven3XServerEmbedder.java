@@ -570,17 +570,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
     ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
-
-    myContainer.addComponent(getComponent(org.apache.maven.project.path.PathTranslator.class),
-                             org.apache.maven.project.path.PathTranslator.ROLE);
-    myContainer.addComponent(getComponent(org.apache.maven.model.path.PathTranslator.class),
-                             org.apache.maven.model.path.PathTranslator.class.getName());
-
-
-    myContainer.addComponent(getComponent(org.apache.maven.model.path.UrlNormalizer.class),
-                             org.apache.maven.model.path.UrlNormalizer.class.getName());
-
-    //myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
+    myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
     myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
                              org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
     ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
