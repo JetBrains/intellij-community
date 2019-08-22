@@ -110,8 +110,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public void preloadTabContent(@NotNull Content content) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
       content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
     }
   }
@@ -125,8 +123,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public void initTabContent(@NotNull Content content) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
       ChangesViewManager viewManager = (ChangesViewManager)getInstance(myProject);
       ChangesViewToolWindowPanel panel = viewManager.initToolWindowPanel();
 
