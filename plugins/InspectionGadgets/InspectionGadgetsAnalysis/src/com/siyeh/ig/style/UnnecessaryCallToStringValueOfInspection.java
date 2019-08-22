@@ -22,10 +22,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -149,6 +146,13 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     final PsiExpression argument = ParenthesesUtils.stripParentheses(call.getArgumentList().getExpressions()[0]);
     if (argument == null) return null;
     PsiType argumentType = argument.getType();
+    if (argumentType instanceof PsiPrimitiveType) {
+      PsiMethod method = call.resolveMethod();
+      assert method != null; // otherwise the matcher above won't match
+      if (!method.getParameters()[0].getType().equals(argumentType)) {
+        return null;
+      }
+    }
     final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
     if (ExpressionUtils.isConversionToStringNecessary(call, throwable)) {
       if (!TypeUtils.isJavaLangString(argumentType) ||
