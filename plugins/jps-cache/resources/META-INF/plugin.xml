@@ -16,4 +16,10 @@
       <add-to-group group-id="BuildMenu" anchor="first"/>
     </action>
   </actions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.jps.cache.JpsCachePluginComponent</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
