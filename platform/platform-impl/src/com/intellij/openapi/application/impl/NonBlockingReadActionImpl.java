@@ -261,7 +261,8 @@ public class NonBlockingReadActionImpl<T>
           return;
         }
 
-        // complete the promise now to prevent write actions inside custom callback from cancelling it
+        // complete the promise before calling custom code (either edtFinish or promise callbacks)
+        // otherwise write actions in those callbacks would cancel the promise
         promise.setResult(result);
 
         if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
