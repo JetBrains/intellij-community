@@ -1,24 +1,38 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * @deprecated use {@link com.intellij.util.containers.MultiMap} directly
+ */
 @Debug.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
+@Deprecated
 public class MultiValuesMap<K, V>{
-  private final Map<K, Collection<V>> myBaseMap;
-  private final boolean myOrdered;
+  private final MultiMap<K, V> myDelegate;
 
+  /**
+   * @deprecated Use {@link MultiMap#createSet()}
+   */
+  @Deprecated
   public MultiValuesMap() {
     this(false);
   }
 
   public MultiValuesMap(boolean ordered) {
-    myOrdered = ordered;
-    myBaseMap = ordered ? new LinkedHashMap<>() : new HashMap<>();
+    if (ordered) {
+      myDelegate = MultiMap.createLinkedSet();
+    }
+    else {
+      myDelegate = MultiMap.createSet();
+    }
   }
 
   public void putAll(K key, @NotNull Collection<? extends V> values) {
@@ -34,70 +48,52 @@ public class MultiValuesMap<K, V>{
   }
 
   public void put(K key, V value) {
-    Collection<V> collection = myBaseMap.get(key);
-    if (collection == null) {
-      collection = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
-      myBaseMap.put(key, collection);
-    }
-
-    collection.add(value);
+    myDelegate.putValue(key, value);
   }
 
   public Collection<V> get(K key){
-    return myBaseMap.get(key);
+    return myDelegate.get(key);
   }
 
   @NotNull
   public Set<K> keySet() {
-    return myBaseMap.keySet();
+    return myDelegate.keySet();
   }
 
   @NotNull
   public Collection<V> values() {
-    Set<V> result = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
-    for (final Collection<V> values : myBaseMap.values()) {
-      result.addAll(values);
-    }
-
-    return result;
+    return (Collection<V>)myDelegate.values();
   }
 
   public void remove(K key, V value) {
-    if (!myBaseMap.containsKey(key)) return;
-    final Collection<V> values = myBaseMap.get(key);
-    values.remove(value);
-    if (values.isEmpty()) {
-      myBaseMap.remove(key);
-    }
+    myDelegate.remove(key, value);
   }
 
   public void clear() {
-    myBaseMap.clear();
+    myDelegate.clear();
   }
 
-  @Nullable 
+  @Nullable
   public Collection<V> removeAll(final K key) {
-    return myBaseMap.remove(key);
+    return myDelegate.remove(key);
   }
 
   @NotNull
   public Set<Map.Entry<K, Collection<V>>> entrySet() {
-    return myBaseMap.entrySet();
+    return myDelegate.entrySet();
   }
 
   public boolean isEmpty() {
-    return myBaseMap.isEmpty();
+    return myDelegate.isEmpty();
   }
 
   public boolean containsKey(final K key) {
-    return myBaseMap.containsKey(key);
+    return myDelegate.containsKey(key);
   }
 
   @Nullable
   public V getFirst(final K key) {
-    Collection<V> values = myBaseMap.get(key);
-    return values == null || values.isEmpty() ? null : values.iterator().next();
+    Collection<V> values = myDelegate.get(key);
+    return values.isEmpty() ? null : values.iterator().next();
   }
-
-
 }
