@@ -4,7 +4,6 @@ package com.intellij.sh.run;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,7 +28,6 @@ import java.util.concurrent.ExecutionException;
 
 public class ShTerminalRunner extends ShRunner {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
-  private static final int DELETE_CODE = SystemInfo.isMac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_DELETE;
 
   protected ShTerminalRunner(@NotNull Project project) {
     super(project);
@@ -106,7 +104,7 @@ public class ShTerminalRunner extends ShRunner {
     if (command != null) {
       try {
         // Workaround for ANSI escape code IDEA-221031
-        process.getOutputStream().write(DELETE_CODE);
+        process.getOutputStream().write(KeyEvent.VK_BACK_SPACE);
         process.getOutputStream().write(command.getBytes(CharsetToolkit.UTF8_CHARSET));
       }
       catch (IOException ex) {
