@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
 public interface ChangesViewContentProvider {
   default void initTabContent(@NotNull Content content) {
     content.setComponent(initContent());
@@ -34,5 +31,10 @@ public interface ChangesViewContentProvider {
   }
 
   default void disposeContent() {
+  }
+
+  interface Preloader {
+    default void preloadTabContent(@NotNull Content content) {
+    }
   }
 }

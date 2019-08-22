@@ -9,7 +9,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -48,6 +47,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.*;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +101,21 @@ public class ChangesViewManager implements ChangesViewEx,
     myProject = project;
   }
 
+  public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
+    @NotNull private final Project myProject;
+
+    public ContentPreloader(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void preloadTabContent(@NotNull Content content) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
+      content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
+    }
+  }
+
   public static class ContentProvider implements ChangesViewContentProvider {
     @NotNull private final Project myProject;
 
@@ -118,11 +133,11 @@ public class ChangesViewManager implements ChangesViewEx,
       content.setHelpId(ChangesListView.HELP_ID);
       content.setComponent(panel);
       content.setPreferredFocusableComponent(panel.myView);
-      content.putUserData(Content.TAB_DND_TARGET_KEY, panel.createContentDnDTarget(content));
     }
   }
 
   @NotNull
+  @CalledInAwt
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this);
@@ -347,11 +362,6 @@ public class ChangesViewManager implements ChangesViewEx,
     @Nullable
     public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
       return myCommitWorkflowHandler;
-    }
-
-    @NotNull
-    public DnDTarget createContentDnDTarget(@NotNull Content content) {
-      return new MyContentDnDTarget(content);
     }
 
     public void updateCommitWorkflow(boolean isNonModal) {
@@ -675,31 +685,32 @@ public class ChangesViewManager implements ChangesViewEx,
         Objects::nonNull).map(UnversionedFileWrapper::new)).collect(toList());
       }
     }
+  }
 
-    private class MyContentDnDTarget extends VcsToolwindowDnDTarget {
-      private MyContentDnDTarget(@NotNull Content content) {
-        super(myProject, content);
-      }
+  private static class MyContentDnDTarget extends VcsToolwindowDnDTarget {
+    private MyContentDnDTarget(@NotNull Project project, @NotNull Content content) {
+      super(project, content);
+    }
 
-      @Override
-      public void drop(DnDEvent event) {
-        super.drop(event);
-        Object attachedObject = event.getAttachedObject();
-        if (attachedObject instanceof ShelvedChangeListDragBean) {
-          ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
-                                                       ChangesDnDSupport.getDropRootNode(myView, event),
-                                                       !ChangesDnDSupport.isCopyAction(event));
-        }
+    @Override
+    public void drop(DnDEvent event) {
+      super.drop(event);
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ShelvedChangeListDragBean) {
+        ChangesViewToolWindowPanel panel = ((ChangesViewManager)getInstance(myProject)).initToolWindowPanel();
+        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
+                                                     ChangesDnDSupport.getDropRootNode(panel.myView, event),
+                                                     !ChangesDnDSupport.isCopyAction(event));
       }
+    }
 
-      @Override
-      public boolean isDropPossible(@NotNull DnDEvent event) {
-        Object attachedObject = event.getAttachedObject();
-        if (attachedObject instanceof ShelvedChangeListDragBean) {
-          return !((ShelvedChangeListDragBean)attachedObject).getShelvedChangelists().isEmpty();
-        }
-        return attachedObject instanceof ChangeListDragBean;
+    @Override
+    public boolean isDropPossible(@NotNull DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ShelvedChangeListDragBean) {
+        return !((ShelvedChangeListDragBean)attachedObject).getShelvedChangelists().isEmpty();
       }
+      return attachedObject instanceof ChangeListDragBean;
     }
   }
 

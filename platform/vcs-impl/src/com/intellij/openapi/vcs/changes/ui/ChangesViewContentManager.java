@@ -72,16 +72,22 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
       final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
       boolean shouldShowTab = predicate == null || predicate.fun(myProject);
       if (shouldShowTab) {
-        myAddedContents.add(createExtensionTab(ep));
+        myAddedContents.add(createExtensionTab(myProject, ep));
       }
     }
   }
 
   @NotNull
-  private static Content createExtensionTab(@NotNull ChangesViewContentEP ep) {
+  private static Content createExtensionTab(@NotNull Project project, @NotNull ChangesViewContentEP ep) {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
     content.setCloseable(false);
     content.putUserData(myEPKey, ep);
+
+    ChangesViewContentProvider.Preloader preloader = ep.newPreloaderInstance(project);
+    if (preloader != null) {
+      preloader.preloadTabContent(content);
+    }
+
     return content;
   }
 
@@ -93,7 +99,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
       Content epContent = ContainerUtil.find(myContentManager.getContents(), content -> content.getUserData(myEPKey) == ep);
       boolean shouldShowTab = predicate.fun(myProject);
       if (shouldShowTab && epContent == null) {
-        Content tab = createExtensionTab(ep);
+        Content tab = createExtensionTab(myProject, ep);
         addIntoCorrectPlace(tab);
       }
       else if (!shouldShowTab && epContent != null) {

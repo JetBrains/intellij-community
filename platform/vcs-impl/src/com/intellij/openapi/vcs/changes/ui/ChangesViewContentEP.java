@@ -31,6 +31,9 @@ public class ChangesViewContentEP implements PluginAware {
   @Attribute("predicateClassName")
   public String predicateClassName;
 
+  @Attribute("preloaderClassName")
+  public String preloaderClassName;
+
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
@@ -63,6 +66,14 @@ public class ChangesViewContentEP implements PluginAware {
     this.predicateClassName = predicateClassName;
   }
 
+  public String getPreloaderClassName() {
+    return preloaderClassName;
+  }
+
+  public void setPreloaderClassName(final String preloaderClassName) {
+    this.preloaderClassName = preloaderClassName;
+  }
+
   public ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
       myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
@@ -82,6 +93,14 @@ public class ChangesViewContentEP implements PluginAware {
     }
     //noinspection unchecked
     return (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName);
+  }
+
+  @Nullable
+  public ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
+    if (preloaderClassName == null) {
+      return null;
+    }
+    return (ChangesViewContentProvider.Preloader)newClassInstance(project, preloaderClassName);
   }
 
   @Nullable

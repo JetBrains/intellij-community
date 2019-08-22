@@ -37,6 +37,7 @@
                     area="IDEA_PROJECT">
       <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
       <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+      <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
     <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">

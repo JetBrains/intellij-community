@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.TOOLWINDOW_ID;
 
 public abstract class VcsToolwindowDnDTarget extends DnDActivateOnHoldTarget {
-  @NotNull private final Project myProject;
-  @NotNull private final Content myContent;
+  @NotNull protected final Project myProject;
+  @NotNull protected final Content myContent;
 
   protected VcsToolwindowDnDTarget(@NotNull Project project, @NotNull Content content) {
     myProject = project;
