@@ -1365,7 +1365,7 @@ class A<T> {
 
 (new A<Integer>()).foo {
     <caret>it
-}''', "? super $JAVA_LANG_INTEGER"
+}''', "$JAVA_LANG_INTEGER"
   }
 
   void 'test implicit @ClosureParams with generified method'() {
@@ -1385,7 +1385,7 @@ def foo(cl) {
 
 foo { a, b ->
     <caret>a
-}''', "? super $JAVA_LANG_INTEGER"
+}''', "$JAVA_LANG_INTEGER"
   }
 
   void 'test DFA priority is higher than signature inference'() {

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -23,7 +22,7 @@ open class ClosureAsAnonymousParameterEnhancer : AbstractClosureParameterEnhance
     val clazz = result.element ?: return null
     val substitutor = result.substitutor
     val sam = findSingleAbstractSignature(clazz) ?: return null
-    return sam.parameterTypes.getOrNull(index)?.let(substitutor::substitute)?.let(::unwrapBound)
+    return sam.parameterTypes.getOrNull(index)?.let(substitutor::substitute)
   }
 
   private fun expectedType(expression: GrFunctionalExpression): PsiType? {
@@ -44,15 +43,6 @@ open class ClosureAsAnonymousParameterEnhancer : AbstractClosureParameterEnhance
     val expectedType = mapping.expectedType(ExpressionArgument(expression)) ?: return null
     val substitutor = substitutorIgnoringClosures(call, candidate, variant)
     return substitutor.substitute(expectedType)
-  }
-
-  private fun unwrapBound(type: PsiType): PsiType? {
-    return if (type is PsiWildcardType && type.isSuper) {
-      type.bound
-    }
-    else {
-      type
-    }
   }
 
   companion object {

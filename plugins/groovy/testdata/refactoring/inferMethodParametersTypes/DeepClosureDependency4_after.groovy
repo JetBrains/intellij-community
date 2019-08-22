@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-def <T0> Object foo(T0 a, @ClosureParams(value = FromString, options = ["? super java.util.List<T0>,T0"]) Closure<?> c) {
+def <T0> Object foo(T0 a, @ClosureParams(value = FromString, options = ["? super java.util.List<T0>,T0"]) Closure<Boolean> c) {
   c([a], a)
 }
 
