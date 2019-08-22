@@ -142,6 +142,7 @@ public class ShelvedChangesViewManager implements Disposable {
         ShelfToolWindowPanel panel = new ShelfToolWindowPanel(myProject);
         myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
+        myContent.setDisposer(panel);
         ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
         contentManager.addContent(myContent);
         DnDSupport.createBuilder(panel.myTree)
@@ -454,16 +455,18 @@ public class ShelvedChangesViewManager implements Disposable {
                                             @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
       String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
       Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
-      shelfDeletionNotification.addAction(new UndoShelfDeletionAction(createdDeletedListsWithOriginalDate));
+      shelfDeletionNotification.addAction(new UndoShelfDeletionAction(myProject, createdDeletedListsWithOriginalDate));
       shelfDeletionNotification.addAction(ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted"));
       VcsNotifier.getInstance(myProject).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
     }
 
-    private class UndoShelfDeletionAction extends NotificationAction {
+    private static class UndoShelfDeletionAction extends NotificationAction {
+      @NotNull private final Project myProject;
       @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
 
-      private UndoShelfDeletionAction(@NotNull Map<ShelvedChangeList, Date> listDateMap) {
+      private UndoShelfDeletionAction(@NotNull Project project, @NotNull Map<ShelvedChangeList, Date> listDateMap) {
         super("Undo");
+        myProject = project;
         myListDateMap = listDateMap;
       }
 
@@ -618,6 +621,7 @@ public class ShelvedChangesViewManager implements Disposable {
       actionGroup.add(new MyToggleDetailsAction(), new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
 
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+      Disposer.register(this, changeProcessor);
       mySplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
                                                              myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
@@ -677,7 +681,6 @@ public class ShelvedChangesViewManager implements Disposable {
       myProject = project;
       myTree = tree;
       myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
-      Disposer.register(project, this);
     }
 
     @NotNull
