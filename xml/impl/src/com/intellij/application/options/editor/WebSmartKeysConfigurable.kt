@@ -4,6 +4,7 @@ package com.intellij.application.options.editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
@@ -34,7 +35,18 @@ val mySelectWholeCssIdentifierOnDoubleClick = CheckboxDescriptor("Select whole C
                                                                  PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick,
                                                                                  model::setSelectWholeCssIdentifierOnDoubleClick))
 
-class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS") {
+val webEditorOptionDescriptors = listOf(
+      myAutomaticallyInsertClosingTagCheckBox
+    , myAutomaticallyInsertRequiredAttributesCheckBox
+    , myAutomaticallyInsertRequiredSubTagsCheckBox
+    , myAutomaticallyStartAttributeAfterCheckBox
+    , myAddQuotasForAttributeValue
+    , myAutoCloseTagCheckBox
+    , mySyncTagEditing
+    , mySelectWholeCssIdentifierOnDoubleClick
+).map(CheckboxDescriptor::asOptionDescriptor)
+
+class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
   override fun createPanel(): DialogPanel {
     return panel {
       row {
@@ -76,6 +88,8 @@ class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConf
       }
     }
   }
+
+  override fun getOptionDescriptors(configurableId: String) = webEditorOptionDescriptors
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
     return ConfigurableWrapper.createConfigurables(EP_NAME)
