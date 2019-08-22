@@ -214,6 +214,11 @@ def file_modification_timestamp(path):
 
 
 def is_source_file(path):
+    # Skip directories, character and block special devices, named pipes
+    # Do not skip regular files and symbolic links to regular files
+    if not os.path.isfile(path):
+        return False
+
     # Want to see that files regardless of their encoding.
     if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
         return True
