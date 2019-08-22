@@ -10,10 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,6 +69,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final MessageBus myBus;
   @NotNull
   private final FileTypeManager myFileTypeManager;
+
+  private final SimpleModificationTracker myPointerSetTracker = new SimpleModificationTracker();
 
   VirtualFilePointerManagerImpl(@NotNull MessageBus messageBus, VirtualFileManager virtualFileManager, @NotNull FileTypeManager fileTypeManager) {
     myVirtualFileManager = virtualFileManager;
@@ -346,6 +345,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     root.checkConsistency();
     DelegatingDisposable.registerDisposable(parentDisposable, pointer);
+    myPointerSetTracker.incModificationCount();
     return pointer;
   }
 
@@ -423,8 +423,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     List<EventDescriptor> eventList;
     List<VirtualFilePointer> allPointersToFire = new ArrayList<>();
 
+    long startModCount;
+
     //noinspection SynchronizeOnThis
     synchronized (this) {
+      startModCount = myPointerSetTracker.getModificationCount();
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         if (!(event.getFileSystem() instanceof VirtualFilePointerCapableFileSystem)) continue;
@@ -499,11 +502,22 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     VirtualFilePointer[] allPointers = allPointersToFire.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : allPointersToFire.toArray(VirtualFilePointer.EMPTY_ARRAY);
 
     return new ChangeApplier() {
+      @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private ChangeApplier delegate;
+
       @Override
       public void beforeVfsChange() {
         //noinspection SynchronizeOnThis
         synchronized (VirtualFilePointerManagerImpl.this) {
-          incModificationCount();
+          if (startModCount != myPointerSetTracker.getModificationCount()) {
+            delegate = prepareChange(events);
+          } else {
+            incModificationCount();
+          }
+        }
+
+        if (delegate != null) {
+          delegate.beforeVfsChange();
+          return;
         }
 
         for (EventDescriptor descriptor : eventList) {
@@ -519,6 +533,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
       @Override
       public void afterVfsChange() {
+        if (delegate != null) {
+          delegate.afterVfsChange();
+          return;
+        }
+
         after(toFireEvents, toUpdateUrl, eventList, allPointers, prepareElapsedMs, events.size());
       }
     };
@@ -630,6 +649,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     pointer.myNode = null;
     assertConsistency();
+    myPointerSetTracker.incModificationCount();
   }
 
   @Override

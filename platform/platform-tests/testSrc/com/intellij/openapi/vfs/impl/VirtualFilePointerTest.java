@@ -18,12 +18,14 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -794,5 +796,34 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer dirPointer = createPointerByFile(dirToCreate, null);
     VirtualFilePointer dirDotPointer = createPointerByFile(new File(dirToCreate, "."), null);
     assertSame(dirDotPointer, dirPointer);
+  }
+
+  @Test
+  public void listenerIsFiredForPointerCreatedBetweenAsyncAndSyncVfsEventProcessing() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    String childName = "child";
+
+    EdtTestUtil.runInEdtAndWait(()-> {
+      assertNull(vDir.findChild(childName));
+      assertTrue(new File(vDir.getPath(), childName).createNewFile());
+
+      Semaphore semaphore = new Semaphore(1);
+      VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+        semaphore.up();
+        return null;
+      }, disposable);
+
+      vDir.refresh(true, true);
+      assertTrue(semaphore.waitFor(10_000));
+
+      LoggingListener listener = new LoggingListener();
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(vDir.getUrl() + "/" + childName, disposable, listener);
+      assertNull(pointer.getFile());
+
+      UIUtil.dispatchAllInvocationEvents();
+      assertNotNull(pointer.getFile());
+
+      assertEquals("[before:false, after:true]", listener.log.toString());
+    });
   }
 }
