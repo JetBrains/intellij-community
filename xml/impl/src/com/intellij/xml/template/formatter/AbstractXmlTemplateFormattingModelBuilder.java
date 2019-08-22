@@ -30,7 +30,6 @@ import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.xml.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.SimpleTemplateLanguageFormattingModelBuilder;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -62,9 +61,8 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   @Override
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     final PsiFile psiFile = element.getContainingFile();
-    FileViewProvider provider = InjectedLanguageManagerImpl.getOriginalProvider(psiFile.getViewProvider());
-    if (provider instanceof TemplateLanguageFileViewProvider) {
-      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)provider;
+    if (psiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)psiFile.getViewProvider();
       if (isTemplateFile(psiFile)) {
         Language templateDataLanguage = viewProvider.getTemplateDataLanguage();
         if (templateDataLanguage != psiFile.getLanguage()) {
