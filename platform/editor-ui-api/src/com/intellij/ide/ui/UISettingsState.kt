@@ -166,7 +166,7 @@ class UISettingsState : BaseState() {
   var showTabsTooltips by property(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES")
   var showDirectoryForNonUniqueFilenames by property(true)
-  var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
+  var smoothScrolling by property(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
 
