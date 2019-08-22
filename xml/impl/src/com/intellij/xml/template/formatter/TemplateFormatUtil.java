@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +54,9 @@ public class TemplateFormatUtil {
   @NotNull
   static List<PsiElement> findAllMarkupLanguageElementsInside(PsiElement outerLangElement) {
     PsiFile file = outerLangElement.getContainingFile();
-    if (file != null && file.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-      TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)file.getViewProvider();
+    FileViewProvider provider = file != null ? InjectedLanguageManagerImpl.getOriginalProvider(file.getViewProvider()) : null;
+    if (provider instanceof TemplateLanguageFileViewProvider) {
+      TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)provider;
       return findAllElementsInside(outerLangElement.getTextRange(), viewProvider, false);
     }
     return EMPTY_PSI_ELEMENT_LIST;
