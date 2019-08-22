@@ -14,10 +14,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,11 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
@@ -88,6 +85,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowDown",
     "MaximizeToolWindow"
   };
+  private static final int MIN_FONT_SIZE = 8;
 
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
@@ -312,6 +310,19 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       //we need to refresh local file system after a command has been executed in the terminal
       LocalFileSystem.getInstance().refresh(true);
     }
+  }
+
+  @Override
+  protected void processMouseWheelEvent(MouseWheelEvent e) {
+    if (EditorSettingsExternalizable.getInstance().isMouseClickSelectionHonorsCamelWords() && EditorUtil.isChangeFontSize(e)) {
+      int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
+      if (newFontSize >= MIN_FONT_SIZE) {
+        mySettingsProvider.getColorScheme().setConsoleFontSize(newFontSize);
+        mySettingsProvider.fireFontChanged();
+      }
+      return;
+    }
+    super.processMouseWheelEvent(e);
   }
 
   /**
