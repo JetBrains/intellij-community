@@ -343,10 +343,10 @@ public class SystemShortcuts {
     if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
       return;
 
-    if (!Registry.is("read.system.shortcuts"))
-      return;
-
     try {
+      if (!Registry.is("read.system.shortcuts"))
+        return;
+
       Class shkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
       if (shkClass == null)
         return;
