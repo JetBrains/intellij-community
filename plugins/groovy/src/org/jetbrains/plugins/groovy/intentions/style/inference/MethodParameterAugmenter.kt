@@ -8,8 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.getBlock
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.inferTypeFromTypeHint
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -41,9 +39,6 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
   override fun inferType(variable: GrVariable): PsiType? {
     if (variable is GrParameter && variable.typeElement == null) {
-      if (getBlock(variable) != null) {
-        return inferTypeFromTypeHint(variable)
-      }
       val method = variable.parentOfType<GrMethod>() ?: return null
       val inferenceResult = createInferenceResult(method)
       val parameterIndex = method.parameterList.getParameterNumber(variable)

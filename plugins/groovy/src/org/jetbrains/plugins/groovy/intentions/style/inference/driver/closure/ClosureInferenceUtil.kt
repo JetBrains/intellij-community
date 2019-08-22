@@ -9,11 +9,13 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCallMethod
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParametersStorageBuilder.Companion.isReferenceTo
+import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -22,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -321,51 +321,6 @@ private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClos
     return block
   }
 }
-
-private val closureParamsShort = GROOVY_TRANSFORM_STC_CLOSURE_PARAMS.substringAfterLast('.')
-
-fun inferTypeFromTypeHint(parameter: GrParameter): PsiType? {
-  val closureBlock = getBlock(parameter) ?: return null
-  val index = if (parameter is ClosureSyntheticParameter) 0 else closureBlock.parameterList.getParameterNumber(parameter)
-  val methodCall = closureBlock.parentOfType<GrCall>() ?: return null
-  val method = (methodCall.resolveMethod() as? GrMethod)
-  method?.takeIf { it.parameters.any { parameter -> parameter.typeElement == null } } ?: return null
-  val (virtualMethod, virtualToActualSubstitutor) = MethodParameterAugmenter.createInferenceResult(method) ?: return null
-  virtualMethod ?: return null
-  val resolveResult = methodCall.advancedResolve() as? GroovyMethodResult ?: return null
-  val virtualParameter = getVirtualParameter(resolveResult, closureBlock, virtualMethod) ?: return null
-  val completeContextSubstitutor =
-    virtualToActualSubstitutor.putAll(virtualSubstitutor(virtualMethod, resolveResult)) compose resolveResult.substitutor
-  val anno = virtualParameter.modifierList.annotations.find { it.shortName == closureParamsShort } ?: return null
-  val signatures = getSignatures(anno, completeContextSubstitutor, virtualMethod) ?: return null
-  val parameters = closureBlock.allParameters
-  return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(index)
-}
-
-private fun getVirtualParameter(resolveResult: GroovyMethodResult, closureBlock: GrClosableBlock, virtualMethod: GrMethod): GrParameter? {
-  val method = resolveResult.candidate?.method ?: return null
-  val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
-    ExpressionArgument(closureBlock)) as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
-  return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter)) ?: return null
-}
-
-private fun getSignatures(anno: PsiAnnotation, substitutor: PsiSubstitutor, virtualMethod: GrMethod): List<Array<out PsiType>>? {
-  val className = (anno.findAttributeValue("value") as? GrReferenceExpression)?.qualifiedReferenceName ?: return null
-  val processor = SignatureHintProcessor.getHintProcessor(className) ?: return null
-  val options = AnnotationUtil.arrayAttributeValues(anno.findAttributeValue("options")).mapNotNull { (it as? PsiLiteral)?.stringValue() }
-  return processor.inferExpectedSignatures(virtualMethod, substitutor, options.toTypedArray())
-}
-
-private fun virtualSubstitutor(virtualMethod: GrMethod, resolveResult: GroovyMethodResult): PsiSubstitutor {
-  val originalMethod =
-    resolveResult.candidate?.method?.takeIf { method -> method.parameters.all { it.name != null } } ?: return PsiSubstitutor.EMPTY
-  val proxyMapping = originalMethod.parameters.map { it.name!! }.zip(virtualMethod.parameters).toMap()
-  val session = CollectingGroovyInferenceSession(virtualMethod.typeParameters, virtualMethod, resolveResult.contextSubstitutor,
-                                                 proxyMapping)
-  session.addConstraint(MethodCallConstraint(null, resolveResult, virtualMethod))
-  return session.inferSubst(resolveResult)
-}
-
 
 internal infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor {
   val typeParameters = substitutionMap.keys
