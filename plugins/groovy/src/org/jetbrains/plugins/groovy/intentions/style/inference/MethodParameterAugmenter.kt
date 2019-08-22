@@ -39,7 +39,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
   override fun inferType(variable: GrVariable): PsiType? {
     if (variable is GrParameter && variable.typeElement == null) {
-      val method = variable.parentOfType<GrMethod>() ?: return null
+      val method = variable.parentOfType<GrMethod>()?.takeIf { it.parameters.contains(variable) } ?: return null
       val inferenceResult = createInferenceResult(method)
       val parameterIndex = method.parameterList.getParameterNumber(variable)
       return inferenceResult?.virtualMethod?.parameters?.getOrNull(parameterIndex)
