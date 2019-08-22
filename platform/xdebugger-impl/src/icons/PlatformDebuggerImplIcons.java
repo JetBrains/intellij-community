@@ -27,9 +27,9 @@ public final class PlatformDebuggerImplIcons {
 
   }
 
-  public final static class Reveal {
-    /** 16x16 */ public static final Icon RevealOff = load("/icons/reveal/revealOff.svg");
-    /** 16x16 */ public static final Icon RevealOn = load("/icons/reveal/revealOn.svg");
+  public final static class PinToTop {
+    /** 16x16 */ public static final Icon PinnedItem = load("/icons/pinned.items/pinnedItem.svg");
+    /** 16x16 */ public static final Icon UnpinnedItem = load("/icons/pinned.items/unpinnedItem.svg");
 
   }
 }

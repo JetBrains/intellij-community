@@ -9,7 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -115,19 +115,19 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   private List<XValueNodeImpl> initChildrenList(int initialSize) {
-    XDebuggerRevealManager revealManager = XDebuggerRevealManager.Companion.getInstance(myTree.getProject());
+    XDebuggerPinToTopManager pinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(myTree.getProject());
     boolean needBaseSorting = !myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues();
-    boolean isRevealSupported = revealManager.isRevealSupported(this);
+    boolean isPinToTopSupported = pinToTopManager.isPinToTopSupported(this);
 
-    if (!needBaseSorting && !isRevealSupported) {
+    if (!needBaseSorting && !isPinToTopSupported) {
       return new ArrayList<>(initialSize);
     }
 
     Comparator<XValueNodeImpl> comparator = needBaseSorting?
-                                              isRevealSupported?
-                                                revealManager.getCompoundComparator()
+                                              isPinToTopSupported?
+                                                pinToTopManager.getCompoundComparator()
                                                 : XValueNodeImpl.COMPARATOR
-                                              : revealManager.getRevealComparator();
+                                              : pinToTopManager.getPinToTopComparator();
     return new SortedList<>(comparator);
   }
 

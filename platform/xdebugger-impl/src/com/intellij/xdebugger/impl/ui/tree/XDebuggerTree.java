@@ -28,7 +28,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
@@ -130,7 +130,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XValueMarkers<?,?> myValueMarkers;
   private final TreeExpansionListener myTreeExpansionListener;
-  private final XDebuggerRevealManager myRevealManager;
+  private final XDebuggerPinToTopManager myPinToTopManager;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -142,7 +142,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = (DefaultTreeModel)getModel();
-    myRevealManager = XDebuggerRevealManager.Companion.getInstance(project);
+    myPinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(project);
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
@@ -162,11 +162,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         super.mouseMoved(e);
         TreePath pathForLocation = getPathForLocation(e.getX(), e.getY());
         if (pathForLocation == null) {
-          myRevealManager.onNodeHovered(null, XDebuggerTree.this);
+          myPinToTopManager.onNodeHovered(null, XDebuggerTree.this);
           return;
         }
         Object lastPathComponent = pathForLocation.getLastPathComponent();
-        myRevealManager.onNodeHovered(lastPathComponent instanceof XDebuggerTreeNode ? (XDebuggerTreeNode) lastPathComponent : null, XDebuggerTree.this);
+        myPinToTopManager
+          .onNodeHovered(lastPathComponent instanceof XDebuggerTreeNode ? (XDebuggerTreeNode) lastPathComponent : null, XDebuggerTree.this);
       }
     }.installOn(this);
     setRootVisible(false);
@@ -323,8 +324,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   @NotNull
-  public XDebuggerRevealManager getRevealManager() {
-    return myRevealManager;
+  public XDebuggerPinToTopManager getPinToTopManager() {
+    return myPinToTopManager;
   }
 
   public DefaultTreeModel getTreeModel() {

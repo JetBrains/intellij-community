@@ -53,7 +53,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -83,7 +83,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
-  private final XDebuggerRevealManager myRevealManager;
+  private final XDebuggerPinToTopManager myPinToTopManager;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
@@ -97,7 +97,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
-    myRevealManager = new XDebuggerRevealManager();
+    myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
@@ -188,8 +188,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   @NotNull
-  public XDebuggerRevealManager getRevealManager() {
-    return myRevealManager;
+  public XDebuggerPinToTopManager getPinToTopManager() {
+    return myPinToTopManager;
   }
 
   public Project getProject() {
@@ -349,7 +349,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     XDebuggerState state = myState;
     myBreakpointManager.saveState(state.getBreakpointManagerState());
     myWatchesManager.saveState(state.getWatchesManagerState());
-    myRevealManager.saveState(state.getRevealManagerState());
+    myPinToTopManager.saveState(state.getPinToTopManagerState());
     return state;
   }
 
@@ -362,7 +362,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     myWatchesManager.loadState(state.getWatchesManagerState());
-    myRevealManager.loadState(state.getRevealManagerState());
+    myPinToTopManager.loadState(state.getPinToTopManagerState());
   }
 
   public void showExecutionPosition() {
