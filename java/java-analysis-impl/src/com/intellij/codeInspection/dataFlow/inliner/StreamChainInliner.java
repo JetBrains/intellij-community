@@ -666,6 +666,7 @@ public class StreamChainInliner implements CallInliner {
         builder.pushUnknown()
                .ifConditionIs(true)
                .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
+               .swap()
                .invokeFunction(2, myMerger)
                .end();
       }
