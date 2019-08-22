@@ -73,7 +73,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
       element, project,
       element,
       CommonDataKeys.EDITOR.getData(dataContext),
-      null,
+      dataContext.getData(PsiElementRenameHandler.DEFAULT_NAME),
       new RenameModuleAndDirectoryProcessor(module)
     );
   }

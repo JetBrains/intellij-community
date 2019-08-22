@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ide.projectView.impl.RenameModuleHandler;
@@ -28,10 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
-import com.intellij.testFramework.MapDataContext;
+import com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +56,7 @@ public class RenameModuleTest extends JavaModuleTestCase {
     assertEquals(newModuleName, module.getName());
   }
 
-  public void testRenameModuleByRenamingContentRoot() {
+  public void testDontRenameDirectoryWhenRenamingModule() {
     Module module = createModule("module");
     VirtualFile root = createChildDirectory(getOrCreateProjectBaseDir(), "module");
     PsiTestUtil.addContentRoot(module, root);
@@ -77,21 +65,49 @@ public class RenameModuleTest extends JavaModuleTestCase {
     context.put(LangDataKeys.MODULE_CONTEXT, module);
     context.put(CommonDataKeys.PSI_ELEMENT, psiDirectory);
     RenameHandler renameHandler = chooseHandler(context, RenameModuleHandler.class);
+    assertNotNull(renameHandler);
     rename(renameHandler, "module2", context);
     assertEquals("module2", module.getName());
+    assertEquals("module", psiDirectory.getName()); // directory remains unchanged
   }
 
+  public void testRenameModuleAndDirectory() {
+    Module module = createModule("module");
+    VirtualFile root = createChildDirectory(getOrCreateProjectBaseDir(), "module");
+    PsiTestUtil.addContentRoot(module, root);
+    PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(root);
+    MapDataContext context = new MapDataContext();
+    context.put(LangDataKeys.MODULE_CONTEXT, module);
+    context.put(CommonDataKeys.PSI_ELEMENT, directory);
+    context.put(PsiElementRenameHandler.DEFAULT_NAME, "newName");
+    RenameHandler renameHandler = chooseHandler(context, RenameModuleAndDirectoryHandler.class);
+    assertNotNull(renameHandler);
+    renameHandler.invoke(myProject, PsiElement.EMPTY_ARRAY, context);
+    assertEquals("newName", module.getName());
+    assertEquals("newName", directory.getName());
+  }
+
+  public void testCannotRenameModuleAndDirectoryWhenNameDoesntMatch() {
+    Module module = createModule("module");
+    VirtualFile root = createChildDirectory(getOrCreateProjectBaseDir(), "contentRoot");
+    PsiTestUtil.addContentRoot(module, root);
+    PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(root);
+    MapDataContext context = new MapDataContext();
+    context.put(LangDataKeys.MODULE_CONTEXT, module);
+    context.put(CommonDataKeys.PSI_ELEMENT, directory);
+    assertNull(chooseHandler(context, RenameModuleAndDirectoryHandler.class));
+  }
+
+  @Nullable
   private RenameHandler chooseHandler(MapDataContext context, Class<? extends RenameHandler> handlerClass) {
     RenameHandlerRegistry registry = RenameHandlerRegistry.getInstance();
     Ref<Boolean> selectorWasUsed = Ref.create(false);
     registry.setRenameHandlerSelectorInTests(all -> {
       selectorWasUsed.set(true);
-      assertEquals(2, all.size());
       return ContainerUtil.findInstance(all, handlerClass);
     }, getTestRootDisposable());
     RenameHandler renameHandler = registry.getRenameHandler(context);
     assertTrue(selectorWasUsed.get());
-    assertNotNull(renameHandler);
     return renameHandler;
   }
 
