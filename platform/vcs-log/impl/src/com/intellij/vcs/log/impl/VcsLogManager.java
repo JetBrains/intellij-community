@@ -115,6 +115,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) throw new ProcessCanceledException();
 
     U ui = factory.createLogUi(myProject, myLogData);
@@ -199,6 +200,7 @@ public class VcsLogManager implements Disposable {
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
 
+  @CalledInAwt
   public boolean isDisposed() {
     return myDisposed;
   }

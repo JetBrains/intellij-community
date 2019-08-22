@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -49,9 +48,7 @@ public class VcsLogTabsWatcher implements Disposable {
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      installContentListener();
-    }, o -> Disposer.isDisposed(this));
+    installContentListener();
   }
 
   @Nullable
@@ -71,6 +68,7 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void installContentListener() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
     if (window != null) {
       myToolWindow = window;
