@@ -220,8 +220,18 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myInstance = beanInstance;
   }
 
+  protected BeanConfigurable(@NotNull T beanInstance, String title) {
+    this(beanInstance);
+    setTitle(title);
+  }
+
   protected BeanConfigurable() {
     myInstance = null;
+  }
+
+  @Nullable
+  public String getTitle() {
+    return myTitle;
   }
 
   protected void setTitle(String title) {
