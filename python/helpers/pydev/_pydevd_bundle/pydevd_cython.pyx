@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 21
+version = 22
 
 if not hasattr(sys, '_current_frames'):
 
@@ -333,11 +333,10 @@ cdef class PyDBFrame:
                             return False, frame
 
                     if exception_breakpoint.ignore_libraries:
-                        frame = trace.tb_frame
-                        while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
-                            frame = frame.f_back
+                        if not main_debugger.is_exception_trace_in_project_scope(trace):
+                            return False, frame
 
-                    if ignore_exception_trace(trace) or frame is None:
+                    if ignore_exception_trace(trace):
                         return False, frame
 
                     was_just_raised = just_raised(trace)
@@ -355,7 +354,7 @@ cdef class PyDBFrame:
                                 return False, frame  # I.e.: we stop only when we're at the caller of a method that throws an exception
 
                         else:
-                            if not was_just_raised:
+                            if not was_just_raised and not main_debugger.is_top_level_trace_in_project_scope(trace):
                                 return False, frame  # I.e.: we stop only when it was just raised
 
                     # If it got here we should stop.
