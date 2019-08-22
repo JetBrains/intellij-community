@@ -483,4 +483,8 @@ class AA { static def fo<caret>o(a) {} }
 class AA { static void fo<caret>o(Integer a) {} }
 """
   }
+
+  void testElvisOperator() {
+    doTest(true)
+  }
 }

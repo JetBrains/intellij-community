@@ -17,10 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -30,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 import kotlin.LazyThreadSafetyMode.NONE
@@ -78,9 +76,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   private fun processArgumentConstraints(parameterType: PsiType, argument: Argument, resolveResult: GroovyMethodResult) {
-    val argumentTypes = when (val argtype = argument.type) {
-      is PsiIntersectionType -> argtype.conjuncts
-      else -> arrayOf(argtype)
+    val argumentTypes = when (argument) {
+      is ExpressionArgument ->
+        unwrapExpression(argument.expression).flatMap { it.type?.flattenComponents() ?: emptyList() }
+      else -> argument.type?.flattenComponents() ?: emptyList()
     }.filterNotNull()
     val erasureSubstitutor = lazy(NONE) { methodTypeParametersErasureSubstitutor(resolveResult.element) }
     val callContextSubstitutor = resolveResult.substitutor
@@ -91,6 +90,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       processRequiredParameters(argtype, upperType)
     }
   }
+
+  private fun PsiType.flattenComponents() =
+    when (this) {
+      is PsiIntersectionType -> conjuncts.asIterable()
+      else -> listOf(this)
+    }
 
 
   /**
@@ -193,24 +198,31 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference ?: return
     processSetter(lValueReference)
     processFieldAssignment(lValueReference, expression)
+    super.visitAssignmentExpression(expression)
   }
 
   private fun processSetter(setterReference: GroovyReference) {
     val accessorResult = setterReference.advancedResolve() as? GroovyMethodResult ?: return
-    val mapping = accessorResult.candidate?.argumentMapping ?: return
-    for ((expectedType, argument) in mapping.expectedTypes) {
-      val argumentType = argument.type ?: continue
-      processRequiredParameters(argumentType, expectedType)
-    }
+    processMethod(accessorResult)
   }
 
   private fun processFieldAssignment(fieldReference: GroovyReference, expression: GrAssignmentExpression) {
     val fieldResult = fieldReference.resolve() as? GrField ?: return
     val leftType = fieldResult.type
-    val rightType = expression.rValue?.type ?: return
-    processRequiredParameters(rightType, leftType)
-    constraintsCollector.add(TypeConstraint(leftType, rightType, method))
+    val rightExpressions = unwrapExpression(expression.rValue)
+    for (rightExpression in rightExpressions) {
+      val rightType = rightExpression.type ?: continue
+      processRequiredParameters(rightType, leftType)
+      constraintsCollector.add(TypeConstraint(leftType, rightType, method))
+    }
   }
+
+  private fun unwrapExpression(expression: GrExpression?): List<GrExpression> =
+    when (expression) {
+      null -> emptyList()
+      is GrConditionalExpression -> listOfNotNull(expression.thenBranch, expression.elseBranch).flatMap { unwrapExpression(it) }
+      else -> listOf(expression)
+    }
 
   override fun visitReturnStatement(returnStatement: GrReturnStatement) {
     returnStatement.returnValue?.apply { processExitExpression(this) }

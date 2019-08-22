@@ -258,7 +258,8 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
-  method.typeParameters.asList() + (method.containingClass?.run { supers + this }?.flatMap { it.typeParameters.asList() } ?: emptyList())
+  method.typeParameters.asList() + (method.containingClass?.run { listOf(this) + supers }?.flatMap { it.typeParameters.asList() }
+                                    ?: emptyList())
 
 fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)
