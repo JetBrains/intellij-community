@@ -22,10 +22,7 @@ import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExtensionsDomExtender extends DomExtender<Extensions> {
 
@@ -37,20 +34,21 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     if (ideaPlugin == null) return;
 
     String epPrefix = extensions.getEpPrefix();
-    for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
-      AbstractCollectionChildDescription collectionChildDescription =
-        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
-      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
-      assert handler != null;
-      List<? extends DomElement> children = handler.getCollectionChildren(collectionChildDescription, false);
-      if (!children.isEmpty()) {
-        for (DomElement points : children) {
-          for (ExtensionPoint point : ((ExtensionPoints)points).getExtensionPoints()) {
-            registerExtensionPoint(registrar, point, epPrefix);
-          }
+    Set<IdeaPlugin> visiblePlugins = getVisiblePlugins(ideaPlugin);
+    for (IdeaPlugin plugin : visiblePlugins) {
+      for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
+        for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
+          registerExtensionPoint(registrar, (ExtensionPoint)point, epPrefix);
         }
       }
     }
+  }
+
+  private static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, String tagName) {
+    AbstractCollectionChildDescription collectionChildDescription =
+      (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
+    DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
+    return handler.getCollectionChildren(collectionChildDescription, false);
   }
 
   @Override

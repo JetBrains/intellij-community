@@ -1,3 +1,5 @@
-<extensionPoints>
-  <extensionPoint name="extensionX" beanClass="foo.Bar"/>
-</extensionPoints>
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="extensionX" beanClass="foo.Bar"/>
+  </extensionPoints>
+</idea-plugin>

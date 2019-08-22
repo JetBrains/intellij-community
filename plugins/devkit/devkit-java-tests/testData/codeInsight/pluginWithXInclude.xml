@@ -7,7 +7,7 @@
     <xi:include href="/pluginWithXInclude-extensionPointsWithModule.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <extensionPoints>
         <extensionPoint name="bar" interface="java.util.List"/>
-        <xi:include href="/pluginWithXInclude-extensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+        <xi:include href="/pluginWithXInclude-extensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="foo">
