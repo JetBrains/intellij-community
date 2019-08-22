@@ -863,7 +863,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     // I.e. we have an endless EDT activity that stops only when editor is re-sized in a way to avoid vertical scroll bar.
     // That's why we don't recalculate soft wraps when visual area width is changed to the vertical scroll bar width value assuming
     // that such a situation is triggered by the scroll bar (dis)appearance.
-    if (Math.abs(currentVisibleAreaWidth - myVisibleAreaWidth) == verticalScrollBarWidth) {
+    if (currentVisibleAreaWidth - myVisibleAreaWidth == verticalScrollBarWidth) {
       myVisibleAreaWidth = currentVisibleAreaWidth;
       return recalculateSoftWraps();
     }
