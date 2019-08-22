@@ -19,7 +19,7 @@ class MyClass {
                          if (key1.size() > 1) {
                            newValues = key1;
                            newValues.addAll(key2);
-                         } else if (<warning descr="Condition 'key2.size() > 1' is always 'false'">key2.size() > 1</warning>) {
+                         } else if (key2.size() > 1) {
                            newValues = key2;
                            newValues.addAll(key1);
                          } else {
