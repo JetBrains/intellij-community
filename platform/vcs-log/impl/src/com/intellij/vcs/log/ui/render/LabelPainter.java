@@ -71,13 +71,10 @@ public class LabelPainter {
 
   @Nullable
   public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (!references.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
-      return logData.getLogProvider(root).getReferenceManager();
-    }
-    else {
-      return null;
-    }
+    if (references.isEmpty()) return null;
+    
+    VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
+    return logData.getLogProvider(root).getReferenceManager();
   }
 
   public void customizePainter(@NotNull Collection<? extends VcsRef> references,
