@@ -689,9 +689,18 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
     if not pre_copy_hook(src, dst):
         return
 
+    # Note about shutil.copy vs shutil.copy2.
+    # There is an open CPython bug which breaks copy2 on NFS when it tries to copy the xattr.
+    # https://bugs.python.org/issue24564
+    # https://youtrack.jetbrains.com/issue/PY-37523
+    # However, in all our use cases, we do not care about the xattr,
+    # so just always use shutil.copy to avoid this problem.
     if os.path.isdir(src):
         if not merge:
-            shutil.copytree(src, dst)
+            if version[0] >= 3:
+                shutil.copytree(src, dst, copy_function=shutil.copy)
+            else:
+                shutil.copytree(src, dst)
         else:
             mkdir(dst)
             for child in os.listdir(src):
@@ -709,7 +718,7 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
                     raise
     else:
         mkdir(os.path.dirname(dst))
-        shutil.copy2(src, dst)
+        shutil.copy(src, dst)
     post_copy_hook(src, dst)
 
 
