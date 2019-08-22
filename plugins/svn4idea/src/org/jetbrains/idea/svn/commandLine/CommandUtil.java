@@ -18,10 +18,14 @@ import javax.xml.bind.*;
 import java.io.File;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandUtil {
 
   private static final Logger LOG = Logger.getInstance(CommandUtil.class);
+
+  private static final Map<Class<?>, JAXBContext> cachedContexts = new ConcurrentHashMap<>();
 
   /**
    * Puts given value to parameters if condition is satisfied
@@ -159,7 +163,10 @@ public class CommandUtil {
   }
 
   public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {
-    JAXBContext context = JAXBContext.newInstance(type);
+    if (!cachedContexts.containsKey(type)) {
+      cachedContexts.put(type, JAXBContext.newInstance(type));
+    }
+    JAXBContext context = cachedContexts.get(type);
     Unmarshaller unmarshaller = context.createUnmarshaller();
 
     unmarshaller.setEventHandler(new ValidationEventHandler() {
