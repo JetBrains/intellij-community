@@ -45,7 +45,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
 
     val config = EventLogConfiguration
-    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize))
+    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize), recorderId)
     val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger

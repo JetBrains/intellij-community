@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.util.containers.ConcurrentMultiMap
 import java.io.File
-import java.util.concurrent.CopyOnWriteArraySet
 
-class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter) : StatisticsEventLogWriter {
+class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
+                                private val recorderId: String) : StatisticsEventLogWriter {
   override fun log(logEvent: LogEvent) {
-    EventLogNotificationService.notifySubscribers(logEvent)
+    EventLogNotificationService.notifySubscribers(logEvent, recorderId)
     writer.log(logEvent)
   }
 
@@ -20,19 +21,20 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter) : 
 }
 
 object EventLogNotificationService {
-  private val subscribers = CopyOnWriteArraySet<(LogEvent) -> Unit>()
+  private val subscribers = ConcurrentMultiMap<String, (LogEvent) -> Unit>()
 
-  fun notifySubscribers(logEvent: LogEvent) {
-    for (onLogEvent in subscribers) {
+  fun notifySubscribers(logEvent: LogEvent, recorderId: String) {
+    val copyOnWriteArraySet = subscribers[recorderId]
+    for (onLogEvent in copyOnWriteArraySet) {
       onLogEvent(logEvent)
     }
   }
 
-  fun subscribe(subscriber: (LogEvent) -> Unit) {
-    subscribers.add(subscriber)
+  fun subscribe(subscriber: (LogEvent) -> Unit, recorderId: String) {
+    subscribers.putValue(recorderId, subscriber)
   }
 
-  fun unsubscribe(subscriber: (LogEvent) -> Unit) {
-    subscribers.remove(subscriber)
+  fun unsubscribe(subscriber: (LogEvent) -> Unit, recorderId: String) {
+    subscribers.remove(recorderId, subscriber)
   }
 }
