@@ -51,8 +51,10 @@ public class MultiValuesMap<K, V>{
     myDelegate.putValue(key, value);
   }
 
+  @Nullable
   public Collection<V> get(K key){
-    return myDelegate.get(key);
+    Collection<V> collection = myDelegate.get(key);
+    return collection.isEmpty() ? null : collection;
   }
 
   @NotNull
