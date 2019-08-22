@@ -87,68 +87,80 @@ public class MouseWheelSmoothScroll {
 
   private final static class InertialAnimator implements ActionListener {
 
-    private static final int HI_POLLING_TIME = 10; // high intensive polling time for events
-
-    private final int REFRESH_TIME = 1000 / getRefreshRate();
+    private final static int REFRESH_TIME = 1000 / 60; // 60 Hz
+    private final static double VELOCITY_THRESHOLD = 0.001;
 
     private double myVelocity = 0.0;
     private double myCurrentValue = 0.0;
+    private double myLambda = -0.01;
 
     private final Consumer<Integer> BLACK_HOLE = (x) -> {};
     private @NotNull Consumer<Integer> myConsumer = BLACK_HOLE;
     private final Predicate<Integer> FALSE_PREDICATE = (value) -> false;
     private @NotNull Predicate<Integer> myShouldStop = FALSE_PREDICATE;
 
-    private final Timer myTimer = new Timer(REFRESH_TIME, this);
+    private final Timer myTimer = TimerUtil.createNamedTimer("Inertial Animation Timer", REFRESH_TIME, this);
     private final AverageDiff<Long> myAvgDiff = new AverageDiff<>(8);
 
     public double getTouchpadVelocityFactor() {
-      return Registry.doubleValue("idea.inertial.smooth.scrolling.touchpad.velocity.factor");
+      return Registry.doubleValue("idea.inertial.smooth.scrolling.touchpad.velocity.multiplier");
     }
 
     public double getVelocityFactor() {
-      return Registry.doubleValue("idea.inertial.smooth.scrolling.velocity.factor");
+      return Registry.doubleValue("idea.inertial.smooth.scrolling.velocity.multiplier");
     }
+
+    public double getDuration() {
+      double value = Registry.doubleValue("idea.inertial.smooth.scrolling.duration");
+      return max(abs(value), 0);
+    }
+
     public double getVelocityDecayFactor() {
-      double value = Registry.doubleValue("idea.inertial.smooth.scrolling.velocity.decay");
-      return -max(abs(value), 0.001);
+      int value = max(abs(Registry.intValue("idea.inertial.smooth.scrolling.inertia.factor")), 0);
+      return value == 0.0 ? 0.0 : -0.1 / value;
     }
 
-    public int getDuration() {
-      return Registry.intValue("idea.inertial.smooth.scrolling.duration");
-    }
-
-    public int getRefreshRate() {
-      return 60;
+    public int getHighIntensivePollingTime() {
+      return Registry.intValue("idea.inertial.smooth.scrolling.touchpad.delay.threshold");
     }
 
     public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
       if (getDuration() == 0) {
-        stop();
         consumer.accept(targetValue);
         return;
       }
 
       myAvgDiff.add(System.currentTimeMillis());
-      double multiplierFactor = myAvgDiff.getAverage() <= HI_POLLING_TIME ? getTouchpadVelocityFactor() : getVelocityFactor();
+      double multiplierFactor = myAvgDiff.getAverage() <= getHighIntensivePollingTime() ? getTouchpadVelocityFactor() : getVelocityFactor();
       myVelocity = multiplierFactor * (targetValue - initValue) / getDuration();
+      double factor = getVelocityDecayFactor();
+      myLambda = factor == 0.0 ? log(VELOCITY_THRESHOLD / abs(myVelocity)) / getDuration() : factor;
       myConsumer = Objects.requireNonNull(consumer);
       myShouldStop = shouldStop == null ? FALSE_PREDICATE : shouldStop;
       myCurrentValue = initValue;
       myTimer.start();
     }
 
+    private long myLastEventTime = -1;
+
     @Override
     public final void actionPerformed(ActionEvent e) {
-      if (abs(myVelocity) < 0.001 || myShouldStop.test((int)round(myCurrentValue))) {
+      if (myShouldStop.test((int)round(myCurrentValue))) {
         stop();
         return;
       }
 
-      myCurrentValue += myVelocity * REFRESH_TIME;
+      long eventTime = System.currentTimeMillis();
+      long refreshTime = (myLastEventTime < 0) ? REFRESH_TIME : (eventTime - myLastEventTime);
+      myLastEventTime = eventTime;
+
+      myCurrentValue += myVelocity * refreshTime;
       int nextValue = (int)round(myCurrentValue);
+      myVelocity *= exp(myLambda * refreshTime);
       myConsumer.accept(nextValue);
-      myVelocity *= exp(getVelocityDecayFactor() * REFRESH_TIME);
+      if (abs(myVelocity) < VELOCITY_THRESHOLD) {
+        stop();
+      }
     }
 
     public final void stop() {
@@ -156,6 +168,7 @@ public class MouseWheelSmoothScroll {
       myConsumer = BLACK_HOLE;
       myShouldStop = FALSE_PREDICATE;
       myVelocity = 0.0;
+      myLastEventTime = -1;
       myAvgDiff.clear();
     }
   }

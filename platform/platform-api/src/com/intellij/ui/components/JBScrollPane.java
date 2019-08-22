@@ -67,9 +67,7 @@ public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
-  private final MouseWheelSmoothScroll mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
-    return ScrollSettings.isEligibleFor(this);
-  });
+  private MouseWheelSmoothScroll mySmoothScroll;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -179,6 +177,11 @@ public class JBScrollPane extends JScrollPane {
                   JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
                   if (bar != null && bar.isVisible()) {
                     if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
+                      if (mySmoothScroll == null) {
+                        mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
+                          return ScrollSettings.isEligibleFor(this);
+                        });
+                      }
                       mySmoothScroll.processMouseWheelEvent(event, oldListener::mouseWheelMoved);
                     } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
                       oldListener.mouseWheelMoved(event);
