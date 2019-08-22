@@ -1368,6 +1368,15 @@ class A<T> {
 }''', "? super $JAVA_LANG_INTEGER"
   }
 
+  void 'test implicit @ClosureParams with generified method'() {
+    doTest '''
+def foo(a, b) { b(a) }
+
+foo(1) {}
+foo('q') { <caret>it }
+''', "$JAVA_LANG_STRING"
+  }
+
   void 'test implicit @ClosureParams with two parameters'() {
     doTest '''
 def foo(cl) {
