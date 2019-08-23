@@ -30,6 +30,7 @@ public class BuilderInfo {
   private PsiVariable variableInClass;
   private PsiType fieldInBuilderType;
   private boolean deprecated;
+  private String visibilityModifier;
 
   private PsiClass builderClass;
   private PsiType builderClassType;
@@ -40,9 +41,6 @@ public class BuilderInfo {
 
   private PsiAnnotation singularAnnotation;
   private BuilderElementHandler builderElementHandler;
-
-  private boolean fluentBuilder = true;
-  private boolean chainBuilder = true;
 
   private PsiAnnotation obtainViaAnnotation;
   private String viaFieldName;
@@ -97,13 +95,8 @@ public class BuilderInfo {
     return this;
   }
 
-  public BuilderInfo withFluent(boolean fluentBuilder) {
-    this.fluentBuilder = fluentBuilder;
-    return this;
-  }
-
-  public BuilderInfo withChain(boolean chainBuilder) {
-    this.chainBuilder = chainBuilder;
+  public BuilderInfo withVisibilityModifier(String visibilityModifier) {
+    this.visibilityModifier = visibilityModifier;
     return this;
   }
 
@@ -176,12 +169,19 @@ public class BuilderInfo {
     return deprecated;
   }
 
+  @Deprecated
   public boolean isFluentBuilder() {
-    return fluentBuilder;
+    return true;
   }
 
+  @Deprecated
   public boolean isChainBuilder() {
-    return chainBuilder;
+    return true;
+  }
+
+  @PsiModifier.ModifierConstant
+  public String getVisibilityModifier() {
+    return visibilityModifier;
   }
 
   public PsiClass getBuilderClass() {

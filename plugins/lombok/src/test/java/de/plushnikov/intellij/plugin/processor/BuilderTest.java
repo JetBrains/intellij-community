@@ -128,4 +128,7 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testBuilder$BuilderSimpleProtected() {
+    doTest(true);
+  }
 }

@@ -64,7 +64,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations());
 
     addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
@@ -78,7 +78,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations());
 
     addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
@@ -93,7 +93,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations());
     clearMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(clearMethodBlockText, clearMethodBuilder));
 

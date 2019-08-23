@@ -40,7 +40,7 @@ class NonSingularHandler implements BuilderElementHandler {
       .withMethodReturnType(info.isChainBuilder() ? info.getBuilderType() : PsiType.VOID)
       .withParameter(info.getFieldName(), info.getFieldType())
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations());
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
     return Collections.singleton(methodBuilder);

@@ -37,21 +37,25 @@ public class LombokProcessorUtil {
     .collect(Collectors.toMap(AccessLevel::name, v -> v));
 
   @Nullable
+  @PsiModifier.ModifierConstant
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
     return getLevelVisibility(psiAnnotation, "value");
   }
 
   @Nullable
+  @PsiModifier.ModifierConstant
   public static String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     return getLevelVisibility(psiAnnotation, "access");
   }
 
   @Nullable
+  @PsiModifier.ModifierConstant
   public static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation) {
     return getLevelVisibility(psiAnnotation, "level");
   }
 
   @Nullable
+  @PsiModifier.ModifierConstant
   private static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
     return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, parameter));
   }
@@ -82,6 +86,7 @@ public class LombokProcessorUtil {
   }
 
   @Nullable
+  @PsiModifier.ModifierConstant
   private static String convertAccessLevelToJavaModifier(String value) {
     if (null == value || value.isEmpty()) {
       return PsiModifier.PUBLIC;
