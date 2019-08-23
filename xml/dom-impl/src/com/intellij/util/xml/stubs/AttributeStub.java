@@ -16,8 +16,8 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,11 +29,12 @@ public class AttributeStub extends DomStub {
 
   private final String myValue;
 
-  public AttributeStub(DomStub parent, StringRef name, StringRef namespace, String value) {
+  public AttributeStub(DomStub parent, @NotNull String name, @Nullable String namespace, @NotNull String value) {
     super(parent, name, namespace);
     myValue = value;
   }
 
+  @NotNull
   public String getValue() {
     return myValue;
   }
@@ -50,7 +51,7 @@ public class AttributeStub extends DomStub {
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
+  public ObjectStubSerializer<?,?> getStubType() {
     return DomElementTypeHolder.AttributeStub;
   }
 
