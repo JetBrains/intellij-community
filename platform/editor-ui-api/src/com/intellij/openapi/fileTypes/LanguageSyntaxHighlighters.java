@@ -5,7 +5,7 @@ import com.intellij.lang.LanguageExtension;
 
 public class LanguageSyntaxHighlighters extends LanguageExtension<SyntaxHighlighter> {
   private LanguageSyntaxHighlighters() {
-    super("com.intellij.lang.syntaxHighlighter", new PlainSyntaxHighlighter());
+    super("com.intellij.lang.syntaxHighlighter");
   }
 
   public static final LanguageSyntaxHighlighters INSTANCE = new LanguageSyntaxHighlighters();

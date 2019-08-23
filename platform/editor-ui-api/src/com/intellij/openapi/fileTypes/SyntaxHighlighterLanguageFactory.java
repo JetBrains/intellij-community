@@ -28,7 +28,7 @@ import java.util.List;
 
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   SyntaxHighlighterLanguageFactory() {
-    super("com.intellij.lang.syntaxHighlighterFactory");
+    super("com.intellij.lang.syntaxHighlighterFactory", new PlainSyntaxHighlighterFactory());
   }
 
   @NotNull
