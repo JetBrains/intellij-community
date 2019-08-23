@@ -10,6 +10,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,10 +49,37 @@ public class Utils{
                                                  PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place){
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false)
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null);
+  }
+
+  public static List<AnAction> expandActionGroup(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place, ActionGroupVisitor visitor) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
+                                                                          @NotNull ActionGroup group,
+                                                                          PresentationFactory presentationFactory,
+                                                                          @NotNull DataContext context,
+                                                                          String place, @Nullable Utils.ActionGroupVisitor visitor) {
+    if (!(context instanceof AsyncDataContext))
+      context = new AsyncDataContext(context);
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+      .expandActionGroupAsync(group, group instanceof CompactActionGroup);
+  }
+
+  public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place, ActionGroupVisitor visitor) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+      .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+  }
 
   static void fillMenu(@NotNull ActionGroup group,
                        JComponent component,
@@ -148,5 +177,12 @@ public class Utils{
         }
       });
     }
+  }
+
+  public interface ActionGroupVisitor {
+    boolean enterNode(@NotNull ActionGroup groupNode);
+    void visitLeaf(@NotNull AnAction act);
+    void leaveNode();
+    Component getCustomComponent(@NotNull AnAction action);
   }
 }
