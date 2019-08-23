@@ -4,10 +4,11 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -52,13 +53,20 @@ public class NestedIfJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (outerCondition == null) return CANNOT_JOIN;
     PsiExpression innerCondition = innerIf.getCondition();
     if (innerCondition == null) return CANNOT_JOIN;
+    PsiJavaToken lParenth = outerIf.getLParenth();
+    PsiJavaToken rParenth = innerIf.getRParenth();
+    if (lParenth == null || rParenth == null) return CANNOT_JOIN;
 
-    CommentTracker ct = new CommentTracker();
-    String childConditionText = ParenthesesUtils.getText(ct.markUnchanged(innerCondition), ParenthesesUtils.OR_PRECEDENCE);
-    String parentConditionText = ParenthesesUtils.getText(ct.markUnchanged(outerCondition), ParenthesesUtils.OR_PRECEDENCE);
+    String childConditionText = ParenthesesUtils.getText(innerCondition, ParenthesesUtils.OR_PRECEDENCE);
+    String parentConditionText = ParenthesesUtils.getText(outerCondition, ParenthesesUtils.OR_PRECEDENCE);
 
-    PsiElement newCondition = ct.replace(outerCondition, parentConditionText + "&&" + childConditionText);
-    ct.replaceAndRestoreComments(outerIf.getThenBranch(), innerIf.getThenBranch());
-    return newCondition.getTextRange().getStartOffset() + parentConditionText.length() + 1;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiFile.getProject());
+    String condition = parentConditionText + " && " + childConditionText;
+    String resultText = outerIf.getText().substring(0, lParenth.getTextRangeInParent().getEndOffset())
+                    + condition + innerIf.getText().substring(rParenth.getTextRangeInParent().getStartOffset());
+    PsiStatement statement = factory.createStatementFromText(resultText, outerIf);
+    PsiIfStatement result = (PsiIfStatement)outerIf.replace(statement);
+    return Objects.requireNonNull(result.getCondition()).getTextRange().getStartOffset() +
+           parentConditionText.length() + 2;
   }
 }

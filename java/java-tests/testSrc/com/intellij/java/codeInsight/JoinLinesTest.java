@@ -246,6 +246,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testConvertComment() { doTest();}
   public void testConvertComment2() { doTest();}
   public void testConvertManyEndOfLineComments() { doTest();}
+  public void testConvertMixed() { doTest();}
 
   public void testJoiningMethodCallWhenItDoesntFit() {
     CommonCodeStyleSettings settings = getJavaSettings();
