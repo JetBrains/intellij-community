@@ -185,7 +185,7 @@ public class PopupUtil {
       position = Balloon.Position.above;
     }
     else {
-      x = Math.min(10, size.width / 2);
+      x = Math.max(10, size.width / 2);
       y = size.height;
       position = Balloon.Position.below;
     }
