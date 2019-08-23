@@ -31,8 +31,7 @@ import java.util.*;
 public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final CompositeElement myParent;
   private final List<CompositeElement> mySuperParents;
-  private final LinkedHashSet<TreeElement> myInitialChildren = new LinkedHashSet<>();
-  private final Map<TreeElement, Integer> myInitialLengths = new HashMap<>();
+  private final LinkedHashMap<TreeElement, Integer> myInitialLengths = new LinkedHashMap<>();
   private final Set<TreeElement> myContentChangeChildren = new HashSet<>();
   private Map<TreeElement, ChangeInfoImpl> myChanges;
 
@@ -41,7 +40,6 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
     for (TreeElement child : getCurrentChildren()) {
-      myInitialChildren.add(child);
       myInitialLengths.put(child, child.getTextLength());
     }
   }
@@ -98,7 +96,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   
   private class ChildrenDiff {
     LinkedHashSet<TreeElement> currentChildren = getCurrentChildren().addAllTo(new LinkedHashSet<>());
-    Iterator<TreeElement> itOld = myInitialChildren.iterator();
+    Iterator<TreeElement> itOld = myInitialLengths.keySet().iterator();
     Iterator<TreeElement> itNew = currentChildren.iterator();
     TreeElement oldChild, newChild;
     int oldOffset = 0;
@@ -124,7 +122,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
           advanceOld(); advanceNew();
         } else {
           boolean oldDisappeared = oldChild != null && !currentChildren.contains(oldChild);
-          boolean newAppeared = newChild != null && !myInitialChildren.contains(newChild);
+          boolean newAppeared = newChild != null && !myInitialLengths.containsKey(newChild);
           addChange(new ChangeInfoImpl(oldDisappeared ? oldChild : null, newAppeared ? newChild : null,
                                        oldOffset,
                                        oldDisappeared ? myInitialLengths.get(oldChild) : 0));
@@ -176,7 +174,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   public List<TreeElement> getInitialChildren() {
-    return new ArrayList<>(myInitialChildren);
+    return new ArrayList<>(myInitialLengths.keySet());
   }
 
   public String toString() {
@@ -190,9 +188,8 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   public void markChildChanged(@NotNull TreeElement child, int lengthDelta) {
     myContentChangeChildren.add(child);
-    Integer oldLength = myInitialLengths.get(child);
-    if (oldLength != null && lengthDelta != 0) {
-      myInitialLengths.put(child, oldLength - lengthDelta);
+    if (lengthDelta != 0) {
+      myInitialLengths.computeIfPresent(child, (c, oldLength) -> oldLength - lengthDelta);
     }
     clearCache();
   }
