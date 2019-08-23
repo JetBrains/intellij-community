@@ -44,7 +44,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       dialogStateListener.onOkActionEnabled(true)
     }
 
-    private val vcsComponents = HashMap<String, VcsCloneComponent>()
+    private val vcsComponents = HashMap<CheckoutProvider, VcsCloneComponent>()
     private val cardLayout = CardLayout()
     private val mainPanel = JPanel(BorderLayout())
     private val comboBox: ComboBox<CheckoutProvider> = ComboBox<CheckoutProvider>().apply {
@@ -76,7 +76,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       for (checkoutProvider in providers) {
         comboBox.addItem(checkoutProvider)
         val vcsComponent = checkoutProvider.buildVcsCloneComponent(project)
-        vcsComponents[checkoutProvider.vcsName] = vcsComponent
+        vcsComponents[checkoutProvider] = vcsComponent
         val view = vcsComponent.getView()
         centerPanel.add(view, checkoutProvider.vcsName)
       }
@@ -98,11 +98,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       return getCurrentVcsComponent()?.doValidateAll() ?: emptyList()
     }
 
-    private fun getCurrentVcsComponent() = vcsComponents[getCurrentVcsName()]
-
-    private fun getCurrentVcsName(): String {
-      val checkoutProvider = comboBox.selectedItem as CheckoutProvider
-      return checkoutProvider.vcsName
-    }
+    private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
 }
