@@ -55,28 +55,26 @@ class SingularGuavaMapHandler extends SingularMapHandler {
     methodBuilder.withParameter(LOMBOK_VALUE, valueType);
   }
 
-  protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
+  protected String getClearMethodBody(String psiFieldName) {
     final String codeBlockTemplate = "this.{0} = null;\n {1}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
       "this.{0}.put(" + LOMBOK_KEY + ", " + LOMBOK_VALUE + ");{4}";
 
     return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, collectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()",
-      fluentBuilder ? "\nreturn this;" : "");
+      sortedCollection ? "naturalOrder()" : "builder()", "\nreturn this;");
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
       + "this.{0}.putAll({0});{3}";
 
     return MessageFormat.format(codeBlockTemplate, singularName, collectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()",
-      fluentBuilder ? "\nreturn this;" : "");
+      sortedCollection ? "naturalOrder()" : "builder()", "\nreturn this;");
   }
 
   @Override

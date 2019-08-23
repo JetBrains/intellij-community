@@ -28,27 +28,27 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
+  protected String getClearMethodBody(String psiFieldName) {
     final String codeBlockTemplate = "if (this.{0} != null) \n this.{0}.clear();\n {1}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{3}>(); \n" +
       "this.{0}.add({1});{2}";
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, "\nreturn this;",
       oneElementType.getCanonicalText(false));
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>(); \n"
       + "this.{0}.addAll({0});{1}";
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "",
+    return MessageFormat.format(codeBlockTemplate, singularName, "\nreturn this;",
       oneElementType.getCanonicalText(false));
   }
 

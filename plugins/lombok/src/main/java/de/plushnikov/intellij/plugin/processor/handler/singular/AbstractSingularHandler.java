@@ -55,7 +55,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
     List<PsiMethod> methods = new ArrayList<>();
 
-    final PsiType returnType = info.isChainBuilder() ? info.getBuilderType() : PsiType.VOID;
+    final PsiType returnType = info.getBuilderType();
     final String fieldName = info.getFieldName();
     final String singularName = createSingularName(info.getSingularAnnotation(), fieldName);
 
@@ -69,7 +69,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
     addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
 
-    final String oneMethodBody = getOneMethodBody(singularName, fieldName, info.getFieldType(), builderClass.getManager(), info.isFluentBuilder());
+    final String oneMethodBody = getOneMethodBody(singularName, fieldName, info.getFieldType(), builderClass.getManager());
     oneAddMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(oneMethodBody, oneAddMethodBuilder));
 
     methods.add(oneAddMethodBuilder);
@@ -83,12 +83,12 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
     addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
 
-    final String allMethodBody = getAllMethodBody(fieldName, info.getFieldType(), builderClass.getManager(), info.isFluentBuilder());
+    final String allMethodBody = getAllMethodBody(fieldName, info.getFieldType(), builderClass.getManager());
     allAddMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(allMethodBody, allAddMethodBuilder));
 
     methods.add(allAddMethodBuilder);
 
-    final String clearMethodBlockText = getClearMethodBody(fieldName, info.isFluentBuilder());
+    final String clearMethodBlockText = getClearMethodBody(fieldName);
     final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(info.getManager(), createSingularClearMethodName(fieldName))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
@@ -111,15 +111,15 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     return Arrays.asList(createSingularName(singularAnnotation, fieldName), fieldName, createSingularClearMethodName(fieldName));
   }
 
-  protected abstract String getClearMethodBody(String psiFieldName, boolean fluentBuilder);
+  protected abstract String getClearMethodBody(String psiFieldName);
 
   protected abstract void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName);
 
   protected abstract void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName);
 
-  protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, PsiManager psiManager, boolean fluentBuilder);
+  protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, PsiManager psiManager);
 
-  protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, PsiManager psiManager, boolean fluentBuilder);
+  protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, PsiManager psiManager);
 
   public String createSingularName(@NotNull PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");

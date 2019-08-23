@@ -169,16 +169,6 @@ public class BuilderInfo {
     return deprecated;
   }
 
-  @Deprecated
-  public boolean isFluentBuilder() {
-    return true;
-  }
-
-  @Deprecated
-  public boolean isChainBuilder() {
-    return true;
-  }
-
   @PsiModifier.ModifierConstant
   public String getVisibilityModifier() {
     return visibilityModifier;

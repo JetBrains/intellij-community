@@ -81,14 +81,14 @@ class SingularMapHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getClearMethodBody(String psiFieldName, boolean fluentBuilder) {
+  protected String getClearMethodBody(String psiFieldName) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " != null) '{'\n this.{0}" + LOMBOK_KEY + ".clear();\n " +
       " this.{0}" + LOMBOK_VALUE + ".clear(); '}'\n {1}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{3}>(); \n" +
       "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{4}>(); \n" +
@@ -100,11 +100,11 @@ class SingularMapHandler extends AbstractSingularHandler {
     final PsiType keyType = getKeyType(psiManager, psiFieldType);
     final PsiType valueType = getValueType(psiManager, psiFieldType);
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, "\nreturn this;",
       keyType.getCanonicalText(false), valueType.getCanonicalText(false));
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{2}>(); \n" +
       "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{3}>(); \n" +
@@ -120,7 +120,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     final PsiType keyIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
     final PsiType valueIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
 
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "",
+    return MessageFormat.format(codeBlockTemplate, singularName, "\nreturn this;",
       keyType.getCanonicalText(false), valueType.getCanonicalText(false),
       keyIterType.getCanonicalText(false), valueIterType.getCanonicalText(false));
   }
