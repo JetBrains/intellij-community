@@ -23,19 +23,31 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   SyntaxHighlighterLanguageFactory() {
     super("com.intellij.lang.syntaxHighlighterFactory");
   }
 
+  @NotNull
   @Override
-  protected SyntaxHighlighterFactory getDefaultImplementationForKey(@NotNull Language language) {
-    return new SingleLazyInstanceSyntaxHighlighterFactory() {
-      @NotNull
-      @Override
-      protected SyntaxHighlighter createHighlighter() {
-        return LanguageSyntaxHighlighters.INSTANCE.forLanguage(language);
+  protected List<SyntaxHighlighterFactory> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    List<SyntaxHighlighterFactory> fromEP = super.buildExtensions(stringKey, key);
+    if (fromEP.isEmpty()) {
+      SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.INSTANCE.forLanguage(key);
+      if (highlighter != null) {
+        SyntaxHighlighterFactory defaultFactory = new SingleLazyInstanceSyntaxHighlighterFactory() {
+          @NotNull
+          @Override
+          protected SyntaxHighlighter createHighlighter() {
+            return highlighter;
+          }
+        };
+        return Collections.singletonList(defaultFactory);
       }
-    };
+    }
+    return fromEP;
   }
 }

@@ -79,10 +79,6 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
         return extensions.get(0);
       }
     }
-    return getDefaultImplementationForKey(language);
-  }
-
-  protected T getDefaultImplementationForKey(@NotNull Language language) {
     return myDefaultImplementation;
   }
 
