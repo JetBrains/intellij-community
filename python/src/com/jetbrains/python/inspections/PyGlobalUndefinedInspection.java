@@ -19,13 +19,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.ResolveResult;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyGlobalStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,12 +63,12 @@ public class PyGlobalUndefinedInspection extends PyInspection {
 
       for (PyTargetExpression global : globals) {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
-        final List<PsiElement> resolved = ContainerUtil.map(global.getReference(resolveContext).multiResolve(false), ResolveResult::getElement);
-        if (resolved.contains(global)) {
-          final ScopeOwner globalScopeOwner = ScopeUtil.getScopeOwner(global);
-          if (ContainerUtil.all(resolved, element -> globalScopeOwner == ScopeUtil.getScopeOwner(element))) {
-            registerProblem(global, PyBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
-          }
+
+        final List<PsiElement> elements = PyUtil.multiResolveTopPriority(global.getReference(resolveContext));
+        final boolean noTopLevelDeclaration = elements.stream().noneMatch(PyUtil::isTopLevel);
+
+        if (noTopLevelDeclaration) {
+          registerProblem(global, PyBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
         }
       }
     }
