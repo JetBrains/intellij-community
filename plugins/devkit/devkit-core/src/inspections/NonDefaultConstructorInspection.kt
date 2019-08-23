@@ -82,7 +82,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 
       // kotlin is not physical, but here only physical is expected, so, convert to uast element and use sourcePsi
       val anchorElement = when {
-        method.isPhysical -> method
+        method.isPhysical -> method.identifyingElement!!
         else -> aClass.sourcePsi?.let { UastFacade.findPlugin(it)?.convertOpt<UMethod>(method, aClass)?.sourcePsi } ?: continue@loop
       }
 
