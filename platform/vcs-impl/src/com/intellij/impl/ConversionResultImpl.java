@@ -71,7 +71,7 @@ public class ConversionResultImpl implements ConversionResult {
 
     final List<VirtualFile> createdFiles = findVirtualFiles(myCreatedFiles);
     if (containsFilesUnderVcs(createdFiles, project)) {
-      final VcsShowConfirmationOptionImpl option = new VcsShowConfirmationOptionImpl("", "", "", "", "");
+      final VcsShowConfirmationOptionImpl option = new VcsShowConfirmationOptionImpl("");
       final Collection<VirtualFile> selected = AbstractVcsHelper.getInstance(project)
         .selectFilesToProcess(createdFiles, "Files Created", "Select files to be added to version control", null, null, option);
       if (selected != null && !selected.isEmpty()) {
