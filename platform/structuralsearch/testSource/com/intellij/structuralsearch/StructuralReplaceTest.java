@@ -2086,6 +2086,15 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
                  "public class A {}", replace(in, what, by2));
 
+    final String expected = "@SuppressWarnings(\"ALL\") class B {}";
+    assertEquals("Should replace unmatched annotation parameters",
+                 expected, replace(in, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
+
+    final String expected2 = "@ SuppressWarnings(\"ALL\")\n" +
+                             "public class A {}";
+    assertEquals("Should replace unmatched annotation parameters when matching just annotation",
+                 expected2, replace(in, "@SuppressWarnings", "@ SuppressWarnings"));
+
     final String in2 = "class X {" +
                  "  @SuppressWarnings(\"unused\") String s;" +
                  "}";
