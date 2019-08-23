@@ -387,14 +387,14 @@ public class SystemShortcuts {
   }
 
   private static class MuteConflictsSettings {
-    private final String MUTED_ACTIONS_KEY = "muted.system.shortcut.conflicts.actions";
+    private static final String MUTED_ACTIONS_KEY = "muted.system.shortcut.conflicts.actions";
     private final @NotNull Set<String> myMutedActions = new HashSet<>();
 
     MuteConflictsSettings() {
       final String[] muted = PropertiesComponent.getInstance().getValues(MUTED_ACTIONS_KEY);
-      if (muted != null)
-        for (String m: muted)
-          myMutedActions.add(m);
+      if (muted != null) {
+        Collections.addAll(myMutedActions, muted);
+      }
     }
 
     void addMutedAction(@NotNull String actId) {
