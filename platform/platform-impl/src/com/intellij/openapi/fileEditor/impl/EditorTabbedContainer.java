@@ -220,6 +220,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       case SwingConstants.RIGHT:
         myTabs.getPresentation().setTabsPosition(JBTabsPosition.right);
         break;
+      case UISettings.TABS_NONE:
+        myTabs.getPresentation().setHideTabs(true);
+        break;
       default:
         throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
     }

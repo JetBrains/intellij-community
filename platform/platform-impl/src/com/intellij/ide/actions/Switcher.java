@@ -701,10 +701,8 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> filesData = new ArrayList<>();
       final ArrayList<FileInfo> editors = new ArrayList<>();
       if (!pinned) {
-        if (UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
-          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-            editors.add(new FileInfo(pair.first, pair.second, project));
-          }
+        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+          editors.add(new FileInfo(pair.first, pair.second, project));
         }
       }
       if (editors.size() < 2) {
@@ -713,9 +711,7 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned
-              && selectedFiles.contains(filesForInit.get(i))
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+          if (pinned && selectedFiles.contains(filesForInit.get(i))) {
             continue;
           }
 
@@ -1096,7 +1092,7 @@ public class Switcher extends AnAction implements DumbAware {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
+                manager.openFile(file, true, true);
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }

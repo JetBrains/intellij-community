@@ -213,12 +213,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       writeWindow(res, findWindowWith(comp));
       return res;
     }
-    else if (comp instanceof EditorWindow.TCompForTablessMode) {
-      EditorWithProviderComposite composite = ((EditorWindow.TCompForTablessMode)comp).myEditor;
-      Element res = new Element("leaf");
-      res.addContent(writeComposite(composite.getFile(), composite, false, composite));
-      return res;
-    }
     else {
       LOG.error(comp.getClass().getName());
       return null;

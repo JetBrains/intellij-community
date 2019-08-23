@@ -838,8 +838,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     compositeRef.set(window.findFileComposite(file));
     boolean newEditor = compositeRef.isNull();
     if (newEditor) {
-      clearWindowIfNeeded(window);
-
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
 
       FileEditor[] newEditors = new FileEditor[newProviders.length];
@@ -975,12 +973,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       providers = providerList.toArray(new FileEditorProvider[0]);
     }
     return new EditorWithProviderComposite(file, editors, providers, this);
-  }
-
-  private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
-    if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE || UISettings.getInstance().getPresentationMode()) {
-      window.clear();
-    }
   }
 
   private void restoreEditorState(@NotNull VirtualFile file,
