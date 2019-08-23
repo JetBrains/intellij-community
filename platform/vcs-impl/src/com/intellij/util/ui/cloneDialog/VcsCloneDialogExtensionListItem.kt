@@ -65,7 +65,7 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
 
     for ((index, line) in additionalLines.withIndex()) {
       val component = labelsPool[index]
-      component.ipad = JBUI.insets(0, 0)
+      component.ipad = JBUI.emptyInsets()
       component.clear()
       // TODO: add handling for long text lines
       component.append(line.text, line.attribute, line.actionListener)
