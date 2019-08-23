@@ -205,7 +205,7 @@ public class BuilderHandler {
   @NotNull
   private static String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME);
-    return StringUtil.isEmptyOrSpaces(builderMethodName) ? BUILDER_METHOD_NAME : builderMethodName;
+    return null == builderMethodName ? BUILDER_METHOD_NAME : builderMethodName;
   }
 
   @NotNull
@@ -237,7 +237,7 @@ public class BuilderHandler {
 
   public Optional<PsiMethod> createBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    if (!hasMethod(containingClass, builderMethodName)) {
+    if (!builderMethodName.isEmpty() && !hasMethod(containingClass, builderMethodName)) {
       final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
 
       final String blockText = String.format("return new %s();", psiTypeWithGenerics.getPresentableText());
