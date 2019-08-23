@@ -314,7 +314,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
-    if (EditorSettingsExternalizable.getInstance().isMouseClickSelectionHonorsCamelWords() && EditorUtil.isChangeFontSize(e)) {
+    if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= MIN_FONT_SIZE) {
         mySettingsProvider.getColorScheme().setConsoleFontSize(newFontSize);
