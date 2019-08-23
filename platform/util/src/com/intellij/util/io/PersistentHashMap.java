@@ -283,6 +283,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  public int getSize() {
+    return (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
+  }
+
   int getGarbageSize() {
     return (int)myLiveAndGarbageKeysCounter;
   }
