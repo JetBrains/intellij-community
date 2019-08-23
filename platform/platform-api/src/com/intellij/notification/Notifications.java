@@ -49,6 +49,9 @@ public interface Notifications {
       });
     }
 
+    /**
+     * Use {@link #notify(Notification, Project)} when project is known to show it in its associated frame.
+     */
     public static void notify(@NotNull final Notification notification) {
       notify(notification, null);
     }
