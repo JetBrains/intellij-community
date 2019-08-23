@@ -108,7 +108,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }.queue();
   }
 
-  private static JdkBundleList findJdkBundles(@Nullable ProgressIndicator indicator) {
+  public static JdkBundleList findJdkBundles(@Nullable ProgressIndicator indicator) {
     JdkBundleList bundleList = new JdkBundleList();
 
     bundleList.addBundle(JdkBundle.createBoot());
