@@ -241,6 +241,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
   val sdk = context.effectiveSdk
   val module = context.module
   val footholdFile = context.footholdFile
+  val withoutStubs = context.withoutStubs
 
   val visitor = RootVisitor { root, module, sdk, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
@@ -249,6 +250,9 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
         root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
         effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
+    }
+    if (withoutStubs && (PyTypeShed.isInside(root) || isInStubPackage(PsiManager.getInstance(context.project).findDirectory(root)!!))) {
+        return@RootVisitor true
     }
     results.addAll(resolveInRoot(name, root, context))
     if (isAcceptRootAsTopLevelPackage(context) && name.matchesPrefix(

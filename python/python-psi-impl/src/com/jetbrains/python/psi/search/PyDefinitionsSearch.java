@@ -10,6 +10,8 @@ import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +35,12 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
 
       if (parent instanceof PyAssignmentStatement) {
         return consumer.process(parent);
+      }
+    }
+    else if (queryParameters instanceof PyiFile) {
+      final PsiElement originalElement = ReadAction.compute(() -> PyiUtil.getOriginalElement((PyiFile)queryParameters));
+      if (originalElement != null) {
+        consumer.process(originalElement);
       }
     }
     return true;
