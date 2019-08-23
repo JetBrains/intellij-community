@@ -872,8 +872,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText, DelayedExceptions exceptions) {
     try {
-      if (LOG.isDebugEnabled()) LOG.debug(event.toString());
-      else if (LOG.isTraceEnabled()) LOG.trace(new Throwable(event.toString()));
+      if (LOG.isTraceEnabled()) LOG.trace(new Throwable(event.toString()));
+      else if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       assert event.getOldFragment().length() ==  event.getOldLength() : "event.getOldFragment().length() = " + event.getOldFragment().length()+"; event.getOldLength() = " + event.getOldLength();
       assert event.getNewFragment().length() ==  event.getNewLength() : "event.getNewFragment().length() = " + event.getNewFragment().length()+"; event.getNewLength() = " + event.getNewLength();
