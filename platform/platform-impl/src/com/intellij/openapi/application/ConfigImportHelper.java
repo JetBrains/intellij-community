@@ -144,37 +144,83 @@ public final class ConfigImportHelper {
   @NotNull
   public static List<Path> findConfigDirectories(@NotNull Path newConfigDir, boolean isMacOs, boolean checkDefaultLocation) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
-
-    List<Path> homes = new ArrayList<>(2);
-    homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
-    String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, isMacOs));
-    String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
-
-    String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
-      ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
-    if (checkDefaultLocation) {
-      Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
-      Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
-      if (!homes.contains(configHome)) homes.add(configHome);
-    }
+    // ("~/Library/<selector_prefix><selector_version>" on macOS, "%LOCALAPPDATA%\<selector_prefix>\<selector_version>>\config" on Windows,
+    // "~/.<selector_prefix><selector_version>/config" on Linux)
 
     List<Path> candidates = new ArrayList<>();
-    for (Path dir : homes) {
-      if (dir == null || !Files.isDirectory(dir)) continue;
+    List<Path> homes = new ArrayList<>(2);
+    if (SystemInfo.isWindows) {
+      homes.add(newConfigDir.getParent().getParent());
 
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> {
-        String fileName = it.getFileName().toString();
-        if ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
-            !startsWithIgnoreCase(fileName, defaultPrefix)) return false;
-        if (!Files.isDirectory(it)) return false;
-        return !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
-      })) {
-        for (Path path : stream) {
-          candidates.add(path);
+      String prefix;
+      String defaultPrefix;
+      String legacyPathsSelector = PathManager.getLegacyPathsSelector();
+      if (legacyPathsSelector != null && legacyPathsSelector.equals(PathManager.getPathsSelector())) {
+        String nameWithSelector = StringUtil.notNullize(legacyPathsSelector, getNameWithVersion(newConfigDir, false));
+        prefix = getPrefixFromSelector(nameWithSelector, false);
+
+        defaultPrefix = StringUtil.replace(StringUtil.notNullize(
+            ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
+        if (checkDefaultLocation) {
+          Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
+          Path configHome = configDir.getParent().getParent();
+          if (!homes.contains(configHome)) homes.add(configHome);
         }
       }
-      catch (IOException ignore) {
+      else {
+        prefix = null;
+        defaultPrefix = null;
+      }
+
+      for (Path dir : homes) {
+        if (dir == null || !Files.isDirectory(dir)) continue;
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> {
+          String fileName = it.getFileName().toString();
+          if (!homes.equals(newConfigDir.getParent().getParent()) &&
+              ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
+               (defaultPrefix == null || !startsWithIgnoreCase(fileName, defaultPrefix)))) {
+            return false;
+          }
+          if (!Files.isDirectory(it)) return false;
+          return !it.equals(newConfigDir.getParent());
+        })) {
+          for (Path path : stream) {
+            candidates.add(path);
+          }
+        }
+        catch (IOException ignore) {
+        }
+      }}
+    else {
+      homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
+      String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, isMacOs));
+      String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
+
+      String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
+          ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
+      if (checkDefaultLocation) {
+        Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
+        Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
+        if (!homes.contains(configHome)) homes.add(configHome);
+      }
+
+      for (Path dir : homes) {
+        if (dir == null || !Files.isDirectory(dir)) continue;
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> {
+          String fileName = it.getFileName().toString();
+          if ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
+              !startsWithIgnoreCase(fileName, defaultPrefix)) return false;
+          if (!Files.isDirectory(it)) return false;
+          return !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
+        })) {
+          for (Path path : stream) {
+            candidates.add(path);
+          }
+        }
+        catch (IOException ignore) {
+        }
       }
     }
 

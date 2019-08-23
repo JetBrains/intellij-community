@@ -133,12 +133,15 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
 
+      def applicationInfo = buildContext.applicationInfo
+      def systemSelector = customizer.getSystemSelector(applicationInfo)
+
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
-        filter(token: "system_selector", value: buildContext.systemSelector)
+        filter(token: "isEap", value: applicationInfo.isEAP)
+        filter(token: "system_selector", value: systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: batName)
@@ -172,21 +175,24 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Windows executable ${arch.name()}") {
       String exeFileName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}.exe"
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
-      def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
-      def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
-      String vmOptions = "$buildContext.additionalJvmArguments -Dide.native.launcher=true -Didea.paths.selector=${buildContext.systemSelector}".trim()
-      def productName = buildContext.applicationInfo.shortProductName
+      def applicationInfo = buildContext.applicationInfo
+      def upperCaseProductName = applicationInfo.upperCaseProductName
+      def lowerCaseProductName = applicationInfo.shortProductName.toLowerCase()
+      def systemSelector = customizer.getSystemSelector(applicationInfo)
+      // TODO: Remove idea.paths.selector.legacy after 2019.3.
+      String vmOptions = "$buildContext.additionalJvmArguments -Dide.native.launcher=true \"-Didea.paths.selector=${systemSelector}\" -Didea.paths.selector.legacy=${buildContext.systemSelector}\"".trim()
+      def productName = applicationInfo.shortProductName
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
-      def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
+      def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(applicationInfo)
       File icoFilesDirectory = new File(buildContext.paths.temp, "win-launcher-ico")
       File appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
 IDS_APP_TITLE=$productName Launcher
-IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector\\\\config
+IDS_VM_OPTIONS_PATH="%LOCALAPPDATA%\\\\\\\\systemSelector\\\\\\\\config"
 IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER

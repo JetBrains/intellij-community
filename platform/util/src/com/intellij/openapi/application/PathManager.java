@@ -42,6 +42,7 @@ public class PathManager {
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  public static final String PROPERTY_PATHS_SELECTOR_LEGACY = "idea.paths.selector.legacy";
 
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
@@ -56,6 +57,7 @@ public class PathManager {
   private static final String CONFIG_FOLDER = "config";
   private static final String SYSTEM_FOLDER = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static final String PATHS_SELECTOR_LEGACY = System.getProperty(PROPERTY_PATHS_SELECTOR_LEGACY);
 
   private static class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -207,6 +209,15 @@ public class PathManager {
     return PATHS_SELECTOR;
   }
 
+  /**
+   * Legacy path selector is used on Windows only, where it contains the old value of the path selector before moving config and system
+   * directories under %LOCALAPPDTATA%.
+\   */
+  @Nullable
+  public static String getLegacyPathsSelector() {
+    return PATHS_SELECTOR_LEGACY;
+  }
+
   @NotNull
   public static String getConfigPath() {
     if (ourConfigPath != null) return ourConfigPath;
@@ -242,7 +253,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultConfigPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
+    return platformPath(selector, "Library/Preferences", "LOCALAPPDATA", null, null, CONFIG_FOLDER);
   }
 
   public static void ensureConfigFolderExists() {
@@ -314,7 +325,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Caches", SYSTEM_FOLDER);
+    return platformPath(selector, "Library/Caches", "LOCALAPPDATA", null, null, SYSTEM_FOLDER);
   }
 
   @NotNull
@@ -597,7 +608,7 @@ public class PathManager {
     if (winVar != null && SystemInfo.isWindows) {
       String dir = System.getenv(winVar);
       if (dir != null) {
-        return dir + "/" + selector;
+        return dir + File.separator + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
       }
     }
 

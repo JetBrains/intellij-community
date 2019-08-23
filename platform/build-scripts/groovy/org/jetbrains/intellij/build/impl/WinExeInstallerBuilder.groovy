@@ -183,11 +183,13 @@ class WinExeInstallerBuilder {
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
-                    "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" : null
+                      "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" :
+                      null
+    def applicationInfo = buildContext.applicationInfo
     new File(box, "nsiconf/strings.nsi").text = """
-!define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
-!define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
-!define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
+!define MANUFACTURER "${applicationInfo.shortCompanyName}"
+!define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(applicationInfo)}"
+!define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(applicationInfo)}"
 !define PRODUCT_EXE_FILE "$mainExeLauncherName"
 !define PRODUCT_EXE_FILE_64 "$x64LauncherName"
 !define PRODUCT_ICON_FILE "install.ico"
@@ -195,7 +197,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
-!define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
+!define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(applicationInfo) ?: "feedback_web_page"}"
 !define LINK_TO_JRE "$linkToJre"
 !define JRE_32BIT_VERSION_SUPPORTED "${jre32BitVersionSupported ? 1 : 0 }"
 
@@ -204,16 +206,18 @@ class WinExeInstallerBuilder {
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
 """
 
-    def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def versionString = applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def systemSelector = customizer.getSystemSelector(applicationInfo)
     new File(box, "nsiconf/version.nsi").text = """
-!define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"
-!define MUI_VERSION_MINOR "${buildContext.applicationInfo.minorVersion}"
+!define MUI_VERSION_MAJOR "${applicationInfo.majorVersion}"
+!define MUI_VERSION_MINOR "${applicationInfo.minorVersion}"
 
 !define VER_BUILD ${buildContext.buildNumber}
 
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
 !define PRODUCT_FULL_NAME_WITH_VER "\${PRODUCT_FULL_NAME} $versionString"
-!define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
+
+!define PRODUCT_PATHS_SELECTOR "${systemSelector}"
 !define PRODUCT_SETTINGS_DIR ".\${PRODUCT_PATHS_SELECTOR}"
 """
   }
