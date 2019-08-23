@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,12 +23,12 @@ public class ListFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy
 
   @Override
   public Component getFirstComponent(Container aContainer) {
-    return myComponents[0];
+    return ArrayUtil.getFirstElement(myComponents);
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
-    return myComponents[myComponents.length - 1];
+    return ArrayUtil.getLastElement(myComponents);
   }
 
   @Override
