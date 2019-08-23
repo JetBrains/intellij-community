@@ -238,8 +238,8 @@ public class RefreshWorker {
     List<VirtualFile> cached = snapshot.getFirst();
     List<String> wanted = snapshot.getSecond();
 
-    OpenTHashSet<String> actualNames =
-      fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
+    OpenTHashSet<String> actualNames = fs.isCaseSensitive() || cached.isEmpty() ? null :
+      new OpenTHashSet<>(fs.listStream(dir).filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList()), strategy);
 
     if (LOG.isTraceEnabled()) LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
 

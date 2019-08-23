@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileSystems;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -42,7 +43,7 @@ public class RootFileElement extends FileElement {
       }
 
       myChildren = myFiles.stream().
-        filter(file -> file != null).
+        filter(Objects::nonNull).
         map(file -> new FileElement(file, file.getPresentableUrl())).
         toArray();
     }
@@ -54,7 +55,6 @@ public class RootFileElement extends FileElement {
 
     return StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false).
       map(root -> localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(root.toString()))).
-      filter(file -> file != null).
       collect(Collectors.toList());
   }
 }
