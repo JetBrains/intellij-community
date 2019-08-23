@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -97,13 +97,18 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     startupManager.registerPreStartupActivity(() -> {
       final EditorFactory factory = EditorFactory.getInstance();
       if (factory != null) {
-        factory.getEventMulticaster().addDocumentListener(new DocumentListener() {
+        factory.getEventMulticaster().addDocumentListener(new BulkAwareDocumentListener() {
           @Override
-          public void documentChanged(@NotNull DocumentEvent event) {
+          public void documentChangedNonBulk(@NotNull DocumentEvent event) {
             if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-            VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+            bulkUpdateFinished(event.getDocument());
+          }
+
+          @Override
+          public void bulkUpdateFinished(@NotNull Document document) {
+            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
             if (file != null) {
-              refreshFileStatusFromDocument(file, event.getDocument());
+              refreshFileStatusFromDocument(file, document);
             }
           }
         }, myProject);
