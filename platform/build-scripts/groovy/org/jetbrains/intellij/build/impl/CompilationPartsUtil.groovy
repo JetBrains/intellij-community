@@ -286,15 +286,14 @@ class CompilationPartsUtil {
       messages.error("Failed to parse metadata file content: $e.message", e)
       return
     }
-    def partsMap = forInstallers ? metadata.files.findAll { !it.key.startsWith('test/') } : metadata.files
     String persistentCache = System.getProperty('agent.persistent.cache')
     String cache = persistentCache ?: new File(classesOutput).parentFile.getAbsolutePath()
     File tempDownloadsStorage = new File(cache, 'idea-compile-parts')
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 
-    List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(partsMap.size())
-    new TreeMap<String, String>(partsMap).each { entry ->
+    List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
+    new TreeMap<String, String>(metadata.files).each { entry ->
       contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key"), !forInstallers))
     }
 
