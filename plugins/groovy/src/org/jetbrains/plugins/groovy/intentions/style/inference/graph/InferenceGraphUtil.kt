@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.rawType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
@@ -147,10 +148,10 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
 }
 
 fun List<PsiClassType>.findTypeWithCorrespondingSupertype(pattern: PsiType): PsiType {
-  val patternClazz = pattern.resolve()
+  val patternClass = pattern.resolve()?.rawType()
   return find {
-    val supers = (it.resolve()?.allSupers() ?: emptySet()) + it.resolve()
-    supers.filter { clazz -> clazz?.name != "Object" }.contains(patternClazz)
+    val supers = (it.resolve()?.allSupers()?.map(PsiClass::rawType) ?: emptyList()) + it.rawType()
+    supers.filter { clazz -> clazz.name != "Object" }.contains(patternClass)
   } ?: pattern
 }
 

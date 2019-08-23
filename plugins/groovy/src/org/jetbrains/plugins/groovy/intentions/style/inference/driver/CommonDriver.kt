@@ -155,9 +155,13 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
       override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
         val resolveResult = methodCallExpression.advancedResolve() as? GroovyMethodResult
         val argumentMapping = resolveResult?.candidate?.argumentMapping ?: return
-        argumentMapping.expectedTypes.forEach { (type, argument) ->
-          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters } ?: return@forEach
-          constraintCollector.add(TypeConstraint(type, typeParameter.type(), method))
+        for ((type, argument) in argumentMapping.expectedTypes) {
+          val properType = resolveResult.substitutor.substitute(type)
+          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters } ?: continue
+          if (properType == typeParameter.type()) {
+            continue
+          }
+          constraintCollector.add(TypeConstraint(resolveResult.substitutor.substitute(type), typeParameter.type(), method))
         }
       }
     })

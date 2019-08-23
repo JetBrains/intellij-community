@@ -5,10 +5,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
 
   InferMethodParametersTypesIntentionTest() {
     super("Add explicit types to parameters")
@@ -485,6 +484,10 @@ class AA { static void fo<caret>o(Integer a) {} }
   }
 
   void testElvisOperator() {
+    doTest(true)
+  }
+
+  void testIndexPropertyWithSpecialSyntax() {
     doTest(true)
   }
 }

@@ -21,15 +21,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference
 import kotlin.LazyThreadSafetyMode.NONE
 
 
@@ -59,13 +62,22 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     }
   }
 
-  private fun processMethod(result: GroovyResolveResult) {
+  private fun processMethod(result: GroovyResolveResult, arguments: Arguments = emptyList()) {
     val methodResult = result as? GroovyMethodResult ?: return
-    val candidate = methodResult.candidate ?: return
-    processReceiverConstraints(candidate)
-    val expectedTypes = candidate.argumentMapping?.expectedTypes ?: return
-    for ((type, argument) in expectedTypes) {
-      processArgumentConstraints(type, argument, methodResult)
+    val candidate = methodResult.candidate
+    if (candidate != null) {
+      processReceiverConstraints(candidate)
+      val expectedTypes = candidate.argumentMapping?.expectedTypes ?: return
+      for ((type, argument) in expectedTypes) {
+        processArgumentConstraints(type, argument, methodResult)
+      }
+    }
+    else {
+      val method = methodResult.element.run { if (this is GrGdkMethod) staticMethod else this }
+      val parameterTypes = method.parameters.mapNotNull { it.type as? PsiType }.takeIf { it.size == arguments.size } ?: return
+      for ((type, argument) in parameterTypes.zip(arguments)) {
+        processArgumentConstraints(type, argument, methodResult)
+      }
     }
   }
 
@@ -195,9 +207,11 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
     constraintsCollector.add(ExpressionConstraint(null, expression))
-    val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference ?: return
-    processSetter(lValueReference)
-    processFieldAssignment(lValueReference, expression)
+    val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference
+    if (lValueReference != null) {
+      processSetter(lValueReference)
+      processFieldAssignment(lValueReference, expression)
+    }
     super.visitAssignmentExpression(expression)
   }
 
@@ -249,11 +263,25 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       constraintsCollector.add(OperatorExpressionConstraint(expression))
     }
     if (expression is GrIndexProperty) {
-      expression.lValueReference?.advancedResolve()?.run { processMethod(this) }
-      expression.rValueReference?.advancedResolve()?.run { processMethod(this) }
+      expression.lValueReference?.advancedResolve()?.run {
+        val lValueArguments = extractArguments(expression, expression.lValueReference as? GrIndexPropertyReference)
+        processMethod(this, lValueArguments)
+      }
+      expression.rValueReference?.advancedResolve()?.run {
+        val rValueArguments = if (element is GrGdkMethod) {
+          extractArguments(expression, expression.rValueReference as? GrIndexPropertyReference)
+        }
+        else {
+          extractArguments(null, expression.rValueReference as? GrIndexPropertyReference)
+        }
+        processMethod(this, rValueArguments)
+      }
     }
     super.visitExpression(expression)
   }
+
+  private fun extractArguments(expression: GrIndexProperty?, reference: GrIndexPropertyReference?): Arguments =
+    listOfNotNull(expression?.invokedExpression?.run { ExpressionArgument(this) }, *reference?.arguments?.toTypedArray() ?: emptyArray())
 
   fun visitOuterCalls(originalMethod: GrMethod, calls: Collection<PsiReference>) {
     val mapping = originalMethod.parameters.map { it.name }.zip(method.parameters).toMap()
