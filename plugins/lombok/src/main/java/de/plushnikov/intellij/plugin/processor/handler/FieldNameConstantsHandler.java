@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.psi.LombokEnumConstantBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -43,16 +44,22 @@ public class FieldNameConstantsHandler {
     }
   }
 
+  private static boolean useUppercasedConstants(@NotNull PsiClass containingClass) {
+    final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
+    return configDiscovery.getBooleanLombokConfigProperty(ConfigKey.FIELD_NAME_CONSTANTS_UPPERCASE, containingClass);
+  }
+
   public static List<PsiField> createFields(@NotNull PsiClass containingClass, @NotNull Collection<PsiField> psiFields) {
     final Set<String> existingFieldNames = PsiClassUtil.collectClassFieldsIntern(containingClass).stream().map(PsiField::getName).collect(Collectors.toSet());
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
     final PsiClassType classType = psiElementFactory.createType(containingClass);
-    return psiFields.stream().filter(psiField -> !existingFieldNames.contains(psiField.getName()))
+    boolean makeUppercased = useUppercasedConstants(containingClass);
+    return psiFields.stream().filter(psiField -> !existingFieldNames.contains(makeFieldNameConstant(psiField, makeUppercased)))
       .map(psiField -> {
         if (containingClass.isEnum()) {
-          return createEnumConstant(psiField, containingClass, classType);
+          return createEnumConstant(psiField, makeUppercased, containingClass, classType);
         }
-        return createFieldNameConstant(psiField, containingClass);
+        return createFieldNameConstant(psiField, makeUppercased, containingClass);
       }).collect(Collectors.toList());
   }
 
@@ -69,13 +76,18 @@ public class FieldNameConstantsHandler {
     return classBuilder;
   }
 
-  private static PsiField createEnumConstant(@NotNull PsiField field, @NotNull PsiClass containingClass, PsiClassType classType) {
-    return new LombokEnumConstantBuilder(containingClass.getManager(), field.getName(), classType)
+  private static PsiField createEnumConstant(@NotNull PsiField field, boolean makeUppercased, @NotNull PsiClass containingClass, PsiClassType classType) {
+    return new LombokEnumConstantBuilder(containingClass.getManager(), makeFieldNameConstant(field, makeUppercased), classType)
       .withContainingClass(containingClass)
       .withModifier(PsiModifier.PUBLIC)
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL)
       .withNavigationElement(field);
+  }
+
+  private static String makeFieldNameConstant(@NotNull PsiField field, boolean makeUppercased1) {
+    final String fieldName = field.getName();
+    return makeUppercased1 ? LombokUtils.camelCaseToConstant(fieldName) : fieldName;
   }
 
   @NotNull
@@ -91,11 +103,11 @@ public class FieldNameConstantsHandler {
   }
 
   @NotNull
-  private static PsiField createFieldNameConstant(@NotNull PsiField psiField, @NotNull PsiClass containingClass) {
+  private static PsiField createFieldNameConstant(@NotNull PsiField psiField, boolean makeUppercased, @NotNull PsiClass containingClass) {
     final PsiManager manager = containingClass.getContainingFile().getManager();
     final PsiType fieldNameConstType = PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(containingClass.getProject()));
 
-    LombokLightFieldBuilder fieldNameConstant = new LombokLightFieldBuilder(manager, psiField.getName(), fieldNameConstType)
+    LombokLightFieldBuilder fieldNameConstant = new LombokLightFieldBuilder(manager, makeFieldNameConstant(psiField, makeUppercased), fieldNameConstType)
       .withContainingClass(containingClass)
       .withNavigationElement(psiField)
       .withModifier(PsiModifier.PUBLIC)

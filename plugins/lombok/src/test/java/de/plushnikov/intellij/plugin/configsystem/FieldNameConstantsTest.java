@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
-import java.io.IOException;
-
 public class FieldNameConstantsTest extends AbstractLombokConfigSystemTestCase {
 
   @Override
@@ -9,7 +7,11 @@ public class FieldNameConstantsTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/fieldnameconstants";
   }
 
-  public void testConfiguration$FieldNameConstantsConfigKeys() throws IOException {
+  public void testConfiguration$FieldNameConstantsConfigKeys() {
+    doTest();
+  }
+
+  public void testUppercase$FieldNameConstantsUppercased() {
     doTest();
   }
 }

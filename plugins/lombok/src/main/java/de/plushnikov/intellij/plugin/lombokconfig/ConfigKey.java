@@ -40,6 +40,8 @@ public enum ConfigKey {
   FIELD_NAME_CONSTANTS_SUFFIX("lombok.fieldNameConstants.suffix", ""),
   // Used for lombok from v1.18.4
   FIELD_NAME_CONSTANTS_TYPENAME("lombok.fieldNameConstants.innerTypeName","Fields"),
+  // Used for lombok from v1.18.8
+  FIELD_NAME_CONSTANTS_UPPERCASE("lombok.fieldNameConstants.uppercase", "false"),
 
   NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE("lombok.noArgsConstructor.extraPrivate", "false");
   /*
