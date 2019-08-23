@@ -11,7 +11,7 @@ iml_project(
     ],
     build = "build.xml",
     data = [
-        "//prebuilts/studio/jdk",
+        "//prebuilts/studio/jdk:jdk_all",
         "//prebuilts/python/linux-x86",
         "//prebuilts/python/windows-x86",
         "//prebuilts/tools/common/kotlin-plugin-ij:kotlin_plugin",
