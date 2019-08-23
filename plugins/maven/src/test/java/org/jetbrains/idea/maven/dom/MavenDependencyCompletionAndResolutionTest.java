@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -368,6 +369,28 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
+  public void testResolutionParentPathOutsideTheProject() throws Exception {
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/org/example/1.0/example-1.0.pom");
+
+    String relativePathUnixSeparator =
+      FileUtil.getRelativePath(new File(myProjectRoot.getPath()), new File(filePath)).replaceAll("\\\\", "/");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<parent>" +
+                     "  <groupId>org.example</groupId>" +
+                     "  <artifactId>example</artifactId>" +
+                     "  <version>1.0</version>" +
+                     "  <relativePath>" + relativePathUnixSeparator + "<caret></relativePath>" +
+                     "</parent>"
+    );
+
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     assertResolved(myProjectPom, findPsiFile(f));
   }
