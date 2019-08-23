@@ -71,14 +71,12 @@ java_library(
         "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.9.10:jar",
         "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.9.10:jar",
         "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.27.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.0.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.9.10:jar",
         "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.9.10:jar",
         "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.27.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.0.1:jar",
     ],
 )
 
