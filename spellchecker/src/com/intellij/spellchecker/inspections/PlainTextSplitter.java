@@ -108,6 +108,7 @@ public class PlainTextSplitter extends BaseSplitter {
     }
   }
 
+  @NotNull
   protected Splitter getTextSplitter() {
     return TextSplitter.getInstance();
   }

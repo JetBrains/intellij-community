@@ -57,6 +57,7 @@ public class TextSplitter extends BaseSplitter {
     catch (ProcessCanceledException ignored) { }
   }
 
+  @NotNull
   @Contract(pure = true)
   protected Pattern getExtendedWordAndSpecial() {
     return EXTENDED_WORD_AND_SPECIAL;
