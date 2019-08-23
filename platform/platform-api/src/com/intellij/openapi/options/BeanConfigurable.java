@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,6 +226,11 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     setTitle(title);
   }
 
+  /**
+   * @deprecated Use BeanConfigurable(@NotNull T beanInstance) or even better BeanConfigurable(@NotNull T beanInstance, String title)
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   protected BeanConfigurable() {
     myInstance = null;
   }

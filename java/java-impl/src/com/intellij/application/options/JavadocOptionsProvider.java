@@ -20,9 +20,9 @@ import com.intellij.openapi.options.BeanConfigurable;
 
 public class JavadocOptionsProvider extends BeanConfigurable<CodeInsightSettings> {
   public JavadocOptionsProvider() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    super(CodeInsightSettings.getInstance(), "JavaDoc");
     checkBox("Automatically insert closing tag in JavaDoc",
-             () -> settings.JAVADOC_GENERATE_CLOSING_TAG,
-             (value) -> settings.JAVADOC_GENERATE_CLOSING_TAG = value);
+             () -> getInstance().JAVADOC_GENERATE_CLOSING_TAG,
+             (value) -> getInstance().JAVADOC_GENERATE_CLOSING_TAG = value);
   }
 }
