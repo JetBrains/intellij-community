@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 
 /**
  * @author mike
@@ -99,7 +98,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     if (code == PROPERTY_CHANGED &&
         (propertyName == PsiTreeChangeEvent.PROP_UNLOADED_PSI ||
          propertyName == PsiTreeChangeEvent.PROP_ROOTS ||
-         propertyName == PsiTreeChangeEvent.PROP_FILE_TYPES)) {
+         propertyName == PsiTreeChangeEvent.PROP_FILE_TYPES) ||
+        code == CHILD_REMOVED && event.getChild() instanceof PsiDirectory) {
       myAllLanguagesTracker.incModificationCount();
       return;
     }
