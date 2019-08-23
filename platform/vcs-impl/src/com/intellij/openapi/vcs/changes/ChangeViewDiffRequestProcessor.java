@@ -150,8 +150,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @CalledInAwt
   @Override
   public void clear() {
-    myCurrentChange = null;
-    updateRequest();
+    if (myCurrentChange != null) {
+      myCurrentChange = null;
+      updateRequest();
+    }
     dropCaches();
   }
 

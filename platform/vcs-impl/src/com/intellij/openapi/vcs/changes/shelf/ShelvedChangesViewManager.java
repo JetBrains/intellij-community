@@ -697,8 +697,10 @@ public class ShelvedChangesViewManager implements Disposable {
     @CalledInAwt
     @Override
     public void clear() {
-      myCurrentShelvedElement = null;
-      updateRequest();
+      if (myCurrentShelvedElement != null) {
+        myCurrentShelvedElement = null;
+        updateRequest();
+      }
       dropCaches();
     }
 
