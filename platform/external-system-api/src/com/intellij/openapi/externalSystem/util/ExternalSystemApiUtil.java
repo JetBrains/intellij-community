@@ -320,17 +320,6 @@ public class ExternalSystemApiUtil {
     return result;
   }
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T> DataNode<T> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                     @NotNull Key<T> key,
-                                                     @NotNull BooleanFunction<? super DataNode<T>> predicate) {
-    return (DataNode<T>)findFirstRecursively(parentNode, node -> {
-      if (!node.getKey().equals(key)) return false;
-      return predicate.fun((DataNode<T>)node);
-    });
-  }
-
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
                                                  @NotNull BooleanFunction<? super DataNode<?>> predicate) {
@@ -732,20 +721,6 @@ public class ExternalSystemApiUtil {
 
     findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
     return tasks;
-  }
-
-  @ApiStatus.Experimental
-  @Nullable
-  public static DataNode<ModuleData> findModuleData(@NotNull Module module,
-                                                    @NotNull ProjectSystemId systemId) {
-    String moduleId = getExternalProjectId(module);
-    if (moduleId == null) return null;
-    String externalProjectPath = getExternalProjectPath(module);
-    if (externalProjectPath == null) return null;
-    Project project = module.getProject();
-    DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
-    if (projectNode == null) return null;
-    return findFirstRecursively(projectNode, ProjectKeys.MODULE, node -> node.getData().getId() == moduleId);
   }
 
   @ApiStatus.Experimental
