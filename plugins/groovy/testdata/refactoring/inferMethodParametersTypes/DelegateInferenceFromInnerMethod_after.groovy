@@ -1,7 +1,4 @@
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.SimpleType
-
-Object foo(@DelegatesTo.Target('a') Object a, @DelegatesTo(target = 'a', strategy = Closure.TO_SELF) @ClosureParams(value = SimpleType, options = ['?']) Closure<Exception> cl) {
+Object foo(@DelegatesTo.Target('a') Object a, @DelegatesTo(target = 'a', strategy = Closure.TO_SELF) Closure<Exception> cl) {
   m(a, cl)
 }
 

@@ -1,7 +1,4 @@
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.SimpleType
-
-Object foo(@DelegatesTo(Integer) @ClosureParams(value = SimpleType, options = ['?']) Closure<Double> cl) {
+Object foo(@DelegatesTo(Integer) Closure<Double> cl) {
   (null as C<Integer>).m(cl)
 }
 

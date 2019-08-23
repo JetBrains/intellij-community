@@ -79,7 +79,10 @@ class ClosureParamsCombiner {
 
 
   fun instantiateAnnotation(outerParameters: PsiParameterList,
-                            signatureTypes: List<PsiType>): String {
+                            signatureTypes: List<PsiType>): String? {
+    if (signatureTypes.size == 1 && signatureTypes.single().equalsToText("?")) {
+      return null
+    }
     if (signatureTypes.size == 1) {
       val patternType = signatureTypes.single()
       val singleParameterAnnotation = typeHintChoosers
