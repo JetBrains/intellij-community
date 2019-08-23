@@ -19,6 +19,9 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -253,7 +256,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && (myActive && isAffectsBorder() || !myActive)) {
+            if (isTopNeeded() && (myActive && isAffectsBorder()) || (!myActive && UIUtil.isUnderIntelliJLaF())) {
                 g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
