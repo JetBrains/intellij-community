@@ -243,7 +243,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       String textToSend = myBuffer.length() == 0 ? text : myBuffer.toString() + text;
       if (textToSend.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
         myBuffer.setLength(0);
-        if (!MavenSpyOutputParser.isSpyLog(text)) {
+        if (!MavenSpyOutputParser.isSpyLog(textToSend)) {
           myConsumer.accept(textToSend, outputType);
         }
         else {
