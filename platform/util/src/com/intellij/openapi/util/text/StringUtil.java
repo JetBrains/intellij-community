@@ -3442,4 +3442,37 @@ public class StringUtil extends StringUtilRt {
   public static String internEmptyString(String s) {
     return s == null ? null : s.isEmpty() ? "" : s;
   }
+
+  /**
+   * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceOrTab(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceOrTab(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
+  private static boolean isWhitespaceOrTab(char c) {
+    return c == ' ' || c == '\t';
+  }
 }
