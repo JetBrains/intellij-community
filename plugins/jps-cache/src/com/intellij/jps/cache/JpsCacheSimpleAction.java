@@ -2,11 +2,13 @@ package com.intellij.jps.cache;
 
 import com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient;
 import com.intellij.jps.cache.client.JpsCacheServerClient;
+import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 public class JpsCacheSimpleAction extends AnAction {
@@ -14,14 +16,15 @@ public class JpsCacheSimpleAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent actionEvent) {
+    Project project = actionEvent.getProject();
+    if (project == null) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        Set<String> cacheKeys = myCacheServerClient.getAllCacheKeys();
-        Set<String> binaryKeys = myCacheServerClient.getAllBinaryKeys();
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
+      Set<String> cacheKeys = myCacheServerClient.getAllCacheKeys();
+      System.out.println(cacheKeys);
+      Set<String> binaryKeys = myCacheServerClient.getAllBinaryKeys();
+      System.out.println(cacheKeys);
+      List<String> hashes = GitRepositoryUtil.getLatestHashes(project, 20);
+      System.out.println(hashes);
     });
   }
 }
