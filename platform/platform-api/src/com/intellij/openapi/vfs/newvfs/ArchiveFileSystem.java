@@ -75,6 +75,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
 
   /**
    * A reverse to {@link #extractLocalPath(String)} - i.e. dresses a local file path to make it a suitable root path for this filesystem.
+   * E.g. "/x/y.jar" -> "/x/y.jar!/"
    */
   @NotNull
   protected abstract String composeRootPath(@NotNull String localPath);

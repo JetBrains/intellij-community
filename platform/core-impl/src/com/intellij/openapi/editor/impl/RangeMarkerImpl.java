@@ -90,7 +90,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   protected boolean unregisterInTree() {
     if (!isValid()) return false;
-    IntervalTreeImpl tree = myNode.getTree();
+    IntervalTreeImpl<?> tree = myNode.getTree();
     tree.checkMax(true);
     boolean b = getDocument().removeRangeMarker(this);
     tree.checkMax(true);
@@ -109,19 +109,19 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public int getStartOffset() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node == null ? -1 : node.intervalStart() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public int getEndOffset() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node == null ? -1 : node.intervalEnd() + node.computeDeltaUpToRoot();
   }
 
   void invalidate(@NotNull final Object reason) {
     setValid(false);
-    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
 
     if (node != null) {
       node.processAliveKeys(markerEx -> {
@@ -161,25 +161,25 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
 
-  public void setStickingToRight(boolean value) {
+  void setStickingToRight(boolean value) {
     if (!isValid() || value == isStickingToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
 
   @Override
   public boolean isGreedyToLeft() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node != null && node.isGreedyToLeft();
   }
 
   @Override
   public boolean isGreedyToRight() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node != null && node.isGreedyToRight();
   }
 
-  public boolean isStickingToRight() {
-    RangeMarkerTree.RMNode node = myNode;
+  boolean isStickingToRight() {
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node != null && node.isStickingToRight();
   }
 
@@ -327,7 +327,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public boolean isValid() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null || !node.isValid()) return false;
     Object file = myDocumentOrFile;
     return file instanceof Document || canHaveDocument((VirtualFile)file);
@@ -347,12 +347,12 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public boolean setValid(boolean value) {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     return node == null || node.setValid(value);
   }
 
   public int intervalStart() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
       return -1;
     }
@@ -360,7 +360,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public int intervalEnd() {
-    RangeMarkerTree.RMNode node = myNode;
+    RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
       return -1;
     }
