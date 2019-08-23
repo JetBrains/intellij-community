@@ -51,6 +51,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private final List<ColoredFragment> myFragments;
   private ColoredFragment myCurrentFragment;
   private Font myLayoutFont;
+  private FontRenderContext myLayoutFRC;
 
   /**
    * Component's icon. It can be {@code null}.
@@ -474,9 +475,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
     Font baseFont = getBaseFont();
-    if (!baseFont.equals(myLayoutFont)) {
+    if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
       myFragments.forEach(ColoredFragment::invalidateLayout);
       myLayoutFont = baseFont;
+      myLayoutFRC = frc;
     }
     return fragment.getAndCacheRenderer(font, frc);
   }
