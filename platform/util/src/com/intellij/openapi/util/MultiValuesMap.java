@@ -13,6 +13,7 @@ import java.util.*;
  * <p></p>On migration please note that MultiMap has few differences:<ul>
  * <li>{@link MultiMap#get(java.lang.Object)} method returns non-null value. In case there is no value for the key - empty collection is returned.</li>
  * <li>{@link MultiMap#values} method returns a real values collection, not a copy. Be careful with modifications.</li>
+ * <li>Default implementations of {@link MultiMap} may not permit null keys and/or null values</li>
  * </ul></p>
  */
 @Debug.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
@@ -35,7 +36,31 @@ public class MultiValuesMap<K, V>{
       myDelegate = MultiMap.createLinkedSet();
     }
     else {
-      myDelegate = MultiMap.createSet();
+      myDelegate = new MultiMap<K, V>() {
+        @NotNull
+        @Override
+        protected Map<K, Collection<V>> createMap() {
+          return new HashMap<>();
+        }
+
+        @NotNull
+        @Override
+        protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+          return new HashMap<>(initialCapacity, loadFactor);
+        }
+
+        @NotNull
+        @Override
+        protected Collection<V> createCollection() {
+          return new HashSet<>();
+        }
+
+        @NotNull
+        @Override
+        protected Collection<V> createEmptyCollection() {
+          return Collections.emptySet();
+        }
+      };
     }
   }
 
