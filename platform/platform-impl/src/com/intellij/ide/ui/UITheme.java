@@ -11,6 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
@@ -32,8 +33,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -372,8 +375,9 @@ public class UITheme {
                                          Integer.parseInt(ints.get(2)),
                                          Integer.parseInt(ints.get(3))));
         }
-        else if (ColorUtil.fromHex(value, null) != null) {
-          return asUIResource(customLine(ColorUtil.fromHex(value), 1));
+        Color color = ColorHexUtil.fromHexOrNull(value);
+        if (color != null) {
+          return asUIResource(customLine(color, 1));
         }
         else {
           return Class.forName(value).newInstance();
@@ -439,7 +443,7 @@ public class UITheme {
         return null;
       }
     }
-    Color color = ColorUtil.fromHex(value, null);
+    Color color = ColorHexUtil.fromHexOrNull(value);
     return color == null ? null : new ColorUIResource(color);
   }
 
