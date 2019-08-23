@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
@@ -107,8 +106,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       if (!isInSyncWithDocument()) {
         final Document document = getDocument();
         assert document != null;
-        if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
-          ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
+        if (document.isInBulkUpdate()) {
+          document.setInBulkUpdate(false); // bulk mode failed
         }
         doSetText(document.getImmutableCharSequence());
       }
@@ -144,7 +143,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       final Document document = e.getDocument();
       CharSequence text = document.getImmutableCharSequence();
 
-      if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+      if (document.isInBulkUpdate()) {
         myText = null;
         mySegments.removeAll();
         return;

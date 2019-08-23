@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -148,7 +147,7 @@ public final class PositionPanel extends EditorBasedWidget
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
-    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+    if (document.isInBulkUpdate()) return;
     onDocumentUpdate(document);
   }
 

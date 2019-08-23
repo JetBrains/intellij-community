@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -141,7 +140,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
 
       final Document document = event.getDocument();
       if (myApplying || UndoManager.getInstance(Objects.requireNonNull(myEditor.getProject())).isUndoInProgress() ||
-          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) {
+          !PomModelImpl.isAllowPsiModification() || document.isInBulkUpdate()) {
         return;
       }
 

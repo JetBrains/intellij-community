@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
-import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
@@ -298,8 +297,8 @@ class DocumentTracker : Disposable {
 
   private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {
     init {
-      if ((document1 as DocumentEx).isInBulkUpdate) freeze(Side.LEFT)
-      if ((document2 as DocumentEx).isInBulkUpdate) freeze(Side.RIGHT)
+      if (document1.isInBulkUpdate) freeze(Side.LEFT)
+      if (document2.isInBulkUpdate) freeze(Side.RIGHT)
     }
 
     override fun updateStarted(doc: Document) {
