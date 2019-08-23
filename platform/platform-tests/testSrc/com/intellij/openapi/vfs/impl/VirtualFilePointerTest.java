@@ -798,7 +798,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void listenerIsFiredForPointerCreatedBetweenAsyncAndSyncVfsEventProcessing() throws IOException {
+  public void listenerIsFiredForPointerCreatedBetweenAsyncAndSyncVfsEventProcessing() {
     VirtualFile vDir = getVirtualTempRoot();
     String childName = "child";
 
@@ -812,7 +812,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         return null;
       }, disposable);
 
-      vDir.refresh(true, true);
+      VfsUtil.markDirtyAndRefresh(true, true, false, vDir);
       assertTrue(semaphore.waitFor(10_000));
 
       LoggingListener listener = new LoggingListener();
