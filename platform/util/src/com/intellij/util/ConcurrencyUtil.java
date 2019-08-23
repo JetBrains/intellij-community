@@ -197,6 +197,11 @@ public class ConcurrencyUtil {
   public static void joinAll(@NotNull Thread... threads) throws RuntimeException {
     joinAll(Arrays.asList(threads));
   }
+  public static void getAll(@NotNull Collection<? extends Future<?>> futures) throws ExecutionException, InterruptedException {
+    for (Future<?> future : futures) {
+      future.get();
+    }
+  }
 
   @NotNull
   @Contract(pure = true)

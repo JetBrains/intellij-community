@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -152,7 +155,8 @@ public class IoTestUtil {
 
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
-      Thread thread = new Thread(() -> {
+
+      Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
           String line;
           while ((line = reader.readLine()) != null) {
@@ -162,16 +166,15 @@ public class IoTestUtil {
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-      }, "io test");
-      thread.start();
+      });
       int ret = process.waitFor();
-      thread.join();
+      thread.get();
 
       if (ret != 0) {
         throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output);
       }
     }
-    catch (IOException | InterruptedException e) {
+    catch (IOException | InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
   }

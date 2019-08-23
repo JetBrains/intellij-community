@@ -65,7 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 
 /**
  * @author MYakovlev
@@ -1033,7 +1033,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(replacement, myFindManager.getStringToReplace(findResult.substring(text), findModel, 0, text));
   }
 
-  public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
+  public void testRegExpSearchDoesCheckCancelled() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("(x+x+)+y");
     findModel.setRegularExpressions(true);
 
@@ -1058,11 +1058,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       "// foo\n// \n// \n");
   }
 
-  private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {
+  private void runAsyncTest(String text, FindModel findModel) throws InterruptedException, ExecutionException {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);
     final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-    final Thread thread = new Thread(() -> ProgressManager.getInstance().runProcess(() -> {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
       try {
         progressStarted.countDown();
         result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
@@ -1070,16 +1070,24 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       catch (ProcessCanceledException ex) {
         result.set(new FindResultImpl());
       }
-    }, progressIndicatorBase), "runAsyncTest");
-    thread.start();
+    }, progressIndicatorBase));
 
     progressStarted.await();
-    thread.join(100);
+    try {
+      thread.get(100, TimeUnit.MILLISECONDS);
+    }
+    catch (TimeoutException ignored) {
+    }
     progressIndicatorBase.cancel();
-    thread.join(500);
+    try {
+      thread.get(500, TimeUnit.MILLISECONDS);
+    }
+    catch (TimeoutException ignored) {
+
+    }
     assertNotNull(result.get());
-    assertTrue(!result.get().isStringFound());
-    thread.join();
+    assertFalse(result.get().isStringFound());
+    thread.get();
   }
 
   private void doTestRegexpReplace(String initialText, String searchString, String replaceString, String expectedResult) {
