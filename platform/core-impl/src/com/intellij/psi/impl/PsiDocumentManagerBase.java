@@ -877,6 +877,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
+  @Override
+  public void bulkUpdateStarting(@NotNull Document document) {
+    document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
+  }
+
+  @Override
+  public void bulkUpdateFinished(@NotNull Document document) {
+    myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
+                                                   TransactionGuard.getInstance().getContextTransaction());
+  }
+
   class PriorityEventCollector implements PrioritizedInternalDocumentListener {
     @Override
     public int getPriority() {

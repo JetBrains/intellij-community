@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -240,17 +240,17 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
 
     final int[] bulkStarted = new int[1];
     final int[] bulkFinished = new int[1];
-    getProject().getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void updateStarted(@NotNull final Document doc) {
+      public void bulkUpdateStarting(@NotNull Document document) {
         bulkStarted[0]++;
       }
 
       @Override
-      public void updateFinished(@NotNull Document doc) {
+      public void bulkUpdateFinished(@NotNull Document document) {
         bulkFinished[0]++;
       }
-    });
+    }, getTestRootDisposable());
 
     undoFirstEditor();
     assertEquals(1, bulkStarted[0]);

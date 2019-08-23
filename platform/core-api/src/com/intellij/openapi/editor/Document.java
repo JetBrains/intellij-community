@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -380,12 +381,23 @@ public interface Document extends UserDataHolder {
 
   /**
    * Enters or exits 'bulk' mode for processing of document changes. Bulk mode should be used when a large number of document changes
-   * are applied in batch (without user interaction for each change). In this mode, to improve performance, some activities that usually
-   * happen on each document change will be muted, with reconciliation happening on bulk mode exit.
-   * <br>
-   * Certain operations shouldn't be invoked in bulk mode as they can return invalid results or lead to exception. They include: querying
+   * are applied in batch (without user interaction for each change), to improve performance. E.g. this mode is sometimes used by the
+   * platform code during code formatting. In this mode some activities that usually happen on each document change will be muted, with
+   * reconciliation happening on bulk mode exit.
+   * <p>
+   * As the reconciliation after exiting bulk mode implies some additional overhead, bulk mode shouldn't be used if the number of document
+   * changes to be performed is relatively small. The number of changes which justifies switching to bulk mode is usually determined
+   * empirically, but typically it's around hundred(s) of changes.
+   * <p>
+   * In bulk mode editor(s) associated with the document will stop updating internal caches on each document change. As a result, certain
+   * operations with editor can return invalid results or lead to exception, if they are preformed in bulk mode. They include: querying
    * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position,
    * etc), querying or updating caret position or selection state.
+   * <p>
+   * Bulk mode shouldn't more than one thread or EDT event. Typically it should turned on/off in a try/finally statement.
+   *
+   * @see com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)
+   * @see BulkAwareDocumentListener
    */
   default void setInBulkUpdate(boolean value) {}
 }

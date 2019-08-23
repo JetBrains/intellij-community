@@ -16,9 +16,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -768,15 +768,13 @@ public final class EditorUtil {
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
     if (editor.getDocument().isInBulkUpdate()) {
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      disposeWithEditor(editor, connection);
-      connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+      Disposable disposable = Disposer.newDisposable();
+      disposeWithEditor(editor, disposable);
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
-        public void updateFinished(@NotNull Document doc) {
-          if (doc == editor.getDocument()) {
-            editor.getFoldingModel().runBatchFoldingOperation(operation);
-            connection.disconnect();
-          }
+        public void bulkUpdateFinished(@NotNull Document document) {
+          editor.getFoldingModel().runBatchFoldingOperation(operation);
+          Disposer.dispose(disposable);
         }
       });
     }

@@ -220,7 +220,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final InlayModelImpl myInlayModel;
 
   @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
-  private final DocumentBulkUpdateListener myBulkUpdateListener;
 
   @MouseSelectionState
   private int myMouseSelectionState;
@@ -369,14 +368,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myImmediatePainter = new ImmediatePainter(this);
-
-    if (myDocument instanceof DocumentImpl) {
-      myBulkUpdateListener = new EditorDocumentBulkUpdateAdapter();
-      ((DocumentImpl)myDocument).addInternalBulkModeListener(myBulkUpdateListener);
-    }
-    else {
-      myBulkUpdateListener = null;
-    }
 
     myMarkupModelListener = new MarkupModelListener() {
       @Override
@@ -1034,9 +1025,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CodeStyleSettingsManager.removeListener(myProject, this);
 
-    if (myBulkUpdateListener != null) {
-      ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
-    }
     Disposer.dispose(myDisposable);
     myVerticalScrollBar.setUI(null); // clear error panel's cached image
   }
@@ -4648,24 +4636,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public int getPriority() {
-      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
-    }
-  }
-
-  private class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
-    @Override
-    public void updateStarted(@NotNull Document doc) {
-      if (doc != getDocument()) return;
-
+    public void bulkUpdateStarting(@NotNull Document document) {
       bulkUpdateStarted();
     }
 
     @Override
-    public void updateFinished(@NotNull Document doc) {
-      if (doc != getDocument()) return;
+    public void bulkUpdateFinished(@NotNull Document document) {
+      EditorImpl.this.bulkUpdateFinished();
+    }
 
-      bulkUpdateFinished();
+    @Override
+    public int getPriority() {
+      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
     }
   }
 

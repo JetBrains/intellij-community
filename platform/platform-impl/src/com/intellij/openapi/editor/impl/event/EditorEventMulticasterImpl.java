@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
@@ -43,6 +44,16 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         DOCUMENT_EP.forEachExtensionSafe(it -> it.documentChanged(event));
+      }
+
+      @Override
+      public void bulkUpdateStarting(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkUpdateStarting(document));
+      }
+
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkUpdateFinished(document));
       }
     });
     document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());

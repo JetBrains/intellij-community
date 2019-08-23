@@ -439,7 +439,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
                                        final String fileText = file.getText();
-                                       final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
+                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
                                          file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
                                        diffLog.performActualPsiChange(file);
                                      });

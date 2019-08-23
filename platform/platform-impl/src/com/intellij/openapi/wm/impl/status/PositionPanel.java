@@ -3,11 +3,9 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
 import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -18,7 +16,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +26,7 @@ import java.beans.PropertyChangeListener;
 
 public final class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
+             CaretListener, SelectionListener, BulkAwareDocumentListener.Simple, PropertyChangeListener {
 
   public static final Key<Object> DISABLE_FOR_EDITOR = new Key<>("positionPanel.disableForEditor");
 
@@ -113,8 +110,6 @@ public final class PositionPanel extends EditorBasedWidget
     multicaster.addCaretListener(this, this);
     multicaster.addSelectionListener(this, this);
     multicaster.addDocumentListener(this, this);
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
     Disposer.register(this,
                       () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY,
@@ -145,21 +140,7 @@ public final class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void documentChanged(@NotNull DocumentEvent event) {
-    Document document = event.getDocument();
-    if (document.isInBulkUpdate()) return;
-    onDocumentUpdate(document);
-  }
-
-  @Override
-  public void updateStarted(@NotNull Document doc) {}
-
-  @Override
-  public void updateFinished(@NotNull Document doc) {
-    onDocumentUpdate(doc);
-  }
-
-  private void onDocumentUpdate(Document document) {
+  public void afterDocumentChange(@NotNull Document document) {
     Editor[] editors = EditorFactory.getInstance().getEditors(document);
     for (Editor editor : editors) {
       if (isFocusedEditor(editor)) {
