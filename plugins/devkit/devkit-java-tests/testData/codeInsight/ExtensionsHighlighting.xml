@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>com.intellij.myPlugin</id>
     <vendor>JetBrains</vendor>
     <version>1.0</version>
@@ -12,6 +12,10 @@
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
+    <depends config-file="../ExtensionsHighlighting-via-depends.xml">com.myplugin.depends</depends>
+
+    <xi:include href="ExtensionsHighlighting-included.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
 
     <extensions defaultExtensionNs="com.intellij">
         <<error descr="'implementation' attribute should be defined">myPlugin.ext</error>/>

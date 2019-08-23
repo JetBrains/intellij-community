@@ -3,12 +3,14 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
@@ -19,8 +21,9 @@ import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 
@@ -89,36 +92,42 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
 
   static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
     Set<String> result = new HashSet<>();
-
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
     for (Dependency dependency : ideaPlugin.getDependencies()) {
       ContainerUtil.addIfNotNull(result, dependency.getStringValue());
     }
 
-    if (ideaPlugin.getPluginId() == null) {
-      final VirtualFile file = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
-      if (file != null) {
-        final String fileName = file.getName();
-        if (!PluginManagerCore.PLUGIN_XML.equals(fileName)) {
-          final VirtualFile mainPluginXml = file.findFileByRelativePath("../" + PluginManagerCore.PLUGIN_XML);
-          if (mainPluginXml != null) {
-            final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
-            if (psiFile instanceof XmlFile) {
-              final XmlFile xmlFile = (XmlFile)psiFile;
-              final IdeaPlugin mainPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
-              if (mainPlugin != null) {
-                ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
-                for (Dependency dependency : mainPlugin.getDependencies()) {
-                  ContainerUtil.addIfNotNull(result, dependency.getStringValue());
-                }
-              }
-            }
-          }
-        }
-      }
+    if (ideaPlugin.getPluginId() != null) {
+      return result;
     }
 
+    final VirtualFile currentFile = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
+    if (currentFile == null) {
+      return result;
+    }
+
+    final Project project = ideaPlugin.getManager().getProject();
+    final VirtualFile[] includingFiles = FileIncludeManager.getManager(project).getIncludingFiles(currentFile, false);
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Set<VirtualFile> includingAndDependsFiles = new SmartHashSet<>();
+    for (VirtualFile virtualFile : includingFiles) {
+      if (!fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
+        continue;
+      }
+      includingAndDependsFiles.add(virtualFile);
+    }
+
+    final Collection<VirtualFile> dependsToFiles = PluginIdDependenciesIndex.findDependsTo(project, currentFile);
+    includingAndDependsFiles.addAll(dependsToFiles);
+
+    if (includingAndDependsFiles.isEmpty()) {
+      return result;
+    }
+
+    final Set<String> ids = PluginIdDependenciesIndex.getPluginAndDependsIds(project, includingAndDependsFiles);
+    result.addAll(ids);
     return result;
   }
 }

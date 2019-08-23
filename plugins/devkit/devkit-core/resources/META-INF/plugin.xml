@@ -63,6 +63,7 @@
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>

@@ -159,7 +159,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
 
     configureByFile()
+    myFixture.copyFileToProject("ExtensionsHighlighting-included.xml")
+    myFixture.copyFileToProject("ExtensionsHighlighting-via-depends.xml",)
     myFixture.checkHighlighting(true, false, false)
+
+    myFixture.testHighlighting("ExtensionsHighlighting-included.xml")
+    myFixture.testHighlighting("ExtensionsHighlighting-via-depends.xml")
   }
 
   void testDependsHighlighting() {
