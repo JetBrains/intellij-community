@@ -57,7 +57,7 @@ public class MouseWheelSmoothScroll {
     int maximum = bar.getMaximum();
     if (abs(delta) > 0.01) { // ignore small delta event
       animator.start(value, value + delta, bar::setValue, (v) -> {
-        return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum();
+        return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum() || !bar.isShowing();
       });
     }
   }
