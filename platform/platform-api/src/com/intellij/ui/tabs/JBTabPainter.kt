@@ -36,6 +36,7 @@ interface JBTabPainter {
                bounds: Rectangle,
                borderThickness: Int,
                tabColor: Color?,
+               active: Boolean,
                hovered: Boolean)
 
   fun paintSelectedTab(position: JBTabsPosition,

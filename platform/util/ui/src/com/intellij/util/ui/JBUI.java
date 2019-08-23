@@ -490,13 +490,6 @@ public class JBUI {
       public static Color underlinedTabForeground() {
         return JBColor.namedColor("DefaultTabs.underlinedTabForeground", UIUtil.getLabelForeground());
       }
-
-      @NotNull
-      public static Color hoverColor() {
-        return JBColor.namedColor("DefaultTabs.hoverColor",
-                                  new JBColor(0xD9D9D9,
-                                              0x2E3133));
-      }
     }
 
     public static class DebuggerTabs {
@@ -540,13 +533,7 @@ public class JBUI {
 
       @NotNull
       public static Color hoverBackground() {
-        return JBColor.namedColor("EditorTabs.hoverMaskColor", DefaultTabs.hoverBackground());
-      }
-
-      @NotNull
-      public static Color hoverColor() {
-        return JBColor.namedColor("EditorTabs.hoverColor",
-                                  DefaultTabs.hoverColor());
+        return JBColor.namedColor("EditorTabs.hoverBackground", DefaultTabs.hoverBackground());
       }
 
       @NotNull
@@ -611,7 +598,10 @@ public class JBUI {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
       }
 
-
+      /**
+       * @deprecated obsolete UI
+       */
+      @Deprecated
       @NotNull
       public static Color tabSelectedBackground() {
         return Registry.is("toolwindow.active.tab.use.contrast.background")
@@ -620,34 +610,22 @@ public class JBUI {
                                     JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE));
       }
 
-      @NotNull
-      public static Color tabSelectedActiveBackground() {
-        return Registry.is("toolwindow.active.tab.use.contrast.background")
-               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
-               : JBColor.namedColor("ToolWindow.HeaderTab.selectedBackground",
-                                    JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8));
-      }
-
+      /**
+       * @deprecated obsolete UI
+       */
+      @Deprecated
       @NotNull
       public static Color tabHoveredBackground() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.hoverInactiveBackground",
-                                  JBColor.namedColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground()));
+        return hoverInactiveBackground();
       }
 
-      @NotNull
-      public static Color tabHoveredActiveBackground() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.hoverBackground",
-                                  JBColor.namedColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground()));
-      }
-
-      @NotNull
-      public static Color tabSelectedBackground(boolean active) {
-        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
-      }
-
+      /**
+       * @deprecated obsolete UI
+       */
+      @Deprecated
       @NotNull
       public static Color tabHoveredBackground(boolean active) {
-        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
+        return active ? hoverBackground() : hoverInactiveBackground();
       }
 
       @NotNull
@@ -670,10 +648,10 @@ public class JBUI {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
       }
 
-      public static int tabVerticalPaddingOld() {
-        return getInt("ToolWindow.tab.verticalPadding", 0);
-      }
-
+      /**
+       * @deprecated obsolete UI
+       */
+      @Deprecated
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }

@@ -285,7 +285,7 @@ class TabContentLayout extends ContentLayout {
         tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
       }
     }
     g2d.dispose();

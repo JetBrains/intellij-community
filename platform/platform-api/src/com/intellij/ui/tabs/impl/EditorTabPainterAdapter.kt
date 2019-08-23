@@ -29,7 +29,7 @@ class EditorTabPainterAdapter : TabPainterAdapter {
       paintBorders(g2d, label, tabs)
     }
     else {
-      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isHoveredTab(label))
+      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), tabs.isHoveredTab(label))
       paintBorders(g2d, label, tabs)
     }
   }

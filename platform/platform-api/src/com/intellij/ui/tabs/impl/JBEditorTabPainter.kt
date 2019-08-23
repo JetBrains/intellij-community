@@ -4,14 +4,13 @@ package com.intellij.ui.tabs.impl
 import com.intellij.openapi.rd.fill2DRect
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.themes.EditorTabTheme
-import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 
 class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
-  override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
+  override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     updatedRect(position, rect, borderThickness)
 
     tabColor?.let {
@@ -24,7 +23,9 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
     }
 
     if(hovered) {
-      g.fillRect(rect, theme.hoverBackground)
+      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
+        g.fill2DRect(rect, it)
+      }
     }
   }
 
