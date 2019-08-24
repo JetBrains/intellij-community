@@ -54,7 +54,7 @@ public class PsiClassUtil {
    * @return all inner classes of the class
    */
   @NotNull
-  private static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
+  public static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnInnerClasses();
     } else {
@@ -92,7 +92,7 @@ public class PsiClassUtil {
   private static boolean superTypesIsEmptyOrObjectOnly(@NotNull final PsiClass psiClass) {
     // It returns abstract classes, but also Object.
     final PsiClassType[] superTypes = psiClass.getSuperTypes();
-    return superTypes.length == 0 || superTypes.length > 1 || CommonClassNames.JAVA_LANG_OBJECT.equals(superTypes[0].getCanonicalText());
+    return superTypes.length != 1 || CommonClassNames.JAVA_LANG_OBJECT.equals(superTypes[0].getCanonicalText());
   }
 
   @NotNull
