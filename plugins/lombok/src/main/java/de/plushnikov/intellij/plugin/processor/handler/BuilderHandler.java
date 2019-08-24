@@ -44,7 +44,7 @@ public class BuilderHandler {
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
 
-  private final static String BUILDER_CLASS_NAME = "Builder";
+  final static String BUILDER_CLASS_NAME = "Builder";
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
@@ -204,14 +204,14 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
+  String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME);
     return null == builderMethodName ? BUILDER_METHOD_NAME : builderMethodName;
   }
 
   @NotNull
   @PsiModifier.ModifierConstant
-  private String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String accessVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     return null == accessVisibility ? PsiModifier.PUBLIC : accessVisibility;
   }
@@ -245,7 +245,7 @@ public class BuilderHandler {
     return StringUtil.capitalize(rootBuilderClassName + BUILDER_CLASS_NAME);
   }
 
-  private boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {
+  boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {
     final Collection<PsiMethod> existingMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
     return existingMethods.stream().map(PsiMethod::getName).anyMatch(builderMethodName::equals);
   }

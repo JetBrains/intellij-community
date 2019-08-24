@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
@@ -26,7 +27,12 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
   private final BuilderHandler builderHandler;
 
   public BuilderClassProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull BuilderHandler builderHandler) {
-    super(configDiscovery, PsiClass.class, Builder.class);
+    this(configDiscovery, builderHandler, Builder.class);
+  }
+
+  BuilderClassProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull BuilderHandler builderHandler,
+                        @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(configDiscovery, PsiClass.class, supportedAnnotationClass);
     this.builderHandler = builderHandler;
   }
 

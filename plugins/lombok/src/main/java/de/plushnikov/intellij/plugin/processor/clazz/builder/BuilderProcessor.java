@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,7 +43,14 @@ public class BuilderProcessor extends AbstractClassProcessor {
   public BuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
                           @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
                           @NotNull BuilderHandler builderHandler) {
-    super(configDiscovery, PsiMethod.class, Builder.class);
+    this(configDiscovery, allArgsConstructorProcessor, builderHandler, Builder.class);
+  }
+
+  BuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
+                   @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
+                   @NotNull BuilderHandler builderHandler,
+                   @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(configDiscovery, PsiMethod.class, supportedAnnotationClass);
     this.builderHandler = builderHandler;
     this.allArgsConstructorProcessor = allArgsConstructorProcessor;
   }

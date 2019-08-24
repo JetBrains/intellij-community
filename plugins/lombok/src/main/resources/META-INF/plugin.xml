@@ -24,6 +24,7 @@
     <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.BuilderHandler"/>
+    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.DelegateHandler"/>
     <applicationService
       serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler"/>
@@ -106,6 +107,9 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
+
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderClassProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
@@ -192,6 +196,10 @@
       </action>
       <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"
               text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">
+      </action>
+      <action id="delombokSuperBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSuperBuilderAction"
+              text="@SuperBuilder"
+              description="Action to replace lombok @SuperBuilder annotation with vanilla java methods">
       </action>
       <separator/>
       <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
