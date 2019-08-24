@@ -174,14 +174,6 @@ public class BuilderHandler {
     return result.get();
   }
 
-  public boolean notExistInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return notExistInnerClass(psiClass, null, psiAnnotation);
-  }
-
-  public boolean notExistInnerClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
-    return !getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).isPresent();
-  }
-
   public Optional<PsiClass> getExistInnerBuilderClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
     return PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
@@ -339,8 +331,13 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightClassBuilder builderClass = createEmptyBuilderClass(psiClass, psiMethod, psiAnnotation);
+  public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+    LombokLightClassBuilder builderClass;
+    if (null != psiMethod) {
+      builderClass = createEmptyBuilderClass(psiClass, psiMethod, psiAnnotation);
+    } else {
+      builderClass = createEmptyBuilderClass(psiClass, psiAnnotation);
+    }
     builderClass.withMethods(createConstructors(builderClass, psiAnnotation));
 
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, psiMethod, builderClass);
@@ -373,35 +370,16 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightClassBuilder builderClass = createEmptyBuilderClass(psiClass, psiAnnotation);
-    builderClass.withMethods(createConstructors(builderClass, psiAnnotation));
-
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, null, builderClass);
-
-    // create builder fields
-    builderInfos.stream()
-      .map(BuilderInfo::renderBuilderFields)
-      .forEach(builderClass::withFields);
-
-    // create builder methods
-    builderInfos.stream()
-      .map(BuilderInfo::renderBuilderMethods)
-      .forEach(builderClass::withMethods);
-
-    // create 'build' method
-    final String buildMethodName = getBuildMethodName(psiAnnotation);
-    builderClass.addMethod(createBuildMethod(psiAnnotation, psiClass, null, builderClass, buildMethodName, builderInfos));
-
-    // create 'toString' method
-    builderClass.addMethod(createToStringMethod(psiAnnotation, builderClass));
-
-    return builderClass;
-  }
-
-  @NotNull
   private LombokLightClassBuilder createEmptyBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     return createBuilderClass(psiClass, psiClass, true, psiAnnotation);
+  }
+
+  public Optional<PsiClass> createBuilderClassIfNotExist(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+    PsiClass builderClass = null;
+    if (!getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).isPresent()) {
+      builderClass = createBuilderClass(psiClass, psiMethod, psiAnnotation);
+    }
+    return Optional.ofNullable(builderClass);
   }
 
   @NotNull
