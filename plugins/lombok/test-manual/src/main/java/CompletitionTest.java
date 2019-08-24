@@ -20,8 +20,9 @@ public class CompletitionTest {
 
   public static void main(String[] args) {
     CompletitionTest test = new CompletitionTest();
-    test.getMyFloat();
+    System.out.println(test.getMyFloat());
     test.getInt();
-    test.getMyFloat();
+    float myFloat = test.getMyFloat();
+    System.out.println(myFloat);
   }
 }
