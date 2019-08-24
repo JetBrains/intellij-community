@@ -1,15 +1,7 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiTypeParameterList;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
@@ -27,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class LombokLightClassBuilder extends LightPsiClassBuilder implements PsiExtensibleClass {
   private boolean myIsEnum;
@@ -131,8 +124,13 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return this;
   }
 
-  public LombokLightClassBuilder withExtendsClass(PsiClass baseClass) {
+  public LombokLightClassBuilder withExtends(PsiClass baseClass) {
     getExtendsList().addReference(baseClass);
+    return this;
+  }
+
+  public LombokLightClassBuilder withExtends(PsiClassType baseClassType) {
+    getExtendsList().addReference(baseClassType);
     return this;
   }
 
@@ -157,10 +155,13 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
   public LombokLightClassBuilder withParameterTypes(@Nullable PsiTypeParameterList parameterList) {
     if (parameterList != null) {
-      for (PsiTypeParameter typeParameter : parameterList.getTypeParameters()) {
-        getTypeParameterList().addParameter(typeParameter);
-      }
+      Stream.of(parameterList.getTypeParameters()).forEach(this::withParameterType);
     }
+    return this;
+  }
+
+  public LombokLightClassBuilder withParameterType(@NotNull PsiTypeParameter psiTypeParameter) {
+    getTypeParameterList().addParameter(psiTypeParameter);
     return this;
   }
 
@@ -185,7 +186,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (isEnum()) {
-      if (!PsiClassImplUtil.processDeclarationsInEnum(processor, state, myInnerCache)){
+      if (!PsiClassImplUtil.processDeclarationsInEnum(processor, state, myInnerCache)) {
         return false;
       }
     }

@@ -17,6 +17,14 @@ public class SuperBuilderSimple {
   }
 
   public static void test() {
-    Child x = Child.builder().field3(0.0).field1(5).item("").build();
+    Child.ChildBuilder<?, ?> childBuilder = Child.builder();
+    Child.ChildBuilder<?, ?> childBuilder1 = childBuilder.field3(0.0);
+    Child.ChildBuilder<?, ?> childBuilder2 = childBuilder1.field1(5);
+    Child.ChildBuilder<?, ?> childBuilder3 = childBuilder2.item("");
+    Child x = childBuilder3.build();
+    System.out.println(x);
+
+    Child y = Child.builder().field3(0.0).field1(5).item("").build();
+    System.out.println(y);
   }
 }

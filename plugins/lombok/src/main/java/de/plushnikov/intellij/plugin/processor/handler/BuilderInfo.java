@@ -106,6 +106,11 @@ public class BuilderInfo {
     return this;
   }
 
+  public BuilderInfo withBuilderClassType(@NotNull PsiClassType builderClassType) {
+    this.builderClassType = builderClassType;
+    return this;
+  }
+
   public BuilderInfo withObtainVia() {
     obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(variableInClass, BUILDER_OBTAIN_VIA_ANNOTATION);
     if (null != obtainViaAnnotation) {
