@@ -1,45 +1,22 @@
 package de.plushnikov.superbuilder;
 
+import lombok.experimental.SuperBuilder;
 import java.util.List;
 
 public class SuperBuilderSimple {
 
-	public static class Parent {
-		int field1;
-		List<String> items;
-
-    protected Parent(ParentBuilder b) {
-    }
-
-    public static ParentBuilderImpl builder() {
-      return new ParentBuilderImpl();
-    }
-
-    public static class ParentBuilder {
-    }
-
-    public static class ParentBuilderImpl {
-    }
+  @SuperBuilder
+  public static class Parent {
+    int field1;
+    List<String> items;
   }
 
-	public static class Child extends Parent {
-		double field3;
-
-    protected Child(ChildBuilder b) {
-    }
-
-    public static ChildBuilderImpl builder() {
-      return new ChildBuilderImpl();
-    }
-
-    public static class ChildBuilder {
-    }
-
-    public static class ChildBuilderImpl {
-    }
+  @SuperBuilder
+  public static class Child extends Parent {
+    double field3;
   }
 
-	public static void test() {
-		Child x = Child.builder().field3(0.0).field1(5).item("").build();
-	}
+  public static void test() {
+    Child x = Child.builder().field3(0.0).field1(5).item("").build();
+  }
 }
