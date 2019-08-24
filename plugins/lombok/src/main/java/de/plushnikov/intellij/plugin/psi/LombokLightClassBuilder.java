@@ -131,6 +131,11 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return this;
   }
 
+  public LombokLightClassBuilder withExtendsClass(PsiClass baseClass) {
+    getExtendsList().addReference(baseClass);
+    return this;
+  }
+
   public LombokLightClassBuilder withField(@NotNull PsiField psiField) {
     addField(psiField);
     return this;

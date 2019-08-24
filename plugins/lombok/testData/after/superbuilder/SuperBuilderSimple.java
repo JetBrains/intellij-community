@@ -86,19 +86,19 @@ public class SuperBuilderSimple {
 		public static abstract class ChildBuilder<C extends Child, B extends ChildBuilder<C, B>> extends ParentBuilder<C, B> {
 
 			private double field3;
-			@Override
 
+			@Override
 			protected abstract B self();
-			@Override
 
+			@Override
 			public abstract C build();
 
 			public B field3(final double field3) {
 				this.field3 = field3;
 				return self();
 			}
-			@Override
 
+			@Override
 			public String toString() {
 				return "SuperBuilderBasic.Child.ChildBuilder(super=" + super.toString() + ", field3=" + this.field3 + ")";
 			}
@@ -108,13 +108,13 @@ public class SuperBuilderSimple {
 
 			private ChildBuilderImpl() {
 			}
-			@Override
 
+			@Override
 			protected ChildBuilderImpl self() {
 				return this;
 			}
-			@Override
 
+			@Override
 			public Child build() {
 				return new Child(this);
 			}

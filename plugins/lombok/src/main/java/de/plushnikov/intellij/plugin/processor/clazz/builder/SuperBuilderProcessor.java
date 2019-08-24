@@ -37,20 +37,21 @@ public class SuperBuilderProcessor extends BuilderProcessor {
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String builderClassName = superBuilderHandler.getBuilderClassName(psiClass);
-    final PsiClass builderClass = psiClass.findInnerClassByName(builderClassName, false);
-    if (null != builderClass) {
-      superBuilderHandler.createBuilderBasedConstructor(psiClass, builderClass, psiAnnotation)
-        .ifPresent(target::add);
-    }
-
-    final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
-    final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
-    if (null != builderImplClass) {
-      superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
+    final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
+    if (null != builderBaseClass) {
+      superBuilderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation)
         .ifPresent(target::add);
 
-      superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
-        .ifPresent(target::add);
+      final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
+      final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
+
+      if (null != builderImplClass) {
+        superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
+          .ifPresent(target::add);
+
+        superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
+          .ifPresent(target::add);
+      }
     }
   }
 

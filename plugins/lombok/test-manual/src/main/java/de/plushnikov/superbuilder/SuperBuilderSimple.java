@@ -1,14 +1,14 @@
 package de.plushnikov.superbuilder;
 
 import lombok.experimental.SuperBuilder;
-import java.util.List;
 
 public class SuperBuilderSimple {
 
   @SuperBuilder
   public static class Parent {
     int field1;
-    List<String> items;
+    String item;
+//    List<String> items;
   }
 
   @SuperBuilder

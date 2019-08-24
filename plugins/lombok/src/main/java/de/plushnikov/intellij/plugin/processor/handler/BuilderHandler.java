@@ -63,7 +63,7 @@ public class BuilderHandler {
     this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
-  private PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
+  PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiTypeParameter[] typeParameters = classOrMethodToBuild.getTypeParameters();
@@ -187,7 +187,7 @@ public class BuilderHandler {
     return PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
   }
 
-  private PsiType getReturnTypeOfBuildMethod(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod) {
+  PsiType getReturnTypeOfBuildMethod(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod) {
     final PsiType result;
     if (null == psiMethod || psiMethod.isConstructor()) {
       result = PsiClassUtil.getTypeWithGenerics(psiClass);

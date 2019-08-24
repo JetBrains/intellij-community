@@ -207,6 +207,13 @@ public class DelombokHandler {
     copyModifiers(fromClass.getModifierList(), resultClass.getModifierList());
     rebuildTypeParameter(fromClass, resultClass);
 
+    // rebuild extends part
+    final PsiReferenceList extendsList = fromClass.getExtendsList();
+    final PsiReferenceList resultExtendsList = resultClass.getExtendsList();
+    if (null != extendsList && null != resultExtendsList) {
+      Stream.of(extendsList.getReferencedTypes()).map(elementFactory::createReferenceElementByType).forEach(resultExtendsList::add);
+    }
+
     for (PsiField psiField : fromClass.getFields()) {
       resultClass.add(rebuildField(project, psiField));
     }
@@ -268,6 +275,8 @@ public class DelombokHandler {
     PsiCodeBlock body = fromMethod.getBody();
     if (null != body) {
       resultMethod.getBody().replace(body);
+    } else {
+      resultMethod.getBody().delete();
     }
 
     return (PsiMethod) CodeStyleManager.getInstance(project).reformat(resultMethod);

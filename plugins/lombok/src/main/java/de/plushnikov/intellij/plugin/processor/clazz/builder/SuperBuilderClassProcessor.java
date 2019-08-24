@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Inspect and validate @SuperBuilder lombok annotation on a class
@@ -41,13 +42,17 @@ public class SuperBuilderClassProcessor extends BuilderClassProcessor {
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String builderClassName = superBuilderHandler.getBuilderClassName(psiClass);
-    if (!PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName).isPresent()) {
-      target.add(superBuilderHandler.createBuilderClass(psiClass, psiAnnotation));
+
+    Optional<PsiClass> builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+    if (!builderClass.isPresent()) {
+      final PsiClass createdBuilderClass = superBuilderHandler.createBuilderBaseClass(psiClass, psiAnnotation);
+      target.add(createdBuilderClass);
+      builderClass = Optional.of(createdBuilderClass);
     }
 
     final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
     if (!PsiClassUtil.getInnerClassInternByName(psiClass, builderImplClassName).isPresent()) {
-      target.add(superBuilderHandler.createBuilderImplClass(psiClass, psiAnnotation));
+      target.add(superBuilderHandler.createBuilderImplClass(psiClass, builderClass.get(), psiAnnotation));
     }
   }
 }
