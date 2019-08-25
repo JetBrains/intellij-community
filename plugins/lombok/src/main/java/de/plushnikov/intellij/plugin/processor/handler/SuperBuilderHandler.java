@@ -109,9 +109,9 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withParameterTypes(psiClass.getTypeParameterList())
-      .withModifier(getBuilderOuterAccessVisibility(psiAnnotation))
-      .withModifier(PsiModifier.ABSTRACT)
-      .withModifier(PsiModifier.STATIC);
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC)
+      .withModifier(PsiModifier.ABSTRACT);
 
     final LightTypeParameterBuilder c = new LightTypeParameterBuilder("C", baseClassBuilder, 0);
     c.getExtendsList().addReference(psiClass);
@@ -184,10 +184,20 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withParameterTypes(psiClass.getTypeParameterList())
-      .withModifier(getBuilderOuterAccessVisibility(psiAnnotation))
-      .withModifier(PsiModifier.STATIC);
+      .withModifier(PsiModifier.PRIVATE)
+      .withModifier(PsiModifier.STATIC)
+      .withModifier(PsiModifier.FINAL);
 
     implClassBuilder.withExtends(PsiClassUtil.createTypeWithGenerics(psiBaseBuilderClass, psiClass, implClassBuilder));
+
+    //create private no args constructor
+    final LombokLightMethodBuilder privateConstructor = new LombokLightMethodBuilder(psiClass.getManager(), builderClassName)
+      .withConstructor(true)
+      .withContainingClass(implClassBuilder)
+      .withNavigationElement(psiClass)
+      .withModifier(PsiModifier.PRIVATE);
+    privateConstructor.withBody(PsiMethodUtil.createCodeBlockFromText("", privateConstructor));
+    implClassBuilder.addMethod(privateConstructor);
 
     // create 'self' method
     final LombokLightMethodBuilder selfMethod = new LombokLightMethodBuilder(psiClass.getManager(), SELF_METHOD)
@@ -212,13 +222,6 @@ public class SuperBuilderHandler extends BuilderHandler {
     final String buildCodeBlockText = String.format("return new %s(this);", psiClass.getName());
     buildMethod.withBody(PsiMethodUtil.createCodeBlockFromText(buildCodeBlockText, buildMethod));
     implClassBuilder.addMethod(buildMethod);
-
-    // create 'toString' method
-    implClassBuilder.addMethod(createToStringMethod(psiAnnotation, implClassBuilder));
-
-    //create private no args constructor
-    noArgsConstructorProcessor.createNoArgsConstructor(implClassBuilder, PsiModifier.PRIVATE, psiAnnotation)
-      .forEach(implClassBuilder::addMethod);
 
     return implClassBuilder;
   }
