@@ -2,37 +2,14 @@
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.text.DateFormat;
 import java.util.Date;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JBDateTimeFormatter {
-  private final String myFormatterID;
-
-  public JBDateTimeFormatter() {
-    this(null);
-  }
-
-  public JBDateTimeFormatter(String formatterID) {
-    myFormatterID = formatterID;
-  }
-
-  @Nullable
-  private DateFormat getDateFormat() {
-    DateFormat dateFormat = null;
-    if (myFormatterID != null) {
-      dateFormat = DateTimeFormatManager.getInstance().getDateFormat(myFormatterID);
-    }
-    return dateFormat;
-  }
-
-  private boolean isPrettyFormattingSupported() {
-    return DateTimeFormatManager.getInstance().isPrettyFormattingAllowed(myFormatterID);
-  }
+public abstract class JBDateTimeFormatter {
+  protected abstract boolean isPrettyFormattingSupported();
 
   @NotNull
   public String formatTime(@NotNull Date time) {
@@ -40,29 +17,23 @@ public class JBDateTimeFormatter {
   }
 
   @NotNull
-  public String formatTime(long time) {
-    return DateFormatUtil.formatTime(time);
-  }
+  public abstract String formatTime(long time);
 
   @NotNull
-  public static String formatTimeWithSeconds(@NotNull Date time) {
+  public String formatTimeWithSeconds(@NotNull Date time) {
     return formatTimeWithSeconds(time.getTime());
   }
 
   @NotNull
-  public static String formatTimeWithSeconds(long time) {
-    return DateFormatUtil.formatTimeWithSeconds(time);
-  }
+  public abstract String formatTimeWithSeconds(long time);
 
   @NotNull
-  public static String formatDate(@NotNull Date time) {
+  public String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
   @NotNull
-  public static String formatDate(long time) {
-    return DateFormatUtil.formatDate(time);
-  }
+  public abstract String formatDate(long time);
 
   @NotNull
   public String formatDateTime(Date date) {
@@ -74,17 +45,19 @@ public class JBDateTimeFormatter {
     return DateFormatUtil.formatDateTime(time);
   }
 
-
   @NotNull
   public String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 
   @NotNull
-  public String formatPrettyDateTime(long time) {
-    if (isPrettyFormattingSupported()) {
-      return DateFormatUtil.formatPrettyDateTime(time);
-    }
-    return formatDateTime(time);
+  public abstract String formatPrettyDateTime(long time);
+
+  @NotNull
+  public String formatPrettyDate(@NotNull Date date) {
+    return formatPrettyDate(date.getTime());
   }
+
+  @NotNull
+  public abstract String formatPrettyDate(long time);
 }

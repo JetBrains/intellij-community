@@ -3,18 +3,21 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.text.DateFormat;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class JBDateFormat {
-  private static final JBDateTimeFormatter DEFAULT_FORMATTER = new JBDateTimeFormatter();
+  private static final JBDateTimeFormatter DEFAULT_FORMATTER = new DefaultJBDateTimeFormatter();
 
   public static JBDateTimeFormatter getDefaultFormatter() {
     return DEFAULT_FORMATTER;
   }
 
   public static JBDateTimeFormatter getFormatter(@NotNull String formatterID) {
-
-    return getDefaultFormatter();
+    DateFormat format = DateTimeFormatManager.getInstance().getDateFormat(formatterID);
+    if (format == null) return DEFAULT_FORMATTER;
+    return new CustomJBDateTimeFormatter(formatterID);
   }
 }
