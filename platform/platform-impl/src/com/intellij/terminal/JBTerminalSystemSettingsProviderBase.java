@@ -52,7 +52,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   protected final MyColorSchemeDelegate myColorScheme;
 
   public JBTerminalSystemSettingsProviderBase() {
-    myColorScheme = createBoundColorSchemeDelegate(null);
+    myColorScheme = createBoundColorSchemeDelegate();
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
@@ -172,8 +172,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
     private int myConsoleFontSize;
 
-    protected MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
-      updateGlobalScheme(globalScheme);
+    protected MyColorSchemeDelegate() {
+      updateGlobalScheme(null);
       myConsoleFontSize = consoleFontSize(this);
       initFonts();
     }
@@ -395,8 +395,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @NotNull
-  private static MyColorSchemeDelegate createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
-    return new MyColorSchemeDelegate(customGlobalScheme);
+  private static MyColorSchemeDelegate createBoundColorSchemeDelegate() {
+    return new MyColorSchemeDelegate();
   }
 
   public EditorColorsScheme getColorScheme() {
