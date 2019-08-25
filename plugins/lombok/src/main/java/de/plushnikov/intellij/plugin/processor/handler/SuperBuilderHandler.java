@@ -15,6 +15,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,28 +77,49 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                             @NotNull PsiClass builderImplClass,
                                                             @NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    if (!builderMethodName.isEmpty() && !hasMethod(containingClass, builderMethodName)) {
-
-      final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.getWildcardClassType(builderBaseClass);
-
-      final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), builderMethodName)
-        .withMethodReturnType(psiTypeBaseWithGenerics)
-        .withContainingClass(containingClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(getBuilderOuterAccessVisibility(psiAnnotation))
-        .withModifier(PsiModifier.STATIC);
-
-      final String blockText = String.format("return new %s();", builderImplClass.getName());
-      methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
-
-      return Optional.of(methodBuilder);
+    if (builderMethodName.isEmpty() || hasMethod(containingClass, builderMethodName)) {
+      return Optional.empty();
     }
-    return Optional.empty();
+
+    final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.getWildcardClassType(builderBaseClass);
+
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), builderMethodName)
+      .withMethodReturnType(psiTypeBaseWithGenerics)
+      .withContainingClass(containingClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC);
+
+    final String blockText = String.format("return new %s();", builderImplClass.getName());
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+
+    return Optional.of(methodBuilder);
   }
 
-  public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    //TODO implement this for superbuilder
-    return super.createToBuilderMethodIfNecessary(containingClass, null, builderPsiClass, psiAnnotation);
+  public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
+                                                              @NotNull PsiClass builderBaseClass,
+                                                              @NotNull PsiClass builderImplClass,
+                                                              @NotNull PsiAnnotation psiAnnotation) {
+    if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
+      return Optional.empty();
+    }
+
+    final PsiType psiTypeWithGenerics = PsiClassUtil.getWildcardClassType(builderBaseClass);
+
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), TO_BUILDER_METHOD_NAME)
+      .withMethodReturnType(psiTypeWithGenerics)
+      .withContainingClass(containingClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(PsiModifier.PUBLIC);
+
+    final String blockText = String.format("return new %s()%s(this);", builderImplClass.getName(), FILL_VALUES_METHOD_NAME);
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+
+    return Optional.of(methodBuilder);
+  }
+
+  private boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false);
   }
 
   @NotNull
@@ -149,6 +171,35 @@ public class SuperBuilderHandler extends BuilderHandler {
       //TODO change "return this;" to "return self();" for all Singular-Handler
       .map(BuilderInfo::renderBuilderMethods)
       .forEach(baseClassBuilder::withMethods);
+
+    if (shouldGenerateToBuilderMethods(psiAnnotation)) {
+      // create '$fillValuesFromInstanceIntoBuilder' method
+      final LombokLightMethodBuilder fillValuesFromInstanceIntoBuilderMethod = new LombokLightMethodBuilder(psiClass.getManager(), STATIC_FILL_VALUES_METHOD_NAME)
+        .withMethodReturnType(PsiType.VOID)
+        .withParameter(INSTANCE_VARIABLE_NAME, PsiClassUtil.getTypeWithGenerics(psiClass))
+        .withParameter(BUILDER_VARIABLE_NAME, PsiClassUtil.getWildcardClassType(baseClassBuilder))
+        .withContainingClass(baseClassBuilder)
+        .withNavigationElement(psiClass)
+        .withModifier(PsiModifier.PRIVATE)
+        .withModifier(PsiModifier.STATIC);
+      //TODO add real CODE
+      final String fillValuesFromInstanceIntoBuilderBlockText = "";
+      fillValuesFromInstanceIntoBuilderMethod.withBody(PsiMethodUtil.createCodeBlockFromText(fillValuesFromInstanceIntoBuilderBlockText, fillValuesFromInstanceIntoBuilderMethod));
+      baseClassBuilder.addMethod(fillValuesFromInstanceIntoBuilderMethod);
+
+      // create '$fillValuesFrom' method
+      final LombokLightMethodBuilder fillValuesFromMethod = new LombokLightMethodBuilder(psiClass.getManager(), FILL_VALUES_METHOD_NAME)
+        .withMethodReturnType(bType)
+        .withParameter(INSTANCE_VARIABLE_NAME, cType)
+        .withContainingClass(baseClassBuilder)
+        .withNavigationElement(psiClass)
+        .withModifier(PsiModifier.PROTECTED);
+
+      final String fillValuesBlockText = String.format("%s.%s(%s, this);\nreturn self();", builderClassName, STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
+      fillValuesFromMethod.withBody(PsiMethodUtil.createCodeBlockFromText(fillValuesBlockText, fillValuesFromMethod));
+
+      baseClassBuilder.addMethod(fillValuesFromMethod);
+    }
 
     // create 'self' method ( protected abstract B self(); )
     final LombokLightMethodBuilder selfMethod = new LombokLightMethodBuilder(psiClass.getManager(), SELF_METHOD)

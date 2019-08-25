@@ -52,7 +52,7 @@ public class SuperBuilderProcessor extends BuilderProcessor {
           superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
             .ifPresent(target::add);
 
-          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
+          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
             .ifPresent(target::add);
         }
       }

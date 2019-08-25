@@ -48,7 +48,7 @@ public class BuilderHandler {
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
-  private static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
+  static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
   private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
@@ -266,34 +266,34 @@ public class BuilderHandler {
   }
 
   public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
-
-      final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, containingClass, psiMethod, builderPsiClass);
-      builderInfos.forEach(BuilderInfo::withObtainVia);
-
-      final PsiType psiTypeWithGenerics;
-      if (null != psiMethod) {
-        psiTypeWithGenerics = calculateResultType(builderInfos, builderPsiClass, containingClass);
-      } else {
-        psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
-      }
-
-      final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), TO_BUILDER_METHOD_NAME)
-        .withMethodReturnType(psiTypeWithGenerics)
-        .withContainingClass(containingClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(getBuilderOuterAccessVisibility(psiAnnotation));
-
-      final String toBuilderMethodCalls = builderInfos.stream()
-        .map(BuilderInfo::renderToBuilderCall)
-        .collect(Collectors.joining(".", ".", ""));
-
-      final String blockText = String.format("return new %s()%s;", psiTypeWithGenerics.getPresentableText(), toBuilderMethodCalls);
-      methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
-
-      return Optional.of(methodBuilder);
+    if (!PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
+      return Optional.empty();
     }
-    return Optional.empty();
+
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, containingClass, psiMethod, builderPsiClass);
+    builderInfos.forEach(BuilderInfo::withObtainVia);
+
+    final PsiType psiTypeWithGenerics;
+    if (null != psiMethod) {
+      psiTypeWithGenerics = calculateResultType(builderInfos, builderPsiClass, containingClass);
+    } else {
+      psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
+    }
+
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), TO_BUILDER_METHOD_NAME)
+      .withMethodReturnType(psiTypeWithGenerics)
+      .withContainingClass(containingClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(getBuilderOuterAccessVisibility(psiAnnotation));
+
+    final String toBuilderMethodCalls = builderInfos.stream()
+      .map(BuilderInfo::renderToBuilderCall)
+      .collect(Collectors.joining(".", ".", ""));
+
+    final String blockText = String.format("return new %s()%s;", psiTypeWithGenerics.getPresentableText(), toBuilderMethodCalls);
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+
+    return Optional.of(methodBuilder);
   }
 
   private PsiType calculateResultType(@NotNull List<BuilderInfo> builderInfos, PsiClass builderPsiClass, PsiClass psiClass) {
