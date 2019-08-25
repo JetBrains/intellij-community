@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
-import java.io.IOException;
-
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
@@ -16,55 +14,61 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/accessors";
   }
 
-  public void testChain$GetterSetterFieldTest() throws IOException {
+  public void testChain$GetterSetterFieldTest() {
     doTest();
   }
 
-  public void testChain$GetterSetterFieldAnnotationOverwriteTest() throws IOException {
+  public void testChain$GetterSetterFieldAnnotationOverwriteTest() {
     doTest();
   }
 
-  public void testChain$GetterSetterClassTest() throws IOException {
+  public void testChain$GetterSetterClassTest() {
     doTest();
   }
 
-  public void testChain$GetterSetterClassAnnotationOverwriteTest() throws IOException {
+  public void testChain$GetterSetterClassAnnotationOverwriteTest() {
     doTest();
   }
 
-  public void testChain$GetterSetterWithoutAccessorsAnnotationTest() throws IOException {
-    doTest();
-  }
-
-  ////////////
-
-  public void testFluent$GetterSetterFieldTest() throws IOException {
-    doTest();
-  }
-
-  public void testFluent$GetterSetterFieldAnnotationOverwriteTest() throws IOException {
-    doTest();
-  }
-
-  public void testFluent$GetterSetterClassTest() throws IOException {
-    doTest();
-  }
-
-  public void testFluent$GetterSetterClassAnnotationOverwriteTest() throws IOException {
-    doTest();
-  }
-
-  public void testFluent$GetterSetterWithoutAccessorsAnnotationTest() throws IOException {
+  public void testChain$GetterSetterWithoutAccessorsAnnotationTest() {
     doTest();
   }
 
   ////////////
 
-  public void testPrefix$GetterSetterClassTest() throws IOException {
+  public void testFluent$GetterSetterFieldTest() {
     doTest();
   }
 
-  public void testPrefix$GetterSetterWithoutAccessorsAnnotationClassTest() throws IOException {
+  public void testFluent$GetterSetterFieldAnnotationOverwriteTest() {
+    doTest();
+  }
+
+  public void testFluent$GetterSetterClassTest() {
+    doTest();
+  }
+
+  public void testFluent$GetterSetterClassAnnotationOverwriteTest() {
+    doTest();
+  }
+
+  public void testFluent$GetterSetterWithoutAccessorsAnnotationTest() {
+    doTest();
+  }
+
+  ////////////
+
+  public void testPrefix$GetterSetterClassTest() {
+    doTest();
+  }
+
+  public void testPrefix$GetterSetterWithoutAccessorsAnnotationClassTest() {
+    doTest();
+  }
+
+  ////////////
+
+  public void testSuperbuilder$SuperBuilderWithPrefixes() {
     doTest();
   }
 }

@@ -75,7 +75,4 @@ public class SuperBuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  public void testSuperbuilder$SuperBuilderWithPrefixes() {
-    doTest(true);
-  }
 }
