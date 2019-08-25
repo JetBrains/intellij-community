@@ -67,13 +67,13 @@ class BuilderInstanceMethod<T> {
 		@java.lang.SuppressWarnings("all")
 		@javax.annotation.Generated("lombok")
 		public java.lang.String toString() {
-			return "BuilderInstanceMethod<T>.StringBuilder(show=" + this.show + ", yes=" + this.yes + ", also=" + this.also + ", $andMe=" + this.$andMe + ")";
+			return "BuilderInstanceMethod.StringBuilder(show=" + this.show + ", yes=" + this.yes + ", also=" + this.also + ", $andMe=" + this.$andMe + ")";
 		}
 	}
 
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public StringBuilder builder() {
-		return new BuilderInstanceMethod<T>.StringBuilder();
+		return new BuilderInstanceMethod.StringBuilder();
 	}
 }
