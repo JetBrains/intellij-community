@@ -25,11 +25,11 @@ import java.util.stream.Collectors;
 
 public class JpsCachePluginComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsCachePluginComponent");
-  Project project;
-  ProjectRootManager projectRootManager;
-  ProjectFileIndex projectFileIndex;
-  PersistentCachingModuleHashingService moduleHashingService;
-  Map<Module, List<VirtualFile>> moduleToContentSourceRoots;
+  private final Project project;
+  private final ProjectRootManager projectRootManager;
+  private final ProjectFileIndex projectFileIndex;
+  private PersistentCachingModuleHashingService moduleHashingService;
+  private Map<Module, List<VirtualFile>> moduleToContentSourceRoots;
 
   public JpsCachePluginComponent(Project project) {
     this.project = project;
@@ -46,15 +46,18 @@ public class JpsCachePluginComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    VirtualFile[] sourcesRoots = projectRootManager.getContentSourceRoots();
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new VFSListener());
+
+    VirtualFile[] sourcesRoots = projectRootManager.getContentSourceRoots();
     moduleToContentSourceRoots =
       Arrays.stream(sourcesRoots).collect(Collectors.groupingBy(sourceRoot -> projectFileIndex.getModuleForFile(sourceRoot)));
     for (Map.Entry<Module, List<VirtualFile>> entry : moduleToContentSourceRoots.entrySet()) {
-      String moduleName = entry.getKey().getName();
+      Module curModule = entry.getKey();
+      String moduleName = curModule.getName();
       File[] sourceRoots = entry.getValue().stream().map(virtualFile -> new File(virtualFile.getPath())).toArray(File[]::new);
       try {
-        moduleHashingService.hashDirectoriesAndPersist(moduleName, sourceRoots);
+        moduleHashingService
+          .hashContentRootsAndPersist(curModule, sourceRoots);
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -89,7 +92,7 @@ public class JpsCachePluginComponent implements ProjectComponent {
         File[] contentSourceRoots =
           virtualContentSourceRoots.stream().map(virtualFile -> new File(virtualFile.getPath())).toArray(File[]::new);
         try {
-          moduleHashingService.hashDirectoriesAndPersist(affectedModule.getName(), contentSourceRoots);
+          moduleHashingService.hashContentRootsAndPersist(affectedModule, contentSourceRoots);
         }
         catch (IOException e) {
           LOG.error(e);

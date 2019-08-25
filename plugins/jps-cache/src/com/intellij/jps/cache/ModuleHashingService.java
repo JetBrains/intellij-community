@@ -1,6 +1,7 @@
 package com.intellij.jps.cache;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 
@@ -8,32 +9,37 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
-class DirHashingService {
+interface PathRelativizer {
+  String relativize(File target);
+}
+
+class ModuleHashingService {
   private static final Logger LOG = Logger.getInstance("com.jetbrains.cachepuller.ModuleHashingService");
   private static final int HASH_SIZE_IN_BYTES = 16;
 
-  byte[] hashDirectories(File[] directories) {
+  byte[] hashContentRoots(File[] contentRoots) {
     byte[] hash = new byte[HASH_SIZE_IN_BYTES];
 
-    for (File curDirectory : directories) {
-      byte[] curHash = hashDirectory(curDirectory);
+    for (File curContentRoot : contentRoots) {
+      byte[] curHash = hashDirectory(curContentRoot, new RelativeToDirectoryRelativizer(curContentRoot.getPath()));
       sum(hash, curHash);
     }
 
     return hash;
   }
 
-  byte[] hashDirectory(File dir) {
+  byte[] hashDirectory(File dir, RelativeToDirectoryRelativizer relativizer) {
     File[] fileList = Optional.ofNullable(dir.listFiles()).orElse(new File[0]);
     byte[] hash = new byte[HASH_SIZE_IN_BYTES];
 
 
     for (File file : fileList) {
-      byte[] curHash = file.isDirectory() ? hashDirectory(file) : hashFile(file);
+      byte[] curHash = file.isDirectory() ? hashDirectory(file, relativizer) : hashFile(file, relativizer);
       sum(hash, curHash);
     }
 
@@ -43,8 +49,9 @@ class DirHashingService {
     return hash;
   }
 
-  byte[] hashFile(File file) {
-    byte[] fileNameBytes = file.getName().getBytes();
+  byte[] hashFile(File file, PathRelativizer relativizer) {
+    String filePathRelativeToModule = relativizer.relativize(file);
+    byte[] fileNameBytes = filePathRelativeToModule.getBytes();
     byte[] buffer = new byte[(int)file.length() + fileNameBytes.length];
     try (FileInputStream fileInputStream = new FileInputStream(file)) {
       fileInputStream.read(buffer);
@@ -95,7 +102,7 @@ class DirHashingService {
   }
 }
 
-class PersistentCachingModuleHashingService extends DirHashingService {
+class PersistentCachingModuleHashingService extends ModuleHashingService {
   private final PersistentHashMap<String, byte[]> hashCache;
 
   PersistentCachingModuleHashingService(File cacheFile) throws IOException {
@@ -103,9 +110,9 @@ class PersistentCachingModuleHashingService extends DirHashingService {
       new PersistentHashMap<>(cacheFile, EnumeratorStringDescriptor.INSTANCE, ByteArrayDescriptor.INSTANCE);
   }
 
-  byte[] hashDirectoriesAndPersist(String moduleName, File[] directories) throws IOException {
-    byte[] directoriesHash = super.hashDirectories(directories);
-    cache(moduleName, directoriesHash);
+  byte[] hashContentRootsAndPersist(Module module, File[] contentRoots) throws IOException {
+    byte[] directoriesHash = super.hashContentRoots(contentRoots);
+    cache(module.getName(), directoriesHash);
     return directoriesHash;
   }
 
@@ -123,6 +130,19 @@ class PersistentCachingModuleHashingService extends DirHashingService {
       return;
     }
     hashCache.put(moduleName, hash);
+  }
+}
+
+class RelativeToDirectoryRelativizer implements PathRelativizer {
+  private final String rootPath;
+
+  RelativeToDirectoryRelativizer(String rootModulePath) {
+    this.rootPath = rootModulePath;
+  }
+
+  @Override
+  public String relativize(File target) {
+    return Paths.get(rootPath).relativize(Paths.get(target.getPath())).toString();
   }
 }
 
