@@ -52,6 +52,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "google-api-services-appengine", version: "v1-rev9-1.22.0",
                        libraryName: "google-api-services-appengine-v1-rev9-1.22.0.jar", url: "",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    // for auto-common module library in db-compiler
+    new LibraryLicense(name: "Google Auto Common Utilities", libraryName: "auto-common", version: "0.10", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/google/auto/tree/master/common"),
     new LibraryLicense(name: "Google Cloud Resource Manager API", version: "v1beta1-rev12-1.21.0",
                        libraryName: "google-api-services-cloudresourcemanager-v1beta1-rev12-1.21.0.jar", url: "",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
