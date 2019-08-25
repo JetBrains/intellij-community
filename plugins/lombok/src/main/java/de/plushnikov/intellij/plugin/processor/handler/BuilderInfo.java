@@ -32,6 +32,8 @@ public class BuilderInfo {
   private boolean deprecated;
   private String visibilityModifier;
 
+  private String builderChainResult = "this";
+
   private PsiClass builderClass;
   private PsiType builderClassType;
 
@@ -111,6 +113,11 @@ public class BuilderInfo {
     return this;
   }
 
+  public BuilderInfo withBuilderChainResult(@NotNull String builderChainResult) {
+    this.builderChainResult = builderChainResult;
+    return this;
+  }
+
   public BuilderInfo withObtainVia() {
     obtainViaAnnotation = PsiAnnotationSearchUtil.findAnnotation(variableInClass, BUILDER_OBTAIN_VIA_ANNOTATION);
     if (null != obtainViaAnnotation) {
@@ -185,6 +192,10 @@ public class BuilderInfo {
 
   public PsiType getBuilderType() {
     return builderClassType;
+  }
+
+  public String getBuilderChainResult() {
+    return builderChainResult;
   }
 
   public PsiAnnotation getSingularAnnotation() {

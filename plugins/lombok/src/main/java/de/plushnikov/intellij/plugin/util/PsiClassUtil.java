@@ -7,10 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Plushnikov Michail
@@ -96,13 +95,14 @@ public class PsiClassUtil {
   }
 
   @NotNull
-  public static PsiType getWildcardClassType(@NotNull PsiClass psiClass) {
+  public static PsiClassType getWildcardClassType(@NotNull PsiClass psiClass) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     if (psiClass.hasTypeParameters()) {
       PsiType[] wildcardTypes = new PsiType[psiClass.getTypeParameters().length];
       Arrays.fill(wildcardTypes, PsiWildcardType.createUnbounded(psiClass.getManager()));
-      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, wildcardTypes);
+      return elementFactory.createType(psiClass, wildcardTypes);
     }
-    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+    return elementFactory.createType(psiClass);
   }
 
   /**
@@ -110,17 +110,9 @@ public class PsiClassUtil {
    */
   @NotNull
   public static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass) {
-    PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    if (classTypeParameters.length > 0) {
-      Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
-      for (PsiTypeParameter typeParameter : classTypeParameters) {
-        substitutionMap.put(typeParameter, factory.createType(typeParameter));
-      }
-      return factory.createType(psiClass, factory.createSubstitutor(substitutionMap));
-    } else {
-      return factory.createType(psiClass);
-    }
+    final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);
+    return factory.createType(psiClass, psiTypes);
   }
 
   /**
@@ -138,7 +130,8 @@ public class PsiClassUtil {
     return psiMembers.stream().map(PsiMember::getName).collect(Collectors.toSet());
   }
 
-  public static PsiClassType createTypeWithGenerics(PsiClass psiClass, PsiClass a, PsiClass b) {
+  @NotNull
+  public static PsiClassType createTypeWithGenerics(@NotNull PsiClass psiClass, @NotNull PsiClass a, @NotNull PsiClass b) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     return factory.createType(psiClass, factory.createType(a), factory.createType(b));
   }

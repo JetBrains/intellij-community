@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
@@ -13,7 +14,6 @@ import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DelombokHandler {
@@ -72,7 +73,8 @@ public class DelombokHandler {
         }
       }
     }
-    deleteAnnotations(processedAnnotations);
+
+    processedAnnotations.forEach(PsiAnnotation::delete);
   }
 
   private void finish(Project project, PsiFile psiFile) {
@@ -283,16 +285,31 @@ public class DelombokHandler {
   }
 
   private void rebuildTypeParameter(@NotNull PsiTypeParameterListOwner listOwner, @NotNull PsiTypeParameterListOwner resultOwner) {
-    final PsiTypeParameterList fromMethodTypeParameterList = listOwner.getTypeParameterList();
-    if (listOwner.hasTypeParameters() && null != fromMethodTypeParameterList) {
-      PsiTypeParameterList typeParameterList = PsiMethodUtil.createTypeParameterList(fromMethodTypeParameterList);
-      if (null != typeParameterList) {
-        final PsiTypeParameterList resultOwnerTypeParameterList = resultOwner.getTypeParameterList();
-        if (null != resultOwnerTypeParameterList) {
-          resultOwnerTypeParameterList.replace(typeParameterList);
-        }
+    final PsiTypeParameterList resultOwnerTypeParameterList = resultOwner.getTypeParameterList();
+    if (null != resultOwnerTypeParameterList) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(resultOwner.getProject());
+
+      for (PsiTypeParameter typeParameter : listOwner.getTypeParameters()) {
+        String typeParameterAsString = getTypeParameterAsString(typeParameter);
+        resultOwnerTypeParameterList.add(elementFactory.createTypeParameterFromText(typeParameterAsString, resultOwner));
       }
     }
+  }
+
+  @NotNull
+  private String getTypeParameterAsString(@NotNull PsiTypeParameter typeParameter) {
+    return typeParameter.getName() +
+      Stream.of(typeParameter.getExtendsList().getReferencedTypes())
+        .map(this::getTypeWithParameter)
+        .collect(Collectors.joining(" & ", " extends ", ""));
+  }
+
+  @NotNull
+  private String getTypeWithParameter(@NotNull PsiClassType psiClassType) {
+    if (psiClassType instanceof PsiClassReferenceType) {
+      return ((PsiClassReferenceType) psiClassType).getReference().getText();
+    }
+    return psiClassType.getName();
   }
 
   private void copyModifiers(PsiModifierList fromModifierList, PsiModifierList resultModifierList) {
@@ -316,9 +333,4 @@ public class DelombokHandler {
     return (PsiField) CodeStyleManager.getInstance(project).reformat(resultField);
   }
 
-  private void deleteAnnotations(Collection<PsiAnnotation> psiAnnotations) {
-    for (PsiAnnotation psiAnnotation : psiAnnotations) {
-      psiAnnotation.delete();
-    }
-  }
 }

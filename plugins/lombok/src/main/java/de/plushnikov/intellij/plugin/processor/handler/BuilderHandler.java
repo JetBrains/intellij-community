@@ -56,7 +56,7 @@ public class BuilderHandler {
     Data.class.getSimpleName(), Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
 
   private final ToStringProcessor toStringProcessor;
-  private final NoArgsConstructorProcessor noArgsConstructorProcessor;
+  final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
   public BuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
     this.toStringProcessor = toStringProcessor;

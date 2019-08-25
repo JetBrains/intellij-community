@@ -26,5 +26,8 @@ public class SuperBuilderSimple {
 
     Child y = Child.builder().field3(0.0).field1(5).item("").build();
     System.out.println(y);
+
+    Parent sasd = Parent.builder().item("sasd").field1(1).build();
+    System.out.println(sasd);
   }
 }

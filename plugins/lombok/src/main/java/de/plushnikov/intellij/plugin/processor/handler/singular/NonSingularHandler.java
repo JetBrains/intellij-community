@@ -30,7 +30,7 @@ class NonSingularHandler implements BuilderElementHandler {
 
   @Override
   public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
-    final String blockText = getAllMethodBody(info.getFieldName());
+    final String blockText = getAllMethodBody(info.getFieldName(), info.getBuilderChainResult());
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(info.getManager(), info.getFieldName())
       .withContainingClass(info.getBuilderClass())
       .withMethodReturnType(info.getBuilderType())
@@ -51,8 +51,8 @@ class NonSingularHandler implements BuilderElementHandler {
     return psiFieldName;
   }
 
-  private String getAllMethodBody(@NotNull String psiFieldName) {
-    final String codeBlockTemplate = "this.{0} = {0};{1}";
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
+  private String getAllMethodBody(@NotNull String psiFieldName, @NotNull String builderChainResult) {
+    final String codeBlockTemplate = "this.{0} = {0};\nreturn {1};";
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, builderChainResult);
   }
 }

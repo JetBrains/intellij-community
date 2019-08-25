@@ -51,9 +51,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       return Optional.empty();
     }
 
-    final LightTypeParameterBuilder t1 = new LightTypeParameterBuilder("?", builderClass, 0);
-    final LightTypeParameterBuilder t2 = new LightTypeParameterBuilder("?", builderClass, 1);
-    final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.createTypeWithGenerics(builderClass, t1, t2);
+    final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.getWildcardClassType(builderClass);
 
     LombokLightMethodBuilder constructorBuilderBased = new LombokLightMethodBuilder(psiClass.getManager(), className)
       .withConstructor(true)
@@ -62,7 +60,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.PROTECTED)
       .withParameter(BUILDER_VARIABLE_NAME, psiTypeBaseWithGenerics);
 
-    // TODO add body
+    // TODO add real body
     final PsiClass superClass = psiClass.getSuperClass();
     if (null != superClass && !"Object".equals(superClass.getName())) {
       constructorBuilderBased.withBody(PsiMethodUtil.createCodeBlockFromText("super(b);", constructorBuilderBased));
@@ -80,9 +78,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
     if (!builderMethodName.isEmpty() && !hasMethod(containingClass, builderMethodName)) {
 
-      final LightTypeParameterBuilder t1 = new LightTypeParameterBuilder("?", builderBaseClass, 0);
-      final LightTypeParameterBuilder t2 = new LightTypeParameterBuilder("?", builderBaseClass, 1);
-      final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.createTypeWithGenerics(builderBaseClass, t1, t2);
+      final PsiClassType psiTypeBaseWithGenerics = PsiClassUtil.getWildcardClassType(builderBaseClass);
 
       final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), builderMethodName)
         .withMethodReturnType(psiTypeBaseWithGenerics)
@@ -100,7 +96,7 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    //TODO implement this
+    //TODO implement this for superbuilder
     return super.createToBuilderMethodIfNecessary(containingClass, null, builderPsiClass, psiAnnotation);
   }
 
@@ -123,7 +119,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     final LightTypeParameterBuilder b = new LightTypeParameterBuilder("B", baseClassBuilder, 1);
     baseClassBuilder.withParameterType(b);
-    b.getExtendsList().addReference(PsiClassUtil.createTypeWithGenerics(baseClassBuilder, c, b));//TODO make this work
+    b.getExtendsList().addReference(PsiClassUtil.createTypeWithGenerics(baseClassBuilder, c, b));
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiClassType bType = factory.createType(b);
@@ -139,7 +135,8 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, null, baseClassBuilder);
     for (BuilderInfo builderInfo : builderInfos) {
-      builderInfo.withBuilderClassType(bType);
+      builderInfo.withBuilderClassType(bType)
+        .withBuilderChainResult("self()");
     }
 
     // create builder Fields
@@ -149,7 +146,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     // create builder methods
     builderInfos.stream()
-      //TODO change "return this;" to "return self();"
+      //TODO change "return this;" to "return self();" for all Singular-Handler
       .map(BuilderInfo::renderBuilderMethods)
       .forEach(baseClassBuilder::withMethods);
 
@@ -194,7 +191,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     // create 'self' method
     final LombokLightMethodBuilder selfMethod = new LombokLightMethodBuilder(psiClass.getManager(), SELF_METHOD)
-      .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(implClassBuilder))//todo without generics?
+      .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(implClassBuilder))
       .withContainingClass(implClassBuilder)
       .withNavigationElement(psiClass)
       .withModifier(PsiModifier.PROTECTED);
@@ -218,6 +215,10 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     // create 'toString' method
     implClassBuilder.addMethod(createToStringMethod(psiAnnotation, implClassBuilder));
+
+    //create private no args constructor
+    noArgsConstructorProcessor.createNoArgsConstructor(implClassBuilder, PsiModifier.PRIVATE, psiAnnotation)
+      .forEach(implClassBuilder::addMethod);
 
     return implClassBuilder;
   }
