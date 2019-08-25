@@ -21,7 +21,4 @@ public class DateTimeFormatterBean {
 
   @Attribute("format")
   public String format;
-
-  @Attribute("allowPrettyFormatting")
-  public boolean allowPrettyFormatting = true;
 }
