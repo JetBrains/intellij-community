@@ -4,6 +4,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
@@ -42,15 +43,18 @@ public class SuperBuilderProcessor extends BuilderProcessor {
       superBuilderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation)
         .ifPresent(target::add);
 
-      final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
-      final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
+      // skip generation of builder methods, if class is abstract
+      if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
+        final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
 
-      if (null != builderImplClass) {
-        superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
-          .ifPresent(target::add);
+        if (null != builderImplClass) {
+          superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
+            .ifPresent(target::add);
 
-        superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
-          .ifPresent(target::add);
+          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderImplClass, psiAnnotation)
+            .ifPresent(target::add);
+        }
       }
     }
   }
