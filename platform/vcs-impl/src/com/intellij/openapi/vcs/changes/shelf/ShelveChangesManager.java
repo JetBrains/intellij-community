@@ -170,13 +170,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         stopCleanScheduler();
       }
     });
-
-    File shelfDirectory = mySchemeManager.getRootDirectory();
-    // do not try to ignore when new project created,
-    // because it may lead to predefined ignore creation conflict; see ConvertExcludedToIgnoredTest etc
-    if (shelfDirectory.exists()) {
-      ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(shelfDirectory.getAbsolutePath());
-    }
   }
 
   private void stopCleanScheduler() {
@@ -589,7 +582,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   private File generateUniqueSchemePatchDir(@Nullable final String defaultName, boolean createResourceDirectory) {
-    ignoreShelfDirectoryIfFirstShelf();
     File shelfResourcesDirectory = getShelfResourcesDirectory();
     File dir = suggestPatchName(myProject, defaultName, shelfResourcesDirectory, "");
     if (createResourceDirectory && !dir.exists()) {
@@ -597,14 +589,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       dir.mkdirs();
     }
     return dir;
-  }
-
-  private void ignoreShelfDirectoryIfFirstShelf() {
-    File shelfDir = getShelfResourcesDirectory();
-    //check that shelf directory wasn't exist before that to ignore it only once
-    if (!shelfDir.exists()) {
-      ChangeListManager.getInstance(myProject).addDirectoryToIgnoreImplicitly(shelfDir.getAbsolutePath());
-    }
   }
 
   @NotNull
