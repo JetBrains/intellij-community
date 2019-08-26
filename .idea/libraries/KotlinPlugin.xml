@@ -16,11 +16,6 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-jvm.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-compiler-impl.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-intellij.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-noarg-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-allopen-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
@@ -40,11 +35,6 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-jvm.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-compiler-impl.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-scripting-intellij.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-sam-with-receiver-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-allopen-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-noarg-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
-      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
     </excluded>
   </library>
 </component>
