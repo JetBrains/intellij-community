@@ -268,7 +268,7 @@
 
     <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager"
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
-    <statistics.counterUsagesCollector groupId="ide.script.engine" version="1"/>
+    <statistics.counterUsagesCollector groupId="ide.script.engine" version="2"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
