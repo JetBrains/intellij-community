@@ -31,7 +31,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     JTable entryTable = getEntryTable();
-    myHeader = new PluginHeaderPanel(null);
+    myHeader = new PluginHeaderPanel();
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       @Override

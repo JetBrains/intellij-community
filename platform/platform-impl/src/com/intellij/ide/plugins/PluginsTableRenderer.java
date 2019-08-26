@@ -34,6 +34,7 @@ import java.util.Set;
 * @author Konstantin Bulenkov
 */
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
+  static final String N_A = "N/A";
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected SimpleColoredComponent myName;
@@ -116,7 +117,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         }
       }
       else if (!myPluginsView) {
-        myCategory.append(AvailablePluginsManagerMain.N_A);
+        myCategory.append(N_A);
       }
 
       myStatus.setIcon(AllIcons.Nodes.Plugin);

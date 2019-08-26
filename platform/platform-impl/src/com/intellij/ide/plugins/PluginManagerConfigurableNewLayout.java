@@ -83,6 +83,8 @@ public class PluginManagerConfigurableNewLayout
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
+  public static final String MANAGE_PLUGIN_REPOSITORIES = "Manage Plugin Repositories...";
+
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
 
@@ -217,7 +219,7 @@ public class PluginManagerConfigurableNewLayout
   @NotNull
   private DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
+    actions.add(new DumbAwareAction(MANAGE_PLUGIN_REPOSITORIES) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
