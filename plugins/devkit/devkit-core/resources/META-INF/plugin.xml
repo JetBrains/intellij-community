@@ -383,6 +383,10 @@
             text="Dump Highlighting-Markup-Free Data">
       <add-to-group group-id="Internal.Dump"/>
     </action>
+    <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"
+            text="Analyze Unloadable Plugins">
+      <add-to-group group-id="Internal.DevKit"/>
+    </action>
 
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
