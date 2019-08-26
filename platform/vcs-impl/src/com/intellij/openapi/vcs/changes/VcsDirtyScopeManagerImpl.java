@@ -35,7 +35,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private final Project myProject;
   private final ProjectLevelVcsManagerImpl myVcsManager;
-  private final VcsGuess myGuess;
+  private final VcsDirtyScopePathMapper myGuess;
 
   private final DirtBuilder myDirtBuilder;
   @Nullable private DirtBuilder myDirtInProgress;
@@ -47,7 +47,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myProject = project;
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
-    myGuess = new VcsGuess(myProject);
+    myGuess = new VcsDirtyScopePathMapper(myProject);
     myDirtBuilder = new DirtBuilder();
 
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {

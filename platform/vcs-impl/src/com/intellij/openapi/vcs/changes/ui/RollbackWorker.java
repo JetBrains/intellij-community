@@ -211,7 +211,7 @@ public class RollbackWorker {
     private void doRefresh(final Project project, final List<? extends Change> changesToRefresh) {
       final Runnable forAwtThread = () -> {
         final VcsDirtyScopeManager manager = project.getComponent(VcsDirtyScopeManager.class);
-        VcsGuess vcsGuess = new VcsGuess(myProject);
+        VcsDirtyScopePathMapper vcsGuess = new VcsDirtyScopePathMapper(myProject);
 
         for (Change change : changesToRefresh) {
           final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -233,7 +233,7 @@ public class RollbackWorker {
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
     }
 
-    private void markDirty(@NotNull VcsDirtyScopeManager manager, @NotNull VcsGuess vcsGuess, @Nullable ContentRevision revision) {
+    private void markDirty(@NotNull VcsDirtyScopeManager manager, @NotNull VcsDirtyScopePathMapper vcsGuess, @Nullable ContentRevision revision) {
       if (revision != null) {
         FilePath parent = revision.getFile().getParentPath();
         if (parent != null && couldBeMarkedDirty(vcsGuess, parent)) {
@@ -245,7 +245,7 @@ public class RollbackWorker {
       }
     }
 
-    private boolean couldBeMarkedDirty(@NotNull VcsGuess vcsGuess, @NotNull FilePath path) {
+    private boolean couldBeMarkedDirty(@NotNull VcsDirtyScopePathMapper vcsGuess, @NotNull FilePath path) {
       return vcsGuess.getVcsForDirty(path) != null;
     }
 

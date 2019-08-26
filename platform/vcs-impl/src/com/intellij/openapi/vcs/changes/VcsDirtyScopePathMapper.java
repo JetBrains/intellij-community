@@ -19,16 +19,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VcsGuess {
-  @NotNull private final ProjectLevelVcsManagerImpl myVcsManager;
+public class VcsDirtyScopePathMapper {
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  public VcsGuess(@NotNull Project project) {
-    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+  public VcsDirtyScopePathMapper(@NotNull Project project) {
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   @Nullable
