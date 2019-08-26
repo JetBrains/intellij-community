@@ -48,7 +48,8 @@ class ProductModulesLayout {
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
    * includes names of optional modules (added via {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withOptionalModule})
-   * from these plugins which need to be included into the plugin distribution for this product.
+   * from these plugins which need to be included into the plugin distribution for this product. Layouts of the bundled plugins are specified
+   * in {@link #allNonTrivialPlugins} list.
    */
   List<String> bundledPluginModules = []
 
@@ -70,6 +71,7 @@ class ProductModulesLayout {
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
+   * Layouts of the plugins are specified in {@link #allNonTrivialPlugins} list.
    * 
    * @see #setPluginPublishingSpec
    */
@@ -90,6 +92,7 @@ class ProductModulesLayout {
   /**
    * Specifies that a plugin with main module name {@code mainModule} should be prepared for publishing under 'plugins' directory in the build
    * artifacts. The passed {@code spec} overrides {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#setDefaultPublishingSpec the plugin's defaults}.
+   * Layouts of the plugin is specified in {@link #allNonTrivialPlugins} list.
    * @see #setPluginModulesToPublish
    */
   void setPluginPublishingSpec(String mainModule, PluginPublishingSpec spec) {
@@ -106,9 +109,10 @@ class ProductModulesLayout {
 
   /**
    * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
-   * with the product is specified by {@link #bundledPluginModules}. There is no need to specify layout for plugins where it's trivial,
+   * with the product is specified by {@link #bundledPluginModules}, the actual list of plugins which need to be prepared for publishing
+   * is specified by {@link #setPluginModulesToPublish pluginModulesToPublish}. There is no need to specify layout for plugins where it's trivial,
    * i.e. for plugins which include an output of a single module and its module libraries, it's enough to specify module names of such plugins
-   * in {@link #bundledPluginModules}.
+   * in {@link #bundledPluginModules} and {@link #setPluginModulesToPublish pluginModulesToPublish}.
    */
   List<PluginLayout> allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 
