@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -76,6 +77,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
   private static final byte[] NO_BOM = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  @org.intellij.lang.annotations.Language("XML")
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
 
@@ -258,31 +260,38 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
                "<meta charset =\"utf-8\">");
   }
 
-  private void doHtmlTest(String metaWithWindowsEncoding, String metaWithUtf8Encoding) throws IOException {
+  private void doHtmlTest(@org.intellij.lang.annotations.Language("HTML") String metaWithWindowsEncoding,
+                          @org.intellij.lang.annotations.Language("HTML") String metaWithUtf8Encoding) throws IOException {
     File temp = getTempDir().createTempFile("copy", ".html", false);
-    setContentOnDisk(temp, NO_BOM,
-                     "<html><head>" + metaWithWindowsEncoding + "</head>" +
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head>" + metaWithWindowsEncoding + "</head>" +
                      THREE_RUSSIAN_LETTERS +
-                     "</html>",
+                     "</html>";
+    setContentOnDisk(temp, NO_BOM,
+                     content,
                      WINDOWS_1252);
     VirtualFile file = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
     assertEquals(WINDOWS_1252, file.getCharset());
 
     Document document = getDocument(file);
-    setText(document, "<html><head>" + metaWithUtf8Encoding + "</head>" +
-                      THREE_RUSSIAN_LETTERS +
-                      "</html>");
+    @org.intellij.lang.annotations.Language("HTML")
+    String text = "<html><head>" + metaWithUtf8Encoding + "</head>" +
+                  THREE_RUSSIAN_LETTERS +
+                  "</html>";
+    setText(document, text);
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
   public void testHtmlEncodingPreferBOM() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\"></head>" +
+                     THREE_RUSSIAN_LETTERS +
+                     "</html>";
     VirtualFile file = createTempFile("html", CharsetToolkit.UTF8_BOM,
-                                      "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\"></head>" +
-                                      THREE_RUSSIAN_LETTERS +
-                                      "</html>",
+                                      content,
                                       WINDOWS_1252);
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -290,26 +299,27 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testHtmlEncodingCaseInsensitive() throws IOException {
-    VirtualFile file = createTempFile("html", NO_BOM, "<html>\n" +
-                                                      "<head>\n" +
-                                                      "<meta http-equiv=\"content-type\" content=\"text/html;charset=us-ascii\"> \n" +
-                                                      "</head>\n" +
-                                                      "<body>\n" +
-                                                      "xyz\n" +
-                                                      "</body>\n" +
-                                                      "</html>",
-                                      WINDOWS_1252);
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html>\n" +
+                     "<head>\n" +
+                     "<meta http-equiv=\"content-type\" content=\"text/html;charset=us-ascii\"> \n" +
+                     "</head>\n" +
+                     "<body>\n" +
+                     "xyz\n" +
+                     "</body>\n" +
+                     "</html>";
+    VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
 
     assertEquals(US_ASCII, file.getCharset());
   }
   public void testHtmlContentAttributeOrder() throws IOException {
-    VirtualFile file =
-      createTempFile("html", NO_BOM, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
-                                     "\t\t\"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-                                     "<html> <head>\n" +
-                                     "\t<meta content=\"text/html;charset=US-ASCII\" http-equiv=\"Content-Type\">\n" +
-                                     "</head> </html>",
-                     WINDOWS_1252);
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
+                     "\t\t\"http://www.w3.org/TR/html4/loose.dtd\">\n" +
+                     "<html> <head>\n" +
+                     "\t<meta content=\"text/html;charset=US-ASCII\" http-equiv=\"Content-Type\">\n" +
+                     "</head> </html>";
+    VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
 
     assertEquals(US_ASCII, file.getCharset());
   }
@@ -319,6 +329,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testXHtmlStuff() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
     String text = "<xxx>\n</xxx>";
     VirtualFile file = createTempFile("xhtml", NO_BOM, text, WINDOWS_1252);
 
@@ -519,16 +530,26 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testConvertNotAvailableForHtml() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
+                     "<body>" + THREE_RUSSIAN_LETTERS +
+                     "</body></html>";
     VirtualFile file = createTempFile("html", null,
-                                      "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
-                                      "<body>" + THREE_RUSSIAN_LETTERS +
-                                      "</body></html>",
+                                      content,
                                       StandardCharsets.UTF_8);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
+    FileType fileType = file.getFileType();
+    assertEquals(StdFileTypes.HTML, fileType);
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(file);
+    assertEquals(StandardCharsets.UTF_8, charsetFromContent);
+    Charset fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(myProject, file, (CharSequence)content);
+    assertEquals(StandardCharsets.UTF_8, fromType);
+    String fromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
+    assertNull(fromProlog);
     EncodingUtil.FailReason result = EncodingUtil.checkCanConvert(file);
-    assertNotNull(result);
+    assertEquals(EncodingUtil.FailReason.BY_FILE, result);
   }
 
   public void testConvertReload() throws IOException {
@@ -544,7 +565,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
     EncodingUtil.FailReason result = EncodingUtil.checkCanReload(file, null);
-    assertNotNull(result);
+    assertEquals(EncodingUtil.FailReason.BY_BOM, result);
 
     EncodingUtil.saveIn(document, null, file, WINDOWS_1251);
     bytes = file.contentsToByteArray();
@@ -891,15 +912,17 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file = createFile("x.txt", "xx").getVirtualFile();
       assertNull(file.getBOM());
+      @org.intellij.lang.annotations.Language("XML")
+      String xxTag = "<xx/>";
       // internal files must never be BOMed
-      VirtualFile imlFile = createFile("x.iml", "<xx/>").getVirtualFile();
+      VirtualFile imlFile = createFile("x.iml", xxTag).getVirtualFile();
       assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
       VirtualFile file2 = createFile("x2.txt", "xx").getVirtualFile();
       assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
       // internal files must never be BOMed
-      imlFile = createFile("x2.iml", "<xx/>").getVirtualFile();
+      imlFile = createFile("x2.iml", xxTag).getVirtualFile();
       assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
@@ -907,14 +930,14 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
       assertArrayEquals(expected, file3.getBOM());
       // internal files must never be BOMed
-      imlFile = createFile("x3.iml", "<xx/>").getVirtualFile();
+      imlFile = createFile("x3.iml", xxTag).getVirtualFile();
       assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file4 = createFile("x4.txt", "xx").getVirtualFile();
       assertNull(file4.getBOM());
       // internal files must never be BOMed
-      imlFile = createFile("x4.iml", "<xx/>").getVirtualFile();
+      imlFile = createFile("x4.iml", xxTag).getVirtualFile();
       assertNull(imlFile.getBOM());
     }
     finally {
