@@ -80,7 +80,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final VcsConfiguration myConfig;
   private final ChangesViewI myChangesViewManager;
   private final ChangelistConflictTracker myConflictTracker;
-  private VcsDirtyScopeManager myDirtyScopeManager;
 
   private final Scheduler myScheduler = new Scheduler(); // update thread
 
@@ -111,10 +110,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)getInstance(project);
-  }
-
-  void setDirtyScopeManager(VcsDirtyScopeManager dirtyScopeManager) {
-    myDirtyScopeManager = dirtyScopeManager;
   }
 
   public ChangeListManagerImpl(@NotNull Project project, VcsConfiguration config) {
@@ -444,10 +439,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ProgressManager.getInstance().runProcess(() -> {
       if (myProject.isDisposed()) return;
 
-      final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
+      VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
       if (checkScopeIsEmpty(invalidated)) {
         LOG.debug("[update] - dirty scope is empty");
-        myDirtyScopeManager.changesProcessed();
+        dirtyScopeManager.changesProcessed();
         return;
       }
 
@@ -540,7 +536,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         LOG.error(ex);
       }
       finally {
-        myDirtyScopeManager.changesProcessed();
+        dirtyScopeManager.changesProcessed();
 
         myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();

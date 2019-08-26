@@ -34,7 +34,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private static final Logger LOG = Logger.getInstance(VcsDirtyScopeManagerImpl.class);
 
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManagerImpl myVcsManager;
   private final VcsGuess myGuess;
 
@@ -44,15 +43,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private boolean myReady;
   private final Object LOCK = new Object();
 
-  public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
+  public VcsDirtyScopeManagerImpl(Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
-    myChangeListManager = changeListManager;
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder();
-
-    ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
 
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
@@ -92,7 +88,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
 
-    myChangeListManager.scheduleUpdate();
+    ChangeListManager.getInstance(myProject).scheduleUpdate();
   }
 
   @Override
@@ -148,7 +144,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
 
     if (hasSomethingDirty) {
-      myChangeListManager.scheduleUpdate();
+      ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
   }
 
