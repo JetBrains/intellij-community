@@ -27,10 +27,6 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   protected final List<IdeaPluginDescriptor> filtered = new ArrayList<>();
 
   private RowSorter.SortKey myDefaultSortKey;
-  private boolean mySortByStatus;
-  private boolean mySortByRating;
-  private boolean mySortByDownloads;
-  private boolean mySortByUpdated;
 
   protected PluginTableModel() { }
 
@@ -115,8 +111,6 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void updatePluginsList(List<? extends IdeaPluginDescriptor> list);
-
   protected void filter(String filter) {
     Set<String> search = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
     List<IdeaPluginDescriptor> allPlugins = getAllPlugins();
@@ -154,39 +148,6 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
       throw e;
     }
   }
-
-  public boolean isSortByStatus() {
-    return mySortByStatus;
-  }
-
-  public void setSortByStatus(boolean sortByStatus) {
-    mySortByStatus = sortByStatus;
-  }
-
-  public boolean isSortByRating() {
-    return mySortByRating;
-  }
-
-  public void setSortByRating(boolean sortByRating) {
-    mySortByRating = sortByRating;
-  }
-
-  public boolean isSortByDownloads() {
-    return mySortByDownloads;
-  }
-
-  public void setSortByDownloads(boolean sortByDownloads) {
-    mySortByDownloads = sortByDownloads;
-  }
-
-  public boolean isSortByUpdated() {
-    return mySortByUpdated;
-  }
-
-  public void setSortByUpdated(boolean sortByUpdated) {
-    mySortByUpdated = sortByUpdated;
-  }
-
   public List<IdeaPluginDescriptor> getAllPlugins() {
     List<IdeaPluginDescriptor> list = new ArrayList<>(view.size() + filtered.size());
     list.addAll(view);

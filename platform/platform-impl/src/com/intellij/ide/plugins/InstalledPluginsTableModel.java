@@ -5,17 +5,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BooleanTableCellEditor;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 /**
@@ -36,10 +29,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private String myEnabledFilter = ENABLED_DISABLED;
 
   public InstalledPluginsTableModel() {
-    final MyPluginManagerColumnInfo infoColumn = new MyPluginManagerColumnInfo();
-    final EnabledPluginInfo enabledColumn = new EnabledPluginInfo();
-    columns = new ColumnInfo[]{infoColumn, enabledColumn};
-
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (appInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
@@ -88,10 +77,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       setEnabled(descriptor, true);
       fireTableDataChanged();
     }
-  }
-
-  public static int getCheckboxColumn() {
-    return 1;
   }
 
   @Override
@@ -148,11 +133,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
-  @Override
-  public void updatePluginsList(List<? extends IdeaPluginDescriptor> list) {
-    fireTableDataChanged();
-  }
-
   public void enableRows(IdeaPluginDescriptor[] ideaPluginDescriptors, Boolean value) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
       final PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
@@ -191,15 +171,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return myEnabled;
   }
 
-  public String getEnabledFilter() {
-    return myEnabledFilter;
-  }
-
-  public void setEnabledFilter(String enabledFilter, String filter) {
-    myEnabledFilter = enabledFilter;
-    filter(filter);
-  }
-
   @Override
   public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
     if (!myEnabledFilter.equals(ENABLED_DISABLED)) {
@@ -211,79 +182,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       if (!bundled && myEnabledFilter.equals(BUNDLED)) return false;
     }
     return true;
-  }
-
-  private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
-
-    EnabledPluginInfo() {
-      super(/*IdeBundle.message("plugin.manager.enable.column.title")*/"");
-    }
-
-    @Override
-    public Boolean valueOf(IdeaPluginDescriptor ideaPluginDescriptor) {
-      return myEnabled.get(ideaPluginDescriptor.getPluginId());
-    }
-
-    @Override
-    public boolean isCellEditable(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      return true;
-    }
-
-    @Override
-    public Class getColumnClass() {
-      return Boolean.class;
-    }
-
-    @Override
-    public TableCellEditor getEditor(final IdeaPluginDescriptor o) {
-      return new BooleanTableCellEditor();
-    }
-
-    @Override
-    public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      return new BooleanTableCellRenderer() {
-        @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          return super.getTableCellRendererComponent(table, value == null ? Boolean.TRUE : value, isSelected, hasFocus, row, column);
-        }
-      };
-    }
-
-    @Override
-    public void setValue(final IdeaPluginDescriptor ideaPluginDescriptor, Boolean value) {
-      final PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
-      final Boolean enabled = myEnabled.get(currentPluginId) == null ? Boolean.FALSE : value;
-      myEnabled.put(currentPluginId, enabled);
-      updatePluginDependencies();
-      warnAboutMissedDependencies(enabled, ideaPluginDescriptor);
-      hideNotApplicablePlugins(value, ideaPluginDescriptor);
-    }
-
-    @Override
-    public Comparator<IdeaPluginDescriptor> getComparator() {
-      return (o1, o2) -> {
-        final Boolean enabled1 = myEnabled.get(o1.getPluginId());
-        final Boolean enabled2 = myEnabled.get(o2.getPluginId());
-        if (enabled1 != null && enabled1.booleanValue()) {
-          if (enabled2 != null && enabled2.booleanValue()) {
-            return 0;
-          }
-
-          return 1;
-        }
-        else {
-          if (enabled2 == null || !enabled2.booleanValue()) {
-            return 0;
-          }
-          return -1;
-        }
-      };
-    }
   }
 
   private void warnAboutMissedDependencies(final Boolean newEnabledState, final IdeaPluginDescriptor... descriptorsWithChangedEnabledState) {
@@ -353,77 +251,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         updatePluginDependencies();
         hideNotApplicablePlugins(newEnabledState, pluginDependencies.toArray(new IdeaPluginDescriptor[0]));
       }
-    }
-  }
-
-  private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
-    MyPluginManagerColumnInfo() {
-      super(PluginManagerColumnInfo.COLUMN_NAME, InstalledPluginsTableModel.this);
-    }
-
-    @Override
-    public TableCellRenderer getRenderer(final IdeaPluginDescriptor pluginDescriptor) {
-      return new PluginsTableRenderer(pluginDescriptor, false);
-    }
-
-    @Override
-    protected boolean isSortByName() {
-      return true;
-    }
-
-    @Override
-    public Comparator<IdeaPluginDescriptor> getComparator() {
-      final Comparator<IdeaPluginDescriptor> comparator = getColumnComparator();
-      return (o1, o2) -> {
-        if (isSortByStatus()) {
-          final boolean incompatible1 = PluginManagerCore.isIncompatible(o1);
-          final boolean incompatible2 = PluginManagerCore.isIncompatible(o2);
-          if (incompatible1) {
-            if (incompatible2) return comparator.compare(o1, o2);
-            return -1;
-          }
-          if (incompatible2) return 1;
-
-          final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
-          final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
-          if (hasNewerVersion1) {
-            if (hasNewerVersion2) return comparator.compare(o1, o2);
-            return -1;
-          }
-          if (hasNewerVersion2) return 1;
-
-
-          final boolean wasUpdated1 = ourState.wasUpdated(o1.getPluginId());
-          final boolean wasUpdated2 = ourState.wasUpdated(o2.getPluginId());
-          if (wasUpdated1) {
-            if (wasUpdated2) return comparator.compare(o1, o2);
-            return -1;
-          }
-          if (wasUpdated2) return 1;
-
-
-          if (o1 instanceof PluginNode) {
-            if (o2 instanceof PluginNode) return comparator.compare(o1, o2);
-            return -1;
-          }
-          if (o2 instanceof PluginNode) return 1;
-
-
-          final boolean deleted1 = o1 instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)o1).isDeleted();
-          final boolean deleted2 = o2 instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)o2).isDeleted();
-          if (deleted1) {
-            if (deleted2) return comparator.compare(o1, o2);
-            return -1;
-          }
-          if (deleted2) return 1;
-
-          final boolean enabled1 = isEnabled(o1.getPluginId());
-          final boolean enabled2 = isEnabled(o2.getPluginId());
-          if (enabled1 && !enabled2) return -1;
-          if (enabled2 && !enabled1) return 1;
-        }
-        return comparator.compare(o1, o2);
-      };
     }
   }
 }
