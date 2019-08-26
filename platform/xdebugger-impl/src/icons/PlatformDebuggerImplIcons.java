@@ -28,8 +28,8 @@ public final class PlatformDebuggerImplIcons {
   }
 
   public final static class PinToTop {
-    /** 16x16 */ public static final Icon PinnedItem = load("/icons/pinned.items/pinnedItem.svg");
-    /** 16x16 */ public static final Icon UnpinnedItem = load("/icons/pinned.items/unpinnedItem.svg");
+    /** 16x16 */ public static final Icon PinnedItem = load("/icons/pinToTop/pinnedItem.svg");
+    /** 16x16 */ public static final Icon UnpinnedItem = load("/icons/pinToTop/unpinnedItem.svg");
 
   }
 }
