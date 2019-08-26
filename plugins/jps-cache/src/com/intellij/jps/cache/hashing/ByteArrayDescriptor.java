@@ -1,4 +1,4 @@
-package com.intellij.jps.cache;
+package com.intellij.jps.cache.hashing;
 
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;

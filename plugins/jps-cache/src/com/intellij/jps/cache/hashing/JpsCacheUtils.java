@@ -1,5 +1,6 @@
-package com.intellij.jps.cache;
+package com.intellij.jps.cache.hashing;
 
+import com.intellij.jps.cache.JpsCachePluginComponent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,7 +19,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class JpsCacheUtils {
+public class JpsCacheUtils {
+  private JpsCacheUtils() {}
+
   public static Map<Module, List<VirtualFile>> createModuleToSourceRootsMap(Project project) {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     VirtualFile[] sourcesRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
