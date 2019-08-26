@@ -10,8 +10,10 @@ import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -20,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -131,6 +134,13 @@ public class PluginManagerConfigurable
   private DefaultActionGroup myInstalledSearchGroup;
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
+
+  public PluginManagerConfigurable() {
+  }
+
+  @Deprecated
+  public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
+  }
 
   @NotNull
   @Override
@@ -1286,6 +1296,28 @@ public class PluginManagerConfigurable
     return width;
   }
 
+  @Messages.YesNoResult
+  public static int showRestartDialog() {
+    return showRestartDialog(IdeBundle.message("update.notifications.title"));
+  }
+
+  @Messages.YesNoResult
+  public static int showRestartDialog(@NotNull String title) {
+    String action = IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
+    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
+  }
+
+  public static void shutdownOrRestartApp() {
+    shutdownOrRestartApp(IdeBundle.message("update.notifications.title"));
+  }
+
+  public static void shutdownOrRestartApp(@NotNull String title) {
+    if (showRestartDialog(title) == Messages.YES) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
+    }
+  }
+
   private enum SortBySearchOption {
     Downloads, Name, Rating, Relevance, Updated
   }
@@ -1691,7 +1723,7 @@ public class PluginManagerConfigurable
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> IdeRestartHelper.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+        () -> shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
     }
   }
 

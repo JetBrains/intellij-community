@@ -28,7 +28,7 @@ public class PluginDropHandler extends CustomFileDropHandler {
     File file = getFile(t);
     if (file == null) return false;
     return PluginInstaller.install(new InstalledPluginsTableModel(), file,
-                   pair -> IdeRestartHelper.shutdownOrRestartApp(), null);
+                   pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
   }
 
   @Nullable

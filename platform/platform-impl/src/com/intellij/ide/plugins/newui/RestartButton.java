@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.IdeRestartHelper;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -18,7 +18,7 @@ public class RestartButton extends InstallButton {
   public RestartButton(@NotNull MyPluginModel pluginModel) {
     super(true);
     addActionListener(e -> {
-      if (IdeRestartHelper.showRestartDialog() != Messages.YES) {
+      if (PluginManagerConfigurable.showRestartDialog() != Messages.YES) {
         return;
       }
 

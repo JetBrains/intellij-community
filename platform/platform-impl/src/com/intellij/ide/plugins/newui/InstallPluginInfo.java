@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeRestartHelper;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -51,7 +51,7 @@ public class InstallPluginInfo {
       closeStatusBarIndicator();
       if (success) {
         ApplicationManager.getApplication()
-          .invokeLater(() -> IdeRestartHelper.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+          .invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
       }
     }
     else if (!cancel) {
