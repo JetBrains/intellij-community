@@ -600,7 +600,7 @@ public class StreamChainInliner implements CallInliner {
     void iteration(CFGBuilder builder) {
       // do nothing currently: we can emulate calling collection.add,
       // but it's unnecessary for current analysis
-      builder.pop();
+      builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
     }
 
     @Override
