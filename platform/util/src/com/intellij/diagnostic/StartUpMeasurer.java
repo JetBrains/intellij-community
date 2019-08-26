@@ -26,6 +26,7 @@ public final class StartUpMeasurer {
     public static final String START_LOGGING = "start logging";
 
     public static final String WAIT_TASKS = "wait tasks";
+    public static final String IMPORT_CONFIGS = "import configs";
 
     public static final String CONFIGURE_LOGGING = "configure logging";
     public static final String APP_STARTER = "appStarter";

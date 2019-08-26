@@ -186,6 +186,7 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
+      Activity activity = StartUpMeasurer.start(Phases.IMPORT_CONFIGS);
       if (newConfigFolder) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
@@ -200,6 +201,7 @@ public class StartupUtil {
         // event queue and icons already initialized as part of old config import
         EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
       }
+      activity.end();
     }
 
     EdtInvocationManager.executeWithCustomManager(new EdtInvocationManager.SwingEdtInvocationManager() {
