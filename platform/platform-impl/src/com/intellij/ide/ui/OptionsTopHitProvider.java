@@ -118,7 +118,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @NotNull Consumer<Object> collector,
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
-      pattern = pattern.startsWith(" ") ? pattern.trim() : StringUtil.toLowerCase(pattern.substring(id.length()).trim());
+      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim();
       consumeTopHitsForApplicableProvider(provider, new WordPrefixMatcher(pattern), collector, project);
     }
   }
