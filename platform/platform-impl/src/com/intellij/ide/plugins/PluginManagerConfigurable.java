@@ -61,7 +61,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class PluginManagerConfigurableNewLayout
+public class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider,
              PluginManagerConfigurableInfo {
 
@@ -369,7 +369,7 @@ public class PluginManagerConfigurableNewLayout
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
-                                                PluginManagerConfigurableNewLayout.this.mySearchListener,
+                                                PluginManagerConfigurable.this.mySearchListener,
                                                 d -> new NewListPluginComponent(myPluginModel, d, mySearchListener, true));
 
         myMarketplacePanel.setSelectionListener(selectionListener);
@@ -646,7 +646,7 @@ public class PluginManagerConfigurableNewLayout
 
         PluginsGroupComponentWithProgress panel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
-                                                PluginManagerConfigurableNewLayout.this.mySearchListener,
+                                                PluginManagerConfigurable.this.mySearchListener,
                                                 descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener,
                                                                                          true));
 
@@ -789,7 +789,7 @@ public class PluginManagerConfigurableNewLayout
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel =
           new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
-                                    PluginManagerConfigurableNewLayout.this.mySearchListener,
+                                    PluginManagerConfigurable.this.mySearchListener,
                                     descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         myInstalledPanel.setSelectionListener(selectionListener);
@@ -943,7 +943,7 @@ public class PluginManagerConfigurableNewLayout
 
         PluginsGroupComponent panel =
           new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
-                                    PluginManagerConfigurableNewLayout.this.mySearchListener,
+                                    PluginManagerConfigurable.this.mySearchListener,
                                     descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         panel.setSelectionListener(selectionListener);

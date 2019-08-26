@@ -448,7 +448,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       Set<String> allTags = new HashSet<>();
 
       for (IdeaPluginDescriptor descriptor : getInstalledDescriptors()) {
-        allTags.addAll(PluginManagerConfigurableNewLayout.getTags(descriptor));
+        allTags.addAll(PluginManagerConfigurable.getTags(descriptor));
       }
 
       myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);

@@ -214,15 +214,15 @@ public class ListPluginComponent extends CellPluginComponent {
 
       myVersion = new JLabel(version);
       myVersion.setOpaque(false);
-      myBaselinePanel.addVersionComponent(PluginManagerConfigurableNewLayout.setTinyFont(myVersion));
+      myBaselinePanel.addVersionComponent(PluginManagerConfigurable.setTinyFont(myVersion));
     }
 
     if (myPlugin instanceof PluginNode) {
-      String date = PluginManagerConfigurableNewLayout.getLastUpdatedDate(myPlugin);
+      String date = PluginManagerConfigurable.getLastUpdatedDate(myPlugin);
       if (date != null) {
         myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
         myLastUpdated.setOpaque(false);
-        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNewLayout.setTinyFont(myLastUpdated));
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurable.setTinyFont(myLastUpdated));
       }
     }
   }
@@ -246,7 +246,7 @@ public class ListPluginComponent extends CellPluginComponent {
       if (myVersion == null) {
         myVersion = new JLabel();
         myVersion.setOpaque(false);
-        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNewLayout.setTinyFont(myVersion));
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurable.setTinyFont(myVersion));
       }
       myVersion.setText("Version " + myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
 

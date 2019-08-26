@@ -20,10 +20,10 @@ import java.awt.*;
  */
 public class PluginManagerConfigurableProxy
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
-  private final PluginManagerConfigurableNewLayout myConfigurable;
+  private final PluginManagerConfigurable myConfigurable;
 
   public PluginManagerConfigurableProxy() {
-    myConfigurable = new PluginManagerConfigurableNewLayout();
+    myConfigurable = new PluginManagerConfigurable();
   }
 
   @NotNull

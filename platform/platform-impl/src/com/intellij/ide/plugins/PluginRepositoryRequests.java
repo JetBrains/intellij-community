@@ -64,7 +64,7 @@ public class PluginRepositoryRequests {
   public static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
                                     @NotNull String query) throws IOException {
-    Url baseUrl = createSearchUrl(query, PluginManagerConfigurableNewLayout.ITEMS_PER_GROUP);
+    Url baseUrl = createSearchUrl(query, PluginManagerConfigurable.ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
     Map<String, String> offsetParameters = new HashMap<>();
     int offset = 0;
@@ -79,7 +79,7 @@ public class PluginRepositoryRequests {
         IdeaPluginDescriptor descriptor = allDescriptors.get(pluginId);
         if (descriptor != null) {
           descriptors.add(descriptor);
-          if (descriptors.size() == PluginManagerConfigurableNewLayout.ITEMS_PER_GROUP) {
+          if (descriptors.size() == PluginManagerConfigurable.ITEMS_PER_GROUP) {
             return true;
           }
         }

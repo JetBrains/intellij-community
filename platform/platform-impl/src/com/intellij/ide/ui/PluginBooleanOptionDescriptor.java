@@ -3,7 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.notification.*;
@@ -38,7 +38,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   public PluginBooleanOptionDescriptor(PluginId id) {
     //noinspection ConstantConditions
-    super(PluginManagerCore.getPlugin(id).getName(), PluginManagerConfigurableNewLayout.ID);
+    super(PluginManagerCore.getPlugin(id).getName(), PluginManagerConfigurable.ID);
     myId = id;
   }
 

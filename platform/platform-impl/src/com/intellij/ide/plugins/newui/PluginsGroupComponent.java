@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
@@ -47,7 +47,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.connect(this);
 
     setOpaque(true);
-    setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
+    setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
   }
 
   @NotNull

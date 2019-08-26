@@ -46,7 +46,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     add(container);
     addIconComponent(container, BorderLayout.WEST);
 
-    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurableNewLayout.offset5(), JBUIScale.scale(181)));
+    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurable.offset5(), JBUIScale.scale(181)));
     container.add(centerPanel);
 
     addNameComponent(centerPanel);
@@ -64,7 +64,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
       @Override
       public Dimension preferredLayoutSize(Container parent) {
         Dimension size = container.getPreferredSize();
-        size.height += PluginManagerConfigurableNewLayout.offset5();
+        size.height += PluginManagerConfigurable.offset5();
         size.height += myLastComponent.getPreferredSize().height;
         JBInsets.addTo(size, parent.getInsets());
         return size;
@@ -83,7 +83,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
         Border border = myLastComponent.getBorder();
         int borderOffset = border == null ? 0 : border.getBorderInsets(myLastComponent).left;
         myLastComponent
-          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurableNewLayout.offset5() + bounds.height,
+          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurable.offset5() + bounds.height,
                      Math.min(buttonSize.width, size.width),
                      buttonSize.height);
       }
@@ -98,9 +98,9 @@ public class GridCellPluginComponent extends CellPluginComponent {
       return;
     }
 
-    String downloads = PluginManagerConfigurableNewLayout.getDownloads(myPlugin);
-    String date = PluginManagerConfigurableNewLayout.getLastUpdatedDate(myPlugin);
-    String rating = PluginManagerConfigurableNewLayout.getRating(myPlugin);
+    String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
+    String date = PluginManagerConfigurable.getLastUpdatedDate(myPlugin);
+    String rating = PluginManagerConfigurable.getRating(myPlugin);
 
     if (downloads != null || date != null || rating != null) {
       JPanel panel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(7)));
@@ -136,7 +136,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     if (color != null) {
       label.setForeground(color);
     }
-    panel.add(tiny ? PluginManagerConfigurableNewLayout.setTinyFont(label) : label, constraints);
+    panel.add(tiny ? PluginManagerConfigurable.setTinyFont(label) : label, constraints);
     return label;
   }
 
@@ -193,7 +193,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
   }
 
   private void addTags(@NotNull JPanel parent, @NotNull TagBuilder tagBuilder) {
-    List<String> tags = PluginManagerConfigurableNewLayout.getTags(myPlugin);
+    List<String> tags = PluginManagerConfigurable.getTags(myPlugin);
     if (tags.isEmpty()) {
       return;
     }

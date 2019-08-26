@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -32,11 +32,11 @@ public class LicensePanel extends NonOpaquePanel {
     myLink.setIconTextGap(0);
     myLink.setHorizontalTextPosition(SwingConstants.LEFT);
 
-    add(tiny ? PluginManagerConfigurableNewLayout.setTinyFont(mySubMessage) : mySubMessage, BorderLayout.NORTH);
+    add(tiny ? PluginManagerConfigurable.setTinyFont(mySubMessage) : mySubMessage, BorderLayout.NORTH);
     add(myPanel);
 
-    myPanel.add(tiny ? PluginManagerConfigurableNewLayout.setTinyFont(myMessage) : myMessage);
-    myPanel.add(tiny ? PluginManagerConfigurableNewLayout.setTinyFont(myLink) : myLink);
+    myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myMessage) : myMessage);
+    myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myLink) : myLink);
 
     hideElements();
   }
@@ -100,7 +100,7 @@ public class LicensePanel extends NonOpaquePanel {
         setText("License is active.", false, false);
       }
       else if (days > 30) {
-        setText("License is active until " + PluginManagerConfigurableNewLayout.DATE_FORMAT.format(new Date(time)) + ".", false, false);
+        setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(new Date(time)) + ".", false, false);
       }
       else if (days == 0) {
         setText("License expired.", false, true);
