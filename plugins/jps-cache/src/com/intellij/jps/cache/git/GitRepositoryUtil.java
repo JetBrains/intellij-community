@@ -18,7 +18,7 @@ public class GitRepositoryUtil {
 
   private GitRepositoryUtil() {}
 
-  public static List<String> getLatestHashes(@NotNull Project project, int commitsCount) {
+  public static List<String> getLatestCommitHashes(@NotNull Project project, int commitsCount) {
     if (GitUtil.hasGitRepositories(project)) {
       VirtualFile virtualFile = project.getProjectFile();
       if (virtualFile == null) return ContainerUtil.newSmartList();
