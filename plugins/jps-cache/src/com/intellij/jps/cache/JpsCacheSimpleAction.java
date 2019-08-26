@@ -8,12 +8,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
 public class JpsCacheSimpleAction extends AnAction {
@@ -30,13 +35,25 @@ public class JpsCacheSimpleAction extends AnAction {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Set<String> cacheKeys = myCacheServerClient.getAllCacheKeys();
       System.out.println(cacheKeys);
-      Set<String> binaryKeys = myCacheServerClient.getAllBinaryKeys();
-      System.out.println(binaryKeys);
-      GitRepositoryUtil.getLatestCommitHashes(myProject, 20).stream().filter(cacheKeys::contains).findFirst()
-        .ifPresent(cacheId -> {
+      GitRepositoryUtil.getLatestCommitHashes(myProject, 20).stream().filter(cacheKeys::contains)
+        .findFirst().ifPresent(cacheId -> {
           System.out.println(cacheId);
           File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
           myCacheServerClient.downloadCacheByIdAsynchronously(myProject, cacheId, targetDir, this::renameTmpCacheFolder);
+        });
+    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Set<String> binaryKeys = myCacheServerClient.getAllBinaryKeys();
+      System.out.println(binaryKeys);
+      CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
+      if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
+        LOG.warn("Compiler output setting not specified for the project ");
+        return;
+      }
+      File targetDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
+      Arrays.stream(ModuleManager.getInstance(myProject).getModules())
+                                        .map(Module::getName).forEach(moduleName -> {
+          myCacheServerClient.downloadCompiledModuleByNameAndHash(myProject, moduleName, "SomeHash", targetDir);
         });
     });
   }

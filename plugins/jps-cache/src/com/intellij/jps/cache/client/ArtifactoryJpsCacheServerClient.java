@@ -81,13 +81,22 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
     downloadArchive(project, downloadUrl, targetDir, fileName, callbackOnSuccess);
   }
 
+  @Override
+  public void downloadCompiledModuleByNameAndHash(@NotNull Project project, @NotNull String moduleName, @NotNull String moduleHash,
+                                                  @NotNull File targetDir) {
+    String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + moduleHash;
+    String fileName = moduleName + ".zip";
+    LOG.debug("Downloading JPS compiled module from: " + downloadUrl);
+    downloadArchive(project,downloadUrl, targetDir, fileName, file -> {});
+  }
+
   private static void downloadArchive(@NotNull Project project, @NotNull String downloadUrl, @NotNull File targetDir, @NotNull String fileName,
-                               @NotNull Consumer<File> callbackOnSuccess) {
+                                      @NotNull Consumer<File> callbackOnSuccess) {
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), fileName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, "Download JPS portable caches") {
+    Task.Backgroundable task = new Task.Backgroundable(project, "Download JPS Caches") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -104,7 +113,7 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
           callbackOnSuccess.accept(tmpFolder);
         }
         catch (IOException e) {
-          LOG.warn("Failed to download portable caches from URL: " + downloadUrl, e);
+          LOG.warn("Failed to download JPS caches from URL: " + downloadUrl, e);
         }
       }
     };
