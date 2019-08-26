@@ -141,8 +141,9 @@ public class NonBlockingReadActionImpl<T>
   }
 
   private static void preventTooManySubmissions(AsyncPromise<?> promise) {
-    if (ourUnboundedSubmissionCount.incrementAndGet() % 100 == 0) {
-      LOG.error("Too many non-blocking read actions submitted at once");
+    if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
+      LOG.error("Too many non-blocking read actions submitted at once. " +
+                "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.");
     }
     promise.onProcessed(__ -> ourUnboundedSubmissionCount.decrementAndGet());
   }
