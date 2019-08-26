@@ -48,6 +48,5 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
   </component>
 </module>
