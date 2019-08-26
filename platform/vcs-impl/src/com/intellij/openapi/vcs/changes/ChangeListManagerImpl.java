@@ -92,7 +92,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final UpdateRequestsQueue myUpdater;
   private final Modifier myModifier;
-  private final MyChangesDeltaForwarder myDeltaForwarder;
 
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
@@ -127,7 +126,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
 
     myComposite = new FileHolderComposite(project);
-    myDeltaForwarder = new MyChangesDeltaForwarder(myProject, myScheduler);
     myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
@@ -505,7 +503,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               ChangeListWorker updatedWorker = dataHolder.getChangeListUpdater().finish();
               myModifier.finishUpdate(updatedWorker);
 
-              myWorker.applyChangesFromUpdate(updatedWorker, myDeltaForwarder);
+              myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
 
               if (LOG.isDebugEnabled()) {
                 LOG.debug("refresh procedure finished, unversioned size: " +
