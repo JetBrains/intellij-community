@@ -289,6 +289,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private static class ShelfTree extends ChangesTree {
     private List<ShelvedChangeList> myLoadedLists = emptyList();
+    private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider(myProject, this);
 
     private ShelfTree(@NotNull Project project) {
       super(project, false, false, true);
@@ -370,7 +371,7 @@ public class ShelvedChangesViewManager implements Disposable {
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        return new MyShelveDeleteProvider(myProject, this);
+        return myDeleteProvider;
       }
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
