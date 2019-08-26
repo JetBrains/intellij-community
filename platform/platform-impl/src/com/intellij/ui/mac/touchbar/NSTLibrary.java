@@ -4,7 +4,6 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 
 public interface NSTLibrary extends Library {
@@ -34,7 +33,7 @@ public interface NSTLibrary extends Library {
   // creator returns non-autorelease obj to be owned by java-wrapper
   ID createButton(String uid, int buttWidth, int buttonFlags, String text, Pointer raster4ByteRGBA, int w, int h, Action action);
   ID createPopover(String uid, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
-  ID createScrubber(String uid, int itemWidth, ScrubberDelegate delegate, ScrubberCacheUpdater updater, Memory packedItems, int byteCount);
+  ID createScrubber(String uid, int itemWidth, ScrubberDelegate delegate, ScrubberCacheUpdater updater, Pointer packedItems, int byteCount);
   ID createGroupItem(String uid, ID[] items, int count);
 
   int BUTTON_UPDATE_LAYOUT  = 1;
@@ -66,9 +65,9 @@ public interface NSTLibrary extends Library {
   void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, Pointer raster4ByteRGBA, int w, int h, Action action);
   void updatePopover(ID popoverObj, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
 
-  void enableScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean enabled);
-  void showScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean show, boolean inverseOthers);
-  void updateScrubberItems(ID scrubObj, Memory packedItems, int byteCount, int fromIndex);
+  void enableScrubberItems(ID scrubObj, Pointer itemIndices, int count, boolean enabled);
+  void showScrubberItems(ID scrubObj, Pointer itemIndices, int count, boolean show, boolean inverseOthers);
+  void updateScrubberItems(ID scrubObj, Pointer packedItems, int byteCount, int fromIndex);
 
   void setArrowImage(ID buttObj, Pointer raster4ByteRGBA, int w, int h);
 

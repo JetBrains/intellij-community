@@ -1,13 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,10 +34,27 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
 
       final int chunkSize = 25;
       final int newItemsCount = Math.min(chunkSize, myItems.size() - myNativeItemsCount);
-      NST.updateScrubberItems(myNativePeer, myItems, myNativeItemsCount, newItemsCount);
+      final int fromPosition = myNativeItemsCount;
+      updateItems(fromPosition, newItemsCount, false);
+
+      final Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.executeOnPooledThread(() -> app.runReadAction(() -> updateItems(fromPosition, newItemsCount, true)));
+      } else {
+        updateItems(fromPosition, newItemsCount, true);
+      }
+
       myNativeItemsCount += newItemsCount;
       return newItemsCount;
     };
+  }
+
+  private void updateItems(int fromPosition, int count, boolean withImages) {
+    synchronized (myReleaseLock) {
+      if (myNativePeer.equals(ID.NIL))
+        return;
+      NST.updateScrubberItems(myNativePeer, myItems, fromPosition, count, withImages, !withImages, myStats);
+    }
   }
 
   TBItemScrubber addItem(Icon icon, String text, Runnable action) {
@@ -52,14 +66,6 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
       if (myListener != null)
         myListener.onItemEvent(this, 0);
     };
-    if (icon instanceof EmptyIcon)
-      icon = null;
-    else if (icon != null) {
-      final long startNs = myStats != null ? System.nanoTime() : 0;
-      icon = IconLoader.getDarkIcon(icon, true);
-      if (myStats != null)
-        myStats.incrementCounter(StatsCounters.iconLoadingRenderingDurationNs, System.nanoTime() - startNs);
-    }
     myItems.add(new ItemData(icon, text, nativeAction));
     return this;
   }
@@ -97,6 +103,14 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     myNativeItemsCount = myItems == null || myItems.isEmpty() ? 0 : Math.min(30, myItems.size());
     final ID result = NST.createScrubber(getUid(), myWidth, this, myUpdater, myItems, myNativeItemsCount, myStats);
     NST.enableScrubberItems(result, _getDisabledIndices(), false);
+    if (myNativeItemsCount > 0 && result != ID.NIL) {
+      final Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.executeOnPooledThread(() -> app.runReadAction(() -> updateItems(0, myNativeItemsCount, true)));
+      } else {
+        updateItems(0, myNativeItemsCount, true);
+      }
+    }
     return result;
   }
 
@@ -120,21 +134,21 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
 
   static class ItemData {
     private byte[] myTextBytes; // cache
+    private final Icon myIcon;
 
-    final Icon myIcon;
     final String myText;
     final Runnable myAction;
-    final float fMulX;
     boolean myEnabled = true;
+
+    float fMulX = 0;
 
     ItemData(Icon icon, String text, Runnable action) {
       this.myIcon = icon;
       this.myText = text;
       this.myAction = action;
-
-      final Application app = ApplicationManager.getApplication();
-      fMulX = myIcon == null ? 1.f : (app != null && UISettings.getInstance().getPresentationMode() ? 40.f / myIcon.getIconHeight() : (myIcon.getIconHeight() < 24 ? 40.f / 16 : 44.f / myIcon.getIconHeight()));
     }
+
+    Icon getIcon() { return myIcon; }
 
     byte[] getTextBytes() {
       if (myTextBytes == null && myText != null)

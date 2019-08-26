@@ -54,7 +54,6 @@ const int g_marginBorders = 10;
     return _isEnabled;
 }
 
-
 - (void)drawRect:(NSRect)dirtyRect {
     // NOTE: simple addSubview:NSButton (with img and text and rounded bezel style) doesn't works
     NSRect rect = NSMakeRect([self bounds].origin.x, [self bounds].origin.y, [self bounds].size.width, [self bounds].size.height);
@@ -104,8 +103,11 @@ const int g_marginBorders = 10;
     [NSLayoutConstraint activateConstraints:constraints];
 }
 
-- (void)setImgAndText:(NSImage *)img text:(NSString *)txt {
+- (void)setImage:(NSImage *)img {
     _imageView.image = img;
+}
+
+- (void)setText:(NSString *)txt {
     if (txt == nil)
       txt = @"";
     _textField.stringValue = txt;

@@ -14,6 +14,7 @@ abstract class TBItem {
   boolean myIsVisible = true;
 
   @Nullable String myOptionalContextName;
+  final Object myReleaseLock = new Object();
 
   TBItem(@NotNull String name, @Nullable ItemListener listener) { myName = name; myListener = listener; }
 
@@ -35,10 +36,10 @@ abstract class TBItem {
     return myNativePeer;
   }
   void releaseNativePeer() {
-    if (myNativePeer == ID.NIL)
-      return;
-    Foundation.invoke(myNativePeer, "release");
-    myNativePeer = ID.NIL;
+    synchronized (myReleaseLock) {
+      Foundation.invoke(myNativePeer, "release");
+      myNativePeer = ID.NIL;
+    }
   }
 
   protected abstract void _updateNativePeer();  // called from EDT
