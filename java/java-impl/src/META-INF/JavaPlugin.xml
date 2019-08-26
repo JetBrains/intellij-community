@@ -369,6 +369,8 @@
     <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.MetaAnnotationUtil"
+                    serviceImplementation="com.intellij.codeInsight.MetaAnnotationUtilImpl"/>
 
     <appStarter implementation="com.intellij.compiler.ant.GenerateAntMain"/>
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>

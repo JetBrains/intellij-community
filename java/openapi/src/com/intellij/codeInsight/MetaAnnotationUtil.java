@@ -13,18 +13,20 @@
 // limitations under the License.
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -41,7 +43,7 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  */
-public class MetaAnnotationUtil {
+public abstract class MetaAnnotationUtil {
   private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
     @Override
     public int computeHashCode(PsiClass object) {
@@ -68,7 +70,7 @@ public class MetaAnnotationUtil {
         }
 
         // limit search to files containing annotations
-        GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(project).intersectWith(moduleScope);
+        GlobalSearchScope effectiveSearchScope = ServiceManager.getService(project, MetaAnnotationUtil.class).getAllAnnotationFilesScope(project).intersectWith(moduleScope);
         return getAnnotationTypesWithChildren(annotationClass, effectiveSearchScope);
       });
       return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -123,23 +125,7 @@ public class MetaAnnotationUtil {
     return classes;
   }
 
-  private static GlobalSearchScope getAllAnnotationFilesScope(Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      Set<VirtualFile> allAnnotationFiles = new HashSet<>();
-      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
-        .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
-        DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
-          ProgressManager.checkCanceled();
-          ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
-          return true;
-        });
-      }
-
-      scope = GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles);
-      return CachedValueProvider.Result.createSingleDependency(scope, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-  }
+  protected abstract GlobalSearchScope getAllAnnotationFilesScope(Project project);
 
   private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {
     classes.add(psiClass);
