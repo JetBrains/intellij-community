@@ -19,8 +19,8 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
@@ -30,6 +30,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.stubs.DomStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
+import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +124,10 @@ final class DomCreator {
                                                                             XmlTag parentTag) {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
-      int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
+      int index = JBIterable
+        .of(parentTag.findSubTags(tag.getName(), tag.getNamespace()))
+        .filter(t -> !(t instanceof IncludedXmlTag))
+        .indexOf(t -> t == tag);
       ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();

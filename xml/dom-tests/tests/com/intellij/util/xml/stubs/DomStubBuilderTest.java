@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -106,8 +107,11 @@ public class DomStubBuilderTest extends DomStubTest {
     assertNotNull(stubTree);
   }
 
-  public void testInclusion() {
+  public void testInclusionOnStubs() {
     doInclusionTest(true);
+  }
+
+  public void testInclusionOnAST() {
     doInclusionTest(false);
   }
 
@@ -128,7 +132,8 @@ public class DomStubBuilderTest extends DomStubTest {
     }
     assertEquals(!onStubs, ((PsiFileImpl) file).isContentsLoaded());
 
-    DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
+    DomManager domManager = DomManager.getDomManager(getProject());
+    DomFileElement<Foo> element = domManager.getFileElement((XmlFile)file, Foo.class);
     assert element != null;
     List<Bar> bars = element.getRootElement().getBars();
     assertEquals(3, bars.size());
@@ -139,6 +144,12 @@ public class DomStubBuilderTest extends DomStubTest {
 
     Bar lastBar = bars.get(2);
     assertEquals("included2", assertOneElement(lastBar.getBars()).getString().getStringValue());
+
+    XmlTag[] barTags = ((XmlFile)file).getRootTag().findSubTags("bar");
+    assertSize(3, barTags);
+    for (int i = 1; i < barTags.length; i++) {
+      assertEquals(String.valueOf(i), bars.get(i), domManager.getDomElement(barTags[i]));
+    }
   }
 
   public static class TestExtender extends DomExtender<Bar> {

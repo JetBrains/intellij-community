@@ -349,7 +349,13 @@ public final class DomManagerImpl extends DomManager {
   public DomInvocationHandler getDomHandler(@Nullable XmlElement xml) {
     if (xml instanceof XmlTag) {
       return CachedValuesManager.getCachedValue(xml, chooseKey(HANDLER_KEY, HANDLER_KEY_FOR_INDEX), () ->
-        CachedValueProvider.Result.create(DomCreator.createTagHandler((XmlTag)xml), PsiModificationTracker.MODIFICATION_COUNT, this));
+      {
+        DomInvocationHandler handler = DomCreator.createTagHandler((XmlTag)xml);
+        if (handler != null && handler.getXmlTag() != xml) {
+          throw new AssertionError("Inconsistent dom, stub=" + handler.getStub());
+        }
+        return CachedValueProvider.Result.create(handler, PsiModificationTracker.MODIFICATION_COUNT, this);
+      });
     }
     if (xml instanceof XmlAttribute) {
       return CachedValuesManager.getCachedValue(xml, chooseKey(HANDLER_KEY, HANDLER_KEY_FOR_INDEX), () ->
