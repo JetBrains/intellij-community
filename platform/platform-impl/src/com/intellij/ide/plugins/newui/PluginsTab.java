@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.MultiPanel;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -106,7 +106,7 @@ public abstract class PluginsTab {
       @Override
       protected Divider createDivider() {
         Divider divider = super.createDivider();
-        divider.setBackground(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR);
+        divider.setBackground(PluginManagerConfigurableNewLayout.SEARCH_FIELD_BORDER_COLOR);
         return divider;
       }
     };
@@ -208,7 +208,7 @@ public abstract class PluginsTab {
       }
     });
 
-    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
+    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNewLayout.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
@@ -216,7 +216,7 @@ public abstract class PluginsTab {
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
-    editor.setBackground(PluginManagerConfigurableNew.SEARCH_BG_COLOR);
+    editor.setBackground(PluginManagerConfigurableNewLayout.SEARCH_BG_COLOR);
 
     String text = "Type / to see options";
 

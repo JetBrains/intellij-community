@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -24,12 +26,11 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -51,6 +52,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -62,8 +65,23 @@ public class PluginManagerConfigurableNewLayout
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider,
              PluginManagerConfigurableInfo {
 
+  public static final String ID = "preferences.pluginManager";
+  public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
+
+  public static final Color MAIN_BG_COLOR =
+    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+  public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
+  public static final Color SEARCH_FIELD_BORDER_COLOR =
+    JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
+
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;
+
+  public static final int ITEMS_PER_GROUP = 9;
+
+  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
+  private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
+  private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
@@ -115,7 +133,7 @@ public class PluginManagerConfigurableNewLayout
   @NotNull
   @Override
   public String getId() {
-    return PluginManagerConfigurableNew.ID;
+    return ID;
   }
 
   @Override
@@ -319,12 +337,12 @@ public class PluginManagerConfigurableNewLayout
   }
 
   private static int getStoredSelectionTab() {
-    int value = PropertiesComponent.getInstance().getInt(PluginManagerConfigurableNew.SELECTION_TAB_KEY, MARKETPLACE_TAB);
+    int value = PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, MARKETPLACE_TAB);
     return value < MARKETPLACE_TAB || value > INSTALLED_TAB ? MARKETPLACE_TAB : value;
   }
 
   private static void storeSelectionTab(int value) {
-    PropertiesComponent.getInstance().setValue(PluginManagerConfigurableNew.SELECTION_TAB_KEY, value, MARKETPLACE_TAB);
+    PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, MARKETPLACE_TAB);
   }
 
   private void createMarketplaceTab() {
@@ -353,7 +371,7 @@ public class PluginManagerConfigurableNewLayout
                                                 d -> new NewListPluginComponent(myPluginModel, d, mySearchListener, true));
 
         myMarketplacePanel.setSelectionListener(selectionListener);
-        PluginManagerConfigurableNew.registerCopyProvider(myMarketplacePanel);
+        registerCopyProvider(myMarketplacePanel);
 
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myMarketplaceSearchPanel.controller).setEventHandler(eventHandler);
@@ -382,9 +400,9 @@ public class PluginManagerConfigurableNewLayout
               if (allDescriptors != null) {
                 addGroup(groups, "Repository: " + host, "/repository:\"" + host + "\"", descriptors -> {
                   int allSize = allDescriptors.size();
-                  descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, PluginManagerConfigurableNew.ITEMS_PER_GROUP));
+                  descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
                   PluginsGroup.sortByName(descriptors);
-                  return allSize > PluginManagerConfigurableNew.ITEMS_PER_GROUP;
+                  return allSize > ITEMS_PER_GROUP;
                 });
               }
             }
@@ -631,7 +649,7 @@ public class PluginManagerConfigurableNewLayout
                                                                                          true));
 
         panel.setSelectionListener(selectionListener);
-        PluginManagerConfigurableNew.registerCopyProvider(panel);
+        registerCopyProvider(panel);
 
         myMarketplaceSearchPanel =
           new SearchResultPanel(marketplaceController, panel, 0, 0) {
@@ -678,8 +696,8 @@ public class PluginManagerConfigurableNewLayout
                   return;
                 }
 
-                Url url = PluginManagerConfigurableNew.createSearchUrl(parser.getUrlQuery(), 10000);
-                for (String pluginId : PluginManagerConfigurableNew.requestToPluginRepository(url)) {
+                Url url = PluginRepositoryRequests.createSearchUrl(parser.getUrlQuery(), 10000);
+                for (String pluginId : PluginRepositoryRequests.requestToPluginRepository(url)) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.descriptors.add(descriptor);
@@ -773,7 +791,7 @@ public class PluginManagerConfigurableNewLayout
                                     descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         myInstalledPanel.setSelectionListener(selectionListener);
-        PluginManagerConfigurableNew.registerCopyProvider(myInstalledPanel);
+        registerCopyProvider(myInstalledPanel);
 
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
@@ -927,7 +945,7 @@ public class PluginManagerConfigurableNewLayout
                                     descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         panel.setSelectionListener(selectionListener);
-        PluginManagerConfigurableNew.registerCopyProvider(panel);
+        registerCopyProvider(panel);
 
         myInstalledSearchCallback = updateAction -> {
           List<String> queries = new ArrayList<>();
@@ -1008,7 +1026,7 @@ public class PluginManagerConfigurableNewLayout
             }
             if (!parser.tags.isEmpty()) {
               for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!ContainerUtil.intersects(PluginManagerConfigurableNew.getTags(I.next()), parser.tags)) {
+                if (!ContainerUtil.intersects(getTags(I.next()), parser.tags)) {
                   I.remove();
                 }
               }
@@ -1109,6 +1127,161 @@ public class PluginManagerConfigurableNewLayout
         }
       }
     }
+  }
+
+  public static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
+    CopyProvider copyProvider = new CopyProvider() {
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        StringBuilder result = new StringBuilder();
+        for (CellPluginComponent pluginComponent : component.getSelection()) {
+          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+        }
+        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return !component.getSelection().isEmpty();
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
+      }
+    };
+
+    DataManager.registerDataProvider(component, dataId -> PlatformDataKeys.COPY_PROVIDER.is(dataId) ? copyProvider : null);
+  }
+
+  @NotNull
+  public static List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
+    List<String> tags = null;
+    String productCode = plugin.getProductCode();
+
+    if (plugin instanceof PluginNode) {
+      tags = ((PluginNode)plugin).getTags();
+
+      if (productCode != null && tags != null && !tags.contains("Paid")) {
+        tags = new ArrayList<>(tags);
+        tags.add(0, "Paid");
+      }
+    }
+    else if (productCode != null) {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance != null) {
+        String stamp = instance.getConfirmationStamp(productCode);
+        if (stamp != null) {
+          return Collections.singletonList(stamp.startsWith("eval:") ? "Trial" : "Purchased");
+        }
+      }
+      return Collections.singletonList("Paid");
+    }
+    if (ContainerUtil.isEmpty(tags)) {
+      return Collections.emptyList();
+    }
+
+    if (tags.size() > 1) {
+      tags = new ArrayList<>(tags);
+      if (tags.remove("EAP")) {
+        tags.add(0, "EAP");
+      }
+      if (tags.remove("Paid")) {
+        tags.add(0, "Paid");
+      }
+    }
+
+    return tags;
+  }
+
+  @NotNull
+  public static <T extends Component> T setTinyFont(@NotNull T component) {
+    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
+  }
+
+  public static int offset5() {
+    return JBUIScale.scale(5);
+  }
+
+  public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
+    return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
+  }
+
+  @Nullable
+  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+    String downloads = null;
+    if (plugin instanceof PluginNode) {
+      downloads = ((PluginNode)plugin).getDownloads();
+    }
+    return getFormatLength(downloads);
+  }
+
+  @Nullable
+  static synchronized String getFormatLength(@Nullable String len) {
+    if (!StringUtil.isEmptyOrSpaces(len)) {
+      try {
+        Long value = Long.valueOf(len);
+        if (value > 1000) {
+          return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
+        }
+        return value.toString();
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+    long date = 0;
+    if (plugin instanceof PluginNode) {
+      date = ((PluginNode)plugin).getDate();
+    }
+    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
+  }
+
+  @Nullable
+  public static String getRating(@NotNull IdeaPluginDescriptor plugin) {
+    String rating = null;
+    if (plugin instanceof PluginNode) {
+      rating = ((PluginNode)plugin).getRating();
+    }
+    if (rating != null) {
+      try {
+        if (Double.valueOf(rating) > 0) {
+          return StringUtil.trimEnd(rating, ".0");
+        }
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static synchronized String getSize(@NotNull IdeaPluginDescriptor plugin) {
+    String size = null;
+    if (plugin instanceof PluginNode) {
+      size = ((PluginNode)plugin).getSize();
+    }
+    return getFormatLength(size);
+  }
+
+  public static int getParentWidth(@NotNull Container parent) {
+    int width = parent.getWidth();
+
+    if (width > 0) {
+      Container container = parent.getParent();
+      int parentWidth = container.getWidth();
+
+      if (container instanceof JViewport && parentWidth < width) {
+        width = parentWidth;
+      }
+    }
+
+    return width;
   }
 
   private enum SortBySearchOption {
@@ -1368,7 +1541,7 @@ public class PluginManagerConfigurableNewLayout
                         @NotNull String name,
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> PluginManagerConfigurableNew.loadPlugins(descriptors, allRepositoriesMap, query));
+    addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));
   }
 
   @Override

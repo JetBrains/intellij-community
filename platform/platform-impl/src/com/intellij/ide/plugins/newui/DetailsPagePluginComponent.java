@@ -61,7 +61,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
                                     @NotNull LinkListener<String> searchListener,
                                     @NotNull IdeaPluginDescriptor plugin,
                                     boolean update) {
-    super(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    super(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     myPluginsModel = pluginsModel;
     myTagBuilder = tagBuilder;
     mySearchListener = searchListener;
@@ -89,7 +89,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   @NotNull
   private JPanel createCenterPanel(boolean update) {
-    int offset = PluginManagerConfigurableNew.offset5();
+    int offset = PluginManagerConfigurableNewLayout.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
     JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset, 0) {
       Component myVersion;
@@ -222,7 +222,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     }
 
     for (Component component : UIUtil.uiChildren(buttons)) {
-      component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      component.setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     }
 
     return buttons;
@@ -245,7 +245,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   private void updateIcon() {
-    boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
+    boolean jb = PluginManagerConfigurableNewLayout.isJBPlugin(myPlugin);
     boolean errors = myPluginsModel.hasErrors(myPlugin);
 
     myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
@@ -253,7 +253,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   private void createTagPanel() {
-    java.util.List<String> tags = PluginManagerConfigurableNew.getTags(myPlugin);
+    java.util.List<String> tags = PluginManagerConfigurableNewLayout.getTags(myPlugin);
 
     if (!tags.isEmpty()) {
       NonOpaquePanel tagPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(6)));
@@ -274,9 +274,9 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       return;
     }
 
-    String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
-    String date = PluginManagerConfigurableNew.getLastUpdatedDate(myPlugin);
-    String rating = PluginManagerConfigurableNew.getRating(myPlugin);
+    String downloads = PluginManagerConfigurableNewLayout.getDownloads(myPlugin);
+    String date = PluginManagerConfigurableNewLayout.getLastUpdatedDate(myPlugin);
+    String rating = PluginManagerConfigurableNewLayout.getRating(myPlugin);
 
     if (downloads != null || date != null || rating != null) {
       JPanel metrics = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(20)));
@@ -293,7 +293,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       if (rating != null) {
         RatesPanel ratesPanel = new RatesPanel();
         ratesPanel.setRate(rating);
-        metrics.add(PluginManagerConfigurableNew.installTiny(ratesPanel));
+        metrics.add(PluginManagerConfigurableNewLayout.setTinyFont(ratesPanel));
       }
     }
   }
@@ -302,7 +302,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
     label.setOpaque(false);
     label.setForeground(CellPluginComponent.GRAY_COLOR);
-    panel.add(PluginManagerConfigurableNew.installTiny(label));
+    panel.add(PluginManagerConfigurableNewLayout.setTinyFont(label));
   }
 
   private void createErrorPanel() {
@@ -444,11 +444,11 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
     if (!StringUtil.isEmptyOrSpaces(description) || !StringUtil.isEmptyOrSpaces(vendor) || !StringUtil.isEmptyOrSpaces(size)) {
       JPanel bottomPanel =
-        new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5()), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+        new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNewLayout.offset5()), PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
       bottomPanel.setBorder(JBUI.Borders.emptyBottom(15));
 
       JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
-      scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane.setBorder(null);
       add(scrollPane);

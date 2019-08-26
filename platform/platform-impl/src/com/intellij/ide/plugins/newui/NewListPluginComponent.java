@@ -161,12 +161,12 @@ public class NewListPluginComponent extends CellPluginComponent {
     myLayout.addLineComponent(panel);
 
     if (myMarketplace) {
-      String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
+      String downloads = PluginManagerConfigurableNewLayout.getDownloads(myPlugin);
       if (downloads != null) {
         myDownloads = GridCellPluginComponent.createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
       }
 
-      String rating = PluginManagerConfigurableNew.getRating(myPlugin);
+      String rating = PluginManagerConfigurableNewLayout.getRating(myPlugin);
       if (rating != null) {
         myRating = GridCellPluginComponent.createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
       }
@@ -186,7 +186,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   private void createTag() {
     if (myPlugin.getProductCode() != null) {
-      String tag = ContainerUtil.getFirstItem(PluginManagerConfigurableNew.getTags(myPlugin));
+      String tag = ContainerUtil.getFirstItem(PluginManagerConfigurableNewLayout.getTags(myPlugin));
       if (tag == null) {
         return;
       }
@@ -195,7 +195,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       //noinspection unchecked
       component.setListener(mySearchListener, component);
 
-      myLayout.setTagComponent(PluginManagerConfigurableNew.installTiny(component));
+      myLayout.setTagComponent(PluginManagerConfigurableNewLayout.setTinyFont(component));
     }
   }
 
@@ -368,7 +368,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @Override
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
+    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNewLayout.isJBPlugin(myPlugin), errors, disabled));
   }
 
   @Override

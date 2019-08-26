@@ -43,7 +43,7 @@ public class TagPanel extends NonOpaquePanel {
     if (newSize > oldSize) {
       for (int i = oldSize; i < newSize; i++) {
         TagComponent component = new TagComponent(tags.get(i));
-        add(PluginManagerConfigurableNew.installTiny(component));
+        add(PluginManagerConfigurableNewLayout.setTinyFont(component));
         //noinspection unchecked
         component.setListener(mySearchListener, component);
       }

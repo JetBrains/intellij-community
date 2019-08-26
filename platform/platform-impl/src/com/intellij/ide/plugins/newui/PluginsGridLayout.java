@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public class PluginsGridLayout extends AbstractLayoutManager {
   public Dimension preferredLayoutSize(@NotNull Container parent) {
     calculateCellSize(parent);
 
-    int width = PluginManagerConfigurableNew.getParentWidth(parent);
+    int width = PluginManagerConfigurableNewLayout.getParentWidth(parent);
     if (width == 0) {
       width = JBUIScale.scale(740);
     }

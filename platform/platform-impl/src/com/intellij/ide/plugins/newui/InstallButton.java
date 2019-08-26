@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
 import com.intellij.ui.JBColor;
 
 import java.awt.*;
@@ -17,7 +17,7 @@ public class InstallButton extends ColorButton {
 
   private static final Color ForegroundColor = JBColor.namedColor("Plugins.Button.installForeground", GreenColor);
   private static final Color BackgroundColor =
-    JBColor.namedColor("Plugins.Button.installBackground", PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    JBColor.namedColor("Plugins.Button.installBackground", PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
 
   @SuppressWarnings("UseJBColor")
   private static final Color FocusedBackground = JBColor.namedColor("Plugins.Button.installFocusedBackground", new Color(0xE1F6DA));

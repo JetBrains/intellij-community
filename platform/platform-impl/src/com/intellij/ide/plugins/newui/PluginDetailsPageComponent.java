@@ -88,16 +88,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     if (key == 1) {
       myEmptyPanel = new JBPanelWithEmptyText();
-      myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
+      myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurableNewLayout.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
       myEmptyPanel.setOpaque(true);
-      myEmptyPanel.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      myEmptyPanel.setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
       return myEmptyPanel;
     }
     return super.create(key);
   }
 
   private void createPluginPanel() {
-    myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
@@ -125,7 +125,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createCenterPanel() {
-    int offset = PluginManagerConfigurableNew.offset5();
+    int offset = PluginManagerConfigurableNewLayout.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
     myNameAndButtons.setYOffset(JBUIScale.scale(3));
@@ -202,7 +202,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myUninstallButton);
 
     for (Component component : myNameAndButtons.getButtonComponents()) {
-      component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      component.setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     }
   }
 
@@ -212,7 +212,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     myVersion.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurableNew.installTiny(myVersion);
+    PluginManagerConfigurableNewLayout.setTinyFont(myVersion);
     myVersion.setBorder(null);
     myVersion.setOpaque(false);
     myVersion.setForeground(CellPluginComponent.GRAY_COLOR);
@@ -227,7 +227,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersionSize = new JLabel();
     myVersionSize.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurableNew.installTiny(myVersionSize);
+    PluginManagerConfigurableNewLayout.setTinyFont(myVersionSize);
 
     int offset = JBUIScale.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
@@ -272,11 +272,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void createBottomPanel() {
     JPanel bottomPanel =
-      new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5()), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNewLayout.offset5()), PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     bottomPanel.setBorder(JBUI.Borders.empty(0, 0, 15, 20));
 
     JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
-    scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNewLayout.MAIN_BG_COLOR);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     myPanel.add(scrollPane);
@@ -409,18 +409,18 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
-    myTagPanel.setTags(PluginManagerConfigurableNew.getTags(myPlugin));
+    myTagPanel.setTags(PluginManagerConfigurableNewLayout.getTags(myPlugin));
 
     if (myMarketplace) {
-      String rating = PluginManagerConfigurableNew.getRating(myPlugin);
+      String rating = PluginManagerConfigurableNewLayout.getRating(myPlugin);
       myRating.setText(rating);
       myRating.setVisible(rating != null);
 
-      String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
+      String downloads = PluginManagerConfigurableNewLayout.getDownloads(myPlugin);
       myDownloads.setText(downloads);
       myDownloads.setVisible(downloads != null);
 
-      String size = PluginManagerConfigurableNew.getSize(myPlugin);
+      String size = PluginManagerConfigurableNewLayout.getSize(myPlugin);
       mySize.setText("Size: " + size);
       mySize.setVisible(!StringUtil.isEmptyOrSpaces(size));
     }
@@ -479,7 +479,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                                                   URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
-    String date = PluginManagerConfigurableNew.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
+    String date = PluginManagerConfigurableNewLayout.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
     myDate.setText(date);
     myDate.setVisible(date != null);
 
@@ -501,7 +501,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateIcon() {
-    boolean jb = PluginManagerConfigurableNew.isJBPlugin(myPlugin);
+    boolean jb = PluginManagerConfigurableNewLayout.isJBPlugin(myPlugin);
     boolean errors = myPluginModel.hasErrors(myPlugin);
 
     myIconLabel.setEnabled(myPlugin instanceof PluginNode || myPluginModel.isEnabled(myPlugin));

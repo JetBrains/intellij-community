@@ -3,7 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -74,7 +74,7 @@ public abstract class CellPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNewLayout.isJBPlugin(myPlugin), errors, disabled));
   }
 
   protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
@@ -102,7 +102,7 @@ public abstract class CellPluginComponent extends JPanel {
       }
     };
 
-    PluginManagerConfigurableNew.installTiny(myDescription);
+    PluginManagerConfigurableNewLayout.setTinyFont(myDescription);
     myDescription.setEditable(false);
     myDescription.setFocusable(false);
     myDescription.setOpaque(false);
@@ -151,7 +151,7 @@ public abstract class CellPluginComponent extends JPanel {
   }
 
   protected void updateColors(@NotNull EventHandler.SelectionType type) {
-    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNew.MAIN_BG_COLOR : HOVER_COLOR);
+    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNewLayout.MAIN_BG_COLOR : HOVER_COLOR);
   }
 
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
