@@ -21,7 +21,7 @@ public final class MarkdownPreviewSettings {
   private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo = new JavaFxHtmlPanelProvider().getProviderInfo();
 
   @Attribute("UseGrayscaleRendering")
-  private boolean myUseGrayscaleRendering = false;
+  private boolean myUseGrayscaleRendering = true;
 
   @Attribute("AutoScrollPreview")
   private boolean myIsAutoScrollPreview = true;
