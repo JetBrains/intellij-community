@@ -1,200 +1,198 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
-import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
-import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
-import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.actions.DescindingFilesFilter
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcsUtil.VcsUtil
+import java.io.File
 
-import java.io.File;
-import java.util.Arrays;
+class DirectoryMappingListTest : HeavyPlatformTestCase() {
+  private val BASE_PATH = "/vcs/directoryMappings/"
 
-/**
- * @author yole
- */
-public class DirectoryMappingListTest extends HeavyPlatformTestCase {
-  @NonNls private static final String BASE_PATH = "/vcs/directoryMappings/";
-  private NewMappings myMappings;
-  private VirtualFile myProjectRoot;
-  private String myRootPath;
+  private lateinit var myMappings: NewMappings
+  private lateinit var myProjectRoot: VirtualFile
+  private lateinit var myRootPath: String
+  private lateinit var myVcsManager: ProjectLevelVcsManagerImpl
 
-  @Override
-  protected void setUpProject() throws Exception {
-    final String root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH);
+  override fun setUpProject() {
+    val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
 
-    myProjectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false);
-    VirtualFile projectFile = myProjectRoot.findChild("directoryMappings.ipr");
-    myRootPath = myProjectRoot.getPath();
+    myProjectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
+    myRootPath = myProjectRoot.path
 
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
+    myProject = ProjectManagerEx.getInstanceEx().loadProject("$myRootPath/directoryMappings.ipr")
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject)
+    UIUtil.dispatchAllInvocationEvents() // startup activities
 
-    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
-    startupManager.runStartupActivities();
-    AllVcsesI vcses = AllVcses.getInstance(myProject);
-    vcses.registerManually(new MockAbstractVcs(myProject, "mock"));
-    vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
-    vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
+    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
+    startupManager.runStartupActivities()
+    val vcses = AllVcses.getInstance(myProject)
+    vcses.registerManually(MockAbstractVcs(myProject, "mock"))
+    vcses.registerManually(MockAbstractVcs(myProject, "CVS"))
+    vcses.registerManually(MockAbstractVcs(myProject, "mock2"))
 
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myMappings = new NewMappings(myProject, vcsManager, DefaultVcsRootPolicy.getInstance(myProject));
-    Disposer.register(getTestRootDisposable(), myMappings);
-    startupManager.runPostStartupActivities();
-    vcsManager.waitForInitialized();
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
+    myMappings = NewMappings(myProject, myVcsManager, DefaultVcsRootPolicy.getInstance(myProject))
+    Disposer.register(testRootDisposable, myMappings)
+    startupManager.runPostStartupActivities()
+    myVcsManager.waitForInitialized()
   }
 
-  public void testMappingsFilter() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    ((MockAbstractVcs)vcsManager.findVcsByName("mock")).setAllowNestedRoots(true);
+  fun testMappingsFilter() {
+    (myVcsManager.findVcsByName("mock") as MockAbstractVcs).setAllowNestedRoots(true)
 
-    final String[] pathsStr = {myRootPath + "/a", myRootPath + "/a/b", myRootPath + "/def",
-      myRootPath + "/a-b", myRootPath + "/a-b/d-e", myRootPath + "/a-b1/d-e"};
-    final VirtualFile a = myProjectRoot.findChild("a");
-    createChildDirectory(a, "b");
-    createChildDirectory(myProjectRoot, "def");
-    final VirtualFile ab = myProjectRoot.findChild("a-b");
-    final VirtualFile ab1 = createChildDirectory(myProjectRoot, "a-b1");
-    createChildDirectory(ab, "d-e");
-    createChildDirectory(ab1, "d-e");
+    val pathsStr = listOf("$myRootPath/a",
+                          "$myRootPath/a/b",
+                          "$myRootPath/def",
+                          "$myRootPath/a-b",
+                          "$myRootPath/a-b/d-e",
+                          "$myRootPath/a-b1/d-e")
+    val a = myProjectRoot.findChild("a")!!
+    createChildDirectory(a, "b")
+    createChildDirectory(myProjectRoot, "def")
+    val ab = myProjectRoot.findChild("a-b")!!
+    val ab1 = createChildDirectory(myProjectRoot, "a-b1")
+    createChildDirectory(ab, "d-e")
+    createChildDirectory(ab1, "d-e")
 
-    vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping(pathsStr[0], "mock"),
-                                                  new VcsDirectoryMapping(pathsStr[1], "mock"),
-                                                  new VcsDirectoryMapping(pathsStr[2], "mock"),
-                                                  new VcsDirectoryMapping(pathsStr[3], "mock2"),
-                                                  new VcsDirectoryMapping(pathsStr[4], "mock2"),
-                                                  new VcsDirectoryMapping(pathsStr[5], "mock2")));
+    myVcsManager.directoryMappings = listOf(
+      VcsDirectoryMapping(pathsStr[0], "mock"),
+      VcsDirectoryMapping(pathsStr[1], "mock"),
+      VcsDirectoryMapping(pathsStr[2], "mock"),
+      VcsDirectoryMapping(pathsStr[3], "mock2"),
+      VcsDirectoryMapping(pathsStr[4], "mock2"),
+      VcsDirectoryMapping(pathsStr[5], "mock2"))
 
-    final FilePath[] paths = new FilePath[6];
-    for (int i = 0; i < pathsStr.length; i++) {
-      final String s = pathsStr[i];
-      paths[i] = VcsUtil.getFilePath(s, true);
+    val paths = mutableListOf<FilePath>()
+    for (path in pathsStr) {
+      paths.add(VcsUtil.getFilePath(path, true))
     }
 
-    assertEquals(6, vcsManager.getDirectoryMappings().size());
-    final FilePath[] filePaths = DescindingFilesFilter.filterDescindingFiles(paths, myProject);
-    assertEquals(5, filePaths.length);
+    assertEquals(6, myVcsManager.directoryMappings.size)
+    val filePaths = DescindingFilesFilter.filterDescindingFiles(paths.toTypedArray(), myProject)
+    assertEquals(5, filePaths.size)
   }
 
-  public void testSamePrefix() {
-    VirtualFile childA = myProjectRoot.findChild("a");
-    VirtualFile childAB = myProjectRoot.findChild("a-b");
-    assertNotNull(childA);
-    assertNotNull(childAB);
+  fun testSamePrefix() {
+    val childA = myProjectRoot.findChild("a")!!
+    val childAB = myProjectRoot.findChild("a-b")!!
 
-    myMappings.setMapping(myRootPath + "/a", "CVS");
-    myMappings.setMapping(myRootPath + "/a-b", "mock2");
-    assertEquals(2, myMappings.getDirectoryMappings().size());
-    myMappings.cleanupMappings();
-    assertEquals(2, myMappings.getDirectoryMappings().size());
-    assertEquals("mock2", getVcsFor(childAB));
-    assertEquals("CVS", getVcsFor(childA));
+    myMappings.setMapping("$myRootPath/a", "CVS")
+    myMappings.setMapping("$myRootPath/a-b", "mock2")
+    assertEquals(2, myMappings.directoryMappings.size)
+    myMappings.cleanupMappings()
+    assertEquals(2, myMappings.directoryMappings.size)
+    assertEquals("mock2", getVcsFor(childAB))
+    assertEquals("CVS", getVcsFor(childA))
   }
 
-  public void testSamePrefixEmpty() {
-    VirtualFile childAB = myProjectRoot.findChild("a-b");
-    assertNotNull(childAB);
+  fun testSamePrefixEmpty() {
+    val childAB = myProjectRoot.findChild("a-b")!!
 
-    myMappings.setMapping(myRootPath + "/a", "CVS");
-    assertNull(getVcsFor(childAB));
+    myMappings.setMapping("$myRootPath/a", "CVS")
+    assertNull(getVcsFor(childAB))
   }
 
-  public void testSame() {
-    myMappings.setMapping(myRootPath + "/parent/path1", "CVS");
-    myMappings.setMapping(myRootPath + "\\parent\\path2", "CVS");
+  fun testSame() {
+    myMappings.setMapping("$myRootPath/parent/path1", "CVS")
+    myMappings.setMapping("$myRootPath\\parent\\path2", "CVS")
 
-    final String[] children = {
-      myRootPath + "\\parent\\path1", myRootPath + "/parent/path1", myRootPath + "\\parent\\path1",
-      myRootPath + "\\parent\\path2", myRootPath + "/parent/path2", myRootPath + "\\parent\\path2"
-    };
-    createFiles(children);
+    val children = listOf(
+      "$myRootPath\\parent\\path1",
+      "$myRootPath/parent/path1",
+      "$myRootPath\\parent\\path1",
+      "$myRootPath\\parent\\path2",
+      "$myRootPath/parent/path2",
+      "$myRootPath\\parent\\path2"
+    )
+    createFiles(children)
 
-    for (String child : children) {
-      myMappings.setMapping(child, "CVS");
-      myMappings.cleanupMappings();
-      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
+    for (child in children) {
+      myMappings.setMapping(child, "CVS")
+      myMappings.cleanupMappings()
+      assertEquals("cleanup failed: $child", 2, myMappings.directoryMappings.size)
     }
 
-    for (String child : children) {
-      myMappings.setMapping(child, "CVS");
-      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
+    for (child in children) {
+      myMappings.setMapping(child, "CVS")
+      assertEquals("cleanup failed: $child", 2, myMappings.directoryMappings.size)
     }
   }
 
-  public void testHierarchy() {
-    myMappings.setMapping(myRootPath + "/parent", "CVS");
+  fun testHierarchy() {
+    myMappings.setMapping("$myRootPath/parent", "CVS")
 
-    final String[] children = {
-      myRootPath + "/parent/child1", myRootPath + "/parent/middle/child2", myRootPath + "/parent/middle/child3"
-    };
-    createFiles(children);
+    val children = listOf(
+      "$myRootPath/parent/child1",
+      "$myRootPath/parent/middle/child2",
+      "$myRootPath/parent/middle/child3"
+    )
+    createFiles(children)
 
-    for (String child : children) {
-      myMappings.setMapping(child, "CVS");
-      myMappings.cleanupMappings();
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+    for (child in children) {
+      myMappings.setMapping(child, "CVS")
+      myMappings.cleanupMappings()
+      assertEquals("cleanup failed: $child", 1, myMappings.directoryMappings.size)
     }
   }
 
-  public void testNestedInnerCopy() {
-    myMappings.setMapping(myRootPath + "/parent", "CVS");
-    myMappings.setMapping(myRootPath + "/parent/child", "mock");
+  fun testNestedInnerCopy() {
+    myMappings.setMapping("$myRootPath/parent", "CVS")
+    myMappings.setMapping("$myRootPath/parent/child", "mock")
 
-    final String[] children = {
-      myRootPath + "/parent/child1",
-      myRootPath + "\\parent\\middle\\child2",
-      myRootPath + "/parent/middle/child3",
-      myRootPath + "/parent/child/inner"
-    };
-    createFiles(children);
+    val children = listOf(
+      "$myRootPath/parent/child1",
+      "$myRootPath\\parent\\middle\\child2",
+      "$myRootPath/parent/middle/child3",
+      "$myRootPath/parent/child/inner"
+    )
+    createFiles(children)
 
-    myMappings.waitMappedRootsUpdate();
+    myMappings.waitMappedRootsUpdate()
 
-    final String[] awaitedVcsNames = {"CVS", "CVS", "CVS", "mock"};
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (int i = 0; i < children.length; i++) {
-      String child = children[i];
-      final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(child));
-      assertNotNull("No file for: " + child, vf);
-      final VcsDirectoryMapping mapping = getMappingFor(vf);
-      assertNotNull("No mapping for: " + vf, mapping);
-      assertEquals(awaitedVcsNames[i], mapping.getVcs());
+    val awaitedVcsNames = listOf("CVS", "CVS", "CVS", "mock")
+    val lfs = LocalFileSystem.getInstance()
+    for (i in children.indices) {
+      val child = children[i]
+      val vf = lfs.refreshAndFindFileByIoFile(File(child))!!
+      assertNotNull("No file for: $child", vf)
+      val mapping = getMappingFor(vf)
+      assertNotNull("No mapping for: $vf", mapping)
+      assertEquals(awaitedVcsNames[i], mapping!!.vcs)
     }
   }
 
-  private void createFiles(final String[] paths) {
-    for (String path : paths) {
-      final File file = new File(FileUtil.toSystemDependentName(path));
-      boolean created = file.mkdirs();
-      assertTrue("Can't create file: " + file, created || file.isDirectory());
-      myFilesToDelete.add(file);
+  private fun createFiles(paths: List<String>) {
+    for (path in paths) {
+      val file = File(FileUtil.toSystemDependentName(path))
+      val created = file.mkdirs()
+      assertTrue("Can't create file: $file", created || file.isDirectory)
+      myFilesToDelete.add(file)
     }
-    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete)
   }
 
-  private String getVcsFor(VirtualFile file) {
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    AbstractVcs vcs = root != null ? root.vcs : null;
-    return vcs != null ? vcs.getName() : null;
+  private fun getVcsFor(file: VirtualFile): String? {
+    val root = myMappings.getMappedRootFor(file)
+    return root?.vcs?.name
   }
 
-  private VcsDirectoryMapping getMappingFor(VirtualFile file) {
-    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
-    return root != null ? root.mapping : null;
+  private fun getMappingFor(file: VirtualFile): VcsDirectoryMapping? {
+    val root = myMappings.getMappedRootFor(file)
+    return root?.mapping
   }
 }
