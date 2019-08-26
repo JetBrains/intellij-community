@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.ui.JBSwingUtilities
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
@@ -48,6 +49,7 @@ import javax.swing.event.ListSelectionEvent
 
 
 internal class GithubPullRequestsComponentFactory(private val project: Project,
+                                                  private val messageBusFactory: MessageBusFactory,
                                                   private val copyPasteManager: CopyPasteManager,
                                                   private val progressManager: ProgressManager,
                                                   private val git: Git,
@@ -76,7 +78,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                           accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
-    private val repoDataLoader: GithubPullRequestsRepositoryDataLoader
     private val listModel: CollectionListModel<GHPullRequestShort>
     private val searchHolder: GithubPullRequestSearchQueryHolder
     private val listLoader: GHPRListLoader
@@ -90,7 +91,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val serviceDisposable: Disposable
 
     init {
-      repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
       listModel = CollectionListModel()
       searchHolder = GithubPullRequestSearchQueryHolderImpl()
       listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
@@ -101,7 +101,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
       busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
       metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
-                                                              repoDataLoader, listLoader, dataLoader,
+                                                              listLoader, dataLoader,
                                                               busyStateTracker,
                                                               requestExecutor, avatarIconsProviderFactory, account.server,
                                                               repoDetails.fullPath)
@@ -109,7 +109,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                         requestExecutor, account.server, repoDetails.fullPath)
 
       serviceDisposable = Disposable {
-        Disposer.dispose(repoDataLoader)
+        Disposer.dispose(metadataService)
         Disposer.dispose(listLoader)
         Disposer.dispose(dataLoader)
       }
@@ -178,7 +178,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       fileEditorManager.openFile(file, true)
     }
 
-    private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
+    private val dataContext = GithubPullRequestsDataContext(requestExecutor, metadataService, listLoader, listSelectionHolder, dataLoader,
                                                             avatarIconsProviderFactory,
                                                             account.server, repoDetails, accountDetails, repository, remote)
 

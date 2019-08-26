@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -26,13 +27,15 @@ import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubIssueLabel
+import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
 import org.jetbrains.plugins.github.util.*
 import java.awt.Component
 import java.awt.Cursor
@@ -49,7 +52,6 @@ import javax.swing.event.DocumentEvent
 
 class GithubPullRequestsMetadataServiceImpl internal constructor(private val project: Project,
                                                                  private val progressManager: ProgressManager,
-                                                                 private val repoDataLoader: GithubPullRequestsRepositoryDataLoader,
                                                                  private val listLoader: GHPRListLoader,
                                                                  private val dataLoader: GithubPullRequestsDataLoader,
                                                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
@@ -57,12 +59,49 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                                                  private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                                  private val serverPath: GithubServerPath,
                                                                  private val repoPath: GithubFullPath)
-  : GithubPullRequestsMetadataService {
+  : GithubPullRequestsMetadataService, Disposable {
+
+  init {
+    requestExecutor.addListener(this) {
+      resetData()
+    }
+  }
+
+  private val repoCollaboratorsWithPushAccessValue = object : AtomicClearableLazyValue<List<GithubUser>>() {
+    override fun compute() = GithubApiPagesLoader
+      .loadAll(requestExecutor, progressManager.progressIndicator,
+               GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.user, repoPath.repository))
+      .filter { it.permissions.isPush }
+  }
+  private val collaboratorsWithPushAccess: List<GithubUser>
+    get() = repoCollaboratorsWithPushAccessValue.value
+
+  private val repoIssuesAssigneesValue = object : AtomicClearableLazyValue<List<GithubUser>>() {
+    override fun compute() = GithubApiPagesLoader
+      .loadAll(requestExecutor, progressManager.progressIndicator,
+               GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.user, repoPath.repository))
+  }
+  private val issuesAssignees: List<GithubUser>
+    get() = repoIssuesAssigneesValue.value
+
+  private val repoIssuesLabelsValue = object : AtomicClearableLazyValue<List<GithubIssueLabel>>() {
+    override fun compute() = GithubApiPagesLoader
+      .loadAll(requestExecutor, progressManager.progressIndicator,
+               GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.user, repoPath.repository))
+  }
+  private val issuesLabels: List<GithubIssueLabel>
+    get() = repoIssuesLabelsValue.value
+
+  override fun resetData() {
+    repoCollaboratorsWithPushAccessValue.drop()
+    repoIssuesAssigneesValue.drop()
+    repoIssuesLabelsValue.drop()
+  }
 
   override fun adjustReviewers(pullRequest: Long, parentComponent: JComponent) {
     showUsersChooser(pullRequest, "Reviewers", parentComponent,
                      { _, details ->
-                       repoDataLoader.collaboratorsWithPushAccess
+                       collaboratorsWithPushAccess
                          .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl.orEmpty(), null) }
                          .filter { it != details.author }
                      },
@@ -88,7 +127,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
   override fun adjustAssignees(pullRequest: Long, parentComponent: JComponent) {
     showUsersChooser(pullRequest, "Assignees", parentComponent,
                      { _, _ ->
-                       repoDataLoader.issuesAssignees.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl.orEmpty(), null) }
+                       issuesAssignees.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl.orEmpty(), null) }
                      },
                      { it.assignees })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "assignee") { delta, indicator ->
@@ -102,7 +141,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
   override fun adjustLabels(pullRequest: Long, parentComponent: JComponent) {
     showChooser(pullRequest, "Labels", parentComponent,
                 { SelectionListCellRenderer.Labels() },
-                { _, _ -> repoDataLoader.issuesLabels.map { GHLabel(it.nodeId, it.url, it.name, it.color) } },
+                { _, _ -> issuesLabels.map { GHLabel(it.nodeId, it.url, it.name, it.color) } },
                 { it.labels })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "label") { delta, indicator ->
         requestExecutor.execute(indicator,
@@ -356,6 +395,10 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
       override fun getIcon(value: GHLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
 
     }
+  }
+
+  override fun dispose() {
+    resetData()
   }
 
   private class CollectionDelta<out T>(oldCollection: Collection<T>, val newCollection: Collection<T>) {

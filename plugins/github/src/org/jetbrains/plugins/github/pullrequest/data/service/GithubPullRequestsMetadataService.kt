@@ -6,6 +6,9 @@ import javax.swing.JComponent
 
 interface GithubPullRequestsMetadataService {
   @CalledInAwt
+  fun resetData()
+
+  @CalledInAwt
   fun adjustReviewers(pullRequest: Long, parentComponent: JComponent)
 
   @CalledInAwt

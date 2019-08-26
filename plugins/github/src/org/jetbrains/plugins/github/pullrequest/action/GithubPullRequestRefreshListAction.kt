@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.pullrequest.action
 
@@ -14,7 +14,7 @@ class GithubPullRequestRefreshListAction : DumbAwareAction("Refresh List", null,
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = e.getRequiredData(GithubPullRequestKeys.DATA_CONTEXT)
-    context.repositoryDataLoader.reset()
+    context.metadataService.resetData()
     context.listLoader.reset()
     context.dataLoader.invalidateAllData()
   }

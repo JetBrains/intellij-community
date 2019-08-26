@@ -11,11 +11,11 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
 
 class GithubPullRequestsDataContext internal constructor(val requestExecutor: GithubApiRequestExecutor,
-                                                         internal val repositoryDataLoader: GithubPullRequestsRepositoryDataLoader,
+                                                         internal val metadataService: GithubPullRequestsMetadataService,
                                                          internal val listLoader: GHPRListLoader,
                                                          internal val selectionHolder: GithubPullRequestsListSelectionHolder,
                                                          internal val dataLoader: GithubPullRequestsDataLoader,
