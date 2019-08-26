@@ -19,6 +19,11 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
     doTest(ValidationResultType.ACCEPTED, validator, context.eventId, context)
   }
 
+  private fun doValidateEventData(validator: CustomWhiteListRule, name: String, eventData: FeatureUsageData) {
+    val context = EventContext.create("event_id", eventData.build())
+    doTest(ValidationResultType.ACCEPTED, validator, context.eventData[name] as String, context)
+  }
+
   private fun doRejectEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.REJECTED, validator, context.eventId, context)
@@ -87,21 +92,23 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
   }
 
   @Test
-  fun `test validate welcome productivity feature`() {
+  fun `test validate welcome productivity feature id`() {
     val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
-    doValidateEventId(validator, "features.welcome", FeatureUsageData())
+    val data = FeatureUsageData().addData("id", "features.welcome").addData("group", "unknown")
+    doValidateEventData(validator, "id", data)
+  }
+
+  @Test
+  fun `test validate unknown productivity feature group`() {
+    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
+    val data = FeatureUsageData().addData("id", "features.welcome").addData("group", "unknown")
+    doValidateEventData(validator, "group", data)
   }
 
   @Test
   fun `test validate third party productivity feature`() {
     val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
     doValidateEventId(validator, "third.party", FeatureUsageData())
-  }
-
-  @Test
-  fun `test validate productivity feature by id`() {
-    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
-    doValidateEventId(validator, "navigation.popup.camelprefix", FeatureUsageData())
   }
 
   @Test
