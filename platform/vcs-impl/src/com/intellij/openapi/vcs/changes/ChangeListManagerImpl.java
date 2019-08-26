@@ -10,8 +10,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,15 +19,11 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
@@ -46,9 +40,7 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
@@ -74,13 +66,12 @@ import java.util.concurrent.*;
 
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
-import static java.util.stream.Collectors.toSet;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
-  private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
     new Topic<>("LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
@@ -119,8 +110,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private boolean myModalNotificationsBlocked;
 
   private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
-
-  private boolean myExcludedConvertedToIgnored;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)getInstance(project);
@@ -300,8 +289,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void projectOpened() {
-    initializeForNewProject();
-
     VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
@@ -330,42 +317,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     List<LocalChangeList> listCopy = getChangeListsCopy();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
-    }
-  }
-
-  @CalledInAwt
-  private void initializeForNewProject() {
-    synchronized (myDataLock) {
-      if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
-        convertExcludedToIgnored();
-        myExcludedConvertedToIgnored = true;
-      }
-    }
-  }
-
-
-  /**
-   * @deprecated will be removed with idea-level ignores. Excludes will be added to ignore file in {@link VcsIgnoreFilesChecker}
-   */
-  @Deprecated
-  void convertExcludedToIgnored() {
-    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
-      for (String url : policy.getExcludeUrlsForProject()) {
-        addDirectoryToIgnoreImplicitly(VfsUtilCore.urlToPath(url));
-      }
-    }
-
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      for (String url : ModuleRootManager.getInstance(module).getExcludeRootUrls()) {
-        VirtualFile file = virtualFileManager.findFileByUrl(url);
-        if (file != null && !fileIndex.isExcluded(file)) {
-          //root is included into some inner module so it shouldn't be ignored
-          continue;
-        }
-        addDirectoryToIgnoreImplicitly(VfsUtilCore.urlToPath(url));
-      }
     }
   }
 
@@ -1262,7 +1213,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       ChangeListManagerSerialization.readExternal(element, myWorker);
     }
-    myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
     myConflictTracker.loadState(element);
   }
 
@@ -1279,7 +1229,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       worker = myWorker.copy();
     }
     ChangeListManagerSerialization.writeExternal(element, worker);
-    JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, Boolean.toString(myExcludedConvertedToIgnored), Boolean.toString(false));
     myConflictTracker.saveState(element);
     return element;
   }
