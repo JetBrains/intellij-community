@@ -70,6 +70,16 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="io.takari:maven-wrapper:0.5.5" type="repository">
+        <properties maven-id="io.takari:maven-wrapper:0.5.5" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>
