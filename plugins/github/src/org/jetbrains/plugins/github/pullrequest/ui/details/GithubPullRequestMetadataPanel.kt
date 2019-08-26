@@ -12,7 +12,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
@@ -26,8 +26,10 @@ internal class GithubPullRequestMetadataPanel(private val model: SingleValueMode
                                               private val securityService: GithubPullRequestsSecurityService,
                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                               private val metadataService: GithubPullRequestsMetadataService,
-                                              private val avatarIconsProvider: GHAvatarIconsProvider)
+                                              avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), Disposable {
+
+  private val avatarIconsProvider = avatarIconsProviderFactory.create(JBUI.uiIntValue("Github.Avatar.Size", 20), this)
 
   private val directionPanel = GithubPullRequestDirectionPanel()
   private val reviewersHandle = ReviewersListPanelHandle()

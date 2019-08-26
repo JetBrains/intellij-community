@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsM
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Graphics
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
@@ -39,9 +38,9 @@ internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullReque
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.value == null
   }
-  private val iconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
 
-  private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService, iconsProvider).apply {
+  private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService,
+                                                         avatarIconsProviderFactory).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
   private val descriptionPanel = GithubPullRequestDescriptionPanel(model).apply {
