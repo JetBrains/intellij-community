@@ -76,7 +76,7 @@ private fun push(context: Context) {
           .map {
             commitUrl(UPSOURCE_DEV_PROJECT_ID, it)?.let { url ->
               slackLink("'${it.subject}'", url)
-            } ?: it.subject
+            } ?: "'${it.subject}'"
           }.joinToString()
         val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
         val synced = commitUrl?.let { slackLink("synced", it) } ?: "synced"
