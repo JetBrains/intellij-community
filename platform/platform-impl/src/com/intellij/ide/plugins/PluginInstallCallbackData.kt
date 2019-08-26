@@ -6,4 +6,9 @@ import java.io.File
 /**
  * @author yole
  */
-data class PluginInstallCallbackData(val file: File, val pluginDescriptor: IdeaPluginDescriptor, val restartNeeded: Boolean)
+data class PluginInstallCallbackData(
+  val file: File,
+  val pluginDescriptor: IdeaPluginDescriptor,
+  val restartNeeded: Boolean,
+  val applyCallback: Runnable
+)

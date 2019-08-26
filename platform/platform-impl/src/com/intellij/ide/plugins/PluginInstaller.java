@@ -398,9 +398,9 @@ public class PluginInstaller {
   }
 
   public static boolean install(@NotNull InstalledPluginsTableModel model,
-                                 @NotNull File file,
-                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                 @Nullable Component parent) {
+                                @NotNull File file,
+                                @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                @Nullable Component parent) {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
       if (pluginDescriptor == null) {
@@ -427,29 +427,33 @@ public class PluginInstaller {
       }
 
       boolean installWithoutRestart = oldFile == null && DynamicPlugins.isUnloadSafe(pluginDescriptor);
-      if (installWithoutRestart) {
-        File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
-        if (targetFile != null) {
-          IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
-          if (targetDescriptor != null) {
-            DynamicPlugins.loadPlugin(targetDescriptor);
-            PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[] { targetDescriptor }));
-          }
-        }
-      }
-      else {
+      if (!installWithoutRestart) {
         installAfterRestart(file, false, oldFile, pluginDescriptor);
       }
 
       ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
+      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart,
+                                                     installWithoutRestart ? () -> installAndLoadPlugin(file, parent, pluginDescriptor) : () -> {}));
       return true;
     }
     catch (IOException ex) {
       MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
     }
     return false;
+  }
+
+  private static void installAndLoadPlugin(@NotNull File file,
+                                           @Nullable Component parent,
+                                           IdeaPluginDescriptorImpl pluginDescriptor) {
+    File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
+    if (targetFile != null) {
+      IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+      if (targetDescriptor != null) {
+        DynamicPlugins.loadPlugin(targetDescriptor);
+        PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[] { targetDescriptor }));
+      }
+    }
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,

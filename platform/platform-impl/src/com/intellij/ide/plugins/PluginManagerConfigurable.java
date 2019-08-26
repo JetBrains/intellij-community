@@ -135,6 +135,8 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
+  private final Map<PluginId, Runnable> myInstallCallbacks = new LinkedHashMap<>();
+
   public PluginManagerConfigurable() {
   }
 
@@ -1583,7 +1585,7 @@ public class PluginManagerConfigurable
 
   @Override
   public boolean isModified() {
-    if (myPluginModel.needRestart) {
+    if (myPluginModel.needRestart || !myInstallCallbacks.isEmpty()) {
       return true;
     }
 
@@ -1642,6 +1644,19 @@ public class PluginManagerConfigurable
                                        " won't be able to load.</body></html>");
     }
 
+    for (Runnable installCallback : myInstallCallbacks.values()) {
+      installCallback.run();
+    }
+
+    if (applyEnableDisablePlugins(enabledMap)) return;
+
+    if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
+      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
+        () -> shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+    }
+  }
+
+  private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
     List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
 
@@ -1692,14 +1707,10 @@ public class PluginManagerConfigurable
         for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
           DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
         }
-        return;
+        return true;
       }
     }
-
-    if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
-      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
-    }
+    return false;
   }
 
   @NotNull
@@ -1763,6 +1774,7 @@ public class PluginManagerConfigurable
     public void actionPerformed(@NotNull AnActionEvent e) {
       PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
         myPluginModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
+        myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(), callbackData.getApplyCallback());
 
         boolean select = myInstalledPanel == null;
 
