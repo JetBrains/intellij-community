@@ -111,10 +111,6 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
             hooks.add(body)
         }
 
-        override fun andThen(body: () -> Unit) {
-            body()
-        }
-
         suspend fun executeAfterTransaction() {
             hooks.forEach { it() }
         }
