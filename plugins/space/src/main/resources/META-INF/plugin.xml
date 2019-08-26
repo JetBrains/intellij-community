@@ -17,6 +17,8 @@
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.kotlin</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
@@ -45,6 +47,8 @@
 
         <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+            implementation="circlet.ui.clone.CircletCloneExtension"/>
     </extensions>
 
     <!--pipelines-->

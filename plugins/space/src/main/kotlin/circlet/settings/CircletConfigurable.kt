@@ -61,45 +61,15 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
 
     private fun createView(st: CircletLoginState): JComponent {
         when (st) {
-            is CircletLoginState.Disconnected -> {
-                val serverField = JTextField(st.server, 30)
-                val loginButton = JButton("Log In").apply {
-                    addActionListener {
-                        isEnabled = false
-                        signIn(serverField.text)
-                    }
-                }
-
-                val panel = JPanel(GridBagLayout())
-                var gbc = GridBag().nextLine().next().setDefaultAnchor(GridBag.LINE_START)
-                panel.add(JLabel("Organization URL:"), gbc)
-                gbc = gbc.next().insetLeft(UIUtil.DEFAULT_HGAP)
-                panel.add(serverField, gbc)
-                gbc = gbc.next().insetLeft(UIUtil.DEFAULT_HGAP).weightx(1.0)
-                panel.add(loginButton, gbc)
-                if (st.error != null) {
-                    gbc = gbc.nextLine().next().next().insets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0)
-                        .coverLine(2).weightx(1.0)
-                    val errorLabel = JLabel(st.error).apply {
-                        foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
-                    }
-                    panel.add(errorLabel, gbc)
-                }
-
-                return panel
+            is CircletLoginState.Disconnected -> return buildLoginPanel(st) { server ->
+                signIn(server)
             }
-            is CircletLoginState.Connecting -> {
-                return JPanel(FlowLayout(FlowLayout.LEADING)).apply {
-                    add(JLabel("Connection to ${st.server}\u2026"))
-                    val connectButton = JButton("Cancel")
-                    add(connectButton.apply {
-                        addActionListener {
-                            st.lt.terminate()
-                            state.value = CircletLoginState.Disconnected(st.server, null)
-                        }
-                    })
-                }
+
+            is CircletLoginState.Connecting -> return buildConnectingPanel(st) {
+                st.lt.terminate()
+                state.value = CircletLoginState.Disconnected(st.server, null)
             }
+
             is CircletLoginState.Connected -> {
                 val serverComponent = JLabel(st.server.removePrefix("https://").removePrefix("http://")).apply {
                     foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
