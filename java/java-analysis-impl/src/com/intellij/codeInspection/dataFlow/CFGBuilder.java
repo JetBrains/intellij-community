@@ -453,6 +453,19 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instruction to flush given value if it's variable.
+   *
+   * @param value value to flush
+   * @return this builder
+   */
+  public CFGBuilder flush(DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      add(new FlushVariableInstruction((DfaVariableValue)value));
+    }
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the second stack value
    * (usually pushed via {@link #pushForWrite(DfaVariableValue)}).
    * <p>
