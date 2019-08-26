@@ -1720,7 +1720,7 @@ public class JBTabsImpl extends JComponent
 
   private void drawToolbarSeparator(Graphics g) {
     Toolbar toolbar = myInfo2Toolbar.get(getSelectedInfo());
-    if (toolbar != null && toolbar.getParent() == this && !mySideComponentOnTabs && !myHorizontalSide) {
+    if (toolbar != null && toolbar.getParent() == this && !mySideComponentOnTabs && !myHorizontalSide && isHideTabs()) {
       Rectangle bounds = toolbar.getBounds();
       if (bounds.width > 0) {
         if (mySideComponentBefore) {
@@ -1783,7 +1783,9 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void drawBorder(Graphics g) {
-    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+    if (!isHideTabs()) {
+      myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+    }
   }
 
   private Max computeMaxSize() {
