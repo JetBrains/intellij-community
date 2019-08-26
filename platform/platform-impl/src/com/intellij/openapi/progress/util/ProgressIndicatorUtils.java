@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Most methods in this class are used to equip long background processes which take read actions with a special listener
@@ -264,6 +262,27 @@ public class ProgressIndicatorUtils {
     }
     finally {
       cancelProgress.cancel(false);
+    }
+  }
+
+  public static <T, E extends Throwable> T withLockCheckingPCE(@NotNull Lock lock,
+                                                               int timeout,
+                                                               @NotNull TimeUnit timeUtil,
+                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
+    try {
+      while (!lock.tryLock(timeout, timeUtil)) {
+        ProgressManager.checkCanceled();
+      }
+    }
+    catch (InterruptedException e) {
+      throw new ProcessCanceledException(e);
+    }
+
+    try {
+      return computable.compute();
+    }
+    finally {
+      lock.unlock();
     }
   }
 }
