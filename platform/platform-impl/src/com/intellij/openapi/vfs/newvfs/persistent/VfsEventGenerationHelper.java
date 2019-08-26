@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -87,7 +88,7 @@ class VfsEventGenerationHelper {
   private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
     if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent)) {
+      if (ReadAction.compute(()->ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
         return false;
       }
       String projectRootPath = openProject.getBasePath();
