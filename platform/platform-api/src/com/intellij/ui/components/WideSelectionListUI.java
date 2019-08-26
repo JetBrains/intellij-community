@@ -15,6 +15,7 @@ import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
+ * @noinspection ALL
  */
 public final class WideSelectionListUI extends BasicListUI {
   private Rectangle myPaintBounds;
@@ -30,8 +31,8 @@ public final class WideSelectionListUI extends BasicListUI {
   protected void paintCell(Graphics g,
                            int row,
                            Rectangle rowBounds,
-                           ListCellRenderer<Object> renderer,
-                           ListModel<Object> model,
+                           ListCellRenderer renderer,
+                           ListModel model,
                            ListSelectionModel selectionModel,
                            int leadSelectionIndex) {
     if (!(0 <= row && row < model.getSize())) return;
