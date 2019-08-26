@@ -114,7 +114,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
     private void start() {
       final Application application = ApplicationManager.getApplication();
-      if (!application.isUnitTestMode()) {
+      if (!(application.isUnitTestMode() || application.isHeadlessEnvironment())) {
         ReadAction.nonBlocking(() -> computeSettings())
           .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed(myFile))
           .submit(AppExecutorUtil.getAppExecutorService());
