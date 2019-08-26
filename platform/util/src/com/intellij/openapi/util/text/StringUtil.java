@@ -876,7 +876,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCode(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCode(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars.charAt(off);
     }
@@ -903,7 +908,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + toLowerCase(chars.charAt(off));
     }
