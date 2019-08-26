@@ -42,7 +42,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
     "regexp.help", "ShowUsagesPopup.showSettings",
-    "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
+    "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
   private boolean myKeymapsInitialized;
