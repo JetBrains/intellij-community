@@ -8,8 +8,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,18 +20,10 @@ import java.awt.*;
  */
 public class PluginManagerConfigurableProxy
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
-  private final SearchableConfigurable myConfigurable;
+  private final PluginManagerConfigurableNewLayout myConfigurable;
 
   public PluginManagerConfigurableProxy() {
-    if (Registry.is("show.new.layout.plugin.page", false)) {
-      myConfigurable = new PluginManagerConfigurableNewLayout();
-    }
-    else if (Registry.is("show.new.plugin.page", false)) {
-      myConfigurable = new PluginManagerConfigurableNew();
-    }
-    else {
-      myConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-    }
+    myConfigurable = new PluginManagerConfigurableNewLayout();
   }
 
   @NotNull
@@ -87,7 +77,7 @@ public class PluginManagerConfigurableProxy
 
   @Override
   public boolean isAvailable() {
-    return myConfigurable instanceof Configurable.TopComponentProvider;
+    return true;
   }
 
   @NotNull
@@ -100,15 +90,6 @@ public class PluginManagerConfigurableProxy
   @Override
   public JComponent createComponent() {
     JComponent component = myConfigurable.createComponent();
-    if (component != null && myConfigurable instanceof PluginManagerConfigurable) {
-      if (!component.getClass().equals(JPanel.class)) {
-        // some custom components do not support borders
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(BorderLayout.CENTER, component);
-        component = panel;
-      }
-      component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
-    }
     return component;
   }
 
@@ -133,22 +114,11 @@ public class PluginManagerConfigurableProxy
   }
 
   public void select(@NotNull IdeaPluginDescriptor... descriptors) {
-    if (myConfigurable instanceof PluginManagerConfigurableInfo) {
-      ((PluginManagerConfigurableInfo)myConfigurable).select(descriptors);
-    }
-    else {
-      ((PluginManagerConfigurable)myConfigurable).select(descriptors);
-    }
+    myConfigurable.select(descriptors);
   }
 
   public void enable(@NotNull IdeaPluginDescriptor... descriptors) {
-    if (myConfigurable instanceof PluginManagerConfigurableInfo) {
-      ((PluginManagerConfigurableInfo)myConfigurable).getPluginModel().changeEnableDisable(descriptors, true);
-    }
-    else {
-      ((InstalledPluginsTableModel)((PluginManagerConfigurable)myConfigurable).getOrCreatePanel().getPluginsModel())
-        .enableRows(descriptors, Boolean.TRUE);
-    }
+    myConfigurable.getPluginModel().changeEnableDisable(descriptors, true);
   }
 
   public static void showPluginConfigurableAndEnable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
