@@ -101,6 +101,10 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
     }
 
     private class Transaction : AutomationStorageTransaction {
+        override fun timestamp(): Long {
+            return System.currentTimeMillis()
+        }
+
         private val hooks = mutableListOf<suspend () -> Unit>()
 
         override fun afterTransaction(body: suspend () -> Unit) {
