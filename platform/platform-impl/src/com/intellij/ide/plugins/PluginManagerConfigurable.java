@@ -246,32 +246,7 @@ public class PluginManagerConfigurable
       }
     });
     actions.addSeparator();
-    actions.add(new DumbAwareAction("Install Plugin from Disk...") {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
-          myPluginModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
-
-          boolean select = myInstalledPanel == null;
-
-          if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
-            myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
-          }
-
-          myInstalledTab.clearSearchPanel("");
-
-          if (select) {
-            for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-              CellPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
-              if (component != null) {
-                myInstalledPanel.setSelection(component);
-                break;
-              }
-            }
-          }
-        });
-      }
-    });
+    actions.add(new InstallFromDiskAction());
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -1779,5 +1754,34 @@ public class PluginManagerConfigurable
         myInstalledTab.showSearchPanel(option);
       }
     };
+  }
+
+  private class InstallFromDiskAction extends DumbAwareAction {
+    private InstallFromDiskAction() {super("Install Plugin from Disk...");}
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
+        myPluginModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
+
+        boolean select = myInstalledPanel == null;
+
+        if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+          myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+        }
+
+        myInstalledTab.clearSearchPanel("");
+
+        if (select) {
+          for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+            CellPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
+            if (component != null) {
+              myInstalledPanel.setSelection(component);
+              break;
+            }
+          }
+        }
+      });
+    }
   }
 }
