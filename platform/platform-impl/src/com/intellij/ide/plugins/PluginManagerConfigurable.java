@@ -65,8 +65,7 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider,
-             PluginManagerConfigurableInfo {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
   public static final String ID = "preferences.pluginManager";
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
@@ -1714,12 +1713,10 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  @Override
   public MyPluginModel getPluginModel() {
     return myPluginModel;
   }
 
-  @Override
   public void select(@NotNull IdeaPluginDescriptor... descriptors) {
     if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
       myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
