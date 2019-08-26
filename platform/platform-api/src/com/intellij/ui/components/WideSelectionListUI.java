@@ -12,7 +12,6 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * @author Sergey.Malenkov
@@ -23,7 +22,7 @@ public final class WideSelectionListUI extends BasicListUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     // do not paint a line background if layout orientation is not vertical
-    myPaintBounds = !isVerticalList(c) ? null : g.getClipBounds();
+    myPaintBounds = JList.VERTICAL != list.getLayoutOrientation() ? null : g.getClipBounds();
     super.paint(g, c);
   }
 
@@ -31,8 +30,8 @@ public final class WideSelectionListUI extends BasicListUI {
   protected void paintCell(Graphics g,
                            int row,
                            Rectangle rowBounds,
-                           ListCellRenderer renderer,
-                           ListModel model,
+                           ListCellRenderer<Object> renderer,
+                           ListModel<Object> model,
                            ListSelectionModel selectionModel,
                            int leadSelectionIndex) {
     if (!(0 <= row && row < model.getSize())) return;
@@ -46,7 +45,6 @@ public final class WideSelectionListUI extends BasicListUI {
         g.setColor(background);
         g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
       }
-      //noinspection unchecked
       Component component = renderer.getListCellRendererComponent(list, value, row, selected, focused);
       if (component != null) {
         if (rendererPane != component.getParent()) rendererPane.add(component);
@@ -59,7 +57,7 @@ public final class WideSelectionListUI extends BasicListUI {
   }
 
   @Nullable
-  private static Color getBackground(@NotNull JList list, @Nullable Object value, int row) {
+  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row) {
     if (value instanceof ColoredItem) {
       Color background = ((ColoredItem)value).getColor();
       if (background != null) return background;
@@ -108,18 +106,6 @@ public final class WideSelectionListUI extends BasicListUI {
     }
   }
 
-  /**
-   * @param component the component being painted
-   * @return {@code true} if the specified component is a list with vertical orientation
-   */
-  private static boolean isVerticalList(Component component) {
-    if (component instanceof JList) {
-      JList list = (JList)component;
-      return JList.VERTICAL == list.getLayoutOrientation();
-    }
-    return false;
-  }
-
   @Override
   public Rectangle getCellBounds(JList list, int index1, int index2) {
     Rectangle bounds = super.getCellBounds(list, index1, index2);
@@ -154,17 +140,13 @@ public final class WideSelectionListUI extends BasicListUI {
       cellHeights = new int[list.getModel().getSize()];
     }
     if ((fixedCellWidth == -1) || (fixedCellHeight == -1)) {
-      ListModel dataModel = list.getModel();
+      ListModel<Object> dataModel = list.getModel();
       int dataModelSize = dataModel.getSize();
-      ListCellRenderer renderer = list.getCellRenderer();
-      int[] selectedIndices = list.getSelectedIndices();
-      boolean hasFocus = !list.isFocusable() || list.hasFocus();
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (renderer != null) {
         for (int index = 0; index < dataModelSize; index++) {
           Object value = dataModel.getElementAt(index);
-          //noinspection unchecked
-          boolean selected = Arrays.binarySearch(selectedIndices, index) >= 0;
-          Component c = renderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
           Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
           if (fixedCellWidth == -1) {
