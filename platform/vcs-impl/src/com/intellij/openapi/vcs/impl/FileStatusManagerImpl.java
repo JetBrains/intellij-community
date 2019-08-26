@@ -281,6 +281,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 
+  @Override
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
     if (myFileStatusProvider != null) {
       myFileStatusProvider.refreshFileStatusFromDocument(file, doc);

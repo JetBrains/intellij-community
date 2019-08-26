@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CompressionUtil;
@@ -103,7 +102,7 @@ public final class EditorChangeAction extends BasicUndoableAction {
     if (f == null || f instanceof LightVirtualFile) return;
 
     for (Project each : ProjectManager.getInstance().getOpenProjects()) {
-      FileStatusManagerImpl statusManager = (FileStatusManagerImpl)FileStatusManager.getInstance(each);
+      FileStatusManager statusManager = FileStatusManager.getInstance(each);
       statusManager.refreshFileStatusFromDocument(f, getDocument());
     }
   }
