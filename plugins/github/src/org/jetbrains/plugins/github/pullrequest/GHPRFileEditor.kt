@@ -20,7 +20,6 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
@@ -34,6 +33,7 @@ import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class GHPRFileEditor(progressManager: ProgressManager,
                               private val fileTypeRegistry: FileTypeRegistry,
@@ -44,6 +44,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
 
   private val propertyChangeSupport = PropertyChangeSupport(this)
   private val mainPanel = Wrapper()
+  private val contentPanel: JPanel
 
   init {
     val context = file.dataContext
@@ -85,7 +86,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       isVisible = false
     }
 
-    val contentPanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
+    contentPanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
       init {
         isOpaque = false
         border = JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2)
@@ -141,7 +142,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
   override fun getName() = file.name
 
   override fun getComponent(): JComponent = mainPanel
-  override fun getPreferredFocusedComponent(): JComponent? = mainPanel.targetComponent
+  override fun getPreferredFocusedComponent(): JComponent? = contentPanel
 
   override fun getFile() = file
   override fun isModified(): Boolean = false

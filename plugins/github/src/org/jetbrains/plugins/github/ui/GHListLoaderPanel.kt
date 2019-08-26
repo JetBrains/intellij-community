@@ -119,18 +119,6 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
     return true
   }
 
-  override fun requestFocus() {
-    contentComponent.requestFocus()
-  }
-
-  override fun requestFocusInWindow(): Boolean {
-    return contentComponent.requestFocusInWindow()
-  }
-
-  override fun requestFocus(temporary: Boolean): Boolean {
-    return contentComponent.requestFocus(temporary)
-  }
-
   override fun dispose() {}
 
   companion object {
