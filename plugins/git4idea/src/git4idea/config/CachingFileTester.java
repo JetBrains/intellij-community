@@ -33,7 +33,7 @@ abstract class CachingFileTester<T> {
 
   @NotNull
   final TestResult getResultForFile(@NotNull String filePath) {
-    return ProgressIndicatorUtils.withLockCheckingPCE(LOCK, 50, TimeUnit.MILLISECONDS, () -> {
+    return ProgressIndicatorUtils.computeWithLockAndCheckingCanceled(LOCK, 50, TimeUnit.MILLISECONDS, () -> {
       TestResult result = myFileTestMap.get(filePath);
       long currentLastModificationDate = 0L;
 

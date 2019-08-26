@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -33,6 +31,8 @@ import java.util.concurrent.locks.Lock;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
+  private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
+
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -265,24 +265,51 @@ public class ProgressIndicatorUtils {
     }
   }
 
-  public static <T, E extends Throwable> T withLockCheckingPCE(@NotNull Lock lock,
-                                                               int timeout,
-                                                               @NotNull TimeUnit timeUtil,
-                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    try {
-      while (!lock.tryLock(timeout, timeUtil)) {
-        ProgressManager.checkCanceled();
-      }
-    }
-    catch (InterruptedException e) {
-      throw new ProcessCanceledException(e);
-    }
+  public static <T, E extends Throwable> T computeWithLockAndCheckingCanceled(@NotNull Lock lock,
+                                                                              int timeout,
+                                                                              @NotNull TimeUnit timeUtil,
+                                                                              @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
+    awaitWithCheckCancelled(lock, timeout, timeUtil);
 
     try {
       return computable.compute();
     }
     finally {
       lock.unlock();
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
+    awaitWithCheckCanceled(() -> waiter.await(50, TimeUnit.MILLISECONDS));
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Future<?> waiter) {
+    awaitWithCheckCanceled(() -> {
+      try {
+        waiter.get(50, TimeUnit.MILLISECONDS);
+        return true;
+      }
+      catch (TimeoutException e) {
+        return false;
+      }
+    });
+  }
+
+  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUtil) {
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUtil));
+  }
+
+  private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+    boolean success = false;
+    while (!success) {
+      ProgressManager.checkCanceled();
+      try {
+        success = waiter.compute();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
     }
   }
 }

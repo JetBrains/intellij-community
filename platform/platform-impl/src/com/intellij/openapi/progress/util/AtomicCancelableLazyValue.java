@@ -23,7 +23,7 @@ public abstract class AtomicCancelableLazyValue<T> {
       return curValue;
     }
 
-    return ProgressIndicatorUtils.withLockCheckingPCE(myLock, TIMEOUT, TimeUnit.MILLISECONDS, () -> {
+    return ProgressIndicatorUtils.computeWithLockAndCheckingCanceled(myLock, TIMEOUT, TimeUnit.MILLISECONDS, () -> {
       T value = myValue;
       if (value == null) {
         RecursionGuard.StackStamp stamp = RecursionManager.markStack();

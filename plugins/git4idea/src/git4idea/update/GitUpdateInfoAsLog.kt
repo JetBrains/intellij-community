@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.VcsException
@@ -109,7 +109,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       }
     }
 
-    BackgroundTaskUtil.awaitWithCheckCanceled(dataSupplier)
+    ProgressIndicatorUtils.awaitWithCheckCanceled(dataSupplier)
     if (!pce.isNull) {
       LOG.warn("Failed to create a log tab.")
       throw pce.get()

@@ -64,7 +64,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.intellij.openapi.progress.util.BackgroundTaskUtil.awaitWithCheckCanceled;
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static java.util.stream.Collectors.toSet;
