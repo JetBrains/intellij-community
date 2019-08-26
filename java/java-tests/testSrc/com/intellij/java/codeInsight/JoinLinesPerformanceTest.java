@@ -1,0 +1,50 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.codeInsight;
+
+import com.intellij.JavaTestUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+
+public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  public void testHugeArray() {
+    int count = 2000;
+    String bytesOriginal = String.join(",\n", Collections.nCopies(count, "0"));
+    String bytesResult = String.join(", ", Collections.nCopies(count, "0"));
+    String text = "class X {\n" +
+                  "  <selection>byte[] data = {$bytes$}</selection>;\n" +
+                  "}";
+    String inputText = text.replace("$bytes$", bytesOriginal);
+
+    ThrowableRunnable<Throwable> action = () -> {
+      configureFromFileText("X.java", inputText);
+      performAction();
+    };
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, action)
+      .assertTiming();
+    String outputText = text.replace("$bytes$", bytesResult);
+    checkResultByText(outputText);
+  }
+
+  private void performAction() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
+    Editor editor = getEditor();
+    actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(),
+                          DataManager.getInstance().getDataContext(editor.getComponent()));
+  }
+}
