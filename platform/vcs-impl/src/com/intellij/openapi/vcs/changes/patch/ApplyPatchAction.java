@@ -111,7 +111,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       VcsNotifier.getInstance(project).notifyWeakError("Can't find patch file " + patchPath);
       return false;
     }
-    if (!isPatchFile(file)) {
+    if (!isPatchFile(vFile)) {
       VcsNotifier.getInstance(project).notifyWeakError("Selected file " + patchPath + " is not patch type file ");
       return false;
     }
