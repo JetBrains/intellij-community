@@ -3,8 +3,9 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerConfigurableNewLayout;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -122,7 +123,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       if (description != null) {
         words.addAll(getProcessedWordsWithoutStemming(description));
       }
-      addOptions(words, null, pluginName, PluginManagerConfigurable.ID, PluginManagerConfigurable.DISPLAY_NAME);
+      addOptions(words, null, pluginName, PluginManagerConfigurableNewLayout.ID, IdeBundle.message("title.plugins"));
     }
   }
 

@@ -8,7 +8,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
@@ -312,7 +312,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           Transferable transferable = e.getTransferable();
           List<File> list = FileCopyPasteUtil.getFileList(transferable);
           if (list != null && list.size() > 0) {
-            InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
+            PluginDropHandler pluginHandler = new PluginDropHandler();
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
               ProjectUtil.tryOpenFileList(null, list, "WelcomeFrame");
             }

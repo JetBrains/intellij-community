@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -12,16 +14,25 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
@@ -47,6 +58,8 @@ public class PluginInstaller {
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   private static final Object ourLock = new Object();
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+  private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   private PluginInstaller() { }
 
@@ -381,6 +394,120 @@ public class PluginInstaller {
           listener.uninstall(descriptor);
         }
       }
+    });
+  }
+
+  public static boolean install(@NotNull InstalledPluginsTableModel model,
+                                 @NotNull File file,
+                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
+                                 @Nullable Component parent) {
+    try {
+      IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+      if (pluginDescriptor == null) {
+        MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
+        return false;
+      }
+
+      if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
+        String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
+        MessagesEx.showWarningDialog(parent, message, "Install Plugin");
+        return false;
+      }
+
+      if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
+        String message = "Plugin '" + pluginDescriptor.getName() + "' is incompatible with this installation";
+        MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
+        return false;
+      }
+
+      File oldFile = null;
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
+      if (installedPlugin != null && !installedPlugin.isBundled()) {
+        oldFile = installedPlugin.getPath();
+      }
+
+      boolean installWithoutRestart = oldFile == null && DynamicPlugins.isUnloadSafe(pluginDescriptor);
+      if (installWithoutRestart) {
+        File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
+        if (targetFile != null) {
+          IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+          if (targetDescriptor != null) {
+            DynamicPlugins.loadPlugin(targetDescriptor);
+            PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[] { targetDescriptor }));
+          }
+        }
+      }
+      else {
+        installAfterRestart(file, false, oldFile, pluginDescriptor);
+      }
+
+      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
+      checkInstalledPluginDependencies(model, pluginDescriptor, parent);
+      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
+      return true;
+    }
+    catch (IOException ex) {
+      MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
+    }
+    return false;
+  }
+
+  private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
+                                                       @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+                                                       @Nullable Component parent) {
+    final Set<PluginId> notInstalled = new HashSet<>();
+    final Set<PluginId> disabledIds = new HashSet<>();
+    final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+    final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
+    for (PluginId id : dependentPluginIds) {
+      if (ArrayUtilRt.find(optionalDependentPluginIds, id) > -1) continue;
+      final boolean disabled = model.isDisabled(id);
+      final boolean enabled = model.isEnabled(id);
+      if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
+        notInstalled.add(id);
+      }
+      else if (disabled) {
+        disabledIds.add(id);
+      }
+    }
+    if (!notInstalled.isEmpty()) {
+      String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
+      String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
+      MessagesEx.showWarningDialog(parent, message, "Install Plugin");
+    }
+    if (!disabledIds.isEmpty()) {
+      final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
+      for (IdeaPluginDescriptor ideaPluginDescriptor : model.getAllPlugins()) {
+        if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
+          dependencies.add(ideaPluginDescriptor);
+        }
+      }
+      String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
+      String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
+      String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
+      if (Messages.showOkCancelDialog(message, "Install Plugin", "Install", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) == Messages.OK) {
+        model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
+      }
+    }
+  }
+
+  static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                               @Nullable final Component parent, @NotNull final Consumer<? super PluginInstallCallbackData> callback) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        final String extension = file.getExtension();
+        return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
+      }
+    };
+    descriptor.setTitle("Choose Plugin File");
+    descriptor.setDescription("JAR and ZIP archives are accepted");
+    final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
+    final VirtualFile toSelect = oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
+    FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
+      File file = VfsUtilCore.virtualToIoFile(virtualFile);
+      PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
+      install(model, file, callback, parent);
     });
   }
 }

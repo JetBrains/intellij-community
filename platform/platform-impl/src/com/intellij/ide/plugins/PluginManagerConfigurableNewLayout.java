@@ -68,7 +68,7 @@ public class PluginManagerConfigurableNewLayout
   public static final String ID = "preferences.pluginManager";
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
 
-  public static final Color MAIN_BG_COLOR =
+  @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
   public static final Color SEARCH_FIELD_BORDER_COLOR =
@@ -237,7 +237,7 @@ public class PluginManagerConfigurableNewLayout
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        InstalledPluginsManagerMain.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
+        PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
           myPluginModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
 
           boolean select = myInstalledPanel == null;
@@ -1547,7 +1547,7 @@ public class PluginManagerConfigurableNewLayout
   @Override
   @NotNull
   public String getHelpTopic() {
-    return PluginManagerConfigurable.ID;
+    return ID;
   }
 
   @Override
@@ -1689,7 +1689,7 @@ public class PluginManagerConfigurableNewLayout
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+        () -> IdeRestartHelper.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
     }
   }
 
