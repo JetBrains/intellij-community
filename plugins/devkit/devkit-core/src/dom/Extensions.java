@@ -49,6 +49,15 @@ public interface Extensions extends DomElement {
   @Deprecated
   GenericAttributeValue<IdeaPlugin> getXmlns();
 
+  /**
+   * Returns all present extensions.
+   */
+  List<Extension> collectExtensions();
+
+  /**
+   * @deprecated dummy method for DOM, use {@link #collectExtensions()}.
+   */
+  @Deprecated
   List<Extension> getExtensions();
 
   Extension addExtension();
