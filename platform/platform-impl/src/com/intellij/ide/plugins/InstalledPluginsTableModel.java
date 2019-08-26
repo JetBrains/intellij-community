@@ -17,16 +17,8 @@ import java.util.*;
 public class InstalledPluginsTableModel extends PluginTableModel {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
-  private static final String ENABLED_DISABLED = "All plugins";
-  private static final String ENABLED = "Enabled";
-  private static final String DISABLED = "Disabled";
-  private static final String BUNDLED = "Bundled";
-  private static final String CUSTOM = "Custom";
-  public static final String[] ENABLED_VALUES = {ENABLED_DISABLED, ENABLED, DISABLED, BUNDLED, CUSTOM};
-
   private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
-  private String myEnabledFilter = ENABLED_DISABLED;
 
   public InstalledPluginsTableModel() {
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -65,13 +57,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     if (!PluginManagerCore.isPluginInstalled(id)) {
-      List<IdeaPluginDescriptor> list = isPluginDescriptorAccepted(descriptor) ? view : filtered;
-      int i = list.indexOf(descriptor);
+      int i = view.indexOf(descriptor);
       if (i < 0) {
-        list.add(descriptor);
+        view.add(descriptor);
       }
       else {
-        list.set(i, descriptor);
+        view.set(i, descriptor);
       }
 
       setEnabled(descriptor, true);
@@ -141,20 +132,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
     updatePluginDependencies();
     warnAboutMissedDependencies(value, ideaPluginDescriptors);
-    hideNotApplicablePlugins(value, ideaPluginDescriptors);
-  }
-
-  private void hideNotApplicablePlugins(Boolean value, final IdeaPluginDescriptor... ideaPluginDescriptors) {
-    if (!value && ENABLED.equals(myEnabledFilter) || (value && DISABLED.equals(myEnabledFilter))) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
-          view.remove(ideaPluginDescriptor);
-          filtered.add(ideaPluginDescriptor);
-        }
-        fireTableDataChanged();
-      });
-    }
   }
 
   public boolean isEnabled(final PluginId pluginId) {
@@ -169,19 +146,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public Map<PluginId, Boolean> getEnabledMap() {
     return myEnabled;
-  }
-
-  @Override
-  public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
-    if (!myEnabledFilter.equals(ENABLED_DISABLED)) {
-      final boolean enabled = isEnabled(descriptor.getPluginId());
-      if (enabled && myEnabledFilter.equals(DISABLED)) return false;
-      if (!enabled && myEnabledFilter.equals(ENABLED)) return false;
-      final boolean bundled = descriptor.isBundled();
-      if (bundled && myEnabledFilter.equals(CUSTOM)) return false;
-      if (!bundled && myEnabledFilter.equals(BUNDLED)) return false;
-    }
-    return true;
   }
 
   private void warnAboutMissedDependencies(final Boolean newEnabledState, final IdeaPluginDescriptor... descriptorsWithChangedEnabledState) {
@@ -249,7 +213,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
 
         updatePluginDependencies();
-        hideNotApplicablePlugins(newEnabledState, pluginDependencies.toArray(new IdeaPluginDescriptor[0]));
       }
     }
   }
