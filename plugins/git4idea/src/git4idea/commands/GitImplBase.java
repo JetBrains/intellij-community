@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -201,16 +202,27 @@ public abstract class GitImplBase implements Git {
   }
 
   /**
-   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
+   * Only public because of {@link GitExecutableValidator#isExecutableValid()}
    */
   @NotNull
   public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
     Map<String, String> environment = new HashMap<>(5);
-    environment.put("GIT_TRACE", "0");
-    if (GitVersionSpecialty.ENV_GIT_TRACE_PACK_ACCESS_ALLOWED.existsIn(version)) environment.put("GIT_TRACE_PACK_ACCESS", "");
-    environment.put("GIT_TRACE_PACKET", "");
-    environment.put("GIT_TRACE_PERFORMANCE", "0");
-    environment.put("GIT_TRACE_SETUP", "0");
+    int logLevel = Registry.intValue("git.execution.debuginfo");
+    if (logLevel == 0) {
+      environment.put("GIT_TRACE", "0");
+      if (GitVersionSpecialty.ENV_GIT_TRACE_PACK_ACCESS_ALLOWED.existsIn(version)) environment.put("GIT_TRACE_PACK_ACCESS", "");
+      environment.put("GIT_TRACE_PACKET", "");
+      environment.put("GIT_TRACE_PERFORMANCE", "0");
+      environment.put("GIT_TRACE_SETUP", "0");
+    }
+    else {
+      String logFile = PathManager.getLogPath() + "/gittrace.log";
+      if ((logLevel & 1) == 1) environment.put("GIT_TRACE", logFile);
+      if ((logLevel & 2) == 2) environment.put("GIT_TRACE_PACK_ACCESS", logFile);
+      if ((logLevel & 4) == 4) environment.put("GIT_TRACE_PACKET", logFile);
+      if ((logLevel & 8) == 8) environment.put("GIT_TRACE_PERFORMANCE", logFile);
+      if ((logLevel & 16) == 16) environment.put("GIT_TRACE_SETUP", logFile);
+    }
     return environment;
   }
 
