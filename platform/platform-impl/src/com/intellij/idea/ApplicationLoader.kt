@@ -545,7 +545,7 @@ private fun reportPluginError() {
     val description = event.description
     if (PluginManagerCore.EDIT == description) {
       val ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null)
-      PluginManagerConfigurable.showPluginConfigurable(ideFrame as JFrame, null)
+      PluginManagerConfigurableProxy.showPluginConfigurable(ideFrame as JFrame, null)
       return@Notification
     }
 
