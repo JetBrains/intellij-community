@@ -518,7 +518,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         filesQueue.addAll(Arrays.asList(file.getChildren()));
         continue;
       }
-      if (PatchFileType.NAME.equals(file.getFileType().getName())) {
+      if (PatchFileType.isPatchFile(file)) {
         result.add(file);
       }
     }
