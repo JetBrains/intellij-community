@@ -15,6 +15,9 @@
     <action id="com.intellij.jps.cache.JpsCacheSimpleAction" class="com.intellij.jps.cache.JpsCacheSimpleAction" text="Pull JPS Chache ">
       <add-to-group group-id="BuildMenu" anchor="first"/>
     </action>
+    <action id="com.intellij.jps.cache.JpsBinaryDataSyncAction" class="com.intellij.jps.cache.JpsBinaryDataSyncAction" text="Sync JPS Binary Data">
+      <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsCacheSimpleAction" group-id="BuildMenu"/>
+    </action>
   </actions>
 
   <project-components>
