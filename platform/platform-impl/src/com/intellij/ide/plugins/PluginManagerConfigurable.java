@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -1291,6 +1292,29 @@ public class PluginManagerConfigurable
   public static void shutdownOrRestartApp(@NotNull String title) {
     if (showRestartDialog(title) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
+    }
+  }
+
+  public static void showPluginConfigurableAndEnable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      configurable.getPluginModel().changeEnableDisable(descriptors, true);
+      configurable.select(descriptors);
+    });
+  }
+
+  public static void showPluginConfigurable(@Nullable Component parent,
+                                            @Nullable Project project,
+                                            @NotNull IdeaPluginDescriptor... descriptors) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    Runnable init = () -> configurable.select(descriptors);
+    ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+
+    if (parent != null) {
+      util.editConfigurable(parent, configurable, init);
+    }
+    else {
+      util.editConfigurable(project, configurable, init);
     }
   }
 
