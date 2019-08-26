@@ -819,7 +819,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(vDir.getUrl() + "/" + childName, disposable, listener);
       assertNull(pointer.getFile());
 
-      UIUtil.dispatchAllInvocationEvents();
+      long start = System.currentTimeMillis();
+      do {
+        UIUtil.dispatchAllInvocationEvents();
+        TimeoutUtil.sleep(1);
+      } while (pointer.getFile() == null && System.currentTimeMillis() - start < 10_000);
       assertNotNull(pointer.getFile());
 
       assertEquals("[before:false, after:true]", listener.log.toString());
