@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -46,7 +47,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 30;
   public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
 
-  private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
+  private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
   @Override
   public void componentsInitialized() {
@@ -106,17 +107,17 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        ScheduledFuture<?> future =
-          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project, null),
-                                                             LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
-                                                             LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
+        ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
+          () -> FUStateUsagesLogger.create().logProjectStates(project, new EmptyProgressIndicator()),
+          LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
+          LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
         LegacyFUSProjectUsageTrigger.cleanup(project);
       }
 
       @Override
       public void projectClosed(@NotNull Project project) {
-        Future future = myPersistStatisticsSessionsMap.remove(project);
+        Future<?> future = myPersistStatisticsSessionsMap.remove(project);
         if (future != null) {
           future.cancel(true);
         }

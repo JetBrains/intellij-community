@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
@@ -47,6 +48,7 @@ public class NonBlockingReadActionImpl<T>
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
   private final @Nullable List<Object> myCoalesceEquality;
+  private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
@@ -54,7 +56,7 @@ public class NonBlockingReadActionImpl<T>
   private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
-    this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null);
+    this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
   }
 
   private NonBlockingReadActionImpl(@NotNull Callable<T> computation,
@@ -62,11 +64,13 @@ public class NonBlockingReadActionImpl<T>
                                     @NotNull ContextConstraint[] constraints,
                                     @NotNull BooleanSupplier[] cancellationConditions,
                                     @NotNull Set<? extends Expiration> expirationSet,
-                                    @Nullable List<Object> coalesceEquality) {
+                                    @Nullable List<Object> coalesceEquality,
+                                    @Nullable ProgressIndicator progressIndicator) {
     super(constraints, cancellationConditions, expirationSet);
     myComputation = computation;
     myEdtFinish = edtFinish;
     myCoalesceEquality = coalesceEquality;
+    myProgressIndicator = progressIndicator;
   }
 
   @NotNull
@@ -75,7 +79,7 @@ public class NonBlockingReadActionImpl<T>
                                                    @NotNull BooleanSupplier[] cancellationConditions,
                                                    @NotNull Set<? extends Expiration> expirationSet) {
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet,
-                                           myCoalesceEquality);
+                                           myCoalesceEquality, myProgressIndicator);
   }
 
   @Override
@@ -99,9 +103,16 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
+  public NonBlockingReadAction<T> expireWith(@NotNull ProgressIndicator progressIndicator) {
+    LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
+    return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
+                                           myCoalesceEquality, progressIndicator);
+  }
+
+  @Override
   public NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction) {
     return new NonBlockingReadActionImpl<>(myComputation, Pair.create(modality, uiThreadAction),
-                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myCoalesceEquality);
+                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myCoalesceEquality, myProgressIndicator);
   }
 
   @Override
@@ -109,7 +120,7 @@ public class NonBlockingReadActionImpl<T>
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
-                                           ContainerUtil.newArrayList(equality));
+                                           ContainerUtil.newArrayList(equality), myProgressIndicator);
   }
 
   @Override
@@ -183,7 +194,14 @@ public class NonBlockingReadActionImpl<T>
 
     void transferToBgThread(@NotNull ReschedulingAttempt previousAttempt) {
       backendExecutor.execute(() -> {
-        final ProgressIndicator indicator = new EmptyProgressIndicator(creationModality);
+        final ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
+          @NotNull
+          @Override
+          public ModalityState getModalityState() {
+            return creationModality;
+          }
+        } : new EmptyProgressIndicator(creationModality);
+
         currentIndicator = indicator;
         try {
           ReadAction.run(() -> {
@@ -241,6 +259,10 @@ public class NonBlockingReadActionImpl<T>
     private boolean checkObsolete() {
       if (Promises.isRejected(promise)) return true;
       if (myExpireCondition != null && myExpireCondition.getAsBoolean()) {
+        promise.cancel();
+        return true;
+      }
+      if (myProgressIndicator != null && myProgressIndicator.isCanceled()) {
         promise.cancel();
         return true;
       }

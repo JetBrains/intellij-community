@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.reference.SoftReference
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -42,7 +43,7 @@ private fun getPackages(project: Project, indicator: ProgressIndicator?): Cancel
         PyPackageManager.getInstance(sdk).getRequirements(module)?.apply {
           val packageNames = getPyPiPackagesCache()
           filter { it.name.toLowerCase() in packageNames }.forEach { req ->
-            indicator?.checkCanceled()
+            ProgressManager.checkCanceled()
             val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
             result.add(MetricEvent("python_package_installed",
                                    usageData.copy() // Not to calculate interpreter on each call
@@ -53,7 +54,7 @@ private fun getPackages(project: Project, indicator: ProgressIndicator?): Cancel
       }
     }
     result
-  }).expireWith(project).submit(NonUrgentExecutor.getInstance())
+  }).withProgressIndicator(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance())
 }
 
 private fun getPyPiPackagesCache() = PyPIPackageCache.getInstance().packageNames.map(String::toLowerCase).toSet()

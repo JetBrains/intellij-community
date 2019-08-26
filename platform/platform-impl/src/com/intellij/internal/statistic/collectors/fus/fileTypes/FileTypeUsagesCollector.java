@@ -14,6 +14,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
@@ -45,7 +46,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
+  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     final Set<MetricEvent> events = new HashSet<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager == null) {
@@ -60,9 +61,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
       promises.add(ReadAction.nonBlocking(() -> {
         IProjectStore stateStore = ProjectKt.getStateStore(project);
         FileTypeIndex.processFiles(fileType, file -> {
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
+          ProgressManager.checkCanceled();
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
           if (!stateStore.isProjectFile(file)) {
             events.add(new MetricEvent("file.in.project", newFeatureUsageData(fileType)));
@@ -70,7 +69,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
-      }).expireWith(project).submit(NonUrgentExecutor.getInstance()));
+      }).expireWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
     Promises.all(promises).onSuccess(__ -> result.setResult(events)).onError(t -> result.setError(t));

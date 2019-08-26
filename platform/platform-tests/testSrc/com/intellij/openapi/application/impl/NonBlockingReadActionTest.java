@@ -4,6 +4,9 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -54,6 +57,21 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       .submit(executor);
     assertFalse(semaphore.isUp());
     executor.submit(() -> {}).get(10, TimeUnit.SECONDS); // shouldn't fail by timeout
+    waitForPromise(promise);
+  }
+
+  public void testStopExecutionWhenOuterProgressIndicatorStopped() {
+    ProgressIndicator outerIndicator = new EmptyProgressIndicator();
+    CancellablePromise<Object> promise = ReadAction
+      .nonBlocking(() -> {
+        //noinspection InfiniteLoopStatement
+        while (true) {
+          ProgressManager.getInstance().getProgressIndicator().checkCanceled();
+        }
+      })
+      .expireWith(outerIndicator)
+      .submit(AppExecutorUtil.getAppExecutorService());
+    outerIndicator.cancel();
     waitForPromise(promise);
   }
 }

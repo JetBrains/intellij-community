@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -40,7 +41,7 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
         .filter { it.isSuspendThreadSupported() }
         .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
         .map {
-          indicator?.checkCanceled()
+          ProgressManager.checkCanceled()
           val data = FeatureUsageData()
           data.addData("suspendPolicy", breakpointManager.getBreakpointDefaults(it).getSuspendPolicy().toString())
           addType(it, data)
@@ -84,7 +85,7 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
       }
 
       res
-    }).expireWith(project).submit(NonUrgentExecutor.getInstance())
+    }).withProgressIndicator(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance())
   }
 }
 

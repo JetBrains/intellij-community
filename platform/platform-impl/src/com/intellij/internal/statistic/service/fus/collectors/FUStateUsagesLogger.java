@@ -27,7 +27,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
 
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
-  public void logProjectStates(@NotNull Project project, @Nullable ProgressIndicator indicator) {
+  public void logProjectStates(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     synchronized (LOCK) {
       for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
         final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
