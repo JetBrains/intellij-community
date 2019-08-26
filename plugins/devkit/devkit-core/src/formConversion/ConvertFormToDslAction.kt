@@ -431,8 +431,10 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
     return bindingWords.count { it in elementWords } > 1
   }
 
-  private fun convertComponentText(component: IComponent) =
-    convertStringDescriptor(component.getPropertyValue("text") as StringDescriptor)
+  private fun convertComponentText(component: IComponent): String {
+    val propertyValue = component.getPropertyValue("text") ?: return ""
+    return convertStringDescriptor(propertyValue as StringDescriptor)
+  }
 
   private fun convertStringDescriptor(text: StringDescriptor): String {
     text.value?.let {
