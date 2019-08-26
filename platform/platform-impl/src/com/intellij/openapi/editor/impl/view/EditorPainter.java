@@ -1085,9 +1085,11 @@ public class EditorPainter implements TextDrawingCallback {
           for (Inlay inlay : inlaysAbove) {
             if (curY <= myClip.y + myYShift) break;
             int height = inlay.getHeightInPixels();
-            int newY = curY - height;
-            inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, newY, inlay.getWidthInPixels(), height), attributes);
-            curY = newY;
+            if (height > 0) {
+              int newY = curY - height;
+              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, newY, inlay.getWidthInPixels(), height), attributes);
+              curY = newY;
+            }
           }
         }
         curY = y + myLineHeight;
@@ -1097,8 +1099,10 @@ public class EditorPainter implements TextDrawingCallback {
           for (Inlay inlay : inlaysBelow) {
             if (curY >= myClip.y + myClip.height + myYShift) break;
             int height = inlay.getHeightInPixels();
-            inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, curY, inlay.getWidthInPixels(), height), attributes);
-            curY += height;
+            if (height > 0) {
+              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, curY, inlay.getWidthInPixels(), height), attributes);
+              curY += height;
+            }
           }
         }
         visLinesIterator.advance();
