@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 /**
  * Policy which defines explicit focus component cycle.
  */
-public class ListFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy {
+public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
 
   private final Component[] myComponents;
   private final TObjectIntHashMap<Component> myComponentToIndex;
@@ -22,18 +23,18 @@ public class ListFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy
   }
 
   @Override
+  protected boolean accept(Component aComponent) {
+    return super.accept(aComponent) && aComponent.isShowing();
+  }
+
+  @Override
   public Component getFirstComponent(Container aContainer) {
-    return ArrayUtil.getFirstElement(myComponents);
+    return getNextComponent(0);
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
-    return ArrayUtil.getLastElement(myComponents);
-  }
-
-  @Override
-  protected boolean accept(Component aComponent) {
-    return super.accept(aComponent) && aComponent.isShowing();
+    return getPreviousComponent(myComponents.length - 1);
   }
 
   @Override
@@ -41,7 +42,26 @@ public class ListFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    for (int index = myComponentToIndex.get(aComponent) + 1; index < myComponents.length; index++) {
+    return getNextComponent(myComponentToIndex.get(aComponent) + 1);
+  }
+
+  @Override
+  public Component getComponentBefore(Container aContainer, Component aComponent) {
+    if (!myComponentToIndex.containsKey(aComponent)) {
+      return null;
+    }
+    return getPreviousComponent(myComponentToIndex.get(aComponent) - 1);
+  }
+
+  @Nullable
+  private Component getNextComponent(int startIndex) {
+    for (int index = startIndex; index < myComponents.length; index++) {
+      Component result = myComponents[index];
+      if (accept(result)) {
+        return result;
+      }
+    }
+    for (int index = 0; index < startIndex; index++) {
       Component result = myComponents[index];
       if (accept(result)) {
         return result;
@@ -50,12 +70,15 @@ public class ListFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy
     return null;
   }
 
-  @Override
-  public Component getComponentBefore(Container aContainer, Component aComponent) {
-    if (!myComponentToIndex.containsKey(aComponent)) {
-      return null;
+  @Nullable
+  private Component getPreviousComponent(int startIndex) {
+    for (int index = startIndex; index >= 0; index--) {
+      Component result = myComponents[index];
+      if (accept(result)) {
+        return result;
+      }
     }
-    for (int index = myComponentToIndex.get(aComponent) - 1; index >= 0; index--) {
+    for (int index = myComponents.length - 1; index > startIndex; index--) {
       Component result = myComponents[index];
       if (accept(result)) {
         return result;
