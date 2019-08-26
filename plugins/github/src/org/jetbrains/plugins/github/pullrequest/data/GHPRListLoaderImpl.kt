@@ -33,10 +33,13 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
                                   private val repoPath: GithubFullPath,
                                   private val listModel: CollectionListModel<GHPullRequestShort>,
                                   private val searchQueryHolder: GithubPullRequestSearchQueryHolder)
-  : GHListLoaderBase<GHPullRequestShort>(progressManager), GHPRListLoader {
-  private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
-    GHGQLRequests.PullRequest.search(serverPath, buildQuery(searchQueryHolder.query), p)
-  })
+  : GHGQLPagedListLoader<GHPullRequestShort>(progressManager,
+                                             SimpleGHGQLPagesLoader(requestExecutor, { p ->
+                                               GHGQLRequests.PullRequest.search(serverPath, buildQuery(repoPath, searchQueryHolder.query),
+                                                                                p)
+                                             })),
+    GHPRListLoader {
+
   override val hasLoadedItems: Boolean
     get() = !listModel.isEmpty
 
@@ -60,14 +63,6 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     Disposer.register(this, resetDisposable)
   }
 
-  private fun buildQuery(searchQuery: GithubPullRequestSearchQuery?): String {
-    return GithubApiSearchQueryBuilder.searchQuery {
-      qualifier("type", GithubIssueSearchType.pr.name)
-      qualifier("repo", repoPath.fullName)
-      searchQuery?.buildApiSearchQuery(this)
-    }
-  }
-
   override val filterNotEmpty: Boolean
     get() = !searchQueryHolder.query.isEmpty()
 
@@ -75,17 +70,12 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     searchQueryHolder.query = GithubPullRequestSearchQuery.parseFromString("state:open")
   }
 
-  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
-
-  override fun doLoadMore(indicator: ProgressIndicator): List<GHPullRequestShort>? = loader.loadNext(indicator)
-
   override fun handleResult(list: List<GHPullRequestShort>) {
     listModel.add(list)
     sizeChecker.start()
   }
 
   override fun reset() {
-    loader.reset()
     super.reset()
     listModel.removeAll()
 
@@ -158,6 +148,16 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     override fun dispose() {
       scheduler?.cancel(true)
       progressIndicator?.cancel()
+    }
+  }
+
+  companion object {
+    private fun buildQuery(repoPath: GithubFullPath, searchQuery: GithubPullRequestSearchQuery?): String {
+      return GithubApiSearchQueryBuilder.searchQuery {
+        qualifier("type", GithubIssueSearchType.pr.name)
+        qualifier("repo", repoPath.fullName)
+        searchQuery?.buildApiSearchQuery(this)
+      }
     }
   }
 }

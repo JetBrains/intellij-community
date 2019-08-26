@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -17,10 +16,11 @@ class GHPRTimelineLoader(progressManager: ProgressManager,
                          repoPath: GithubFullPath,
                          number: Long,
                          private val listModel: GHPRTimelineMergingModel)
-  : GHListLoaderBase<GHPRTimelineItem>(progressManager) {
-  private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
-    GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.user, repoPath.repository, number, p)
-  })
+  : GHGQLPagedListLoader<GHPRTimelineItem>(progressManager,
+                                           SimpleGHGQLPagesLoader(requestExecutor, { p ->
+                                             GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.user, repoPath.repository,
+                                                                                      number, p)
+                                           })) {
   override val hasLoadedItems: Boolean
     get() = listModel.size != 0
 
@@ -28,15 +28,9 @@ class GHPRTimelineLoader(progressManager: ProgressManager,
     listModel.add(list.filter { it !is GHPRTimelineItem.Unknown })
   }
 
-  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
-
-  override fun doLoadMore(indicator: ProgressIndicator) = loader.loadNext(indicator)
-
   override fun reset() {
-    loader.reset()
     super.reset()
     listModel.removeAll()
-
     loadMore()
   }
 }
