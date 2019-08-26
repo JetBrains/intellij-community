@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -133,7 +135,15 @@ class FeatureUsageData {
     return this
   }
 
-  fun addInputEvent(event: AnActionEvent): FeatureUsageData {
+  fun addInputEvent(event: InputEvent?, place: String?): FeatureUsageData {
+    val inputEvent = ShortcutDataProvider.getInputEventText(event, place)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: AnActionEvent?): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getActionEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent

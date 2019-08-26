@@ -41,8 +41,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
   private final Map<AnAction, String> myOtherActions = ContainerUtil.createWeakMap();
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
-    "tooltip.actions.execute", "tooltip.actions.show.all", "tooltip.actions.show.description.gear",
-    "tooltip.actions.show.description.shortcut", "tooltip.actions.show.description.morelink",
     "regexp.help", "ShowUsagesPopup.showSettings",
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
