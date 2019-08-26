@@ -1,0 +1,130 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions;
+
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.HashMap;
+
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+
+public class CopyReferencePopup {
+  public static final Key<String> COPY_REFERENCE_KEY = Key.create("COPY_REFERENCE_KEY");
+  private static final Logger LOG = Logger.getInstance(CopyReferencePopup.class);
+  private static final String COPY_REFERENCE_POPUP_PLACE = "CopyReferencePopupPlace";
+  private static final int DEFAULT_WIDTH = JBUIScale.scale(600);
+
+  public static void showPopup(@NotNull AnActionEvent e, @Nullable String className) {
+    AnAction popupGroup = ActionManager.getInstance().getAction("CopyReferencePopup");
+    if (!(popupGroup instanceof DefaultActionGroup)) {
+      LOG.warn("Cannot find 'CopyReferencePopup' action to show popup");
+      return;
+    }
+
+    DataContext context = cloneDataContext(e);
+    Condition<AnAction> selectionCondition = action -> action.getClass().getSimpleName().equals(className);
+    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup("Copy", (ActionGroup)popupGroup, e.getDataContext(), true, true, false, true,
+                                                            null, -1, selectionCondition, COPY_REFERENCE_POPUP_PLACE) {
+      @Override
+      protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
+        return new PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
+          private ErrorLabel myInfoLabel;
+
+          @Override
+          protected JComponent createItemComponent() {
+            myTextLabel = new ErrorLabel();
+            myTextLabel.setOpaque(true);
+            myTextLabel.setBorder(JBUI.Borders.empty(1));
+
+            myInfoLabel = new ErrorLabel();
+            myInfoLabel.setOpaque(true);
+            myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
+            myInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+            JPanel textPanel = new JPanel(new BorderLayout());
+            textPanel.add(myTextLabel, BorderLayout.WEST);
+            textPanel.add(myInfoLabel, BorderLayout.CENTER);
+            return layoutComponent(textPanel);
+          }
+
+          @Override
+          protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
+                                            @NotNull PopupFactoryImpl.ActionItem actionItem,
+                                            boolean isSelected) {
+            AnAction action = actionItem.getAction();
+            AnActionEvent event = new AnActionEvent(e.getInputEvent(),
+                                                    context,
+                                                    COPY_REFERENCE_POPUP_PLACE,
+                                                    action.getTemplatePresentation().clone(),
+                                                    e.getActionManager(),
+                                                    e.getModifiers());
+
+            ActionUtil.performDumbAwareUpdate(true, action, event, false);
+
+            String property = event.getPresentation().getClientProperty(COPY_REFERENCE_KEY);
+            if (property != null) {
+              myInfoLabel.setText(property);
+            }
+            myInfoLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+
+            MnemonicNavigationFilter<Object> filter = myStep.getMnemonicNavigationFilter();
+            int pos = filter == null ? -1 : filter.getMnemonicPos(actionItem);
+            if (pos != -1) {
+              String text = myTextLabel.getText();
+              text = text.substring(0, pos) + text.substring(pos + 1);
+              myTextLabel.setText(text);
+              myTextLabel.setDisplayedMnemonicIndex(pos);
+            }
+          }
+        };
+      }
+
+      @Override
+      protected boolean isResizable() {
+        return true;
+      }
+    };
+
+    updatePopupSize(popup);
+
+    popup.showInBestPositionFor(e.getDataContext());
+  }
+
+  private static void updatePopupSize(@NotNull ListPopup popup) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      popup.getContent().setPreferredSize(new Dimension(DEFAULT_WIDTH, popup.getContent().getPreferredSize().height));
+      popup.getContent().setSize(new Dimension(DEFAULT_WIDTH, popup.getContent().getPreferredSize().height));
+      popup.setSize(popup.getContent().getPreferredSize());
+    });
+  }
+
+  @NotNull
+  private static DataContext cloneDataContext(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    HashMap<String, Object> map = new HashMap<>();
+    map.put(CommonDataKeys.PSI_ELEMENT.getName(), CommonDataKeys.PSI_ELEMENT.getData(dataContext));
+    map.put(CommonDataKeys.PROJECT.getName(), CommonDataKeys.PROJECT.getData(dataContext));
+    map.put(LangDataKeys.PSI_ELEMENT_ARRAY.getName(), LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
+    map.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    map.put(CommonDataKeys.EDITOR.getName(), CommonDataKeys.EDITOR.getData(dataContext));
+
+    return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
+  }
+}

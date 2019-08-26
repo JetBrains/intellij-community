@@ -746,5 +746,7 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
 
     <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
+
+    <experimentalFeature id="copy.reference.popup" percentOfUsers="100"/>
   </extensions>
 </idea-plugin>

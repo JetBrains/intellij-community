@@ -109,8 +109,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
-    <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceAction" >
-      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
+    <action id="CopyReferencePopupAction" class="com.intellij.ide.actions.CopyReferencePopupAction">
+      <add-to-group group-id="CopyFileReference" anchor="first"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">

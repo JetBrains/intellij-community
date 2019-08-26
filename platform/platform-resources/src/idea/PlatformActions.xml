@@ -1312,5 +1312,19 @@
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
+
+    <group id="CopyReferencePopup">
+      <group id="CopyFileReference">
+        <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path"/>
+        <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>
+        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Content Root Path"/>
+        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Source Root Path"/>
+      </group>
+      <separator/>
+      <group id="CopyExternalReferenceGroup">
+        <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox Reference"
+                icon="AllIcons.Actions.Copy"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

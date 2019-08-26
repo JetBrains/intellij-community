@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.ide.DataManager
+import com.intellij.idea.Bombed
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,6 +27,7 @@ class CreateTBXReferenceTest : BasePlatformTestCase() {
     doTest("jetbrains://idea/navigate/reference?project=light_temp&fqn=X&selection=3:3-7:3")
   }
 
+  @Bombed(year = 2019, month = 9, day = 10, user = "kradima")
   fun testMultipleSelections() {
     doTest(
       "jetbrains://idea/navigate/reference?project=light_temp&path=MultipleSelections.java:11:5&selection1=2:5-4:5&selection2=5:5-7:5&selection3=8:5-10:5&selection4=11:5-13:5")
@@ -36,6 +38,7 @@ class CreateTBXReferenceTest : BasePlatformTestCase() {
            getTestName(false) + ".groovy")
   }
 
+  @Bombed(year = 2019, month = 9, day = 10, user = "kradima")
   fun testPathWithLocation() {
     doTest("jetbrains://idea/navigate/reference?project=light_temp&path=PathWithLocation.java:4:13")
   }
