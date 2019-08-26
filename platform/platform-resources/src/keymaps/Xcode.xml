@@ -73,6 +73,18 @@
     <keyboard-shortcut first-keystroke="meta N"/>
   </action>
 
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="control shift SLASH"/>
+    <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+    <keyboard-shortcut first-keystroke="meta shift SLASH"/>
+    <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+    <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+  </action>
+  <action id="SwiftGenerateDocComment">
+    <keyboard-shortcut first-keystroke="meta alt SLASH"/>
+    <keyboard-shortcut first-keystroke="meta alt DIVIDE"/>
+  </action>
+
   <action id="$Cut">
     <keyboard-shortcut first-keystroke="meta X"/> <!--disable shift DELETE-->
   </action>
