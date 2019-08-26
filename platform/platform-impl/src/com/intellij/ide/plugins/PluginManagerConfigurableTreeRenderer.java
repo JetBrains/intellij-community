@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.scale.JBUIScale;
@@ -29,9 +28,6 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
   @Nullable
   @Override
   public Pair<Component, Layout> getDecorator(@NotNull SimpleTree tree, @Nullable UnnamedConfigurable configurable, boolean selected) {
-    if (!Registry.is("show.new.plugin.page", false) && !Registry.is("show.new.layout.plugin.page", false)) {
-      return null;
-    }
     if (myTree == null) {
       myService = PluginUpdatesService.connectTreeRenderer(this);
       tree.addAncestorListener(this);
