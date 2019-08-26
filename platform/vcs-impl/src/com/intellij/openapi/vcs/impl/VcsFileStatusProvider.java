@@ -40,7 +40,6 @@ import java.nio.charset.Charset;
  */
 public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
-  private final FileStatusManagerImpl myFileStatusManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -50,17 +49,14 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
   public VcsFileStatusProvider(final Project project,
-                               final FileStatusManagerImpl fileStatusManager,
                                final ProjectLevelVcsManager vcsManager,
                                ChangeListManager changeListManager,
                                VcsDirtyScopeManager dirtyScopeManager, VcsConfiguration configuration) {
     myProject = project;
-    myFileStatusManager = fileStatusManager;
     myVcsManager = vcsManager;
     myChangeListManager = changeListManager;
     myDirtyScopeManager = dirtyScopeManager;
     myConfiguration = configuration;
-    myFileStatusManager.setFileStatusProvider(this);
     myAdditionalProviders = VcsBaseContentProvider.EP_NAME.getExtensions(project);
 
     changeListManager.addChangeListListener(new ChangeListAdapter() {
@@ -82,7 +78,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   }
 
   private void fileStatusesChanged() {
-    myFileStatusManager.fileStatusesChanged();
+    FileStatusManager.getInstance(myProject).fileStatusesChanged();
   }
 
   @Override
@@ -116,7 +112,8 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     if (LOG.isDebugEnabled()) {
       LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
     }
-    FileStatus cachedStatus = myFileStatusManager.getCachedStatus(virtualFile);
+    FileStatusManagerImpl fileStatusManager = (FileStatusManagerImpl)FileStatusManager.getInstance(myProject);
+    FileStatus cachedStatus = fileStatusManager.getCachedStatus(virtualFile);
     if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(virtualFile)) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
       if (vcs == null) return;
@@ -128,7 +125,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
           }
         }
       }
-      myFileStatusManager.fileStatusChanged(virtualFile);
+      fileStatusManager.fileStatusChanged(virtualFile);
       ChangeProvider cp = vcs.getChangeProvider();
       if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
         myDirtyScopeManager.fileDirty(virtualFile);

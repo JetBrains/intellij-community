@@ -53,8 +53,7 @@ public class DirectoryMappingListTest extends HeavyPlatformTestCase {
     vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myMappings = new NewMappings(myProject, vcsManager,
-                                 FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    myMappings = new NewMappings(myProject, vcsManager, DefaultVcsRootPolicy.getInstance(myProject));
     Disposer.register(getTestRootDisposable(), myMappings);
     startupManager.runPostStartupActivities();
     vcsManager.waitForInitialized();

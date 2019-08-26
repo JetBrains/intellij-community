@@ -80,9 +80,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
-    <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
-    </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>

@@ -79,7 +79,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final Project myProject;
   private final VcsConfiguration myConfig;
   private final ChangesViewI myChangesViewManager;
-  private final FileStatusManager myFileStatusManager;
   private final ChangelistConflictTracker myConflictTracker;
   private VcsDirtyScopeManager myDirtyScopeManager;
 
@@ -122,8 +121,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myProject = project;
     myConfig = config;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
-    myFileStatusManager = FileStatusManager.getInstance(myProject);
-    myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
+    myConflictTracker = new ChangelistConflictTracker(project, this, EditorNotifications.getInstance(project));
 
     myComposite = new FileHolderComposite(project);
     myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);

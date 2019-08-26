@@ -98,7 +98,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final FileTypeManager myFileTypeManager;
 
   public ProjectLevelVcsManagerImpl(Project project,
-                                    FileStatusManager manager,
                                     FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
                                     FileTypeManager fileTypeManager,
@@ -124,7 +123,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       });
     }
 
-    myMappings = new NewMappings(myProject, this, manager, defaultVcsRootPolicy);
+    myMappings = new NewMappings(myProject, this, defaultVcsRootPolicy);
   }
 
   public void registerVcs(AbstractVcs<?> vcs) {

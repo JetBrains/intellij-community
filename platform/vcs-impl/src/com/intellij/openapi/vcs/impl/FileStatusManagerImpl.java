@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -25,11 +25,13 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -47,7 +49,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private FileStatusProvider myFileStatusProvider;
+  private final FileStatusProvider myFileStatusProvider;
   private final NotNullLazyValue<FileStatusProvider[]> myExtensions = new NotNullLazyValue<FileStatusProvider[]>() {
     @NotNull
     @Override
@@ -84,13 +86,16 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public FileStatusManagerImpl(Project project, StartupManager startupManager, @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myProject = project;
+    myFileStatusProvider = project.getComponent(VcsFileStatusProvider.class);
 
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    MessageBusConnection projectBus = project.getMessageBus().connect();
+    projectBus.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         fileStatusesChanged();
       }
     });
+    projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> fileStatusesChanged());
 
     if (project.isDefault()) return;
 
@@ -117,10 +122,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
   }
 
-  public void setFileStatusProvider(final FileStatusProvider fileStatusProvider) {
-    myFileStatusProvider = fileStatusProvider;
-  }
-
   public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
     for (FileStatusProvider extension : myExtensions.getValue()) {
       final FileStatus status = extension.getFileStatus(virtualFile);
@@ -132,7 +133,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     }
 
-    if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
+    if (virtualFile.isInLocalFileSystem()) {
       FileStatus status = myFileStatusProvider.getFileStatus(virtualFile);
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
@@ -200,7 +201,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
     myCachedStatuses.put(virtualFile, fs);
     if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = myFileStatusProvider == null ? null : myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
+      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
       if (ThreeState.YES.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(virtualFile, true);
       }
@@ -283,8 +284,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   @Override
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
-    if (myFileStatusProvider != null) {
-      myFileStatusProvider.refreshFileStatusFromDocument(file, doc);
-    }
+    myFileStatusProvider.refreshFileStatusFromDocument(file, doc);
   }
 }

@@ -55,7 +55,6 @@ public class NewMappings implements Disposable {
 
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final ProjectLevelVcsManager myVcsManager;
-  private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
   @NotNull private Disposable myFilePointerDisposable = Disposer.newDisposable();
@@ -69,11 +68,9 @@ public class NewMappings implements Disposable {
 
   public NewMappings(Project project,
                      ProjectLevelVcsManagerImpl vcsManager,
-                     FileStatusManager fileStatusManager,
                      DefaultVcsRootPolicy defaultVcsRootPolicy) {
     myProject = project;
     myVcsManager = vcsManager;
-    myFileStatusManager = fileStatusManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
     myDefaultVcsRootPolicy = defaultVcsRootPolicy;
 
@@ -361,7 +358,6 @@ public class NewMappings implements Disposable {
 
   public void mappingsChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
-    myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
   }
 
