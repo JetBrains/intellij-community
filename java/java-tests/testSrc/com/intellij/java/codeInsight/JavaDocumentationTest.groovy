@@ -227,7 +227,7 @@ class Bar {
     def documentationManager = DocumentationManager.getInstance(myFixture.project)
     JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
       def expected =
-        "<html><div class='content-only'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+        "<html><div class='content'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
         "<br>" +
         "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
         "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
