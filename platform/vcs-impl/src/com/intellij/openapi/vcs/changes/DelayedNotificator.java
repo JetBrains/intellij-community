@@ -30,7 +30,7 @@ public class DelayedNotificator implements ChangeListListener {
   public void callNotify(final ChangeListCommand command) {
     myScheduler.submit(() -> {
       try {
-        command.doNotify(myDispatcher);
+        command.doNotify(getMulticaster());
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -41,47 +41,47 @@ public class DelayedNotificator implements ChangeListListener {
 
   @Override
   public void changeListAdded(final ChangeList list) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListAdded(list));
+    myScheduler.submit(() -> getMulticaster().changeListAdded(list));
   }
 
   @Override
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changesRemoved(changes, fromList));
+    myScheduler.submit(() -> getMulticaster().changesRemoved(changes, fromList));
   }
 
   @Override
   public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changesAdded(changes, toList));
+    myScheduler.submit(() -> getMulticaster().changesAdded(changes, toList));
   }
 
   @Override
   public void changeListRemoved(final ChangeList list) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRemoved(list));
+    myScheduler.submit(() -> getMulticaster().changeListRemoved(list));
   }
 
   @Override
   public void changeListChanged(final ChangeList list) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListChanged(list));
+    myScheduler.submit(() -> getMulticaster().changeListChanged(list));
   }
 
   @Override
   public void changeListRenamed(final ChangeList list, final String oldName) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRenamed(list, oldName));
+    myScheduler.submit(() -> getMulticaster().changeListRenamed(list, oldName));
   }
 
   @Override
   public void changeListDataChanged(ChangeList list) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListDataChanged(list));
+    myScheduler.submit(() -> getMulticaster().changeListDataChanged(list));
   }
 
   @Override
   public void changeListCommentChanged(final ChangeList list, final String oldComment) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
+    myScheduler.submit(() -> getMulticaster().changeListCommentChanged(list, oldComment));
   }
 
   @Override
   public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
+    myScheduler.submit(() -> getMulticaster().changesMoved(changes, fromList, toList));
   }
 
   @Override
@@ -91,23 +91,23 @@ public class DelayedNotificator implements ChangeListListener {
 
   @Override
   public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList, boolean automatic) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList, automatic));
+    myScheduler.submit(() -> getMulticaster().defaultListChanged(oldDefaultList, newDefaultList, automatic));
   }
 
 
   @Override
   public void unchangedFileStatusChanged() {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().unchangedFileStatusChanged());
+    myScheduler.submit(() -> getMulticaster().unchangedFileStatusChanged());
   }
 
   @Override
   public void changeListUpdateDone() {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
+    myScheduler.submit(() -> getMulticaster().changeListUpdateDone());
   }
 
   @Override
   public void allChangeListsMappingsChanged() {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().allChangeListsMappingsChanged());
+    myScheduler.submit(() -> getMulticaster().allChangeListsMappingsChanged());
   }
 
   public void changeListsForFileChanged(@NotNull FilePath path,
@@ -121,16 +121,21 @@ public class DelayedNotificator implements ChangeListListener {
       for (String listId : removedChangeListsIds) {
         LocalChangeList changeList = myManager.getChangeList(listId);
         if (changeList != null) {
-          myDispatcher.getMulticaster().changesRemoved(changes, changeList);
+          getMulticaster().changesRemoved(changes, changeList);
         }
       }
 
       for (String listId : addedChangeListsIds) {
         LocalChangeList changeList = myManager.getChangeList(listId);
         if (changeList != null) {
-          myDispatcher.getMulticaster().changesAdded(changes, changeList);
+          getMulticaster().changesAdded(changes, changeList);
         }
       }
     });
+  }
+
+  @NotNull
+  private ChangeListListener getMulticaster() {
+    return myDispatcher.getMulticaster();
   }
 }
