@@ -177,12 +177,8 @@ public final class ChangelistConflictTracker {
   }
 
   public void startTracking() {
-    myChangeListManager.addChangeListListener(myChangeListListener);
+    myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, myChangeListListener);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
-  }
-
-  public void stopTracking() {
-    myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
   public void saveState(Element to) {

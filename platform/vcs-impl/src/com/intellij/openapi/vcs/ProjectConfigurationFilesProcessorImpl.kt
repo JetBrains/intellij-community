@@ -38,14 +38,12 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   private val fileSystem = LocalFileSystem.getInstance()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
       }
     }
   }
@@ -60,7 +58,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   override fun changeListUpdateDone() {
     if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
-      val unversionedProjectConfigurationFiles = doFilterFiles(changeListManager.unversionedFiles)
+      val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
         PropertiesComponent.getInstance(project).setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
         processFiles(unversionedProjectConfigurationFiles.toList())

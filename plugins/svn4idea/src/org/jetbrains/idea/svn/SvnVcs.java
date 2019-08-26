@@ -302,7 +302,7 @@ public class SvnVcs extends AbstractVcs {
   public void activate() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+      busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
         @Override
         public void directoryMappingChanged() {
@@ -383,9 +383,6 @@ public class SvnVcs extends AbstractVcs {
     SvnApplicationSettings.getInstance().svnDeactivated();
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
-    }
-    if (myChangeListListener != null && !myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
     myRootsToWorkingCopies.clear();
 

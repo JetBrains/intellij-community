@@ -43,7 +43,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
   private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(repository.project)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
@@ -81,7 +80,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       unprocessedFiles.removeAll(filesToCheck)
     }
     //if the files already unversioned, there is no need to check it for ignore
-    filesToCheck.removeAll(changeListManager.unversionedFilesPaths)
+    val unversioned = ChangeListManagerImpl.getInstanceImpl(repository.project).unversionedFilesPaths
+    filesToCheck.removeAll(unversioned)
 
     if (filesToCheck.isNotEmpty()) {
       removeIgnoredFiles(filesToCheck)
@@ -106,7 +106,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
-      changeListManager.addChangeListListener(this, this)
+      repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
 
   @Throws(VcsException::class)

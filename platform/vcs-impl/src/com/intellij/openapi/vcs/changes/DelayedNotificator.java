@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
-import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,15 +15,15 @@ import java.util.Set;
 public class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance(DelayedNotificator.class);
 
+  @NotNull private final Project myProject;
   @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final EventDispatcher<? extends ChangeListListener> myDispatcher;
   @NotNull private final ChangeListManagerImpl.Scheduler myScheduler;
 
-  public DelayedNotificator(@NotNull ChangeListManagerImpl manager,
-                            @NotNull EventDispatcher<? extends ChangeListListener> dispatcher,
+  public DelayedNotificator(@NotNull Project project,
+                            @NotNull ChangeListManagerImpl manager,
                             @NotNull ChangeListManagerImpl.Scheduler scheduler) {
+    myProject = project;
     myManager = manager;
-    myDispatcher = dispatcher;
     myScheduler = scheduler;
   }
 
@@ -136,6 +136,6 @@ public class DelayedNotificator implements ChangeListListener {
 
   @NotNull
   private ChangeListListener getMulticaster() {
-    return myDispatcher.getMulticaster();
+    return myProject.getMessageBus().syncPublisher(ChangeListListener.TOPIC);
   }
 }

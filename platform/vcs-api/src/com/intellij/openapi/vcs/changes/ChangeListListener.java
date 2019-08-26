@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.util.messages.Topic;
+
 import java.util.Collection;
 import java.util.EventListener;
 
@@ -26,6 +28,8 @@ import java.util.EventListener;
  * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)
  */
 public interface ChangeListListener extends EventListener {
+  Topic<ChangeListListener> TOPIC = Topic.create("VCS changelists changed", ChangeListListener.class);
+
   default void changeListAdded(ChangeList list) {}
   default void changeListRemoved(ChangeList list) {}
   default void changeListChanged(ChangeList list) {}

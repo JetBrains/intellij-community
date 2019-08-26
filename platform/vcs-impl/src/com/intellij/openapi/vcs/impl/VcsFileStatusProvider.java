@@ -39,7 +39,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     myProject = project;
     myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
-    ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
+    project.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();

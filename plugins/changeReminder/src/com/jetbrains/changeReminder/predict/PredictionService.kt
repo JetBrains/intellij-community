@@ -191,16 +191,15 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun startService() = synchronized(LOCK) {
     projectLogListenerDisposable = Disposer.newDisposable()
-    project.messageBus.connect(projectLogListenerDisposable).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, projectLogListener)
+    val connection = project.messageBus.connect(projectLogListenerDisposable)
+    connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, projectLogListener)
+    connection.subscribe(ChangeListListener.TOPIC, changeListsListener)
 
     setDataManager(VcsProjectLog.getInstance(project).dataManager)
-
-    changeListManager.addChangeListListener(changeListsListener)
   }
 
   private fun shutdownService() = synchronized(LOCK) {
     nodeExpandedListener.unsubscribe()
-    changeListManager.removeChangeListListener(changeListsListener)
 
     removeDataManager()
 

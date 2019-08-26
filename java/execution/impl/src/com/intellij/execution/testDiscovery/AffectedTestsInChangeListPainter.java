@@ -17,6 +17,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.PowerStatus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,12 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
 public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Disposable {
   private final Project myProject;
-  private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
 
   public AffectedTestsInChangeListPainter(@NotNull Project project) {
     myProject = project;
-    myChangeListListener = new ChangeListAdapter() {
+    ChangeListListener changeListListener = new ChangeListAdapter() {
       @Override
       public void changeListsChanged() {
         scheduleUpdate();
@@ -57,9 +57,9 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
       }
     };
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-    ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-
-    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ChangeListListener.TOPIC, changeListListener);
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         if (project == myProject) {
@@ -72,7 +72,6 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
   @Override
   public void dispose() {
     myChangeListsToShow.set(Collections.emptySet());
-    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
   }
 
   private void scheduleRefresh() {

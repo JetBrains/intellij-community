@@ -122,12 +122,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
-    myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
+    myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
     myUpdater = new UpdateRequestsQueue(myProject, myScheduler, () -> updateImmediately());
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
+    myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
@@ -171,7 +172,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       }
 
       manager.myUpdater.stop();
-      manager.myConflictTracker.stopTracking();
     }
   }
 

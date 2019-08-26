@@ -134,8 +134,14 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable);
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);

@@ -101,6 +101,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
+    busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
 
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
@@ -112,8 +113,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
       editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
-
-      ChangeListManagerImpl.getInstance(project).addChangeListListener(MyChangeListListener())
     }
   }
 
