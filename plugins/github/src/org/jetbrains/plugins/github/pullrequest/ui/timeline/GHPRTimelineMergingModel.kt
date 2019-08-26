@@ -29,42 +29,28 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>(), GHPRRevi
 
   fun add(items: List<GHPRTimelineItem>) {
     var lastListIdx = list.lastIndex
-    var lastEvent: GHPRTimelineEvent? = list.lastOrNull() as? GHPRTimelineEvent
-    if (lastEvent != null) {
+    var lastItem: GHPRTimelineItem? = list.lastOrNull()
+    if (lastItem != null) {
       list.removeAt(lastListIdx)
       fireIntervalRemoved(this, lastListIdx, lastListIdx)
       lastListIdx--
     }
 
     for (item in items) {
-      if (item !is GHPRTimelineEvent) {
-        if (lastEvent != null) {
-          if (!isCollapsedMerge(lastEvent)) list.add(lastEvent)
-          lastEvent = null
-        }
-        list.add(item)
-
-        if (item is GHPullRequestReview) {
-          threadsModelsByReview[item.id] = GHPRReviewThreadsModel(threadsByReview[item.id].orEmpty())
-        }
+      val merged = mergeIfPossible(lastItem, item)
+      if (merged != null) {
+        lastItem = merged
       }
       else {
-        if (lastEvent != null) {
-          val merged = mergeIfPossible(lastEvent, item)
-          if (merged != null) {
-            lastEvent = merged
-          }
-          else {
-            if (!isCollapsedMerge(lastEvent)) list.add(lastEvent)
-            lastEvent = item
-          }
-        }
-        else {
-          lastEvent = item
-        }
+        if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
+        lastItem = item
+      }
+
+      if (item is GHPullRequestReview) {
+        threadsModelsByReview[item.id] = GHPRReviewThreadsModel(threadsByReview[item.id].orEmpty())
       }
     }
-    if (lastEvent != null && !isCollapsedMerge(lastEvent)) list.add(lastEvent)
+    if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
     fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
   }
 
@@ -79,7 +65,9 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>(), GHPRRevi
   companion object {
     private const val MERGE_THRESHOLD_MS = DateFormatUtil.MINUTE * 2
 
-    private fun mergeIfPossible(existing: GHPRTimelineEvent, new: GHPRTimelineEvent): GHPRTimelineEvent? {
+    private fun mergeIfPossible(existing: GHPRTimelineItem?, new: GHPRTimelineItem?): GHPRTimelineEvent? {
+      if (existing !is GHPRTimelineEvent || new !is GHPRTimelineEvent) return null
+
       if (existing.actor == new.actor && new.createdAt.time - existing.createdAt.time <= MERGE_THRESHOLD_MS) {
         if (existing is GHPRTimelineEvent.Simple && new is GHPRTimelineEvent.Simple) {
           if (existing is GHPRTimelineMergedSimpleEvents) {
@@ -108,6 +96,6 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>(), GHPRRevi
       return null
     }
 
-    private fun isCollapsedMerge(event: GHPRTimelineEvent) = event is GHPRTimelineMergedEvents<*> && !event.hasAnyChanges()
+    private fun isCollapsedMerge(event: GHPRTimelineItem) = event is GHPRTimelineMergedEvents<*> && !event.hasAnyChanges()
   }
 }
