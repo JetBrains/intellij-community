@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.util.messages.MessageBusFactory
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
@@ -78,6 +80,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                           accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
+    private val messageBus = messageBusFactory.createMessageBus(this)
+
     private val listModel: CollectionListModel<GHPullRequestShort>
     private val searchHolder: GithubPullRequestSearchQueryHolder
     private val listLoader: GHPRListLoader
@@ -101,11 +105,11 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
       busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
       metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
-                                                              listLoader, dataLoader,
-                                                              busyStateTracker,
-                                                              requestExecutor, avatarIconsProviderFactory, account.server,
-                                                              repoDetails.fullPath)
-      stateService = GithubPullRequestsStateServiceImpl(project, progressManager, listLoader, dataLoader, busyStateTracker,
+                                                              messageBus,
+                                                              dataLoader, busyStateTracker,
+                                                              requestExecutor,
+                                                              avatarIconsProviderFactory, account.server, repoDetails.fullPath)
+      stateService = GithubPullRequestsStateServiceImpl(project, progressManager, messageBus, dataLoader, busyStateTracker,
                                                         requestExecutor, account.server, repoDetails.fullPath)
 
       serviceDisposable = Disposable {
@@ -158,6 +162,16 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         }
       }
 
+      messageBus.connect(this).subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
+        override fun onPullRequestEdited(number: Long) {
+          runInEdt {
+            val dataProvider = dataLoader.findDataProvider(number)
+            dataProvider?.reloadDetails()
+            dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
+          }
+        }
+      })
+
       secondComponent = preview
       isFocusCycleRoot = true
 
@@ -180,7 +194,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private val dataContext = GithubPullRequestsDataContext(requestExecutor, metadataService, listLoader, listSelectionHolder, dataLoader,
                                                             avatarIconsProviderFactory,
-                                                            account.server, repoDetails, accountDetails, repository, remote)
+                                                            account.server, repoDetails, repository)
 
     private fun installPopup(list: GithubPullRequestsList) {
       val popupHandler = object : PopupHandler() {
@@ -235,6 +249,14 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     override fun dispose() {
       Disposer.dispose(uiDisposable)
       Disposer.dispose(serviceDisposable)
+    }
+  }
+
+  companion object {
+    val PULL_REQUEST_EDITED_TOPIC = Topic(PullRequestEditedListener::class.java)
+
+    interface PullRequestEditedListener {
+      fun onPullRequestEdited(number: Long)
     }
   }
 }

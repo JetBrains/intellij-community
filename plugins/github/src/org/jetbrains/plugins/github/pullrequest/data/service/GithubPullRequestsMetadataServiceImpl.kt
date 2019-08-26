@@ -18,6 +18,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -31,9 +32,9 @@ import org.jetbrains.plugins.github.api.data.GithubIssueLabel
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.util.*
@@ -52,7 +53,7 @@ import javax.swing.event.DocumentEvent
 
 class GithubPullRequestsMetadataServiceImpl internal constructor(private val project: Project,
                                                                  private val progressManager: ProgressManager,
-                                                                 private val listLoader: GHPRListLoader,
+                                                                 private val messageBus: MessageBus,
                                                                  private val dataLoader: GithubPullRequestsDataLoader,
                                                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                                  private val requestExecutor: GithubApiRequestExecutor,
@@ -121,6 +122,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                     .add(serverPath, repoPath.user, repoPath.repository, pullRequest,
                                          delta.newItems.map { it.login }))
         }
+        messageBus.syncPublisher(GithubPullRequestsComponentFactory.PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       })
   }
 
@@ -135,6 +137,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                 GithubApiRequests.Repos.Issues
                                   .updateAssignees(serverPath, repoPath.user, repoPath.repository, pullRequest.toString(),
                                                    delta.newCollection.map { it.login }))
+        messageBus.syncPublisher(GithubPullRequestsComponentFactory.PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       })
   }
 
@@ -148,6 +151,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                 GithubApiRequests.Repos.Issues.Labels
                                   .replace(serverPath, repoPath.user, repoPath.repository, pullRequest.toString(),
                                            delta.newCollection.map { it.name }))
+        messageBus.syncPublisher(GithubPullRequestsComponentFactory.PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       })
   }
 
@@ -333,9 +337,6 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
         override fun onFinished() {
           busyStateTracker.release(pullRequest)
-          val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
-          dataProvider.reloadDetails()
-          listLoader.reloadData(dataProvider.detailsRequest)
         }
       })
     }

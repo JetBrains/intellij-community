@@ -8,24 +8,25 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 class GithubPullRequestsStateServiceImpl internal constructor(private val project: Project,
                                                               private val progressManager: ProgressManager,
-                                                              private val listLoader: GHPRListLoader,
+                                                              private val messageBus: MessageBus,
                                                               private val dataLoader: GithubPullRequestsDataLoader,
                                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                               private val requestExecutor: GithubApiRequestExecutor,
@@ -42,6 +43,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
                                                                             state = GithubIssueState.closed))
+        messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
       override fun onSuccess() {
@@ -53,7 +55,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        releaseAndRefreshData(pullRequest)
+        busyStateTracker.release(pullRequest)
       }
     })
   }
@@ -67,6 +69,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
                                                                             state = GithubIssueState.open))
+        messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
       override fun onSuccess() {
@@ -78,7 +81,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        releaseAndRefreshData(pullRequest)
+        busyStateTracker.release(pullRequest)
       }
     })
   }
@@ -109,6 +112,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, details.number,
                                                                                       commitMessage.first, commitMessage.second,
                                                                                       details.headRefOid))
+        messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
       override fun onSuccess() {
@@ -120,7 +124,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        releaseAndRefreshData(pullRequest)
+        busyStateTracker.release(pullRequest)
       }
     })
   }
@@ -141,6 +145,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         indicator.text2 = "Merging"
         requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, details.number,
                                                                                             details.headRefOid))
+        messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
       override fun onSuccess() {
@@ -153,7 +158,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        releaseAndRefreshData(pullRequest)
+        busyStateTracker.release(pullRequest)
       }
     })
   }
@@ -191,6 +196,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, details.number,
                                                                                             commitMessage.first, commitMessage.second,
                                                                                             details.headRefOid))
+        messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
 
       override fun onSuccess() {
@@ -203,15 +209,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        releaseAndRefreshData(pullRequest)
+        busyStateTracker.release(pullRequest)
       }
     })
-  }
-
-  private fun releaseAndRefreshData(pullRequest: Long) {
-    busyStateTracker.release(pullRequest)
-    val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
-    dataProvider.reloadDetails()
-    listLoader.reloadData(dataProvider.detailsRequest)
   }
 }
