@@ -28,14 +28,14 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   private boolean myForGeneratedSources;
 
   /**
-   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
+   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
    */
   @Deprecated
   public JavaSourceRootProperties() {
   }
 
   /**
-   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
+   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
    */
   @Deprecated
   public JavaSourceRootProperties(@NotNull String packagePrefix) {
@@ -43,7 +43,7 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   }
 
   /**
-   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
+   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
    */
   @Deprecated
   public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
