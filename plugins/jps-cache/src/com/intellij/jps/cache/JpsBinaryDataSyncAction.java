@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 public class JpsBinaryDataSyncAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsBinaryDataSyncAction");
   private final JpsCacheServerClient myCacheServerClient = new ArtifactoryJpsCacheServerClient();
-  private static final String PRODUCTION = "production";
-  private static final String TEST = "test";
+  public static final String PRODUCTION = "production";
+  public static final String TEST = "test";
 
   @Override
   public void actionPerformed(AnActionEvent actionEvent) {

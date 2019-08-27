@@ -27,4 +27,8 @@ public class JpsCachePluginComponent implements ProjectComponent {
       LOG.error(e);
     }
   }
+
+  public PersistentCachingModuleHashingService getModuleHashingService() {
+    return moduleHashingService;
+  }
 }

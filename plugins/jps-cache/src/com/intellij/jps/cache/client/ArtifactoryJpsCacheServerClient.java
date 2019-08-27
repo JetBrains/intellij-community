@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -82,17 +83,16 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
     String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     LOG.debug("Downloading JPS build caches from: " + downloadUrl);
-    downloadArchive(project, downloadUrl, targetDir, fileName, callbackOnSuccess);
+    downloadArchive(project, downloadUrl, targetDir, fileName, "tmp", callbackOnSuccess);
   }
 
   @Override
-  public void downloadCompiledModuleByNameAndHash(@NotNull Project project, @NotNull String moduleName, @NotNull String moduleHash,
-                                                  @NotNull File targetDir) {
-    String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + moduleHash;
+  public void downloadCompiledModuleByNameAndHash(@NotNull Project project, @NotNull String moduleName, @NotNull String prefix,
+                                                  @NotNull String moduleHash, @NotNull File targetDir, @NotNull BiConsumer<File, String> callbackOnSuccess) {
+    String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + prefix + "/" + moduleHash;
     String fileName = moduleName + ".zip";
     LOG.debug("Downloading JPS compiled module from: " + downloadUrl);
-    downloadArchive(project, downloadUrl, targetDir, fileName, file -> {
-    });
+    downloadArchive(project, downloadUrl, targetDir, fileName, moduleName + "_tmp", file -> callbackOnSuccess.accept(file,moduleName));
   }
 
   @Override
@@ -113,11 +113,8 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
     }
   }
 
-  private static void downloadArchive(@NotNull Project project,
-                                      @NotNull String downloadUrl,
-                                      @NotNull File targetDir,
-                                      @NotNull String fileName,
-                                      @NotNull Consumer<File> callbackOnSuccess) {
+  private static void downloadArchive(@NotNull Project project, @NotNull String downloadUrl, @NotNull File targetDir, @NotNull String fileName,
+                                      @NotNull String tmpFolderName, @NotNull Consumer<File> callbackOnSuccess) {
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), fileName);
@@ -133,7 +130,7 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
             callbackOnSuccess.accept(null);
             return;
           }
-          File tmpFolder = new File(targetDir, "tmp");
+          File tmpFolder = new File(targetDir, tmpFolderName);
           ZipUtil.extract(file, tmpFolder, null);
           FileUtil.delete(file);
           callbackOnSuccess.accept(tmpFolder);
