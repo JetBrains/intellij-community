@@ -5,6 +5,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,26 +40,28 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getClearMethodBody(String psiFieldName) {
-    final String codeBlockTemplate = "this.{0} = null;\n {1}";
-
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
+  protected String getClearMethodBody(@NotNull BuilderInfo info) {
+    final String codeBlockFormat = "this.{0} = null;\n" +
+      "return {1};";
+    return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
-      "this.{0}.add({1});{4}";
+      "this.{0}.add({1});\n" +
+      "return {4};";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, typeCollectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", "\nreturn this;");
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, typeCollectionQualifiedName,
+      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
-      + "this.{0}.addAll({0});{3}";
+      + "this.{0}.addAll({0});\n" +
+      "return {3};";
 
     return MessageFormat.format(codeBlockTemplate, singularName, typeCollectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", "\nreturn this;");
+      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
   @Override

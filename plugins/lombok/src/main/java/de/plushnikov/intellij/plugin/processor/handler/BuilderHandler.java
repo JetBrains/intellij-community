@@ -203,7 +203,7 @@ public class BuilderHandler {
 
   @NotNull
   @PsiModifier.ModifierConstant
-  String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String accessVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     return null == accessVisibility ? PsiModifier.PUBLIC : accessVisibility;
   }

@@ -1,14 +1,18 @@
 package de.plushnikov.superbuilder;
 
+import lombok.Singular;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SuperBuilderSimple {
 
   @SuperBuilder
   public static class Parent {
     int field1;
-    String item;
-//    List<String> items;
+    @Singular
+    List<String> items;
   }
 
   @SuperBuilder
@@ -27,7 +31,7 @@ public class SuperBuilderSimple {
     Child y = Child.builder().field3(0.0).field1(5).item("").build();
     System.out.println(y);
 
-    Parent sasd = Parent.builder().item("sasd").field1(1).build();
+    Parent sasd = Parent.builder().item("sasd").clearItems().items(Collections.singletonList("ss")).field1(1).build();
     System.out.println(sasd);
   }
 }

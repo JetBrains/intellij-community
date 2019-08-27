@@ -4,6 +4,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,27 +29,29 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getClearMethodBody(String psiFieldName) {
-    final String codeBlockTemplate = "if (this.{0} != null) \n this.{0}.clear();\n {1}";
-
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
+  protected String getClearMethodBody(@NotNull BuilderInfo info) {
+    final String codeBlockFormat = "if (this.{0} != null) \n this.{0}.clear();\n" +
+      "return {1};";
+    return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{3}>(); \n" +
-      "this.{0}.add({1});{2}";
-    final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
+      "this.{0}.add({1});\n" +
+      "return {2};";
+    final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, "\nreturn this;",
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, info.getBuilderChainResult(),
       oneElementType.getCanonicalText(false));
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>(); \n"
-      + "this.{0}.addAll({0});{1}";
-    final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
+      + "this.{0}.addAll({0});\n" +
+      "return {1};";
+    final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
-    return MessageFormat.format(codeBlockTemplate, singularName, "\nreturn this;",
+    return MessageFormat.format(codeBlockTemplate, singularName, info.getBuilderChainResult(),
       oneElementType.getCanonicalText(false));
   }
 

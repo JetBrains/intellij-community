@@ -204,7 +204,6 @@ public class SuperBuilderHandler extends BuilderHandler {
     // create builder methods
     builderInfos.stream()
       .filter(info -> info.notAlreadyExistingMethod(existedMethodNames))
-      //TODO change "return this;" to "return self();" for all Singular-Handler
       .map(BuilderInfo::renderBuilderMethods)
       .forEach(result::addAll);
 

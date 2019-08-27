@@ -81,30 +81,30 @@ class SingularMapHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getClearMethodBody(String psiFieldName) {
-    final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " != null) '{'\n this.{0}" + LOMBOK_KEY + ".clear();\n " +
-      " this.{0}" + LOMBOK_VALUE + ".clear(); '}'\n {1}";
-
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, "\nreturn this;");
+  protected String getClearMethodBody(@NotNull BuilderInfo info) {
+    final String codeBlockFormat = "if (this.{0}" + LOMBOK_KEY + " != null) '{'\n this.{0}" + LOMBOK_KEY + ".clear();\n " +
+      " this.{0}" + LOMBOK_VALUE + ".clear(); '}'\n" +
+      "return {1};";
+    return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{3}>(); \n" +
       "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{4}>(); \n" +
       "'}' \n" +
       "this.{0}" + LOMBOK_KEY + ".add({1}" + KEY + ");\n" +
-      "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");" +
-      "{2}";
+      "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");\n" +
+      "return {2};";
 
-    final PsiType keyType = getKeyType(psiManager, psiFieldType);
-    final PsiType valueType = getValueType(psiManager, psiFieldType);
+    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
+    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, "\nreturn this;",
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, info.getBuilderChainResult(),
       keyType.getCanonicalText(false), valueType.getCanonicalText(false));
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{2}>(); \n" +
       "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<{3}>(); \n" +
@@ -112,15 +112,16 @@ class SingularMapHandler extends AbstractSingularHandler {
       "for (final java.util.Map.Entry<{4},{5}> $lombokEntry : {0}.entrySet()) '{'\n" +
       "this.{0}" + LOMBOK_KEY + ".add($lombokEntry.getKey());\n" +
       "this.{0}" + LOMBOK_VALUE + ".add($lombokEntry.getValue());\n" +
-      "'}'{1}";
+      "'}'\n" +
+      "return {1};";
 
-    final PsiType keyType = getKeyType(psiManager, psiFieldType);
-    final PsiType valueType = getValueType(psiManager, psiFieldType);
+    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
+    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
 
-    final PsiType keyIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyIterType = PsiTypeUtil.extractAllElementType(info.getFieldType(), info.getManager(), CommonClassNames.JAVA_UTIL_MAP, 0);
+    final PsiType valueIterType = PsiTypeUtil.extractAllElementType(info.getFieldType(), info.getManager(), CommonClassNames.JAVA_UTIL_MAP, 1);
 
-    return MessageFormat.format(codeBlockTemplate, singularName, "\nreturn this;",
+    return MessageFormat.format(codeBlockTemplate, singularName, info.getBuilderChainResult(),
       keyType.getCanonicalText(false), valueType.getCanonicalText(false),
       keyIterType.getCanonicalText(false), valueIterType.getCanonicalText(false));
   }
