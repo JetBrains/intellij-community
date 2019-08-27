@@ -2,11 +2,7 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -30,21 +26,11 @@ public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
                   "}";
     String inputText = text.replace("$bytes$", bytesOriginal);
 
-    ThrowableRunnable<Throwable> action = () -> {
-      configureFromFileText("X.java", inputText);
-      performAction();
-    };
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, action)
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000,
+                                          () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
+      .setup(() -> configureFromFileText("X.java", inputText))
       .assertTiming();
     String outputText = text.replace("$bytes$", bytesResult);
     checkResultByText(outputText);
-  }
-
-  private void performAction() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
-    Editor editor = getEditor();
-    actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(),
-                          DataManager.getInstance().getDataContext(editor.getComponent()));
   }
 }
