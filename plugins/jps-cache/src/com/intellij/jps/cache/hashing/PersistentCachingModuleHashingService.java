@@ -5,8 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -14,31 +15,43 @@ import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class PersistentCachingModuleHashingService extends ModuleHashingService {
   private static final Logger LOG = Logger.getInstance("com.jetbrains.cachepuller.PersistentCachingModuleHashingService");
-  private static final String HASH_CACHE_FILE_NAME = "hashCache";
-  private static final String IS_MODULE_AFFECTED_FILE_NAME = "affectedModules";
-  private final PersistentHashMap<String, byte[]> hashCache;
+  private static final String TEST_CACHE_FILE_NAME = "testCache";
+  private static final String PRODUCTION_CACHE_FILE_NAME = "productionCache";
+  private static final String AFFECTED_TESTS_FILE_NAME = "affectedTests";
+  private static final String AFFECTED_PRODUCTION_FILE_NAME = "affectedProduction";
+  private final PersistentHashMap<String, byte[]> testHashes;
+  private final PersistentHashMap<String, byte[]> productionHashes;
+  private final PersistentHashMap<String, Boolean> affectedTests;
+  private final PersistentHashMap<String, Boolean> affectedProduction;
   private final ProjectFileIndex projectFileIndex;
-  private final Map<Module, List<VirtualFile>> moduleToContentSourceRoots;
   private final Map<String, Module> moduleNameToModule;
-  private final PersistentHashMap<String, Boolean> isModuleAffected;
 
   public PersistentCachingModuleHashingService(File baseDir, Project project) throws IOException {
-    this.moduleToContentSourceRoots = JpsCacheUtils.createModuleToSourceRootsMap(project);
     this.moduleNameToModule = JpsCacheUtils.createModuleNameToModuleMap(project);
-    this.hashCache =
-      new PersistentHashMap<>(new File(baseDir, HASH_CACHE_FILE_NAME), EnumeratorStringDescriptor.INSTANCE, ByteArrayDescriptor.INSTANCE);
-    this.isModuleAffected = new PersistentHashMap<>(new File(baseDir, IS_MODULE_AFFECTED_FILE_NAME), EnumeratorStringDescriptor.INSTANCE,
-                                                    BooleanDataDescriptor.INSTANCE);
+    this.testHashes =
+      new PersistentHashMap<>(new File(baseDir, TEST_CACHE_FILE_NAME), EnumeratorStringDescriptor.INSTANCE, ByteArrayDescriptor.INSTANCE);
+    this.productionHashes =
+      new PersistentHashMap<>(new File(baseDir, PRODUCTION_CACHE_FILE_NAME), EnumeratorStringDescriptor.INSTANCE,
+                              ByteArrayDescriptor.INSTANCE);
+    this.affectedTests =
+      new PersistentHashMap<>(new File(baseDir, AFFECTED_TESTS_FILE_NAME), EnumeratorStringDescriptor.INSTANCE,
+                              BooleanDataDescriptor.INSTANCE);
+    this.affectedProduction =
+      new PersistentHashMap<>(new File(baseDir, AFFECTED_PRODUCTION_FILE_NAME), EnumeratorStringDescriptor.INSTANCE,
+                              BooleanDataDescriptor.INSTANCE);
     this.projectFileIndex = ProjectFileIndex.getInstance(project);
 
 
@@ -50,12 +63,25 @@ public class PersistentCachingModuleHashingService extends ModuleHashingService 
           if (affectedModule == null) {
             continue;
           }
-          try {
-            isModuleAffected.put(affectedModule.getName(), true);
-            hashCache.remove(affectedModule.getName());
+          final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
+          boolean isTest = moduleFileIndex.isInTestSourceContent(e.getFile());
+          if (isTest) {
+            try {
+              affectedTests.put(affectedModule.getName(), true);
+              testHashes.remove(affectedModule.getName());
+            }
+            catch (IOException ex) {
+              LOG.warn(ex);
+            }
           }
-          catch (IOException ex) {
-            LOG.warn(ex);
+          else {
+            try {
+              affectedProduction.put(affectedModule.getName(), true);
+              productionHashes.remove(affectedModule.getName());
+            }
+            catch (IOException ex) {
+              LOG.warn(ex);
+            }
           }
         }
       }
@@ -65,31 +91,59 @@ public class PersistentCachingModuleHashingService extends ModuleHashingService 
       @Override
       public void projectClosed(@NotNull Project project) {
         try {
-          hashCache.close();
+          productionHashes.close();
         }
         catch (IOException e) {
+          LOG.warn(e);
         }
         try {
-          isModuleAffected.close();
+          testHashes.close();
         }
         catch (IOException e) {
+          LOG.warn(e);
+        }
+        try {
+          affectedTests.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+        try {
+          affectedProduction.close();
+        }
+        catch (IOException ex) {
+          LOG.warn(ex);
         }
       }
     });
   }
 
-  public Map<String, byte[]> getAffectedModulesWithHashes() throws IOException {
+  public Map<String, byte[]> getAffectedTests() throws IOException {
+    return getAffected(testHashes, affectedTests, Arrays.asList(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE));
+  }
+
+  public Map<String, byte[]> getAffectedProduction() throws IOException {
+    return getAffected(productionHashes, affectedProduction, Arrays.asList(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE));
+  }
+
+  private Map<String, byte[]> getAffected(PersistentHashMap<String, byte[]> hashCache,
+                                          PersistentHashMap<String, Boolean> affected,
+                                          List<JpsModuleSourceRootType<?>> rootTypes)
+    throws IOException {
     Map<String, byte[]> result = new HashMap<>();
 
-    isModuleAffected.processKeysWithExistingMapping(moduleName -> {
-      boolean isAffected = false;
+    affected.processKeysWithExistingMapping(moduleName -> {
       try {
-        isAffected = isModuleAffected.get(moduleName);
+        boolean isAffected = affected.get(moduleName);
         if (!isAffected) {
           return true;
         }
-        result.put(moduleName, get(moduleName));
-        isModuleAffected.put(moduleName, false);
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(moduleNameToModule.get(moduleName));
+        File[] sourceRoots =
+          rootTypes.stream().map(moduleRootManager::getSourceRoots).flatMap(List::stream).map(vFile -> new File(vFile.getPath()))
+            .toArray(File[]::new);
+        result.put(moduleName, getFromCacheOrCalcAndPersist(moduleName, hashCache, sourceRoots));
+        affected.put(moduleName, false);
         return true;
       }
       catch (IOException e) {
@@ -101,35 +155,27 @@ public class PersistentCachingModuleHashingService extends ModuleHashingService 
     return result;
   }
 
-  byte[] get(String moduleName) throws IOException {
+  private byte[] getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache, File[] sourceRoots)
+    throws IOException {
     byte[] hash = hashCache.get(moduleName);
     if (hash != null) {
       return hash;
     }
-
-    hash = hashContentRootsAndPersist(moduleName,
-                                      Optional.ofNullable(moduleToContentSourceRoots.get(moduleNameToModule.get(moduleName)))
-                                        .map(vFiles ->
-                                               vFiles.stream()
-                                                 .map(vFile -> new File(vFile.getPath()))
-                                                 .toArray(File[]::new)).orElse(null));
-    cache(moduleName, hash);
+    hash = hashDirectoriesAndPersist(moduleName, sourceRoots, hashCache);
     return hash;
   }
 
-  private byte[] hashContentRootsAndPersist(String moduleName, File[] contentRoots) throws IOException {
+  private byte[] hashDirectoriesAndPersist(String name,
+                                           File[] directories,
+                                           PersistentHashMap<String, byte[]> hashCache) throws IOException {
     byte[] directoriesHash;
-    if (contentRoots != null) {
-      directoriesHash = super.hashDirectories(contentRoots);
+    if (directories != null) {
+      directoriesHash = super.hashDirectories(directories);
     }
     else {
       directoriesHash = new byte[HASH_SIZE_IN_BYTES];
     }
-    cache(moduleName, directoriesHash);
+    hashCache.put(name, directoriesHash);
     return directoriesHash;
-  }
-
-  private void cache(String moduleName, byte[] hash) throws IOException {
-    hashCache.put(moduleName, hash);
   }
 }

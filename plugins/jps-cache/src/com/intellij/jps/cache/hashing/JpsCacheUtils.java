@@ -10,7 +10,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -33,12 +35,11 @@ public class JpsCacheUtils {
                                                                                                    Function.identity()));
   }
 
-  public static String getPluginStorageDir(Project project) throws NoSuchAlgorithmException {
+  public static String getPluginStorageDir(Project project) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     File pluginsDir = new File(PathManager.getPluginsPath());
-    String projectPathHash = "";
     MessageDigest messageDigest = MessageDigest.getInstance("MD5");
     messageDigest.update(project.getBasePath().getBytes());
-    projectPathHash = new String(messageDigest.digest());
+    String projectPathHash = DatatypeConverter.printHexBinary(messageDigest.digest());
     return FileUtil.join(pluginsDir.getPath(), JpsCachePluginComponent.PLUGIN_NAME, project.getName() + "_" + projectPathHash);
   }
 }
