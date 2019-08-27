@@ -91,8 +91,9 @@ public class MouseWheelSmoothScroll {
     private final static int REFRESH_TIME = 1000 / 60; // 60 Hz
     private final static double VELOCITY_THRESHOLD = 0.001;
     private double myVelocity = Double.NaN;
+    private double myLambda = Double.NaN;
     private double myCurrentValue = Double.NaN, myTargetValue = Double.NaN;
-    private double myLambda = -0.01;
+    private long myLastEventTime = -1;
 
     private final Consumer<Integer> BLACK_HOLE = (x) -> {};
     private @NotNull Consumer<Integer> myConsumer = BLACK_HOLE;
@@ -119,7 +120,8 @@ public class MouseWheelSmoothScroll {
     }
 
     public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
-      myTouchpadRecognizer.addTime(System.currentTimeMillis());
+      long currentEventTime = System.currentTimeMillis();
+      myTouchpadRecognizer.addTime(currentEventTime);
       double duration = getDuration();
       if (duration == 0 || myTouchpadRecognizer.getSize() >= getTouchpadThreshold()) {
         consumer.accept(targetValue);
@@ -134,7 +136,7 @@ public class MouseWheelSmoothScroll {
         myTargetValue = targetValue;
       }
 
-      myLastEventTime = System.currentTimeMillis() - myTimer.getDelay();
+      myLastEventTime = currentEventTime - myTimer.getDelay();
       myVelocity = (myTargetValue - initValue) / duration;
       myLambda = 1.0;
       myConsumer = Objects.requireNonNull(consumer);
@@ -142,8 +144,6 @@ public class MouseWheelSmoothScroll {
       myCurrentValue = initValue;
       myTimer.start();
     }
-
-    private long myLastEventTime = -1;
 
     @Override
     public final void actionPerformed(ActionEvent e) {
@@ -153,17 +153,16 @@ public class MouseWheelSmoothScroll {
       }
 
       long eventTime = System.currentTimeMillis();
-      long refreshTime = eventTime - myLastEventTime;
-      myLastEventTime = eventTime;
-      myCurrentValue += myVelocity * refreshTime;
+      myCurrentValue += myVelocity * (eventTime - myLastEventTime);
       myVelocity *= myLambda;
+      myLastEventTime = eventTime;
 
       int nextValue = (int)round(myCurrentValue);
       myConsumer.accept(nextValue);
 
-      double animationTimeLeft = (myTargetValue - myCurrentValue) / myVelocity;
       // slowdown the animation
-      if (myLambda == 1.0 && animationTimeLeft > REFRESH_TIME &&  animationTimeLeft < getDecayDuration()) {
+      double animationTimeLeft = (myTargetValue - myCurrentValue) / myVelocity;
+      if (myLambda == 1.0 && animationTimeLeft > REFRESH_TIME && animationTimeLeft < getDecayDuration()) {
         // find q of geometric progression using n-th member formulae
         myLambda = pow(abs(VELOCITY_THRESHOLD / myVelocity), 1.0 / (animationTimeLeft / REFRESH_TIME));
       }
@@ -179,12 +178,13 @@ public class MouseWheelSmoothScroll {
         return;
       }
       myTimer.stop();
+      myVelocity = Double.NaN;
+      myLambda = Double.NaN;
+      myCurrentValue = Double.NaN;
+      myTargetValue = Double.NaN;
+      myLastEventTime = -1;
       myConsumer = BLACK_HOLE;
       myShouldStop = FALSE_PREDICATE;
-      myVelocity = Double.NaN;
-      myLastEventTime = -1;
-      myTargetValue = Double.NaN;
-      myCurrentValue = Double.NaN;
     }
   }
 
