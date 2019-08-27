@@ -81,6 +81,18 @@ public final class PyToxTest extends PyEnvTestCase {
     );
   }
 
+
+  @Test
+  public void testToxPyTestPy3k() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestPy3k/", 1,
+                                                     () -> new MyTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py36", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
   /**
    * Check tox unit runner
    */
