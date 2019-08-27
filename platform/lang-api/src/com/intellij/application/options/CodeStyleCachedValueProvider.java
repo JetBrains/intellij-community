@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -29,10 +30,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   private final static Logger LOG = Logger.getInstance(CodeStyleCachedValueProvider.class);
 
   private final static Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
+  private final static int MAX_COMPUTATION_THREADS = 10;
 
   private final @NotNull PsiFile          myFile;
   private final @NotNull AsyncComputation myComputation;
   private final @NotNull Lock             myComputationLock = new ReentrantLock();
+
+  private final static ExecutorService ourExecutorService =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider", MAX_COMPUTATION_THREADS);
 
   CodeStyleCachedValueProvider(@NotNull PsiFile file) {
     myFile = file;
@@ -116,7 +121,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       if (isRunOnBackground()) {
         ReadAction.nonBlocking(() -> computeSettings())
           .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed(myFile))
-          .submit(AppExecutorUtil.getAppExecutorService());
+          .submit(ourExecutorService);
       }
       else {
         ReadAction.run((() -> computeSettings()));
