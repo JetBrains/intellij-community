@@ -45,17 +45,17 @@ public class InstallPluginInfo {
     closeStatusBarIndicator();
   }
 
-  public synchronized void finish(boolean success, boolean cancel) {
+  public synchronized void finish(boolean success, boolean cancel, boolean restartRequired) {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
-      if (success) {
+      if (success && restartRequired) {
         ApplicationManager.getApplication()
           .invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
       }
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, success, true);
+      myPluginModel.finishInstall(myDescriptor, success, true, restartRequired);
     }
   }
 

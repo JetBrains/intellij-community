@@ -61,7 +61,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private Runnable myInvalidFixCallback;
 
-  private final Map<PluginId, PendingDynamicPluginInstall> myInstallCallbacks = new LinkedHashMap<>();
+  private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
 
   protected MyPluginModel() {
@@ -81,7 +81,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isModified() {
-    if (needRestart || !myInstallCallbacks.isEmpty() || !myDynamicPluginsToUninstall.isEmpty()) {
+    if (needRestart || !myDynamicPluginsToInstall.isEmpty() || !myDynamicPluginsToUninstall.isEmpty()) {
       return true;
     }
 
@@ -142,7 +142,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
                                        " won't be able to load.</body></html>");
     }
 
-    for (PendingDynamicPluginInstall installCallback : myInstallCallbacks.values()) {
+    for (PendingDynamicPluginInstall installCallback : myDynamicPluginsToInstall.values()) {
       PluginInstaller.installAndLoadDynamicPlugin(installCallback.getFile(), parent,
                                                   (IdeaPluginDescriptorImpl)installCallback.getPluginDescriptor());
     }
@@ -215,8 +215,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
     appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
     if (!callbackData.getRestartNeeded()) {
-      myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(),
-                             new PendingDynamicPluginInstall(callbackData.getFile(), callbackData.getPluginDescriptor()));
+      myDynamicPluginsToInstall.put(callbackData.getPluginDescriptor().getPluginId(),
+                                    new PendingDynamicPluginInstall(callbackData.getFile(), callbackData.getPluginDescriptor()));
     }
   }
 
@@ -307,19 +307,27 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor));
   }
 
-  private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
-                                    @NotNull List<? extends IdeaPluginDescriptor> allPlugins,
-                                    @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
-                                    @NotNull InstallPluginInfo info) {
+  private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
+                             @NotNull List<? extends IdeaPluginDescriptor> allPlugins,
+                             @NotNull InstallPluginInfo info) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       boolean cancel = false;
       boolean error = false;
+      boolean restartRequired = true;
 
       try {
-        error = !PluginInstaller.prepareToInstall(pluginsToInstall, allPlugins, pluginEnabler, info.indicator);
+        PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, this, info.indicator);
+        operation.setAllowInstallWithoutRestart(true);
+        operation.run();
+        for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+          myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
+        }
+
+        error = !operation.isSuccess();
+        restartRequired = operation.isRestartRequired();
       }
       catch (ProcessCanceledException e) {
         cancel = true;
@@ -331,7 +339,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       boolean success = !error;
       boolean _cancel = cancel;
-      ApplicationManager.getApplication().invokeLater(() -> info.finish(success, _cancel), ModalityState.any());
+      boolean finalRestartRequired = restartRequired;
+      ApplicationManager.getApplication().invokeLater(() -> info.finish(success, _cancel, finalRestartRequired), ModalityState.any());
     });
   }
 
@@ -392,7 +401,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return info;
   }
 
-  void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success, boolean showErrors) {
+  void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success, boolean showErrors, boolean restartRequired) {
     InstallPluginInfo info = finishInstall(descriptor);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -433,12 +442,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         myInstalledPanel.doLayout();
       }
       if (success) {
-        appendOrUpdateDescriptor(descriptor, true);
+        appendOrUpdateDescriptor(descriptor, restartRequired);
         appendDependsAfterInstall();
       }
     }
     else if (success) {
-      if (myDownloaded != null && myDownloaded.ui != null) {
+      if (myDownloaded != null && myDownloaded.ui != null && restartRequired) {
         CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
         if (component != null) {
           component.enableRestart();

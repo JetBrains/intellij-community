@@ -111,6 +111,10 @@ public class PluginDownloader {
     return myDescriptor;
   }
 
+  public File getFile() {
+    return myFile;
+  }
+
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
     if (myFile != null) {
       return true;

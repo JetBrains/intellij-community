@@ -34,6 +34,9 @@ public class PluginInstallOperation {
   private final ProgressIndicator myIndicator;
   private boolean mySuccess = true;
   private final Set<PluginNode> myDependant = new HashSet<>();
+  private boolean myAllowInstallWithoutRestart = false;
+  private final List<PendingDynamicPluginInstall> myPendingDynamicPluginInstalls = new ArrayList<>();
+  private boolean myRestartRequired = false;
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 List<? extends IdeaPluginDescriptor> allPlugins,
@@ -44,6 +47,18 @@ public class PluginInstallOperation {
     myAllPlugins = allPlugins;
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
+  }
+
+  public void setAllowInstallWithoutRestart(boolean allowInstallWithoutRestart) {
+    myAllowInstallWithoutRestart = allowInstallWithoutRestart;
+  }
+
+  public List<PendingDynamicPluginInstall> getPendingDynamicPluginInstalls() {
+    return myPendingDynamicPluginInstalls;
+  }
+
+  public boolean isRestartRequired() {
+    return myRestartRequired;
   }
 
   public void run() {
@@ -216,8 +231,18 @@ public class PluginInstallOperation {
     PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
     if (downloader.prepareToInstall(myIndicator)) {
-      synchronized (PluginInstaller.ourLock) {
-        downloader.install();
+      if (myAllowInstallWithoutRestart && DynamicPlugins.isUnloadSafe(downloader.getDescriptor())) {
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), downloader.getDescriptor()));
+        InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
+        if (state != null) {
+          state.onPluginInstall(downloader.getDescriptor(), false, false);
+        }
+      }
+      else {
+        myRestartRequired = true;
+        synchronized (PluginInstaller.ourLock) {
+          downloader.install();
+        }
       }
       pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (!toDisable.isNull()) {

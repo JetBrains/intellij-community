@@ -379,7 +379,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
   private void showProgress(boolean repaint) {
     myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
+    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false, true));
     myLayout.setProgressComponent(myIndicator.createBaselineWrapper());
 
     MyPluginModel.addProgress(myPlugin, myIndicator);

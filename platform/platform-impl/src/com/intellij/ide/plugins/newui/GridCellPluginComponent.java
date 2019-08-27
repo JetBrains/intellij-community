@@ -162,7 +162,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
 
   private void showProgress(boolean repaint) {
     TwoLineProgressIndicator indicator = new TwoLineProgressIndicator();
-    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
+    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false, true));
     myIndicator = indicator;
 
     myInstallButton.setVisible(false);
