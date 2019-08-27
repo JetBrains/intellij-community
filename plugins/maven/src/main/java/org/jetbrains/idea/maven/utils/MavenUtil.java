@@ -1107,8 +1107,8 @@ public class MavenUtil {
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 
-  public static void restartConfigHighlightning(Collection<MavenProject> projects) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+  public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
+    invokeLater(project, () -> {
       FileContentUtilCore.reparseFiles(getConfigFiles(projects));
     });
   }
