@@ -1313,7 +1313,13 @@
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
 
-    <group id="CopyReferencePopup">
+    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup" text="Copy Reference...">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </action>
+
+    <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
         <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path"/>
         <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>

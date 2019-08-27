@@ -21,11 +21,6 @@ public class CopyPathsAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (isCopyReferencePopupAvailable()) {
-      CopyReferencePopup.showPopup(e, "CopyAbsolutePathProvider");
-      return;
-    }
-
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 0) {
       CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(files)));
