@@ -54,6 +54,10 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
     return defaultPushPath == null ? null : new HgTarget(defaultPushPath, repository.getCurrentBranchName());
   }
 
+  @Override
+  @Nullable
+  public HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {return getDefaultTarget(repository);}
+
   @NotNull
   @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
