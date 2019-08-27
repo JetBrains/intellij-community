@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.LazyInstance;
+import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +14,12 @@ import java.util.List;
 
 /**
  * Extension point for schemes exporters.
- * 
+ *
  * @author Rustam Vishnyakov
  */
-public class SchemeExporterEP <S extends Scheme> extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<SchemeExporterEP> EP_NAME = ExtensionPointName.create("com.intellij.schemeExporter");
-  
+public final class SchemeExporterEP<S extends Scheme> extends BaseKeyedLazyInstance<SchemeExporter<S>> {
+  public static final ExtensionPointName<SchemeExporterEP<?>> EP_NAME = ExtensionPointName.create("com.intellij.schemeExporter");
+
   @Attribute("name")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String name;
@@ -44,18 +29,13 @@ public class SchemeExporterEP <S extends Scheme> extends AbstractExtensionPointB
 
   @Attribute("implementationClass")
   public String implementationClass;
-  
-  private final LazyInstance<SchemeExporter<S>> myExporterInstance = new LazyInstance<SchemeExporter<S>>() {
-    @Override
-    protected Class<SchemeExporter<S>> getInstanceClass() {
-      return findExtensionClass(implementationClass);
-    }
-  };
-  
-  public SchemeExporter<S> getInstance() {
-    return myExporterInstance.getValue();
+
+  @Nullable
+  @Override
+  protected String getImplementationClassName() {
+    return implementationClass;
   }
-  
+
   /**
    * Finds extensions supporting the given {@code schemeClass}
    * @param schemeClass The class of the scheme to search extensions for.

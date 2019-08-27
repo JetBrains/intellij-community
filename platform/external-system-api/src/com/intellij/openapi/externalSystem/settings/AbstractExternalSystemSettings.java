@@ -50,7 +50,7 @@ public abstract class AbstractExternalSystemSettings<
 
   @Override
   public void dispose() {
-    
+
   }
 
   @NotNull
@@ -231,34 +231,36 @@ public abstract class AbstractExternalSystemSettings<
   @SuppressWarnings("unchecked")
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
-    if (settings != null) {
-      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
-        @Override
-        public void onProjectsLinked(@NotNull Collection linked) {
-          if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-            return;
-          }
+    if (settings == null) {
+      return;
+    }
 
-          Project project = getProject();
-          for (Object o : linked) {
-            final ExternalProjectSettings settings = (ExternalProjectSettings)o;
-            for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
-              ProjectSystemId externalSystemId = manager.getSystemId();
-              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-                ExternalProjectsManager.getInstance(project).refreshProject(
-                  settings.getExternalProjectPath(),
-                  new ImportSpecBuilder(project, externalSystemId)
-                    .useDefaultCallback()
-                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                    .build()
-                );
-              }
+    setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection linked) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+          return;
+        }
+
+        Project project = getProject();
+        for (Object o : linked) {
+          final ExternalProjectSettings settings = (ExternalProjectSettings)o;
+          for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
+            AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
+            ProjectSystemId externalSystemId = manager.getSystemId();
+            if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
+              ExternalProjectsManager.getInstance(project).refreshProject(
+                settings.getExternalProjectPath(),
+                new ImportSpecBuilder(project, externalSystemId)
+                  .useDefaultCallback()
+                  .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                  .build()
+              );
             }
           }
         }
-      });
-    }
+      }
+    });
   }
 
   public interface State<S> {

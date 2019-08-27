@@ -71,7 +71,9 @@ public final class HeavyProcessLatch {
   }
 
   public interface HeavyProcessListener extends EventListener {
-    void processStarted();
+    default void processStarted() {
+    }
+
     void processFinished();
   }
 

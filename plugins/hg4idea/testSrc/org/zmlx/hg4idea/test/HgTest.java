@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.UtilKt;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
 import hg4idea.test.HgExecutor;
@@ -30,7 +31,6 @@ import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
-import org.picocontainer.MutablePicoContainer;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -177,11 +177,9 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
    * Registers HgMockVcsHelper as the AbstractVcsHelper.
    */
   protected HgMockVcsHelper registerMockVcsHelper() {
-    final String key = "com.intellij.openapi.vcs.AbstractVcsHelper";
-    final MutablePicoContainer picoContainer = (MutablePicoContainer) myProject.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, HgMockVcsHelper.class);
-    return (HgMockVcsHelper) AbstractVcsHelper.getInstance(myProject);
+    HgMockVcsHelper instance = new HgMockVcsHelper(myProject);
+    UtilKt.replaceServiceInstance(myProject, AbstractVcsHelper.class, instance, myProject);
+    return instance;
   }
 
   protected VirtualFile makeFile(File file) throws IOException {

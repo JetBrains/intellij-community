@@ -9,11 +9,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.UtilKt;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,9 +60,6 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
     FileUtil.writeToFile(child, schema);
     VirtualFile schemaFile = getVirtualFile(child);
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile, getAvailabilityPredicate()));
-    MutablePicoContainer container = (MutablePicoContainer)project.getPicoContainer();
-    String key = JsonSchemaService.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);
+    UtilKt.replaceServiceInstance(getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
   }
 }

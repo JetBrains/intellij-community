@@ -8,7 +8,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,8 +24,7 @@ import java.util.ResourceBundle;
  * @author Dmitry Avdeev
  * @see LocalInspectionEP
  */
-public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
-
+public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
   /**
    * @see GlobalInspectionTool
    */
@@ -161,7 +159,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
-                                    "and short name: " + shortName, getPluginId()));
+                                    "and short name: " + shortName, getPluginDescriptor().getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
@@ -176,14 +174,14 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Nullable
   private String getLocalizedString(@Nullable String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName :
-                            bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
+                            bundle == null ? ((IdeaPluginDescriptor)getPluginDescriptor()).getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
+    ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, getLoaderForClass());
     return CommonBundle.message(resourceBundle, key);
   }
 
@@ -191,7 +189,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    final InspectionProfileEntry entry = instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+    InspectionProfileEntry entry = getInstance();
     entry.myNameProvider = this;
     return entry;
   }

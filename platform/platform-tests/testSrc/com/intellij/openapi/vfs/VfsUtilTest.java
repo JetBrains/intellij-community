@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.UtilKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -35,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -336,12 +336,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         return super.getAllExcludedUrls();
       }
+
+      @Override
+      public void dispose() {
+      }
     };
-    ProjectManager old = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
-    Application app = ApplicationManager.getApplication();
-    MutablePicoContainer container = (MutablePicoContainer)app.getPicoContainer();
-    container.unregisterComponent(ProjectManager.class.getName());
-    container.registerComponentInstance(ProjectManager.class.getName(), test);
+    Disposable disposable = Disposer.newDisposable();
+    UtilKt.replaceServiceInstance(ApplicationManager.getApplication(), ProjectManager.class, test, disposable);
     assertSame(test, ProjectManager.getInstance());
 
     try {
@@ -368,11 +369,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
     finally {
-      if (old != null) {
-        container.unregisterComponent(ProjectManager.class.getName());
-        container.registerComponentInstance(ProjectManager.class.getName(), old);
-      }
-      assertSame(old, ProjectManager.getInstance());
+      Disposer.dispose(disposable);
       WriteAction.runAndWait(() -> Disposer.dispose(test));
     }
   }

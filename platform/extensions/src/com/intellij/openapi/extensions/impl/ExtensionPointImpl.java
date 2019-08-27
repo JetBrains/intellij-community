@@ -841,17 +841,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private synchronized void removeAdapter(@NotNull ExtensionComponentAdapter adapter, int index) {
     myAdapters.remove(index);
 
-    if (myListeners != null) {
-      T extensionInstance;
-      // it is not optimization - ObjectComponentAdapter must be checked explicitly because there is a chance that adapters were not yet processed,
-      // but adapter was registered explicitly (and so, already initialized and we must call `extensionRemoved` for this instance)
-      if (adapter instanceof ExtensionPointImpl.ObjectComponentAdapter) {
-        extensionInstance = castComponentInstance(adapter);
-      }
-      else {
-        extensionInstance = extensions[index];
-      }
-      notifyListenersOnRemove(extensionInstance, adapter.getPluginDescriptor(), myListeners);
+    if (myListeners.length != 0 && adapter.isInstanceCreated()) {
+      notifyListenersOnRemove(adapter.createInstance(myComponentManager), adapter.getPluginDescriptor(), myListeners);
     }
   }
 

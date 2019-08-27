@@ -434,7 +434,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                  "</profile>";
     profile.readExternal(JDOMUtil.load(customSettingsText));
     assertEquals(customSettingsText, serialize(profile));
-    InspectionToolWrapper wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
+    InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
     assertNotNull(wrapper);
     NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)wrapper.getTool();
     assertEquals(256, tool.getNamingConventionBean("AnnotationNamingConvention").m_maxLength);
@@ -584,7 +584,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                "  </inspection_tool>\n" +
                                                "</profile>"));
     profile.modifyProfile(it -> {
-      InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
+      InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
       UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
       inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
@@ -592,18 +592,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     });
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-                        "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
-                        "    <option name=\"FIELD\" value=\"true\" />\n" +
-                        "    <option name=\"METHOD\" value=\"true\" />\n" +
-                        "    <option name=\"CLASS\" value=\"false\" />\n" +
-                        "    <option name=\"PARAMETER\" value=\"true\" />\n" +
-                        "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
-                        "  </inspection_tool>\n" +
                         "</profile>";
     assertEquals(mergedText, serialize(profile));
   }

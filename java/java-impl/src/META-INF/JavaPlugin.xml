@@ -192,8 +192,8 @@
     <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"/>
 
     <!-- both EP implementation classes requires constructor injection (our plugins fixed, but 3rd-party not) -->
-    <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider" registerInPicoContainer="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder" registerInPicoContainer="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
+    <extensionPoint qualifiedName="com.intellij.projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
     <extensionPoint qualifiedName="com.intellij.projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"

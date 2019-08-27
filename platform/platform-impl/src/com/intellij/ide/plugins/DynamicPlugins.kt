@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.IconLoader
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.messages.Topic
 
@@ -91,12 +92,13 @@ object DynamicPlugins {
 
       pluginDescriptor.app.extensionsPoints?.let {
         for (extensionPointElement in it) {
-          Extensions.getRootArea().unregisterExtensionPoint(ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor))
+          val rootArea = Extensions.getRootArea() as ExtensionsAreaImpl
+          rootArea.unregisterExtensionPoint(rootArea.getExtensionPointName(extensionPointElement, pluginDescriptor))
         }
       }
       pluginDescriptor.project.extensionsPoints?.let {
         for (extensionPointElement in it) {
-          val extensionPointName = ExtensionsAreaImpl.getExtensionPointName(extensionPointElement, pluginDescriptor)
+          val extensionPointName = (Extensions.getRootArea() as ExtensionsAreaImpl).getExtensionPointName(extensionPointElement, pluginDescriptor)
           for (openProject in openProjects) {
             openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
           }

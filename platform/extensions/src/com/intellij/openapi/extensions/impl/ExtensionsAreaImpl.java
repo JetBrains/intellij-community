@@ -88,8 +88,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @NotNull
-  public static String getExtensionPointName(@NotNull Element extensionPointElement,
-                                             @NotNull PluginDescriptor pluginDescriptor) {
+  public String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
     String pointName = extensionPointElement.getAttributeValue("qualifiedName");
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");

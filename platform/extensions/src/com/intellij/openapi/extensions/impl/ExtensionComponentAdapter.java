@@ -33,8 +33,8 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   abstract boolean isInstanceCreated();
 
   @NotNull
-  public Object createInstance(@NotNull ComponentManager componentManager) {
-    Object instance;
+  public <T> T createInstance(@NotNull ComponentManager componentManager) {
+    T instance;
     try {
       instance = instantiateClass(getImplementationClass(), componentManager);
       initInstance(instance);
@@ -50,7 +50,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @NotNull
-  protected Object instantiateClass(@NotNull Class<?> aClass, @NotNull ComponentManager componentManager) {
+  protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
     return componentManager.instantiateClass(aClass, myPluginDescriptor.getPluginId());
   }
 
@@ -73,7 +73,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @NotNull
-  public final Class<?> getImplementationClass() throws ClassNotFoundException {
+  public final <T> Class<T> getImplementationClass() throws ClassNotFoundException {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
@@ -82,7 +82,8 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
       }
       myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
     }
-    return (Class<?>)implementationClassOrName;
+    //noinspection unchecked
+    return (Class<T>)implementationClassOrName;
   }
 
   @NotNull

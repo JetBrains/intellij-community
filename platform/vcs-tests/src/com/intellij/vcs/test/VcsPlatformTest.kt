@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,10 +20,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.*
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
@@ -64,8 +60,8 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
-    vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
-    vcsNotifier = project.service<VcsNotifier>() as TestVcsNotifier
+    vcsNotifier = TestVcsNotifier(myProject)
+    project.replaceServiceInstance(VcsNotifier::class.java, vcsNotifier, testRootDisposable)
     cd(testRoot)
   }
 

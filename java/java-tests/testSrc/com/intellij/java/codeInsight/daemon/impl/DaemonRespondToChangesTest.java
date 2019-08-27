@@ -903,7 +903,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return info;
       }
     };
-    LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
+    LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
     myDaemonCodeAnalyzer.restart();
     try {
       TextRange range = ObjectUtils.assertNotNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));

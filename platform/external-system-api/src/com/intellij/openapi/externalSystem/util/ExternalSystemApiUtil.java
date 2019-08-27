@@ -51,7 +51,8 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.util.PlatformUtils.*;
+import static com.intellij.util.PlatformUtils.getPlatformPrefix;
+import static com.intellij.util.PlatformUtils.isIntelliJ;
 
 /**
  * @author Denis Zhdanov
@@ -174,7 +175,7 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
-    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
       if (externalSystemId.equals(manager.getSystemId())) {
         return manager;
       }
@@ -447,7 +448,7 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
       AbstractExternalSystemSettings systemSettings = getSettings(ideProject, externalSystemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();

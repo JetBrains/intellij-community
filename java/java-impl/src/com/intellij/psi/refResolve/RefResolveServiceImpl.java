@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
@@ -241,10 +241,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     }, this);
 
     HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
-      @Override
-      public void processStarted() {
-      }
-
       @Override
       public void processFinished() {
         wakeUp();

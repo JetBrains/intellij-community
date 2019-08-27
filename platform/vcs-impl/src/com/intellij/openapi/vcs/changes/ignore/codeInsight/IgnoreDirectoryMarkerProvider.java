@@ -48,11 +48,11 @@ import java.util.regex.Pattern;
  * {@link LineMarkerProvider} that marks ignore entry lines with {@link PlatformIcons#FOLDER_ICON} if they point to the directory in file
  * system.
  */
-public class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
+public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 

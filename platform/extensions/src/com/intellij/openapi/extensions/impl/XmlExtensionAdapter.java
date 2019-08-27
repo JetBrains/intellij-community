@@ -35,8 +35,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   @NotNull
   @Override
-  public Object createInstance(@NotNull ComponentManager componentManager) {
-    Object instance = extensionInstance;
+  public <T> T createInstance(@NotNull ComponentManager componentManager) {
+    @SuppressWarnings("unchecked")
+    T instance = (T)extensionInstance;
     if (instance != null) {
       // todo add assert that createInstance was already called
       // problem is that ExtensionPointImpl clears cache on runtime modification and so adapter instance need to be recreated
@@ -46,7 +47,8 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
-      instance = extensionInstance;
+      //noinspection unchecked
+      instance = (T)extensionInstance;
       if (instance != null) {
         return instance;
       }
@@ -88,7 +90,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
     @NotNull
     @Override
-    protected Object instantiateClass(@NotNull Class<?> aClass, @NotNull ComponentManager componentManager) {
+    protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
       // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
       if (componentManager.getPicoContainer().getParent() == null) {
         try {

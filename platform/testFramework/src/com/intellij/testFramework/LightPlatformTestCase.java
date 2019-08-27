@@ -436,7 +436,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.hideActiveLookup(project)).
       append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
-      append(() -> { if (ProjectManager.getInstance() == null) throw new AssertionError("Application components damaged"); }).
       append(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
         if (ourSourceRoot != null) {
           try {
@@ -455,7 +454,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
       })).
-      append(() -> EditorHistoryManager.getInstance(project).removeAllFiles()).
+      append(() -> {
+        EditorHistoryManager editorHistoryManager = project.getServiceIfCreated(EditorHistoryManager.class);
+        if (editorHistoryManager != null) {
+          editorHistoryManager.removeAllFiles();
+        }
+      }).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
         clearEncodingManagerDocumentQueue();
@@ -467,11 +471,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }).
       append(() -> clearUncommittedDocuments(project)).
-      append(() -> ((HintManagerImpl)HintManager.getInstance()).cleanup()).
+      append(() -> {
+        HintManagerImpl hintManager = (HintManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(HintManager.class);
+        if (hintManager != null) {
+          hintManager.cleanup();
+        }
+      }).
       append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
-      append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
+      append(() -> {
+        TemplateDataLanguageMappings templateDataLanguageMappings = project.getServiceIfCreated(TemplateDataLanguageMappings.class);
+        if (templateDataLanguageMappings != null) {
+          templateDataLanguageMappings.cleanupForNextTest();
+        }
+      }).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
       append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).

@@ -1,12 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
-import org.picocontainer.MutablePicoContainer
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.serviceContainer.PlatformComponentManagerImpl
 
-fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, instance: T) {
-  val picoContainer = picoContainer as MutablePicoContainer
-  val key = interfaceClass.name
-  picoContainer.unregisterComponent(key)
-  picoContainer.registerComponentInstance(key, instance)
+fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
+  (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, DefaultPluginDescriptor("test"))
+}
+
+@JvmOverloads
+fun <T : Any> ComponentManager.replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+  (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
