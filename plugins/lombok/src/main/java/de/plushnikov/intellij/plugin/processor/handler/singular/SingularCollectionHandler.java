@@ -57,46 +57,54 @@ class SingularCollectionHandler extends AbstractSingularHandler {
 
   @Override
   public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+    return renderBuildCode(psiVariable, fieldName, "this");
+  }
+
+  @Override
+  public String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+    return renderBuildCode(psiVariable, fieldName, "b") + "this." + fieldName + "=" + fieldName + ";\n";
+  }
+
+  @Override
+  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiVariable.getType(), psiManager);
-
-    final String selectedFormat;
+    String result;
     if (SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET.equals(collectionQualifiedName)) {
-      selectedFormat = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
-        "if (this.{0} != null) {0}.addAll(this.{0});\n" +
+      result = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
+        "if ({3}.{0} != null) {0}.addAll({3}.{0});\n" +
         "{0} = java.util.Collections.unmodifiableNavigableSet({0});\n";
     } else if (SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName)) {
-      selectedFormat = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
-        "if (this.{0} != null) {0}.addAll(this.{0});\n" +
+      result = "{2}<{1}> {0} = new java.util.TreeSet<{1}>();\n" +
+        "if ({3}.{0} != null) {0}.addAll({3}.{0});\n" +
         "{0} = java.util.Collections.unmodifiableSortedSet({0});\n";
     } else if (SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
-      selectedFormat = "{2}<{1}> {0};\n" +
-        "switch (this.{0} == null ? 0 : this.{0}.size()) '{'\n" +
+      result = "{2}<{1}> {0};\n" +
+        "switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'\n" +
         " case 0: \n" +
         "   {0} = java.util.Collections.emptySet();\n" +
         "   break;\n" +
         " case 1: \n" +
-        "   {0} = java.util.Collections.singleton(this.{0}.get(0));\n" +
+        "   {0} = java.util.Collections.singleton({3}.{0}.get(0));\n" +
         "   break;\n" +
         " default: \n" +
-        "   {0} = new java.util.LinkedHashSet<{1}>(this.{0}.size() < 1073741824 ? 1 + this.{0}.size() + (this.{0}.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);\n" +
-        "   {0}.addAll(this.{0});\n" +
+        "   {0} = new java.util.LinkedHashSet<{1}>({3}.{0}.size() < 1073741824 ? 1 + {3}.{0}.size() + ({3}.{0}.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);\n" +
+        "   {0}.addAll({3}.{0});\n" +
         "   {0} = java.util.Collections.unmodifiableSet({0});\n" +
         "'}'\n";
     } else {
-      selectedFormat = "{2}<{1}> {0};\n" +
-        "switch (this.{0} == null ? 0 : this.{0}.size()) '{'\n" +
+      result = "{2}<{1}> {0};\n" +
+        "switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'\n" +
         "case 0: \n" +
         " {0} = java.util.Collections.emptyList();\n" +
         " break;\n" +
         "case 1: \n" +
-        " {0} = java.util.Collections.singletonList(this.{0}.get(0));\n" +
+        " {0} = java.util.Collections.singletonList({3}.{0}.get(0));\n" +
         " break;\n" +
         "default: \n" +
-        " {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>(this.{0}));\n" +
+        " {0} = java.util.Collections.unmodifiableList(new java.util.ArrayList<{1}>({3}.{0}));\n" +
         "'}'\n";
     }
-
-    return MessageFormat.format(selectedFormat, fieldName, elementType.getCanonicalText(false), collectionQualifiedName);
+    return MessageFormat.format(result, fieldName, elementType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
 }

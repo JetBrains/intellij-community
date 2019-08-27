@@ -56,13 +56,19 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.PROTECTED)
       .withParameter(BUILDER_VARIABLE_NAME, psiTypeBaseWithGenerics);
 
-    // TODO add real body
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, builderClass, psiTypeBaseWithGenerics);
+    final String buildMethodPrepare = builderInfos.stream()
+      .map(BuilderInfo::renderSuperBuilderConstruction)
+      .collect(Collectors.joining());
+
+    final String codeBlock;
     final PsiClass superClass = psiClass.getSuperClass();
     if (null != superClass && !"Object".equals(superClass.getName())) {
-      constructorBuilderBased.withBody(PsiMethodUtil.createCodeBlockFromText("super(b);", constructorBuilderBased));
+      codeBlock = "super(b);\n" + buildMethodPrepare;
     } else {
-      constructorBuilderBased.withBody(PsiMethodUtil.createCodeBlockFromText("", constructorBuilderBased));
+      codeBlock = buildMethodPrepare;
     }
+    constructorBuilderBased.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlock, constructorBuilderBased));
 
     return Optional.of(constructorBuilderBased);
   }
@@ -107,7 +113,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withNavigationElement(psiAnnotation)
       .withModifier(PsiModifier.PUBLIC);
 
-    final String blockText = String.format("return new %s()%s(this);", builderImplClass.getName(), FILL_VALUES_METHOD_NAME);
+    final String blockText = String.format("return new %s().%s(this);", builderImplClass.getName(), FILL_VALUES_METHOD_NAME);
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
 
     return Optional.of(methodBuilder);
@@ -170,7 +176,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, null, baseClassBuilder);
     for (BuilderInfo builderInfo : builderInfos) {
       builderInfo.withBuilderClassType(bType)
-        .withBuilderChainResult("self()");
+        .withBuilderChainResult("self()")
+        .withInstanceVariableName(INSTANCE_VARIABLE_NAME);
     }
     return builderInfos;
   }
@@ -212,6 +219,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .forEach(result::addAll);
 
     final PsiManager psiManager = psiClass.getManager();
+    final boolean forceCallSuper = PsiClassUtil.hasSuperClass(psiClass);
 
     if (shouldGenerateToBuilderMethods(psiAnnotation)) {
       if (!existedMethodNames.contains(STATIC_FILL_VALUES_METHOD_NAME)) {
@@ -224,9 +232,13 @@ public class SuperBuilderHandler extends BuilderHandler {
           .withNavigationElement(psiClass)
           .withModifier(PsiModifier.PRIVATE)
           .withModifier(PsiModifier.STATIC);
-        //TODO add real CODE
-        final String codeBlockText = "";
-        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+
+        //TODO Fix obtain via
+        final String toBuilderMethodCalls = builderInfos.stream()
+          .map(BuilderInfo::renderToBuilderCall)
+          .collect(Collectors.joining(';' + BUILDER_VARIABLE_NAME + '.', BUILDER_VARIABLE_NAME + '.', ";\n"));
+
+        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(toBuilderMethodCalls, methodBuilder));
         result.add(methodBuilder);
       }
 
@@ -239,8 +251,9 @@ public class SuperBuilderHandler extends BuilderHandler {
           .withNavigationElement(psiClass)
           .withModifier(PsiModifier.PROTECTED);
 
-        final String codeBlockText = String.format("%s.%s(%s, this);\nreturn self();", baseClassBuilder.getName(),
-          STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
+        final String callSuperCode = "super." + FILL_VALUES_METHOD_NAME + "(" + INSTANCE_VARIABLE_NAME + ");\n";
+        final String codeBlockText = String.format("%s%s.%s(%s, this);\nreturn self();", forceCallSuper ? callSuperCode : "",
+          baseClassBuilder.getName(), STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
         methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
 
         result.add(methodBuilder);
@@ -248,7 +261,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     }
 
     if (!existedMethodNames.contains(SELF_METHOD)) {
-      // create 'self' method ( protected abstract B self(); )
+      // create 'self' method
       final LombokLightMethodBuilder selfMethod = new LombokLightMethodBuilder(psiManager, SELF_METHOD)
         .withMethodReturnType(bType)
         .withContainingClass(baseClassBuilder)
@@ -260,7 +273,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     final String buildMethodName = getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
-      // create 'build' method ( public abstract C build(); )
+      // create 'build' method
       final LombokLightMethodBuilder buildMethod = new LombokLightMethodBuilder(psiManager, buildMethodName)
         .withMethodReturnType(cType)
         .withContainingClass(baseClassBuilder)
@@ -272,7 +285,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
       // create 'toString' method
-      result.add(createToStringMethod(psiAnnotation, baseClassBuilder));
+      result.add(createToStringMethod(psiAnnotation, baseClassBuilder, forceCallSuper));
     }
 
     return result;

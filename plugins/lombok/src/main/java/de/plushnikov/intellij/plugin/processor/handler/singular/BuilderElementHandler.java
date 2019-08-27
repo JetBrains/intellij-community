@@ -19,6 +19,14 @@ public interface BuilderElementHandler {
     return "";
   }
 
+  default String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
+    return "";
+  }
+
+  default String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+    return "this." + psiVariable.getName() + "=b." + fieldName + ";\n";
+  }
+
   Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info);
 
   Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info);

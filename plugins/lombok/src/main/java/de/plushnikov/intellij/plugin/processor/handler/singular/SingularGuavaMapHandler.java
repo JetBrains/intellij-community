@@ -80,7 +80,7 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
 
@@ -89,9 +89,9 @@ class SingularGuavaMapHandler extends SingularMapHandler {
 
     return MessageFormat.format(
       "{3}<{1}, {2}> {0} = " +
-        "this.{0} == null ? " +
+        "{4}.{0} == null ? " +
         "{3}.<{1}, {2}>of() : " +
-        "this.{0}.build();\n",
-      fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName);
+        "{4}.{0}.build();\n",
+      fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
 }

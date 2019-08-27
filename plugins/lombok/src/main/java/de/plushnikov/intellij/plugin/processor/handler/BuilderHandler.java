@@ -384,9 +384,14 @@ public class BuilderHandler {
 
   @NotNull
   public PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass) {
+    return createToStringMethod(psiAnnotation, builderClass, false);
+  }
+
+  @NotNull
+  PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass, boolean forceCallSuper) {
     final List<EqualsAndHashCodeToStringHandler.MemberInfo> memberInfos = Arrays.stream(builderClass.getFields())
       .map(EqualsAndHashCodeToStringHandler.MemberInfo::new).collect(Collectors.toList());
-    return toStringProcessor.createToStringMethod(builderClass, memberInfos, psiAnnotation);
+    return toStringProcessor.createToStringMethod(builderClass, memberInfos, psiAnnotation, forceCallSuper);
   }
 
   @NotNull

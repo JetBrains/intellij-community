@@ -65,16 +65,16 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   }
 
   @Override
-  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
 
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
     return MessageFormat.format(
       "{2}<{1}> {0} = " +
-        "this.{0} == null ? " +
+        "{4}.{0} == null ? " +
         "{3}.<{1}>of() : " +
-        "this.{0}.build();\n",
-      fieldName, elementType.getCanonicalText(false), collectionQualifiedName, typeCollectionQualifiedName);
+        "{4}.{0}.build();\n",
+      fieldName, elementType.getCanonicalText(false), collectionQualifiedName, typeCollectionQualifiedName, builderVariable);
   }
 }

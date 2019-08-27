@@ -98,15 +98,15 @@ public class ToStringProcessor extends AbstractClassProcessor {
     }
 
     final Collection<MemberInfo> memberInfos = handler.filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
-    final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation);
+    final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation, false);
     return Collections.singletonList(stringMethod);
   }
 
   @NotNull
-  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
     final PsiManager psiManager = psiClass.getManager();
 
-    final String paramString = createParamString(psiClass, memberInfos, psiAnnotation);
+    final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
     final String blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
@@ -133,8 +133,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return psiClassName.toString();
   }
 
-  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
-    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.TOSTRING_CALL_SUPER);
+  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
+    final boolean callSuper = forceCallSuper || readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.TOSTRING_CALL_SUPER);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
     final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
 

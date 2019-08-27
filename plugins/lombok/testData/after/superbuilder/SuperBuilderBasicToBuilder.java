@@ -107,15 +107,15 @@ public class SuperBuilderBasicToBuilder {
 			this.obtainViaField = b.obtainViaField;
 			this.obtainViaMethod = b.obtainViaMethod;
 			this.obtainViaStaticMethod = b.obtainViaStaticMethod;
-			List<String> items;
+			java.util.List<String> items;
 			switch (b.items == null ? 0 : b.items.size()) {
-			case 0: 
+			case 0:
 				items = java.util.Collections.emptyList();
 				break;
-			case 1: 
+			case 1:
 				items = java.util.Collections.singletonList(b.items.get(0));
 				break;
-			default: 
+			default:
 				items = java.util.Collections.unmodifiableList(new java.util.ArrayList<String>(b.items));
 			}
 			this.items = items;

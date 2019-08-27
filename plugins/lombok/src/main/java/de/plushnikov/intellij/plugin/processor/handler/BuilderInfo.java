@@ -48,6 +48,7 @@ public class BuilderInfo {
   private String viaFieldName;
   private String viaMethodName;
   private boolean viaStaticCall;
+  private String instanceVariableName = "this";
 
   public static BuilderInfo fromPsiParameter(@NotNull PsiParameter psiParameter) {
     final BuilderInfo result = new BuilderInfo();
@@ -241,6 +242,10 @@ public class BuilderInfo {
     return builderElementHandler.renderBuildPrepare(variableInClass, fieldInBuilderName);
   }
 
+  public String renderSuperBuilderConstruction() {
+    return builderElementHandler.renderSuperBuilderConstruction(variableInClass, fieldInBuilderName);
+  }
+
   public String renderBuildCall() {
     return fieldInBuilderName;
   }
@@ -252,21 +257,18 @@ public class BuilderInfo {
     result.append('(');
     if (hasObtainViaAnnotation()) {
       if (StringUtil.isNotEmpty(viaFieldName)) {
-        result.append("this.");
-        result.append(viaFieldName);
+        result.append(instanceVariableName).append(".").append(viaFieldName);
       } else if (StringUtil.isNotEmpty(viaMethodName)) {
 
-        result.append(viaStaticCall ? getPsiClass().getName() : "this");
+        result.append(viaStaticCall ? getPsiClass().getName() : instanceVariableName);
         result.append('.');
         result.append(viaMethodName);
-        result.append(viaStaticCall ? "(this)" : "()");
+        result.append(viaStaticCall ? "(" + instanceVariableName + ")" : "()");
       } else {
-        result.append("this.");
-        result.append(variableInClass.getName());
+        result.append(instanceVariableName).append(".").append(variableInClass.getName());
       }
     } else {
-      result.append("this.");
-      result.append(variableInClass.getName());
+      result.append(instanceVariableName).append(".").append(variableInClass.getName());
     }
     result.append(')');
 
@@ -298,4 +300,7 @@ public class BuilderInfo {
     return Optional.empty();
   }
 
+  public void withInstanceVariableName(String instanceVariableName) {
+    this.instanceVariableName = instanceVariableName;
+  }
 }
