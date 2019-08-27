@@ -117,6 +117,30 @@ public class PersistentCachingModuleHashingService {
     });
   }
 
+  public Map<String, byte[]> compureProductionHashesForProject() {
+    Map<String, byte[]> result = new HashMap<>();
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    Arrays.stream(modules).forEach(module -> {
+      File[] productionSources = getProductionSources(module);
+      byte[] hash = ModuleHashingService.hashDirectories(productionSources);
+      result.put(module.getName(), hash);
+    });
+
+    return result;
+  }
+
+  public Map<String, byte[]> computeTestHashesForProject() {
+    Map<String, byte[]> result = new HashMap<>();
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    Arrays.stream(modules).forEach(module -> {
+      File[] testSources = getTestSources(module);
+      byte[] hash = ModuleHashingService.hashDirectories(testSources);
+      result.put(module.getName(), hash);
+    });
+
+    return result;
+  }
+
   public Map<String, byte[]> getAffectedTests() {
     try {
       return getAffected(testHashes, affectedTests, Arrays.asList(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE));
@@ -135,6 +159,22 @@ public class PersistentCachingModuleHashingService {
       LOG.warn("Error while calculating hashes for affected sources", e);
       return Collections.emptyMap();
     }
+  }
+
+  private File[] getProductionSources(Module module) {
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+
+    return Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE).stream(),
+                         moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE).stream())
+      .map(vf -> new File(vf.getPath())).toArray(File[]::new);
+  }
+
+  private File[] getTestSources(Module module) {
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+
+    return Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream(),
+                         moduleRootManager.getSourceRoots(JavaResourceRootType.TEST_RESOURCE).stream())
+      .map(vf -> new File(vf.getPath())).toArray(File[]::new);
   }
 
   private Map<String, byte[]> getAffected(PersistentHashMap<String, byte[]> hashCache,
