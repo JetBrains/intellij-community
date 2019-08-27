@@ -12,11 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.io.File;
+
+import static com.intellij.openapi.vcs.Executor.overwrite;
 
 public class HgRenameTest extends HgSingleUserTest {
 
@@ -34,8 +36,8 @@ public class HgRenameTest extends HgSingleUserTest {
   public void testRenameModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    VcsTestUtil.editFileInCommand(myProject, file, "modified new file content");
     myChangeListManager.ensureUpToDate();
+    overwrite(VfsUtilCore.virtualToIoFile(file), "modified new file content");
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     renameFileInCommand(file, "b.txt");
     myChangeListManager.ensureUpToDate();
