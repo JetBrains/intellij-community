@@ -43,7 +43,7 @@ public class JsonTypingHandlingTest extends JsonTestCase {
 
   // JsonEnterHandler
   public void testEnterAfterProperty() {
-    doTestEnter("{\"a\": true<caret>}", "{\"a\": true,\n}");
+    doTestEnter("{\"a\": true<caret>\n}", "{\"a\": true,\n  <caret>\n}");
   }
   public void testEnterMidProperty() {
     doTestEnter("{\"a\": tr<caret>ue}", "{\"a\": true,\n}");
@@ -55,7 +55,7 @@ public class JsonTypingHandlingTest extends JsonTestCase {
     doTestEnter("{\"a\": {<caret>} \"b\": 5}", "{\"a\": {\n  \n}, \"b\": 5}");
   }
   public void testEnterAfterObject() {
-    doTestEnter("{\"a\": {}<caret>}", "{\"a\": {},\n}");
+    doTestEnter("{\"a\": {}<caret>\n}", "{\"a\": {},\n  <caret>\n}");
   }
 
   // JsonTypedHandler
@@ -157,5 +157,12 @@ public class JsonTypingHandlingTest extends JsonTestCase {
 
   public void testAddCommaWithPairedQuotes() {
     testWithPairQuotes(true, () -> doTypingTest("\"ccc\": \"", "{<caret>\"aaa\": \"bbb\"}", "{\"ccc\": \"<caret>\",\"aaa\": \"bbb\"}", "json"));
+  }
+
+  public void testNoCommaIfRBraceAndNoNewline() {
+    doTestEnter("{\n" +
+                "  \"x\": 5<caret>}\n", "{\n" +
+                                 "  \"x\": 5\n" +
+                                 "}\n");
   }
 }
