@@ -124,8 +124,9 @@ public class VfsData {
       throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
-    return o instanceof DirectoryData ? persistentFS.getOrCacheDir(id, segment, (DirectoryData)o, parent)
-                                      : new VirtualFileImpl(id, segment, parent);
+    return o instanceof DirectoryData
+           ? persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()))
+           : new VirtualFileImpl(id, segment, parent);
   }
 
   private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
@@ -156,7 +157,7 @@ public class VfsData {
     }
   }
 
-  public static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
+  static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
     int offset = getOffset(id);
 
     segment.setNameId(id, nameId);
@@ -204,7 +205,7 @@ public class VfsData {
     }
   }
 
-  public static class Segment {
+  static class Segment {
     // user data for files, DirectoryData for folders
     private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<>(SEGMENT_SIZE);
 
@@ -281,7 +282,7 @@ public class VfsData {
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
-  public static class DirectoryData {
+  static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;

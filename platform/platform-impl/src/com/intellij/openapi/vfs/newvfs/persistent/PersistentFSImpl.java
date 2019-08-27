@@ -31,8 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -114,14 +112,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @NotNull
-  public VirtualFileSystemEntry getOrCacheDir(int id,
-                                              @NotNull VfsData.Segment segment,
-                                              @NotNull VfsData.DirectoryData o,
-                                              @NotNull VirtualDirectoryImpl parent) {
+  public VirtualFileSystemEntry getOrCacheDir(int id, @NotNull VirtualDirectoryImpl newDir) {
     VirtualFileSystemEntry dir = myIdToDirCache.get(id);
     if (dir != null) return dir;
-    dir = new VirtualDirectoryImpl(id, segment, o, parent, parent.getFileSystem());
-    return myIdToDirCache.cacheOrGet(id, dir);
+    return myIdToDirCache.cacheOrGet(id, newDir);
   }
   public VirtualFileSystemEntry getCachedDir(int id) {
     return myIdToDirCache.get(id);
@@ -1187,17 +1181,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int rootId = FSRecords.findRootRecord(rootUrl);
 
-    VfsData.Segment segment = myVfsData.getSegment(rootId, true);
-    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, StringUtil.trimTrailing(rootPath, '/'));
     int rootNameId = FileNameCache.storeName(rootName.toString());
     boolean mark;
+    VirtualFileSystemEntry newRoot;
     synchronized (myRoots) {
       root = myRoots.get(rootUrl);
       if (root != null) return root;
 
       try {
-        VfsData.initFile(rootId, segment, rootNameId, directoryData);
+        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, StringUtil.trimTrailing(rootPath, '/'));
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -1560,69 +1552,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void doCleanPersistedContent(int id) {
     setFlag(id, MUST_RELOAD_CONTENT, true);
-  }
-
-  private static class FsRoot extends VirtualDirectoryImpl {
-    private final String myPathWithOneSlash;
-
-    private FsRoot(int id,
-                   @NotNull VfsData.Segment segment,
-                   @NotNull VfsData.DirectoryData data,
-                   @NotNull NewVirtualFileSystem fs,
-                   @NotNull String pathBeforeSlash) {
-      super(id, segment, data, null, fs);
-      if (!looksCanonical(pathBeforeSlash)) {
-        throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
-      }
-      myPathWithOneSlash = pathBeforeSlash + '/';
-    }
-
-    @NotNull
-    @Override
-    protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-      int myLength = myPathWithOneSlash.length() - 1;
-      char[] chars = new char[pathLength + myLength];
-      CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);
-      position[0] += myLength;
-      return chars;
-    }
-
-    @Override
-    public void setNewName(@NotNull String newName) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public final void setParent(@NotNull VirtualFile newParent) {
-      throw new IncorrectOperationException();
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
-      return myPathWithOneSlash;
-    }
-
-    @NotNull
-    @Override
-    public String getUrl() {
-      return getFileSystem().getProtocol() + URLUtil.SCHEME_SEPARATOR + getPath();
-    }
-  }
-
-  private static boolean looksCanonical(@NotNull String pathBeforeSlash) {
-    if (pathBeforeSlash.endsWith("/")) {
-      return false;
-    }
-    int start = 0;
-    while (true) {
-      int i = pathBeforeSlash.indexOf("..", start);
-      if (i == -1) break;
-      if (i != 0 && pathBeforeSlash.charAt(i-1) == '/') return false; // /..
-      if (i < pathBeforeSlash.length() - 2 && pathBeforeSlash.charAt(i+2) == '/') return false; // ../
-      start = i+1;
-    }
-    return true;
   }
 
   @Override
