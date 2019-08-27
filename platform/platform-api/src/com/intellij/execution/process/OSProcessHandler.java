@@ -28,20 +28,46 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
-  public static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
+  static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
-  private boolean myHasErrorStream = true;
+  private final boolean myHasErrorStream;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
-  private Set<File> myFilesToDelete = null;
+  private final Set<File> myFilesToDelete;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
+    super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
+    setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
   }
 
-  private static Process startProcess(GeneralCommandLine commandLine) throws ExecutionException {
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @Deprecated
+  public OSProcessHandler(@NotNull Process process) {
+    this(process, null);
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
+    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
+    super(process, commandLine, charset);
+    setHasPty(isPtyProcess(process));
+    myFilesToDelete = null;
+    myHasErrorStream = true;
+  }
+
+  @NotNull
+  private static Process startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     try {
       return commandLine.createProcess();
     }
@@ -85,7 +111,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * <li>Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
    *   <ul>
    *     <li>Synchronous (you need to return execution result or derived information to the caller) - execute under
-   *       {@link ProgressManager#runProcessWithProgressSynchronously(java.lang.Runnable, java.lang.String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
+   *       {@link ProgressManager#runProcessWithProgressSynchronously(Runnable, String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
    *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
    *   </ul>
    * </li>
@@ -132,30 +158,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  @Deprecated
-  public OSProcessHandler(@NotNull Process process) {
-    this(process, null);
-  }
-
-  /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
-   */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
-    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
-  }
-
-  /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
-   */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
-    super(process, commandLine, charset);
-    setHasPty(isPtyProcess(process));
-  }
-
   private static boolean isPtyProcess(Process process) {
-    Class c = process.getClass();
+    Class<?> c = process.getClass();
     while (c != null) {
       if ("com.pty4j.unix.UnixPtyProcess".equals(c.getName()) || "com.pty4j.windows.WinPtyProcess".equals(c.getName())) {
         return true;
