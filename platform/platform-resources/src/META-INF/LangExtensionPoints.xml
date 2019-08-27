@@ -552,16 +552,16 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
-    </extensionPoint>
-
-    <extensionPoint name="contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
     </extensionPoint>
 
     <extensionPoint name="completion.preselectionBehaviourProvider"

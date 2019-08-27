@@ -13,7 +13,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public interface ElementFeatureProvider {
-  LanguageExtension<ElementFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.stats.completion.elementFeatures");
+  LanguageExtension<ElementFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.elementFeatures");
 
   @NotNull
   static List<ElementFeatureProvider> forLanguage(Language language) {

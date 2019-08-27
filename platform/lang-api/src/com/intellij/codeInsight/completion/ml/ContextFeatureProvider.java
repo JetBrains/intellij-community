@@ -12,7 +12,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public interface ContextFeatureProvider {
-  LanguageExtension<ContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.stats.completion.contextFeatures");
+  LanguageExtension<ContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.contextFeatures");
 
   @NotNull
   static List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
