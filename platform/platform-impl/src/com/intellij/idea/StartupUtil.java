@@ -487,7 +487,7 @@ public class StartupUtil {
 
     SocketLock.ActivateStatusAndResponse status;
     try {
-      status = ourSocketLock.lock(args);
+      status = ourSocketLock.lockAndTryActivate(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
