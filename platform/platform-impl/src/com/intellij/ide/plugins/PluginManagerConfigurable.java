@@ -1595,7 +1595,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myPluginModel.apply()) return;
+    if (myPluginModel.apply(myCardPanel)) return;
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(

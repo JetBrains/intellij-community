@@ -27,11 +27,7 @@ public class PluginDropHandler extends CustomFileDropHandler {
   public boolean handleDrop(@NotNull Transferable t, @Nullable Editor editor, Project project) {
     File file = getFile(t);
     if (file == null) return false;
-    return PluginInstaller.install(new InstalledPluginsTableModel(), file,
-                                   callbackData -> {
-                                     callbackData.getApplyCallback().run();
-                                     if (callbackData.getRestartNeeded()) PluginManagerConfigurable.shutdownOrRestartApp();
-                                   }, null);
+    return PluginInstaller.install(new InstalledPluginsTableModel(), file, PluginInstallCallbackDataKt::installPluginFromCallbackData, null);
   }
 
   @Nullable

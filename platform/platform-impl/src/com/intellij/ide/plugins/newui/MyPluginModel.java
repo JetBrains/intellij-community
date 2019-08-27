@@ -61,7 +61,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private Runnable myInvalidFixCallback;
 
-  private final Map<PluginId, Runnable> myInstallCallbacks = new LinkedHashMap<>();
+  private final Map<PluginId, PendingDynamicPluginInstall> myInstallCallbacks = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
 
   protected MyPluginModel() {
@@ -112,7 +112,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   /**
    * @return true if changes were applied without restart
    */
-  public boolean apply() throws ConfigurationException {
+  public boolean apply(Component parent) throws ConfigurationException {
     Map<PluginId, Boolean> enabledMap = getEnabledMap();
     List<String> dependencies = new ArrayList<>();
 
@@ -142,8 +142,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
                                        " won't be able to load.</body></html>");
     }
 
-    for (Runnable installCallback : myInstallCallbacks.values()) {
-      installCallback.run();
+    for (PendingDynamicPluginInstall installCallback : myInstallCallbacks.values()) {
+      PluginInstaller.installAndLoadDynamicPlugin(installCallback.getFile(), parent,
+                                                  (IdeaPluginDescriptorImpl)installCallback.getPluginDescriptor());
     }
     boolean needRestartForUninstall = false;
     for (IdeaPluginDescriptor pluginId : myDynamicPluginsToUninstall) {
@@ -213,7 +214,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
     appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
-    myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(), callbackData.getApplyCallback());
+    if (!callbackData.getRestartNeeded()) {
+      myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(),
+                             new PendingDynamicPluginInstall(callbackData.getFile(), callbackData.getPluginDescriptor()));
+    }
   }
 
   public void addComponent(@NotNull CellPluginComponent component) {

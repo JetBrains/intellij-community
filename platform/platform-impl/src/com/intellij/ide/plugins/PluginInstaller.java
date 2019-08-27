@@ -419,8 +419,7 @@ public class PluginInstaller {
 
       ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart,
-                                                     installWithoutRestart ? () -> installAndLoadPlugin(file, parent, pluginDescriptor) : () -> {}));
+      callback.consume(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
       return true;
     }
     catch (IOException ex) {
@@ -429,9 +428,9 @@ public class PluginInstaller {
     return false;
   }
 
-  private static void installAndLoadPlugin(@NotNull File file,
-                                           @Nullable Component parent,
-                                           IdeaPluginDescriptorImpl pluginDescriptor) {
+  public static void installAndLoadDynamicPlugin(@NotNull File file,
+                                                 @Nullable Component parent,
+                                                 IdeaPluginDescriptorImpl pluginDescriptor) {
     File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);

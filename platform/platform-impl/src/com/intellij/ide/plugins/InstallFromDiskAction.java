@@ -14,9 +14,6 @@ public class InstallFromDiskAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PluginInstaller.chooseAndInstall(new InstalledPluginsTableModel(), null, callbackData -> {
-      callbackData.getApplyCallback().run();
-      if (callbackData.getRestartNeeded()) PluginManagerConfigurable.shutdownOrRestartApp();
-    });
+    PluginInstaller.chooseAndInstall(new InstalledPluginsTableModel(), null, PluginInstallCallbackDataKt::installPluginFromCallbackData);
   }
 }
