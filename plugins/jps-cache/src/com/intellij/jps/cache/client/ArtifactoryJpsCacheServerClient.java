@@ -3,6 +3,10 @@ package com.intellij.jps.cache.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -87,10 +91,32 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
     String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + moduleHash;
     String fileName = moduleName + ".zip";
     LOG.debug("Downloading JPS compiled module from: " + downloadUrl);
-    downloadArchive(project,downloadUrl, targetDir, fileName, file -> {});
+    downloadArchive(project, downloadUrl, targetDir, fileName, file -> {
+    });
   }
 
-  private static void downloadArchive(@NotNull Project project, @NotNull String downloadUrl, @NotNull File targetDir, @NotNull String fileName,
+  @Override
+  public void uploadBinaryData(@NotNull File uploadData, @NotNull String moduleName, @NotNull String prefix) {
+    String uploadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + prefix + "/";
+    try {
+      //TODO :: Rewrite from cURL to REST
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine()
+                                            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+                                            .withExePath("/usr/bin/curl")
+                                            .withParameters(Arrays.asList("-T", uploadData.getAbsolutePath(), uploadUrl)));
+      if (processOutput.getExitCode() != 0) {
+        LOG.warn("Couldn't upload binary data: " + uploadUrl + " " + processOutput.getStderr());
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Couldn't upload binary data: " + uploadUrl, e);
+    }
+  }
+
+  private static void downloadArchive(@NotNull Project project,
+                                      @NotNull String downloadUrl,
+                                      @NotNull File targetDir,
+                                      @NotNull String fileName,
                                       @NotNull Consumer<File> callbackOnSuccess) {
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
@@ -103,7 +129,7 @@ public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
           List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir);
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
-          if (file == null)  {
+          if (file == null) {
             callbackOnSuccess.accept(null);
             return;
           }

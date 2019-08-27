@@ -14,5 +14,7 @@ public interface JpsCacheServerClient {
   Set<String> getAllBinaryKeys();
   void downloadCacheByIdAsynchronously(@NotNull Project project, @NotNull String cacheId, @NotNull File targetDir,
                                        @NotNull Consumer<File> callbackOnSuccess);
-  void downloadCompiledModuleByNameAndHash(@NotNull Project project, @NotNull String moduleName, @NotNull String moduleHash, @NotNull File targetDir);
+  void downloadCompiledModuleByNameAndHash(@NotNull Project project, @NotNull String moduleName, @NotNull String moduleHash,
+                                           @NotNull File targetDir);
+  void uploadBinaryData(@NotNull File uploadData, @NotNull String moduleName, @NotNull String prefix);
 }

@@ -26,7 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PersistentCachingModuleHashingService extends ModuleHashingService {
+import static com.intellij.jps.cache.hashing.ModuleHashingService.HASH_SIZE_IN_BYTES;
+
+public class PersistentCachingModuleHashingService {
   private static final Logger LOG = Logger.getInstance("com.jetbrains.cachepuller.PersistentCachingModuleHashingService");
   private static final String TEST_CACHE_FILE_NAME = "testCache";
   private static final String PRODUCTION_CACHE_FILE_NAME = "productionCache";
@@ -155,7 +157,7 @@ public class PersistentCachingModuleHashingService extends ModuleHashingService 
     return result;
   }
 
-  private byte[] getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache, File[] sourceRoots)
+  private static byte[] getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache, File[] sourceRoots)
     throws IOException {
     byte[] hash = hashCache.get(moduleName);
     if (hash != null) {
@@ -165,12 +167,11 @@ public class PersistentCachingModuleHashingService extends ModuleHashingService 
     return hash;
   }
 
-  private byte[] hashDirectoriesAndPersist(String name,
-                                           File[] directories,
-                                           PersistentHashMap<String, byte[]> hashCache) throws IOException {
+  private static byte[] hashDirectoriesAndPersist(String name, File[] directories,
+                                                  PersistentHashMap<String, byte[]> hashCache) throws IOException {
     byte[] directoriesHash;
     if (directories != null) {
-      directoriesHash = super.hashDirectories(directories);
+      directoriesHash = ModuleHashingService.hashDirectories(directories);
     }
     else {
       directoriesHash = new byte[HASH_SIZE_IN_BYTES];
