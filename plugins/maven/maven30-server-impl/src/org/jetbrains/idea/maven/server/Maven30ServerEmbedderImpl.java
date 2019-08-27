@@ -597,8 +597,35 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) throws RemoteException {
-    super.executeWithMavenSessionLegacy(request, runnable);
+  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    RepositorySystemSession repositorySession = maven.newRepositorySession(request);
+
+    request.getProjectBuildingRequest().setRepositorySession(repositorySession);
+
+    MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
+    LegacySupport legacySupport = getComponent(LegacySupport.class);
+
+    MavenSession oldSession = legacySupport.getSession();
+
+    legacySupport.setSession(mavenSession);
+
+    // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+    try {
+      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+        listener.afterSessionStart(mavenSession);
+      }
+    }
+    catch (MavenExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      runnable.run();
+    }
+    finally {
+      legacySupport.setSession(oldSession);
+    }
   }
 
   @NotNull
