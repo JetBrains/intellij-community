@@ -121,7 +121,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
     }
     val componentCount = ideaPlugin.applicationComponents.flatMap { it.components }.size +
-                         ideaPlugin.projectComponents.flatMap { it.components }.size
+                         ideaPlugin.projectComponents.flatMap { it.components }.size +
                          ideaPlugin.moduleComponents.flatMap { it.components }.size
     return PluginUnloadabilityStatus(ideaPlugin.pluginId ?: "?", nonDynamicEPs, componentCount, analysisErrors)
   }
