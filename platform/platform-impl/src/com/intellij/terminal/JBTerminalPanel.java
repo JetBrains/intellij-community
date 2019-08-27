@@ -33,6 +33,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -140,15 +141,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
-  private boolean skipKeyEvent(KeyEvent e) {
-    if (myActionsToSkip == null) {
-      return false;
-    }
-    int kc = e.getKeyCode();
-    return kc == KeyEvent.VK_ESCAPE || skipAction(e, myActionsToSkip);
+  private boolean skipKeyEvent(@NotNull KeyEvent e) {
+    return skipAction(e, myActionsToSkip);
   }
 
-  private static boolean skipAction(KeyEvent e, List<? extends AnAction> actionsToSkip) {
+  private static boolean skipAction(@NotNull KeyEvent e, @Nullable List<? extends AnAction> actionsToSkip) {
     if (actionsToSkip != null) {
       final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
       for (AnAction action : actionsToSkip) {
