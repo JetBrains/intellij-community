@@ -565,7 +565,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void updateEnableForNameAndIcon() {
     boolean enabled = myPluginModel.isEnabled(myPlugin);
-    myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
+    myNameComponent.setForeground(enabled ? null : NewListPluginComponent.DisabledColor);
     myIconLabel.setEnabled(enabled);
   }
 

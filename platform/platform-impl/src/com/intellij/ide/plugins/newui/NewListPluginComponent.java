@@ -4,13 +4,13 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
@@ -33,6 +33,7 @@ import java.util.ListIterator;
  * @author Alexander Lobas
  */
 public class NewListPluginComponent extends CellPluginComponent {
+  public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
@@ -309,7 +310,7 @@ public class NewListPluginComponent extends CellPluginComponent {
     if (calcColor && !myMarketplace) {
       boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
       if (!enabled) {
-        nameForeground = otherForeground = ListPluginComponent.DisabledColor;
+        nameForeground = otherForeground = DisabledColor;
       }
     }
 
@@ -483,7 +484,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
     if (restart) {
-      group.add(new ListPluginComponent.ButtonAnAction(((NewListPluginComponent)selection.get(0)).myRestartButton));
+      group.add(new ButtonAnAction(((NewListPluginComponent)selection.get(0)).myRestartButton));
       return;
     }
 
@@ -500,7 +501,7 @@ public class NewListPluginComponent extends CellPluginComponent {
         installButtons[i] = button;
       }
 
-      group.add(new ListPluginComponent.ButtonAnAction(installButtons));
+      group.add(new ButtonAnAction(installButtons));
       return;
     }
 
@@ -525,14 +526,14 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
 
       if (updateButtons != null) {
-        group.add(new ListPluginComponent.ButtonAnAction(updateButtons));
+        group.add(new ButtonAnAction(updateButtons));
         if (size > 1) {
           return;
         }
       }
 
       Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-      group.add(new ListPluginComponent.MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+      group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myPluginModel.changeEnableDisable(result.second, result.first);
@@ -550,7 +551,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       group.addSeparator();
     }
 
-    group.add(new ListPluginComponent.MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
+    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (!MyPluginModel.showUninstallDialog(selection)) {
@@ -668,6 +669,37 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
 
     return Pair.create(setTrue || !state, plugins);
+  }
+
+  public static class ButtonAnAction extends DumbAwareAction {
+    private final JButton[] myButtons;
+
+    ButtonAnAction(@NotNull JButton... buttons) {
+      super(buttons[0].getText());
+      myButtons = buttons;
+      setShortcutSet(CommonShortcuts.ENTER);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      for (JButton button : myButtons) {
+        button.doClick();
+      }
+    }
+  }
+
+  public abstract static class MyAnAction extends DumbAwareAction {
+    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
+      super(text);
+      ShortcutSet shortcutSet = null;
+      if (actionId != null) {
+        shortcutSet = EventHandler.getShortcuts(actionId);
+      }
+      if (shortcutSet == null) {
+        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
+      }
+      setShortcutSet(shortcutSet);
+    }
   }
 
   private class BaselineLayout extends AbstractLayoutManager {

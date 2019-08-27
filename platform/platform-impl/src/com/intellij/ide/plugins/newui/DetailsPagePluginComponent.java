@@ -142,7 +142,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myNameComponent.setFont(font.deriveFont(Font.BOLD, 30));
     }
     if (!(myPlugin instanceof PluginNode) && !myPluginsModel.isEnabled(myPlugin)) {
-      myNameComponent.setForeground(ListPluginComponent.DisabledColor);
+      myNameComponent.setForeground(NewListPluginComponent.DisabledColor);
     }
 
     nameButtons.add(myNameComponent, BorderLayout.WEST);
@@ -571,7 +571,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   private void updateEnabledState() {
     if (!(myPlugin instanceof PluginNode)) {
       boolean enabled = myPluginsModel.isEnabled(myPlugin);
-      myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
+      myNameComponent.setForeground(enabled ? null : NewListPluginComponent.DisabledColor);
       myIconLabel.setEnabled(enabled);
     }
 
