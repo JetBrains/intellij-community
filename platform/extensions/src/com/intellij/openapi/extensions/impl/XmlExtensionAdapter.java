@@ -61,6 +61,13 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
         initializing = true;
 
         instance = super.createInstance(componentManager);
+
+        Element element = myExtensionElement;
+        if (element != null) {
+          XmlSerializer.deserializeInto(instance, element);
+          myExtensionElement = null;
+        }
+
         extensionInstance = instance;
       }
       finally {
@@ -68,15 +75,6 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
     }
     return instance;
-  }
-
-  @Override
-  protected void initInstance(@NotNull Object instance) {
-    Element element = myExtensionElement;
-    if (element != null) {
-      XmlSerializer.deserializeInto(instance, element);
-      myExtensionElement = null;
-    }
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {

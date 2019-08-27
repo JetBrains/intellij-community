@@ -34,15 +34,15 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   @NotNull
   public <T> T createInstance(@NotNull ComponentManager componentManager) {
-    T instance;
+    Class<T> aClass;
     try {
-      instance = instantiateClass(getImplementationClass(), componentManager);
-      initInstance(instance);
+      aClass = getImplementationClass();
     }
-    catch (Throwable t) {
-      throw componentManager.createError(t, myPluginDescriptor.getPluginId());
+    catch (ClassNotFoundException e) {
+      throw componentManager.createError(e, myPluginDescriptor.getPluginId());
     }
 
+    T instance = instantiateClass(aClass, componentManager);
     if (instance instanceof PluginAware) {
       ((PluginAware)instance).setPluginDescriptor(myPluginDescriptor);
     }
@@ -52,9 +52,6 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   @NotNull
   protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
     return componentManager.instantiateClass(aClass, myPluginDescriptor.getPluginId());
-  }
-
-  protected void initInstance(@NotNull Object instance) {
   }
 
   @Override

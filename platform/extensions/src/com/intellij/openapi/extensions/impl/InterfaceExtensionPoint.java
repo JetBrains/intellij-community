@@ -8,8 +8,8 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ComponentManager componentManager) {
+final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
+  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ComponentManager componentManager) {
     super(name, clazz.getName(), componentManager, new UndefinedPluginDescriptor(), false);
 
     myExtensionClass = clazz;

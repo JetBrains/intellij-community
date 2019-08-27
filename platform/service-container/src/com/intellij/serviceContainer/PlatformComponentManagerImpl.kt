@@ -159,7 +159,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingPhase.PROJECT_OPENED.isComplete() /* loading plugin on the fly */) {
+    if (picoContainer.parent == null && !LoadingPhase.PROJECT_OPENED.isComplete /* loading plugin on the fly */) {
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED)
     }
 
@@ -454,7 +454,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
   }
 
-  open protected fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
+  protected open fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
     val app = getApplication()
     @Suppress("SpellCheckingInspection")
     if (app != null && app.isUnitTestMode && pluginId?.idString != "org.jetbrains.kotlin" && pluginId?.idString != "Lombook Plugin") {

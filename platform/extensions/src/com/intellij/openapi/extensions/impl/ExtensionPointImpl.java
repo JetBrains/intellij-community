@@ -468,8 +468,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     try {
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
-      @SuppressWarnings("unchecked")
-      T extension = (T)adapter.createInstance(myComponentManager);
+      T extension = adapter.createInstance(myComponentManager);
       if (duplicates != null && !duplicates.add(extension)) {
         T duplicate = duplicates.get(extension);
         assert result != null;
@@ -888,8 +887,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         else {
           // createInstance() actually does caching, so it's safe to call multiple times
           for (int i = oldSize; i < adapters.size(); i++) {
-            //noinspection unchecked
-            listener.extensionAdded((T)adapters.get(i).createInstance(componentManager), pluginDescriptor);
+            listener.extensionAdded(adapters.get(i).createInstance(componentManager), pluginDescriptor);
           }
         }
       }
@@ -962,8 +960,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     @NotNull
     @Override
-    public T createInstance(@Nullable ComponentManager componentManager) {
-      return myComponentInstance;
+    public <I> I createInstance(@Nullable ComponentManager componentManager) {
+      //noinspection unchecked
+      return (I)myComponentInstance;
     }
   }
 
