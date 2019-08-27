@@ -549,6 +549,7 @@ public class Switcher extends AnAction implements DumbAware {
         .setMovable(pinned)
         .setKeyEventHandler(this::keyEvent)
         .setMinSize(new Dimension(myTopPanel.getMinimumSize().width, MINIMUM_HEIGHT))
+        .setDimensionServiceKey(pinned ? project : null, pinned ? "SwitcherDM" : null , false)
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
