@@ -21,10 +21,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.jps.cache.hashing.ModuleHashingService.HASH_SIZE_IN_BYTES;
 
@@ -120,12 +117,24 @@ public class PersistentCachingModuleHashingService {
     });
   }
 
-  public Map<String, byte[]> getAffectedTests() throws IOException {
-    return getAffected(testHashes, affectedTests, Arrays.asList(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE));
+  public Map<String, byte[]> getAffectedTests() {
+    try {
+      return getAffected(testHashes, affectedTests, Arrays.asList(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE));
+    }
+    catch (IOException e) {
+      LOG.warn("Error while calculating hashes for affected tests", e);
+      return Collections.emptyMap();
+    }
   }
 
-  public Map<String, byte[]> getAffectedProduction() throws IOException {
-    return getAffected(productionHashes, affectedProduction, Arrays.asList(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE));
+  public Map<String, byte[]> getAffectedProduction() {
+    try {
+      return getAffected(productionHashes, affectedProduction, Arrays.asList(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE));
+    }
+    catch (IOException e) {
+      LOG.warn("Error while calculating hashes for affected sources", e);
+      return Collections.emptyMap();
+    }
   }
 
   private Map<String, byte[]> getAffected(PersistentHashMap<String, byte[]> hashCache,
