@@ -276,25 +276,27 @@ public class PluginInstaller {
           PluginManagerMain.LOG.error("Plugin is bundled: " + pluginId);
         }
         else {
-          boolean uninstalledWithoutRestart = false;
-          if (DynamicPlugins.isUnloadSafe(pluginDescriptor)) {
-            uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
-            if (uninstalledWithoutRestart) {
-              FileUtil.delete(pluginDescriptor.getPath());
-              PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), pluginDescriptor));
-            }
-          }
-
-          if (!uninstalledWithoutRestart) {
+          boolean needRestart = !DynamicPlugins.isUnloadSafe(pluginDescriptor);
+          if (needRestart) {
             StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
           }
 
           PluginStateManager.fireState(pluginDescriptor, false);
-          return !uninstalledWithoutRestart;
+          return needRestart;
         }
       }
     }
     return false;
+  }
+
+  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor) {
+    boolean uninstalledWithoutRestart;
+    uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
+    if (uninstalledWithoutRestart) {
+      FileUtil.delete(pluginDescriptor.getPath());
+      PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), pluginDescriptor));
+    }
+    return uninstalledWithoutRestart;
   }
 
   public static void installAfterRestart(@NotNull File sourceFile,

@@ -62,6 +62,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private Runnable myInvalidFixCallback;
 
   private final Map<PluginId, Runnable> myInstallCallbacks = new LinkedHashMap<>();
+  private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
 
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
@@ -80,7 +81,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isModified() {
-    if (needRestart || !myInstallCallbacks.isEmpty()) {
+    if (needRestart || !myInstallCallbacks.isEmpty() || !myDynamicPluginsToUninstall.isEmpty()) {
       return true;
     }
 
@@ -144,8 +145,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     for (Runnable installCallback : myInstallCallbacks.values()) {
       installCallback.run();
     }
+    boolean needRestartForUninstall = false;
+    for (IdeaPluginDescriptor pluginId : myDynamicPluginsToUninstall) {
+      if (!PluginInstaller.uninstallDynamicPlugin(pluginId)) {
+        needRestartForUninstall = true;
+      }
+    }
 
-    return applyEnableDisablePlugins(enabledMap);
+    return applyEnableDisablePlugins(enabledMap) || needRestartForUninstall;
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
@@ -749,6 +756,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     try {
       ((IdeaPluginDescriptorImpl)descriptor).setDeleted(true);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptor.getPluginId());
+      if (!needRestartForUninstall) {
+        myDynamicPluginsToUninstall.add(descriptor);
+      }
       needRestart |= descriptor.isEnabled() && needRestartForUninstall;
     }
     catch (IOException e) {
