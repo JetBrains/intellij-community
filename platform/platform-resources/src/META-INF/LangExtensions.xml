@@ -8,8 +8,6 @@
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
     <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
 
-    <preloadingActivity implementation="com.intellij.codeInsight.completion.CompletionPreloader"/>
-
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
