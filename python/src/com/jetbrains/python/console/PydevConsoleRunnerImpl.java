@@ -383,10 +383,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     if (PythonSdkUtil.isRemote(sdk)) {
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
-      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
       final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, sdk, myConsoleSettings);
-      if (manager != null && data != null && pathMapper != null) {
+      if (data != null && pathMapper != null) {
         RemoteConsoleProcessData remoteConsoleProcessData =
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
                                                                          pathMapper,
@@ -480,11 +479,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (manager != null) {
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
         assert data != null;
-        myProcessHandler =
-          manager.createConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication,
-                                              commandLine, StandardCharsets.UTF_8,
-                                              manager.setupMappings(myProject, data, null),
-                                              myRemoteConsoleProcessData.getSocketProvider());
+        myProcessHandler = manager.createConsoleProcessHandler(
+          process, myConsoleView, myPydevConsoleCommunication,
+          commandLine, StandardCharsets.UTF_8,
+          PythonRemoteInterpreterManager.appendBasicMappings(myProject, null, data),
+          myRemoteConsoleProcessData.getSocketProvider()
+        );
       }
       else {
         LOG.error("Can't create remote console process handler");
