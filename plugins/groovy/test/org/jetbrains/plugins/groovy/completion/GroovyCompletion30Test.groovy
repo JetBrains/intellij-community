@@ -2,17 +2,26 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 
 class GroovyCompletion30Test extends GroovyCompletionTestBase {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
   @Override
+  protected void setUp() {
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    super.setUp()
+  }
+
+  @Override
   protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
     super.tearDown()
   }
 
@@ -45,5 +54,21 @@ def foo(a, b) { b(a) }
 foo(1) { a -> a.byteValue() }
 foo('q') { it.length()<caret>}
 '''
+  }
+
+  void testInferArgumentTypeFromMethod() {
+    doBasicTest('''\
+def foo(a) {
+  a.byt<caret>
+}
+
+foo 1
+''', '''\
+def foo(a) {
+  a.byteValue()<caret>
+}
+
+foo 1
+''')
   }
 }

@@ -17,8 +17,10 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
   companion object {
 
+    const val GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE = "groovy.collect.method.calls.for.inference"
+
     internal fun createInferenceResult(method: GrMethod): InferenceResult? {
-      if (!Registry.`is`("groovy.collect.method.calls.for.inference", false)) {
+      if (!Registry.`is`(GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE, false)) {
         return null
       }
       val originalMethod = getOriginalMethod(method)
@@ -38,14 +40,14 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
 
   override fun inferType(variable: GrVariable): PsiType? {
-    if (variable is GrParameter && variable.typeElement == null) {
-      val method = variable.parentOfType<GrMethod>()?.takeIf { it.parameters.contains(variable) } ?: return null
-      val inferenceResult = createInferenceResult(method)
-      val parameterIndex = method.parameterList.getParameterNumber(variable)
-      return inferenceResult?.virtualMethod?.parameters?.getOrNull(parameterIndex)
-        ?.takeIf { it.typeElementGroovy != null }?.type
-        ?.let { inferenceResult.typeParameterSubstitutor.substitute(it) }
+    if (variable !is GrParameter || variable.typeElement != null) {
+      return null
     }
-    return null
+    val method = variable.parentOfType<GrMethod>()?.takeIf { it.parameters.contains(variable) } ?: return null
+    val inferenceResult = createInferenceResult(method)
+    val parameterIndex = method.parameterList.getParameterNumber(variable)
+    return inferenceResult?.virtualMethod?.parameters?.getOrNull(parameterIndex)
+      ?.takeIf { it.typeElementGroovy != null }?.type
+      ?.let { inferenceResult.typeParameterSubstitutor.substitute(it) }
   }
 }

@@ -1342,21 +1342,6 @@ def foo(Integer a) {
 ''')
   }
 
-  void testInferArgumentTypeFromMethod5() {
-    doBasicTest('''\
-def foo(a) {
-  a.byt<caret>
-}
-
-foo 1
-''', '''\
-def foo(a) {
-  a.byteValue()<caret>
-}
-
-foo 1
-''')
-  }
 
   void testSuperExtendsInTypeParams() {
     myFixture.configureByText("_.groovy", '''\

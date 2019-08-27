@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
@@ -13,6 +15,18 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     super("Add explicit types to parameters")
   }
 
+  @Override
+  void setUp() {
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    super.setUp()
+  }
+
+
+  @Override
+  void tearDown() {
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
+    super.tearDown()
+  }
 
   final String basePath = TestUtils.testDataPath + 'refactoring/inferMethodParametersTypes'
 
