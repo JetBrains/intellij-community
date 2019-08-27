@@ -70,7 +70,7 @@ public class PsiUtil {
     if (modifiers == null) return false;
 
     return modifiers.hasModifierProperty(PsiModifier.PUBLIC) &&
-           (cls.getParent() instanceof PsiFile || modifiers.hasModifierProperty(PsiModifier.STATIC));
+           (cls.getContainingClass() == null || modifiers.hasModifierProperty(PsiModifier.STATIC));
   }
 
   @Nullable
