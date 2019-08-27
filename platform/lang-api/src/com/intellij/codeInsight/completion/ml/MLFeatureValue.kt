@@ -2,39 +2,42 @@
 package com.intellij.codeInsight.completion.ml
 
 
-sealed class MLFeatureValue
-
-class BinaryValue private constructor(val value: Boolean) : MLFeatureValue() {
-  companion object {
-    val TRUE = BinaryValue(true)
-    val FALSE = BinaryValue(false)
-
-    @JvmStatic
-    fun of(value: Boolean): BinaryValue = if (value) TRUE else FALSE
-  }
-
-  override fun toString(): String {
-    return if (value) "1" else "0"
-  }
-}
-
-class FloatValue private constructor(val value: Double) : MLFeatureValue() {
+sealed class MLFeatureValue {
   companion object {
     @JvmStatic
-    fun of(value: Double) = FloatValue(value)
+    fun binary(value: Boolean): MLFeatureValue = if (value) BinaryValue.TRUE else BinaryValue.FALSE
 
     @JvmStatic
-    fun of(value: Int) = FloatValue(value.toDouble())
-  }
+    fun float(value: Int): MLFeatureValue = FloatValue(value.toDouble())
 
-  override fun toString(): String = value.toString()
-}
-
-class CategoricalValue<T : Enum<*>> private constructor(val value: T) : MLFeatureValue() {
-  companion object {
     @JvmStatic
-    fun <T : Enum<*>> of(value: T) = CategoricalValue(value)
+    fun float(value: Double): MLFeatureValue = FloatValue(value)
+
+    @JvmStatic
+    fun <T : Enum<*>> categorical(value: T): MLFeatureValue = CategoricalValue(value.toString())
   }
 
-  override fun toString(): String = value.toString()
+  protected abstract val value: Any
+  fun asBinary(): Boolean? = value as? Boolean
+  fun asFloat(): Double? = value as? Double
+  fun asCategorical(): String? = value as? String
+
+  private class BinaryValue private constructor(override val value: Boolean) : MLFeatureValue() {
+    companion object {
+      val TRUE = BinaryValue(true)
+      val FALSE = BinaryValue(false)
+    }
+
+    override fun toString(): String {
+      return if (value) "1" else "0"
+    }
+  }
+
+  private class FloatValue(override val value: Double) : MLFeatureValue() {
+    override fun toString(): String = value.toString()
+  }
+
+  private class CategoricalValue(override val value: String) : MLFeatureValue() {
+    override fun toString(): String = value
+  }
 }

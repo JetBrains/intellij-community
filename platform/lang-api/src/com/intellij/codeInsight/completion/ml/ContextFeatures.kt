@@ -23,10 +23,10 @@ class ContextFeatures(private val featuresSnapshot: Map<String, MLFeatureValue>)
     }
   }
 
-  fun binaryValue(name: String): Boolean? = (featuresSnapshot[name] as? BinaryValue)?.value
+  fun binaryValue(name: String): Boolean? = (featuresSnapshot[name])?.asBinary()
 
-  fun floatValue(name: String): Double? = (featuresSnapshot[name] as? FloatValue)?.value
+  fun floatValue(name: String): Double? = (featuresSnapshot[name])?.asFloat()
 
-  fun categoricalValue(name: String): String? = (featuresSnapshot[name] as? CategoricalValue<*>)?.toString()
+  fun categoricalValue(name: String): String? = (featuresSnapshot[name])?.asCategorical()
 }
 
