@@ -443,7 +443,7 @@ public class UITheme {
         return null;
       }
     }
-    Color color = ColorHexUtil.fromHexOrNull(value);
+    Color color = ColorHexUtil.fromHex(value, null);
     return color == null ? null : new ColorUIResource(color);
   }
 
