@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +61,18 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
   }
 
   private static boolean ensureValidEditorFile(Editor editor) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && !file.isValid()) {
-      LOG.error("Returned editor for invalid file: " + editor + "; disposed=" + editor.isDisposed() + "; file " + file.getClass());
+      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
+      Project project = editor.getProject();
+      Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
+      LOG.error("Returned editor for invalid file: " + editor +
+                "; disposed=" + editor.isDisposed() +
+                "; file " + file.getClass() +
+                "; cached document exists: " + (cachedDocument != null) +
+                "; same as document: " + (cachedDocument == document) +
+                "; file is open: " + fileIsOpen);
       return false;
     }
     return true;
