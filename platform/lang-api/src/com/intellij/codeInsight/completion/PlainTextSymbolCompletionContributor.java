@@ -12,9 +12,9 @@ import java.util.Collection;
  * (likely only top-level declarations). Such contributor could be used in plain text editors like VCS commit message field
  * to help users referring to code symbols from the text.
  *
- * @see SymbolNameCompletionContributorEP
+ * @see PlainTextSymbolCompletionContributorEP
  */
-public interface SymbolNameCompletionContributor {
+public interface PlainTextSymbolCompletionContributor {
   /**
    * Adds lookup elements from given file.
    *

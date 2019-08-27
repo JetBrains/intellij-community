@@ -3,8 +3,8 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.SymbolNameCompletionContributor;
-import com.intellij.codeInsight.completion.SymbolNameCompletionContributorEP;
+import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor;
+import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiFile;
@@ -14,7 +14,7 @@ import one.util.streamex.StreamEx;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class JvmSymbolNameCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
+public class JvmPlainTextSymbolCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
   public void testBasics() {
     PsiFile file = myFixture.configureByText("Test.java", "class Foo {\n" +
                                                           "  void fooMethod() {}\n" +
@@ -37,7 +37,7 @@ public class JvmSymbolNameCompletionContributorTest extends LightJavaCodeInsight
   }
 
   private static void checkCompletion(PsiFile file, String prefix, int invocationCount, String... expected) {
-    SymbolNameCompletionContributor contributor = SymbolNameCompletionContributorEP.forLanguage(JavaLanguage.INSTANCE);
+    PlainTextSymbolCompletionContributor contributor = PlainTextSymbolCompletionContributorEP.forLanguage(JavaLanguage.INSTANCE);
     assertNotNull(contributor);
     Collection<LookupElement> options = contributor.getLookupElements(file, invocationCount, prefix);
     PrefixMatcher matcher = new PlainPrefixMatcher(prefix);

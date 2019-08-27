@@ -8,12 +8,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SymbolNameCompletionContributorEP extends LanguageExtensionPoint<SymbolNameCompletionContributor> {
-  private static final ExtensionPointName<SymbolNameCompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.symbols");
-  private static final LanguageExtension<SymbolNameCompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
+public class PlainTextSymbolCompletionContributorEP extends LanguageExtensionPoint<PlainTextSymbolCompletionContributor> {
+  private static final ExtensionPointName<PlainTextSymbolCompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.plainTextSymbol");
+  private static final LanguageExtension<PlainTextSymbolCompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
 
   @Nullable
-  public static SymbolNameCompletionContributor forLanguage(@NotNull Language language) {
+  public static PlainTextSymbolCompletionContributor forLanguage(@NotNull Language language) {
     return INSTANCE.forLanguage(language);
   }
 }

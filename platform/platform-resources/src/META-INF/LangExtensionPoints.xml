@@ -552,8 +552,8 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.symbols" beanClass="com.intellij.codeInsight.completion.SymbolNameCompletionContributorEP">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.SymbolNameCompletionContributor"/>
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
     </extensionPoint>
 
     <extensionPoint name="completion.preselectionBehaviourProvider"

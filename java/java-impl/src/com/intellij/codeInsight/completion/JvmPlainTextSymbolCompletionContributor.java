@@ -15,9 +15,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * An implementation of {@link SymbolNameCompletionContributor} which is suitable for JVM languages.
+ * An implementation of {@link PlainTextSymbolCompletionContributor} which is suitable for JVM languages.
  */
-public class JvmSymbolNameCompletionContributor implements SymbolNameCompletionContributor {
+public class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolCompletionContributor {
   @NotNull
   @Override
   public Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
