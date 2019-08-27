@@ -207,7 +207,7 @@ public abstract class GitImplBase implements Git {
   @NotNull
   public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
     Map<String, String> environment = new HashMap<>(5);
-    int logLevel = Registry.intValue("git.execution.debuginfo");
+    int logLevel = Registry.intValue("git.execution.trace");
     if (logLevel == 0) {
       environment.put("GIT_TRACE", "0");
       if (GitVersionSpecialty.ENV_GIT_TRACE_PACK_ACCESS_ALLOWED.existsIn(version)) environment.put("GIT_TRACE_PACK_ACCESS", "");
