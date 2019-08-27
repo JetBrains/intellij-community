@@ -9,6 +9,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
@@ -128,6 +129,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.use {
       writer.obj {
         writer.writeStringField("version", "9")
+        writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
+        writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
         writer.writeStringField("generated", SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.MEDIUM, SimpleDateFormat.LONG, Locale.ENGLISH).format(Date()))
         writeServiceStats(writer)
         writeIcons(writer)
