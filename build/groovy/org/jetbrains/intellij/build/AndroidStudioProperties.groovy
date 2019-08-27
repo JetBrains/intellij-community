@@ -505,8 +505,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
         context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
           fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
-            include(name: "icu/**")
+            include(name: "icu/*")
+            exclude(name: "icu/BUILD")
             include(name: "linux/**")
+            exclude(name: "linux/BUILD")
           }
         }
       }
@@ -563,8 +565,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
         fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
-          include(name: "icu/**")
+          include(name: "icu/*")
+          exclude(name: "icu/BUILD")
           include(name: "mac/**")
+          exclude(name: "mac/BUILD")
         }
       }
     }
