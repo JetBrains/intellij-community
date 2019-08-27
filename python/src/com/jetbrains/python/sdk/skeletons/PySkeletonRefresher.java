@@ -40,7 +40,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
+import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -183,10 +184,9 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-    if (PythonSdkUtil.isRemote(sdk) && remoteInterpreterManager != null) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       try {
-        mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
+        mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
       }
       catch (ExecutionException e) {
         throw new InvalidSdkException(e.getMessage(), e.getCause());
@@ -299,7 +299,7 @@ public class PySkeletonRefresher {
         binaries.modules.putAll(mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch)).modules);
       }
     }
-    myGeneratorVersion = binaries != null ? binaries.generatorVersion: 0;
+    myGeneratorVersion = binaries != null ? binaries.generatorVersion : 0;
     myPregeneratedSkeletons = PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
     indicate(PyBundle.message("sdk.gen.reading.versions.file"));
@@ -699,7 +699,6 @@ public class PySkeletonRefresher {
   }
 
 
-
   /**
    * Generates a skeleton for a particular binary module.
    *
@@ -723,5 +722,15 @@ public class PySkeletonRefresher {
 
   public int getGeneratorVersion() {
     return myGeneratorVersion;
+  }
+
+  @NotNull
+  public static PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
+                                                                  Component ownerComponent,
+                                                                  @NotNull Sdk sdk,
+                                                                  String skeletonsPath) throws ExecutionException {
+    PyRemoteSdkAdditionalDataBase sdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+    return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
+      .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
   }
 }

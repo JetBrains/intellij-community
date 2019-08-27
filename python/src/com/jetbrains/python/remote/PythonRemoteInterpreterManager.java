@@ -38,7 +38,6 @@ import com.jetbrains.python.console.PyConsoleProcessHandler;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
-import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,11 +79,6 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
 
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
-
-  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
-                                                                    @Nullable Component ownerComponent,
-                                                                    @NotNull Sdk sdk,
-                                                                    String path) throws ExecutionException;
 
   public abstract boolean ensureCanWrite(RemoteSdkCredentials data, String path);
 
