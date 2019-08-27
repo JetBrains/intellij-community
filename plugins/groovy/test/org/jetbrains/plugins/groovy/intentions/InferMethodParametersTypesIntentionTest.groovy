@@ -490,4 +490,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testIndexPropertyWithSpecialSyntax() {
     doTest(true)
   }
+
+  void testWeirdClassName() {
+    doTest(true)
+  }
 }

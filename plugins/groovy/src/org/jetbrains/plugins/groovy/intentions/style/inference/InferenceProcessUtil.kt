@@ -25,7 +25,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.typing.box
 
 
-class NameGenerator(private val restrictions: Collection<String> = emptySet(), private val postfix: String = "") {
+class NameGenerator(private val postfix: String = "",
+                    private val context: PsiElement) {
   companion object {
     private const val nameRange = ('Z'.toByte() + 1) - 'T'.toByte()
 
@@ -42,7 +43,8 @@ class NameGenerator(private val restrictions: Collection<String> = emptySet(), p
       while (true) {
         val name = produceTypeParameterName(counter, postfix)
         ++counter
-        if (name !in restrictions) {
+        val newType = PsiClassType.getTypeByName(name, context.project, context.resolveScope)
+        if (newType.resolve() == null) {
           return name
         }
       }

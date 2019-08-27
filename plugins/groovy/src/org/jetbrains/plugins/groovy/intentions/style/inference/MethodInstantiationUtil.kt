@@ -88,7 +88,7 @@ class RenamingTypeMapper(private val nameMap: Map<in String, String>,
 fun renameTypeParameters(resultMethod: GrMethod,
                          method: GrMethod,
                          remainedNames: Set<String>): Pair<PsiTypeParameterList, Map<String, String>> {
-  val nameGenerator = NameGenerator(method.parameters.map { it.name })
+  val nameGenerator = NameGenerator(context = method)
   val collector = TypeParameterCollector(method)
   val nameMap = remainedNames.map { it to nameGenerator.name }.toMap()
   val renamingMapper = RenamingTypeMapper(nameMap, null)

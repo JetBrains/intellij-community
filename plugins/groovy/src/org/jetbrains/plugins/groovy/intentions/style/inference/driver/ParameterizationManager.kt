@@ -63,7 +63,7 @@ private class Parameterizer(val context: PsiElement,
 data class ParameterizationResult(val type: PsiType, val typeParameters: List<PsiTypeParameter>)
 
 class ParameterizationManager(method: GrMethod) {
-  val nameGenerator = NameGenerator(method.typeParameters.map { it.name!! }, "_ENRICH" + method.hashCode())
+  val nameGenerator = NameGenerator("_ENRICH" + method.hashCode(), context = method)
   private val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
   private val context: PsiElement = method
 

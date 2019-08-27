@@ -35,7 +35,7 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
 private fun createDriver(method: GrMethod,
                          scope: SearchScope): InferenceDriver {
   val virtualMethod = createVirtualMethod(method) ?: return EmptyDriver
-  val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name }, "_START" + method.hashCode())
+  val generator = NameGenerator("_START" + method.hashCode(), context = method)
   return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
 }
 
