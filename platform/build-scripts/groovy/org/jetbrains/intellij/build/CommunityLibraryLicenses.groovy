@@ -149,7 +149,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.12-1", license: "BSD",
                        url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
 
-    new LibraryLicense(name: "batik", libraryName: "batik-transcoder", version: "1.11", license: "Apache 2.0",
+    new LibraryLicense(name: "batik", libraryName: "batik-transcoder", version: "1.12", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
+    new LibraryLicense(name: "batik", libraryName: "batik-codec", version: "1.12", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
 
     new LibraryLicense(name: "bouncy-castle", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",

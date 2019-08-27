@@ -15,6 +15,6 @@
     <orderEntry type="library" name="xml-apis-ext" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="org.apache.xmlgraphics:batik-codec:1.7" level="project" />
+    <orderEntry type="library" name="batik-codec" level="project" />
   </component>
 </module>
