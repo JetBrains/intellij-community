@@ -363,8 +363,15 @@ public abstract class LineStatusMarkerRenderer {
   public static void paintRange(@NotNull Graphics g,
                                 @NotNull Editor editor,
                                 @NotNull Range range,
-                                int framingBorder) {
-    List<ChangesBlock> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
+                                int framingBorder,
+                                boolean isIgnored) {
+    VisibleRangeMerger merger = new VisibleRangeMerger(editor) {
+      @Override
+      protected boolean isIgnored(@NotNull Range range) {
+        return isIgnored;
+      }
+    };
+    List<ChangesBlock> blocks = merger.run(Collections.singletonList(range), g.getClipBounds());
     for (ChangesBlock block : blocks) {
       paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
@@ -473,9 +480,6 @@ public abstract class LineStatusMarkerRenderer {
 
   @Nullable
   private static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
-    Color borderColor = getGutterBorderColor(editor);
-    if (borderColor != null) return borderColor;
-
     final EditorColorsScheme scheme = getColorScheme(editor);
     switch (type) {
       case Range.INSERTED:
