@@ -26,7 +26,7 @@ public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
                   "}";
     String inputText = text.replace("$bytes$", bytesOriginal);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000,
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 2500,
                                           () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
       .setup(() -> configureFromFileText("X.java", inputText))
       .assertTiming();
