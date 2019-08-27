@@ -357,7 +357,7 @@ public class PluginManagerConfigurable
         myMarketplacePanel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                 PluginManagerConfigurable.this.mySearchListener,
-                                                d -> new NewListPluginComponent(myPluginModel, d, mySearchListener, true));
+                                                d -> new ListPluginComponent(myPluginModel, d, mySearchListener, true));
 
         myMarketplacePanel.setSelectionListener(selectionListener);
         registerCopyProvider(myMarketplacePanel);
@@ -634,8 +634,8 @@ public class PluginManagerConfigurable
         PluginsGroupComponentWithProgress panel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                 PluginManagerConfigurable.this.mySearchListener,
-                                                descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener,
-                                                                                         true));
+                                                descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener,
+                                                                                      true));
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -777,7 +777,7 @@ public class PluginManagerConfigurable
         myInstalledPanel =
           new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                     PluginManagerConfigurable.this.mySearchListener,
-                                    descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         myInstalledPanel.setSelectionListener(selectionListener);
         registerCopyProvider(myInstalledPanel);
@@ -833,7 +833,7 @@ public class PluginManagerConfigurable
               myUpdateAll.setEnabled(false);
 
               for (CellPluginComponent plugin : downloaded.ui.plugins) {
-                ((NewListPluginComponent)plugin).updatePlugin();
+                ((ListPluginComponent)plugin).updatePlugin();
               }
             }
           }, null);
@@ -931,7 +931,7 @@ public class PluginManagerConfigurable
         PluginsGroupComponent panel =
           new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                     PluginManagerConfigurable.this.mySearchListener,
-                                    descriptor -> new NewListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -1100,7 +1100,7 @@ public class PluginManagerConfigurable
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
       for (CellPluginComponent plugin : group.plugins) {
-        ((NewListPluginComponent)plugin).setUpdateDescriptor(null);
+        ((ListPluginComponent)plugin).setUpdateDescriptor(null);
       }
     }
   }
@@ -1111,7 +1111,7 @@ public class PluginManagerConfigurable
       for (UIPluginGroup group : panel.getGroups()) {
         CellPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
-          ((NewListPluginComponent)component).setUpdateDescriptor(descriptor);
+          ((ListPluginComponent)component).setUpdateDescriptor(descriptor);
           break;
         }
       }

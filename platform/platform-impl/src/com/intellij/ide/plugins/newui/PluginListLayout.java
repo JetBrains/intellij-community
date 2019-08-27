@@ -32,7 +32,7 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
       }
       int lineHeight = component.getPreferredSize().height;
       height += lineHeight;
-      if (component instanceof NewListPluginComponent) {
+      if (component instanceof ListPluginComponent) {
         myMiddleLineHeight += lineHeight;
         lines++;
       }

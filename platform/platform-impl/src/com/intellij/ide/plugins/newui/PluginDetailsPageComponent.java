@@ -323,7 +323,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myPlugin = component.myPlugin;
-      myUpdateDescriptor = ((NewListPluginComponent)component).myUpdateDescriptor;
+      myUpdateDescriptor = ((ListPluginComponent)component).myUpdateDescriptor;
       showPlugin();
       select(0, true);
     }
@@ -565,7 +565,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void updateEnableForNameAndIcon() {
     boolean enabled = myPluginModel.isEnabled(myPlugin);
-    myNameComponent.setForeground(enabled ? null : NewListPluginComponent.DisabledColor);
+    myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
     myIconLabel.setEnabled(enabled);
   }
 

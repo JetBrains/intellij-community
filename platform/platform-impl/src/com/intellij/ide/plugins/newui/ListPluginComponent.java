@@ -32,7 +32,7 @@ import java.util.ListIterator;
 /**
  * @author Alexander Lobas
  */
-public class NewListPluginComponent extends CellPluginComponent {
+public class ListPluginComponent extends CellPluginComponent {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
@@ -58,10 +58,10 @@ public class NewListPluginComponent extends CellPluginComponent {
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
 
-  public NewListPluginComponent(@NotNull MyPluginModel pluginModel,
-                                @NotNull IdeaPluginDescriptor plugin,
-                                @NotNull LinkListener<Object> searchListener,
-                                boolean marketplace) {
+  public ListPluginComponent(@NotNull MyPluginModel pluginModel,
+                             @NotNull IdeaPluginDescriptor plugin,
+                             @NotNull LinkListener<Object> searchListener,
+                             boolean marketplace) {
     super(plugin);
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
@@ -478,13 +478,13 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     boolean restart = true;
     for (CellPluginComponent component : selection) {
-      if (((NewListPluginComponent)component).myRestartButton == null) {
+      if (((ListPluginComponent)component).myRestartButton == null) {
         restart = false;
         break;
       }
     }
     if (restart) {
-      group.add(new ButtonAnAction(((NewListPluginComponent)selection.get(0)).myRestartButton));
+      group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
       return;
     }
 
@@ -494,7 +494,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       JButton[] installButtons = new JButton[size];
 
       for (int i = 0; i < size; i++) {
-        JButton button = ((NewListPluginComponent)selection.get(i)).myInstallButton;
+        JButton button = ((ListPluginComponent)selection.get(i)).myInstallButton;
         if (button == null || !button.isVisible() || !button.isEnabled()) {
           return;
         }
@@ -517,7 +517,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       JButton[] updateButtons = new JButton[size];
 
       for (int i = 0; i < size; i++) {
-        JButton button = ((NewListPluginComponent)selection.get(i)).myUpdateButton;
+        JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
         if (button == null || !button.isVisible()) {
           updateButtons = null;
           break;
@@ -542,7 +542,7 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
 
     for (CellPluginComponent component : selection) {
-      if (((NewListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+      if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
         return;
       }
     }
@@ -574,7 +574,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     boolean restart = true;
     for (CellPluginComponent component : selection) {
-      if (((NewListPluginComponent)component).myRestartButton == null) {
+      if (((ListPluginComponent)component).myRestartButton == null) {
         restart = false;
         break;
       }
@@ -583,17 +583,17 @@ public class NewListPluginComponent extends CellPluginComponent {
     if (myMarketplace) {
       if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
-          ((NewListPluginComponent)selection.get(0)).myRestartButton.doClick();
+          ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
         }
 
         for (CellPluginComponent component : selection) {
-          JButton button = ((NewListPluginComponent)component).myInstallButton;
+          JButton button = ((ListPluginComponent)component).myInstallButton;
           if (button == null || !button.isVisible() || !button.isEnabled()) {
             return;
           }
         }
         for (CellPluginComponent component : selection) {
-          ((NewListPluginComponent)component).myInstallButton.doClick();
+          ((ListPluginComponent)component).myInstallButton.doClick();
         }
       }
       return;
@@ -601,7 +601,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     boolean update = true;
     for (CellPluginComponent component : selection) {
-      JButton button = ((NewListPluginComponent)component).myUpdateButton;
+      JButton button = ((ListPluginComponent)component).myUpdateButton;
       if (button == null || !button.isVisible()) {
         update = false;
         break;
@@ -610,11 +610,11 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     if (keyCode == KeyEvent.VK_ENTER) {
       if (restart) {
-        ((NewListPluginComponent)selection.get(0)).myRestartButton.doClick();
+        ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
       }
       else if (update) {
         for (CellPluginComponent component : selection) {
-          ((NewListPluginComponent)component).myUpdateButton.doClick();
+          ((ListPluginComponent)component).myUpdateButton.doClick();
         }
       }
     }
@@ -636,7 +636,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
       else if (keyCode == EventHandler.DELETE_CODE) {
         for (CellPluginComponent component : selection) {
-          if (((NewListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
         }
@@ -652,11 +652,11 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @NotNull
   private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends CellPluginComponent> selection) {
-    boolean state = ((NewListPluginComponent)selection.get(0)).isEnabledState();
+    boolean state = ((ListPluginComponent)selection.get(0)).isEnabledState();
     boolean setTrue = false;
 
     for (ListIterator<? extends CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
-      if (state != ((NewListPluginComponent)I.next()).isEnabledState()) {
+      if (state != ((ListPluginComponent)I.next()).isEnabledState()) {
         setTrue = true;
         break;
       }
@@ -904,7 +904,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       if (myEventHandler != null) {
         myEventHandler.addAll(progressComponent);
-        myEventHandler.updateHover(NewListPluginComponent.this);
+        myEventHandler.updateHover(ListPluginComponent.this);
       }
 
       setVisibleOther(false);
