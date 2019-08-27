@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -89,9 +90,8 @@ public class MouseWheelSmoothScroll {
 
     private final static int REFRESH_TIME = 1000 / 60; // 60 Hz
     private final static double VELOCITY_THRESHOLD = 0.001;
-
-    private double myVelocity = 0.0;
-    private double myCurrentValue = 0.0;
+    private double myVelocity = Double.NaN;
+    private double myCurrentValue = Double.NaN, myTargetValue = Double.NaN;
     private double myLambda = -0.01;
 
     private final Consumer<Integer> BLACK_HOLE = (x) -> {};
@@ -100,41 +100,43 @@ public class MouseWheelSmoothScroll {
     private @NotNull Predicate<Integer> myShouldStop = FALSE_PREDICATE;
 
     private final Timer myTimer = TimerUtil.createNamedTimer("Inertial Animation Timer", REFRESH_TIME, this);
-    private final AverageDiff<Long> myAvgDiff = new AverageDiff<>(8);
+    private final EventCounter myTouchpadRecognizer = new EventCounter(100);
 
-    public double getTouchpadVelocityFactor() {
-      return Registry.doubleValue("idea.inertial.smooth.scrolling.touchpad.velocity.multiplier");
-    }
-
-    public double getVelocityFactor() {
-      return Registry.doubleValue("idea.inertial.smooth.scrolling.velocity.multiplier");
+    private InertialAnimator() {
+      myTimer.setInitialDelay(0);
     }
 
     public double getDuration() {
-      double value = Registry.doubleValue("idea.inertial.smooth.scrolling.duration");
-      return max(abs(value), 0);
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.duration")), 0);
     }
 
-    public double getVelocityDecayFactor() {
-      int value = max(abs(Registry.intValue("idea.inertial.smooth.scrolling.inertia.factor")), 0);
-      return value == 0.0 ? 0.0 : -0.1 / value;
+    public double getDecayDuration() {
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.decay.duration")), 0);
     }
 
-    public int getHighIntensivePollingTime() {
-      return Registry.intValue("idea.inertial.smooth.scrolling.touchpad.delay.threshold");
+    public int getTouchpadThreshold() {
+      return Registry.intValue("idea.inertial.smooth.scrolling.touchpad.threshold");
     }
 
     public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
-      if (getDuration() == 0) {
+      myTouchpadRecognizer.addTime(System.currentTimeMillis());
+      double duration = getDuration();
+      if (duration == 0 || myTouchpadRecognizer.getSize() >= getTouchpadThreshold()) {
         consumer.accept(targetValue);
+        stop();
         return;
       }
 
-      myAvgDiff.add(System.currentTimeMillis());
-      double multiplierFactor = myAvgDiff.getAverage() <= getHighIntensivePollingTime() ? getTouchpadVelocityFactor() : getVelocityFactor();
-      myVelocity = multiplierFactor * (targetValue - initValue) / getDuration();
-      double factor = getVelocityDecayFactor();
-      myLambda = factor == 0.0 ? log(VELOCITY_THRESHOLD / abs(myVelocity)) / getDuration() : factor;
+      boolean isSameDirection = myVelocity * (targetValue - initValue) > 0;
+      if (isSameDirection) {
+        myTargetValue = (targetValue - initValue) + myTargetValue;
+      } else {
+        myTargetValue = targetValue;
+      }
+
+      myLastEventTime = System.currentTimeMillis() - myTimer.getDelay();
+      myVelocity = (myTargetValue - initValue) / duration;
+      myLambda = 1.0;
       myConsumer = Objects.requireNonNull(consumer);
       myShouldStop = shouldStop == null ? FALSE_PREDICATE : shouldStop;
       myCurrentValue = initValue;
@@ -151,64 +153,60 @@ public class MouseWheelSmoothScroll {
       }
 
       long eventTime = System.currentTimeMillis();
-      long refreshTime = (myLastEventTime < 0) ? REFRESH_TIME : (eventTime - myLastEventTime);
+      long refreshTime = eventTime - myLastEventTime;
       myLastEventTime = eventTime;
-
       myCurrentValue += myVelocity * refreshTime;
+      myVelocity *= myLambda;
+
       int nextValue = (int)round(myCurrentValue);
-      myVelocity *= exp(myLambda * refreshTime);
       myConsumer.accept(nextValue);
-      if (abs(myVelocity) < VELOCITY_THRESHOLD) {
+
+      double animationTimeLeft = (myTargetValue - myCurrentValue) / myVelocity;
+      // slowdown the animation
+      if (myLambda == 1.0 && animationTimeLeft > REFRESH_TIME &&  animationTimeLeft < getDecayDuration()) {
+        // find q of geometric progression using n-th member formulae
+        myLambda = pow(abs(VELOCITY_THRESHOLD / myVelocity), 1.0 / (animationTimeLeft / REFRESH_TIME));
+      }
+
+      if (abs(myVelocity) < VELOCITY_THRESHOLD || (myVelocity > 0 ? nextValue > myTargetValue : nextValue < myTargetValue)) {
         stop();
       }
     }
 
     public final void stop() {
+      boolean isAlreadyStopped = myLastEventTime < 0;
+      if (isAlreadyStopped) {
+        return;
+      }
       myTimer.stop();
       myConsumer = BLACK_HOLE;
       myShouldStop = FALSE_PREDICATE;
-      myVelocity = 0.0;
+      myVelocity = Double.NaN;
       myLastEventTime = -1;
-      myAvgDiff.clear();
+      myTargetValue = Double.NaN;
+      myCurrentValue = Double.NaN;
     }
   }
 
-  private final static class AverageDiff<T extends Number> {
-    private final List<Double> myValues = new LinkedList<>();
-    private final int myCapacity;
-    private T myLastValue;
+  private final static class EventCounter {
+    private final List<Long> myValues = new LinkedList<>();
+    private final long myDuration;
 
 
-    private AverageDiff(int capacity) {
-      myCapacity = max(capacity, 1);
+    private EventCounter(long duration) {
+      myDuration = max(duration, 1);
     }
 
-    public void add(@NotNull T value) {
-      if (myLastValue != null) {
-        myValues.add(value.doubleValue() - myLastValue.doubleValue());
-        while (myValues.size() > myCapacity) {
-          myValues.remove(0);
-        }
+    public void addTime(long value) {
+      myValues.add(value);
+      Iterator<Long> it = myValues.iterator();
+      while (it.hasNext() && it.next() <= value - myDuration) {
+        it.remove();
       }
-      myLastValue = value;
     }
 
-    public void put(@NotNull T value) {
-      myValues.add(value.doubleValue());
-      while (myValues.size() > myCapacity) {
-        myValues.remove(0);
-      }
-      myLastValue = value;
-    }
-
-    public double getAverage() {
-      if (myValues.size() < myCapacity) return Double.NaN;
-      return myValues.stream().reduce(0.0, Double::sum) / myValues.size();
-    }
-
-    public void clear() {
-      myValues.clear();
-      myLastValue = null;
+    public int getSize() {
+      return myValues.size();
     }
   }
 
