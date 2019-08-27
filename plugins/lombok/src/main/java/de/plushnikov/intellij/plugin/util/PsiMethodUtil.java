@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Plushnikov Michail
@@ -20,25 +22,12 @@ public class PsiMethodUtil {
   }
 
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName) {
-    boolean hasMethod = false;
-    for (PsiMethod classMethod : classMethods) {
-      if (methodName.equals(classMethod.getName())) {
-        hasMethod = true;
-        break;
-      }
-    }
-    return hasMethod;
+    return classMethods.stream().map(PsiMethod::getName).anyMatch(methodName::equals);
   }
 
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, String... methodNames) {
-    boolean hasMethod = false;
-    for (String methodName : methodNames) {
-      if (hasMethodByName(classMethods, methodName)) {
-        hasMethod = true;
-        break;
-      }
-    }
-    return hasMethod;
+    final List<String> searchedMethodNames = Arrays.asList(methodNames);
+    return classMethods.stream().map(PsiMethod::getName).anyMatch(searchedMethodNames::contains);
   }
 
   public static boolean hasSimilarMethod(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName, int methodArgCount) {

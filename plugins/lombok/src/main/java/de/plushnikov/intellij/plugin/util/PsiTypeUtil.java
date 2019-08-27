@@ -62,9 +62,12 @@ public class PsiTypeUtil {
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-    PsiClass genericClass = facade.findClass(collectionQualifiedName, globalsearchscope);
-
-    return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiTypes);
+    final PsiClass genericClass = facade.findClass(collectionQualifiedName, globalsearchscope);
+    if (null != genericClass) {
+      return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiTypes);
+    } else {
+      return PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
+    }
   }
 
   @Nullable
