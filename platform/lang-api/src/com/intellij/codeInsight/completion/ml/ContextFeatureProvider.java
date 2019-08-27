@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.completion.ml;
+package com.intellij.codeInsight.completion.ml;
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,5 +26,5 @@ public interface ContextFeatureProvider {
    * Will be invoked in EDT, should be fast enough
    */
   @NotNull
-  Map<String, MLFeatureValue> calculateFeatures(LookupImpl lookup);
+  Map<String, MLFeatureValue> calculateFeatures(Lookup lookup);
 }
