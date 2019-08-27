@@ -8,7 +8,6 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -47,7 +46,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author stathik
  * @author Konstantin Bulenkov
  */
-public abstract class PluginManagerMain implements Disposable {
+public abstract class PluginManagerMain {
   public static final String JETBRAINS_VENDOR = "JetBrains";
 
   public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
@@ -55,9 +54,6 @@ public abstract class PluginManagerMain implements Disposable {
   private static final String TEXT_SUFFIX = "</body></html>";
   private static final String HTML_PREFIX = "<a href=\"";
   private static final String HTML_SUFFIX = "</a>";
-
-  private boolean requireShutdown;
-  private boolean myDisposed;
 
   public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
@@ -71,14 +67,6 @@ public abstract class PluginManagerMain implements Disposable {
       }
     }
     return false;
-  }
-  @Override
-  public void dispose() {
-    myDisposed = true;
-  }
-
-  public boolean isDisposed() {
-    return myDisposed;
   }
 
   private static String getTextPrefix() {
@@ -94,10 +82,6 @@ public abstract class PluginManagerMain implements Disposable {
            "    </style>" +
            "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
            fontSize, m1, m1, fontSize, m2, m2);
-  }
-
-  void setRequireShutdown(boolean val) {
-    requireShutdown |= val;
   }
 
   /**
@@ -148,14 +132,6 @@ public abstract class PluginManagerMain implements Disposable {
       }
     }
     return result[0];
-  }
-
-  boolean isRequireShutdown() {
-    return requireShutdown;
-  }
-
-  public void ignoreChanges() {
-    requireShutdown = false;
   }
 
   public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
@@ -229,22 +205,6 @@ public abstract class PluginManagerMain implements Disposable {
 
   private static String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
-  }
-
-  public boolean isModified() {
-    return requireShutdown;
-  }
-
-  public String apply() {
-    String applyMessage = canApply();
-    if (applyMessage != null) return applyMessage;
-    setRequireShutdown(true);
-    return null;
-  }
-
-  @Nullable
-  protected String canApply() {
-    return null;
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {
@@ -391,30 +351,6 @@ public abstract class PluginManagerMain implements Disposable {
 
       public boolean isDisabled(@NotNull String pluginId) {
         return PluginManagerCore.isDisabled(pluginId);
-      }
-    }
-
-    class UI implements PluginEnabler {
-      @NotNull
-      private final InstalledPluginsTableModel pluginsModel;
-
-      public UI(@NotNull InstalledPluginsTableModel model) {
-        pluginsModel = model;
-      }
-
-      @Override
-      public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), true);
-      }
-
-      @Override
-      public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), false);
-      }
-
-      @Override
-      public boolean isDisabled(PluginId pluginId) {
-        return pluginsModel.isDisabled(pluginId);
       }
     }
   }
