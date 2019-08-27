@@ -42,7 +42,7 @@ import java.util.zip.GZIPInputStream;
 import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Name;
 import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Sort;
 
-public class ArtifactoryJpsCacheServerClient implements JpsCacheServerClient {
+public class ArtifactoryJpsServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static final String AUTH_TOKEN = "";

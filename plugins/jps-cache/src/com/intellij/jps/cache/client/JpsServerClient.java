@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public interface JpsCacheServerClient {
+public interface JpsServerClient {
   @NotNull
   Set<String> getAllCacheKeys();
   @NotNull
