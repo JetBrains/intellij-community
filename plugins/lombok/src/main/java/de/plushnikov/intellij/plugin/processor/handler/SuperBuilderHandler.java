@@ -179,13 +179,17 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                              @NotNull PsiAnnotation psiAnnotation,
                                                              @NotNull PsiClass psiBuilderClass) {
     final PsiTypeParameter[] typeParameters = psiBuilderClass.getTypeParameters();
-    //TODO
-    final LightTypeParameterBuilder c = new LightTypeParameterBuilder("C", psiBuilderClass, 0);
-    final LightTypeParameterBuilder b = new LightTypeParameterBuilder("B", psiBuilderClass, 1);
-
+    final PsiClass bTypeClass, cTypeClass;
+    if (typeParameters.length >= 2) {
+      bTypeClass = typeParameters[typeParameters.length - 1];
+      cTypeClass = typeParameters[typeParameters.length - 2];
+    } else {
+      bTypeClass = new LightTypeParameterBuilder("B", psiBuilderClass, 1);
+      cTypeClass = new LightTypeParameterBuilder("C", psiBuilderClass, 0);
+    }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiParentClass.getProject());
-    final PsiClassType bType = factory.createType(b);
-    final PsiClassType cType = factory.createType(c);
+    final PsiClassType bType = factory.createType(bTypeClass);
+    final PsiClassType cType = factory.createType(cTypeClass);
 
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiParentClass, psiAnnotation, psiBuilderClass, bType);
 
