@@ -50,18 +50,15 @@ public class CopyReferencePopup extends DumbAwareAction {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
         return new PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
-          private ErrorLabel myInfoLabel;
+          private JLabel myInfoLabel;
 
           @Override
           protected JComponent createItemComponent() {
             myTextLabel = new ErrorLabel();
-            myTextLabel.setOpaque(true);
             myTextLabel.setBorder(JBUI.Borders.empty(1));
 
-            myInfoLabel = new ErrorLabel();
-            myInfoLabel.setOpaque(true);
+            myInfoLabel = new JLabel();
             myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
-            myInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
             JPanel textPanel = new JPanel(new BorderLayout());
             textPanel.add(myTextLabel, BorderLayout.WEST);
