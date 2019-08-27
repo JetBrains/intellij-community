@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -112,7 +111,7 @@ public class PluginManagerConfigurable
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
     public List<IdeaPluginDescriptor> getAllRepoPlugins() {
-      return getPluginRepositories();
+      return getRepositoryPlugins();
     }
   };
 
@@ -120,9 +119,9 @@ public class PluginManagerConfigurable
 
   private PluginUpdatesService myPluginUpdatesService;
 
-  private List<IdeaPluginDescriptor> myAllRepositoriesList;
-  private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
-  private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoriesMap;
+  private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
+  private Map<String, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
+  private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
   private List<String> myVendorsSorted;
@@ -134,8 +133,6 @@ public class PluginManagerConfigurable
   private DefaultActionGroup myInstalledSearchGroup;
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
-
-  private final Map<PluginId, Runnable> myInstallCallbacks = new LinkedHashMap<>();
 
   public PluginManagerConfigurable() {
   }
@@ -302,9 +299,9 @@ public class PluginManagerConfigurable
 
   private void resetPanels() {
     synchronized (myRepositoriesLock) {
-      myAllRepositoriesList = null;
-      myAllRepositoriesMap = null;
-      myCustomRepositoriesMap = null;
+      myAllRepositoryPluginsList = null;
+      myAllRepositoryPluginsMap = null;
+      myCustomRepositoryPluginsMap = null;
     }
 
     myTagsSorted = null;
@@ -369,7 +366,7 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadPluginRepositories();
+            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
             Map<String, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
             Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
@@ -458,7 +455,7 @@ public class PluginManagerConfigurable
               case "/tag:":
                 if (ContainerUtil.isEmpty(myTagsSorted)) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
+                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
                       if (!ContainerUtil.isEmpty(tags)) {
@@ -473,7 +470,7 @@ public class PluginManagerConfigurable
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
-                  myVendorsSorted = MyPluginModel.getVendors(getPluginRepositories());
+                  myVendorsSorted = MyPluginModel.getVendors(getRepositoryPlugins());
                 }
                 return myVendorsSorted;
               case "/repository:":
@@ -645,7 +642,7 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+                Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadRepositoryPlugins();
                 Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
                 Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
 
@@ -653,7 +650,7 @@ public class PluginManagerConfigurable
 
                 // TODO: parser.vendors on server
                 if (!parser.vendors.isEmpty()) {
-                  for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
+                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
                     if (MyPluginModel.isVendor(descriptor, parser.vendors)) {
                       result.descriptors.add(descriptor);
                     }
@@ -1465,10 +1462,10 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private List<IdeaPluginDescriptor> getPluginRepositories() {
+  private List<IdeaPluginDescriptor> getRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoriesList != null) {
-        return myAllRepositoriesList;
+      if (myAllRepositoryPluginsList != null) {
+        return myAllRepositoryPluginsList;
       }
     }
     try {
@@ -1484,10 +1481,10 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() {
+  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoriesMap != null) {
-        return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
+      if (myAllRepositoryPluginsMap != null) {
+        return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
       }
     }
 
@@ -1528,12 +1525,12 @@ public class PluginManagerConfigurable
     });
 
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoriesList == null) {
-        myAllRepositoriesList = list;
-        myAllRepositoriesMap = map;
-        myCustomRepositoriesMap = custom;
+      if (myAllRepositoryPluginsList == null) {
+        myAllRepositoryPluginsList = list;
+        myAllRepositoryPluginsMap = map;
+        myCustomRepositoryPluginsMap = custom;
       }
-      return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
+      return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
     }
   }
 
@@ -1593,132 +1590,17 @@ public class PluginManagerConfigurable
 
   @Override
   public boolean isModified() {
-    if (myPluginModel.needRestart || !myInstallCallbacks.isEmpty()) {
-      return true;
-    }
-
-    int rowCount = myPluginModel.getRowCount();
-
-    for (int i = 0; i < rowCount; i++) {
-      IdeaPluginDescriptor descriptor = myPluginModel.getObjectAt(i);
-      boolean enabledInTable = myPluginModel.isEnabled(descriptor);
-
-      if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
-          continue; // was disabled automatically on startup
-        }
-        return true;
-      }
-    }
-
-    for (Map.Entry<PluginId, Boolean> entry : myPluginModel.getEnabledMap().entrySet()) {
-      Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
-        return true;
-      }
-    }
-
-    return false;
+    return myPluginModel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    Map<PluginId, Boolean> enabledMap = myPluginModel.getEnabledMap();
-    List<String> dependencies = new ArrayList<>();
-
-    for (Map.Entry<PluginId, Set<PluginId>> entry : myPluginModel.getDependentToRequiredListMap().entrySet()) {
-      PluginId id = entry.getKey();
-
-      if (enabledMap.get(id) == null) {
-        continue;
-      }
-
-      for (PluginId dependId : entry.getValue()) {
-        if (!PluginManagerCore.isModuleDependency(dependId)) {
-          IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
-          if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
-              !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
-            dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
-          }
-          break;
-        }
-      }
-    }
-
-    if (!dependencies.isEmpty()) {
-      throw new ConfigurationException("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
-                                       (dependencies.size() == 1 ? " " : "s ") +
-                                       StringUtil.join(dependencies, ", ") +
-                                       " won't be able to load.</body></html>");
-    }
-
-    for (Runnable installCallback : myInstallCallbacks.values()) {
-      installCallback.run();
-    }
-
-    if (applyEnableDisablePlugins(enabledMap)) return;
+    if (myPluginModel.apply()) return;
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
         () -> shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
     }
-  }
-
-  private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
-    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
-    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
-
-    int rowCount = myPluginModel.getRowCount();
-    for (int i = 0; i < rowCount; i++) {
-      IdeaPluginDescriptor descriptor = myPluginModel.getObjectAt(i);
-      boolean enabled = myPluginModel.isEnabled(descriptor.getPluginId());
-      if (enabled != descriptor.isEnabled()) {
-        if (!enabled) {
-          pluginDescriptorsToDisable.add(descriptor);
-        }
-        else {
-          // For disabled plugins, we do not resolve XInclude references and potentially do not load other parts of plugin.xml.
-          // To check if a plugin can be loaded without restart, we need to read the complete descriptor.
-          pluginDescriptorsToEnable.add(PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true));
-        }
-      }
-      descriptor.setEnabled(enabled);
-    }
-
-    List<String> disableIds = new ArrayList<>();
-    for (Map.Entry<PluginId, Boolean> entry : enabledMap.entrySet()) {
-      Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled) {
-        disableIds.add(entry.getKey().getIdString());
-      }
-    }
-
-    try {
-      PluginManagerCore.saveDisabledPlugins(disableIds, false);
-    }
-    catch (IOException e) {
-      PluginManagerMain.LOG.error(e);
-    }
-
-
-    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin)) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin))) {
-      boolean needRestart = false;
-      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)descriptor)) {
-          needRestart = true;
-          break;
-        }
-      }
-
-      if (!needRestart) {
-        for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
-        }
-        return true;
-      }
-    }
-    return false;
   }
 
   @NotNull
@@ -1779,8 +1661,7 @@ public class PluginManagerConfigurable
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
-        myPluginModel.appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
-        myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(), callbackData.getApplyCallback());
+        myPluginModel.pluginInstalledFromDisk(callbackData);
 
         boolean select = myInstalledPanel == null;
 

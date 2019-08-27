@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -60,6 +61,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private Runnable myInvalidFixCallback;
 
+  private final Map<PluginId, Runnable> myInstallCallbacks = new LinkedHashMap<>();
+
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -74,6 +77,136 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return (StatusBarEx)((IdeFrame)frame).getStatusBar();
     }
     return null;
+  }
+
+  public boolean isModified() {
+    if (needRestart || !myInstallCallbacks.isEmpty()) {
+      return true;
+    }
+
+    int rowCount = getRowCount();
+
+    for (int i = 0; i < rowCount; i++) {
+      IdeaPluginDescriptor descriptor = getObjectAt(i);
+      boolean enabledInTable = isEnabled(descriptor);
+
+      if (descriptor.isEnabled() != enabledInTable) {
+        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
+          continue; // was disabled automatically on startup
+        }
+        return true;
+      }
+    }
+
+    for (Map.Entry<PluginId, Boolean> entry : getEnabledMap().entrySet()) {
+      Boolean enabled = entry.getValue();
+      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @return true if changes were applied without restart
+   */
+  public boolean apply() throws ConfigurationException {
+    Map<PluginId, Boolean> enabledMap = getEnabledMap();
+    List<String> dependencies = new ArrayList<>();
+
+    for (Map.Entry<PluginId, Set<PluginId>> entry : getDependentToRequiredListMap().entrySet()) {
+      PluginId id = entry.getKey();
+
+      if (enabledMap.get(id) == null) {
+        continue;
+      }
+
+      for (PluginId dependId : entry.getValue()) {
+        if (!PluginManagerCore.isModuleDependency(dependId)) {
+          IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
+              !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
+            dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
+          }
+          break;
+        }
+      }
+    }
+
+    if (!dependencies.isEmpty()) {
+      throw new ConfigurationException("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
+                                       (dependencies.size() == 1 ? " " : "s ") +
+                                       StringUtil.join(dependencies, ", ") +
+                                       " won't be able to load.</body></html>");
+    }
+
+    for (Runnable installCallback : myInstallCallbacks.values()) {
+      installCallback.run();
+    }
+
+    return applyEnableDisablePlugins(enabledMap);
+  }
+
+  private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
+    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
+
+    int rowCount = getRowCount();
+    for (int i = 0; i < rowCount; i++) {
+      IdeaPluginDescriptor descriptor = getObjectAt(i);
+      boolean enabled = isEnabled(descriptor.getPluginId());
+      if (enabled != descriptor.isEnabled()) {
+        if (!enabled) {
+          pluginDescriptorsToDisable.add(descriptor);
+        }
+        else {
+          // For disabled plugins, we do not resolve XInclude references and potentially do not load other parts of plugin.xml.
+          // To check if a plugin can be loaded without restart, we need to read the complete descriptor.
+          pluginDescriptorsToEnable.add(PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true));
+        }
+      }
+      descriptor.setEnabled(enabled);
+    }
+
+    List<String> disableIds = new ArrayList<>();
+    for (Map.Entry<PluginId, Boolean> entry : enabledMap.entrySet()) {
+      Boolean enabled = entry.getValue();
+      if (enabled != null && !enabled) {
+        disableIds.add(entry.getKey().getIdString());
+      }
+    }
+
+    try {
+      PluginManagerCore.saveDisabledPlugins(disableIds, false);
+    }
+    catch (IOException e) {
+      PluginManagerMain.LOG.error(e);
+    }
+
+    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin)) &&
+        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin))) {
+      boolean needRestart = false;
+      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
+        if (!DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)descriptor)) {
+          needRestart = true;
+          break;
+        }
+      }
+
+      if (!needRestart) {
+        for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
+          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
+    appendOrUpdateDescriptor(callbackData.getPluginDescriptor(), callbackData.getRestartNeeded());
+    myInstallCallbacks.put(callbackData.getPluginDescriptor().getPluginId(), callbackData.getApplyCallback());
   }
 
   public void addComponent(@NotNull CellPluginComponent component) {
