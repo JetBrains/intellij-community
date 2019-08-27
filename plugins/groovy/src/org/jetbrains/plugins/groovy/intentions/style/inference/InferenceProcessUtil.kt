@@ -25,12 +25,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.typing.box
 
 
-class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
+class NameGenerator(private val restrictions: Collection<String> = emptySet(), private val postfix: String = "") {
   companion object {
-    private const val nameRange = 'Z'.toByte() - 'T'.toByte()
+    private const val nameRange = ('Z'.toByte() + 1) - 'T'.toByte()
 
-    private fun produceTypeParameterName(index: Int): String {
-      return ('T'.toByte() + index % nameRange).toChar().toString() + (index / nameRange).toString()
+    private fun produceTypeParameterName(index: Int, postfix: String): String {
+      val indexRepresentation = (index / nameRange).run { if (this == 0) "" else this.toString() }
+      return ('T'.toByte() + index % nameRange).toChar().toString() + indexRepresentation + postfix
     }
   }
 
@@ -39,7 +40,7 @@ class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
   val name: String
     get() {
       while (true) {
-        val name = produceTypeParameterName(counter)
+        val name = produceTypeParameterName(counter, postfix)
         ++counter
         if (name !in restrictions) {
           return name
@@ -184,11 +185,21 @@ fun PsiClassType.erasure(): PsiClassType {
   }
 }
 
-fun createVirtualMethod(method: GrMethod): GrMethod? {
+fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
   val virtualFile = method.containingFile.copy() as? GroovyFile ?: return null
   val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
-  if (!newMethod.hasTypeParameters()) {
-    newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
+  if (newMethod.hasTypeParameters()) {
+    if (typeParameterList != null) {
+      newMethod.typeParameterList!!.replace(typeParameterList)
+    }
+  }
+  else {
+    if (typeParameterList != null) {
+      newMethod.addAfter(typeParameterList, newMethod.firstChild)
+    }
+    else {
+      newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
+    }
   }
   return newMethod
 }

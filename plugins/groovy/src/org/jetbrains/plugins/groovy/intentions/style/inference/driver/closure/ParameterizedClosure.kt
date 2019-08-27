@@ -2,24 +2,19 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiParameterList
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
 class ParameterizedClosure(val parameter: GrParameter,
                            val typeParameters: List<PsiTypeParameter>,
                            val closureArguments: List<GrClosableBlock>,
-                           newTypes: List<PsiType>) {
-  val types: MutableList<PsiType> = newTypes.toMutableList()
-  val delegatesToCombiner: DelegatesToCombiner = DelegatesToCombiner()
+                           val types: List<PsiType>,
+                           val delegatesToCombiner: DelegatesToCombiner = DelegatesToCombiner()) {
   private val closureParamsCombiner: ClosureParamsCombiner = ClosureParamsCombiner()
 
-  fun renderTypes(outerParameters: PsiParameterList,
-                  substitutor: PsiSubstitutor): List<AnnotatingResult> {
-    substituteTypes(substitutor)
+  fun renderTypes(outerParameters: PsiParameterList): List<AnnotatingResult> {
     val closureParamsAnnotation = closureParamsCombiner.instantiateAnnotation(outerParameters, types)
     val (delegatesToAnnotation, parameterAnnotatingResult) = delegatesToCombiner.instantiateAnnotation(outerParameters)
     val primaryAnnotatingResults = listOfNotNull(delegatesToAnnotation, closureParamsAnnotation)
@@ -30,15 +25,6 @@ class ParameterizedClosure(val parameter: GrParameter,
     else {
       return primaryAnnotatingResults
     }
-  }
-
-
-  private fun substituteTypes(resultSubstitutor: PsiSubstitutor) {
-    val substitutedTypes = types.map { parameterType ->
-      resultSubstitutor.recursiveSubstitute(parameterType)
-    }
-    types.clear()
-    types.addAll(substitutedTypes)
   }
 
 

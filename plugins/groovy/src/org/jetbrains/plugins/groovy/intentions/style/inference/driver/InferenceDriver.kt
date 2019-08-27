@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -19,9 +19,9 @@ interface InferenceDriver {
                                 targetMethod: GrMethod,
                                 substitutor: PsiSubstitutor): InferenceDriver
 
-  fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor)
+  fun instantiate(resultMethod: GrMethod)
 
-  fun acceptReducingVisitor(visitor: PsiTypeVisitor<*>, resultMethod: GrMethod)
+  fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver
 
   fun forbiddingTypes(): List<PsiType> = emptyList()
 

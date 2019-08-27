@@ -1,4 +1,4 @@
-def <T0 extends I & J> Object foo(T0 a) {
+def <T extends I & J> Object foo(T a) {
   bar(a)
 }
 

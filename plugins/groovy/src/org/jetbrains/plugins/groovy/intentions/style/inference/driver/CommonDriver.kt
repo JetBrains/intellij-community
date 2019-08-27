@@ -29,12 +29,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstr
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 
-class CommonDriver internal constructor(private val targetParameters: Set<GrParameter>,
-                                        private val varargParameter: GrParameter?,
-                                        private val closureDriver: InferenceDriver,
-                                        private val originalMethod: GrMethod,
-                                        private val typeParameters: Collection<PsiTypeParameter>,
-                                        searchScope: SearchScope? = null) : InferenceDriver {
+class CommonDriver private constructor(private val targetParameters: Set<GrParameter>,
+                                       private val varargParameter: GrParameter?,
+                                       private val closureDriver: InferenceDriver,
+                                       private val originalMethod: GrMethod,
+                                       private val typeParameters: Collection<PsiTypeParameter>,
+                                       searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
   private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
   private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll() }
@@ -75,6 +75,20 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
         return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, scope)
       }
     }
+
+    private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
+      if (type == null || type == PsiType.NULL) {
+        typeElementGroovy?.delete()
+      }
+      else try {
+        val desiredTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(type)
+        if (typeElementGroovy == null) addAfter(desiredTypeElement, modifierList) else typeElementGroovy?.replace(desiredTypeElement)
+      }
+      catch (e: IncorrectOperationException) {
+        typeElementGroovy?.delete()
+      }
+    }
+
   }
 
   override fun typeParameters(): Collection<PsiTypeParameter> {
@@ -207,43 +221,36 @@ class CommonDriver internal constructor(private val targetParameters: Set<GrPara
     return analyzer.buildUsageInformation() + typeUsageInformation
   }
 
-  override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {
+  override fun instantiate(resultMethod: GrMethod) {
     if (resultMethod.parameters.last().typeElementGroovy == null) {
       resultMethod.parameters.last().ellipsisDots?.delete()
     }
     val parameterMapping = setUpParameterMapping(method, resultMethod)
-    parameterMapping.forEach { (param, actualParameter) ->
+    for ((virtualParameter, actualParameter) in parameterMapping) {
+      val virtualType = virtualParameter.type
       val newParamType = when {
-        param.type is PsiArrayType -> {
-          val substituted = resultSubstitutor.substitute((param.type as PsiArrayType).componentType)
-          (if (substituted is PsiWildcardType) substituted.bound else substituted)?.createArrayType()
+        virtualType is PsiArrayType -> {
+          val component = virtualType.componentType
+          (if (component is PsiWildcardType) component.bound else component)?.createArrayType()
         }
-        else -> resultSubstitutor.substitute(param.type)
+        virtualParameter.typeElement == null -> PsiType.NULL
+        else -> virtualParameter.type
       }
-      if (newParamType == null || newParamType == PsiType.NULL) {
-        actualParameter.typeElementGroovy?.delete()
-      }
-      else {
-        try {
-          val typeElement = GroovyPsiElementFactory.getInstance(resultMethod.project).createTypeElement(newParamType)
-          if (actualParameter.typeElementGroovy == null) {
-            actualParameter.addAfter(typeElement, actualParameter.modifierList)
-          }
-          else {
-            actualParameter.typeElementGroovy!!.replace(typeElement)
-          }
-        }
-        catch (e: IncorrectOperationException) {
-          actualParameter.typeElementGroovy?.delete()
-        }
-      }
+      actualParameter.setTypeWithoutFormatting(newParamType)
     }
-    closureDriver.instantiate(resultMethod, resultSubstitutor)
+    closureDriver.instantiate(resultMethod)
   }
 
-  override fun acceptReducingVisitor(visitor: PsiTypeVisitor<*>, resultMethod: GrMethod) {
-    resultMethod.parameters.forEach { it.type.accept(visitor) }
-    closureDriver.acceptReducingVisitor(visitor, resultMethod)
+  override fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver {
+    val mapping = setUpParameterMapping(method, resultMethod)
+    method.parameters.forEach {
+      val type = if (it.typeElement == null) PsiType.NULL else it.type
+      mapping.getValue(it).setTypeWithoutFormatting(type.accept(visitor))
+    }
+    val newClosureDriver = closureDriver.acceptTypeVisitor(visitor, resultMethod)
+    val newTypeParameters = typeParameters.mapNotNull { param -> resultMethod.typeParameters.find { it.name == param.name } }
+    val newTargetParameters = targetParameters.map { mapping.getValue(it) }.toSet()
+    return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters)
   }
 
   override fun forbiddingTypes(): List<PsiType> {

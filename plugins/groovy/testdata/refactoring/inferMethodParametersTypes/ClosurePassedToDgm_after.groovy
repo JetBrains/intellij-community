@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-def <U1> boolean foo(List<? extends U1> list, @ClosureParams(value = FromString, options = ["U1"]) Closure<Boolean> cl) {
+def <T> boolean foo(List<? extends T> list, @ClosureParams(value = FromString, options = ["T"]) Closure<Boolean> cl) {
   list.every cl
 }
 

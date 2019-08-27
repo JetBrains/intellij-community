@@ -7,6 +7,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign
@@ -41,9 +42,9 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
     }
     visited.add(unit)
     units.find { it.type == unit.typeInstantiation }?.run { visitTypes(this, visited, order) }
-    when (unit.typeInstantiation) {
-      is PsiClassType -> unit.typeInstantiation.parameters
-      is PsiIntersectionType -> unit.typeInstantiation.conjuncts
+    when (val flushedType = removeWildcard(unit.typeInstantiation)) {
+      is PsiClassType -> flushedType.parameters
+      is PsiIntersectionType -> flushedType.conjuncts
       else -> emptyArray()
     }.forEach { parameter ->
       units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
@@ -74,6 +75,7 @@ fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
 private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val nodeMap = LinkedHashMap<InferenceUnitNode, InferenceGraphNode>()
   val representativeMap = mutableMapOf<InferenceUnit, InferenceUnit>()
+  val typeMap = mutableMapOf<InferenceUnit, PsiType>()
   graph.units.forEach { nodeMap[it] = InferenceGraphNode(it); }
 
   for (unit in graph.units) {
@@ -89,6 +91,8 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
     component.forEach {
       representativeMap[it.core] = representative.core
       if (it != representative) {
+        val representativeType = typeMap[representative.core] ?: representative.typeInstantiation
+        typeMap[representative.core] = mergeTypes(representativeType, it.typeInstantiation)
         builder.setType(it.core, representative.core.type).setDirect(it.core)
       }
     }
@@ -98,6 +102,9 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   }
   graph.units.filter { representativeMap[it.core] == it.core }.forEach { unit ->
     builder.register(unit)
+    if (unit.core in typeMap) {
+      builder.setType(unit.core, typeMap[unit.core]!!)
+    }
     unit.supertypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(it, unit.core) }
     unit.subtypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(unit.core, it) }
   }
@@ -248,6 +255,8 @@ private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): Inferenc
 
 private fun mergeTypes(firstType: PsiType, secondType: PsiType): PsiType {
   // it is possible to diagnose errors here
+  if (firstType == PsiType.NULL) return secondType
+  if (secondType == PsiType.NULL) return firstType
   val context = firstType.resolve() ?: return firstType
   if (firstType is PsiWildcardType && secondType is PsiWildcardType) {
     if (firstType.isExtends && secondType.isExtends) {

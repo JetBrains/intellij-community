@@ -1,4 +1,4 @@
-def <U0 extends List<Integer>> List<U0> foo(List<U0> a) {
+def <T extends List<Integer>> List<T> foo(List<T> a) {
   a.each {
     it.first()
   }

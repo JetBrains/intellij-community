@@ -29,13 +29,13 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   val typeUsage = parameterizedDriver.collectInnerConstraints()
   val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList(), typeUsage)
   val inferredGraph = determineDependencies(graph)
-  return inferTypeParameters(parameterizedDriver, inferredGraph, method, typeUsage)
+  return instantiateTypeParameters(parameterizedDriver, inferredGraph, method, typeUsage)
 }
 
 private fun createDriver(method: GrMethod,
                          scope: SearchScope): InferenceDriver {
   val virtualMethod = createVirtualMethod(method) ?: return EmptyDriver
-  val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name })
+  val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name }, "_START" + method.hashCode())
   return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
 }
 

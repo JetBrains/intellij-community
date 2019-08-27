@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeMapper
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
@@ -16,9 +16,9 @@ object EmptyDriver : InferenceDriver {
                                          targetMethod: GrMethod,
                                          substitutor: PsiSubstitutor): InferenceDriver = this
 
-  override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {}
+  override fun instantiate(resultMethod: GrMethod) {}
 
-  override fun acceptReducingVisitor(visitor: PsiTypeVisitor<*>, resultMethod: GrMethod) {}
+  override fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod) = this
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> = emptyList()
 

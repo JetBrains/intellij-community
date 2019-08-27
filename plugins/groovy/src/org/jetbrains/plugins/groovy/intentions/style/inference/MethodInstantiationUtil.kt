@@ -15,27 +15,100 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
-internal fun inferTypeParameters(driver: InferenceDriver,
-                                 inferredGraph: InferenceUnitGraph,
-                                 method: GrMethod,
-                                 usage: TypeUsageInformation): GrMethod {
-  val (finalSubstitutor, typeParameterList) = createCompleteSubstitutor(method, inferredGraph, usage)
-  val resultMethod = createVirtualMethod(method) ?: return method
-  driver.instantiate(resultMethod, finalSubstitutor)
-  resultMethod.typeParameterList?.replace(typeParameterList)
-  val residualTypeParameterList = buildResidualTypeParameterList(resultMethod, driver, method)
-  if (resultMethod.typeParameters.isEmpty()) {
-    resultMethod.typeParameterList?.delete()
+fun instantiateTypeParameters(driver: InferenceDriver,
+                              inferredGraph: InferenceUnitGraph,
+                              method: GrMethod,
+                              usage: TypeUsageInformation): GrMethod {
+  val (completeSubstitutor, completeTypedMethod) = createCompleteSubstitutor(method, inferredGraph, usage)
+  val reducingDriver = driver.acceptTypeVisitor(SubstitutorTypeMapper(completeSubstitutor), completeTypedMethod)
+  val (reducedMethod, remainedNames) = buildResidualTypeParameterList(completeTypedMethod, reducingDriver, method)
+  val (renamedList, nameMap) = renameTypeParameters(reducedMethod, method, remainedNames)
+  val renamingDriver = reducingDriver.acceptTypeVisitor(RenamingTypeMapper(nameMap, reducedMethod), reducedMethod)
+  renamingDriver.instantiate(reducedMethod)
+  for (typeParameter in reducedMethod.typeParameters) {
+    if (typeParameter.name !in nameMap.keys && typeParameter.name !in nameMap.values) {
+      renamedList.add(typeParameter)
+    }
+  }
+  if (reducedMethod.typeParameters.isEmpty()) {
+    reducedMethod.typeParameterList?.delete()
   }
   else {
-    resultMethod.typeParameterList!!.replace(residualTypeParameterList)
+    reducedMethod.typeParameterList!!.replace(renamedList)
   }
-  return resultMethod
+  return reducedMethod
+}
+
+fun createVirtualMethodWithoutVararg(method: GrMethod, typeParameterList: PsiTypeParameterList) : GrMethod {
+  val virtualMethod = createVirtualMethod(method, typeParameterList) ?: return method
+  virtualMethod.parameters.lastOrNull()?.ellipsisDots?.delete()
+  return virtualMethod
+}
+
+
+class SubstitutorTypeMapper(private val substitutor: PsiSubstitutor) : PsiTypeMapper() {
+  private val typeParameters = substitutor.substitutionMap.keys
+
+  override fun visitClassType(classType: PsiClassType?): PsiType? {
+    val correctClassType = typeParameters.find { it.name == classType?.name }?.type() ?: classType
+    return substitutor.substitute(correctClassType)
+  }
+
+  override fun visitArrayType(type: PsiArrayType?): PsiType? {
+    type ?: return type
+    val substitution = removeWildcard(type.componentType.accept(this))
+    return substitution.createArrayType()
+
+  }
+
+}
+
+
+class RenamingTypeMapper(private val nameMap: Map<in String, String>,
+                         private val sourceMethod: GrMethod?) : PsiTypeMapper() {
+  private val sourceTypeParameterNames = sourceMethod?.typeParameters?.map { it.name }
+
+  override fun visitClassType(classType: PsiClassType): PsiType {
+    val resolved = classType.resolve() ?: return classType
+    if (resolved is PsiTypeParameter && classType.name in nameMap) {
+      val newName = nameMap.getValue(classType.name)
+      return if (sourceMethod != null && newName in sourceTypeParameterNames!!) {
+        sourceMethod.typeParameters.find { it.name == newName }!!.type()
+      }
+      else {
+        PsiClassType.getTypeByName(newName, resolved.project, resolved.resolveScope)
+      }
+    }
+    else return GroovyPsiElementFactory.getInstance(resolved.project)
+      .createType(resolved, *classType.parameters.map { it.accept(this) }.toTypedArray())
+  }
+
+}
+
+fun renameTypeParameters(resultMethod: GrMethod,
+                         method: GrMethod,
+                         remainedNames: Set<String>): Pair<PsiTypeParameterList, Map<String, String>> {
+  val nameGenerator = NameGenerator(method.parameters.map { it.name })
+  val collector = TypeParameterCollector(method)
+  val nameMap = remainedNames.map { it to nameGenerator.name }.toMap()
+  val renamingMapper = RenamingTypeMapper(nameMap, null)
+  for (typeParameter in resultMethod.typeParameters.filter { it.name in remainedNames }) {
+    val newType = typeParameter.upperBound().accept(renamingMapper)
+    collector.createBoundedTypeParameter(nameMap[typeParameter.name]!!, PsiSubstitutor.EMPTY, newType)
+  }
+  val validPsiTypeParameterList = collector.validPsiTypeParameterList()
+  val existingNames = resultMethod.typeParameters.map { it.name }
+  for (newTypeParameter in validPsiTypeParameterList.typeParameters) {
+    if (newTypeParameter.name !in existingNames) {
+      resultMethod.typeParameterList!!.add(newTypeParameter.copy())
+    }
+  }
+  return validPsiTypeParameterList to nameMap
 }
 
 fun createCompleteSubstitutor(method: GrMethod,
                               inferredGraph: InferenceUnitGraph,
-                              usage: TypeUsageInformation): Pair<PsiSubstitutor, PsiTypeParameterList> {
+                              usage: TypeUsageInformation): Pair<PsiSubstitutor, GrMethod> {
   var resultSubstitutor = PsiSubstitutor.EMPTY
   val endpoints = mutableSetOf<InferenceUnitNode>()
   val collector = TypeParameterCollector(method)
@@ -71,20 +144,21 @@ fun createCompleteSubstitutor(method: GrMethod,
   }
   val endpointTypeParameters = endpoints.map { it.core.initialTypeParameter }
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpointTypeParameters.toTypedArray(), endpointTypes.toTypedArray())
-  return resultSubstitutor.putAll(endpointSubstitutor) to collector.typeParameterList
+  val completeTypedMethod = createVirtualMethodWithoutVararg(method, collector.typeParameterList)
+  return resultSubstitutor.putAll(endpointSubstitutor) to completeTypedMethod
 }
 
 private fun buildResidualTypeParameterList(resultMethod: GrMethod,
                                            driver: InferenceDriver,
-                                           method: GrMethod): PsiTypeParameterList {
+                                           method: GrMethod): Pair<GrMethod, Set<String>> {
   val factory = GroovyPsiElementFactory.getInstance(resultMethod.project)
   val necessaryTypeParameters = mutableSetOf<PsiTypeParameter>()
   val necessaryTypeNames = mutableSetOf<String>()
   val outerClassParameters = collectClassParameters(resultMethod.containingClass).map { it.name!! }.toSet()
-  val visitor = object : PsiTypeVisitor<Unit>() {
+  val visitor = object : PsiTypeMapper() {
 
-    override fun visitClassType(classType: PsiClassType?) {
-      classType ?: return
+    override fun visitClassType(classType: PsiClassType?): PsiType? {
+      classType ?: return classType
       val resolvedTypeParameter = classType.typeParameter()
       if (resolvedTypeParameter != null &&
           resolvedTypeParameter.name.run { this !in outerClassParameters && this !in necessaryTypeNames }) {
@@ -93,18 +167,18 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
         resolvedTypeParameter.extendsList.referencedTypes.forEach { it.accept(this) }
       }
       classType.parameters.forEach { it.accept(this) }
+      return classType
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType?) = wildcardType?.extendsBound?.accept(this)
-
-    override fun visitArrayType(arrayType: PsiArrayType?) = arrayType?.componentType?.accept(this)
   }
-  driver.acceptReducingVisitor(visitor, resultMethod)
+  driver.acceptTypeVisitor(visitor, resultMethod)
   val takenNames = necessaryTypeParameters.mapNotNull { it.name }
   val remainedConstantParameters = method.typeParameters.filter { it.name !in takenNames || it.name in outerClassParameters }
-  return factory
+  val resultTypeParameterList = factory
     .createMethodFromText("def <${(remainedConstantParameters + necessaryTypeParameters).joinToString { it.text }}> void foo() {}")
     .typeParameterList!!
+  val newMethod = createVirtualMethodWithoutVararg(method, resultTypeParameterList)
+  return newMethod to (necessaryTypeNames - method.typeParameters.map { it.name!! })
 }
 
 private fun collectClassParameters(clazz: PsiClass?): MutableList<PsiTypeParameter> {
@@ -114,7 +188,12 @@ private fun collectClassParameters(clazz: PsiClass?): MutableList<PsiTypeParamet
 
 class TypeParameterCollector(context: PsiElement) {
   val factory = GroovyPsiElementFactory.getInstance(context.project)
-  val typeParameterList: PsiTypeParameterList = factory.createTypeParameterList()
+  val typeParameterList: PsiTypeParameterList = (factory).createTypeParameterList()
+
+  // this method handles annoying bug with non-fading PSI error registered on empty type parameter list
+  fun validPsiTypeParameterList(): PsiTypeParameterList {
+    return factory.createMethodFromText("def ${typeParameterList.text} void foo() {}").typeParameterList!!
+  }
 
   fun createBoundedTypeParameter(name: String,
                                  resultSubstitutor: PsiSubstitutor,

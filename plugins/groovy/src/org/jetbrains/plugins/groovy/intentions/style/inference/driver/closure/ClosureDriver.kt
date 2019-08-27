@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
@@ -128,10 +128,10 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     return closureInvocationConstraints + closureBodyAnalysisResult
   }
 
-  override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {
+  override fun instantiate(resultMethod: GrMethod) {
     val mapping = setUpParameterMapping(method, resultMethod)
     for ((_, closureParameter) in closureParameters) {
-      val createdAnnotations = closureParameter.renderTypes(method.parameterList, resultSubstitutor)
+      val createdAnnotations = closureParameter.renderTypes(method.parameterList)
       for ((parameter, anno) in createdAnnotations) {
         if (anno.isEmpty()) {
           continue
@@ -141,8 +141,16 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     }
   }
 
-  override fun acceptReducingVisitor(visitor: PsiTypeVisitor<*>, resultMethod: GrMethod) {
-    closureParameters.values.flatMap { it.types }.forEach { it.accept(visitor) }
+  override fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver {
+    val mapping = setUpParameterMapping(method, resultMethod)
+    val parameterizedClosureCollector = mutableListOf<Pair<GrParameter, ParameterizedClosure>>()
+    for ((parameter, closure) in closureParameters) {
+      val newTypes = closure.types.map { it.accept(visitor) }
+      val newParameter = mapping.getValue(parameter)
+      val newParameterizedClosure = ParameterizedClosure(newParameter, closure.typeParameters, closure.closureArguments, newTypes, closure.delegatesToCombiner)
+      parameterizedClosureCollector.add(newParameter to newParameterizedClosure)
+    }
+    return ClosureDriver(parameterizedClosureCollector.toMap(), resultMethod)
   }
 
 }

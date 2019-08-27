@@ -46,7 +46,9 @@ fun extractConstraintsFromClosureInvocations(closureParameter: ParameterizedClos
   for (call in instructions) {
     val nearestCall = call.element?.parentOfType<GrCall>()?.takeIf { it.isClosureCall() } ?: continue
     for (index in nearestCall.expressionArguments.indices) {
-      collector.add(ExpressionConstraint(closureParameter.typeParameters[index].type(), nearestCall.expressionArguments[index]))
+      val argumentExpression = nearestCall.expressionArguments.getOrNull(index) ?: continue
+      val innerParameterType = closureParameter.typeParameters.getOrNull(index)?.type()
+      collector.add(ExpressionConstraint(innerParameterType, argumentExpression))
     }
   }
   return collector

@@ -40,7 +40,7 @@ foo(null as List<Number>)
 
   fun testTypeParameters() {
     val text = """
-def<# [< V0 >] #> foo(<# [[List < V0 >]  ] #>a, <# [[List < [? [ extends  V0]] >]  ] #>b) {
+def<# [< T >] #> foo(<# [[List < T >]  ] #>a, <# [[List < [? [ extends  T]] >]  ] #>b) {
   a.add(b[0])
 }
 
@@ -52,7 +52,7 @@ foo(['q'], ['q'])
 
   fun testClosure() {
     val text = """
-def<# [< [X0 extends  A] >] #> foo(<# [X0  ] #>a, <# [[Closure < Object >]  ] #>c) {
+def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < Object >]  ] #>c) {
   c(a)
 }
 
@@ -65,4 +65,15 @@ foo(null as A) {
     testTypeHints(text)
   }
 
+
+  fun testInsideClosure() {
+    val text = """
+def foo(<# [Integer  ] #>arg, <# [[Closure < Byte >]  ] #>closure) {
+  closure(arg)
+}
+
+foo(1) { <# [Integer  ] #>a -> a.byteValue() }
+    """.trimIndent()
+    testTypeHints(text)
+  }
 }
