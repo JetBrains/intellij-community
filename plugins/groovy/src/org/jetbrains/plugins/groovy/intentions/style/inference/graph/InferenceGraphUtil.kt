@@ -140,10 +140,17 @@ private fun completeInstantiation(parameter: PsiTypeParameter,
     else -> {
       val upperBound = typeLattice.meet(superClasses)
       val lowerBound = typeLattice.join(subClasses + inhabitingClasses).mapConjuncts { if (it.isGroovyLangObject()) javaLangObject else it }
-      val adjustedBound = if (upperBound == javaLangObject && lowerBound !is PsiIntersectionType) lowerBound else upperBound
+      val adjustedBound = lowerBound.findSingleClass()?.takeIf { upperBound == javaLangObject } ?: upperBound
       val invariantUpperBound = adjustedBound.mapConjuncts { signatureTypes.findTypeWithCorrespondingSupertype(it) }
       invariantUpperBound
     }
+  }
+}
+
+private fun PsiType.findSingleClass(): PsiType? {
+  return when (this) {
+    is PsiIntersectionType -> conjuncts.find { it.resolve()?.isInterface?.not() ?: false }
+    else -> this
   }
 }
 

@@ -508,4 +508,9 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testWeirdClassName() {
     doTest(true)
   }
+
+  void testInferCommonClassType() {
+    doTest(true)
+  }
+
 }
