@@ -48,11 +48,10 @@ public class SelectExternalProjectStep extends AbstractImportFromExternalSystemW
   public void updateDataModel() {
   }
 
-  // TODO den uncomment
-  //@Override
-  //public String getHelpId() {
-  //  return GradleConstants.HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP;
-  //}
+  @Override
+  public String getHelpId() {
+    return myControl.getProjectSettingsControl().getHelpId();
+  }
 
   @Override
   public boolean validate() throws ConfigurationException {
