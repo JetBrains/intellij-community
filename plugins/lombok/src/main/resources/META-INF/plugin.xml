@@ -108,6 +108,10 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
 
+    <processor
+      implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderPreDefinedInnerClassFieldProcessor"/>
+    <processor
+      implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderPreDefinedInnerClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderClassProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderProcessor"/>
 

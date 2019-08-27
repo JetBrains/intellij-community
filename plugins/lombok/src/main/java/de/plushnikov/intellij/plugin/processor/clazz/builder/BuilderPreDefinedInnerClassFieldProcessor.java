@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Creates methods for a builder inner class if it is predefined.
+ * Creates fields for a @Builder inner class if it is predefined.
  *
  * @author Michail Plushnikov
  */
@@ -30,10 +30,16 @@ public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPr
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Collection<String> existedFieldNames = PsiClassUtil.collectClassFieldsIntern(psiBuilderClass).stream().map(PsiField::getName).collect(Collectors.toSet());
+  protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {
+    final Collection<String> existedFieldNames = PsiClassUtil.collectClassFieldsIntern(psiBuilderClass).stream()
+      .map(PsiField::getName)
+      .collect(Collectors.toSet());
 
     final List<BuilderInfo> builderInfos = builderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
-    builderInfos.stream().filter(info -> info.notAlreadyExistingField(existedFieldNames)).map(BuilderInfo::renderBuilderFields).forEach(target::addAll);
+    return builderInfos.stream()
+      .filter(info -> info.notAlreadyExistingField(existedFieldNames))
+      .map(BuilderInfo::renderBuilderFields)
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
   }
 }

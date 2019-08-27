@@ -13,6 +13,7 @@ import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,30 +30,34 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     super(configDiscovery, builderHandler, PsiMethod.class, Builder.class);
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {
+    final Collection<PsiMethod> result = new ArrayList<>();
+
     final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(psiBuilderClass).stream().map(PsiMethod::getName).collect(Collectors.toSet());
 
     final List<BuilderInfo> builderInfos = builderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
 
     //create constructor
-    target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
+    result.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
 
     // create builder methods
     builderInfos.stream()
       .filter(info -> info.notAlreadyExistingMethod(existedMethodNames))
       .map(BuilderInfo::renderBuilderMethods)
-      .forEach(target::addAll);
+      .forEach(result::addAll);
 
     // create 'build' method
     final String buildMethodName = builderHandler.getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
-      target.add(builderHandler.createBuildMethod(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass, buildMethodName, builderInfos));
+      result.add(builderHandler.createBuildMethod(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass, buildMethodName, builderInfos));
     }
 
     // create 'toString' method
     if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
-      target.add(builderHandler.createToStringMethod(psiAnnotation, psiBuilderClass));
+      result.add(builderHandler.createToStringMethod(psiAnnotation, psiBuilderClass));
     }
+
+    return result;
   }
 
 }
