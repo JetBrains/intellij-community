@@ -4,13 +4,11 @@ package com.intellij.openapi.components.impl;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
@@ -27,9 +25,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.messages.Topic;
-import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
@@ -48,7 +43,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   protected final DefaultPicoContainer myPicoContainer;
-  private final ExtensionsAreaImpl myExtensionArea;
+  protected final ExtensionsAreaImpl myExtensionArea;
 
   private volatile boolean myDisposed;
   private volatile boolean myDisposeCompleted;
@@ -70,10 +65,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
     myParent = parent;
     myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
-    myExtensionArea = new ExtensionsAreaImpl(myPicoContainer);
-    if (parent == null) {
-      Extensions.setRootArea(myExtensionArea);
-    }
+    myExtensionArea = new ExtensionsAreaImpl(this);
   }
 
   @Nullable
@@ -135,14 +127,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  private MessageBus createMessageBus() {
-    MessageBus messageBus = MessageBusFactory.newMessageBus(this, myParent == null ? null : myParent.getMessageBus());
-    if (messageBus instanceof MessageBusImpl) {
-      ((MessageBusImpl) messageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
-    }
-    getPicoContainer().registerComponentInstance(MessageBus.class, messageBus);
-    return messageBus;
-  }
+  protected abstract MessageBus createMessageBus();
 
   public final boolean isComponentsCreated() {
     return myComponentsCreated;
@@ -262,7 +247,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public DefaultPicoContainer getPicoContainer() {
+  public final DefaultPicoContainer getPicoContainer() {
     DefaultPicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
       throwAlreadyDisposed();
@@ -272,7 +257,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   @Override
-  public ExtensionsAreaImpl getExtensionArea() {
+  public final ExtensionsArea getExtensionArea() {
     return myExtensionArea;
   }
 
@@ -308,17 +293,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  protected void logMessageBusDelivery(Topic<?> topic, String messageName, Object handler, long durationNanos) {
-    if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener(null);
-      return;
-    }
-
-    ClassLoader loader = handler.getClass().getClassLoader();
-    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : PluginManagerCore.CORE_PLUGIN_ID;
-    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
   }
 
   @Nullable

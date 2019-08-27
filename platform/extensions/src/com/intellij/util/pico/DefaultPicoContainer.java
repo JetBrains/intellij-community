@@ -17,8 +17,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements MutablePicoContainer {
-  static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
-  static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
+  public static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
+  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
+
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new THashSet<>();
 
@@ -101,7 +102,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public List<ComponentAdapter> getComponentAdaptersOfType(final Class componentType) {
+  public List<ComponentAdapter> getComponentAdaptersOfType(@Nullable Class componentType) {
     if (componentType == null || componentType == String.class) {
       return Collections.emptyList();
     }
@@ -149,6 +150,10 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Nullable
   public ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
+    if (adapter == null) {
+      return null;
+    }
+
     componentAdapters.remove(adapter);
     if (adapter instanceof AssignableToComponentAdapter) {
       classNameToAdapter.remove(((AssignableToComponentAdapter)adapter).getAssignableToClassName());
@@ -176,11 +181,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     throw new UnsupportedOperationException("use ComponentManagerImpl.getComponentInstancesOfType");
   }
 
-  @FunctionalInterface
-  public interface LazyComponentAdapter {
-    boolean isComponentInstantiated();
-  }
-
   @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
@@ -206,19 +206,20 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Nullable
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean isCreate) {
+  public <T> T getService(@NotNull Class<T> serviceClass) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass.getName());
     if (adapter == null) {
       return null;
     }
 
-    if (!isCreate && adapter instanceof LazyComponentAdapter && !((LazyComponentAdapter)adapter).isComponentInstantiated()) {
-      return null;
-    }
-    else {
-      //noinspection unchecked
-      return (T)adapter.getComponentInstance(this);
-    }
+    //noinspection unchecked
+    return (T)adapter.getComponentInstance(this);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  public final ComponentAdapter getServiceAdapter(@NotNull String key) {
+    return componentKeyToAdapterCache.get(key);
   }
 
   @Override

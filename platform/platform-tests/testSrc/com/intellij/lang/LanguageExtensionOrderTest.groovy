@@ -11,7 +11,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import groovy.transform.CompileStatic
-import org.picocontainer.MutablePicoContainer
 
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
@@ -32,11 +31,11 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
   }
 
   private void registerLanguageEP() {
-    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load('''\
-<extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
-</extensionPoint>    
-'''), (MutablePicoContainer)ApplicationManager.getApplication().picoContainer)
+    myArea.registerExtensionPoints(myDescriptor, Collections.singletonList(JDOMUtil.load('''\
+    <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
+    </extensionPoint>    
+    ''')), ApplicationManager.getApplication())
     Disposer.register(testRootDisposable) {
       myArea.unregisterExtensionPoint("langExt")
     }

@@ -45,7 +45,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     };
 
     myPicoContainer.registerComponentInstance(this);
-    myExtensionArea = new ExtensionsAreaImpl(myPicoContainer);
+    myExtensionArea = new ExtensionsAreaImpl(this);
     Disposer.register(parentDisposable, this);
   }
 
@@ -96,7 +96,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    T result = myPicoContainer.getService(serviceClass, createIfNeeded);
+    T result = myPicoContainer.getService(serviceClass);
     registerComponentInDisposer(result);
     return result;
   }

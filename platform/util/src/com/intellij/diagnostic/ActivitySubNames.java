@@ -13,5 +13,6 @@ public final class ActivitySubNames {
   public static final String FIX_PROCESS_ENV = "fix process env";
 
   public static final String INIT_PLUGINS = "plugin initialization";
+  public static final String REGISTER_SERVICES = "app service and ep registration";
   public static final String REGISTER_EXTENSIONS = "app extension registration";
 }

@@ -7,11 +7,11 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,18 +20,17 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +82,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private Map<PluginId, List<IdeaPluginDescriptorImpl>> myOptionalDescriptors;
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
-  private @Nullable MultiMap<String, Element> myExtensions;
+  private @Nullable THashMap<String, List<Element>> myExtensions;
 
   private final ContainerDescriptor myAppContainerDescriptor = new ContainerDescriptor();
   private final ContainerDescriptor myProjectContainerDescriptor = new ContainerDescriptor();
@@ -266,7 +265,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
-    MultiMap<String, Element> extensions = myExtensions;
+    THashMap<String, List<Element>> epNameToExtensions = myExtensions;
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -297,11 +296,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
               containerDescriptor = myModuleContainerDescriptor;
             }
             else {
-              if (extensions == null) {
-                extensions = MultiMap.createSmart();
-                myExtensions = extensions;
+              if (epNameToExtensions == null) {
+                epNameToExtensions = new THashMap<>();
+                myExtensions = epNameToExtensions;
               }
-              extensions.putValue(qualifiedExtensionPointName, extensionElement);
+
+              List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
+              if (list == null) {
+                list = new SmartList<>();
+                epNameToExtensions.put(qualifiedExtensionPointName, list);
+              }
+              list.add(extensionElement);
               continue;
             }
 
@@ -484,12 +489,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  public void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull MutablePicoContainer picoContainer) {
+  void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager) {
     ContainerDescriptor containerDescriptor;
-    if (picoContainer.getParent() == null) {
+    if (componentManager.getPicoContainer().getParent() == null) {
       containerDescriptor = myAppContainerDescriptor;
     }
-    else if (picoContainer.getParent().getParent() == null) {
+    else if (componentManager.getPicoContainer().getParent().getParent() == null) {
       containerDescriptor = myProjectContainerDescriptor;
     }
     else {
@@ -498,9 +503,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     List<Element> extensionsPoints = containerDescriptor.extensionsPoints;
     if (extensionsPoints != null) {
-      for (Element element : extensionsPoints) {
-        area.registerExtensionPoint(this, element, picoContainer);
-      }
+      area.registerExtensionPoints(this, extensionsPoints, componentManager);
     }
   }
 
@@ -520,28 +523,61 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
+  @NotNull
   public ContainerDescriptor getAppContainerDescriptor() {
     return myAppContainerDescriptor;
   }
 
+  @NotNull
   public ContainerDescriptor getProjectContainerDescriptor() {
     return myProjectContainerDescriptor;
   }
 
+  @NotNull
   public ContainerDescriptor getModuleContainerDescriptor() {
     return myModuleContainerDescriptor;
   }
 
-  void registerExtensions(@NotNull ExtensionPointImpl<?>[] extensionPoints,
-                          @NotNull MutablePicoContainer picoContainer,
-                          boolean notifyListeners) {
-    if (myExtensions == null) {
-      return;
+  @ApiStatus.Internal
+  public void registerExtensions(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager, boolean notifyListeners) {
+    THashMap<String, List<Element>> extensions;
+    if (componentManager.getPicoContainer().getParent() == null) {
+      extensions = myAppContainerDescriptor.extensions;
+      if (extensions == null) {
+        if (myExtensions == null) {
+          return;
+        }
+
+        myExtensions.retainEntries((name, list) -> {
+          if (area.registerExtensions(name, list, this, componentManager, notifyListeners)) {
+            if (myAppContainerDescriptor.extensions == null) {
+              myAppContainerDescriptor.extensions = new THashMap<>();
+            }
+            addExtensionList(myAppContainerDescriptor.extensions, name, list);
+            return false;
+          }
+          return true;
+        });
+
+        if (myExtensions.isEmpty()) {
+          myExtensions = null;
+        }
+
+        return;
+      }
+      // else... it means that another application is created for the same set of plugins - at least, this case should be supported for tests
+    }
+    else {
+      extensions = myExtensions;
+      if (extensions == null) {
+        return;
+      }
     }
 
-    for (ExtensionPointImpl<?> extensionPoint : extensionPoints) {
-      extensionPoint.createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, picoContainer, notifyListeners);
-    }
+    extensions.forEachEntry((name, list) -> {
+      area.registerExtensions(name, list, this, componentManager, notifyListeners);
+      return true;
+    });
   }
 
   @Override
@@ -621,11 +657,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @SuppressWarnings("UnusedDeclaration") // Used in Upsource
   @Nullable
-  public MultiMap<String, Element> getExtensions() {
-    if (myExtensions == null) return null;
-    MultiMap<String, Element> result = MultiMap.create();
-    result.putAllValues(myExtensions);
-    return result;
+  public Map<String, List<Element>> getExtensions() {
+    if (myExtensions == null) {
+      return null;
+    }
+    else {
+      Map<String, List<Element>> result = new THashMap<>(myExtensions.size());
+      result.putAll(myExtensions);
+      return result;
+    }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -801,7 +841,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myExtensions = descriptor.myExtensions;
     }
     else if (descriptor.myExtensions != null) {
-      myExtensions.putAllValues(descriptor.myExtensions);
+      descriptor.myExtensions.forEachEntry((name, list) -> {
+        addExtensionList(myExtensions, name, list);
+        return true;
+      });
     }
 
     if (myActionElements == null) {
@@ -814,6 +857,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myAppContainerDescriptor.merge(descriptor.myAppContainerDescriptor);
     myProjectContainerDescriptor.merge(descriptor.myProjectContainerDescriptor);
     myModuleContainerDescriptor.merge(descriptor.myModuleContainerDescriptor);
+  }
+
+  private static void addExtensionList(@NotNull Map<String, List<Element>> map, @NotNull String name, @NotNull List<Element> list) {
+    List<Element> myList = map.get(name);
+    if (myList == null) {
+      map.put(name, list);
+    }
+    else {
+      myList.addAll(list);
+    }
   }
 
   public Boolean getSkipped() {

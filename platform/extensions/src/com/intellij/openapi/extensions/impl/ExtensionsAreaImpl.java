@@ -2,24 +2,19 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint.PicoContainerAwareInterfaceExtensionPoint;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,12 +25,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
-  private final DefaultPicoContainer myPicoContainer;
+  private final ComponentManager myComponentManager;
   private final Map<String, ExtensionPointImpl<?>> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
 
-  public ExtensionsAreaImpl(@NotNull DefaultPicoContainer picoContainer) {
-    myPicoContainer = picoContainer;
+  public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
+    myComponentManager = componentManager;
   }
 
   @TestOnly
@@ -57,46 +52,37 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  public void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull Element extensionPointElement,
-                                     @NotNull MutablePicoContainer picoContainer) {
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor,
+                                      @NotNull List<Element> extensionPointElements,
+                                      @NotNull ComponentManager componentManager) {
+    for (Element element : extensionPointElements) {
+      registerExtensionPoint(pluginDescriptor, element, componentManager);
+    }
+  }
+
+  private void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
+                                      @NotNull Element extensionPointElement,
+                                      @NotNull ComponentManager componentManager) {
     String pointName = getExtensionPointName(extensionPointElement, pluginDescriptor);
 
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
     String interfaceClassName = extensionPointElement.getAttributeValue("interface");
     if (beanClassName == null && interfaceClassName == null) {
-      throw new ExtensionInstantiationException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
+      throw myComponentManager.createError("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
     }
 
     if (beanClassName != null && interfaceClassName != null) {
-      throw new ExtensionInstantiationException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
+      throw myComponentManager.createError("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
     }
 
     boolean dynamic = Boolean.parseBoolean(extensionPointElement.getAttributeValue("dynamic"));
 
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, picoContainer, pluginDescriptor, dynamic);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, componentManager, pluginDescriptor, dynamic);
     }
     else {
-      boolean registerInPicoContainer;
-      String registerInPicoContainerValue = extensionPointElement.getAttributeValue("registerInPicoContainer");
-      if (registerInPicoContainerValue == null) {
-        String pluginId = pluginDescriptor.getPluginId().getIdString();
-        // https://github.com/mplushnikov/lombok-intellij-plugin/blob/master/src/main/resources/META-INF/plugin.xml (processor)
-        //noinspection SpellCheckingInspection
-        registerInPicoContainer = SystemProperties.getBooleanProperty("idea.register.ep.in.pico.container", !pluginDescriptor.isBundled()) || pluginId.equals("Lombook Plugin");
-      }
-      else {
-        registerInPicoContainer = Boolean.parseBoolean(registerInPicoContainerValue);
-      }
-
-      if (registerInPicoContainer) {
-        point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor);
-      }
-      else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, picoContainer, pluginDescriptor, dynamic);
-      }
+      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, componentManager, pluginDescriptor, dynamic);
     }
     registerExtensionPoint(point);
   }
@@ -108,8 +94,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
       if (name == null) {
-        throw new ExtensionInstantiationException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor);
+        throw myComponentManager.createError("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
       }
+
       assert pluginDescriptor.getPluginId() != null;
       pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
     }
@@ -122,10 +109,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 
-  // Used in Upsource
   @Override
-  public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
-    ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myPicoContainer);
+  public void registerExtension(@NotNull ExtensionPoint extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
+    ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myComponentManager);
   }
 
   // don't want to expose clearCache directly
@@ -172,10 +158,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new PicoContainerAwareInterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
+      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
     }
     else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor, false);
+      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
     }
     registerExtensionPoint(point);
   }
@@ -186,10 +172,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                                  @NotNull PluginDescriptor pluginDescriptor) {
     ExtensionPointImpl<T> point;
     if (extensionClass.isInterface() || (extensionClass.getModifiers() & Modifier.ABSTRACT) != 0) {
-      point = new PicoContainerAwareInterfaceExtensionPoint<>(name, extensionClass.getName(), myPicoContainer, pluginDescriptor);
+      point = new InterfaceExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
     }
     else {
-      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myPicoContainer, pluginDescriptor, false);
+      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
     }
     registerExtensionPoint(point);
     return point;
@@ -199,10 +185,11 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
    * To register extensions for {@link com.intellij.openapi.util.KeyedExtensionCollector} for test purposes, where extension instance can be KeyedLazyInstance and not a real bean class,
    * because often it is not possible to use one (for example, {@link com.intellij.lang.LanguageExtensionPoint}).
    */
+  @SuppressWarnings("UnusedReturnValue")
   @TestOnly
   public <T> ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
     // any object name can be used, because EP must not create any instance
-    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myPicoContainer, pluginDescriptor, false);
+    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myComponentManager, pluginDescriptor, false);
     registerExtensionPoint(point);
     return point;
   }
@@ -223,10 +210,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));
     }
-    throw new ExtensionInstantiationException(message, pluginDescriptor);
+    throw myComponentManager.createError(message, pluginDescriptor.getPluginId());
   }
 
-  public void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {
+  private void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {
     String name = point.getName();
     checkThatPointNotDuplicated(name, point.getDescriptor());
     myExtensionPoints.put(name, point);
@@ -241,9 +228,27 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     @SuppressWarnings("unchecked")
     ExtensionPointImpl<T> extensionPoint = (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
     if (extensionPoint == null) {
-      throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in container " + myPicoContainer);
+      throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in container " + myComponentManager);
     }
     return extensionPoint;
+  }
+
+  @ApiStatus.Internal
+  public boolean registerExtensions(@NotNull String pointName,
+                                 @NotNull List<Element> extensions,
+                                 @NotNull PluginDescriptor pluginDescriptor,
+                                 @NotNull ComponentManager componentManager,
+                                 boolean notifyListeners)  {
+    ExtensionPointImpl<?> point = myExtensionPoints.get(pointName);
+    if (point == null) {
+      return false;
+    }
+
+    if (point.myComponentManager != componentManager) {
+      LOG.error("The same point on different levels (pointName=" + pointName +  ")");
+    }
+    point.registerExtensions(extensions, pluginDescriptor, componentManager, notifyListeners);
+    return true;
   }
 
   @Nullable
@@ -264,6 +269,35 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public ExtensionPointImpl<?>[] getExtensionPoints() {
     return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
+  }
+
+  @Nullable
+  public <T> T findExtensionPointByClass(@NotNull Class<T> aClass) {
+    for (ExtensionPointImpl<?> point : myExtensionPoints.values()) {
+      if (!(point instanceof InterfaceExtensionPoint)) {
+        continue;
+      }
+
+      Class<?> extensionClass;
+      try {
+        extensionClass = point.getExtensionClass();
+      }
+      catch (Throwable e) {
+        LOG.warn("error during findExtensionPointByName", e);
+        continue;
+      }
+
+      if (!extensionClass.isAssignableFrom(aClass)) {
+        continue;
+      }
+
+      //noinspection unchecked
+      T extension = ((ExtensionPointImpl<T>)point).findExtension(aClass, false, /* strictMatch = */ true);
+      if (extension != null) {
+        return extension;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -287,6 +321,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public String toString() {
-    return myPicoContainer.toString();
+    return myComponentManager.toString();
   }
 }

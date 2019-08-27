@@ -3,6 +3,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
@@ -273,7 +274,15 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       if (super.myEp.childrenEPName != null) {
         Project project = super.myEp.getProject();
         ExtensionsArea area = project == null ? ApplicationManager.getApplication().getExtensionArea() : project.getExtensionArea();
-        List<Object> extensions = area.getExtensionPoint(super.myEp.childrenEPName).getExtensionList();
+        ExtensionPoint<Object> point = area.getExtensionPointIfRegistered(super.myEp.childrenEPName);
+        List<Object> extensions;
+        if (point == null) {
+          LOG.warn("Cannot find extension point " + super.myEp.childrenEPName + " in " + area);
+          extensions = Collections.emptyList();
+        }
+        else {
+          extensions = point.getExtensionList();
+        }
         if (!extensions.isEmpty()) {
           if (extensions.get(0) instanceof ConfigurableEP) {
             for (Object object : extensions) {

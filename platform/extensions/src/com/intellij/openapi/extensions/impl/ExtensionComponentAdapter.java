@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.PicoContainer;
 
 public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
@@ -14,7 +14,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   @NotNull
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
-  private Object myImplementationClassOrName; // Class or String
+  Object myImplementationClassOrName; // Class or String
 
   private final String myOrderId;
   private final LoadingOrder myOrder;
@@ -33,21 +33,14 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   abstract boolean isInstanceCreated();
 
   @NotNull
-  public Object createInstance(@NotNull PicoContainer container) {
+  public Object createInstance(@NotNull ComponentManager componentManager) {
     Object instance;
     try {
-      Class<?> impl = getImplementationClass();
-
-      ExtensionPointImpl.CHECK_CANCELED.run();
-
-      instance = instantiateClass(impl, container);
+      instance = instantiateClass(getImplementationClass(), componentManager);
       initInstance(instance);
     }
-    catch (ProcessCanceledException | ExtensionNotApplicableException e) {
-      throw e;
-    }
     catch (Throwable t) {
-      throw new ExtensionInstantiationException(t, myPluginDescriptor);
+      throw componentManager.createError(t, myPluginDescriptor.getPluginId());
     }
 
     if (instance instanceof PluginAware) {
@@ -57,8 +50,8 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @NotNull
-  protected Object instantiateClass(@NotNull Class<?> clazz, @NotNull PicoContainer container) {
-    return ReflectionUtil.newInstance(clazz, false);
+  protected Object instantiateClass(@NotNull Class<?> aClass, @NotNull ComponentManager componentManager) {
+    return componentManager.instantiateClass(aClass, myPluginDescriptor.getPluginId());
   }
 
   protected void initInstance(@NotNull Object instance) {
@@ -80,19 +73,14 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @NotNull
-  public final Class<?> getImplementationClass() {
+  public final Class<?> getImplementationClass() throws ClassNotFoundException {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
-      try {
-        ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
-        if (classLoader == null) {
-          classLoader = getClass().getClassLoader();
-        }
-        myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
+      if (classLoader == null) {
+        classLoader = getClass().getClassLoader();
       }
-      catch (ClassNotFoundException e) {
-        throw new ExtensionInstantiationException(e, myPluginDescriptor);
-      }
+      myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
     }
     return (Class<?>)implementationClassOrName;
   }

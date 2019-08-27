@@ -11,8 +11,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.IconLoader
-import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.messages.Topic
 
@@ -44,7 +42,7 @@ object DynamicPlugins {
 
     val extensions = pluginDescriptor.extensions
     if (extensions != null) {
-      for (epName in extensions.keySet()) {
+      for (epName in extensions.keys) {
         val ep = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) ?:
           anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
         if (ep == null || !ep.isDynamic) {
@@ -77,7 +75,7 @@ object DynamicPlugins {
       val openProjects = ProjectManager.getInstance().openProjects
 
       pluginDescriptor.extensions?.let { extensions ->
-        for (epName in extensions.keySet()) {
+        for (epName in extensions.keys) {
           val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
           if (appEp != null) {
             appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
@@ -105,13 +103,13 @@ object DynamicPlugins {
         }
       }
 
-      val appServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.app, application)
+      val appServiceInstances = application.unloadServices(pluginDescriptor.app)
       for (appServiceInstance in appServiceInstances) {
         application.stateStore.unloadComponent(appServiceInstance)
       }
 
       for (project in openProjects) {
-        val projectServiceInstances = ServiceManagerImpl.unloadServices(pluginDescriptor.project, project as ProjectImpl)
+        val projectServiceInstances = (project as ProjectImpl).unloadServices(pluginDescriptor.project)
         for (projectServiceInstance in projectServiceInstances) {
           project.stateStore.unloadComponent(projectServiceInstance)
         }

@@ -51,5 +51,9 @@ public interface ExtensionsArea  {
   @TestOnly
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
 
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 }

@@ -103,10 +103,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                            boolean isCommandLine) {
     super(null);
 
-    ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
 
-    getPicoContainer().registerComponentInstance(Application.class, this);
-    getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
+
+    myPicoContainer.registerComponentInstance(Application.class, this);
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
@@ -364,7 +366,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
+      for (ApplicationInitializedListener listener : myExtensionArea.<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
           break;
         }
@@ -1365,15 +1367,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
-    super.logMessageBusDelivery(topic, messageName, handler, durationNanos);
+  protected void logMessageBusDelivery(@NotNull Topic<?> topic, String messageName, @NotNull Object handler, long durationInNano) {
+    super.logMessageBusDelivery(topic, messageName, handler, durationInNano);
+
     if (topic == ProjectManager.TOPIC) {
-      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
-                                                   StartUpMeasurer.Level.PROJECT);
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationInNano, handler.getClass(), StartUpMeasurer.Level.PROJECT);
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
-      if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 50) {
-        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
+      if (TimeUnit.NANOSECONDS.toMillis(durationInNano) > 50) {
+        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(
+          durationInNano)));
       }
     }
   }

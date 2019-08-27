@@ -2,12 +2,13 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,5 +122,46 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   default ExtensionsArea getExtensionArea() {
     // default impl to keep backward compatibility
     throw new AbstractMethodError();
+  }
+
+  @ApiStatus.Internal
+  default <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+    return ReflectionUtil.newInstance(aClass, false);
+  }
+
+  @ApiStatus.Internal
+  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @Nullable PluginId pluginId) {
+    //noinspection unchecked
+    return (T)new CachingConstructorInjectionComponentAdapter(key, aClass, null, true).getComponentInstance(getPicoContainer());
+  }
+
+  @ApiStatus.Internal
+  default void logError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    throw createError(error, pluginId);
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  default RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    ExceptionUtilRt.rethrowUnchecked(error);
+    return new RuntimeException(error);
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  default RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+    return new RuntimeException(message);
+  }
+
+  // todo make pluginDescriptor as not-null
+  @NotNull
+  default <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+    try {
+      //noinspection unchecked
+      return (T)ReflectionUtil.newInstance(Class.forName(name));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

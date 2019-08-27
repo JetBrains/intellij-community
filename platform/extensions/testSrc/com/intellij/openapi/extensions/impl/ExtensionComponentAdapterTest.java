@@ -4,15 +4,12 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Alexander Kireyev
@@ -32,7 +29,7 @@ public class ExtensionComponentAdapterTest {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element).createInstance(new DefaultPicoContainer());
+    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element).createInstance(new ExtensionPointImplTest.MyComponentManager());
   }
 
   @NotNull

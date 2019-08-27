@@ -21,7 +21,7 @@ val ComponentManager.stateStore: IComponentStore
       this is ProjectStoreOwner -> (this as ProjectStoreOwner).getComponentStore()
       else -> {
         // module or application service
-        picoContainer.getComponentInstance(IComponentStore::class.java.name) as IComponentStore
+        getService(IComponentStore::class.java)
       }
     }
   }

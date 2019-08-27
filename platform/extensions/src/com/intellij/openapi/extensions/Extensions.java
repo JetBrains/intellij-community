@@ -4,7 +4,6 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,37 +43,6 @@ public final class Extensions {
   @Deprecated
   public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     return areaInstance == null ? ourRootArea : areaInstance.getExtensionArea();
-  }
-
-  @TestOnly
-  private static final class TestAreaInstance implements AreaInstance {
-    private final DefaultPicoContainer container = new DefaultPicoContainer();
-    private final ExtensionsAreaImpl extensionArea = new ExtensionsAreaImpl(container);
-
-    @NotNull
-    @Override
-    public ExtensionsArea getExtensionArea() {
-      return extensionArea;
-    }
-  }
-
-  /**
-   * @deprecated Extension area is a part of component manager, no need to clean extension area - dispose component manager instead.
-   */
-  @TestOnly
-  @Deprecated
-  public static void cleanRootArea(@NotNull Disposable parentDisposable) {
-    ExtensionsAreaImpl oldRootArea = ourRootArea;
-    TestAreaInstance areaInstance = new TestAreaInstance();
-    final ExtensionsAreaImpl newArea = new ExtensionsAreaImpl(areaInstance.container);
-    ourRootArea = newArea;
-    if (oldRootArea != null) {
-      oldRootArea.notifyAreaReplaced(newArea);
-    }
-    Disposer.register(parentDisposable, () -> {
-      ourRootArea = oldRootArea;
-      newArea.notifyAreaReplaced(oldRootArea);
-    });
   }
 
   /**

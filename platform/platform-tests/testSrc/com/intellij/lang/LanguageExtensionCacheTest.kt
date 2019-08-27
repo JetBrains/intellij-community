@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import org.picocontainer.MutablePicoContainer
+import java.util.*
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val myExtensionPointName = "testLangExt"
@@ -20,40 +20,40 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 </extensionPoint>
 """
 
-  private val myDescriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
-  private lateinit var myArea: ExtensionsAreaImpl
-  private lateinit var myExtension: LanguageExtension<String>
+  private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
+  private lateinit var area: ExtensionsAreaImpl
+  private lateinit var extension: LanguageExtension<String>
 
   override fun setUp() {
     super.setUp()
-    myArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load(myExtensionPointXML), ApplicationManager.getApplication ().picoContainer as MutablePicoContainer)
+    area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)), ApplicationManager.getApplication ())
     Disposer.register(testRootDisposable, Disposable {
-      myArea.unregisterExtensionPoint(myExtensionPointName)
+      area.unregisterExtensionPoint(myExtensionPointName)
     })
-    myExtension = LanguageExtension(myExtensionPointName, null, testRootDisposable)
+    extension = LanguageExtension(myExtensionPointName, null, testRootDisposable)
   }
 
   private fun registerExtension(languageID: String, implementationFqn: String) {
     val element = JDOMUtil.load(
       """<extension point="$myExtensionPointName" language="$languageID" implementationClass="$implementationFqn"/>"""
     )
-    myArea.registerExtension(myDescriptor, element, null)
+    area.registerExtension(descriptor, element, null)
   }
 
   fun `test extensions are cleared when explicit extension is added`() {
     val language = PlainTextLanguage.INSTANCE
 
     registerExtension(language.id, String::class.java.name)   // emulate registration via plugin.xml
-    assertSize(1, myExtension.allForLanguage(language))
-    assertEquals("", myExtension.forLanguage(language))       // empty because created with new String(); it is cached within forLanguage()
+    assertSize(1, extension.allForLanguage(language))
+    assertEquals("", extension.forLanguage(language))       // empty because created with new String(); it is cached within forLanguage()
 
-    myExtension.addExplicitExtension(language, "hello")
-    assertSize(2, myExtension.allForLanguage(language))
-    assertEquals("hello", myExtension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
+    extension.addExplicitExtension(language, "hello")
+    assertSize(2, extension.allForLanguage(language))
+    assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
 
-    myExtension.removeExplicitExtension(language, "hello")
-    assertSize(1, myExtension.allForLanguage(language))
-    assertEquals("", myExtension.forLanguage(language))
+    extension.removeExplicitExtension(language, "hello")
+    assertSize(1, extension.allForLanguage(language))
+    assertEquals("", extension.forLanguage(language))
   }
 }

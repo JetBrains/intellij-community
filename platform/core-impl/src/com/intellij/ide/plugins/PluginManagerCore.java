@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -43,7 +42,6 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -1641,21 +1639,6 @@ public class PluginManagerCore {
     }
   }
 
-  @ApiStatus.Internal
-  public static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area,
-                                                          @NotNull MutablePicoContainer container,
-                                                          @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins,
-                                                          boolean notifyListeners) {
-    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      descriptor.registerExtensionPoints(area, container);
-    }
-
-    ExtensionPointImpl<?>[] extensionPoints = area.getExtensionPoints();
-    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      descriptor.registerExtensions(extensionPoints, container, notifyListeners);
-    }
-  }
-
   /**
    * Load extensions points and extensions from a configuration file in plugin.xml format
    *
@@ -1678,9 +1661,8 @@ public class PluginManagerCore {
     }
 
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions((ExtensionsAreaImpl)area,
-                                           (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer(), Collections.singletonList(descriptor),
-                                           false);
+      descriptor.registerExtensionPoints((ExtensionsAreaImpl)area, ApplicationManager.getApplication());
+      descriptor.registerExtensions((ExtensionsAreaImpl)area, ApplicationManager.getApplication(), false);
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
