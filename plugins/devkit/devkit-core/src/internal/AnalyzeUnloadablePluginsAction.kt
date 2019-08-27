@@ -13,8 +13,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
-import com.intellij.util.xml.DomManager
-import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -48,7 +46,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             }
 
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
-            val status = analyzeUnloadable(project, ideaPlugin)
+            val status = analyzeUnloadable(ideaPlugin)
             result.add(status)
             pi.text = status.pluginId
           }
@@ -105,12 +103,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     }).show()
   }
 
-  private fun analyzeUnloadable(project: Project, ideaPlugin: IdeaPlugin): PluginUnloadabilityStatus {
+  private fun analyzeUnloadable(ideaPlugin: IdeaPlugin): PluginUnloadabilityStatus {
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
-    for (extensionTag in ideaPlugin.extensions.flatMap { it.xmlTag.subTags.toList() }) {
-      val domElement = DomManager.getDomManager(project).getDomElement(extensionTag)
-      val extension = domElement as? Extension ?: continue
+    for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
       val ep = extension.extensionPoint
       if (ep == null) {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
