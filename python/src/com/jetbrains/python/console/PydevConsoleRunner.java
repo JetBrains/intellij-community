@@ -64,11 +64,8 @@ public interface PydevConsoleRunner {
                                           Sdk sdk,
                                           PyConsoleOptions.PyConsoleSettings consoleSettings) {
     if (PythonSdkUtil.isRemote(sdk)) {
-      PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
-      if (instance != null) {
-        PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-        return getPathMapper(project, consoleSettings, instance, remoteSdkAdditionalData);
-      }
+      PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      return getPathMapper(project, consoleSettings, remoteSdkAdditionalData);
     }
     return null;
   }
@@ -76,9 +73,8 @@ public interface PydevConsoleRunner {
   @NotNull
   static PyRemotePathMapper getPathMapper(@NotNull Project project,
                                           PyConsoleOptions.PyConsoleSettings consoleSettings,
-                                          PythonRemoteInterpreterManager instance,
                                           PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
-    PyRemotePathMapper remotePathMapper = instance.setupMappings(project, remoteSdkAdditionalData, null);
+    PyRemotePathMapper remotePathMapper = PythonRemoteInterpreterManager.appendBasicMappings(project, null, remoteSdkAdditionalData);
     PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
     remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
     return remotePathMapper;
