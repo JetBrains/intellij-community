@@ -40,7 +40,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
 class ProjectFromVersionControlAction : GetFromVersionControlAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.text = "Project form Version Control..."
+    e.presentation.text = "Project from Version Control..."
   }
 }
 
