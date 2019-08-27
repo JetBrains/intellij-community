@@ -16,11 +16,13 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -245,6 +247,21 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
 
   public void testConvertComment() { doTest();}
   public void testConvertComment2() { doTest();}
+  public void testConvertFinalLineComment() { doTest();}
+  public void testConvertFinalLineComment2() { doTest();}
+  public void testConvertFinalLineComment3() { doTest();}
+  public void testConvertLongLine() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.RIGHT_MARGIN = 79;
+
+    doTest();
+  }
+  public void testConvertMultiLongLine() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.RIGHT_MARGIN = 50;
+
+    doTest();
+  }
   public void testConvertManyEndOfLineComments() { doTest();}
   public void testConvertMixed() { doTest();}
 

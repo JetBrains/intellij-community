@@ -30,6 +30,9 @@ public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
    * In contrast to {@link JoinLinesHandlerDelegate#tryJoinLines(Document, PsiFile, int, int) tryJoinLines()}, this method
    * is called on an unmodified document.
    *
+   * This joiner is allowed to keep number of lines the same,
+   * but it should not increase number of lines in the document.
+   *
    * @param document where the lines are
    * @param file where the lines are
    * @param start offset right after the last non-space char of first line;
