@@ -242,7 +242,7 @@ public class DirectoryAccessChecker {
 
       private final List<String> args = new ArrayList<>();
 
-      CifsOptions(String service, String optionString) {
+      private CifsOptions(String service, String optionString) {
         for (String o : optionString.split(",")) {
           if (o.startsWith("username")) {
             userName = getValue(o);
