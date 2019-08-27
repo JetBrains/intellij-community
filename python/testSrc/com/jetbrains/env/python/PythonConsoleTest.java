@@ -2,6 +2,7 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
@@ -11,9 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.swing.tree.TreeNode;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
 import static org.junit.Assert.assertTrue;
@@ -142,6 +145,61 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(x)");
 
         waitForOutput("2");
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testConsoleActionsReflectedInVariableView() {
+    runPythonTest(new PyConsoleTask() {
+
+      private static final int TIMEOUT = 3000;
+      private static final int NUMBER_OF_ATTEMPTS = 10;
+
+      @Override
+      public void testing() throws Exception {
+        exec("foo = 'bar'");
+        waitForConditionIsTrue("`foo` is not in the console variable tree", (root) -> {
+          for(TreeNode child : root.getChildren()) {
+            XDebuggerTreeNode node = (XDebuggerTreeNode) child;
+            if (node.toString().equals("foo")) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        exec("foo = 'baz'");
+        waitForConditionIsTrue("`foo` value hasn't changed to 'baz'", (root) -> {
+          for(TreeNode child : root.getChildren()) {
+            XDebuggerTreeNode node = (XDebuggerTreeNode) child;
+            if (node.toString().equals("foo") && node.getText().toString().contains("'baz'")) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        exec("del foo");
+        waitForConditionIsTrue("`foo` is still in the console variable tree", (root) -> {
+          for (TreeNode child : root.getChildren()) {
+            XDebuggerTreeNode node = (XDebuggerTreeNode)child;
+            if (node.toString().equals("foo")) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+
+      private void waitForConditionIsTrue(String message, @NotNull Predicate<XDebuggerTreeNode> pred) throws InterruptedException {
+        final long startedAt = System.currentTimeMillis();
+        do {
+          if (pred.test(getConsoleView().getDebuggerTreeRootNode())) return;
+          Thread.sleep(TIMEOUT / NUMBER_OF_ATTEMPTS);
+        } while (startedAt + TIMEOUT > System.currentTimeMillis());
+        Assert.fail(message);
       }
     });
   }

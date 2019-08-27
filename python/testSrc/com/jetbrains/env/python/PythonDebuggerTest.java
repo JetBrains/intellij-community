@@ -105,36 +105,36 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   private void pytests(final String script, @Nullable Set<String> tags) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/helpers/pydev/", SdkCreationType.SDK_PACKAGES_ONLY) {
-      @NotNull
-      @Override
-      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(script, 0);
-      }
+                    @NotNull
+                    @Override
+                    protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+                      return new PyTestTestProcessRunner(script, 0);
+                    }
 
-      @Override
-      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
-                                      @NotNull String stdout,
-                                      @NotNull String stderr,
-                                      @NotNull String all,
-                                      int exitCode) {
-        runner.assertNoFailures();
-      }
+                    @Override
+                    protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                                    @NotNull String stdout,
+                                                    @NotNull String stderr,
+                                                    @NotNull String all,
+                                                    int exitCode) {
+                      runner.assertNoFailures();
+                    }
 
-      @NotNull
-      @Override
-      public String getTestDataPath() {
-        return PythonHelpersLocator.getPythonCommunityPath();
-      }
+                    @NotNull
+                    @Override
+                    public String getTestDataPath() {
+                      return PythonHelpersLocator.getPythonCommunityPath();
+                    }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        if (tags == null) {
-          return super.getTags();
-        }
-        return tags;
-      }
-    }
+                    @NotNull
+                    @Override
+                    public Set<String> getTags() {
+                      if (tags == null) {
+                        return super.getTags();
+                      }
+                      return tags;
+                    }
+                  }
     );
   }
 
@@ -2101,12 +2101,24 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  private static class PyDebuggerTaskTagAware extends PyDebuggerTask {
+
+    private PyDebuggerTaskTagAware(@Nullable String relativeTestDataPath, String scriptName) {
+      super(relativeTestDataPath, scriptName);
+    }
+
+    public boolean hasTag(String tag) throws NullPointerException {
+      String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
+      return envTags.get(env).stream().anyMatch((t) -> t.startsWith(tag));
+    }
+  }
+
   @Test
   public void testExecAndSpawnWithBytesArgs() {
 
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
-    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
+    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
 
       private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
                                                        "Breakpoints may not work correctly.\n";
@@ -2117,8 +2129,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       private boolean hasPython2Tag() throws NullPointerException {
-          String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-          return envTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
+          return hasTag(PYTHON2_TAG);
       }
 
       @Override
@@ -2246,6 +2257,60 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
         outputContains("The subprocess finished with the return code 0.");
+      }
+    });
+  }
+
+  @Test
+  public void testCodeEvaluationWithGeneratorExpression() {
+    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_code_eval_with_generator_expr.py") {
+
+      private final static String PYTHON2_TAG = "python2";
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        String[] expectedOutput = ("[True] \t [True]\n" +
+                                   "[False] \t [False]\n" +
+                                   "[None] \t [None]").split("\n");
+        waitForPause();
+        for (String line : expectedOutput) {
+          waitForOutput(line);
+        }
+        consoleExec("TFN = [True, False, None]\n" +
+                    "for q in TFN:\n" +
+                    "    gen = (c for c in TFN if c == q)\n" +
+                    "    lcomp = [c for c in TFN if c == q]\n" +
+                    "    print(list(gen), \"\\t\", list(lcomp))");
+        if (hasPython2Tag()) {
+          // Python 2 formats the output slightly differently.
+          expectedOutput = ("([True], '\\t', [True])\n" +
+                            "([False], '\\t', [False])\n" +
+                            "([None], '\\t', [None])").split("\n");
+          for (String line : expectedOutput) {
+            waitForOutput(line);
+          }
+        }
+        else {
+          for (String line : expectedOutput) {
+            waitForOutput(line, 2);
+          }
+        }
+        consoleExec("def g():\n" +
+                    "    print(\"Foo, bar, baz\")\n" +
+                    "def f():\n" +
+                    "    g()\n" +
+                    "f()");
+        waitForOutput("Foo, bar, baz");
+        resume();
+      }
+
+      private boolean hasPython2Tag() throws NullPointerException {
+        return hasTag(PYTHON2_TAG);
       }
     });
   }
