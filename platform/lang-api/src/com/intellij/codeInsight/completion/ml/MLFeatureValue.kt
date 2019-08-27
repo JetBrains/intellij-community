@@ -9,6 +9,7 @@ class BinaryValue private constructor(val value: Boolean) : MLFeatureValue() {
     val TRUE = BinaryValue(true)
     val FALSE = BinaryValue(false)
 
+    @JvmStatic
     fun of(value: Boolean): BinaryValue = if (value) TRUE else FALSE
   }
 
@@ -19,7 +20,10 @@ class BinaryValue private constructor(val value: Boolean) : MLFeatureValue() {
 
 class FloatValue private constructor(val value: Double) : MLFeatureValue() {
   companion object {
+    @JvmStatic
     fun of(value: Double) = FloatValue(value)
+
+    @JvmStatic
     fun of(value: Int) = FloatValue(value.toDouble())
   }
 
@@ -28,6 +32,7 @@ class FloatValue private constructor(val value: Double) : MLFeatureValue() {
 
 class CategoricalValue<T : Enum<*>> private constructor(val value: T) : MLFeatureValue() {
   companion object {
+    @JvmStatic
     fun <T : Enum<*>> of(value: T) = CategoricalValue(value)
   }
 
