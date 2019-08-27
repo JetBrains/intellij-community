@@ -222,6 +222,9 @@ public class SuperBuilderHandler extends BuilderHandler {
     final boolean forceCallSuper = PsiClassUtil.hasSuperClass(psiClass);
 
     if (shouldGenerateToBuilderMethods(psiAnnotation)) {
+      // precalculate obtainVia
+      builderInfos.forEach(BuilderInfo::withObtainVia);
+
       if (!existedMethodNames.contains(STATIC_FILL_VALUES_METHOD_NAME)) {
         // create '$fillValuesFromInstanceIntoBuilder' method
         final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, STATIC_FILL_VALUES_METHOD_NAME)
@@ -233,8 +236,8 @@ public class SuperBuilderHandler extends BuilderHandler {
           .withModifier(PsiModifier.PRIVATE)
           .withModifier(PsiModifier.STATIC);
 
-        //TODO Fix obtain via
         final String toBuilderMethodCalls = builderInfos.stream()
+          // TODO fix collection call
           .map(BuilderInfo::renderToBuilderCall)
           .collect(Collectors.joining(';' + BUILDER_VARIABLE_NAME + '.', BUILDER_VARIABLE_NAME + '.', ";\n"));
 
