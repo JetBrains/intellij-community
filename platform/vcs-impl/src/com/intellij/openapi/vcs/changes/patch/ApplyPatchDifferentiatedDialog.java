@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,6 +83,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final List<? extends ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
+  @NotNull private final JBLoadingPanel myChangesTreeLoadingPanel;
   @Nullable private final Collection<Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
 
@@ -176,6 +178,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
+    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
+    myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
@@ -541,7 +545,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       ++gb.gridy;
       gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      JPanel changeTreePanel = JBUI.Panels.simplePanel(myChangesTreeList).addToTop(myErrorNotificationPanel);
+      JPanel changeTreePanel = JBUI.Panels.simplePanel(myChangesTreeLoadingPanel).addToTop(myErrorNotificationPanel);
       treePanel.add(ScrollPaneFactory.createScrollPane(changeTreePanel), gb);
 
       ++gb.gridy;
@@ -567,12 +571,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
   }
 
-  private void paintBusy(final boolean requestPut) {
-    if (requestPut) {
-      myChangesTreeList.setPaintBusy(true);
+  private void paintBusy(final boolean isBusy) {
+    if (isBusy) {
+      myChangesTreeList.setEmptyText("");
+      myChangesTreeLoadingPanel.startLoading();
     }
     else {
-      myChangesTreeList.setPaintBusy(!myLoadQueue.isEmpty());
+      myChangesTreeList.setEmptyText("No changed files");
+      myChangesTreeLoadingPanel.stopLoading();
     }
   }
 
