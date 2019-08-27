@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -304,17 +303,14 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private static PsiElement[] collectPackageLocalMembers(PsiElement classToMove) {
-    return PsiTreeUtil.collectElements(classToMove, new PsiElementFilter() {
-      @Override
-      public boolean isAccepted(@NotNull final PsiElement element) {
-        if (element instanceof PsiMember) {
-          PsiMember member = (PsiMember) element;
-          if (VisibilityUtil.getVisibilityModifier(member.getModifierList()) == PsiModifier.PACKAGE_LOCAL) {
-            return true;
-          }
+    return PsiTreeUtil.collectElements(classToMove, element -> {
+      if (element instanceof PsiMember) {
+        PsiMember member = (PsiMember) element;
+        if (VisibilityUtil.getVisibilityModifier(member.getModifierList()) == PsiModifier.PACKAGE_LOCAL) {
+          return true;
         }
-        return false;
       }
+      return false;
     });
   }
 

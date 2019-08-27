@@ -56,22 +56,12 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     final DiffProvider diffProvider = myVcs.getDiffProvider();
     final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
 
-    return annotate(file, currentRevision, true, new ThrowableComputable<FileAnnotation, VcsException>() {
-      @Override
-      public FileAnnotation compute() throws VcsException {
-        return myAnnotationProvider.annotate(file);
-      }
-    });
+    return annotate(file, currentRevision, true, () -> myAnnotationProvider.annotate(file));
   }
 
   @Override
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
-    return annotate(file, revision.getRevisionNumber(), false, new ThrowableComputable<FileAnnotation, VcsException>() {
-      @Override
-      public FileAnnotation compute() throws VcsException {
-        return myAnnotationProvider.annotate(file, revision);
-      }
-    });
+    return annotate(file, revision.getRevisionNumber(), false, () -> myAnnotationProvider.annotate(file, revision));
   }
 
   @Override

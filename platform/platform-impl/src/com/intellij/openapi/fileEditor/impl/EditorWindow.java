@@ -91,12 +91,8 @@ public class EditorWindow {
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
-    ApplicationManager.getApplication().getMessageBus().connect(myOwner).subscribe(UISettingsListener.TOPIC, new UISettingsListener(){
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        updateTabsVisibility();
-      }
-    });
+    ApplicationManager.getApplication().getMessageBus().connect(myOwner).subscribe(UISettingsListener.TOPIC,
+                                                                                   uiSettings -> updateTabsVisibility());
     updateTabsVisibility();
   }
 

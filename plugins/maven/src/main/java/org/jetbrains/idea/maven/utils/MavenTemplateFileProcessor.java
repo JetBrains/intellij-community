@@ -42,23 +42,20 @@ public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
   @Override
   protected String encodeFileText(final String content, final VirtualFile file, final Project project) throws IOException {
     if (MavenConstants.POM_XML.equals(file.getName())) {
-      return ApplicationManager.getApplication().runReadAction(new ThrowableComputable<String, IOException>() {
-        @Override
-        public String compute() throws IOException {
-          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XmlFileType.INSTANCE, content);
-          final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class);
-          if (model == null) return null;
-          String text = psiFile.getText();
-          XmlElement element = model.getName().getXmlElement();
-          if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
-          }
-          element = model.getArtifactId().getXmlElement();
-          if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
-          }
-          return text;
+      return ApplicationManager.getApplication().runReadAction((ThrowableComputable<String, IOException>)() -> {
+        PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XmlFileType.INSTANCE, content);
+        final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class);
+        if (model == null) return null;
+        String text = psiFile.getText();
+        XmlElement element = model.getName().getXmlElement();
+        if (element instanceof XmlTag) {
+          text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
         }
+        element = model.getArtifactId().getXmlElement();
+        if (element instanceof XmlTag) {
+          text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
+        }
+        return text;
       });
     }
     return null;

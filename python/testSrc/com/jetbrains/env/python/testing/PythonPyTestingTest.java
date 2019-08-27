@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -473,14 +472,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         configuration.getTarget().setTarget("test_foo");
         configuration.setWorkingDirectory(myFixture.getTempDirPath());
 
-        ReadAction.run(new ThrowableRunnable<RuntimeException>() {
-          @Override
-          public void run() throws RuntimeException {
-            Assert.assertThat("Failed to resolve qname",
-                              configuration.getTarget().asPsiElement(configuration),
-                              Matchers.instanceOf(PyFile.class));
-          }
-        });
+        ReadAction.run(() -> Assert.assertThat("Failed to resolve qname",
+                                           configuration.getTarget().asPsiElement(configuration),
+                                           Matchers.instanceOf(PyFile.class)));
       }
     });
   }

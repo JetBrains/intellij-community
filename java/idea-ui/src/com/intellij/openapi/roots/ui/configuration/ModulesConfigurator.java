@@ -60,8 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -401,12 +401,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private Module createModule(final ModuleBuilder builder) {
     try {
-      return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
-        @Override
-        public Module compute() throws Exception {
-          return builder.createModule(myModuleModel);
-        }
-      });
+      return ApplicationManager.getApplication().runWriteAction(
+        (ThrowableComputable<Module, Exception>)() -> builder.createModule(myModuleModel));
     }
     catch (Exception e) {
       Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", e.getMessage()),

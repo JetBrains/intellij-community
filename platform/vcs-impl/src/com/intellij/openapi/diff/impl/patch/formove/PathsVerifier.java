@@ -532,12 +532,7 @@ public class PathsVerifier {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
       myBeforePaths.add(VcsUtil.getFilePath(file));
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-        @Override
-        public VirtualFile compute() throws IOException {
-          return movedFile.doMove();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction((ThrowableComputable<VirtualFile, IOException>)() -> movedFile.doMove());
     }
   }
 
