@@ -63,6 +63,7 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
 
   public final static Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
+  public static final String PYTHON_PREFIX = "python";
 
   /**
    * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
@@ -115,9 +116,9 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
 
 
   public abstract ListenableFuture<?> uploadHelpersAsync(@Nullable Sdk sdk,
-                                                               @Nullable Project project,
-                                                               @Nullable Component component,
-                                                               @NotNull RemoteSdkCredentials credentials, boolean uploadOnSnapshot);
+                                                         @Nullable Project project,
+                                                         @Nullable Component component,
+                                                         @NotNull RemoteSdkCredentials credentials, boolean uploadOnSnapshot);
 
 
   /**
@@ -163,6 +164,32 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
 
   public static void addHelpersMapping(@NotNull RemoteSdkProperties data, @NotNull PyRemotePathMapper pathMapper) {
     pathMapper.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath(), PyPathMappingType.HELPERS);
+  }
+
+  @NotNull
+  public static PyRemotePathMapper appendBasicMappings(@Nullable Project project,
+                                                       @Nullable PyRemotePathMapper pathMapper,
+                                                       RemoteSdkAdditionalData data) {
+    @NotNull PyRemotePathMapper newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper);
+
+    addHelpersMapping(data, newPathMapper);
+
+    newPathMapper.addAll(data.getPathMappings().getPathMappings(), PyRemotePathMapper.PyPathMappingType.SYS_PATH);
+
+    if (project != null) {
+      final RemoteMappingsManager.Mappings mappings =
+        RemoteMappingsManager.getInstance(project).getForServer(PYTHON_PREFIX, data.getSdkId());
+      if (mappings != null) {
+        newPathMapper.addAll(mappings.getSettings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+      }
+
+      for (PathMappingProvider mappingProvider : PathMappingProvider.getSuitableMappingProviders(data)) {
+        PathMappingSettings settings = mappingProvider.getPathMappingSettings(project, data);
+        newPathMapper.addAll(settings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.REPLICATED_FOLDER);
+      }
+    }
+
+    return newPathMapper;
   }
 
   @NotNull
