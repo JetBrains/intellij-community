@@ -77,8 +77,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       appendln()
 
       appendln("Plugins using components:")
-      for (status in result.filter { it.componentCount > 0 }) {
-        appendln(status.pluginId)
+      for (status in result.filter { it.componentCount > 0 }.sortedByDescending { it.componentCount }) {
+        appendln("${status.pluginId} (${status.componentCount})")
       }
       appendln()
 
