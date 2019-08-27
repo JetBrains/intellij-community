@@ -506,9 +506,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
-      updateTheOnlyProjectField();
-      myOpenProjectByHash.put(project.getLocationHash(), project);
     }
+    updateTheOnlyProjectField();
+    myOpenProjectByHash.put(project.getLocationHash(), project);
     return true;
   }
 
