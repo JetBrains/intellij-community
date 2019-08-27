@@ -26,15 +26,15 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
   private final @NotNull V2 value2;
 
   PairElementsFMap(@NotNull Key<V1> key1, @NotNull V1 value1, @NotNull Key<V2> key2, @NotNull V2 value2) {
-    assert key1 != key2;
     // Key hashCodes are unique and ordered
-    if(key1.hashCode() < key2.hashCode()) {
+    int c = Integer.compare(key1.hashCode(), key2.hashCode());
+    if(c < 0) {
       this.key1 = key1;
       this.value1 = value1;
       this.key2 = key2;
       this.value2 = value2;
     }
-    else {
+    else if (c > 0) {
       //noinspection unchecked
       this.key1 = (Key<V1>)key2;
       //noinspection unchecked
@@ -43,6 +43,9 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
       this.key2 = (Key<V2>)key1;
       //noinspection unchecked
       this.value2 = (V2)value1;
+    }
+    else {
+      throw new IllegalArgumentException("Must not pass equal keys but got: key1: "+key1+":"+value1+"; key2: "+key2+":"+value2);
     }
   }
 
