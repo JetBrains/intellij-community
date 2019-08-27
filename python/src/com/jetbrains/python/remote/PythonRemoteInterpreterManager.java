@@ -16,7 +16,6 @@
 package com.jetbrains.python.remote;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -65,7 +64,7 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
   public static final String PYTHON_PREFIX = "python";
 
   /**
-   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
+   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
    */
   @Deprecated
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
@@ -107,12 +106,6 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
   @Nullable
   public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
     throws ExecutionException, InterruptedException;
-
-
-  public abstract ListenableFuture<?> uploadHelpersAsync(@Nullable Sdk sdk,
-                                                         @Nullable Project project,
-                                                         @Nullable Component component,
-                                                         @NotNull RemoteSdkCredentials credentials, boolean uploadOnSnapshot);
 
 
   /**

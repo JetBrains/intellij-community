@@ -80,8 +80,8 @@ public class PyRemoteProcessStarter {
 
     try {
       return PyRemoteProcessStarterManagerUtil
-        .getManager(pyRemoteSdkAdditionalDataBase).startRemoteProcess(project, commandLine, manager, pyRemoteSdkAdditionalDataBase,
-                                                     extendedPathMapper);
+        .getManager(pyRemoteSdkAdditionalDataBase)
+        .startRemoteProcess(project, commandLine, pyRemoteSdkAdditionalDataBase, extendedPathMapper);
     }
     catch (InterruptedException e) {
       throw new ExecutionException(e);
