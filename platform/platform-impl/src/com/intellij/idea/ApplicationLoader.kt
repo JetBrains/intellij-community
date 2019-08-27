@@ -152,13 +152,7 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
     //  SplashManager.showLicenseeInfoOnSplash(LOG)
     //}
 
-    AppExecutorUtil.getAppExecutorService().execute {
-      AsyncProcessIcon("")
-      AsyncProcessIcon.Big("")
-      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-      AnimatedIcon.FS()
-      AllIcons.Ide.Shadow.Top.iconHeight
-    }
+    preloadIcons()
 
     initAppActivity.runChild("migLayout") {
       //IDEA-170295
@@ -196,6 +190,14 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
     ParallelActivity.PREPARE_APP_INIT.run("init system properties") {
       SystemPropertyBean.initSystemProperties()
     }
+  }
+}
+
+private fun preloadIcons() {
+  AppExecutorUtil.getAppExecutorService().execute {
+    AsyncProcessIcon("")
+    AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+    AnimatedIcon.FS()
   }
 }
 
