@@ -33,7 +33,7 @@ public class AnimatedIcon implements Icon {
    *
    * @see UIUtil#putClientProperty
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
 
   public interface Frame {
@@ -115,7 +115,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.State.GreyProgr_8);
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class FS extends AnimatedIcon {
     public FS() {
       super(DELAY, ICONS.toArray(new Icon[0]));
@@ -143,7 +143,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.FS.Step_18);
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Blinking extends AnimatedIcon {
     public Blinking(@NotNull Icon icon) {
       this(1000, icon);
@@ -154,7 +154,7 @@ public class AnimatedIcon implements Icon {
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Fading extends AnimatedIcon {
     public Fading(@NotNull Icon icon) {
       this(1000, icon);
