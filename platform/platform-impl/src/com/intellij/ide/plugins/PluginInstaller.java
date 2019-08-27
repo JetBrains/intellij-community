@@ -36,7 +36,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -290,7 +289,7 @@ public class PluginInstaller {
             StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
           }
 
-          fireState(pluginDescriptor, false);
+          PluginStateManager.fireState(pluginDescriptor, false);
           return !uninstalledWithoutRestart;
         }
       }
@@ -323,7 +322,7 @@ public class PluginInstaller {
 
     StartupActionScriptManager.addActionCommands(commands);
 
-    fireState(descriptor, true);
+    PluginStateManager.fireState(descriptor, true);
   }
 
   @Nullable
@@ -353,7 +352,7 @@ public class PluginInstaller {
     if (exception != null) {
       Messages.showErrorDialog(parent, "Plugin installation failed: " + exception.getMessage());
     }
-    fireState(descriptor, true);
+    PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
   }
 
@@ -374,27 +373,12 @@ public class PluginInstaller {
     throw new IOException("Corrupted archive (no file entries): " + zip);
   }
 
-  private static final List<PluginStateListener> myStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   public static void addStateListener(@NotNull PluginStateListener listener) {
-    myStateListeners.add(listener);
+    PluginStateManager.addStateListener(listener);
   }
 
   public static void removeStateListener(@NotNull PluginStateListener listener) {
-    myStateListeners.remove(listener);
-  }
-
-  private static void fireState(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      for (PluginStateListener listener : myStateListeners) {
-        if (install) {
-          listener.install(descriptor);
-        }
-        else {
-          listener.uninstall(descriptor);
-        }
-      }
-    });
+    PluginStateManager.removeStateListener(listener);
   }
 
   public static boolean install(@NotNull InstalledPluginsTableModel model,
