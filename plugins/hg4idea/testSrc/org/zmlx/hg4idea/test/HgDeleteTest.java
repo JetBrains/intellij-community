@@ -14,12 +14,14 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 
+import static com.intellij.openapi.vcs.Executor.overwrite;
 import static org.junit.Assert.fail;
 
 public class HgDeleteTest extends HgSingleUserTest {
@@ -51,7 +53,8 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    VcsTestUtil.editFileInCommand(myProject, file, "even newer content");
+    myChangeListManager.ensureUpToDate();
+    overwrite(VfsUtilCore.virtualToIoFile(file), "even newer content");
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
     verifyStatus(HgTestOutputParser.removed("a.txt"));
