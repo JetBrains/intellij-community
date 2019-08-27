@@ -394,7 +394,7 @@ public interface Document extends UserDataHolder {
    * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position,
    * etc), querying or updating caret position or selection state.
    * <p>
-   * Bulk mode shouldn't more than one thread or EDT event. Typically it should turned on/off in a try/finally statement.
+   * Bulk mode shouldn't span more than one thread or EDT event. Typically it should turned on/off in a try/finally statement.
    *
    * @see com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)
    * @see BulkAwareDocumentListener
