@@ -17,19 +17,11 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UI.PanelFactory.grid
-import com.intellij.util.ui.UI.PanelFactory.panel
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox
-import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JTextArea
 
@@ -66,28 +58,31 @@ class GithubCreateGistDialog(project: Project,
     get() = myAccountSelector.selectedItem as GithubAccount
 
   init {
-
     title = "Create Gist"
     init()
   }
 
-  override fun createCenterPanel(): JComponent? {
-    val checkBoxes = JBBox.createHorizontalBox()
-    checkBoxes.add(mySecretCheckBox)
-    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-    checkBoxes.add(myOpenInBrowserCheckBox)
-    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-    checkBoxes.add(myCopyLinkCheckBox)
-
-    val descriptionPane = JBScrollPane(myDescriptionField)
-    descriptionPane.preferredSize = JBDimension(270, 55)
-    descriptionPane.minimumSize = JBDimension(270, 55)
-
-    val grid = grid().resize()
-    if (myFileNameField != null) grid.add(panel(myFileNameField).withLabel("Filename:"))
-    grid.add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true)).add(panel(checkBoxes))
-    if (myAccountSelector.isEnabled) grid.add(panel(myAccountSelector).withLabel("Create for:").resizeX(false))
-    return grid.createPanel()
+  override fun createCenterPanel() = panel {
+    myFileNameField?.let {
+      row("Filename:") {
+        it(pushX, growX)
+      }
+    }
+    row("Description:") {
+      scrollPane(myDescriptionField)
+    }
+    row("") {
+      cell {
+        mySecretCheckBox()
+        myOpenInBrowserCheckBox()
+        myCopyLinkCheckBox()
+      }
+    }
+    if (myAccountSelector.isEnabled) {
+      row("Create for:") {
+        myAccountSelector(pushX, growX)
+      }
+    }
   }
 
   override fun getHelpId(): String? {
