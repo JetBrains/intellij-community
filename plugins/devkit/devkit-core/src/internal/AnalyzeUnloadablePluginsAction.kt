@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
@@ -8,7 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
@@ -16,9 +17,7 @@ import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 
@@ -30,24 +29,33 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val project = e.project ?: return
 
     val result = mutableListOf<PluginUnloadabilityStatus>()
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+    val show = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
-        val rootTypes = setOf<JpsModuleSourceRootType<*>>(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE)
         runReadAction {
-          val pluginXmlFiles = FilenameIndex.getFilesByName(project, "plugin.xml", GlobalSearchScope.projectScope(project))
-          for (pluginXmlFile in pluginXmlFiles) {
-            ProgressManager.checkCanceled()
+          val pi = ProgressManager.getInstance().progressIndicator
+          pi.isIndeterminate = false
+
+          val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML,
+                                                            GlobalSearchScopesCore.projectProductionScope(project))
+          for ((processed, pluginXmlFile) in pluginXmlFiles.withIndex()) {
+            pi.checkCanceled()
+            pi.fraction = (processed.toDouble() / pluginXmlFiles.size)
+
             if (pluginXmlFile !is XmlFile) continue
-            if (!ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(pluginXmlFile.virtualFile, rootTypes)) {
+            if (!ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(pluginXmlFile.virtualFile,
+                                                                                           JavaModuleSourceRootTypes.PRODUCTION)) {
               continue
             }
+
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
-            result.add(analyzeUnloadable(project, ideaPlugin))
+            val status = analyzeUnloadable(project, ideaPlugin)
+            result.add(status)
+            pi.text = status.pluginId
           }
         }
-      }, "Analyzing plugins", true, e.project)
+      }, "Analyzing Plugins", true, e.project)
 
-    showReport(project, result)
+    if (show) showReport(project, result)
   }
 
   private fun showReport(project: Project, result: MutableList<PluginUnloadabilityStatus>) {
