@@ -340,17 +340,20 @@ public abstract class LineStatusMarkerRenderer {
         }
       }
     }
-    else {
+    else if (line1 != line2) {
       paintRect(g, null, borderColor, x, y, endX, endY);
     }
 
-    for (ChangedLines change: block) {
+    for (ChangedLines change : block) {
       if (change.line1 == change.line2) {
         int start = editorImpl.visualLineToY(change.line1);
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
+        }
+        else if (borderColor != null) {
+          paintTriangle(g, editor, null, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
