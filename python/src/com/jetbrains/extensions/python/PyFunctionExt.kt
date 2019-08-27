@@ -8,8 +8,7 @@ import com.jetbrains.python.psi.PyParameter
 fun PyFunction.getParameter(paramToSearch: FunctionParameter): PyParameter? {
   val parameterList = this.parameterList
   val position = paramToSearch.position
-  val name = paramToSearch.name
-  if (name != null) {
+  paramToSearch.name?.let { name ->
     parameterList.findParameterByName(name)?.let {
       return it
     }
