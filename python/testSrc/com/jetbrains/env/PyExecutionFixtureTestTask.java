@@ -94,6 +94,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myRelativeTestDataPath = relativeTestDataPath;
   }
 
+  @Nullable
+  protected String getRelativeTestDataPath() {
+    return myRelativeTestDataPath;
+  }
+
   /**
    * Debug output of this classes will be captured and reported in case of test failure
    */
