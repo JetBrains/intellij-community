@@ -1,57 +1,44 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.data
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.util.VcsLogUtil
 
-import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.*
+import java.util.HashMap
 
-public class CurrentBranchConditionCache {
-  private static final Logger LOG = Logger.getInstance(CurrentBranchConditionCache.class);
+class CurrentBranchConditionCache(private val logData: VcsLogData) {
+  private var conditions: MutableMap<VirtualFile, Condition<Int>> = HashMap()
 
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private Map<VirtualFile, Condition<Integer>> myConditions = new HashMap<>();
+  fun getContainedInCurrentBranchCondition(root: VirtualFile): Condition<Int> {
+    LOG.assertTrue(EventQueue.isDispatchThread())
 
-  public CurrentBranchConditionCache(@NotNull VcsLogData data) {
-    myLogData = data;
-  }
-
-  @NotNull
-  public Condition<Integer> getContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
-    LOG.assertTrue(EventQueue.isDispatchThread());
-
-    Condition<Integer> condition = myConditions.get(root);
+    var condition: Condition<Int>? = conditions[root]
     if (condition == null) {
-      condition = doGetContainedInCurrentBranchCondition(root);
-      myConditions.put(root, condition);
+      condition = doGetContainedInCurrentBranchCondition(root)
+      conditions[root] = condition
     }
-    return condition;
+    return condition
   }
 
-  @NotNull
-  private Condition<Integer> doGetContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
-    DataPack dataPack = myLogData.getDataPack();
-    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
+  private fun doGetContainedInCurrentBranchCondition(root: VirtualFile): Condition<Int> {
+    val dataPack = logData.dataPack
+    if (dataPack === DataPack.EMPTY) return Conditions.alwaysFalse()
 
-    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
-    if (branchName == null) return Conditions.alwaysFalse();
-
-    VcsRef branchRef = VcsLogUtil.findBranch(dataPack.getRefsModel(), root, branchName);
-    if (branchRef == null) return Conditions.alwaysFalse();
-
-    int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
-    return dataPack.getPermanentGraph().getContainedInBranchCondition(Collections.singleton(branchIndex));
+    val branchName = logData.getLogProvider(root).getCurrentBranch(root) ?: return Conditions.alwaysFalse()
+    val branchRef = VcsLogUtil.findBranch(dataPack.refsModel, root, branchName) ?: return Conditions.alwaysFalse()
+    val branchIndex = logData.getCommitIndex(branchRef.commitHash, branchRef.root)
+    return dataPack.permanentGraph.getContainedInBranchCondition(setOf(branchIndex))
   }
 
-  public void clear() {
-    myConditions = new HashMap<>();
+  fun clear() {
+    conditions = HashMap()
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(CurrentBranchConditionCache::class.java)
   }
 }
