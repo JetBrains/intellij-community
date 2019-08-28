@@ -437,6 +437,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (success) {
         appendOrUpdateDescriptor(descriptor, restartRequired);
         appendDependsAfterInstall();
+        if (!restartRequired) {
+          try {
+            apply(null);
+          } catch (ConfigurationException e) {
+            PluginManagerMain.LOG.error(e);
+          }
+        }
       }
     }
     else if (success) {
