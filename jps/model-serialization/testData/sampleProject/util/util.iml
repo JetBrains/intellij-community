@@ -4,6 +4,12 @@
     <output url="file://$MODULE_DIR$/../out/production-util" />
     <output-test url="file://$MODULE_DIR$/../out/test-util" />
     <exclude-output />
+    <annotation-paths>
+      <root url="file://$MODULE_DIR$/../lib/anno" />
+    </annotation-paths>
+    <javadoc-paths>
+      <root url="file://$MODULE_DIR$/../lib/javadoc" />
+    </javadoc-paths>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="xxx" />
       <excludeFolder url="file://$MODULE_DIR$/exc" />
@@ -30,12 +36,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <javadoc-paths>
-      <root url="file://$MODULE_DIR$/../lib/javadoc" />
-    </javadoc-paths>
-    <annotation-paths>
-      <root url="file://$MODULE_DIR$/../lib/anno" />
-    </annotation-paths>
   </component>
 </module>
-

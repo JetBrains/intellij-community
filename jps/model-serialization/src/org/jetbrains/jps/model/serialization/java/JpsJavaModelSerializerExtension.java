@@ -243,8 +243,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       rootModelComponent.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "true");
     }
 
-    saveAdditionalRoots(rootModelComponent, JAVADOC_PATHS_TAG, extension.getJavadocRoots());
     saveAdditionalRoots(rootModelComponent, ANNOTATION_PATHS_TAG, extension.getAnnotationRoots());
+    saveAdditionalRoots(rootModelComponent, JAVADOC_PATHS_TAG, extension.getJavadocRoots());
   }
 
   private static void loadAdditionalRoots(Element rootModelComponent, final String rootsTagName, final JpsUrlList result) {
