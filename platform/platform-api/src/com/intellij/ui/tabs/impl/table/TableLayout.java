@@ -112,42 +112,48 @@ public class TableLayout extends TabLayout {
 
   public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos) {
     myTabs.resetLayout(true);
-    final TablePassInfo data = computeLayoutTable(visibleInfos);
-    final Insets insets = myTabs.getLayoutInsets();
+    Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
-    int eachX;
+    TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
 
-    for (TableRow eachRow : data.table) {
-      eachX = insets.left;
+    if (!myTabs.isHideTabs()) {
+      data = computeLayoutTable(visibleInfos);
+      insets = myTabs.getLayoutInsets();
+      eachY = insets.top;
+      int eachX;
 
-      int deltaToFit = 0;
-      boolean toAjust = false;
-      if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
-        deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
-        toAjust = true;
-      }
+      for (TableRow eachRow : data.table) {
+        eachX = insets.left;
 
-      for (int i = 0; i < eachRow.myColumns.size(); i++) {
-        TabInfo tabInfo = eachRow.myColumns.get(i);
-        final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-
-        label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
-        
-        int width;
-        if (i < eachRow.myColumns.size() - 1 || !toAjust) {
-          width = label.getPreferredSize().width + deltaToFit;
-        }
-        else {
-          width = data.toFitRec.width + insets.left - eachX;
+        int deltaToFit = 0;
+        boolean toAjust = false;
+        if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
+          deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
+          toAjust = true;
         }
 
-        myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
-        label.setAlignmentToCenter(deltaToFit > 0);
+        for (int i = 0; i < eachRow.myColumns.size(); i++) {
+          TabInfo tabInfo = eachRow.myColumns.get(i);
+          final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
 
-        boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
+          label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
+
+          int width;
+          if (i < eachRow.myColumns.size() - 1 || !toAjust) {
+            width = label.getPreferredSize().width + deltaToFit;
+          }
+          else {
+            width = data.toFitRec.width + insets.left - eachX;
+          }
+
+          myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+          label.setAlignmentToCenter(deltaToFit > 0);
+
+          boolean lastCell = i == eachRow.myColumns.size() - 1;
+          eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
+        }
+        eachY += myTabs.myHeaderFitSize.height;
       }
-      eachY += myTabs.myHeaderFitSize.height;
     }
 
     if (myTabs.getSelectedInfo() != null) {

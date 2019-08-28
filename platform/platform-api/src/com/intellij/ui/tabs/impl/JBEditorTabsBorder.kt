@@ -14,7 +14,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
-    if(tabs.isEmptyVisible) return
+    if(tabs.isEmptyVisible || tabs.isHideTabs) return
 
     val myInfo2Label = tabs.myInfo2Label
     val firstLabel = myInfo2Label[tabs.lastLayoutPass.getTabAt(0, 0)] ?: return
