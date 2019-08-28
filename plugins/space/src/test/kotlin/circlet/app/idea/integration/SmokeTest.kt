@@ -1,5 +1,6 @@
 package circlet.app.idea.integration
 
+import circlet.pipelines.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.api.*
 import circlet.pipelines.config.dsl.script.exec.common.*
@@ -18,8 +19,6 @@ class TestProjectExecutor(override val listener: ProjectElementListener) : Proje
     override val vcsRevision: String = "revision.0"
     override val vcsBranch: String = "test"
 }
-
-private const val scriptFileName : String = "circlet.kts"
 
 class SmokeTest : JavaCodeInsightFixtureTestCase() {
 
@@ -46,7 +45,7 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
     fun testBuildModelWhenDslExistsFromBeginning() {
         val project = myFixture.project
         val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
-        myFixture.copyFileToProject(scriptFileName, "../$projectFileFolderName/$scriptFileName")
+        myFixture.copyFileToProject(DefaultDslFileName, "../$projectFileFolderName/$DefaultDslFileName")
 
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
@@ -81,7 +80,7 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
         assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
         val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
-        myFixture.copyFileToProject(scriptFileName, "../$projectFileFolderName/$scriptFileName")
+        myFixture.copyFileToProject(DefaultDslFileName, "../$projectFileFolderName/$DefaultDslFileName")
 
         val newScript = viewModel.script.value
         assertNotSame(script, newScript, "new instance of script should be created")

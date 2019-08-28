@@ -1,5 +1,6 @@
 package circlet.plugins.pipelines.services
 
+import circlet.pipelines.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.resolve.*
@@ -61,7 +62,7 @@ object ScriptModelBuilder : KLogging() {
 
         if (dslFile == null)
         {
-            logger.info("Can't find `circlet.kts`")
+            logger.info("Can't find `$DefaultDslFileName`")
             return createEmptyScriptViewModel(lifetime)
         }
 

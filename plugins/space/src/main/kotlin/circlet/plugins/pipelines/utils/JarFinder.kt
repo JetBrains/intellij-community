@@ -1,7 +1,7 @@
 package circlet.plugins.pipelines.utils
 
 import com.intellij.ide.plugins.*
-import libraries.common.*
+import platform.common.*
 import java.io.*
 
 

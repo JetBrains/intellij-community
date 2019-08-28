@@ -1,6 +1,5 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.plugins.pipelines.services.*
@@ -57,20 +56,24 @@ class CircletTaskRunner(val project: Project) {
             }
         }
 
-        val storage = CircletIdeaAutomationGraphStorage(task)
+        val storage = CircletIdeaExecutionProviderStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
         val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
-        val automationGraphEngineCommon = AutomationGraphEngineCommon(
+        val tracer = CircletIdeaAutomationTracer()
+        val automationGraphEngineCommon = AutomationGraphEngineImpl(
             provider,
+            storage,
             provider,
             SystemTimeTicker(),
+            tracer,
             listOf(provider))
-        val automationStarterCommon = AutomationStarterCommon(
+        val automationStarterCommon = AutomationStarterImpl(
             orgInfo,
             storage,
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
-            CircletIdeaAutomationTracer())
+            tracer
+        )
 
         val currentTime = System.currentTimeMillis()
         val metaTaskId : Long = 1
@@ -80,7 +83,7 @@ class CircletTaskRunner(val project: Project) {
         val branch = "myBranch"
         val commit = "myCommit"
         val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
-        val context = TaskStartContext(projectKey, repositoryData, branch, commit, emptyList(), trigger)
+        val context = TaskStartContext(repositoryData, branch, commit, emptyList(), trigger)
 
         async(lifetime, Ui) {
             automationStarterCommon.startTask(metaTaskId, context)

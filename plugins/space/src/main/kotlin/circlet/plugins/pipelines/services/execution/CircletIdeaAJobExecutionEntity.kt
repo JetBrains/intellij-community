@@ -12,7 +12,6 @@ class CircletIdeaAJobExecutionEntity(
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
     override val meta: ProjectJob.Process.Container,
-    override val autoProvisionVolume: Boolean,
     override val baseVolumeName: String?,
     override val isSnapshotPoint: Boolean,
     override val volumeSize: Int?,

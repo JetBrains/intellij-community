@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         if (Build.buildSettings.useCacheRedirector){
-            maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service"}   
+            maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service"}
         } else {
             maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
         }
@@ -35,6 +35,7 @@ dependencies {
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-compile')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-script-exec-common')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-utils')
+    compile project(':plugins:pipelines:pipelines-common')
 
     compile project(':plugins:pipelines:pipelines-engine')
     compile project(':plugins:pipelines:pipelines-utils')
