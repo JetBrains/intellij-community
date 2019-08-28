@@ -34,12 +34,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class ClsPsiTest extends LightIdeaTestCase {
   private static final String TEST_DATA_PATH = "/psi/cls/repo";
@@ -64,37 +67,42 @@ public class ClsPsiTest extends LightIdeaTestCase {
   }
 
   public void testClassFileUpdate() throws IOException {
-    File testFile = IoTestUtil.createTestFile("TestClass.class");
-    File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
-    FileUtil.copy(file1, testFile);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
-    assertNotNull(testFile.getPath(), vFile);
-    FileBasedIndex.getInstance().requestReindex(vFile);
-    PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);
-    assertNotNull(file);
+    // create outside sources to be able to decompile
+    VirtualFile lib = VfsTestUtil.createDir(getSourceRoot(), "lib");
+    PsiTestUtil.addExcludedRoot(getModule(), lib);
+    try {
+      byte[] class1 = FileUtil.loadFileBytes(new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class"));
+      VirtualFile vTestFile = VfsTestUtil.createFile(lib, "TestClass.class", class1);
+      FileBasedIndex.getInstance().requestReindex(vTestFile);
+      PsiFile psiTestFile = PsiManager.getInstance(getProject()).findFile(vTestFile);
+      assertNotNull(psiTestFile);
 
-    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
-    assertTrue(aClass.isValid());
-    assertEquals(2, aClass.getFields().length);
-    assertEquals("field11", aClass.getFields()[0].getName());
-    assertEquals("field12", aClass.getFields()[1].getName());
-    assertEquals(2, aClass.getMethods().length);
-    assertEquals("TestClass", aClass.getMethods()[0].getName());
-    assertEquals("method1", aClass.getMethods()[1].getName());
+      PsiClass aClass = ((PsiJavaFile)psiTestFile).getClasses()[0];
+      assertTrue(aClass.isValid());
+      assertEquals(Arrays.toString(aClass.getFields()), 2, aClass.getFields().length);
+      assertEquals("field11", aClass.getFields()[0].getName());
+      assertEquals("field12", aClass.getFields()[1].getName());
+      assertEquals(2, aClass.getMethods().length);
+      assertEquals("TestClass", aClass.getMethods()[0].getName());
+      assertEquals("method1", aClass.getMethods()[1].getName());
 
-    File file2 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/2_TestClass.class");
-    FileUtil.copy(file2, testFile);
-    assertTrue(testFile.setLastModified(System.currentTimeMillis() + 5000));
-    vFile.refresh(false, false);
+      byte[] class2 = FileUtil.loadFileBytes(new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/2_TestClass.class"));
+      WriteAction.run(() -> vTestFile.setBinaryContent(class2));
+      psiTestFile = PsiManager.getInstance(getProject()).findFile(vTestFile);
+      assertNotNull(psiTestFile);
 
-    aClass = ((PsiJavaFile)file).getClasses()[0];
-    assertTrue(aClass.isValid());
-    assertTrue(aClass.isValid());
-    assertEquals(1, aClass.getFields().length);
-    assertEquals("field2", aClass.getFields()[0].getName());
-    assertEquals(2, aClass.getMethods().length);
-    assertEquals("TestClass", aClass.getMethods()[0].getName());
-    assertEquals("method2", aClass.getMethods()[1].getName());
+      aClass = ((PsiJavaFile)psiTestFile).getClasses()[0];
+      assertTrue(aClass.isValid());
+      assertTrue(aClass.isValid());
+      assertEquals(1, aClass.getFields().length);
+      assertEquals("field2", aClass.getFields()[0].getName());
+      assertEquals(2, aClass.getMethods().length);
+      assertEquals("TestClass", aClass.getMethods()[0].getName());
+      assertEquals("method2", aClass.getMethods()[1].getName());
+    }
+    finally {
+      PsiTestUtil.removeExcludedRoot(getModule(), lib);
+    }
   }
 
   public void testFile() {
