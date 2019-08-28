@@ -29,14 +29,17 @@ public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
    * Tries to join lines at the specified position of the specified file. <br/>
    * In contrast to {@link JoinLinesHandlerDelegate#tryJoinLines(Document, PsiFile, int, int) tryJoinLines()}, this method
    * is called on an unmodified document.
-   *
+   * <p>
    * This joiner is allowed to keep number of lines the same,
    * but it should not increase number of lines in the document.
+   * <p>
+   * It's possible that more than one line-break appears between {@code start} and {@code end} if several empty lines
+   * were selected.
    *
    * @param document where the lines are
    * @param file where the lines are
    * @param start offset right after the last non-space char of first line;
-   * @param end offset of first non-space char of next line.
+   * @param end offset of first non-space char since the next line.
    * @return the position to place the caret after the operation, or -1 if this handler was not able
    *         to perform the operation.
    */
