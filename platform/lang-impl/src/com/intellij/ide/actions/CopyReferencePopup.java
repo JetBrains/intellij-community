@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -25,7 +26,6 @@ import java.util.HashMap;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
 public class CopyReferencePopup extends DumbAwareAction {
-  public static final Key<String> COPY_REFERENCE_KEY = Key.create("COPY_REFERENCE_KEY");
   private static final Logger LOG = Logger.getInstance(CopyReferencePopup.class);
   private static final String COPY_REFERENCE_POPUP_PLACE = "CopyReferencePopupPlace";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
@@ -43,7 +43,7 @@ public class CopyReferencePopup extends DumbAwareAction {
       return;
     }
 
-    DataContext context = cloneDataContext(e);
+    DataContext dataContext = cloneDataContext(e);
     ListPopup popup =
       new PopupFactoryImpl.ActionGroupPopup("Copy", (ActionGroup)popupGroup, e.getDataContext(), true, true, false, true, null, -1, null,
                                             COPY_REFERENCE_POPUP_PLACE) {
@@ -72,7 +72,7 @@ public class CopyReferencePopup extends DumbAwareAction {
                                             boolean isSelected) {
             AnAction action = actionItem.getAction();
             AnActionEvent event = new AnActionEvent(e.getInputEvent(),
-                                                    context,
+                                                    dataContext,
                                                     COPY_REFERENCE_POPUP_PLACE,
                                                     action.getTemplatePresentation().clone(),
                                                     e.getActionManager(),
@@ -80,9 +80,19 @@ public class CopyReferencePopup extends DumbAwareAction {
 
             ActionUtil.performDumbAwareUpdate(true, action, event, false);
 
-            String property = event.getPresentation().getClientProperty(COPY_REFERENCE_KEY);
-            if (property != null) {
-              myInfoLabel.setText(property);
+            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+            java.util.List<PsiElement> elements = CopyReferenceUtil.getElementsToCopy(editor, dataContext);
+            String qualifiedName = null;
+            if (action instanceof CopyPathProvider) {
+              qualifiedName = ((CopyPathProvider)action).getQualifiedName(getProject(), elements, editor);
+            }
+
+            if (action instanceof CopyReferencePopupAction) {
+              qualifiedName = CopyReferencePopupAction.doElementsCopy(elements, editor);
+            }
+
+            if (qualifiedName != null) {
+              myInfoLabel.setText(qualifiedName);
             }
             myInfoLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
 
