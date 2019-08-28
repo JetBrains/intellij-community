@@ -118,7 +118,10 @@ object DynamicPlugins {
       }
     }
 
-    return pluginDescriptor.unloadClassLoader()
+    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
+    // We need to find the real plugin loaded into the current instance and unload its classloader.
+    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl ?: return false
+    return loadedPluginDescriptor.unloadClassLoader()
   }
 
   @JvmStatic

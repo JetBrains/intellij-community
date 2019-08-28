@@ -756,7 +756,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor, @Nullable Runnable update) {
-    if (!dependent((IdeaPluginDescriptorImpl)descriptor).isEmpty()) {
+    IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
+    if (!dependent(descriptorImpl).isEmpty()) {
       String message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", descriptor.getName());
       String title = IdeBundle.message("title.plugin.uninstall");
       if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
@@ -766,11 +767,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean needRestartForUninstall = true;
     try {
-      ((IdeaPluginDescriptorImpl)descriptor).setDeleted(true);
-      needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptor.getPluginId());
+      descriptorImpl.setDeleted(true);
+      // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
+      IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore.loadDescriptor(descriptorImpl.getPath(), PluginManagerCore.PLUGIN_XML, true);
+      if (fullDescriptor == null) {
+        Messages.showErrorDialog(uiParent, "Failed to load plugin for uninstallation");
+        return;
+      }
+      needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
       InstalledPluginsState.getInstance().onPluginUninstall(descriptor, needRestartForUninstall);
       if (!needRestartForUninstall) {
-        myDynamicPluginsToUninstall.add(descriptor);
+        myDynamicPluginsToUninstall.add(fullDescriptor);
       }
       needRestart |= descriptor.isEnabled() && needRestartForUninstall;
     }

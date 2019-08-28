@@ -64,15 +64,11 @@ public class PluginInstaller {
   /**
    * @return true if restart is needed
    */
-  public static boolean prepareToUninstall(PluginId pluginId) throws IOException {
+  public static boolean prepareToUninstall(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
     synchronized (ourLock) {
-      if (PluginManagerCore.isPluginInstalled(pluginId)) {
-        IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
-        if (pluginDescriptor == null) {
-          PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
-        }
-        else if (pluginDescriptor.isBundled()) {
-          PluginManagerMain.LOG.error("Plugin is bundled: " + pluginId);
+      if (PluginManagerCore.isPluginInstalled(pluginDescriptor.getPluginId())) {
+        if (pluginDescriptor.isBundled()) {
+          PluginManagerMain.LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
           boolean needRestart = !DynamicPlugins.isUnloadSafe(pluginDescriptor);
