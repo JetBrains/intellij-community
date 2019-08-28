@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -26,6 +27,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 class TouchBar implements NSTLibrary.ItemCreator {
@@ -50,6 +52,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private ID myNativePeer;        // java wrapper holds native object
   private String myDefaultOptionalContextName;
   private BarContainer myBarContainer;
+
+  private final Object myHideReleaseLock = new Object();
+  private Future myLastUpdateNativePeers;
 
   private final @NotNull Map<AnAction, TBItemAnActionButton> myActionButtonPool = new HashMap<>();
   private final @NotNull LinkedList<TBItemGroup> myGroupPool = new LinkedList<>();
@@ -146,20 +151,22 @@ class TouchBar implements NSTLibrary.ItemCreator {
   @NotNull ItemsContainer getItemsContainer() { return myItems; }
 
   void release() {
-    final long startNs = myStats != null ? System.nanoTime() : 0;
-    myItems.releaseAll();
-    if (!myNativePeer.equals(ID.NIL)) {
-      NST.releaseTouchBar(myNativePeer);
-      myNativePeer = ID.NIL;
-    }
-    myUpdateTimer.stop();
+    synchronized (myHideReleaseLock) {
+      final long startNs = myStats != null ? System.nanoTime() : 0;
+      myItems.releaseAll();
+      if (!myNativePeer.equals(ID.NIL)) {
+        NST.releaseTouchBar(myNativePeer);
+        myNativePeer = ID.NIL;
+      }
+      myUpdateTimer.stop();
 
-    myActionButtonPool.forEach((act, item) -> item.releaseNativePeer());
-    myActionButtonPool.clear();
-    myGroupPool.forEach(item -> item.releaseNativePeer());
-    myGroupPool.clear();
-    if (myStats != null)
-      myStats.incrementCounter(StatsCounters.touchbarReleaseDurationNs, System.nanoTime() - startNs);
+      myActionButtonPool.forEach((act, item) -> item.releaseNativePeer());
+      myActionButtonPool.clear();
+      myGroupPool.forEach(item -> item.releaseNativePeer());
+      myGroupPool.clear();
+      if (myStats != null)
+        myStats.incrementCounter(StatsCounters.touchbarReleaseDurationNs, System.nanoTime() - startNs);
+    }
   }
 
   void softClear() { myItems.softClear(myActionButtonPool, myGroupPool); }
@@ -261,17 +268,23 @@ class TouchBar implements NSTLibrary.ItemCreator {
     updateActionItems();
   }
   void onHide() {
-    if (myLastUpdate != null) {
-      myLastUpdate.cancel();
-      myLastUpdate = null;
+    synchronized (myHideReleaseLock) {
+      if (myLastUpdate != null) {
+        myLastUpdate.cancel();
+        myLastUpdate = null;
+      }
+      myUpdateTimer.stop();
     }
-    myUpdateTimer.stop();
   }
 
   void forEachDeep(Consumer<? super TBItem> proc) { myItems.forEachDeep(proc); }
 
   private void _applyPresentationChanges(List<AnAction> actions) {
     final long startNs = myStats != null ? System.nanoTime() : 0;
+    if (myLastUpdateNativePeers != null && !myLastUpdateNativePeers.isDone())
+      myLastUpdateNativePeers.cancel(false);
+
+    final List<TBItemButton.Updater> toUpdate = new ArrayList<>();
     forEachDeep(tbitem -> {
       if (!(tbitem instanceof TBItemAnActionButton))
         return;
@@ -280,7 +293,28 @@ class TouchBar implements NSTLibrary.ItemCreator {
       final @NotNull Presentation presentation = myFactory.getPresentation(item.getAnAction());
       item.updateVisibility(presentation);
       item.updateView(presentation);
+      final @Nullable TBItemButton.Updater updater = item.getNativePeerUpdater();
+      if (updater != null) {
+        toUpdate.add(updater);
+      }
     });
+
+    final Runnable updateAllNativePeers = () -> {
+      toUpdate.forEach(item -> item.prepareUpdateData());
+
+      synchronized (myHideReleaseLock) {
+        if (!myUpdateTimer.isRunning() || myNativePeer.equals(ID.NIL))
+          return; // was hidden or released
+
+        toUpdate.forEach(item -> item.updateNativePeer());
+      }
+    };
+    final Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      myLastUpdateNativePeers = app.executeOnPooledThread(() -> app.runReadAction(updateAllNativePeers));
+    } else {
+      updateAllNativePeers.run();
+    }
 
     selectVisibleItemsToShow();
     if (myStats != null)
@@ -449,8 +483,6 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
 class SpacingItem extends TBItem {
   SpacingItem() { super("space", null); }
-  @Override
-  protected void _updateNativePeer() {} // mustn't be called
   @Override
   protected ID _createNativePeer() { return ID.NIL; } // mustn't be called
 }

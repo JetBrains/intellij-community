@@ -3,7 +3,6 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,13 +88,6 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
 
   void showItems(Collection<Integer> indices, boolean visible, boolean inverseOthers) {
     NST.showScrubberItem(myNativePeer, indices, visible, inverseOthers);
-  }
-
-  // NOTE: scrubber is immutable container => update doesn't called => _create/_update can be unsyncronized
-
-  @Override
-  protected void _updateNativePeer() {
-    Logger.getInstance(TBItemScrubber.class).error("_updateNativePeer of scrubber masn't be called");
   }
 
   @Override

@@ -42,6 +42,5 @@ abstract class TBItem {
     }
   }
 
-  protected abstract void _updateNativePeer();  // called from EDT
   protected abstract ID _createNativePeer();    // called from AppKit
 }

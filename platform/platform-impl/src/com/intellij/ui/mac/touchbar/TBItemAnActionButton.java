@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,22 +86,28 @@ class TBItemAnActionButton extends TBItemButton {
 
     return visibilityChanged;
   }
-  void updateView(@NotNull Presentation presentation) { // called from EDT
+
+  // returns true when need to update native peer
+  boolean updateView(@NotNull Presentation presentation) { // called from EDT
     if (!myIsVisible)
-      return;
+      return false;
 
     final long startNs = myActionStats != null ? System.nanoTime() : 0;
     Icon icon = null;
+    boolean needGetDisabledIcon = false;
     if (myShowMode != SHOWMODE_TEXT_ONLY) {
       if (presentation.isEnabled())
         icon = presentation.getIcon();
       else {
         icon = presentation.getDisabledIcon();
-        if (icon == null) {
-          icon = presentation.getIcon() == null ? null : IconLoader.getDisabledIcon(presentation.getIcon());
+        if (icon == null && presentation.getIcon() != null) {
+          needGetDisabledIcon = true;
+          icon = presentation.getIcon();
         }
       }
     }
+    setIcon(icon, needGetDisabledIcon);
+    setDisabled(!presentation.isEnabled());
 
     boolean isSelected = false;
     if (myAnAction instanceof Toggleable) {
@@ -110,6 +115,8 @@ class TBItemAnActionButton extends TBItemButton {
       if (myNativePeer != ID.NIL && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
+    setSelected(isSelected);
+
     if ("RunConfiguration".equals(myActionId)) {
       if (presentation.getIcon() != AllIcons.General.Add) {
         setHasArrowIcon(true);
@@ -122,14 +129,12 @@ class TBItemAnActionButton extends TBItemButton {
 
     final boolean hideText = myShowMode == SHOWMODE_IMAGE_ONLY || (myShowMode == SHOWMODE_IMAGE_ONLY_IF_PRESENTED && icon != null);
     final String text = hideText ? null : presentation.getText();
-
-    setIcon(icon);
     setText(text);
-    setSelected(isSelected);
-    setDisabled(!presentation.isEnabled());
-    updateNativePeerIfNecessary();
+
     if (myActionStats != null)
       myActionStats.updateViewNs += System.nanoTime() - startNs;
+
+    return myUpdateOptions != 0 && myNativePeer != ID.NIL;
   }
 
   private boolean _setLinkedVisibility(boolean visible) {

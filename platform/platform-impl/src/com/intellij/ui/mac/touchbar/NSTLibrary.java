@@ -63,7 +63,6 @@ public interface NSTLibrary extends Library {
   // all updaters are called from EDT (when update UI, or from all another threads except AppKit)
   // C-implementation creates NSAutoReleasePool internally
   void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, Pointer raster4ByteRGBA, int w, int h, Action action);
-  void updatePopover(ID popoverObj, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
 
   void enableScrubberItems(ID scrubObj, Pointer itemIndices, int count, boolean enabled);
   void showScrubberItems(ID scrubObj, Pointer itemIndices, int count, boolean show, boolean inverseOthers);

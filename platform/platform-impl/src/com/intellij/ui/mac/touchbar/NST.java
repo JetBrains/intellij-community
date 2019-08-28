@@ -157,19 +157,16 @@ public class NST {
                                   int buttWidth,
                                   int buttonFlags,
                                   String text,
-                                  Icon icon,
-                                  NSTLibrary.Action action,
-                                  @Nullable TouchBarStats.AnActionStats stats) {
-    final long startNs = stats != null && icon != null ? System.nanoTime() : 0;
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    if (stats != null && icon != null) {
-      stats.iconUpdateIconRasterCount++;
-      stats.iconRenderingDurationNs += System.nanoTime() - startNs;
-    }
-    ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action); // creates autorelease-pool internally
+                                  @Nullable Pair<Pointer, Dimension> raster,
+                                  NSTLibrary.Action action) {
+    ourNSTLibrary.updateButton(
+      buttonObj, updateOptions,
+      buttWidth, buttonFlags,
+      text,
+      raster == null ? null : raster.getFirst(),
+      raster == null ? 0 : raster.getSecond().width,
+      raster == null ? 0 : raster.getSecond().height,
+      action); // creates autorelease-pool internally
   }
 
   public static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
@@ -178,18 +175,6 @@ public class NST {
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     ourNSTLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
-  }
-
-  public static void updatePopover(ID popoverObj,
-                                   int itemWidth,
-                                   String text,
-                                   Icon icon,
-                                   ID tbObjExpand, ID tbObjTapAndHold) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
   private static Pointer _makeIndices(Collection<Integer> indices) {
@@ -303,6 +288,15 @@ public class NST {
     }
 
     return Pair.create(result, byteCount);
+  }
+
+  protected static Pair<Pointer, Dimension> get4ByteRGBARaster(@Nullable Icon icon) {
+    if (icon == null || icon.getIconHeight() == 0)
+      return null;
+
+    final float fMulX = getIconScaleForTouchbar(icon);
+    final @NotNull BufferedImage img = _getImg4ByteRGBA(icon, fMulX);
+    return Pair.create(_getRaster(img), new Dimension(img.getWidth(), img.getHeight()));
   }
 
   private static Pointer _getRaster(BufferedImage img) {

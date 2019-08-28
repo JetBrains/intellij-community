@@ -37,13 +37,6 @@ class TBItemPopover extends TBItem {
     super.releaseNativePeer();
   }
 
-  // NOTE: popover is immutable (at this moment) => update doesn't called => _create/_update can be unsyncronized
-
-  @Override
-  protected void _updateNativePeer() {
-    NST.updatePopover(myNativePeer, myWidthPix, myText, myIcon, getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
-  }
-
   @Override
   protected ID _createNativePeer() {
     return NST.createPopover(getUid(), myWidthPix, myText, myIcon, getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));

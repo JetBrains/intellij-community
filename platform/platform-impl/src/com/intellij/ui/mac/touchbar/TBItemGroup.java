@@ -16,11 +16,6 @@ class TBItemGroup extends TBItem {
   ItemsContainer getContainer() { return myGroupItems; }
 
   @Override
-  protected void _updateNativePeer() {
-    myGroupItems.forEachDeep(item->item._updateNativePeer());
-  }
-
-  @Override
   protected ID _createNativePeer() {
     if (myGroupItems.isEmpty())
       return ID.NIL;
