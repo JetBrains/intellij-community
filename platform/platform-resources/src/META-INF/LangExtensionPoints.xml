@@ -356,17 +356,14 @@
     <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
-    <extensionPoint name="localInspection"
-                    beanClass="com.intellij.codeInspection.LocalInspectionEP">
+    <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
     </extensionPoint>
 
-    <extensionPoint name="globalInspection"
-                    beanClass="com.intellij.codeInspection.InspectionEP">
+    <extensionPoint name="globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
     </extensionPoint>
-    <extensionPoint name="inspectionToolProvider"
-                    interface="com.intellij.codeInspection.InspectionToolProvider"/>
+    <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
