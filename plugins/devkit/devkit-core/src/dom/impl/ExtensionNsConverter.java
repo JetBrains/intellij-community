@@ -39,6 +39,7 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
     return s == null ? null : findById(context.getInvocationElement(), s);
   }
 
+  @Nullable
   private static IdeaPlugin findById(@NotNull DomElement place, @NotNull String id) {
     return ContainerUtil.find(PluginIdModuleIndex.findPlugins(place, id), plugin -> id.equals(plugin.getPluginId()));
   }
