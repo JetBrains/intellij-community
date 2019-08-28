@@ -52,7 +52,7 @@ public interface NonBlockingReadAction<T> {
    * @return a copy of this builder that cancels submitted read actions once the specified progress indicator is cancelled.
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> expireWith(@NotNull ProgressIndicator progressIndicator);
+  NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator);
 
   /**
    * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.

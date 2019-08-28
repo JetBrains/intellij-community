@@ -69,7 +69,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
-      }).expireWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
+      }).cancelWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
     Promises.all(promises).onSuccess(__ -> result.setResult(events)).onError(t -> result.setError(t));

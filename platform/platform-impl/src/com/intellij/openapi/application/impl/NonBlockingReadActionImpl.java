@@ -103,7 +103,7 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
-  public NonBlockingReadAction<T> expireWith(@NotNull ProgressIndicator progressIndicator) {
+  public NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
     LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
                                            myCoalesceEquality, progressIndicator);

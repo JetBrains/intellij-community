@@ -69,7 +69,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
           ProgressManager.getInstance().getProgressIndicator().checkCanceled();
         }
       })
-      .expireWith(outerIndicator)
+      .cancelWith(outerIndicator)
       .submit(AppExecutorUtil.getAppExecutorService());
     outerIndicator.cancel();
     waitForPromise(promise);
