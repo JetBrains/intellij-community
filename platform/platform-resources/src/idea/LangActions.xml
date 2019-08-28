@@ -109,7 +109,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
-    <action id="CopyReferencePopupAction" class="com.intellij.ide.actions.CopyReferencePopupAction">
+    <action id="CopyReferencePopupAction" class="com.intellij.ide.actions.CopyReferencePopupAction" text="Reference">
       <add-to-group group-id="CopyFileReference" anchor="first"/>
     </action>
 
