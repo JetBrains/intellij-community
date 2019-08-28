@@ -261,7 +261,7 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            markDirty = stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(_file, rd.getTarget()), file, attrs);
+            markDirty = stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(_file, rd.getTarget()), _file, attrs);
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
