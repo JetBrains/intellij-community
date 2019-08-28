@@ -33,7 +33,6 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
@@ -206,7 +205,8 @@ internal class GHCloneDialogExtensionComponent(
         directoryField(growX, pushX)
       }
     }
-    repositoriesPanel.border = JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS)
+    repositoriesPanel.border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+
 
     if (authenticationManager.hasAccounts()) {
       switchToRepositories()
@@ -400,7 +400,6 @@ internal class GHCloneDialogExtensionComponent(
       project,
       false
     ).apply {
-      border = JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS)
       if (account != null) {
         setCredentials(account.name, null, false)
         setServer(account.server.toUrl(), false)
