@@ -41,7 +41,7 @@ return null;
 }
 
 public synchronized void out(groovy.lang.GString message) {
-invokeMethod("println", new java.lang.Object[]{message});
+println(message);
 }
 
 public concurency(groovy.lang.Binding binding) {
