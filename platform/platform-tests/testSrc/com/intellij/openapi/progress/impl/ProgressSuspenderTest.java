@@ -87,6 +87,8 @@ public class ProgressSuspenderTest extends LightPlatformTestCase {
       assertFalse(task.isDone());
       assertThreadCompleted(unrelated);
     });
+
+    assertThreadCompleted(task);
   }
 
   private static void assertThreadCompleted(Future<?> task) {
