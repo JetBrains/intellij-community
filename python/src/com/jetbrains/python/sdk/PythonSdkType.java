@@ -42,6 +42,7 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
+import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
@@ -187,11 +188,11 @@ public final class PythonSdkType extends SdkType {
                                  @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
-        if (sdk != null) {
-          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
-          sdkCreatedCallback.consume(sdk);
-        }
-      });
+      if (sdk != null) {
+        sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
+        sdkCreatedCallback.consume(sdk);
+      }
+    });
   }
 
   @Nullable
@@ -449,16 +450,13 @@ public final class PythonSdkType extends SdkType {
       assert data != null;
       String versionString = data.getVersionString();
       if (StringUtil.isEmpty(versionString)) {
-        final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-        if (remoteInterpreterManager != null) {
-          try {
-            versionString =
-              remoteInterpreterManager.getInterpreterVersion(null, data);
-          }
-          catch (Exception e) {
-            LOG.warn("Couldn't get interpreter version:" + e.getMessage(), e);
-            versionString = "undefined";
-          }
+        try {
+          versionString =
+            PyRemoteInterpreterUtil.getInterpreterVersion(null, data, true);
+        }
+        catch (Exception e) {
+          LOG.warn("Couldn't get interpreter version:" + e.getMessage(), e);
+          versionString = "undefined";
         }
         data.setVersionString(versionString);
       }
