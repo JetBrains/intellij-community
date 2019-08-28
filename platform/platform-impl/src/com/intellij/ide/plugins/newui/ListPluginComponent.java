@@ -187,8 +187,7 @@ public class ListPluginComponent extends JPanel {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            int scale = JBUIScale.scale(2);
-            return new Dimension(size.width + scale, size.height + scale);
+            return new Dimension(size.width + JBUIScale.scale(8), size.height + JBUIScale.scale(2));
           }
         });
 
