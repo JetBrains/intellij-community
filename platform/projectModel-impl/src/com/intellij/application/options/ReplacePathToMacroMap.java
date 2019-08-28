@@ -12,7 +12,6 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.ArrayList;
@@ -70,18 +69,16 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
+  @NotNull
   @Override
-  public String substitute(@Nullable String text, boolean caseSensitive) {
-    if (text == null) {
-      return null;
-    }
-
+  public String substitute(@NotNull String text, boolean caseSensitive) {
     for (final String path : getPathIndex()) {
       text = replacePathMacro(text, path, caseSensitive);
     }
     return text;
   }
 
+  @NotNull
   private String replacePathMacro(@NotNull String text, @NotNull final String path, boolean caseSensitive) {
     if (text.length() < path.length() || path.isEmpty()) {
       return text;

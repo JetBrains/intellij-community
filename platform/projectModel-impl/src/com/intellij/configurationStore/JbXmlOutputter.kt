@@ -206,13 +206,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * trims interior whitespace, etc. if necessary.
    */
   @Throws(IOException::class)
-  private fun printString(out: Writer, str: String?) {
+  private fun printString(out: Writer, str: String) {
     var normalizedString = str
     if (format.textMode == Format.TextMode.NORMALIZE) {
       normalizedString = Text.normalizeString(normalizedString)
     }
     else if (format.textMode == Format.TextMode.TRIM) {
-      normalizedString = normalizedString!!.trim()
+      normalizedString = normalizedString.trim()
     }
 
     if (macroMap != null) {

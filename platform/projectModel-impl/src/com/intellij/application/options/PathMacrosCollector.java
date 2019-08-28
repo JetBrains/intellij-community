@@ -70,8 +70,9 @@ public class PathMacrosCollector extends PathMacroMap {
     return text;
   }
 
+  @NotNull
   @Override
-  public String substitute(String text, boolean caseSensitive) {
+  public String substitute(@NotNull String text, boolean caseSensitive) {
     if (StringUtil.isEmpty(text)) {
       return text;
     }
