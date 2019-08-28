@@ -126,6 +126,9 @@ public class PersistentCachingModuleHashingService {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     Arrays.stream(modules).forEach(module -> {
       File[] productionSources = getProductionSources(module);
+      if (productionSources.length == 0) {
+        return;
+      }
       byte[] hash = ModuleHashingService.hashDirectories(productionSources);
       result.put(module.getName(), hash);
     });
@@ -138,6 +141,9 @@ public class PersistentCachingModuleHashingService {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     Arrays.stream(modules).forEach(module -> {
       File[] testSources = getTestSources(module);
+      if (testSources.length == 0) {
+        return;
+      }
       byte[] hash = ModuleHashingService.hashDirectories(testSources);
       result.put(module.getName(), hash);
     });
