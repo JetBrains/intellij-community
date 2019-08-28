@@ -576,6 +576,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return false;
   }
 
+  public void paintOnlyChildren(@NotNull Graphics g) {
+    if (getComponentCount() == 1) {
+      ((JLayeredPane)getComponent(0)).paintComponents(g);
+    }
+  }
+
   @Override
   protected void paintComponent(final Graphics g) {
     getPainters().paint(g);

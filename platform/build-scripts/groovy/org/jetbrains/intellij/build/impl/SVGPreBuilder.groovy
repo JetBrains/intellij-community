@@ -9,14 +9,18 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 @CompileStatic
 class SVGPreBuilder {
   static final List<String> getModulesToInclude() {
     return ["intellij.platform.images.build"]
   }
 
-  private static File getResultDir(BuildContext buildContext) {
-    new File(buildContext.paths.temp, "svg-prebuild/result")
+  private static Path getResultDir(BuildContext buildContext) {
+    Paths.get(buildContext.paths.temp, "svg-prebuild", "result")
   }
 
   static void prebuildSVGIcons(BuildContext buildContext, List<String> modules) {
@@ -25,18 +29,18 @@ class SVGPreBuilder {
       buildContext.messages.progress("Prebuild SVG icons for ${modulesToProcess.size()} modules")
       buildContext.messages.debug("Prebuild SVG icons are going to be built for the following modules: $modulesToProcess")
 
-      File resultDir = getResultDir(buildContext)
-      resultDir.mkdirs()
-      File requestFile = new File(resultDir, "request.txt")
+      Path resultDir = getResultDir(buildContext)
+      Files.createDirectories(resultDir)
+      Path requestFile = resultDir.resolve("request.txt")
 
       requestFile.withPrintWriter("UTF-8") { writer ->
         for (String moduleName : modulesToProcess) {
           JpsModule module = buildContext.findRequiredModule(moduleName)
-          File outputFile = new File(buildContext.getModuleOutputPath(module))
-          File resultFile = new File(resultDir, moduleName)
+          Path outputFile = Paths.get(buildContext.getModuleOutputPath(module))
+          Path resultFile = resultDir.resolve(moduleName)
 
-          writer.println(outputFile.absolutePath)
-          writer.println(resultFile.absolutePath)
+          writer.println(outputFile.toString())
+          writer.println(resultFile.toString())
         }
       }
 
@@ -47,11 +51,11 @@ class SVGPreBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, File requestFile) {
+  private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
     buildContext.ant.java(classname: "org.jetbrains.intellij.build.images.ImageSvgPreCompiler", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
       sysproperty(key: "java.awt.headless", value: true)
-      arg(path: requestFile.absolutePath)
+      arg(path: requestFile.toString())
 
       buildContext.applicationInfo.svgProductIcons.forEach {
         arg(value: "$it")
@@ -67,13 +71,13 @@ class SVGPreBuilder {
 
   static void addGeneratedResources(BuildContext buildContext, LayoutBuilder layoutBuilder) {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SVGICONS_PREBUILD_STEP)) {
-      File resultDir = getResultDir(buildContext)
-      if (!resultDir.isDirectory()) {
+      Path resultDir = getResultDir(buildContext)
+      if (!Files.isDirectory(resultDir)) {
         buildContext.messages.error("There are no SVG prebuilt images generated. " +
                                     "Please ensure that you call org.jetbrains.intellij.build.impl.SVGPreBuilder.prebuildSVGIcons before this method.")
       }
       resultDir.eachFile(FileType.DIRECTORIES) {
-        layoutBuilder.patchModuleOutput(it.name, FileUtil.toSystemIndependentName(it.absolutePath))
+        layoutBuilder.patchModuleOutput(it.fileName.toString(), FileUtil.toSystemIndependentName(it.toString()))
       }
     }
   }

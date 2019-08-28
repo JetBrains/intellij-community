@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoaderCache;
 import com.intellij.util.ui.paint.ImageComparator;
@@ -9,26 +10,26 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class SVGLoaderCacheTest {
   @Rule
-  public final TemporaryFolder temp = new TemporaryFolder();
+  public final InMemoryFsRule fsRule = new InMemoryFsRule();
 
-  private SVGLoaderCache myCache;
+  private SVGLoaderCache cache;
 
   @Before
   public void setup() throws IOException {
-    final File home = temp.newFolder();
-    myCache = new SVGLoaderCache() {
+    Path home = fsRule.getFs().getPath("/test");
+
+    cache = new SVGLoaderCache() {
       @NotNull
       @Override
-      protected File getCachesHome() {
+      protected Path getCachesHome() {
         return home;
       }
 
@@ -41,7 +42,7 @@ public class SVGLoaderCacheTest {
 
   @Test
   public void testNoEntry() {
-    Assert.assertNull(myCache.loadFromCache(new byte[]{}, new byte[]{}, 1.0, new ImageLoader.Dimension2DDouble(0, 0)));
+    Assert.assertNull(cache.loadFromCache(new byte[]{}, new byte[]{}, 1.0, new ImageLoader.Dimension2DDouble(0, 0)));
   }
 
   @Test
@@ -53,10 +54,10 @@ public class SVGLoaderCacheTest {
 
     byte[] imageBytes = new byte[]{1, 2, 3};
     final byte[] theme = {};
-    myCache.storeLoadedImage(theme, imageBytes, 1.0, i, new ImageLoader.Dimension2DDouble(20.0, 15.0));
+    cache.storeLoadedImage(theme, imageBytes, 1.0, i, new ImageLoader.Dimension2DDouble(20.0, 15.0));
 
     ImageLoader.Dimension2DDouble copySize = new ImageLoader.Dimension2DDouble(0.0, 0.0);
-    BufferedImage copy = myCache.loadFromCache(theme, imageBytes, 1.0, copySize);
+    BufferedImage copy = cache.loadFromCache(theme, imageBytes, 1.0, copySize);
 
     Assert.assertEquals(20.0, copySize.getWidth(), 0.1);
     Assert.assertEquals(15.0, copySize.getHeight(), 0.1);
@@ -65,8 +66,8 @@ public class SVGLoaderCacheTest {
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), i, copy, null);
 
     final ImageLoader.Dimension2DDouble size = new ImageLoader.Dimension2DDouble(0, 0);
-    Assert.assertNull(myCache.loadFromCache(new byte[]{123}, imageBytes, 1.0, size));
-    Assert.assertNull(myCache.loadFromCache(theme, new byte[]{6, 7}, 1.0, size));
-    Assert.assertNull(myCache.loadFromCache(theme, imageBytes, 2.0, size));
+    Assert.assertNull(cache.loadFromCache(new byte[]{123}, imageBytes, 1.0, size));
+    Assert.assertNull(cache.loadFromCache(theme, new byte[]{6, 7}, 1.0, size));
+    Assert.assertNull(cache.loadFromCache(theme, imageBytes, 2.0, size));
   }
 }

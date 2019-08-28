@@ -455,7 +455,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       if (application == null) {
         // We cannot use services while Application has not been loaded yet
         // So let's apply the default hints.
-        UIUtil.applyRenderingHints(g)
+        GraphicsUtil.applyRenderingHints(g)
         return
       }
 

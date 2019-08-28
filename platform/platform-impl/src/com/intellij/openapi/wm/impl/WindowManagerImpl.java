@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -44,8 +43,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.io.EOFException;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -498,17 +495,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (options.sendFrameBack) {
       frame.setAutoRequestFocus(false);
     }
-
-    if (options.projectWorkspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
-      try {
-        frame.setProjectWorkspaceId(options.projectWorkspaceId);
-      }
-      catch (IOException e) {
-        if (!(e.getCause() instanceof EOFException)) {
-          LOG.warn(e);
-        }
-      }
-    }
     return frame;
   }
 
@@ -554,7 +540,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     FrameInfo frameInfo = null;
     if (isNewFrame) {
       frame = new IdeFrameImpl();
-      frame.preInit();
+      frame.preInit(null);
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();

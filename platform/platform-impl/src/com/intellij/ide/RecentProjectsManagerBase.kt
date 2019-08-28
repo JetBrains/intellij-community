@@ -12,6 +12,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -116,7 +117,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       state.pid = null
       @Suppress("DEPRECATION")
       val openPaths = state.openPaths
-      if (!openPaths.isEmpty()) {
+      if (openPaths.isNotEmpty()) {
         migrateOpenPaths(openPaths)
       }
     }
@@ -501,8 +502,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         info.projectWorkspaceId = workspaceId
       }
     }
+
     if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
-      frame.takeASelfie(workspaceId)
+      try {
+        frame.takeASelfie(workspaceId)
+      }
+      catch (e: Exception) {
+        logger<RecentProjectsManager>().warn(e)
+      }
     }
   }
 

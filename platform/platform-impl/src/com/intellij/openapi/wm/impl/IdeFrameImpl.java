@@ -35,9 +35,7 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +48,11 @@ import org.jetbrains.concurrency.Promises;
 import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -58,8 +60,11 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Set;
 
@@ -108,10 +113,13 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setupCloseAction();
   }
 
-  public void preInit() {
+  public void preInit(@Nullable Image selfie) {
+    this.selfie = selfie;
+
     updateTitle();
 
     myRootPane = new IdeRootPane(this);
+
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
@@ -511,11 +519,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
   }
 
-  public void setProjectWorkspaceId(@NotNull String value) throws IOException {
-    LOG.assertTrue(selfie == null);
-    selfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation(value).toFile()), ScaleContext.create(this));
-  }
-
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
@@ -529,22 +532,43 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     super.paint(g);
   }
 
-  public void takeASelfie(@NotNull String projectWorkspaceId) {
-    BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+  public void takeASelfie(@NotNull String projectWorkspaceId) throws IOException {
+    int width = getWidth();
+    int height = getHeight();
+    BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
     UISettings.setupAntialiasing(image.getGraphics());
-    paint(image.getGraphics());
-    try {
-      Path selfieFile = getSelfieLocation(projectWorkspaceId);
-      // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
-      ImageIO.write(image, "png", selfieFile.toFile());
+    super.paint(image.getGraphics());
+    Path selfieFile = getSelfieLocation(projectWorkspaceId);
+    Files.createDirectories(selfieFile.getParent());
+
+    // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
+    //long start = System.currentTimeMillis();
+    try (OutputStream stream = Files.newOutputStream(selfieFile)) {
+      try (MemoryCacheImageOutputStream out = new MemoryCacheImageOutputStream(stream)) {
+        ImageWriter writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next();
+        try {
+          writer.setOutput(out);
+          writer.write(null, new IIOImage(image, null, null), null);
+        }
+        finally {
+          writer.dispose();
+        }
+      }
     }
-    catch (IOException e) {
-      LOG.debug(e);
+
+    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
+    Path lastLink = selfieFile.getParent().resolve("last.png");
+    if (SystemInfo.isUnix) {
+      Files.deleteIfExists(lastLink);
+      Files.createSymbolicLink(lastLink, selfieFile);
+    }
+    else {
+      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
   @NotNull
-  private static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
+  public static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
     return PathManagerEx.getAppSystemDir().resolve("project-selfies").resolve(projectWorkspaceId + ".png");
   }
 

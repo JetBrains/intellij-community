@@ -1,15 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Storage level for {@link SVGLoaderCache} and {@link SVGLoaderPrebuilt}
@@ -17,6 +22,8 @@ import java.nio.ByteBuffer;
  */
 @ApiStatus.Internal
 public class SVGLoaderCacheIO {
+  private static final Set<OpenOption> OPEN_OPTION_SET = new THashSet<>(Arrays.asList(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
+
   @NotNull
   @ApiStatus.Internal
   public static BufferedImage readImageFile(@NotNull byte[] bytes,
@@ -30,7 +37,7 @@ public class SVGLoaderCacheIO {
 
     @SuppressWarnings("UndesirableClassUsage")
     //we do not need a specific image here, it will be wrapped later
-      BufferedImage image = new BufferedImage(actualWidth, actualHeight, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = new BufferedImage(actualWidth, actualHeight, BufferedImage.TYPE_INT_ARGB);
 
     for (int y = 0; y < actualHeight; y++) {
       for (int x = 0; x < actualWidth; x++) {
@@ -43,7 +50,7 @@ public class SVGLoaderCacheIO {
   }
 
   @ApiStatus.Internal
-  public static void writeImageFile(@NotNull File file,
+  public static void writeImageFile(@NotNull Path file,
                                     @NotNull BufferedImage image,
                                     @NotNull ImageLoader.Dimension2DDouble size) throws IOException {
 
@@ -62,6 +69,11 @@ public class SVGLoaderCacheIO {
       }
     }
 
-    FileUtil.writeToFile(file, buff.array());
+    buff.flip();
+
+    Files.createDirectories(file.getParent());
+    try (SeekableByteChannel channel = Files.newByteChannel(file, OPEN_OPTION_SET)) {
+      channel.write(buff);
+    }
   }
 }

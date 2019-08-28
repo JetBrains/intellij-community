@@ -6,6 +6,7 @@ import com.intellij.util.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
+import com.intellij.util.io.readBytes
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
@@ -75,7 +76,7 @@ class ImageSvgPreCompiler {
           else -> scales
         }
         //TODO: use output directory
-        preCompile(fromFile.toFile(), toFile.toFile(), scales)
+        preCompile(fromFile, toFile, scales)
       }
     }
   }
@@ -85,8 +86,8 @@ class ImageSvgPreCompiler {
     println("SVG generation: ${StringUtil.formatFileSize(generatedSize.get())} bytes in total in ${totalFiles.get()} files(s)")
   }
 
-  private fun preCompile(svgFile: File, targetFileBase: File, scales: DoubleArray) {
-    if (!svgFile.path.endsWith(".svg")) {
+  private fun preCompile(svgFile: Path, targetFileBase: Path, scales: DoubleArray) {
+    if (!svgFile.fileName.toString().endsWith(".svg")) {
       return
     }
 
@@ -101,12 +102,12 @@ class ImageSvgPreCompiler {
 
     for (scale in scales) {
       val dim = ImageLoader.Dimension2DDouble(0.0, 0.0)
-      val image = SVGLoader.loadWithoutCache(svgFile.toURI().toURL(), data.inputStream(), scale, dim)
+      val image = SVGLoader.loadWithoutCache(svgFile.toUri().toURL(), data.inputStream(), scale, dim)
 
-      val targetFile = File(targetFileBase.path + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
+      val targetFile = Paths.get(targetFileBase.toString() + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
       SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
 
-      val length = targetFile.length()
+      val length = Files.size(targetFile)
       require(length > 0) { "File ${targetFile} is empty!" }
       generatedSize.addAndGet(length)
     }

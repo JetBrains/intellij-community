@@ -43,8 +43,10 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -1479,7 +1481,7 @@ public final class UIUtil extends StartupUiUtil {
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
     for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
       try {
-        if (isValidFont(font)) {
+        if (FontUtil.isValidFont(font)) {
           result.add(familyName ? font.getFamily() : font.getName());
         }
       }
@@ -1490,7 +1492,7 @@ public final class UIUtil extends StartupUiUtil {
 
     // add label font (if isn't listed among above)
     Font labelFont = getLabelFont();
-    if (labelFont != null && isValidFont(labelFont)) {
+    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
       result.add(familyName ? labelFont.getFamily() : labelFont.getName());
     }
 
@@ -1502,19 +1504,9 @@ public final class UIUtil extends StartupUiUtil {
     return STANDARD_FONT_SIZES;
   }
 
+  @Deprecated
   public static boolean isValidFont(@NotNull Font font) {
-    try {
-      return font.canDisplay('a') &&
-             font.canDisplay('z') &&
-             font.canDisplay('A') &&
-             font.canDisplay('Z') &&
-             font.canDisplay('0') &&
-             font.canDisplay('1');
-    }
-    catch (Exception e) {
-      // JRE has problems working with the font. Just skip.
-      return false;
-    }
+    return FontUtil.isValidFont(font);
   }
 
   public static void setupEnclosingDialogBounds(@NotNull final JComponent component) {
@@ -1775,9 +1767,7 @@ public final class UIUtil extends StartupUiUtil {
     painter.paint(g, startX, endX, lineY);
   }
 
-  /** This method is intended to use when user settings are not accessible yet.
-   *  Use it to set up default RenderingHints.
-   */
+  @Deprecated
   public static void applyRenderingHints(@NotNull Graphics g) {
     GraphicsUtil.applyRenderingHints(g);
   }

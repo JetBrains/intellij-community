@@ -8,14 +8,19 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
 import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.ui.scale.ScaleContext
 import org.jetbrains.annotations.CalledInAwt
+import java.awt.Image
+import java.io.EOFException
 import java.nio.file.Path
 
 internal open class ProjectFrameAllocator {
@@ -70,7 +75,19 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       windowManager.restoreFrameState(frame, frameInfo)
     }
 
-    frame.preInit()
+    var projectSelfie: Image? = null
+    if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
+      try {
+        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!, ScaleContext.create(frame))
+      }
+      catch (e: Throwable) {
+        if (e.cause !is EOFException) {
+          logger<ProjectFrameAllocator>().warn(e)
+        }
+      }
+    }
+
+    frame.preInit(projectSelfie)
     frame.isVisible = true
     frame.init()
   }

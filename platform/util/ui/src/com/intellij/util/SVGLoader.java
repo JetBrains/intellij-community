@@ -27,11 +27,12 @@ import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author tav
@@ -44,8 +45,8 @@ public final class SVGLoader {
   private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
     @NotNull
     @Override
-    protected File getCachesHome() {
-      return new File(PathManager.getSystemPath(), "icons");
+    protected Path getCachesHome() {
+      return Paths.get(PathManager.getSystemPath(), "icons");
     }
 
     @Override

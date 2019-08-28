@@ -61,7 +61,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
    * Current {@code ToolWindowsPane}. If there is no such pane then this field is null.
    */
   private ToolWindowsPane myToolWindowsPane;
-  private JBPanel myContentPane;
+  private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
 
@@ -211,7 +211,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
 
   @Override
   protected final Container createContentPane() {
-    return myContentPane = new IdePanePanel(new BorderLayout());
+    myContentPane = new IdePanePanel(new BorderLayout());
+    return myContentPane;
   }
 
   void updateToolbar() {
