@@ -9,6 +9,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -22,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PersistentCachingModuleHashingService {
@@ -121,34 +123,22 @@ public class PersistentCachingModuleHashingService {
     });
   }
 
-  public Map<String, byte[]> compureProductionHashesForProject() {
-    Map<String, byte[]> result = new HashMap<>();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    Arrays.stream(modules).forEach(module -> {
+  public Map<String, byte[]> computeProductionHashesForProject() {
+    return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
       File[] productionSources = getProductionSources(module);
-      if (productionSources.length == 0) {
-        return;
-      }
+      if (productionSources.length == 0) return null;
       byte[] hash = ModuleHashingService.hashDirectories(productionSources);
-      result.put(module.getName(), hash);
-    });
-
-    return result;
+      return new Pair<>(module.getName(), hash);
+    }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
   }
 
   public Map<String, byte[]> computeTestHashesForProject() {
-    Map<String, byte[]> result = new HashMap<>();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    Arrays.stream(modules).forEach(module -> {
+    return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
       File[] testSources = getTestSources(module);
-      if (testSources.length == 0) {
-        return;
-      }
+      if (testSources.length == 0) return null;
       byte[] hash = ModuleHashingService.hashDirectories(testSources);
-      result.put(module.getName(), hash);
-    });
-
-    return result;
+      return new Pair<>(module.getName(), hash);
+    }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
   }
 
   public Map<String, byte[]> getAffectedTests() {
