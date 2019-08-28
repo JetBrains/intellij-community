@@ -32,7 +32,7 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
   @NotNull
   private final NotNullLazyValue<Collection<? extends Supplier<InspectionToolWrapper>>> myInspectionToolFactories = NotNullLazyValue.createValue(() -> {
     Application application = ApplicationManager.getApplication();
-    MultiMap<Class<?>, Supplier<InspectionToolWrapper>> factories = MultiMap.create();
+    MultiMap<Object, Supplier<InspectionToolWrapper>> factories = MultiMap.create();
     Map<String, InspectionEP> shortNames = new THashMap<>();
     registerToolProviders(application, factories);
     registerInspections(factories, application, shortNames, LocalInspectionEP.LOCAL_INSPECTION);
@@ -40,7 +40,7 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
     return factories.values();
   });
 
-  private static <T extends InspectionEP> void registerInspections(@NotNull MultiMap<Class<?>, Supplier<InspectionToolWrapper>> factories,
+  private static <T extends InspectionEP> void registerInspections(@NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories,
                                                                    @NotNull Application application,
                                                                    @NotNull Map<String, InspectionEP> shortNames,
                                                                    ExtensionPointName<T> extensionPointName) {
@@ -52,7 +52,7 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
         if (!isInternal && extension.isInternal) {
           return;
         }
-        factories.putValue(extension.getClass(), () -> extension instanceof LocalInspectionEP
+        factories.putValue(extension, () -> extension instanceof LocalInspectionEP
                                                        ? new LocalInspectionToolWrapper((LocalInspectionEP)extension)
                                                        : new GlobalInspectionToolWrapper(extension));
       }
@@ -60,14 +60,14 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
       @Override
       public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
         shortNames.remove(extension.getShortName());
-        factories.remove(extension.getClass());
+        factories.remove(extension);
       }
     }, true, application);
   }
 
   private static void registerToolProviders(@NotNull Application application,
-                                            @NotNull MultiMap<Class<?>, Supplier<InspectionToolWrapper>> factories) {
-    for (InspectionToolProvider provider : ((ComponentManagerImpl)application).getComponentInstancesOfType(InspectionToolProvider.class)) {
+                                            @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
+    for (InspectionToolProvider provider : application.getComponentInstancesOfType(InspectionToolProvider.class)) {
       registerToolProvider(provider, factories);
     }
     InspectionToolProvider.EXTENSION_POINT_NAME.getPoint(application).addExtensionPointListener(
@@ -79,16 +79,15 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
 
         @Override
         public void extensionRemoved(@NotNull InspectionToolProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          factories.remove(extension.getClass());
+          factories.remove(extension);
         }
       }, true, application);
   }
 
   public static void registerToolProvider(@NotNull InspectionToolProvider extension,
-                                          @NotNull MultiMap<Class<?>, Supplier<InspectionToolWrapper>> factories) {
-    Class<? extends InspectionToolProvider> providerClass = extension.getClass();
-    for (Class<? extends LocalInspectionTool> aClass : extension.getInspectionClasses()) {
-      factories.putValue(providerClass, () ->
+                                          @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
+    for (Class<? extends InspectionProfileEntry> aClass : extension.getInspectionClasses()) {
+      factories.putValue(extension, () ->
         ObjectUtils.doIfNotNull(InspectionToolsRegistrarCore.instantiateTool(aClass), e -> wrapTool(e)));
     }
   }
