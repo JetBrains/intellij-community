@@ -42,7 +42,7 @@ public class ContainingBranchesGetter {
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
-    myConditionsCache = new CurrentBranchConditionCache(logData);
+    myConditionsCache = new CurrentBranchConditionCache(logData, parentDisposable);
     myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
       final List<String> branches = task.getContainingBranches(myLogData);
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -134,6 +134,7 @@ public class ContainingBranchesGetter {
     return branches;
   }
 
+  @CalledInAny
   @NotNull
   public Condition<Integer> getContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
     return myConditionsCache.getContainedInCurrentBranchCondition(root);
