@@ -237,7 +237,6 @@ public class SuperBuilderHandler extends BuilderHandler {
           .withModifier(PsiModifier.STATIC);
 
         final String toBuilderMethodCalls = builderInfos.stream()
-          // TODO fix collection call
           .map(BuilderInfo::renderToBuilderCall)
           .collect(Collectors.joining(';' + BUILDER_VARIABLE_NAME + '.', BUILDER_VARIABLE_NAME + '.', ";\n"));
 

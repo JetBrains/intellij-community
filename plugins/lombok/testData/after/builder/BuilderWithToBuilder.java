@@ -123,7 +123,7 @@ class BuilderWithToBuilder<T> {
 	@java.lang.SuppressWarnings("all")
 	@javax.annotation.Generated("lombok")
 	public BuilderWithToBuilderBuilder<T> toBuilder() {
-		return new BuilderWithToBuilderBuilder<T>().one(this.mOne).two(this.mTwo).foo(BuilderWithToBuilder.rrr(this)).bars(this.bars);
+		return new BuilderWithToBuilderBuilder<T>().one(this.mOne).two(this.mTwo).foo(BuilderWithToBuilder.rrr(this)).bars(this.bars==null?java.util.Collections.emptyList():this.bars);
 	}
 }
 

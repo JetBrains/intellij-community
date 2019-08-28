@@ -28,7 +28,7 @@ import java.util.List;
 
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
-  protected final String collectionQualifiedName;
+  final String collectionQualifiedName;
 
   AbstractSingularHandler(String qualifiedName) {
     this.collectionQualifiedName = qualifiedName;
@@ -110,6 +110,14 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation) {
     return Arrays.asList(createSingularName(singularAnnotation, fieldName), fieldName, createSingularClearMethodName(fieldName));
   }
+
+  @Override
+  public String renderToBuilderCall(@NotNull BuilderInfo info) {
+    final String instanceGetter = info.getInstanceVariableName() + '.' + info.getVariable().getName();
+    return info.getFieldName() + '(' + instanceGetter + " == null ? " + getEmptyCollectionCall() + " : " + instanceGetter + ')';
+  }
+
+  protected abstract String getEmptyCollectionCall();
 
   protected abstract String getClearMethodBody(@NotNull BuilderInfo info);
 

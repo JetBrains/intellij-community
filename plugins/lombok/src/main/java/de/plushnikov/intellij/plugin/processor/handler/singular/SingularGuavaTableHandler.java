@@ -112,4 +112,9 @@ class SingularGuavaTableHandler extends SingularMapHandler {
       fieldName, rowKeyType.getCanonicalText(false), columnKeyType.getCanonicalText(false),
       valueType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
+
+  @Override
+  protected String getEmptyCollectionCall() {
+    return collectionQualifiedName + '.' + "builder()";
+  }
 }

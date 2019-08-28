@@ -169,4 +169,9 @@ class SingularMapHandler extends AbstractSingularHandler {
   public String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
     return renderBuildCode(psiVariable, fieldName, "b");
   }
+
+  @Override
+  protected String getEmptyCollectionCall() {
+    return "java.util.Collections.emptyMap()";
+  }
 }

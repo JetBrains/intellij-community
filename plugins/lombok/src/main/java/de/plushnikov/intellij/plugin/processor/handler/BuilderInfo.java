@@ -223,6 +223,10 @@ public class BuilderInfo {
     return viaStaticCall;
   }
 
+  public String getInstanceVariableName() {
+    return instanceVariableName;
+  }
+
   public Collection<String> getAnnotations() {
     if (deprecated) {
       return Collections.singleton(CommonClassNames.JAVA_LANG_DEPRECATED);
@@ -251,11 +255,10 @@ public class BuilderInfo {
   }
 
   public CharSequence renderToBuilderCall() {
-    final StringBuilder result = new StringBuilder();
-
-    result.append(fieldInBuilderName);
-    result.append('(');
     if (hasObtainViaAnnotation()) {
+      final StringBuilder result = new StringBuilder();
+      result.append(fieldInBuilderName);
+      result.append('(');
       if (StringUtil.isNotEmpty(viaFieldName)) {
         result.append(instanceVariableName).append(".").append(viaFieldName);
       } else if (StringUtil.isNotEmpty(viaMethodName)) {
@@ -267,12 +270,11 @@ public class BuilderInfo {
       } else {
         result.append(instanceVariableName).append(".").append(variableInClass.getName());
       }
+      result.append(')');
+      return result;
     } else {
-      result.append(instanceVariableName).append(".").append(variableInClass.getName());
+      return builderElementHandler.renderToBuilderCall(this);
     }
-    result.append(')');
-
-    return result;
   }
 
   private PsiClass getPsiClass() {

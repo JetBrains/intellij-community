@@ -107,4 +107,14 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     }
     return MessageFormat.format(result, fieldName, elementType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
+
+  protected String getEmptyCollectionCall() {
+    if (SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET.equals(collectionQualifiedName) ||
+      SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName) ||
+      SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
+      return "java.util.Collections.emptySet()";
+    } else {
+      return "java.util.Collections.emptyList()";
+    }
+  }
 }

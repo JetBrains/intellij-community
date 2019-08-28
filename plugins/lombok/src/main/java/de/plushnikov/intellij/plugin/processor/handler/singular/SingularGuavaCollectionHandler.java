@@ -77,4 +77,9 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
         "{4}.{0}.build();\n",
       fieldName, elementType.getCanonicalText(false), collectionQualifiedName, typeCollectionQualifiedName, builderVariable);
   }
+
+  @Override
+  protected String getEmptyCollectionCall() {
+    return typeCollectionQualifiedName + '.' + "builder()";
+  }
 }

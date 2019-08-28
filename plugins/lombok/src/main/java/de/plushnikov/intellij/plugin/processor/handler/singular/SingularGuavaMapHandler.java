@@ -94,4 +94,9 @@ class SingularGuavaMapHandler extends SingularMapHandler {
         "{4}.{0}.build();\n",
       fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
+
+  @Override
+  protected String getEmptyCollectionCall() {
+    return collectionQualifiedName + '.' + "builder()";
+  }
 }
