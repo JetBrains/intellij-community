@@ -1208,10 +1208,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           return;
         }
 
-        Project project = getProject();
+        Project project;
+        try {
+          project = myProjectFixture.getProject();
+        }
+        catch (AssertionError ignore) {
+          project = null;
+        }
+
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
-          AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+          // clear "show param info" delayed requests leaking project
+          AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+          if (autoPopupController != null) {
+            autoPopupController.cancelAllRequests();
+          }
         }
 
         // return default value to avoid unnecessary save
@@ -1383,7 +1394,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       Module module = getModule();
       if (module != null) {
-        for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+        for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
           module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
         }
       }
@@ -1530,7 +1541,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public Project getProject() {
+  public final Project getProject() {
     return myProjectFixture.getProject();
   }
 
