@@ -84,7 +84,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
 
   public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VisiblePack initialDataPack, @Nullable VcsLogFilterCollection filters) {
+                   @NotNull VisiblePack initialDataPack, @Nullable VcsLogFilterCollection filters, boolean isUpdateLog) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
@@ -106,7 +106,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
-    }, this);
+    }, this, isUpdateLog);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);

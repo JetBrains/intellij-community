@@ -262,7 +262,7 @@ public class VcsLogManager implements Disposable {
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,
                                                                         vcsLogFilterer, myLogId);
-      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher, myFilters);
+      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher, myFilters, false);
     }
   }
 }
