@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -42,13 +41,13 @@ public class SuperBuilderHandler extends BuilderHandler {
     return getBuilderClassName(psiClass) + "Impl";
   }
 
-  public Optional<PsiMethod> createBuilderBasedConstructor(@NotNull PsiClass psiClass, @NotNull PsiClass builderClass, @NotNull PsiAnnotation psiAnnotation) {
+  public Optional<PsiMethod> createBuilderBasedConstructor(@NotNull PsiClass psiClass, @NotNull PsiClass builderClass,
+                                                           @NotNull PsiAnnotation psiAnnotation,
+                                                           @NotNull PsiClassType psiTypeBaseWithGenerics) {
     final String className = psiClass.getName();
     if (null == className) {
       return Optional.empty();
     }
-
-    final PsiClassType psiTypeBaseWithGenerics = getTypeWithWildcardsForSuperBuilderTypeParameters(builderClass);
 
     LombokLightMethodBuilder constructorBuilderBased = new LombokLightMethodBuilder(psiClass.getManager(), className)
       .withConstructor(true)
@@ -57,6 +56,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.PROTECTED)
       .withParameter(BUILDER_VARIABLE_NAME, psiTypeBaseWithGenerics);
 
+    //TODO fix bType
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, builderClass, psiTypeBaseWithGenerics);
     final String buildMethodPrepare = builderInfos.stream()
       .map(BuilderInfo::renderSuperBuilderConstruction)
@@ -77,13 +77,12 @@ public class SuperBuilderHandler extends BuilderHandler {
   public Optional<PsiMethod> createBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
                                                             @NotNull PsiClass builderBaseClass,
                                                             @NotNull PsiClass builderImplClass,
-                                                            @NotNull PsiAnnotation psiAnnotation) {
+                                                            @NotNull PsiAnnotation psiAnnotation,
+                                                            @NotNull PsiClassType psiTypeBaseWithGenerics) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
     if (builderMethodName.isEmpty() || hasMethod(containingClass, builderMethodName)) {
       return Optional.empty();
     }
-//TODO optimize with constructor
-    final PsiClassType psiTypeBaseWithGenerics = getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), builderMethodName)
       .withMethodReturnType(psiTypeBaseWithGenerics)
@@ -102,20 +101,20 @@ public class SuperBuilderHandler extends BuilderHandler {
   public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
                                                               @NotNull PsiClass builderBaseClass,
                                                               @NotNull PsiClass builderImplClass,
-                                                              @NotNull PsiAnnotation psiAnnotation) {
+                                                              @NotNull PsiAnnotation psiAnnotation,
+                                                              @NotNull PsiClassType psiTypeBaseWithGenerics) {
     if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
       return Optional.empty();
     }
-//TODO optimize with constructor
-    final PsiType psiTypeWithGenerics = getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), TO_BUILDER_METHOD_NAME)
-      .withMethodReturnType(psiTypeWithGenerics)
+      .withMethodReturnType(psiTypeBaseWithGenerics)
       .withContainingClass(containingClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(PsiModifier.PUBLIC);
 
-    final String blockText = String.format("return new %s().%s(this);", builderImplClass.getName(), FILL_VALUES_METHOD_NAME);
+    final String blockText = String.format("return new %s().%s(this);",
+      PsiClassUtil.getTypeWithGenerics(builderImplClass).getPresentableText(), FILL_VALUES_METHOD_NAME);
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
 
     return Optional.of(methodBuilder);
@@ -144,7 +143,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     final LightTypeParameterBuilder b = new LightTypeParameterBuilder("B", baseClassBuilder, 1);
     baseClassBuilder.withParameterType(b);
-    b.getExtendsList().addReference(PsiClassUtil.createTypeWithGenerics(baseClassBuilder, c, b));
+    b.getExtendsList().addReference(PsiClassUtil.getTypeWithGenerics(baseClassBuilder));
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiClassType bType = factory.createType(b);
@@ -154,7 +153,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     if (null != superClass && !"Object".equals(superClass.getName())) {
       final PsiClass parentBuilderClass = superClass.findInnerClassByName(getBuilderClassName(superClass), false);
       if (null != parentBuilderClass) {
-        baseClassBuilder.withExtends(PsiClassUtil.createTypeWithGenerics(parentBuilderClass, c, b));
+        final PsiClassType extendsType = getTypeWithWildcardsForSuperBuilderTypeParameters(parentBuilderClass, cType, bType);
+        baseClassBuilder.withExtends(extendsType);
       }
     }
 
@@ -309,7 +309,9 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
 
-    implClassBuilder.withExtends(PsiClassUtil.createTypeWithGenerics(psiBaseBuilderClass, psiClass, implClassBuilder));
+    final PsiClassType extendsType = getTypeWithWildcardsForSuperBuilderTypeParameters(psiBaseBuilderClass,
+      PsiClassUtil.getTypeWithGenerics(psiClass), PsiClassUtil.getTypeWithGenerics(implClassBuilder));
+    implClassBuilder.withExtends(extendsType);
 
     implClassBuilder.withMethods(createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
 
@@ -369,16 +371,23 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   @NotNull
-  private PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+  public PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+    final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
+    return getTypeWithWildcardsForSuperBuilderTypeParameters(psiClass, wildcardType, wildcardType);
+  }
+
+  @NotNull
+  private PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
-    if (classTypeParameters.length >= 2) {
+    final int substituteTypesCount = psiTypes.length;
+    if (classTypeParameters.length >= substituteTypesCount) {
       PsiType[] newTypes = new PsiType[classTypeParameters.length];
-      final int fromIndex = classTypeParameters.length - 2;
+      final int fromIndex = classTypeParameters.length - substituteTypesCount;
       for (int i = 0; i < fromIndex; i++) {
         newTypes[i] = elementFactory.createType(classTypeParameters[i]);
       }
-      Arrays.fill(newTypes, fromIndex, classTypeParameters.length, PsiWildcardType.createUnbounded(psiClass.getManager()));
+      System.arraycopy(psiTypes, 0, newTypes, fromIndex, substituteTypesCount);
       return elementFactory.createType(psiClass, newTypes);
     }
     return elementFactory.createType(psiClass);

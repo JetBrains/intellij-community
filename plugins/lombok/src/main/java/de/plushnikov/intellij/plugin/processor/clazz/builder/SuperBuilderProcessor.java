@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -40,7 +41,9 @@ public class SuperBuilderProcessor extends BuilderProcessor {
     final String builderClassName = superBuilderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {
-      superBuilderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation)
+      final PsiClassType psiTypeBaseWithGenerics = superBuilderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
+
+      superBuilderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
 
       // skip generation of builder methods, if class is abstract
@@ -49,10 +52,10 @@ public class SuperBuilderProcessor extends BuilderProcessor {
         final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
 
         if (null != builderImplClass) {
-          superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
+          superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
 
-          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation)
+          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
         }
       }

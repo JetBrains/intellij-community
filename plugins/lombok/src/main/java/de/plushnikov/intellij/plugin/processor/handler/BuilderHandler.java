@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -68,7 +67,7 @@ public class BuilderHandler {
     if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiTypeParameter[] typeParameters = classOrMethodToBuild.getTypeParameters();
       PsiTypeParameter[] builderParams = innerClass.getTypeParameters();
-      if (typeParameters.length == builderParams.length) {
+      if (typeParameters.length <= builderParams.length) {
         for (int i = 0; i < typeParameters.length; i++) {
           PsiTypeParameter typeParameter = typeParameters[i];
           substitutor = substitutor.put(typeParameter, PsiSubstitutor.EMPTY.substitute(builderParams[i]));
@@ -345,7 +344,6 @@ public class BuilderHandler {
     // create builder Fields
     builderInfos.stream()
       .map(BuilderInfo::renderBuilderFields)
-      .filter(Objects::nonNull)
       .forEach(builderClass::withFields);
 
     // create builder methods
