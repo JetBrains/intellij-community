@@ -443,7 +443,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     // so, if class has constructors (Project) and (Project, Foo, Bar), then Foo and Bar unrelated classes will be searched for.
     // To avoid this expensive nearly linear search of extension, first resolve without our logic, and in case of error try expensive.
     try {
-      return instantiateGuarded(aClass, key, this, constructorParameterResolver, aClass)
+      return instantiateUsingPicoContainer(aClass, key, this, constructorParameterResolver)
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -457,7 +457,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
       }
       else {
         assertExtensionInjection(pluginId, e)
-        return instantiateGuarded(aClass, key, this, heavyConstructorParameterResolver, aClass)
+        return instantiateUsingPicoContainer(aClass, key, this, heavyConstructorParameterResolver)
       }
     }
   }

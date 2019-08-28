@@ -1,77 +1,50 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.pico.DefaultPicoContainer
 import gnu.trove.THashSet
 import org.picocontainer.*
 import org.picocontainer.defaults.AmbiguousComponentResolutionException
-import org.picocontainer.defaults.CyclicDependencyException
 import org.picocontainer.defaults.TooManySatisfiableConstructorsException
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 
-private val ourGuard = ThreadLocal<MutableSet<Class<*>>>()
-
 internal class ConstructorInjectionComponentAdapter(componentKey: Any, implementation: Class<*>, private val componentManager: PlatformComponentManagerImpl) : InstantiatingComponentAdapter(componentKey, implementation) {
   override fun getComponentInstance(container: PicoContainer): Any {
-    return instantiateGuarded(componentImplementation, componentKey, componentManager, ConstructorParameterResolver.INSTANCE, componentImplementation)
+    return instantiateUsingPicoContainer(componentImplementation, componentKey, componentManager, ConstructorParameterResolver.INSTANCE)
   }
 }
 
-internal fun <T> instantiateGuarded(aClass: Class<*>, key: Any, componentManager: PlatformComponentManagerImpl, defaultResolver: ConstructorParameterResolver, stackFrame: Class<*>): T {
-  var currentStack = ourGuard.get()
-  if (currentStack == null) {
-    currentStack = ContainerUtil.newIdentityTroveSet()
-    ourGuard.set(currentStack)
-  }
-
-  if (!currentStack.add(aClass)) {
-    throw CyclicDependencyException(stackFrame)
-  }
-
-  @Suppress("UNCHECKED_CAST")
+internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): T {
+  val result = getGreediestSatisfiableConstructor(aClass, requestorKey, componentManager, parameterResolver)
   try {
-    return doGetComponentInstance(aClass, key, componentManager, defaultResolver) as T
-  }
-  catch (e: CyclicDependencyException) {
-    e.push(stackFrame)
-    throw e
-  }
-  finally {
-    currentStack.remove(aClass)
-  }
-}
-
-private fun doGetComponentInstance(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, defaultResolver: ConstructorParameterResolver): Any {
-  val constructor = try {
-    getGreediestSatisfiableConstructor(aClass, requestorKey, componentManager, defaultResolver)
-  }
-  catch (e: AmbiguousComponentResolutionException) {
-    e.setComponent(aClass)
-    throw e
-  }
-
-  try {
-    constructor.isAccessible = true
-    val parameterTypes = constructor.parameterTypes
-    return constructor.newInstance(*Array(parameterTypes.size) {
-      defaultResolver.resolveInstance(componentManager, requestorKey, parameterTypes[it])
-    })
+    result.first.isAccessible = true
+    val parameterTypes = result.second
+    @Suppress("UNCHECKED_CAST")
+    return result.first.newInstance(*Array(parameterTypes.size) {
+      parameterResolver.resolveInstance(componentManager, requestorKey, parameterTypes[it])
+    }) as T
   }
   catch (e: InvocationTargetException) {
     throw e.cause ?: e
   }
 }
 
-private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, defaultResolver: ConstructorParameterResolver): Constructor<*> {
+private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null
   var unsatisfiableDependencyTypes: MutableSet<Array<Class<*>>>? = null
   val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
   var greediestConstructor: Constructor<*>? = null
+  var greediestConstructorParameterTypes: Array<Class<*>>? = null
   var lastSatisfiableConstructorSize = -1
   var unsatisfiedDependencyType: Class<*>? = null
+
   loop@ for (constructor in sortedMatchingConstructors) {
+    if (sortedMatchingConstructors.size > 1 &&
+        (constructor.isAnnotationPresent(java.lang.Deprecated::class.java) || constructor.isAnnotationPresent(Deprecated::class.java))) {
+      continue
+    }
+
     var failedDependency = false
     val parameterTypes = constructor.parameterTypes
 
@@ -81,7 +54,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
       }
 
       // check whether this constructor is satisfiable
-      if (defaultResolver.isResolvable(componentManager, requestorKey, expectedType)) {
+      if (parameterResolver.isResolvable(componentManager, requestorKey, expectedType)) {
         continue
       }
 
@@ -97,7 +70,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
     if (greediestConstructor != null && parameterTypes.size != lastSatisfiableConstructorSize) {
       if (conflicts.isNullOrEmpty()) {
         // we found our match (greedy and satisfied)
-        return greediestConstructor
+        return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
       }
       else {
         // fits although not greedy
@@ -116,15 +89,22 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
     }
     else if (!failedDependency) {
       greediestConstructor = constructor
+      greediestConstructorParameterTypes = parameterTypes
       lastSatisfiableConstructorSize = parameterTypes.size
     }
   }
 
   when {
-    !conflicts.isNullOrEmpty() -> throw TooManySatisfiableConstructorsException(aClass, conflicts)
-    greediestConstructor != null -> return greediestConstructor
-    !unsatisfiableDependencyTypes.isNullOrEmpty() -> throw PicoIntrospectionException("$requestorKey has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
-                                                                                      "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
+    !conflicts.isNullOrEmpty() -> {
+      throw TooManySatisfiableConstructorsException(aClass, conflicts)
+    }
+    greediestConstructor != null -> {
+      return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
+    }
+    !unsatisfiableDependencyTypes.isNullOrEmpty() -> {
+      throw PicoIntrospectionException("$requestorKey has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
+                                       "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
+    }
     else -> {
       throw PicoInitializationException("The specified parameters not match any of the following constructors: " +
                                         "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" +
