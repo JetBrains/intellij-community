@@ -16,13 +16,13 @@
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
