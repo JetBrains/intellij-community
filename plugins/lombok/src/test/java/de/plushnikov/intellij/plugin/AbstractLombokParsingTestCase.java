@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +35,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     return true;
   }
 
-  public void doTest() throws IOException {
+  public void doTest() {
     doTest(false);
   }
 
