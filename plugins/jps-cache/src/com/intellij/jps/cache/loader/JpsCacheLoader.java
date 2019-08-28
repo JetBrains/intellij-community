@@ -15,6 +15,7 @@ import java.util.Set;
 public class JpsCacheLoader implements JpsOutputLoader{
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
   private static final int COMMITS_COUNT = 20;
+  private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private final BuildManager myBuildManager;
   private final JpsServerClient myClient;
   private final Project myProject;
@@ -54,9 +55,21 @@ public class JpsCacheLoader implements JpsOutputLoader{
     }
     File currentDirForBuildCache = BuildManager.getInstance().getProjectSystemDirectory(myProject);
     if (currentDirForBuildCache != null) {
+      File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
+      if (timestamps.exists()) {
+        try {
+          File newTimestampFolder = new File(tmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
+          newTimestampFolder.mkdirs();
+          FileUtil.copyDir(timestamps, newTimestampFolder);
+        }
+        catch (IOException e) {
+          LOG.warn("Couldn't copy timestamps from old JPS caches", e);
+        }
+      }
       FileUtil.delete(currentDirForBuildCache);
       try {
         FileUtil.rename(tmpCacheFolder, currentDirForBuildCache);
+        LOG.warn("Cache downloads DONE");
       }
       catch (IOException e) {
         LOG.warn("Couldn't replace existing caches by downloaded portable", e);
