@@ -19,8 +19,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestActionEvent;
-import com.intellij.testFramework.UtilKt;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockVcsContextFactory;
 import com.intellij.vcsUtil.VcsUtil;
@@ -316,11 +316,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
   private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
-    UtilKt.replaceServiceInstance(getProject(), CodeStyleManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), CodeStyleManager.class, manager, getTestRootDisposable());
   }
 
   private void registerVcsContextFactory(@NotNull VcsContextFactory factory) {
-    UtilKt.replaceServiceInstance(ApplicationManager.getApplication(), VcsContextFactory.class, factory, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), VcsContextFactory.class, factory, getTestRootDisposable());
   }
 
   private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) {

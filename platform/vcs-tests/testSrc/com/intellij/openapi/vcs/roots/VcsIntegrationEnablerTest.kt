@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.replaceServiceInstance
+import com.intellij.testFramework.replaceService
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsUtil
 import java.io.File
@@ -20,7 +20,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
   public override fun setUp() {
     super.setUp()
 
-    myProject.replaceServiceInstance(VcsNotifier::class.java, TestVcsNotifier(myProject), testRootDisposable)
+    myProject.replaceService(VcsNotifier::class.java, TestVcsNotifier(myProject), testRootDisposable)
     myTestRoot = projectRoot.parent
   }
 

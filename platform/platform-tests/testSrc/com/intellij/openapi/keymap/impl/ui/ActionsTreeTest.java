@@ -14,7 +14,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.UtilKt;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +167,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   }
 
   private void setRestrictions(@NotNull ActionShortcutRestrictions restrictions) {
-    UtilKt.replaceServiceInstance(ApplicationManager.getApplication(), ActionShortcutRestrictions.class, restrictions, getTestRootDisposable());
+    ServiceContainerUtil
+      .replaceService(ApplicationManager.getApplication(), ActionShortcutRestrictions.class, restrictions, getTestRootDisposable());
   }
 
   public void testVariousActionsArePresent() {

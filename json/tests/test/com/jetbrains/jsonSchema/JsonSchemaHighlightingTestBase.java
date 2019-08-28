@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.UtilKt;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.annotations.Language;
@@ -60,6 +60,6 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
     FileUtil.writeToFile(child, schema);
     VirtualFile schemaFile = getVirtualFile(child);
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile, getAvailabilityPredicate()));
-    UtilKt.replaceServiceInstance(getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
+    ServiceContainerUtil.replaceService(project, JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
   }
 }

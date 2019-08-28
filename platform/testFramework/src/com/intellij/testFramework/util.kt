@@ -1,4 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
@@ -10,7 +11,6 @@ fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T
   (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, DefaultPluginDescriptor("test"))
 }
 
-@JvmOverloads
-fun <T : Any> ComponentManager.replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
   (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }

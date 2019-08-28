@@ -22,8 +22,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.UtilKt;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
 import hg4idea.test.HgExecutor;
@@ -178,7 +178,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
    */
   protected HgMockVcsHelper registerMockVcsHelper() {
     HgMockVcsHelper instance = new HgMockVcsHelper(myProject);
-    UtilKt.replaceServiceInstance(myProject, AbstractVcsHelper.class, instance, myProject);
+    ServiceContainerUtil.replaceService(myProject, AbstractVcsHelper.class, instance, myProject);
     return instance;
   }
 

@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.replaceServiceInstance
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -54,11 +54,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     dialogManager = service<DialogManager>() as TestDialogManager
     vcsHelper = MockVcsHelper(myProject)
-    project.replaceServiceInstance(AbstractVcsHelper::class.java, vcsHelper, testRootDisposable)
+    project.replaceService(AbstractVcsHelper::class.java, vcsHelper, testRootDisposable)
 
     repositoryManager = GitUtil.getRepositoryManager(project)
     git = TestGitImpl()
-    ApplicationManager.getApplication().replaceServiceInstance(Git::class.java, git, testRootDisposable)
+    ApplicationManager.getApplication().replaceService(Git::class.java, git, testRootDisposable)
     vcs = GitVcs.getInstance(project)
     vcs.doActivate()
     commitContext = CommitContext()

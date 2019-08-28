@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.UtilKt;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -342,7 +342,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       }
     };
     Disposable disposable = Disposer.newDisposable();
-    UtilKt.replaceServiceInstance(ApplicationManager.getApplication(), ProjectManager.class, test, disposable);
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, disposable);
     assertSame(test, ProjectManager.getInstance());
 
     try {

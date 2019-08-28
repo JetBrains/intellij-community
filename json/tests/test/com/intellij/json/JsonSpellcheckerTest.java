@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.UtilKt;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
@@ -41,7 +41,7 @@ public class JsonSpellcheckerTest extends JsonTestCase {
   public void testWithSchema() {
     PsiFile[] files = myFixture.configureByFiles(getTestName(false) + ".json", "Schema.json");
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(files[1].getVirtualFile(), getAvailabilityPredicate()));
-    UtilKt.replaceServiceInstance(getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {

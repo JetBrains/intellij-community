@@ -17,7 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.UtilKt;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +64,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
   }
 
   private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
-    UtilKt.replaceServiceInstance(getProject(), CodeStyleManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), CodeStyleManager.class, manager, getTestRootDisposable());
   }
 
   public void testReformatWithoutMask() {

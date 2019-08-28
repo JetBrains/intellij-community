@@ -61,7 +61,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
     vcsNotifier = TestVcsNotifier(myProject)
-    project.replaceServiceInstance(VcsNotifier::class.java, vcsNotifier, testRootDisposable)
+    project.replaceService(VcsNotifier::class.java, vcsNotifier, testRootDisposable)
     cd(testRoot)
   }
 

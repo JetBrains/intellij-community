@@ -31,7 +31,6 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ConcurrentMap
 
-
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
     private val LOG = logger<PlatformComponentManagerImpl>()
