@@ -20,6 +20,8 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -81,7 +83,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
-  private final UIManager.LookAndFeelInfo[] myLaFs;
+  private UIManager.LookAndFeelInfo[] myLaFs;
+  private final UIManager.LookAndFeelInfo myDefaultLightTheme;
+  private final UIManager.LookAndFeelInfo myDefaultDarkTheme;
   private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
@@ -105,10 +109,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     if (SystemInfo.isMac) {
-      lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
+      myDefaultLightTheme = new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName());
+      lafList.add(myDefaultLightTheme);
     }
     else {
-      lafList.add(new IntelliJLookAndFeelInfo());
+      myDefaultLightTheme = new IntelliJLookAndFeelInfo();
+      lafList.add(myDefaultLightTheme);
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
@@ -122,7 +128,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    lafList.add(new DarculaLookAndFeelInfo());
+    lafList.add(myDefaultDarkTheme = new DarculaLookAndFeelInfo());
 
 
     for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
@@ -133,6 +139,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
+    sortThemesIfNecessary();
+
+    myCurrentLaf = getDefaultLaf();
+  }
+
+  private void sortThemesIfNecessary() {
     if (!SystemInfo.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
@@ -143,8 +155,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return name1.compareToIgnoreCase(name2);
       });
     }
-
-    myCurrentLaf = getDefaultLaf();
   }
 
   @Override
@@ -178,6 +188,43 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     updateUI();
+
+    UIThemeProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
+      @Override
+      public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        UITheme theme = provider.createTheme();
+        if (theme != null) {
+          UIManager.LookAndFeelInfo[] newLafs = new UIManager.LookAndFeelInfo[myLaFs.length + 1];
+          System.arraycopy(myLaFs, 0, newLafs, 0, myLaFs.length);
+          UIThemeBasedLookAndFeelInfo newTheme = new UIThemeBasedLookAndFeelInfo(theme);
+          newLafs[newLafs.length - 1] = newTheme;
+          myLaFs = newLafs;
+          sortThemesIfNecessary();
+          setCurrentLookAndFeel(newTheme);
+          updateUI();
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        UIManager.LookAndFeelInfo switchLafTo = null;
+        ArrayList<UIManager.LookAndFeelInfo> lafs = new ArrayList<>();
+        for (UIManager.LookAndFeelInfo lookAndFeel : getInstalledLookAndFeels()) {
+          if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().getId().equals(provider.id)) {
+            if (lookAndFeel == getCurrentLookAndFeel()) {
+              switchLafTo = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
+            }
+            continue;
+          }
+          lafs.add(lookAndFeel);
+        }
+        myLaFs = lafs.toArray(new UIManager.LookAndFeelInfo[0]);
+        if (switchLafTo != null) {
+          setCurrentLookAndFeel(switchLafTo);
+          updateUI();
+        }
+      }
+    }, false, this);
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
