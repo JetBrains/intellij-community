@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public class ModuleHashingService {
   protected static final int HASH_SIZE_IN_BYTES = 16;
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.cachepuller.ModuleHashingService");
+  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.hashing.ModuleHashingService");
 
   private ModuleHashingService() {}
 
