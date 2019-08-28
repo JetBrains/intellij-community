@@ -68,7 +68,7 @@ public abstract class PluginsTab {
       return;
     }
 
-    List<CellPluginComponent> selection = panel.getSelection();
+    List<ListPluginComponent> selection = panel.getSelection();
     int size = selection.size();
     myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
@@ -221,7 +221,7 @@ public abstract class PluginsTab {
     String text = "Type / to see options";
 
     StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
-    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
+    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));
   }
 
   @NotNull

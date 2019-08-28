@@ -20,9 +20,9 @@ import java.util.function.Consumer;
 public class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
-  private List<CellPluginComponent> myComponents;
+  private List<ListPluginComponent> myComponents;
 
-  private CellPluginComponent myHoverComponent;
+  private ListPluginComponent myHoverComponent;
 
   private int mySelectionIndex;
   private int mySelectionLength;
@@ -45,7 +45,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseClicked(MouseEvent event) {
         if (SwingUtilities.isLeftMouseButton(event)) {
-          CellPluginComponent component = get(event);
+          ListPluginComponent component = get(event);
           int index = getIndex(component);
 
           if (event.isShiftDown()) {
@@ -69,7 +69,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           }
         }
         else if (SwingUtilities.isRightMouseButton(event)) {
-          CellPluginComponent component = get(event);
+          ListPluginComponent component = get(event);
 
           if (myAllSelected || myMixSelection) {
             int size = getSelection().size();
@@ -110,7 +110,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseMoved(MouseEvent event) {
         if (myHoverComponent == null) {
-          CellPluginComponent component = get(event);
+          ListPluginComponent component = get(event);
           if (component.getSelection() == SelectionType.NONE) {
             myHoverComponent = component;
             component.setSelection(SelectionType.HOVER);
@@ -172,7 +172,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
         else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == DELETE_CODE) {
           assert mySelectionLength != 0;
-          CellPluginComponent component = myComponents.get(mySelectionIndex);
+          ListPluginComponent component = myComponents.get(mySelectionIndex);
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
@@ -185,7 +185,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void focusGained(FocusEvent event) {
         if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
-          CellPluginComponent component = get(event);
+          ListPluginComponent component = get(event);
           int index = getIndex(component);
           if (mySelectionIndex != index) {
             clearSelectionWithout(index);
@@ -204,13 +204,13 @@ public class MultiSelectionEventHandler extends EventHandler {
 
     try {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
+      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
 
       myKeyListener.keyPressed(event);
     }
     finally {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
+      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
     }
   }
 
@@ -221,7 +221,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void addCell(@NotNull CellPluginComponent component, int index) {
+  public void addCell(@NotNull ListPluginComponent component, int index) {
     if (index == -1) {
       myComponents.add(component);
     }
@@ -231,7 +231,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void addCell(@NotNull CellPluginComponent component, @Nullable CellPluginComponent anchor) {
+  public void addCell(@NotNull ListPluginComponent component, @Nullable ListPluginComponent anchor) {
     if (anchor == null) {
       myComponents.add(component);
     }
@@ -241,12 +241,12 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void removeCell(@NotNull CellPluginComponent component) {
+  public void removeCell(@NotNull ListPluginComponent component) {
     myComponents.remove(component);
   }
 
   @Override
-  public int getCellIndex(@NotNull CellPluginComponent component) {
+  public int getCellIndex(@NotNull ListPluginComponent component) {
     return myComponents.indexOf(component);
   }
 
@@ -270,10 +270,10 @@ public class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   @NotNull
-  public List<CellPluginComponent> getSelection() {
-    List<CellPluginComponent> selection = new ArrayList<>();
+  public List<ListPluginComponent> getSelection() {
+    List<ListPluginComponent> selection = new ArrayList<>();
 
-    for (CellPluginComponent component : myComponents) {
+    for (ListPluginComponent component : myComponents) {
       if (component.getSelection() == SelectionType.SELECTION) {
         selection.add(component);
       }
@@ -332,7 +332,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     myMixSelection = false;
     myHoverComponent = null;
 
-    for (CellPluginComponent component : myComponents) {
+    for (ListPluginComponent component : myComponents) {
       if (component.getSelection() != SelectionType.SELECTION) {
         component.setSelection(SelectionType.SELECTION, false);
       }
@@ -423,7 +423,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     }
   }
 
-  private int getIndex(@NotNull CellPluginComponent component) {
+  private int getIndex(@NotNull ListPluginComponent component) {
     int index = myComponents.indexOf(component);
     assert index >= 0 : component;
     return index;
@@ -434,7 +434,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       return;
     }
     if (myMixSelection && mySelectionIndex != -1) {
-      CellPluginComponent component = myComponents.get(mySelectionIndex);
+      ListPluginComponent component = myComponents.get(mySelectionIndex);
       if (component.getSelection() != SelectionType.SELECTION) {
         component.setSelection(SelectionType.SELECTION);
       }
@@ -455,13 +455,13 @@ public class MultiSelectionEventHandler extends EventHandler {
     }
 
     for (int i = 0; i < first; i++) {
-      CellPluginComponent component = myComponents.get(i);
+      ListPluginComponent component = myComponents.get(i);
       if (component.getSelection() == SelectionType.SELECTION) {
         component.setSelection(SelectionType.NONE);
       }
     }
     for (int i = last, size = myComponents.size(); i < size; i++) {
-      CellPluginComponent component = myComponents.get(i);
+      ListPluginComponent component = myComponents.get(i);
       if (component.getSelection() == SelectionType.SELECTION) {
         component.setSelection(SelectionType.NONE);
       }
@@ -473,7 +473,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     myMixSelection = false;
     for (int i = 0, size = myComponents.size(); i < size; i++) {
       if (i != withoutIndex) {
-        CellPluginComponent component = myComponents.get(i);
+        ListPluginComponent component = myComponents.get(i);
         if (component.getSelection() == SelectionType.SELECTION) {
           component.setSelection(SelectionType.NONE);
         }
@@ -481,7 +481,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     }
   }
 
-  private void ensureMoveSingleSelection(CellPluginComponent component) {
+  private void ensureMoveSingleSelection(ListPluginComponent component) {
     int index = getIndex(component);
     if (mySelectionLength == 0 || mySelectionIndex != index) {
       clearSelectionWithout(index);
@@ -490,13 +490,13 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
+  public void setSelection(@NotNull ListPluginComponent component, boolean scrollAndFocus) {
     clearSelectionWithout(-1);
     singleSelection(component, getIndex(component), scrollAndFocus);
   }
 
   @Override
-  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
     clearSelectionWithout(-1);
     mySelectionIndex = -1;
     mySelectionLength = components.size();
@@ -507,7 +507,7 @@ public class MultiSelectionEventHandler extends EventHandler {
 
     mySelectionIndex = getIndex(components.get(0));
 
-    for (CellPluginComponent component : components) {
+    for (ListPluginComponent component : components) {
       mySelectionIndex = Math.min(mySelectionIndex, getIndex(component));
       if (component.getSelection() != SelectionType.SELECTION) {
         component.setSelection(SelectionType.SELECTION, true);
@@ -521,11 +521,11 @@ public class MultiSelectionEventHandler extends EventHandler {
     singleSelection(myComponents.get(index), index);
   }
 
-  private void singleSelection(@NotNull CellPluginComponent component, int index) {
+  private void singleSelection(@NotNull ListPluginComponent component, int index) {
     singleSelection(component, index, true);
   }
 
-  private void singleSelection(@NotNull CellPluginComponent component, int index, boolean scrollAndFocus) {
+  private void singleSelection(@NotNull ListPluginComponent component, int index, boolean scrollAndFocus) {
     mySelectionIndex = index;
     mySelectionLength = 1;
     if (myHoverComponent == component) {
@@ -546,7 +546,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void updateHover(@NotNull CellPluginComponent component) {
+  public void updateHover(@NotNull ListPluginComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       myHoverComponent = component;
       if (component.getSelection() == SelectionType.NONE) {

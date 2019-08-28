@@ -45,7 +45,7 @@ public class PluginsListLayout extends AbstractLayoutManager implements PagePlug
       component.setBounds(0, y, width, height);
       y += height;
 
-      for (CellPluginComponent plugin : group.plugins) {
+      for (ListPluginComponent plugin : group.plugins) {
         plugin.setBounds(0, y, width, myLineHeight);
         y += myLineHeight;
       }
@@ -63,15 +63,7 @@ public class PluginsListLayout extends AbstractLayoutManager implements PagePlug
     myLineHeight = 0;
 
     for (UIPluginGroup group : groups) {
-      for (CellPluginComponent plugin : group.plugins) {
-        JEditorPane description = plugin.myDescription;
-        if (description != null) {
-          plugin.doLayout();
-          int parentWidth = width - SwingUtilities.convertPoint(description.getParent(), description.getLocation(), plugin).x;
-          if (parentWidth > 0) {
-            description.putClientProperty("parent.width", new Integer(parentWidth));
-          }
-        }
+      for (ListPluginComponent plugin : group.plugins) {
 
         plugin.doLayout();
         myLineHeight = Math.max(myLineHeight, plugin.getPreferredSize().height);

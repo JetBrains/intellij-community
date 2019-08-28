@@ -64,7 +64,7 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
       component.setBounds(0, y, width, height);
       y += height;
 
-      for (CellPluginComponent plugin : group.plugins) {
+      for (ListPluginComponent plugin : group.plugins) {
         int lineHeight = plugin.getPreferredSize().height;
         plugin.setBounds(0, y, width, lineHeight);
         y += lineHeight;

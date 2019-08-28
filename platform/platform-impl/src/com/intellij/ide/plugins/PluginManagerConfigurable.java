@@ -829,7 +829,7 @@ public class PluginManagerConfigurable
             public void linkSelected(LinkLabel aSource, Object aLinkData) {
               myUpdateAll.setEnabled(false);
 
-              for (CellPluginComponent plugin : downloaded.ui.plugins) {
+              for (ListPluginComponent plugin : downloaded.ui.plugins) {
                 ((ListPluginComponent)plugin).updatePlugin();
               }
             }
@@ -1096,7 +1096,7 @@ public class PluginManagerConfigurable
 
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
-      for (CellPluginComponent plugin : group.plugins) {
+      for (ListPluginComponent plugin : group.plugins) {
         ((ListPluginComponent)plugin).setUpdateDescriptor(null);
       }
     }
@@ -1106,7 +1106,7 @@ public class PluginManagerConfigurable
     for (PluginDownloader downloader : updates) {
       IdeaPluginDescriptor descriptor = downloader.getDescriptor();
       for (UIPluginGroup group : panel.getGroups()) {
-        CellPluginComponent component = group.findComponent(descriptor);
+        ListPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
           ((ListPluginComponent)component).setUpdateDescriptor(descriptor);
           break;
@@ -1120,7 +1120,7 @@ public class PluginManagerConfigurable
       @Override
       public void performCopy(@NotNull DataContext dataContext) {
         StringBuilder result = new StringBuilder();
-        for (CellPluginComponent pluginComponent : component.getSelection()) {
+        for (ListPluginComponent pluginComponent : component.getSelection()) {
           result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
         }
         CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
@@ -1619,11 +1619,11 @@ public class PluginManagerConfigurable
       return;
     }
 
-    List<CellPluginComponent> components = new ArrayList<>();
+    List<ListPluginComponent> components = new ArrayList<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
       for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-        CellPluginComponent component = group.findComponent(descriptor);
+        ListPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
           components.add(component);
           break;
@@ -1675,7 +1675,7 @@ public class PluginManagerConfigurable
 
         if (select) {
           for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-            CellPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
+            ListPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
             if (component != null) {
               myInstalledPanel.setSelection(component);
               break;

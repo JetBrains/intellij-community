@@ -34,9 +34,9 @@ import java.util.stream.Collectors;
  * @author Alexander Lobas
  */
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
-  private final List<CellPluginComponent> myListComponents = new ArrayList<>();
-  private final Map<IdeaPluginDescriptor, List<CellPluginComponent>> myListMap = new HashMap<>();
-  private final Map<IdeaPluginDescriptor, List<CellPluginComponent>> myGridMap = new HashMap<>();
+  private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
+  private final Map<IdeaPluginDescriptor, List<ListPluginComponent>> myInstalledPluginComponentMap = new HashMap<>();
+  private final Map<IdeaPluginDescriptor, List<ListPluginComponent>> myMarketplacePluginComponentMap = new HashMap<>();
   private final List<PluginsGroup> myEnabledGroups = new ArrayList<>();
   private PluginsGroupComponent myInstalledPanel;
   private PluginsGroup myDownloaded;
@@ -219,40 +219,39 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
-  public void addComponent(@NotNull CellPluginComponent component) {
+  public void addComponent(@NotNull ListPluginComponent component) {
     if (!component.isMarketplace()) {
       if (myInstallingPlugins.contains(component.myPlugin)) {
         return;
       }
-      myListComponents.add(component);
 
-      List<CellPluginComponent> components = myListMap.computeIfAbsent(component.myPlugin, __ -> new ArrayList<>());
+      List<ListPluginComponent> components = myInstalledPluginComponentMap.computeIfAbsent(component.myPlugin, __ -> new ArrayList<>());
       components.add(component);
     }
     else {
-      List<CellPluginComponent> components = myGridMap.computeIfAbsent(component.myPlugin, __ -> new ArrayList<>());
+      List<ListPluginComponent> components = myMarketplacePluginComponentMap.computeIfAbsent(component.myPlugin, __ -> new ArrayList<>());
       components.add(component);
     }
   }
 
-  public void removeComponent(@NotNull CellPluginComponent component) {
+  public void removeComponent(@NotNull ListPluginComponent component) {
     if (!component.isMarketplace()) {
-      myListComponents.remove(component);
+      myInstalledPluginComponents.remove(component);
 
-      List<CellPluginComponent> components = myListMap.get(component.myPlugin);
+      List<ListPluginComponent> components = myInstalledPluginComponentMap.get(component.myPlugin);
       if (components != null) {
         components.remove(component);
         if (components.isEmpty()) {
-          myListMap.remove(component.myPlugin);
+          myInstalledPluginComponentMap.remove(component.myPlugin);
         }
       }
     }
     else {
-      List<CellPluginComponent> components = myGridMap.get(component.myPlugin);
+      List<ListPluginComponent> components = myMarketplacePluginComponentMap.get(component.myPlugin);
       if (components != null) {
         components.remove(component);
         if (components.isEmpty()) {
-          myGridMap.remove(component.myPlugin);
+          myMarketplacePluginComponentMap.remove(component.myPlugin);
         }
       }
     }
@@ -376,15 +375,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myInstalledPanel.doLayout();
     }
 
-    List<CellPluginComponent> gridComponents = myGridMap.get(descriptor);
+    List<ListPluginComponent> gridComponents = myMarketplacePluginComponentMap.get(descriptor);
     if (gridComponents != null) {
-      for (CellPluginComponent gridComponent : gridComponents) {
+      for (ListPluginComponent gridComponent : gridComponents) {
         gridComponent.showProgress();
       }
     }
-    List<CellPluginComponent> listComponents = myListMap.get(descriptor);
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor);
     if (listComponents != null) {
-      for (CellPluginComponent listComponent : listComponents) {
+      for (ListPluginComponent listComponent : listComponents) {
         listComponent.showProgress();
       }
     }
@@ -404,15 +403,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myTopController.showProgress(false);
     }
 
-    List<CellPluginComponent> gridComponents = myGridMap.get(descriptor);
+    List<ListPluginComponent> gridComponents = myMarketplacePluginComponentMap.get(descriptor);
     if (gridComponents != null) {
-      for (CellPluginComponent gridComponent : gridComponents) {
+      for (ListPluginComponent gridComponent : gridComponents) {
         gridComponent.hideProgress(success, restartRequired);
       }
     }
-    List<CellPluginComponent> listComponents = myListMap.get(descriptor);
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor);
     if (listComponents != null) {
-      for (CellPluginComponent listComponent : listComponents) {
+      for (ListPluginComponent listComponent : listComponents) {
         listComponent.hideProgress(success, restartRequired);
       }
     }
@@ -448,7 +447,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     else if (success) {
       if (myDownloaded != null && myDownloaded.ui != null && restartRequired) {
-        CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+        ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
         if (component != null) {
           component.enableRestart();
         }
@@ -472,12 +471,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private void clearInstallingProgress(@NotNull IdeaPluginDescriptor descriptor) {
     if (myInstallingPlugins.isEmpty()) {
-      for (CellPluginComponent listComponent : myInstalling.ui.plugins) {
+      for (ListPluginComponent listComponent : myInstalling.ui.plugins) {
         listComponent.clearProgress();
       }
     }
     else {
-      for (CellPluginComponent listComponent : myInstalling.ui.plugins) {
+      for (ListPluginComponent listComponent : myInstalling.ui.plugins) {
         if (listComponent.myPlugin == descriptor) {
           listComponent.clearProgress();
           return;
@@ -534,9 +533,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       String id = descriptor.getPluginId().getIdString();
 
-      for (Entry<IdeaPluginDescriptor, List<CellPluginComponent>> entry : myGridMap.entrySet()) {
+      for (Entry<IdeaPluginDescriptor, List<ListPluginComponent>> entry : myMarketplacePluginComponentMap.entrySet()) {
         if (id.equals(entry.getKey().getPluginId().getIdString())) {
-          for (CellPluginComponent component : entry.getValue()) {
+          for (ListPluginComponent component : entry.getValue()) {
             component.hideProgress(true, true);
           }
           break;
@@ -573,7 +572,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       addEnabledGroup(myDownloaded);
     }
     else {
-      CellPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+      ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
       if (component != null) {
         myInstalledPanel.setSelection(component);
         component.enableRestart();
@@ -728,7 +727,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private void updateAfterEnableDisable() {
-    for (CellPluginComponent component : myListComponents) {
+    for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateEnabledState();
     }
     for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
@@ -739,7 +738,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
-  static boolean showUninstallDialog(@NotNull List<? extends CellPluginComponent> selection) {
+  static boolean showUninstallDialog(@NotNull List<? extends ListPluginComponent> selection) {
     int size = selection.size();
     return showUninstallDialog(size == 1 ? selection.get(0).myPlugin.getName() : null, size);
   }
@@ -783,14 +782,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       update.run();
     }
 
-    List<CellPluginComponent> listComponents = myListMap.get(descriptor);
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor);
     if (listComponents != null) {
-      for (CellPluginComponent listComponent : listComponents) {
+      for (ListPluginComponent listComponent : listComponents) {
         listComponent.updateAfterUninstall(needRestartForUninstall);
       }
     }
 
-    for (CellPluginComponent component : myListComponents) {
+    for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateErrors();
     }
 

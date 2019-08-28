@@ -215,7 +215,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     PluginManagerConfigurable.setTinyFont(myVersion);
     myVersion.setBorder(null);
     myVersion.setOpaque(false);
-    myVersion.setForeground(CellPluginComponent.GRAY_COLOR);
+    myVersion.setForeground(ListPluginComponent.GRAY_COLOR);
     myVersion.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -234,10 +234,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     centerPanel.add(panel1);
     if (myMarketplace) {
       myDownloads =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, false);
 
       myRating =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, false);
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
@@ -266,7 +266,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     panel2.add(myTagPanel = new TagPanel(mySearchListener));
     panel2.add(myVersion);
     myDate =
-      GridCellPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, CellPluginComponent.GRAY_COLOR, true);
+      ListPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, ListPluginComponent.GRAY_COLOR, true);
     centerPanel.add(panel2);
   }
 
@@ -310,7 +310,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  public void showPlugin(@Nullable CellPluginComponent component, boolean multiSelection) {
+  public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
     if (myIndicator != null) {
       MyPluginModel.removeProgress(myPlugin, myIndicator);
       hideProgress(false, false);

@@ -10,6 +10,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
@@ -32,11 +34,15 @@ import java.util.ListIterator;
 /**
  * @author Alexander Lobas
  */
-public class ListPluginComponent extends CellPluginComponent {
+public class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
+  public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
+  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
+
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
+  public final IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
   private boolean myUninstalledWithoutRestart;
   public IdeaPluginDescriptor myUpdateDescriptor;
@@ -44,9 +50,9 @@ public class ListPluginComponent extends CellPluginComponent {
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
   private final BaselineLayout myLayout = new BaselineLayout();
-  private JButton myRestartButton;
-  private InstallButton myInstallButton;
-  private JButton myUpdateButton;
+  protected JButton myRestartButton;
+  protected InstallButton myInstallButton;
+  protected JButton myUpdateButton;
   private JCheckBox myEnableDisableButton;
   private JLabel myRating;
   private JLabel myDownloads;
@@ -57,12 +63,15 @@ public class ListPluginComponent extends CellPluginComponent {
   private JComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
+  protected EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
+
+  public static boolean HANDLE_FOCUS_ON_SELECTION = true;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
-    super(plugin);
+    myPlugin = plugin;
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
@@ -94,6 +103,40 @@ public class ListPluginComponent extends CellPluginComponent {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
+  }
+
+  public EventHandler.SelectionType getSelection() {
+    return mySelection;
+  }
+
+  public void setSelection(@NotNull EventHandler.SelectionType type) {
+    setSelection(type, type == EventHandler.SelectionType.SELECTION);
+  }
+
+  public void setSelection(@NotNull EventHandler.SelectionType type, boolean scrollAndFocus) {
+    mySelection = type;
+
+    if (scrollAndFocus) {
+      scrollToVisible();
+      if (getParent() != null && type == EventHandler.SelectionType.SELECTION && HANDLE_FOCUS_ON_SELECTION) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+      }
+    }
+
+    updateColors(type);
+    repaint();
+  }
+
+  public void scrollToVisible() {
+    JComponent parent = (JComponent)getParent();
+    if (parent == null) {
+      return;
+    }
+
+    Rectangle bounds = getBounds();
+    if (!parent.getVisibleRect().contains(bounds)) {
+      parent.scrollRectToVisible(bounds);
+    }
   }
 
   private void createButtons() {
@@ -164,24 +207,24 @@ public class ListPluginComponent extends CellPluginComponent {
     if (myMarketplace) {
       String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
       if (downloads != null) {
-        myDownloads = GridCellPluginComponent.createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
+        myDownloads = createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
       }
 
       String rating = PluginManagerConfigurable.getRating(myPlugin);
       if (rating != null) {
-        myRating = GridCellPluginComponent.createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
+        myRating = createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
       }
     }
     else {
       String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : "bundled";
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = GridCellPluginComponent.createRatingLabel(panel, version, null);
+        myVersion = createRatingLabel(panel, version, null);
       }
     }
 
     String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = GridCellPluginComponent.createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      myVendor = createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
   }
 
@@ -284,7 +327,6 @@ public class ListPluginComponent extends CellPluginComponent {
     doLayout();
   }
 
-  @Override
   public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
@@ -292,7 +334,10 @@ public class ListPluginComponent extends CellPluginComponent {
     eventHandler.addAll(this);
   }
 
-  @Override
+  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurable.MAIN_BG_COLOR : HOVER_COLOR);
+  }
+
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
     setBackground(background);
 
@@ -330,7 +375,6 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  @Override
   public void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
@@ -367,12 +411,10 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  @Override
   protected void updateIcon(boolean errors, boolean disabled) {
     myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurable.isJBPlugin(myPlugin), errors, disabled));
   }
 
-  @Override
   public void showProgress() {
     showProgress(true);
   }
@@ -389,7 +431,6 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  @Override
   public void hideProgress(boolean success, boolean restartRequired) {
     myIndicator = null;
     myLayout.removeProgressComponent();
@@ -406,12 +447,10 @@ public class ListPluginComponent extends CellPluginComponent {
     fullRepaint();
   }
 
-  @Override
   public void clearProgress() {
     myIndicator = null;
   }
 
-  @Override
   public void enableRestart() {
     if (myInstallButton != null) {
       myLayout.removeButtonComponent(myInstallButton);
@@ -430,7 +469,6 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  @Override
   public void updateEnabledState() {
     if (!myUninstalled && myEnableDisableButton != null) {
       myEnableDisableButton.setSelected(isEnabledState());
@@ -439,7 +477,6 @@ public class ListPluginComponent extends CellPluginComponent {
     setSelection(mySelection, false);
   }
 
-  @Override
   public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
     myUninstalledWithoutRestart = !needRestartForUninstall;
@@ -455,16 +492,14 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  private boolean isEnabledState() {
+  protected boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
 
-  @Override
   public boolean isMarketplace() {
     return myMarketplace;
   }
 
-  @Override
   public void close() {
     if (myIndicator != null) {
       MyPluginModel.removeProgress(myPlugin, myIndicator);
@@ -473,23 +508,22 @@ public class ListPluginComponent extends CellPluginComponent {
     myPluginModel.removeComponent(this);
   }
 
-  @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
-    for (CellPluginComponent component : selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends ListPluginComponent> selection) {
+    for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
       }
     }
 
     boolean restart = true;
-    for (CellPluginComponent component : selection) {
-      if (((ListPluginComponent)component).myRestartButton == null) {
+    for (ListPluginComponent component : selection) {
+      if (component.myRestartButton == null) {
         restart = false;
         break;
       }
     }
     if (restart) {
-      group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
+      group.add(new ButtonAnAction(selection.get(0).myRestartButton));
       return;
     }
 
@@ -499,7 +533,7 @@ public class ListPluginComponent extends CellPluginComponent {
       JButton[] installButtons = new JButton[size];
 
       for (int i = 0; i < size; i++) {
-        JButton button = ((ListPluginComponent)selection.get(i)).myInstallButton;
+        JButton button = selection.get(i).myInstallButton;
         if (button == null || !button.isVisible() || !button.isEnabled()) {
           return;
         }
@@ -511,7 +545,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     boolean showUpdateAndState = true;
-    for (CellPluginComponent component : selection) {
+    for (ListPluginComponent component : selection) {
       if (myPluginModel.hasErrors(component.myPlugin)) {
         showUpdateAndState = false;
         break;
@@ -522,7 +556,7 @@ public class ListPluginComponent extends CellPluginComponent {
       JButton[] updateButtons = new JButton[size];
 
       for (int i = 0; i < size; i++) {
-        JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
+        JButton button = selection.get(i).myUpdateButton;
         if (button == null || !button.isVisible()) {
           updateButtons = null;
           break;
@@ -546,8 +580,8 @@ public class ListPluginComponent extends CellPluginComponent {
       });
     }
 
-    for (CellPluginComponent component : selection) {
-      if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+    for (ListPluginComponent component : selection) {
+      if (component.myUninstalled || component.myPlugin.isBundled()) {
         return;
       }
     }
@@ -562,24 +596,23 @@ public class ListPluginComponent extends CellPluginComponent {
         if (!MyPluginModel.showUninstallDialog(selection)) {
           return;
         }
-        for (CellPluginComponent component : selection) {
+        for (ListPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
       }
     });
   }
 
-  @Override
-  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
-    for (CellPluginComponent component : selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends ListPluginComponent> selection) {
+    for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
       }
     }
 
     boolean restart = true;
-    for (CellPluginComponent component : selection) {
-      if (((ListPluginComponent)component).myRestartButton == null) {
+    for (ListPluginComponent component : selection) {
+      if (component.myRestartButton == null) {
         restart = false;
         break;
       }
@@ -588,25 +621,25 @@ public class ListPluginComponent extends CellPluginComponent {
     if (myMarketplace) {
       if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
-          ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
+          selection.get(0).myRestartButton.doClick();
         }
 
-        for (CellPluginComponent component : selection) {
-          JButton button = ((ListPluginComponent)component).myInstallButton;
+        for (ListPluginComponent component : selection) {
+          JButton button = component.myInstallButton;
           if (button == null || !button.isVisible() || !button.isEnabled()) {
             return;
           }
         }
-        for (CellPluginComponent component : selection) {
-          ((ListPluginComponent)component).myInstallButton.doClick();
+        for (ListPluginComponent component : selection) {
+          component.myInstallButton.doClick();
         }
       }
       return;
     }
 
     boolean update = true;
-    for (CellPluginComponent component : selection) {
-      JButton button = ((ListPluginComponent)component).myUpdateButton;
+    for (ListPluginComponent component : selection) {
+      JButton button = component.myUpdateButton;
       if (button == null || !button.isVisible()) {
         update = false;
         break;
@@ -615,17 +648,17 @@ public class ListPluginComponent extends CellPluginComponent {
 
     if (keyCode == KeyEvent.VK_ENTER) {
       if (restart) {
-        ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
+        selection.get(0).myRestartButton.doClick();
       }
       else if (update) {
-        for (CellPluginComponent component : selection) {
-          ((ListPluginComponent)component).myUpdateButton.doClick();
+        for (ListPluginComponent component : selection) {
+          component.myUpdateButton.doClick();
         }
       }
     }
     else if (!restart && !update) {
       if (keyCode == KeyEvent.VK_SPACE) {
-        for (CellPluginComponent component : selection) {
+        for (ListPluginComponent component : selection) {
           if (myPluginModel.hasErrors(component.myPlugin)) {
             return;
           }
@@ -640,28 +673,40 @@ public class ListPluginComponent extends CellPluginComponent {
         }
       }
       else if (keyCode == EventHandler.DELETE_CODE) {
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+        for (ListPluginComponent component : selection) {
+          if (component.myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
         }
         if (!MyPluginModel.showUninstallDialog(selection)) {
           return;
         }
-        for (CellPluginComponent component : selection) {
+        for (ListPluginComponent component : selection) {
           myPluginModel.doUninstall(this, component.myPlugin, null);
         }
       }
     }
   }
 
+  protected void fullRepaint() {
+    Container parent = getParent();
+    parent.doLayout();
+    parent.revalidate();
+    parent.repaint();
+  }
+
   @NotNull
-  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends CellPluginComponent> selection) {
-    boolean state = ((ListPluginComponent)selection.get(0)).isEnabledState();
+  public IdeaPluginDescriptor getPluginDescriptor() {
+    return myPlugin;
+  }
+
+  @NotNull
+  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends ListPluginComponent> selection) {
+    boolean state = selection.get(0).isEnabledState();
     boolean setTrue = false;
 
-    for (ListIterator<? extends CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
-      if (state != ((ListPluginComponent)I.next()).isEnabledState()) {
+    for (ListIterator<? extends ListPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
+      if (state != I.next().isEnabledState()) {
         setTrue = true;
         break;
       }
@@ -674,6 +719,28 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     return Pair.create(setTrue || !state, plugins);
+  }
+
+  @NotNull
+  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull String text, @Nullable Icon icon) {
+    return createRatingLabel(panel, null, text, icon, null, true);
+  }
+
+  @NotNull
+  static JLabel createRatingLabel(@NotNull JPanel panel,
+                                  @Nullable Object constraints,
+                                  @NotNull String text,
+                                  @Nullable Icon icon,
+                                  @Nullable Color color,
+                                  boolean tiny) {
+    JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
+    label.setOpaque(false);
+    label.setIconTextGap(2);
+    if (color != null) {
+      label.setForeground(color);
+    }
+    panel.add(tiny ? PluginManagerConfigurable.setTinyFont(label) : label, constraints);
+    return label;
   }
 
   public static class ButtonAnAction extends DumbAwareAction {

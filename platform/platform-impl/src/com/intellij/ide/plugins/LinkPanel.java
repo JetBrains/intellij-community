@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.newui.CellPluginComponent;
+import com.intellij.ide.plugins.newui.ListPluginComponent;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,7 @@ public class LinkPanel {
 
   public LinkPanel(@NotNull JPanel parent, boolean icon, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
     myLinkLabel = createLink(icon);
-    myTextLabel.setForeground(CellPluginComponent.GRAY_COLOR);
+    myTextLabel.setForeground(ListPluginComponent.GRAY_COLOR);
     parent.add(myTextLabel, labelConstraints);
     parent.add(myLinkLabel, linkConstraints);
   }
