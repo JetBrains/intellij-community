@@ -212,7 +212,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private boolean isInTerminalToolWindow() {
-    DataContext dataContext = DataManager.getInstance().getDataContext(myTerminalPanel);
+    return isInTerminalToolWindow(DataManager.getInstance().getDataContext(myTerminalPanel));
+  }
+
+  static boolean isInTerminalToolWindow(@NotNull DataContext dataContext) {
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
     return toolWindow instanceof ToolWindowImpl && "Terminal".equals(((ToolWindowImpl)toolWindow).getId());
   }
