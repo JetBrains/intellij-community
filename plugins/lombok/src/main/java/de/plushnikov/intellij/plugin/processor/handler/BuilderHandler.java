@@ -504,7 +504,7 @@ public class BuilderHandler {
     return className + psiMethod.getName();
   }
 
-  private void addTypeParameters(PsiClass builderClass, PsiMethod psiMethod, LombokLightMethodBuilder methodBuilder) {
+  void addTypeParameters(@NotNull PsiClass builderClass, @Nullable PsiMethod psiMethod, @NotNull LombokLightMethodBuilder methodBuilder) {
     final PsiTypeParameter[] psiTypeParameters;
     if (null == psiMethod || psiMethod.isConstructor()) {
       psiTypeParameters = builderClass.getTypeParameters();

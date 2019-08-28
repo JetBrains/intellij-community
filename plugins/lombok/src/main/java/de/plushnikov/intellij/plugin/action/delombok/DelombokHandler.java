@@ -298,10 +298,13 @@ public class DelombokHandler {
 
   @NotNull
   private String getTypeParameterAsString(@NotNull PsiTypeParameter typeParameter) {
-    return typeParameter.getName() +
-      Stream.of(typeParameter.getExtendsList().getReferencedTypes())
-        .map(this::getTypeWithParameter)
+    final PsiClassType[] referencedTypes = typeParameter.getExtendsList().getReferencedTypes();
+    String extendsText = "";
+    if (referencedTypes.length > 0) {
+      extendsText = Stream.of(referencedTypes).map(this::getTypeWithParameter)
         .collect(Collectors.joining(" & ", " extends ", ""));
+    }
+    return typeParameter.getName() + extendsText;
   }
 
   @NotNull
