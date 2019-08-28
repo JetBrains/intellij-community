@@ -33,13 +33,11 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
   val constantNames = constantTypes.mapNotNull { it.name }.toMutableList()
-  val flexibleTypes = virtualMethod.parameters.map { it.type }
   val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
   for (variable in variables) {
     val variableType = variable.parameter.type()
     val (instantiation, isStrict) = inferType(variable.parameter, usageInformation)
     val core = InferenceUnit(variable.parameter,
-                             flexible = variableType in flexibleTypes,
                              constant = variableType.name in constantNames)
     if (variableType.name !in constantNames) {
       builder.setType(core, instantiation)

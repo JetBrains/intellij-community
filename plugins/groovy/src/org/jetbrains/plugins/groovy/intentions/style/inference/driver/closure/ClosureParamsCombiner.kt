@@ -80,7 +80,7 @@ class ClosureParamsCombiner {
 
   fun instantiateAnnotation(outerParameters: PsiParameterList,
                             signatureTypes: List<PsiType>): String? {
-    if (signatureTypes.size == 1 && signatureTypes.single().equalsToText("?")) {
+    if (signatureTypes.all { it.equalsToText("?") || it == PsiType.NULL }) {
       return null
     }
     if (signatureTypes.size == 1) {

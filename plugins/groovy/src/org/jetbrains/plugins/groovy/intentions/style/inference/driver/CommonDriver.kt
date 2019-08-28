@@ -75,11 +75,12 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     }
 
     private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
-      if (type == null || type == PsiType.NULL) {
+      assert(type != null) { "null!" }
+      if (type == null || type == PsiType.NULL || (type is PsiWildcardType && !type.isBounded)) {
         typeElementGroovy?.delete()
       }
       else try {
-        val desiredTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(type)
+        val desiredTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(removeWildcard(type))
         if (typeElementGroovy == null) addAfter(desiredTypeElement, modifierList) else typeElementGroovy?.replace(desiredTypeElement)
       }
       catch (e: IncorrectOperationException) {

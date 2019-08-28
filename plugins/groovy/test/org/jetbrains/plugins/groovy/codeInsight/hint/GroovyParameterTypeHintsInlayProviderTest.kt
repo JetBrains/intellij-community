@@ -88,4 +88,11 @@ foo(1) { <# [Integer  ] #>a -> a.byteValue() }
     """.trimIndent()
     testTypeHints(text)
   }
+
+  fun testNoTypeHintsWithoutTypeInformation() {
+    val text = """
+def foo(x) {}
+    """.trimIndent()
+    testTypeHints(text)
+  }
 }
