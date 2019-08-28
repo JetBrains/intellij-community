@@ -379,6 +379,7 @@ public class JBTabsImpl extends JComponent
   public void uiSettingsChanged(UISettings uiSettings) {
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
+      entry.getValue().updateActionLabelPosition();
     }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
