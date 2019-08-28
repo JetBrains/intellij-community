@@ -17,9 +17,7 @@ package com.jetbrains.python.remote;
 
 import com.google.common.base.Function;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -60,17 +58,6 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
   public final static Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
   public static final String PYTHON_PREFIX = "python";
-
-  /**
-   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
-   */
-  @Deprecated
-  public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkCredentials data,
-                                                    @NotNull GeneralCommandLine commandLine,
-                                                    @NotNull PyRemotePathMapper pathMapper)
-    throws RemoteSdkException;
-
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
