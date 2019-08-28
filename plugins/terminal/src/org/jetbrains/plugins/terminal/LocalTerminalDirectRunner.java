@@ -136,7 +136,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private Map<String, String> getTerminalEnvironment() {
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
-                                                                     : ContainerUtil.canonicalStrategy());
+                                                                   : ContainerUtil.canonicalStrategy());
 
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
