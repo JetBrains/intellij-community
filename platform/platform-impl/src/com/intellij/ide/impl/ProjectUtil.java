@@ -361,7 +361,7 @@ public class ProjectUtil {
         f.toFront();
       }
       else {
-        IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+        IdeFocusManager.getInstance(p).requestFocusInProject(f.getMostRecentFocusOwner(), p);
       }
     }
   }
