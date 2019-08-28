@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
@@ -34,6 +35,8 @@ import java.util.stream.Collectors;
  * @author Alexander Lobas
  */
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
+  private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
+
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
   private final Map<IdeaPluginDescriptor, List<ListPluginComponent>> myInstalledPluginComponentMap = new HashMap<>();
   private final Map<IdeaPluginDescriptor, List<ListPluginComponent>> myMarketplacePluginComponentMap = new HashMap<>();
@@ -141,18 +144,29 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
                                        " won't be able to load.</body></html>");
     }
 
-    for (PendingDynamicPluginInstall installCallback : myDynamicPluginsToInstall.values()) {
-      PluginInstaller.installAndLoadDynamicPlugin(installCallback.getFile(), parent,
-                                                  (IdeaPluginDescriptorImpl)installCallback.getPluginDescriptor());
-    }
-    boolean needRestartForUninstall = false;
-    for (IdeaPluginDescriptor pluginId : myDynamicPluginsToUninstall) {
-      if (!PluginInstaller.uninstallDynamicPlugin(pluginId)) {
-        needRestartForUninstall = true;
+    Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
+    for (IdeaPluginDescriptor pluginDescriptor : myDynamicPluginsToUninstall) {
+      if (!PluginInstaller.uninstallDynamicPlugin(pluginDescriptor)) {
+        uninstallsRequiringRestart.add(pluginDescriptor.getPluginId());
       }
     }
 
-    return applyEnableDisablePlugins(enabledMap) && !needRestartForUninstall;
+    for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
+      if (!uninstallsRequiringRestart.contains(pendingPluginInstall.getPluginDescriptor().getPluginId())) {
+        PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
+                                                    (IdeaPluginDescriptorImpl)pendingPluginInstall.getPluginDescriptor());
+      }
+      else {
+        try {
+          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), true, null, pendingPluginInstall.getPluginDescriptor());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    return applyEnableDisablePlugins(enabledMap) && uninstallsRequiringRestart.isEmpty();
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
@@ -291,6 +305,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return;
     }
 
+    boolean allowUninstallWithoutRestart = true;
+    if (updateDescriptor != null) {
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true);
+      if (installedPluginDescriptor == null || !DynamicPlugins.isUnloadSafe(installedPluginDescriptor)) {
+        allowUninstallWithoutRestart = false;
+      }
+      else {
+        performUninstall(installedPluginDescriptor);
+      }
+    }
+
     IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
     PluginNode pluginNode;
     if (actionDescriptor instanceof PluginNode) {
@@ -305,12 +330,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart);
   }
 
   private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
                              @NotNull List<? extends IdeaPluginDescriptor> allPlugins,
-                             @NotNull InstallPluginInfo info) {
+                             @NotNull InstallPluginInfo info, boolean allowInstallWithoutRestart) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       boolean cancel = false;
       boolean error = false;
@@ -318,7 +343,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       try {
         PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, this, info.indicator);
-        operation.setAllowInstallWithoutRestart(true);
+        operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
         operation.run();
         for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
           myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
@@ -755,7 +780,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return Messages.showYesNoDialog(uiParent, message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
-  void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
+  void uninstallAndUpdateUi(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
     IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
     if (!dependent(descriptorImpl).isEmpty()) {
       String message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", descriptor.getName());
@@ -765,25 +790,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    boolean needRestartForUninstall = true;
-    try {
-      descriptorImpl.setDeleted(true);
-      // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
-      IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore.loadDescriptor(descriptorImpl.getPath(), PluginManagerCore.PLUGIN_XML, true);
-      if (fullDescriptor == null) {
-        Messages.showErrorDialog(uiParent, "Failed to load plugin for uninstallation");
-        return;
-      }
-      needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
-      InstalledPluginsState.getInstance().onPluginUninstall(descriptor, needRestartForUninstall);
-      if (!needRestartForUninstall) {
-        myDynamicPluginsToUninstall.add(fullDescriptor);
-      }
-      needRestart |= descriptor.isEnabled() && needRestartForUninstall;
-    }
-    catch (IOException e) {
-      PluginManagerMain.LOG.error(e);
-    }
+    boolean needRestartForUninstall = performUninstall(descriptorImpl);
+    needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
     List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor);
     if (listComponents != null) {
@@ -801,6 +809,26 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         panel.updateButtons();
       }
     }
+  }
+
+  private boolean performUninstall(IdeaPluginDescriptorImpl descriptorImpl) {
+    boolean needRestartForUninstall = true;
+    try {
+      descriptorImpl.setDeleted(true);
+      // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
+      IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore
+        .loadDescriptor(descriptorImpl.getPath(), PluginManagerCore.PLUGIN_XML, true);
+      LOG.assertTrue(fullDescriptor != null);
+      needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
+      InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, needRestartForUninstall);
+      if (!needRestartForUninstall) {
+        myDynamicPluginsToUninstall.add(fullDescriptor);
+      }
+    }
+    catch (IOException e) {
+      PluginManagerMain.LOG.error(e);
+    }
+    return needRestartForUninstall;
   }
 
   @Nullable

@@ -452,9 +452,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void updateButtons() {
+    boolean installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId());
     if (myMarketplace) {
       boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
-      boolean installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId());
       myRestartButton.setVisible(installed);
 
       myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null && !installedWithoutRestart, "Installed");
@@ -497,7 +497,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         String title = myPluginModel.getEnabledTitle(myPlugin);
         boolean errors = myPluginModel.hasErrors(myPlugin);
 
-        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors && !installedWithoutRestart);
 
         myEnableDisableButton.setVisible(bundled && !errors);
         myEnableDisableButton.setText(title);
@@ -607,7 +607,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void doUninstall() {
     if (MyPluginModel.showUninstallDialog(this, myPlugin.getName(), 1)) {
-      myPluginModel.doUninstall(this, myPlugin);
+      myPluginModel.uninstallAndUpdateUi(this, myPlugin);
     }
   }
 

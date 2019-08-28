@@ -438,8 +438,12 @@ public class ListPluginComponent extends JPanel {
       if (restartRequired) {
         enableRestart();
       }
-      else {
+      else if (myInstallButton != null) {
         myInstallButton.setEnabled(false, "Installed");
+      }
+      else if (myUpdateButton != null) {
+        myUpdateButton.setEnabled(false);
+        myUpdateButton.setText("Installed");
       }
     }
 
@@ -596,7 +600,7 @@ public class ListPluginComponent extends JPanel {
           return;
         }
         for (ListPluginComponent component : selection) {
-          myPluginModel.doUninstall(component, component.myPlugin);
+          myPluginModel.uninstallAndUpdateUi(component, component.myPlugin);
         }
       }
     });
@@ -681,7 +685,7 @@ public class ListPluginComponent extends JPanel {
           return;
         }
         for (ListPluginComponent component : selection) {
-          myPluginModel.doUninstall(this, component.myPlugin);
+          myPluginModel.uninstallAndUpdateUi(this, component.myPlugin);
         }
       }
     }
