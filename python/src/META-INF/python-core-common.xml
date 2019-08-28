@@ -670,6 +670,7 @@
     <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
                     interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"/>
     <extensionPoint qualifiedName="Pythonid.remoteSdkEditor" interface="com.jetbrains.python.remote.PyRemoteSdkEditor"/>
+    <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

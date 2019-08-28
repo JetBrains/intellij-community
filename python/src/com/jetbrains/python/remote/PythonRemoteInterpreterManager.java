@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.remote;
 
-import com.google.common.base.Function;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -24,9 +23,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.remote.*;
+import com.intellij.remote.PathMappingProvider;
+import com.intellij.remote.RemoteMappingsManager;
+import com.intellij.remote.RemoteSdkAdditionalData;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -38,11 +39,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * @author traff
@@ -68,25 +66,6 @@ public abstract class PythonRemoteInterpreterManager {
    */
   @Nullable
   public abstract PyProjectSynchronizer getSynchronizer(@NotNull final Sdk sdk);
-
-  public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
-                                      RemoteSdkCredentials data,
-                                      List<PathMappingSettings.PathMapping> mappings);
-
-  /**
-   * Creates form to browse remote box.
-   * You need to show it to user using dialog.
-   *
-   * @return null if remote sdk can't be browsed.
-   * First argument is consumer to get path, chosen by user.
-   * Second is panel to display to user
-   * @throws ExecutionException   credentials can't be obtained due to remote server error
-   * @throws InterruptedException credentials can't be obtained due to remote server error
-   */
-  @Nullable
-  public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
-    throws ExecutionException, InterruptedException;
-
 
   /**
    * Short-cut to get {@link PyProjectSynchronizer} for sdk or null if sdk does not have any
@@ -169,10 +148,6 @@ public abstract class PythonRemoteInterpreterManager {
                                                                       Charset charset,
                                                                       PyRemotePathMapper pathMapper,
                                                                       PyRemoteSocketToLocalHostProvider remoteSocketProvider);
-
-  @NotNull
-  public abstract RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
-                                                                                                       RemoteConnectionCredentialsWrapper connectionWrapper);
 
   @NotNull
   public abstract String[] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)

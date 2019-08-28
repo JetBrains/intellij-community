@@ -10,16 +10,16 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
+import com.intellij.util.component1
+import com.intellij.util.component2
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.remote.PythonSshInterpreterManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
@@ -158,7 +158,7 @@ class PyAddExistingSdkPanel(project: Project?,
       get() = PythonRemoteInterpreterManager.getInstance()?.getSynchronizer(this)
 
     private fun Sdk.chooseRemotePath(owner: Component): String? {
-      val remoteManager = PythonRemoteInterpreterManager.getInstance() ?: return null
+      val remoteManager = PythonSshInterpreterManager.Factory.getInstance() ?: return null
       val (supplier, panel) = try {
         remoteManager.createServerBrowserForm(this) ?: return null
       }
