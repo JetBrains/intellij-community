@@ -27,6 +27,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -252,11 +253,11 @@ public class SearchUtil {
     }
   }
 
-  private static int getSelection(String tabIdx, final JTabbedPane tabbedPane) {
+  private static int getSelection(String tabIdx, int tabCount, Function<Integer,String> titleGetter) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+    for (int i = 0; i < tabCount; i++) {
       final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
-      final String title = tabbedPane.getTitleAt(i);
+      final String title = titleGetter.apply(i);
       if (!pathWords.isEmpty()) {
         final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
         pathWords.removeAll(titleWords);
@@ -271,19 +272,6 @@ public class SearchUtil {
     return -1;
   }
 
-  public static int getSelection(String tabIdx, final TabbedPaneWrapper tabbedPane) {
-    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-      final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
-      final String title = tabbedPane.getTitleAt(i);
-      final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
-      pathWords.removeAll(titleWords);
-      if (pathWords.isEmpty()) {
-        return i;
-      }
-    }
-    return -1;
-  }
 
   private static boolean traverseComponentsTree(SearchableConfigurable configurable,
                                                 JComponent rootComponent,
@@ -312,7 +300,7 @@ public class SearchUtil {
       final JTabbedPane tabbedPane = (JTabbedPane)rootComponent;
       final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
       if (path != null) {
-        final int index = getSelection(path, tabbedPane);
+        final int index = getSelection(path, tabbedPane.getTabCount(), i -> tabbedPane.getTitleAt(i));
         if (index > -1 && index < tabbedPane.getTabCount()) {
           if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
             highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
@@ -324,7 +312,7 @@ public class SearchUtil {
       final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
       final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
       if (path != null) {
-        final int index = getSelection(path, tabbedPaneWrapper);
+        final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));;
         if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
           highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
         }
