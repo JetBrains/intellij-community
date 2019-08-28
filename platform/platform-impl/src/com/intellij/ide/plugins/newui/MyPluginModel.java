@@ -52,7 +52,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public boolean needRestart;
   public boolean createShutdownCallback = true;
-  public DetailsPagePluginComponent detailPanel;
   private final List<PluginDetailsPageComponent> myDetailPanels = new ArrayList<>();
 
   private StatusBarEx myStatusBar;
@@ -389,9 +388,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         listComponent.showProgress();
       }
     }
-    if (detailPanel != null && detailPanel.myPlugin == descriptor) {
-      detailPanel.showProgress();
-    }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.myPlugin == descriptor) {
         panel.showProgress();
@@ -419,9 +415,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       for (CellPluginComponent listComponent : listComponents) {
         listComponent.hideProgress(success);
       }
-    }
-    if (detailPanel != null && detailPanel.myPlugin == descriptor) {
-      detailPanel.hideProgress(success);
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.myPlugin == descriptor) {
