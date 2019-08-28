@@ -1224,7 +1224,7 @@
     <applicationInitializedListener implementation="com.intellij.ide.script.IdeStartupScripts"/>
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
-    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" id="joinLines.comments"/>
+    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
   </extensions>
 </idea-plugin>
 
