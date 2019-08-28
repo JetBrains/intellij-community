@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.*
@@ -232,10 +233,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
 
   override fun getDisplayedUnversionedFiles(): List<VirtualFile> =
-    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
+    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
 
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
-    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
+    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
 
   override var inclusionModel: InclusionModel?
     get() = changesView.inclusionModel
