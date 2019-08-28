@@ -81,18 +81,15 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  private final boolean myIsUpdateLog;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
                        @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
-                       @NotNull Disposable parent,
-                       boolean isUpdateLog) {
+                       @NotNull Disposable parent) {
     super(project, false, false);
     myProject = project;
     myUiProperties = uiProperties;
     myDataGetter = getter;
-    myIsUpdateLog = isUpdateLog;
 
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
@@ -151,16 +148,6 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull
   @Override
   protected List<AnAction> createPopupMenuActions() {
-    if (myIsUpdateLog) {
-      AnAction action = ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_UPDATE_POPUP_ADDITIONAL_ACTION_GROUP);
-      if (action != null) {
-        return ContainerUtil.append(
-          super.createPopupMenuActions(),
-          ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP),
-          action
-        );
-      }
-    }
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)

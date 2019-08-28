@@ -207,7 +207,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(), initialSortType, vcsLogFilterer, logId)
 
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set
-      val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null, true)
+      val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
       if (listenerGetter != null) {
         refresher.addVisiblePackChangeListener(listenerGetter.invoke(LogUiAndFactory(logUi, this)))

@@ -49,11 +49,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher,
-                      @Nullable VcsLogFilterCollection filters,
-                      boolean isUpdateLog) {
+                      @Nullable VcsLogFilterCollection filters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, myVisiblePack, filters, isUpdateLog);
+    myMainFrame = new MainFrame(logData, this, uiProperties, myVisiblePack, filters);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));

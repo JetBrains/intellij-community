@@ -193,7 +193,6 @@
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
       <reference id="Vcs.Log.ShowChangesFromParents"/>
     </group>
-    <group id="Vcs.Log.ChangesBrowser.Popup.Update.Additional"/>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>

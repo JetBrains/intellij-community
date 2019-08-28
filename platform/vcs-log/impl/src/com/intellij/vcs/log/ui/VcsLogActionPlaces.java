@@ -25,7 +25,6 @@ public class VcsLogActionPlaces {
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
   public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
-  public static final String CHANGES_BROWSER_UPDATE_POPUP_ADDITIONAL_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup.Update.Additional";
 
   // action places
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
