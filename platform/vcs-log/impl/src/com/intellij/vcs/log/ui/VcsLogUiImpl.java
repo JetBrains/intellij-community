@@ -172,12 +172,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   public Component getMainComponent() {
     return myMainFrame.getMainComponent();
   }
-
-  @NotNull
-  public JComponent getToolbar() {
-    return myMainFrame.getToolbar();
-  }
-
+  
   @NotNull
   @Override
   public VcsLogFilterUiEx getFilterUi() {
