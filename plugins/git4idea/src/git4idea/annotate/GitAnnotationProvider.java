@@ -88,17 +88,16 @@ public final class GitAnnotationProvider implements AnnotationProviderEx {
       throw new VcsException("Cannot annotate a directory");
     }
 
-    final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
-    final FilePath realFilePath;
     if (revision == null) {
-      realFilePath = VcsUtil.getLastCommitPath(myProject, currentFilePath);
+      FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
+      VcsRevisionNumber revisionNumber = GitVcs.getInstance(myProject).getDiffProvider().getCurrentRevision(file);
+      return annotate(filePath, revisionNumber, file);
     }
     else {
-      realFilePath = ((VcsFileRevisionEx)revision).getPath();
+      FilePath filePath = ((VcsFileRevisionEx)revision).getPath();
+      VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
+      return annotate(filePath, revisionNumber, file);
     }
-    VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
-
-    return annotate(realFilePath, revisionNumber, file);
   }
 
   @Override
@@ -116,39 +115,35 @@ public final class GitAnnotationProvider implements AnnotationProviderEx {
   }
 
   private static void setProgressIndicatorText(@Nullable String text) {
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) progress.setText(text);
   }
 
   @NotNull
-  private GitFileAnnotation annotate(@NotNull final FilePath repositoryFilePath,
-                                     @Nullable final VcsRevisionNumber revision,
-                                     @NotNull final VirtualFile file) throws VcsException {
-    GitVcs vcs = GitVcs.getInstance(myProject);
-
-    VcsRevisionNumber actualRevision = revision != null ? revision : vcs.getDiffProvider().getCurrentRevision(file);
-
-    if (actualRevision != null) {
-      Object annotatedData = myCache.getAnnotation(repositoryFilePath, GitVcs.getKey(), actualRevision);
-      if (annotatedData instanceof CachedData) return restoreFromCache(repositoryFilePath, file, actualRevision, (CachedData)annotatedData);
+  private GitFileAnnotation annotate(@NotNull FilePath filePath,
+                                     @Nullable VcsRevisionNumber revision,
+                                     @NotNull VirtualFile file) throws VcsException {
+    if (revision != null) {
+      Object annotatedData = myCache.getAnnotation(filePath, GitVcs.getKey(), revision);
+      if (annotatedData instanceof CachedData) return restoreFromCache(filePath, file, revision, (CachedData)annotatedData);
     }
 
-    GitFileAnnotation fileAnnotation = doAnnotate(repositoryFilePath, actualRevision, file);
+    GitFileAnnotation fileAnnotation = doAnnotate(filePath, revision, file);
 
-    if (actualRevision != null) {
-      myCache.putAnnotation(repositoryFilePath, GitVcs.getKey(), actualRevision, cacheData(fileAnnotation));
+    if (revision != null) {
+      myCache.putAnnotation(filePath, GitVcs.getKey(), revision, cacheData(fileAnnotation));
     }
 
     return fileAnnotation;
   }
 
   @NotNull
-  private GitFileAnnotation doAnnotate(@NotNull final FilePath repositoryFilePath,
-                                       @Nullable final VcsRevisionNumber revision,
-                                       @NotNull final VirtualFile file) throws VcsException {
+  private GitFileAnnotation doAnnotate(@NotNull FilePath filePath,
+                                       @Nullable VcsRevisionNumber revision,
+                                       @NotNull VirtualFile file) throws VcsException {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
-    VirtualFile root = GitUtil.getRepositoryForFile(myProject, repositoryFilePath).getRoot();
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, filePath).getRoot();
     GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t");
@@ -172,7 +167,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx {
       h.addParameters(revision.asString());
     }
     h.endOptions();
-    h.addRelativePaths(repositoryFilePath);
+    h.addRelativePaths(filePath);
     String output = new String(h.run(), StandardCharsets.UTF_8);
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
