@@ -25,7 +25,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
-import org.jetbrains.plugins.github.api.GithubRepositoryPath
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
@@ -59,7 +59,7 @@ open class GithubOpenInBrowserActionGroup
 
   override fun disableIfNoVisibleChildren(): Boolean = false
 
-  protected open fun getData(dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+  protected open fun getData(dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
     return getDataFromPullRequest(project, dataContext)
@@ -68,14 +68,14 @@ open class GithubOpenInBrowserActionGroup
            ?: getDataFromVirtualFile(project, dataContext)
   }
 
-  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val pullRequest = dataContext.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
     val context = dataContext.getData(GithubPullRequestKeys.DATA_CONTEXT) ?: return null
 
-    return setOf(GithubRepositoryPath(context.serverPath, context.repositoryDetails.fullPath)) to Data.URL(project, pullRequest.url)
+    return setOf(GHRepositoryCoordinates(context.serverPath, context.repositoryDetails.fullPath)) to Data.URL(project, pullRequest.url)
   }
 
-  private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+  private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
@@ -89,7 +89,7 @@ open class GithubOpenInBrowserActionGroup
     return accessibleRepositories to Data.Revision(project, fileRevision.revisionNumber.asString())
   }
 
-  private fun getDataFromLog(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+  private fun getDataFromLog(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
 
     val selectedCommits = log.selectedCommits
@@ -106,7 +106,7 @@ open class GithubOpenInBrowserActionGroup
     return accessibleRepositories to Data.Revision(project, commit.hash.asString())
   }
 
-  private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+  private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
@@ -134,7 +134,7 @@ open class GithubOpenInBrowserActionGroup
   private companion object {
     private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
 
-    class GithubOpenInBrowserAction(private val repoPath: GithubRepositoryPath, val data: Data)
+    class GithubOpenInBrowserAction(private val repoPath: GHRepositoryCoordinates, val data: Data)
       : DumbAwareAction(repoPath.toString().replace('_', ' ')) {
 
       override fun actionPerformed(e: AnActionEvent) {
@@ -145,13 +145,13 @@ open class GithubOpenInBrowserActionGroup
         }
       }
 
-      private fun openCommitInBrowser(path: GithubRepositoryPath, revisionHash: String) {
+      private fun openCommitInBrowser(path: GHRepositoryCoordinates, revisionHash: String) {
         BrowserUtil.browse("${path.toUrl()}/commit/$revisionHash")
       }
 
       private fun openFileInBrowser(project: Project,
                                     repositoryRoot: VirtualFile,
-                                    path: GithubRepositoryPath,
+                                    path: GHRepositoryCoordinates,
                                     virtualFile: VirtualFile,
                                     editor: Editor?) {
         val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
@@ -188,7 +188,7 @@ open class GithubOpenInBrowserActionGroup
       private fun makeUrlToOpen(editor: Editor?,
                                 relativePath: String,
                                 branch: String,
-                                path: GithubRepositoryPath): String? {
+                                path: GHRepositoryCoordinates): String? {
         val builder = StringBuilder()
 
         if (StringUtil.isEmptyOrSpaces(relativePath)) {

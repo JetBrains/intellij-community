@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -31,7 +31,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
                                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                               private val requestExecutor: GithubApiRequestExecutor,
                                                               private val serverPath: GithubServerPath,
-                                                              private val repoPath: GithubFullPath)
+                                                              private val repoPath: GHRepositoryPath)
   : GithubPullRequestsStateService {
 
   @CalledInAwt
@@ -41,7 +41,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     progressManager.run(object : Task.Backgroundable(project, "Closing Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
-                                GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
+                                GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                                                             state = GithubIssueState.closed))
         messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }
@@ -67,7 +67,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     progressManager.run(object : Task.Backgroundable(project, "Reopening Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
-                                GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
+                                GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                                                             state = GithubIssueState.open))
         messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
       }

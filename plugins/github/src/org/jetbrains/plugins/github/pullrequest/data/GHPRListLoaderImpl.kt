@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.concurrency.JobScheduler
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,7 +29,7 @@ import kotlin.properties.Delegates
 internal class GHPRListLoaderImpl(progressManager: ProgressManager,
                                   private val requestExecutor: GithubApiRequestExecutor,
                                   private val serverPath: GithubServerPath,
-                                  private val repoPath: GithubFullPath,
+                                  private val repoPath: GHRepositoryPath,
                                   private val listModel: CollectionListModel<GHPullRequestShort>,
                                   private val searchQueryHolder: GithubPullRequestSearchQueryHolder)
   : GHGQLPagedListLoader<GHPullRequestShort>(progressManager,
@@ -152,10 +151,10 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
   }
 
   companion object {
-    private fun buildQuery(repoPath: GithubFullPath, searchQuery: GithubPullRequestSearchQuery?): String {
+    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GithubPullRequestSearchQuery?): String {
       return GithubApiSearchQueryBuilder.searchQuery {
         qualifier("type", GithubIssueSearchType.pr.name)
-        qualifier("repo", repoPath.fullName)
+        qualifier("repo", repoPath.toString())
         searchQuery?.buildApiSearchQuery(this)
       }
     }

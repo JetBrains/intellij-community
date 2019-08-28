@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
@@ -49,7 +49,7 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
         accountDetails = accountInformationProvider.getInformation(requestExecutor, indicator, account)
 
         indicator.text = "Loading repository information"
-        repoDetails = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.user, fullPath.repository))
+        repoDetails = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.owner, fullPath.repository))
                       ?: throw IllegalArgumentException(
                         "Repository $fullPath does not exist at ${account.server} or you don't have access.")
         indicator.checkCanceled()

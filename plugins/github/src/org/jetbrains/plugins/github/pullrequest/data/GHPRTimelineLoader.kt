@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
@@ -13,12 +13,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingM
 class GHPRTimelineLoader(progressManager: ProgressManager,
                          requestExecutor: GithubApiRequestExecutor,
                          serverPath: GithubServerPath,
-                         repoPath: GithubFullPath,
+                         repoPath: GHRepositoryPath,
                          number: Long,
                          private val listModel: GHPRTimelineMergingModel)
   : GHGQLPagedListLoader<GHPRTimelineItem>(progressManager,
                                            SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                                             GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.user, repoPath.repository,
+                                             GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.owner, repoPath.repository,
                                                                                       number, p)
                                            })) {
   override val hasLoadedItems: Boolean

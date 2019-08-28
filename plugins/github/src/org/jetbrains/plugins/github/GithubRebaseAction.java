@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -58,7 +58,7 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
     GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
     if (executor == null) return;
 
-    GithubFullPath repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    GHRepositoryPath repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (repoPath == null) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Invalid Github remote: " + remoteUrl);
       return;
@@ -71,16 +71,16 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
     @NotNull private final Git myGit;
     @NotNull private final GithubServerPath myServer;
     @NotNull private final GitRepository myRepository;
-    @NotNull private final GithubFullPath myRepoPath;
+    @NotNull private final GHRepositoryPath myRepoPath;
     @NotNull private final String myOnto;
 
     RebaseTask(@NotNull Project project,
-                      @NotNull GithubApiRequestExecutor requestExecutor,
-                      @NotNull Git git,
-                      @NotNull GithubServerPath server,
-                      @NotNull GitRepository repository,
-                      @NotNull GithubFullPath repoPath,
-                      @NotNull String rebaseOnto) {
+               @NotNull GithubApiRequestExecutor requestExecutor,
+               @NotNull Git git,
+               @NotNull GithubServerPath server,
+               @NotNull GitRepository repository,
+               @NotNull GHRepositoryPath repoPath,
+               @NotNull String rebaseOnto) {
       super(project, "Rebasing GitHub Fork...");
       myRequestExecutor = requestExecutor;
       myGit = git;
@@ -129,13 +129,13 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
 
     private boolean isUpstreamWithSameUsername(@NotNull ProgressIndicator indicator, @NotNull String upstreamRemoteUrl) {
       try {
-        GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
+        GHRepositoryPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
         if (userAndRepo == null) {
           GithubNotifications.showError(myProject, CANNOT_PERFORM_GITHUB_REBASE, "Can't validate upstream remote: " + upstreamRemoteUrl);
           return true;
         }
         String username = myRequestExecutor.execute(indicator, GithubApiRequests.CurrentUser.get(myServer)).getLogin();
-        return userAndRepo.getUser().equals(username);
+        return userAndRepo.getOwner().equals(username);
       }
       catch (IOException e) {
         GithubNotifications.showError(myProject, CANNOT_PERFORM_GITHUB_REBASE, "Can't get user information");
@@ -174,10 +174,10 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
     }
 
     @Nullable
-    private GithubRepoDetailed loadRepositoryInfo(@NotNull ProgressIndicator indicator, @NotNull GithubFullPath fullPath) {
+    private GithubRepoDetailed loadRepositoryInfo(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath fullPath) {
       try {
         GithubRepoDetailed repo =
-          myRequestExecutor.execute(indicator, GithubApiRequests.Repos.get(myServer, fullPath.getUser(), fullPath.getRepository()));
+          myRequestExecutor.execute(indicator, GithubApiRequests.Repos.get(myServer, fullPath.getOwner(), fullPath.getRepository()));
         if (repo == null) GithubNotifications.showError(myProject, "Repository " + fullPath.toString() + " was not found", "");
         return repo;
       }

@@ -11,8 +11,8 @@ import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import java.util.*
 
@@ -23,7 +23,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val project: Project,
                                                 private val repository: GitRepository,
                                                 private val remote: GitRemote,
                                                 private val serverPath: GithubServerPath,
-                                                private val repoPath: GithubFullPath) : GithubPullRequestsDataLoader, Disposable {
+                                                private val repoPath: GHRepositoryPath) : GithubPullRequestsDataLoader, Disposable {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
@@ -50,7 +50,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val project: Project,
 
     return cache.get(number) {
       GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, repository, remote, serverPath,
-                                        repoPath.user, repoPath.repository, number)
+                                        repoPath.owner, repoPath.repository, number)
     }
   }
 

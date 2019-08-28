@@ -453,7 +453,7 @@ internal class GHCloneDialogExtensionComponent(
     selectedUrl = null
   }
 
-  private fun getGithubRepoPath(url: String): GithubRepositoryPath? {
+  private fun getGithubRepoPath(url: String): GHRepositoryCoordinates? {
     try {
       if (!url.endsWith(GitUtil.DOT_GIT, true)) return null
 
@@ -461,7 +461,7 @@ internal class GHCloneDialogExtensionComponent(
       serverPath = GithubServerPath.from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: ""))
 
       val githubFullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url) ?: return null
-      return GithubRepositoryPath(serverPath, githubFullPath)
+      return GHRepositoryCoordinates(serverPath, githubFullPath)
     }
     catch (e: Throwable) {
       return null

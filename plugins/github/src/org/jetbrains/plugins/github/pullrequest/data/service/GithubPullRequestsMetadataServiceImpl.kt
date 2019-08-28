@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -24,7 +24,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
                                                                  private val messageBus: MessageBus,
                                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                                  private val serverPath: GithubServerPath,
-                                                                 private val repoPath: GithubFullPath)
+                                                                 private val repoPath: GHRepositoryPath)
   : GithubPullRequestsMetadataService, Disposable {
 
   init {
@@ -36,7 +36,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
   private val collaboratorsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
-               GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.user, repoPath.repository))
+               GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
       .filter { it.permissions.isPush }
       .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
@@ -47,7 +47,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
-               GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.user, repoPath.repository))
+               GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository))
       .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
@@ -56,7 +56,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
   private val labelsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
-               GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.user, repoPath.repository))
+               GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository))
       .map { GHLabel(it.nodeId, it.url, it.name, it.color) }
   }
 
@@ -77,14 +77,14 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
       indicator.text2 = "Removing reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
-                                .remove(serverPath, repoPath.user, repoPath.repository, pullRequest,
+                                .remove(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                         delta.removedItems.map { it.login }))
     }
     if (delta.newItems.isNotEmpty()) {
       indicator.text2 = "Adding reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
-                                .add(serverPath, repoPath.user, repoPath.repository, pullRequest,
+                                .add(serverPath, repoPath.owner, repoPath.repository, pullRequest,
                                      delta.newItems.map { it.login }))
     }
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
@@ -95,7 +95,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
     if (delta.isEmpty) return
 
     requestExecutor.execute(indicator,
-                            GithubApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.user, repoPath.repository,
+                            GithubApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.owner, repoPath.repository,
                                                                            pullRequest.toString(), delta.newCollection.map { it.login }))
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
   }
@@ -106,7 +106,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
 
     requestExecutor.execute(indicator,
                             GithubApiRequests.Repos.Issues.Labels
-                              .replace(serverPath, repoPath.user, repoPath.repository, pullRequest.toString(),
+                              .replace(serverPath, repoPath.owner, repoPath.repository, pullRequest.toString(),
                                        delta.newCollection.map { it.name }))
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
   }

@@ -329,29 +329,29 @@ object GithubApiRequests {
           .withOperationName("update pull request")
 
       @JvmStatic
-      fun merge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+      fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
           .withOperationName("merge pull request ${number}")
 
       @JvmStatic
-      fun squashMerge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+      fun squashMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
           .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
-      fun rebaseMerge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+      fun rebaseMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
           .withOperationName("rebase and merge pull request ${number}")
 
       @JvmStatic
-      fun getListETag(server: GithubServerPath, repoPath: GithubFullPath) =
-        object : Get<String?>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix,
+      fun getListETag(server: GithubServerPath, repoPath: GHRepositoryPath) =
+        object : Get<String?>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix,
                                      GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
           override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
         }.withOperationName("get pull request list ETag")
@@ -428,16 +428,16 @@ object GithubApiRequests {
   object Search : Entity("/search") {
     object Issues : Entity("/issues") {
       @JvmStatic
-      fun pages(server: GithubServerPath, repoPath: GithubFullPath?, state: String?, assignee: String?, query: String?) =
+      fun pages(server: GithubServerPath, repoPath: GHRepositoryPath?, state: String?, assignee: String?, query: String?) =
         GithubApiPagesLoader.Request(get(server, repoPath, state, assignee, query), ::get)
 
       @JvmStatic
-      fun get(server: GithubServerPath, repoPath: GithubFullPath?, state: String?, assignee: String?, query: String?,
+      fun get(server: GithubServerPath, repoPath: GHRepositoryPath?, state: String?, assignee: String?, query: String?,
               pagination: GithubRequestPagination? = null) =
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
                      param("q", GithubApiSearchQueryBuilder.searchQuery {
-                       qualifier("repo", repoPath?.fullName.orEmpty())
+                       qualifier("repo", repoPath?.toString().orEmpty())
                        qualifier("state", state)
                        qualifier("assignee", assignee)
                        query(query)
