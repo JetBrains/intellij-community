@@ -192,6 +192,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIThemeProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
       @Override
       public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        for (UIManager.LookAndFeelInfo feel : getInstalledLookAndFeels()) {
+          if (feel instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)feel).getTheme().getId().equals(provider.id)) {
+            //provider is already registered
+            return;
+          }
+        }
         UITheme theme = provider.createTheme();
         if (theme != null) {
           UIManager.LookAndFeelInfo[] newLafs = new UIManager.LookAndFeelInfo[myLaFs.length + 1];
