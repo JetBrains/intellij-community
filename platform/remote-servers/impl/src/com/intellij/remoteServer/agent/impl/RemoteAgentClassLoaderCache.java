@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.agent.impl;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.lang.JavaVersion;
 
@@ -34,6 +35,7 @@ public class RemoteAgentClassLoaderCache {
   private static class PlatformClassLoaderHolder {
     public static final ClassLoader ourInstance = initPlatformClassLoader();
 
+    @ReviseWhenPortedToJDK("9")
     private static ClassLoader initPlatformClassLoader() {
       if (JavaVersion.current().isAtLeast(9)) {
         try {
