@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remote.*;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -42,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
@@ -73,13 +71,8 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
                                                     @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
-  public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
-                                    NullableConsumer<Sdk> sdkCallback);
-
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
-
-  public abstract boolean ensureCanWrite(RemoteSdkCredentials data, String path);
 
   /**
    * @param sdk current sdk
