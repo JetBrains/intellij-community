@@ -23,7 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -71,9 +70,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
         }, GlobalSearchScope.projectScope(project));
       }).cancelWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
-    AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
-    Promises.all(promises).onSuccess(__ -> result.setResult(events)).onError(t -> result.setError(t));
-    return result;
+    return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));
   }
 
   @NotNull
