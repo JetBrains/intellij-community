@@ -312,7 +312,7 @@ public class SearchUtil {
       final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
       final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
       if (path != null) {
-        final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));;
+        final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));
         if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
           highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
         }
