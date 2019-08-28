@@ -11,8 +11,10 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
@@ -155,5 +157,6 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
     if (options.sendFrameBack) {
       ideFrame?.isAutoRequestFocus = true
     }
+
   }
 }

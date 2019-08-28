@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -79,5 +80,10 @@ public final class IdeFocusManagerHeadless extends IdeFocusManager {
 
   @Override
   public void toFront(JComponent c) {
+  }
+
+  @Override
+  public Project getProject() {
+    return null;
   }
 }

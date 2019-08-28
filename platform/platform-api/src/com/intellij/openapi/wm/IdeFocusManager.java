@@ -138,6 +138,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
    */
   public abstract void toFront(JComponent c);
 
+  public abstract Project getProject();
+
   public static IdeFocusManager getInstance(@Nullable Project project) {
     Application app = ApplicationManager.getApplication();
     if (app == null || app.isHeadlessEnvironment() || app.isUnitTestMode() || project == null || project.isDisposed() || !project.isInitialized()) {

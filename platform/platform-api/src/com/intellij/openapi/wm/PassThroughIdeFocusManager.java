@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -92,5 +93,10 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
 
   @Override
   public void toFront(JComponent c) {
+  }
+
+  @Override
+  public Project getProject() {
+    return null;
   }
 }

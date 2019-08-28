@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -301,6 +302,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
+  @Override
+  public Project getProject() {
+    return null;
+  }
+
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
@@ -387,7 +393,12 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
     Component toFocus = null;
-    if (myLastFocusedFrame != null) {
+
+    Project project = getProject();
+
+    if (project != null) {
+      toFocus = WindowManagerEx.getInstanceEx().findFrameFor(project).getComponent();
+    } else if (myLastFocusedFrame != null) {
       toFocus = myLastFocused.get(myLastFocusedFrame);
       if (toFocus == null || !toFocus.isShowing()) {
         toFocus = getFocusTargetFor(myLastFocusedFrame.getComponent());
