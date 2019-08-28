@@ -36,7 +36,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       return;
     }
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      PsiFile e = PyTestCreator.generateTestAndNavigate(project, model);
+      PsiFile e = PyTestCreator.generateTestAndNavigate(element, model);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       documentManager.commitAllDocuments();
     }, CodeInsightBundle.message("intention.create.test"), this);

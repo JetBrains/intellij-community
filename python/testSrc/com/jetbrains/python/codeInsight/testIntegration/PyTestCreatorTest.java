@@ -19,7 +19,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -30,19 +34,21 @@ import java.util.Arrays;
  * @author Ilya.Kazakevich
  */
 public final class PyTestCreatorTest extends PyTestCase {
-  public void testCreateTest() {
 
-    myFixture.configureByFile("/create_tests/create_tst.py");
+  public void testCreateUnitTest() {
+    final PyTestCreationModel model = prepareAndCreateModel();
+    TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
+    testRunnerService.setProjectConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
+    checkResult(model, "create_tst_class.expected_unittest.py");
+  }
 
-    final VirtualFile[] roots = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots();
-    assert roots.length > 0 : "Empty roots for module " + myFixture.getModule();
-    final VirtualFile root = roots[0];
+  public void testCreatePyTest() {
+    final PyTestCreationModel model = prepareAndCreateModel();
+    boolean p2k = LanguageLevel.forElement(myFixture.getFile()).isPython2();
+    TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
+    testRunnerService.setProjectConfiguration(PyNames.PY_TEST);
 
-    final PyTestCreationModel model =
-      new PyTestCreationModel("tests.py", root.getCanonicalPath(), "Spam", Arrays.asList("eggs", "eggs_and_ham"));
-
-
-    checkResult(model, "create_tst_class.expected.py");
+    checkResult(model, (p2k ? "create_tst_class.expected_pytest_2k.py" : "create_tst_class.expected_pytest_3k.py"));
 
     model.setClassName("");
     model.setFileName("tests_no_class.py");
@@ -50,9 +56,20 @@ public final class PyTestCreatorTest extends PyTestCase {
     checkResult(model, "create_tst.expected.py");
   }
 
+  @NotNull
+  private PyTestCreationModel prepareAndCreateModel() {
+    myFixture.configureByFile("/create_tests/create_tst.py");
+
+    final VirtualFile[] roots = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots();
+    assert roots.length > 0 : "Empty roots for module " + myFixture.getModule();
+    final VirtualFile root = roots[0];
+
+    return new PyTestCreationModel("tests.py", root.getCanonicalPath(), "Spam", Arrays.asList("eggs", "eggs_and_ham"));
+  }
+
   private void checkResult(@NotNull final PyTestCreationModel model, @NotNull final String fileName) {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-      final PsiFile file = PyTestCreator.generateTest(myFixture.getProject(), model).getContainingFile();
+      final PsiFile file = PyTestCreator.generateTest(myFixture.getFile(), model).getContainingFile();
       myFixture.configureByText(file.getFileType(), file.getText());
       myFixture.checkResultByFile("/create_tests/" + fileName);
     });

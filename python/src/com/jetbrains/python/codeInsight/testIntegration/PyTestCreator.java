@@ -17,6 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -53,11 +54,12 @@ public class PyTestCreator implements TestCreator {
    *
    * @return file with test
    */
-  static PsiFile generateTestAndNavigate(@NotNull final Project project, @NotNull final PyTestCreationModel creationModel) {
+  static PsiFile generateTestAndNavigate(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel creationModel) {
+    final Project project = anchor.getProject();
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction((Computable<PsiFile>)() -> {
         try {
-          final PyElement testClass = generateTest(project, creationModel);
+          final PyElement testClass = generateTest(anchor, creationModel);
           testClass.navigate(false);
           return testClass.getContainingFile();
         }
@@ -74,7 +76,8 @@ public class PyTestCreator implements TestCreator {
    * @return newly created test class
    */
   @NotNull
-  static PyElement generateTest(@NotNull final Project project, @NotNull final PyTestCreationModel model) {
+  static PyElement generateTest(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel model) {
+    final Project project = anchor.getProject();
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
     String fileName = model.getFileName();
@@ -85,22 +88,42 @@ public class PyTestCreator implements TestCreator {
 
     final String className = model.getClassName();
     final List<String> methods = model.getMethods();
+
     final boolean classBased = !StringUtil.isEmptyOrSpaces(className);
     final LanguageLevel level = LanguageLevel.forElement(psiFile);
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
 
     PyElement result = psiFile;
     if (classBased) {
+      final boolean unitTestClassRequired = PythonUnitTestUtil.isTestCaseClassRequired(anchor);
       final StringBuilder fileText = new StringBuilder();
-      fileText.append("class ").append(className).append("(TestCase):\n\t");
+      fileText.append("class ").append(className);
+      if (unitTestClassRequired) {
+        fileText.append("(TestCase)");
+      }
+      else if (LanguageLevel.forElement(anchor).isPython2()) {
+        fileText.append("(object)");
+      }
+      fileText.append(":\n\t");
+
+
       if (methods.isEmpty()) {
         fileText.append("pass\n");
       }
       for (final String method : methods) {
-        fileText.append("def ").append(method).append("(self):\n\tself.fail()\n\n\t");
+        fileText.append("def ").append(method).append("(self):\n\t");
+        if (unitTestClassRequired) {
+          fileText.append("self.fail()");
+        }
+        else {
+          fileText.append("assert False");
+        }
+        fileText.append("\n\n\t");
       }
-      AddImportHelper.addOrUpdateFromImportStatement(psiFile, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN,
-                                                     null);
+      if (unitTestClassRequired) {
+        AddImportHelper.addOrUpdateFromImportStatement(psiFile, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN,
+                                                       null);
+      }
       result = (PyElement)psiFile.addAfter(generator.createFromText(level, PyClass.class, fileText.toString()), psiFile.getLastChild());
     }
     else {
