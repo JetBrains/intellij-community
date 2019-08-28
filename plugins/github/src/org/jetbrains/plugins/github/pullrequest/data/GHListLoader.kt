@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 
-interface GHListLoader {
+interface GHListLoader : Disposable {
   @get:CalledInAwt
   val loading: Boolean
   @get:CalledInAwt

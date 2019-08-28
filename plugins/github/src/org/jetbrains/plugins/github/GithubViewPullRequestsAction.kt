@@ -11,12 +11,11 @@ import com.intellij.openapi.project.Project
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 
@@ -35,29 +34,21 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
     }
 
     val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
-    val accountInformationProvider = service<GithubAccountInformationProvider>()
 
     val toolWindowManager = project.service<GithubPullRequestsToolWindowManager>()
-    if (toolWindowManager.showPullRequestsTabIfExists(repository, remote, remoteUrl, account)) return
+    val remoteCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
+    if (toolWindowManager.showPullRequestsTabIfExists(remoteCoordinates, account)) return
 
     object : Task.Backgroundable(project, "Loading GitHub Repository Information", true, PerformInBackgroundOption.DEAF) {
-      lateinit var accountDetails: GithubAuthenticatedUser
-      lateinit var repoDetails: GithubRepoDetailed
+      lateinit var context: GHPullRequestsDataContext
 
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Loading account information"
-        accountDetails = accountInformationProvider.getInformation(requestExecutor, indicator, account)
-
-        indicator.text = "Loading repository information"
-        repoDetails = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.owner, fullPath.repository))
-                      ?: throw IllegalArgumentException(
-                        "Repository $fullPath does not exist at ${account.server} or you don't have access.")
-        indicator.checkCanceled()
+        context = project.service<GHPullRequestsDataContextRepository>().getContext(indicator, account, requestExecutor, remoteCoordinates)
       }
 
       override fun onSuccess() {
-        toolWindowManager.createPullRequestsTab(requestExecutor, repository, remote, remoteUrl, accountDetails, repoDetails, account)
-        toolWindowManager.showPullRequestsTabIfExists(repository, remote, remoteUrl, account)
+        toolWindowManager.createPullRequestsTab(context)
+        toolWindowManager.showPullRequestsTabIfExists(remoteCoordinates, account)
       }
 
       override fun onThrowable(error: Throwable) {

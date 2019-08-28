@@ -7,38 +7,22 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
-import com.intellij.util.messages.MessageBusFactory
-import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
-import git4idea.commands.Git
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.data.*
-import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
-import java.awt.Component
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -50,80 +34,30 @@ import javax.swing.event.ListSelectionEvent
 
 
 internal class GithubPullRequestsComponentFactory(private val project: Project,
-                                                  private val messageBusFactory: MessageBusFactory,
                                                   private val copyPasteManager: CopyPasteManager,
-                                                  private val progressManager: ProgressManager,
-                                                  private val git: Git,
                                                   private val avatarLoader: CachingGithubUserAvatarLoader,
                                                   private val imageResizer: GithubImageResizer,
                                                   private val actionManager: ActionManager,
                                                   private val autoPopupController: AutoPopupController,
-                                                  private val sharedProjectSettings: GithubSharedProjectSettings,
                                                   private val pullRequestUiSettings: GithubPullRequestsProjectUISettings,
                                                   private val fileEditorManager: FileEditorManager) {
 
-  fun createComponent(requestExecutor: GithubApiRequestExecutor,
-                      gitRepositoryCoordinates: GitRemoteUrlCoordinates,
-                      repositoryCoordinates: GHRepositoryCoordinates,
-                      accountDetails: GithubAuthenticatedUser,
-                      repoDetails: GithubRepoDetailed): JComponent? {
-    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, requestExecutor)
-    return GithubPullRequestsComponent(requestExecutor, avatarIconsProviderFactory, pullRequestUiSettings,
-                                       gitRepositoryCoordinates, repositoryCoordinates, accountDetails, repoDetails)
+  fun createComponent(dataContext: GHPullRequestsDataContext): JComponent {
+    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
+    return GithubPullRequestsComponent(dataContext, avatarIconsProviderFactory)
   }
 
-  inner class GithubPullRequestsComponent(requestExecutor: GithubApiRequestExecutor,
-                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                          pullRequestUiSettings: GithubPullRequestsProjectUISettings,
-                                          gitRepositoryCoordinates: GitRemoteUrlCoordinates,
-                                          repositoryCoordinates: GHRepositoryCoordinates,
-                                          accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed)
+  private inner class GithubPullRequestsComponent(private val dataContext: GHPullRequestsDataContext,
+                                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
-    private val messageBus = messageBusFactory.createMessageBus(this)
-
-    private val listModel: CollectionListModel<GHPullRequestShort>
-    private val searchHolder: GithubPullRequestSearchQueryHolder
-    private val listLoader: GHPRListLoader
-    private val listSelectionHolder: GithubPullRequestsListSelectionHolder
-    private val dataLoader: GithubPullRequestsDataLoader
-    private val securityService: GithubPullRequestsSecurityService
-    private val busyStateTracker: GithubPullRequestsBusyStateTracker
-    private val metadataService: GithubPullRequestsMetadataService
-    private val stateService: GithubPullRequestsStateService
-
-    private val serviceDisposable: Disposable
-
-    init {
-      listModel = CollectionListModel()
-      searchHolder = GithubPullRequestSearchQueryHolderImpl()
-      listLoader = GHPRListLoaderImpl(progressManager, requestExecutor,
-                                      repositoryCoordinates.serverPath, repositoryCoordinates.repositoryPath,
-                                      listModel, searchHolder)
-      listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
-      dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor,
-                                                    gitRepositoryCoordinates.repository, gitRepositoryCoordinates.remote,
-                                                    repositoryCoordinates.serverPath, repositoryCoordinates.repositoryPath)
-
-      securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
-      busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
-      metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor,
-                                                              repositoryCoordinates.serverPath, repositoryCoordinates.repositoryPath)
-      stateService = GithubPullRequestsStateServiceImpl(project, progressManager, messageBus,
-                                                        dataLoader, busyStateTracker, requestExecutor,
-                                                        repositoryCoordinates.serverPath, repositoryCoordinates.repositoryPath)
-
-      serviceDisposable = Disposable {
-        Disposer.dispose(metadataService)
-        Disposer.dispose(listLoader)
-        Disposer.dispose(dataLoader)
-      }
-    }
+    private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
+    private val actionDataContext = GHPRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
 
     private val uiDisposable: Disposable
 
     init {
-      val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, listModel)
+      val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel)
       list.emptyText.clear()
       installPopup(list)
       installSelectionSaver(list)
@@ -138,40 +72,35 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       list.registerKeyboardAction({ openTimelineForSelection(list) }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                                   JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 
-      val search = GithubPullRequestSearchPanel(project, autoPopupController, searchHolder).apply {
+      val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
         border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
       }
-      val loaderPanel = GHPRListLoaderPanel(listLoader, dataLoader, list, search)
+      val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
       firstComponent = loaderPanel
 
       val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(avatarIconsProviderFactory)
       val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings, diffCommentComponentFactory).apply {
         diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
       }
-      val details = GithubPullRequestDetailsComponent(project, dataLoader, securityService, busyStateTracker, metadataService,
-                                                      stateService, avatarIconsProviderFactory)
+      val details = GithubPullRequestDetailsComponent(project,
+                                                      dataContext.dataLoader,
+                                                      dataContext.securityService,
+                                                      dataContext.busyStateTracker,
+                                                      dataContext.metadataService,
+                                                      dataContext.stateService,
+                                                      avatarIconsProviderFactory)
       val preview = GithubPullRequestPreviewComponent(changes, details)
 
       listSelectionHolder.addSelectionChangeListener(preview) {
-        preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
+        preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider)
       }
 
-      dataLoader.addInvalidationListener(preview) {
+      dataContext.dataLoader.addInvalidationListener(preview) {
         val selection = listSelectionHolder.selectionNumber
         if (selection != null && selection == it) {
-          preview.dataProvider = dataLoader.getDataProvider(selection)
+          preview.dataProvider = dataContext.dataLoader.getDataProvider(selection)
         }
       }
-
-      messageBus.connect(this).subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
-        override fun onPullRequestEdited(number: Long) {
-          runInEdt {
-            val dataProvider = dataLoader.findDataProvider(number)
-            dataProvider?.reloadDetails()
-            dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
-          }
-        }
-      })
 
       secondComponent = preview
       isFocusCycleRoot = true
@@ -189,17 +118,15 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private fun openTimelineForSelection(list: GithubPullRequestsList) {
       val pullRequest = list.selectedValue
-      val file = GHPRVirtualFile(actionDataContext, pullRequest, dataLoader.getDataProvider(pullRequest.number))
+      val file = GHPRVirtualFile(actionDataContext,
+                                 pullRequest,
+                                 dataContext.dataLoader.getDataProvider(pullRequest.number))
       fileEditorManager.openFile(file, true)
     }
 
-    private val actionDataContext = GHPRActionDataContext(gitRepositoryCoordinates, repositoryCoordinates,
-                                                          requestExecutor, listLoader, dataLoader, metadataService, listSelectionHolder,
-                                                          avatarIconsProviderFactory)
-
     private fun installPopup(list: GithubPullRequestsList) {
       val popupHandler = object : PopupHandler() {
-        override fun invokePopup(comp: Component, x: Int, y: Int) {
+        override fun invokePopup(comp: java.awt.Component, x: Int, y: Int) {
           if (ListUtil.isPointOnSelection(list, x, y)) {
             val popupMenu = actionManager
               .createActionPopupMenu("GithubPullRequestListPopup",
@@ -249,15 +176,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     override fun dispose() {
       Disposer.dispose(uiDisposable)
-      Disposer.dispose(serviceDisposable)
-    }
-  }
-
-  companion object {
-    val PULL_REQUEST_EDITED_TOPIC = Topic(PullRequestEditedListener::class.java)
-
-    interface PullRequestEditedListener {
-      fun onPullRequestEdited(number: Long)
+      Disposer.dispose(dataContext)
     }
   }
 }

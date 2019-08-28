@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -14,7 +13,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory.Companion.PULL_REQUEST_EDITED_TOPIC
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
@@ -25,7 +24,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
                                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                                  private val serverPath: GithubServerPath,
                                                                  private val repoPath: GHRepositoryPath)
-  : GithubPullRequestsMetadataService, Disposable {
+  : GithubPullRequestsMetadataService {
 
   init {
     requestExecutor.addListener(this) {

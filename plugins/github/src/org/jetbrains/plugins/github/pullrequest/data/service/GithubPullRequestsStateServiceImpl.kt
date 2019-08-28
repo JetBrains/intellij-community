@@ -17,8 +17,8 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil

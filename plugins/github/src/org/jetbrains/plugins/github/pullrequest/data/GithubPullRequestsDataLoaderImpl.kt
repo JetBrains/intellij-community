@@ -23,7 +23,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val project: Project,
                                                 private val repository: GitRepository,
                                                 private val remote: GitRemote,
                                                 private val serverPath: GithubServerPath,
-                                                private val repoPath: GHRepositoryPath) : GithubPullRequestsDataLoader, Disposable {
+                                                private val repoPath: GHRepositoryPath) : GithubPullRequestsDataLoader {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
