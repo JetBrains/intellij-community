@@ -971,7 +971,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+  private static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
 
   public static void setCheckCanceledAction(@NotNull Runnable checkCanceled) {
     CHECK_CANCELED = () -> {

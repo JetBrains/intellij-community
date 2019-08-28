@@ -376,7 +376,16 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
   }
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
-    ProgressManager.checkCanceled()
+    try {
+      ProgressManager.checkCanceled()
+    }
+    catch (e: ProcessCanceledException) {
+      // otherwise ExceptionInInitializerError happens and the class is screwed forever
+      @Suppress("SpellCheckingInspection")
+      if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
+        throw e
+      }
+    }
 
     try {
       if (myParent == null) {
