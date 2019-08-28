@@ -6,7 +6,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 
 object GithubPullRequestKeys {
   @JvmStatic
-  val DATA_CONTEXT = DataKey.create<GithubPullRequestsDataContext>("org.jetbrains.plugins.github.pullrequest.datacontext")
+  val ACTION_DATA_CONTEXT = DataKey.create<GHPRActionDataContext>("org.jetbrains.plugins.github.pullrequest.datacontext")
 
   @JvmStatic
   internal val SELECTED_PULL_REQUEST = DataKey.create<GHPullRequestShort>("org.jetbrains.plugins.github.pullrequest.list.selected")

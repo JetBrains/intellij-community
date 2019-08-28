@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
@@ -18,12 +18,14 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.JComponent
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
@@ -46,8 +48,12 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
     var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
     val contentManager: ContentManager
 
+    val gitRepositoryCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
+    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoDetails.fullPath)
+
     if (toolWindow == null) {
-      val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
+      val component = componentFactory.createComponent(requestExecutor, gitRepositoryCoordinates, repositoryCoordinates,
+                                                       accountDetails, repoDetails)
                       ?: return
 
       toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
@@ -70,7 +76,8 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
       contentManager = toolWindow.contentManager
       val existingContent = contentManager.findContent(repository, remote, remoteUrl, account)
       if (existingContent == null) {
-        val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
+        val component = componentFactory.createComponent(requestExecutor, gitRepositoryCoordinates, repositoryCoordinates,
+                                                         accountDetails, repoDetails)
                         ?: return
         val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
         contentManager.addContent(content)

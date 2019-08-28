@@ -47,7 +47,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
   private val contentPanel: JPanel
 
   init {
-    val context = file.dataContext
+    val context = file.context
 
     val detailsModel = SingleValueModel(file.pullRequest)
     val timelineModel = GHPRTimelineMergingModel()
@@ -55,7 +55,8 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       timelineModel.removeAll()
     })
 
-    val loader = GHPRTimelineLoader(progressManager, context.requestExecutor, context.serverPath, context.repositoryDetails.fullPath,
+    val repository = context.repositoryCoordinates
+    val loader = GHPRTimelineLoader(progressManager, context.requestExecutor, repository.serverPath, repository.repositoryPath,
                                     file.pullRequest.number, timelineModel)
     Disposer.register(this, loader)
 
@@ -120,7 +121,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       }
 
       override fun getData(dataId: String): Any? {
-        if (GithubPullRequestKeys.DATA_CONTEXT.`is`(dataId)) return context
+        if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId)) return context
         return null
       }
     }

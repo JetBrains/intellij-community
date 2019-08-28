@@ -70,9 +70,9 @@ open class GithubOpenInBrowserActionGroup
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val pullRequest = dataContext.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GithubPullRequestKeys.DATA_CONTEXT) ?: return null
+    val context = dataContext.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT) ?: return null
 
-    return setOf(GHRepositoryCoordinates(context.serverPath, context.repositoryDetails.fullPath)) to Data.URL(project, pullRequest.url)
+    return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
   }
 
   private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
