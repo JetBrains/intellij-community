@@ -31,6 +31,11 @@ public class JpsCompilationOutputLoader implements JpsOutputLoader{
   public void load() {
     //Set<String> binaryKeys = myClient.getAllBinaryKeys();
     //System.out.println(binaryKeys);
+    testScenario();
+    //mainScenario();
+  }
+
+  private void mainScenario() {
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
     if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
       LOG.warn("Compiler output setting not specified for the project ");
@@ -47,6 +52,29 @@ public class JpsCompilationOutputLoader implements JpsOutputLoader{
     downloadAffectedModuleBinaryData(moduleHashingService.getAffectedTests(), testDir, CompilerModuleExtension.TEST);
   }
 
+  private void testScenario() {
+    CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
+    if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
+      LOG.warn("Compiler output setting not specified for the project ");
+      return;
+    }
+    File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
+    JpsCachePluginComponent pluginComponent = myProject.getComponent(JpsCachePluginComponent.class);
+    PersistentCachingModuleHashingService moduleHashingService = pluginComponent.getModuleHashingService();
+
+    File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
+    if (!productionDir.exists()) {
+      productionDir.mkdirs();
+    }
+    downloadAffectedModuleBinaryData(moduleHashingService.computeProductionHashesForProject(), productionDir, CompilerModuleExtension.PRODUCTION);
+
+    File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
+    if (!testDir.exists()) {
+      testDir.mkdirs();
+    }
+    downloadAffectedModuleBinaryData(moduleHashingService.computeTestHashesForProject(), testDir, CompilerModuleExtension.TEST);
+  }
+
   @Override
   public void rollback() {
 
@@ -60,8 +88,7 @@ public class JpsCompilationOutputLoader implements JpsOutputLoader{
   private void downloadAffectedModuleBinaryData(@NotNull Map<String, byte[]> affectedModules, @NotNull File targetDir, @NotNull String prefix) {
     affectedModules.forEach((moduleName, moduleHash) -> {
       String stringHash = DatatypeConverter.printHexBinary(moduleHash).toLowerCase();
-      myClient.downloadCompiledModuleByNameAndHash(myProject, moduleName, prefix, stringHash, new File(targetDir, moduleName),
-                                                   JpsCompilationOutputLoader::renameTmpModuleFolder);
+      myClient.downloadCompiledModuleByNameAndHash(myProject, moduleName, prefix, stringHash, targetDir, JpsCompilationOutputLoader::renameTmpModuleFolder);
     });
   }
 
@@ -75,6 +102,7 @@ public class JpsCompilationOutputLoader implements JpsOutputLoader{
     FileUtil.delete(currentModuleBuildDir);
     try {
       FileUtil.rename(tmpModuleFolder, currentModuleBuildDir);
+      LOG.warn("Done for module: " + moduleName);
     }
     catch (IOException e) {
       LOG.warn("Couldn't replace existing caches by downloaded portable", e);
