@@ -738,12 +738,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
-  static boolean showUninstallDialog(@NotNull List<? extends ListPluginComponent> selection) {
+  static boolean showUninstallDialog(@NotNull Component uiParent, @NotNull List<? extends ListPluginComponent> selection) {
     int size = selection.size();
-    return showUninstallDialog(size == 1 ? selection.get(0).myPlugin.getName() : null, size);
+    return showUninstallDialog(uiParent, size == 1 ? selection.get(0).myPlugin.getName() : null, size);
   }
 
-  static boolean showUninstallDialog(@Nullable String singleName, int count) {
+  static boolean showUninstallDialog(@NotNull Component uiParent, @Nullable String singleName, int count) {
     String message;
     if (singleName == null) {
       message = IdeBundle.message("prompt.uninstall.several.plugins", count);
@@ -752,10 +752,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       message = IdeBundle.message("prompt.uninstall.plugin", singleName);
     }
 
-    return Messages.showYesNoDialog(message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == Messages.YES;
+    return Messages.showYesNoDialog(uiParent, message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
-  void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor, @Nullable Runnable update) {
+  void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
     IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
     if (!dependent(descriptorImpl).isEmpty()) {
       String message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", descriptor.getName());
@@ -783,10 +783,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     catch (IOException e) {
       PluginManagerMain.LOG.error(e);
-    }
-
-    if (update != null) {
-      update.run();
     }
 
     List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor);

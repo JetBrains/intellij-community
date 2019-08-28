@@ -592,11 +592,11 @@ public class ListPluginComponent extends JPanel {
     group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!MyPluginModel.showUninstallDialog(selection)) {
+        if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
           return;
         }
         for (ListPluginComponent component : selection) {
-          myPluginModel.doUninstall(component, component.myPlugin, null);
+          myPluginModel.doUninstall(component, component.myPlugin);
         }
       }
     });
@@ -677,11 +677,11 @@ public class ListPluginComponent extends JPanel {
             return;
           }
         }
-        if (!MyPluginModel.showUninstallDialog(selection)) {
+        if (!MyPluginModel.showUninstallDialog(this, selection)) {
           return;
         }
         for (ListPluginComponent component : selection) {
-          myPluginModel.doUninstall(this, component.myPlugin, null);
+          myPluginModel.doUninstall(this, component.myPlugin);
         }
       }
     }

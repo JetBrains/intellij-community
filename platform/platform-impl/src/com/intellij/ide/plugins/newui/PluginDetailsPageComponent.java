@@ -606,8 +606,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void doUninstall() {
-    if (MyPluginModel.showUninstallDialog(myPlugin.getName(), 1)) {
-      myPluginModel.doUninstall(this, myPlugin, null);
+    if (MyPluginModel.showUninstallDialog(this, myPlugin.getName(), 1)) {
+      myPluginModel.doUninstall(this, myPlugin);
     }
   }
 
