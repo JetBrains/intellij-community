@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -27,7 +27,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
   }
 
   private void registerMetaLanguage() {
-    PlatformTestUtil.registerExtension myArea, MetaLanguage.EP_NAME, MyMetaLanguage.INSTANCE, testRootDisposable
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), MetaLanguage.EP_NAME, MyMetaLanguage.INSTANCE, testRootDisposable)
   }
 
   private void registerLanguageEP() {

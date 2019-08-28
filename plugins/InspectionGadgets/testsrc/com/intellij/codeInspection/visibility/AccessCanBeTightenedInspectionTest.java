@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
@@ -161,7 +147,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
   }
-  
+
   public void testQualifiedAccessFromSubclassSamePackage() {
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java", "package x; " +
@@ -336,7 +322,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                "public class MyTest {\n" +
                                "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
                                "}");
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 
@@ -392,7 +378,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
                                "    {foo();}\n" +
                                "}");
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 
@@ -445,10 +431,10 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSuggestPackagePrivateForImplicitWrittenFields() {
     addJavaFile("x/MyTest.java", "package x;\n" +
                                "public class MyTest {\n" +
-                               "    String foo;\n" + 
-                               "  {System.out.println(foo);}" + 
+                               "    String foo;\n" +
+                               "  {System.out.println(foo);}" +
                                "}");
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;

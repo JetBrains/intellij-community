@@ -6,8 +6,8 @@ import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -16,7 +16,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,7 +169,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
   }
 
   public void testEntryPointWithPredefinedVisibility() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 

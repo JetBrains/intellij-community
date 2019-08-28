@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
@@ -317,7 +318,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final Set<VirtualFile> requested = new LinkedHashSet<>();
-    PlatformTestUtil.registerExtension(getProject().getExtensionArea(), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
+    ServiceContainerUtil.registerExtension(getProject(), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
       @NotNull
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
@@ -331,7 +332,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void registerAccessCheckExtension(Collection<VirtualFile> filesToAllow, Collection<VirtualFile> filesToDeny) {
-    PlatformTestUtil.registerExtension(getProject().getExtensionArea(), NonProjectFileWritingAccessExtension.EP_NAME,
+    ServiceContainerUtil.registerExtension(getProject(), NonProjectFileWritingAccessExtension.EP_NAME,
                                        new NonProjectFileWritingAccessExtension() {
                                          @Override
                                          public boolean isWritable(@NotNull VirtualFile file) {

@@ -5,11 +5,11 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsig
     doTest();
   }
   public void testImplicit() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;

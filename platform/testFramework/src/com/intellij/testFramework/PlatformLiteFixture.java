@@ -57,7 +57,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
   public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull T extension) {
     //noinspection unchecked
     registerExtensionPoint(area, name, (Class<T>)extension.getClass());
-    PlatformTestUtil.registerExtension(area, name, extension, getTestRootDisposable());
+    area.<T>getExtensionPoint(name.getName()).registerExtension(extension, getTestRootDisposable());
   }
 
   protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {

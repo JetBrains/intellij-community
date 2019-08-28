@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
-import com.intellij.openapi.extensions.Extensions
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.registerExtension
 import junit.framework.TestCase
 import org.junit.Test
 
@@ -21,8 +21,7 @@ class ProductivityValidatorTest : ProductivityFeaturesTest() {
 
   override fun setUp() {
     super.setUp()
-    PlatformTestUtil.registerExtension(
-      Extensions.getRootArea(),
+    ApplicationManager.getApplication().registerExtension(
       ProductivityFeaturesProvider.EP_NAME, TestProductivityFeatureProvider(),
       testRootDisposable
     )

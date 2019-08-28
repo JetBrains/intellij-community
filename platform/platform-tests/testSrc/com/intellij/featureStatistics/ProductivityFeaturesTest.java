@@ -5,11 +5,10 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
 
 public class ProductivityFeaturesTest extends LightPlatformTestCase {
@@ -23,12 +22,12 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
     ((ProductivityFeaturesRegistryImpl)myRegistry).prepareForTest();
     myTracker = FeatureUsageTracker.getInstance();
 
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ProductivityFeaturesProvider.EP_NAME, new TestProductivityFeatureProvider(), getTestRootDisposable());
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ProductivityFeaturesProvider.EP_NAME, new TestProductivityFeatureProvider(), getTestRootDisposable());
 
     TipAndTrickBean tip = new TipAndTrickBean();
     tip.fileName = "TestTip.html";
     tip.setPluginDescriptor(PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)));
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), TipAndTrickBean.EP_NAME, tip, getTestRootDisposable());
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), TipAndTrickBean.EP_NAME, tip, getTestRootDisposable());
   }
 
   @Override

@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -540,7 +539,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testSubsequentFoldsAreCombined() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
       @Override
       public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
         return line.contains("FOO");

@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -139,21 +139,6 @@ public class PlatformTestUtil {
                                         @NotNull List<T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
-  }
-
-  /**
-   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
-   */
-  @Deprecated
-  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
-    registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
-  }
-
-  public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull BaseExtensionPointName name,
-                                           @NotNull T t,
-                                           @NotNull Disposable parentDisposable) {
-    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
   }
 
   @Nullable

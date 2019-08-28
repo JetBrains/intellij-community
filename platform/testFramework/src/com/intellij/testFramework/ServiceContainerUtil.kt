@@ -4,13 +4,22 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import org.jetbrains.annotations.TestOnly
 
+@TestOnly
 fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
   (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, DefaultPluginDescriptor("test"))
 }
 
+@TestOnly
 fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
   (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
+}
+
+@TestOnly
+fun <T> ComponentManager.registerExtension(name: BaseExtensionPointName, instance: T, parentDisposable: Disposable) {
+  extensionArea.getExtensionPoint<T>(name.name).registerExtension(instance, parentDisposable)
 }
