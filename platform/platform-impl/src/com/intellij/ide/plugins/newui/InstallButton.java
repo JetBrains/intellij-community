@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -48,13 +49,17 @@ public class InstallButton extends ColorButton {
   }
 
   @Override
-  public void setEnabled(boolean enabled) {
+  public void setEnabled(boolean b) {
+    super.setEnabled(b);
+  }
+
+  public void setEnabled(boolean enabled, @Nullable String statusText) {
     super.setEnabled(enabled);
     if (enabled) {
       setTextAndSize();
     }
     else {
-      setText("Installed");
+      setText(statusText);
       setWidth(this, 80);
     }
   }

@@ -50,7 +50,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private final JEditorPane myNameComponent = createNameComponent();
   private final BaselinePanel myNameAndButtons = new BaselinePanel();
   private JButton myRestartButton;
-  private JButton myInstallButton;
+  private InstallButton myInstallButton;
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
@@ -345,56 +345,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameComponent.setText("<html><span>" + myPlugin.getName() + "</span></html>");
     updateIcon();
 
-    if (myMarketplace) {
-      boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
-      myRestartButton.setVisible(installed);
-
-      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
-      myInstallButton.setVisible(!installed);
-
-      myUpdateButton.setVisible(false);
-      myEnableDisableButton.setVisible(false);
-      myEnableDisableUninstallButton.setVisible(false);
-      myUninstallButton.setVisible(false);
-    }
-    else {
-      myInstallButton.setVisible(false);
-
-      boolean restart = myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted();
-      if (!restart) {
-        InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
-        PluginId id = myPlugin.getPluginId();
-        restart = pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id);
-      }
-
-      if (restart) {
-        myRestartButton.setVisible(true);
-        myUpdateButton.setVisible(false);
-        myEnableDisableButton.setVisible(false);
-        myEnableDisableUninstallButton.setVisible(false);
-        myUninstallButton.setVisible(false);
-      }
-      else {
-        myRestartButton.setVisible(false);
-
-        boolean bundled = myPlugin.isBundled();
-        String title = myPluginModel.getEnabledTitle(myPlugin);
-        boolean errors = myPluginModel.hasErrors(myPlugin);
-
-        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-
-        myEnableDisableButton.setVisible(bundled && !errors);
-        myEnableDisableButton.setText(title);
-
-        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-        myEnableDisableUninstallButton.setText(title);
-
-        myUninstallButton.setVisible(!bundled && errors);
-      }
-
-      updateEnableForNameAndIcon();
-      updateErrors();
-    }
+    updateButtons();
 
     boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
     String version = bundled ? "bundled" : myPlugin.getVersion();
@@ -500,6 +451,68 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
+  public void updateButtons() {
+    if (myMarketplace) {
+      boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
+      boolean installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId());
+      myRestartButton.setVisible(installed);
+
+      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null && !installedWithoutRestart, "Installed");
+      myInstallButton.setVisible(!installed);
+
+      myUpdateButton.setVisible(false);
+      myEnableDisableButton.setVisible(false);
+      myEnableDisableUninstallButton.setVisible(false);
+      myUninstallButton.setVisible(false);
+    }
+    else {
+      myInstallButton.setVisible(false);
+
+      boolean uninstalled = myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted();
+      boolean uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(myPlugin.getPluginId());
+      if (!uninstalled) {
+        InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
+        PluginId id = myPlugin.getPluginId();
+        uninstalled = pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id);
+      }
+
+      if (uninstalled) {
+        if (uninstalledWithoutRestart) {
+          myRestartButton.setVisible(false);
+          myInstallButton.setVisible(true);
+          myInstallButton.setEnabled(false, "Uninstalled");
+        }
+        else {
+          myRestartButton.setVisible(true);
+        }
+        myUpdateButton.setVisible(false);
+        myEnableDisableButton.setVisible(false);
+        myEnableDisableUninstallButton.setVisible(false);
+        myUninstallButton.setVisible(false);
+      }
+      else {
+        myRestartButton.setVisible(false);
+
+        boolean bundled = myPlugin.isBundled();
+        String title = myPluginModel.getEnabledTitle(myPlugin);
+        boolean errors = myPluginModel.hasErrors(myPlugin);
+
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+
+        myEnableDisableButton.setVisible(bundled && !errors);
+        myEnableDisableButton.setText(title);
+
+        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
+        myEnableDisableUninstallButton.setText(title);
+
+        myUninstallButton.setVisible(!bundled && errors);
+      }
+
+      updateEnableForNameAndIcon();
+      updateErrors();
+    }
+  }
+
   private void updateIcon() {
     boolean jb = PluginManagerConfigurable.isJBPlugin(myPlugin);
     boolean errors = myPluginModel.hasErrors(myPlugin);
@@ -551,7 +564,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.removeProgressComponent();
 
     if (success) {
-      enableRestart();
+      updateButtons();
     }
     if (repaint) {
       fullRepaint();
@@ -596,15 +609,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (MyPluginModel.showUninstallDialog(myPlugin.getName(), 1)) {
       myPluginModel.doUninstall(this, myPlugin, null);
     }
-  }
-
-  public void enableRestart() {
-    myInstallButton.setVisible(false);
-    myUpdateButton.setVisible(false);
-    myEnableDisableButton.setVisible(false);
-    myEnableDisableUninstallButton.setVisible(false);
-    myUninstallButton.setVisible(false);
-    myRestartButton.setVisible(true);
   }
 
   @Nullable

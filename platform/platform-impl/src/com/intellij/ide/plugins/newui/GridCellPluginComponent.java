@@ -177,7 +177,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void hideProgress(boolean success) {
+  public void hideProgress(boolean success, boolean restartRequired) {
     myIndicator = null;
     JComponent lastComponent = myLastComponent;
     if (success) {

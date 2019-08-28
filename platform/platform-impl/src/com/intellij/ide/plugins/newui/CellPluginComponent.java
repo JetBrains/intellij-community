@@ -201,7 +201,7 @@ public abstract class CellPluginComponent extends JPanel {
 
   public abstract void showProgress();
 
-  public abstract void hideProgress(boolean success);
+  public abstract void hideProgress(boolean success, boolean restartRequired);
 
   public void clearProgress() {
     throw new UnsupportedOperationException();

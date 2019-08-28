@@ -1586,6 +1586,8 @@ public class PluginManagerConfigurable
       myShutdownCallback.run();
       myShutdownCallback = null;
     }
+
+    InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
   }
 
   @Override

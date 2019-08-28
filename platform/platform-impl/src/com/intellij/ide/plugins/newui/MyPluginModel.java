@@ -152,7 +152,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    return applyEnableDisablePlugins(enabledMap) || needRestartForUninstall;
+    return applyEnableDisablePlugins(enabledMap) && !needRestartForUninstall;
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
@@ -407,13 +407,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<CellPluginComponent> gridComponents = myGridMap.get(descriptor);
     if (gridComponents != null) {
       for (CellPluginComponent gridComponent : gridComponents) {
-        gridComponent.hideProgress(success);
+        gridComponent.hideProgress(success, restartRequired);
       }
     }
     List<CellPluginComponent> listComponents = myListMap.get(descriptor);
     if (listComponents != null) {
       for (CellPluginComponent listComponent : listComponents) {
-        listComponent.hideProgress(success);
+        listComponent.hideProgress(success, restartRequired);
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
@@ -537,7 +537,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       for (Entry<IdeaPluginDescriptor, List<CellPluginComponent>> entry : myGridMap.entrySet()) {
         if (id.equals(entry.getKey().getPluginId().getIdString())) {
           for (CellPluginComponent component : entry.getValue()) {
-            component.hideProgress(true);
+            component.hideProgress(true, true);
           }
           break;
         }
@@ -769,6 +769,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     try {
       ((IdeaPluginDescriptorImpl)descriptor).setDeleted(true);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptor.getPluginId());
+      InstalledPluginsState.getInstance().onPluginUninstall(descriptor, needRestartForUninstall);
       if (!needRestartForUninstall) {
         myDynamicPluginsToUninstall.add(descriptor);
       }
@@ -794,8 +795,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin == descriptor && needRestartForUninstall) {
-        panel.enableRestart();
+      if (panel.myPlugin == descriptor) {
+        panel.updateButtons();
       }
     }
   }

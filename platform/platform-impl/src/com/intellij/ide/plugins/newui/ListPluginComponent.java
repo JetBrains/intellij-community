@@ -45,7 +45,7 @@ public class ListPluginComponent extends CellPluginComponent {
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
   private final BaselineLayout myLayout = new BaselineLayout();
   private JButton myRestartButton;
-  private JButton myInstallButton;
+  private InstallButton myInstallButton;
   private JButton myUpdateButton;
   private JCheckBox myEnableDisableButton;
   private JLabel myRating;
@@ -105,7 +105,7 @@ public class ListPluginComponent extends CellPluginComponent {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
         myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null);
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
         ColorButton.setWidth72(myInstallButton);
       }
     }
@@ -390,12 +390,17 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void hideProgress(boolean success) {
+  public void hideProgress(boolean success, boolean restartRequired) {
     myIndicator = null;
     myLayout.removeProgressComponent();
 
     if (success) {
-      enableRestart();
+      if (restartRequired) {
+        enableRestart();
+      }
+      else {
+        myInstallButton.setEnabled(false, "Installed");
+      }
     }
 
     fullRepaint();

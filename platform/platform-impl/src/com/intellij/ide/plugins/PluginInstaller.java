@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -41,6 +42,8 @@ import java.util.zip.ZipFile;
  * @author stathik
  */
 public class PluginInstaller {
+  private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
+
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   static final Object ourLock = new Object();
@@ -74,7 +77,7 @@ public class PluginInstaller {
         else {
           boolean needRestart = !DynamicPlugins.isUnloadSafe(pluginDescriptor);
           if (needRestart) {
-            StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+            uninstallAfterRestart(pluginDescriptor);
           }
 
           PluginStateManager.fireState(pluginDescriptor, false);
@@ -85,12 +88,23 @@ public class PluginInstaller {
     return false;
   }
 
+  private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+  }
+
   public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor) {
-    boolean uninstalledWithoutRestart;
-    uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
+    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
     if (uninstalledWithoutRestart) {
       FileUtil.delete(pluginDescriptor.getPath());
       PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), pluginDescriptor));
+    }
+    else {
+      try {
+        uninstallAfterRestart(pluginDescriptor);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     return uninstalledWithoutRestart;
   }
@@ -110,7 +124,8 @@ public class PluginInstaller {
       commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
-      commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
+      commands
+        .add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
       commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
 
@@ -232,7 +247,7 @@ public class PluginInstaller {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
         DynamicPlugins.loadPlugin(targetDescriptor);
-        PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[] { targetDescriptor }));
+        PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[]{targetDescriptor}));
       }
     }
   }
@@ -257,7 +272,8 @@ public class PluginInstaller {
     }
     if (!notInstalled.isEmpty()) {
       String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
-      String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
+      String message =
+        "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
       MessagesEx.showWarningDialog(parent, message, "Install Plugin");
     }
     if (!disabledIds.isEmpty()) {
@@ -270,7 +286,9 @@ public class PluginInstaller {
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
-      if (Messages.showOkCancelDialog(message, "Install Plugin", "Install", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) == Messages.OK) {
+      if (Messages
+            .showOkCancelDialog(message, "Install Plugin", "Install", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) ==
+          Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }
@@ -288,7 +306,8 @@ public class PluginInstaller {
     descriptor.setTitle("Choose Plugin File");
     descriptor.setDescription("JAR and ZIP archives are accepted");
     final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
-    final VirtualFile toSelect = oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
+    final VirtualFile toSelect =
+      oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);
     FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
       File file = VfsUtilCore.virtualToIoFile(virtualFile);
       PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtil.toSystemIndependentName(file.getParent()));
