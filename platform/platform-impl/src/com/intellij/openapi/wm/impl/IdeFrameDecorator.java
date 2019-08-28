@@ -142,7 +142,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
       });
 
-      if (SystemInfo.isKDE && UIUtil.SUPPRESS_FOCUS_STEALING) {
+      if (SystemInfo.isKDE && UIUtil.DISABLE_AUTO_REQUEST_FOCUS) {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active

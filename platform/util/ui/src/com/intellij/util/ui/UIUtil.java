@@ -87,7 +87,8 @@ public final class UIUtil extends StartupUiUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux", false) && Registry.is("suppress.focus.stealing", true);
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.active.window.checks", false);
+  public static final boolean DISABLE_AUTO_REQUEST_FOCUS = Registry.is("suppress.focus.stealing.disable.auto.request.focus", false);
 
   @NotNull
   // cannot be static because logging maybe not configured yet

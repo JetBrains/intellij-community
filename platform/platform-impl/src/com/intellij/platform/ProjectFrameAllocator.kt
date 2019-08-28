@@ -224,8 +224,7 @@ fun createNewProjectFrame(): IdeFrameImpl {
   frame.size = size
   frame.setLocationRelativeTo(null)
 
-  if (UIUtil.SUPPRESS_FOCUS_STEALING &&
-      Registry.`is`("suppress.focus.stealing.auto.request.focus") &&
+  if (UIUtil.DISABLE_AUTO_REQUEST_FOCUS &&
       !ApplicationManager.getApplication().isActive) {
     frame.isAutoRequestFocus = false
   }

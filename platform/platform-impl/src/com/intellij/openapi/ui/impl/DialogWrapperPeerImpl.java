@@ -420,7 +420,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus(!UIUtil.SUPPRESS_FOCUS_STEALING);
+    myDialog.getWindow().setAutoRequestFocus(!UIUtil.DISABLE_AUTO_REQUEST_FOCUS);
 
     if (SystemInfo.isMac) {
       final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
@@ -545,7 +545,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, !UIUtil.SUPPRESS_FOCUS_STEALING);
+      UIUtil.setAutoRequestFocus(this, !UIUtil.DISABLE_AUTO_REQUEST_FOCUS);
     }
 
     /**
