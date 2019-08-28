@@ -95,7 +95,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
     DomFileElement<MavenDomProjectModel> domModel =
       DomManager.getDomManager(context.getProject()).getFileElement(contextFile, MavenDomProjectModel.class);
 
-    if (!isInsideManagedDependencies(domCoordinates) &&
+    if (!MavenDependencyCompletionUtil.isInsideManagedDependency(domCoordinates) &&
         MavenDependencyCompletionUtil.findManagedDependency(domModel.getRootElement(), context.getProject(), completionItem.getGroupId(),
                                                             completionItem.getArtifactId()) != null) {
       return; //allready present in parent file
@@ -115,10 +115,4 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
     }
   }
 
-  private static boolean isInsideManagedDependencies(MavenDomArtifactCoordinates coordinates) {
-    XmlTag tag = coordinates.getXmlTag();
-    XmlTag dependencies = tag == null ? null : tag.getParentTag();
-    XmlTag dependencyManagement = dependencies == null ? null : dependencies.getParentTag();
-    return dependencyManagement != null && "dependencyManagement".equals(dependencyManagement.getName());
-  }
 }

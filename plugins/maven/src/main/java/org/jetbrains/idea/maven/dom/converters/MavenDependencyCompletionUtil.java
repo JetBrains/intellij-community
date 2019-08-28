@@ -67,7 +67,7 @@ public class MavenDependencyCompletionUtil {
     return ref.get();
   }
 
-  private static boolean isInsideManagedDependency(MavenDomArtifactCoordinates dependency) {
+  public static boolean isInsideManagedDependency(@NotNull MavenDomShortArtifactCoordinates dependency) {
     DomElement parent = dependency.getParent();
     if (!(parent instanceof MavenDomDependencies)) return false;
 
@@ -114,7 +114,6 @@ public class MavenDependencyCompletionUtil {
     String key = "maven.dependency.completion.presentable";
     return IndicesBundle.message(key, info.getGroupId(), info.getArtifactId());
   }
-
 
   @Nullable
   public static Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {

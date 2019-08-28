@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.converters
 
+import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
@@ -45,7 +46,7 @@ object MavenArtifactCoordinatesHelper {
                    ?: return withVersion(coords, "")
     val groupId = MavenDependencyCompletionUtil.removeDummy(coords?.groupId?.stringValue)
     val artifactId = MavenDependencyCompletionUtil.removeDummy(coords?.artifactId?.stringValue)
-    if (artifactId.isNotEmpty() && groupId.isNotEmpty()) {
+    if (artifactId.isNotEmpty() && groupId.isNotEmpty() && (coords!=null && !MavenDependencyCompletionUtil.isInsideManagedDependency(coords))) {
       val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId,
                                                                         artifactId)
       return withVersion(coords, managed?.version?.stringValue ?: "")
@@ -53,7 +54,6 @@ object MavenArtifactCoordinatesHelper {
     else {
       return MavenId(groupId, artifactId, "")
     }
-
   }
 
   @JvmStatic
