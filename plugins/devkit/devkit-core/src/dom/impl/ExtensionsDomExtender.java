@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -20,7 +19,10 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -91,23 +93,25 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
   }
 
   static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    Set<String> result = new HashSet<>();
-    result.add(PluginManagerCore.CORE_PLUGIN_ID);
-
-    for (Dependency dependency : ideaPlugin.getDependencies()) {
-      ContainerUtil.addIfNotNull(result, dependency.getStringValue());
-    }
-
-    if (ideaPlugin.getPluginId() != null) {
-      return result;
-    }
-
     final VirtualFile currentFile = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
     if (currentFile == null) {
-      return result;
+      return Collections.emptySet();
     }
 
     final Project project = ideaPlugin.getManager().getProject();
+
+    Set<String> result = new HashSet<>();
+    result.add(PluginManagerCore.CORE_PLUGIN_ID);
+
+    result.addAll(PluginIdDependenciesIndex.getPluginAndDependsIds(project, Collections.singleton(currentFile)));
+
+    final String pluginId = ideaPlugin.getPluginId();
+    if (pluginId != null) {
+      result.remove(pluginId);
+      return result;
+    }
+
+    
     final VirtualFile[] includingFiles = FileIncludeManager.getManager(project).getIncludingFiles(currentFile, false);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
