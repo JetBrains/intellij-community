@@ -417,60 +417,77 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    AtomicBoolean success = new AtomicBoolean(true);
-
-    Runnable doLoad = () -> {
-      success.set(loadProjectUnderProgress(project, () -> {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
-
-        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-        startupManager.runStartupActivities();
-        startupManager.runPostStartupActivitiesFromExtensions();
-
-        GuiUtils.invokeLaterIfNeeded(() -> {
-          if (!project.isDisposed()) {
-            startupManager.runPostStartupActivities();
-
-            Application application = ApplicationManager.getApplication();
-            if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-              StorageUtilKt.checkUnknownMacros(project, true);
-            }
-            StartUpMeasurer.stopPluginCostMeasurement();
-          }
-        }, ModalityState.NON_MODAL);
-        ApplicationManager.getApplication().invokeLater(
-          () -> {
-            LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
-                                       DumbService.isDumb(project)
-                                       ? LoadingPhase.PROJECT_OPENED
-                                       : LoadingPhase.INDEXING_FINISHED);
-
-            if (!project.isDisposed()) {
-              startupManager.scheduleBackgroundPostStartupActivities();
-            }
-          },
-          ModalityState.NON_MODAL);
-      }));
-    };
-
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
+      AtomicBoolean success = new AtomicBoolean(true);
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+        success.set(loadProjectUnderProgress(project));
+      });
+      if (success.get()) {
+        return true;
+      }
     }
     else {
       assertInTransaction();
-      doLoad.run();
+      if (loadProjectUnderProgress(project)) {
+        return true;
+      }
     }
 
-    if (!success.get()) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        closeProject(project, false, false, false, true);
-        WriteAction.run(() -> Disposer.dispose(project));
-        notifyProjectOpenFailed();
-      }, ModalityState.defaultModalityState());
-      return false;
-    }
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      closeProject(project, false, false, false, true);
+      WriteAction.run(() -> Disposer.dispose(project));
+      notifyProjectOpenFailed();
+    }, ModalityState.defaultModalityState());
+    return false;
+  }
 
-    return true;
+  private static boolean loadProjectUnderProgress(@NotNull Project project) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null || ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        doLoadProject(project);
+      }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+    }
+    else {
+      indicator.setText("Preparing workspace...");
+      try {
+        doLoadProject(project);
+        return true;
+      }
+      catch (ProcessCanceledException e) {
+        return false;
+      }
+    }
+  }
+
+  private static void doLoadProject(@NotNull Project project) {
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+
+    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+    startupManager.runStartupActivities();
+    startupManager.runPostStartupActivitiesFromExtensions();
+
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      if (!project.isDisposed()) {
+        startupManager.runPostStartupActivities();
+
+        Application application = ApplicationManager.getApplication();
+        if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+          StorageUtilKt.checkUnknownMacros(project, true);
+        }
+        StartUpMeasurer.stopPluginCostMeasurement();
+      }
+    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
+                                 DumbService.isDumb(project)
+                                 ? LoadingPhase.PROJECT_OPENED
+                                 : LoadingPhase.INDEXING_FINISHED);
+
+      if (!project.isDisposed()) {
+        startupManager.scheduleBackgroundPostStartupActivities();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static void assertInTransaction() {
@@ -480,23 +497,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.error("Project opening should be done in a transaction",
                 new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
     }
-  }
-
-  private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
-      indicator.setText("Preparing workspace...");
-      try {
-        performLoading.run();
-        return true;
-      }
-      catch (ProcessCanceledException e) {
-        return false;
-      }
-    }
-
-    return ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 
   private boolean addToOpened(@NotNull Project project) {
