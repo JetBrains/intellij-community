@@ -50,11 +50,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
 
-  public VirtualDirectoryImpl(int id,
-                              @NotNull VfsData.Segment segment,
-                              @NotNull VfsData.DirectoryData data,
-                              @Nullable VirtualDirectoryImpl parent,
-                              @NotNull NewVirtualFileSystem fs) {
+  VirtualDirectoryImpl(int id,
+                       @NotNull VfsData.Segment segment,
+                       @NotNull VfsData.DirectoryData data,
+                       @Nullable VirtualDirectoryImpl parent,
+                       @NotNull NewVirtualFileSystem fs) {
     super(id, segment, parent);
     myData = data;
     myFs = fs;
