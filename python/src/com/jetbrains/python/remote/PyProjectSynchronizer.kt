@@ -85,6 +85,7 @@ interface PyProjectSynchronizer {
    */
   fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String?
 }
+
 /**
  * Plugin registers [PyProjectSynchronizer] for [CredentialsType]
  */
@@ -93,7 +94,7 @@ interface PyProjectSynchronizerProvider {
 
   companion object {
     private val EP: ExtensionPointName<PyProjectSynchronizerProvider> =
-      ExtensionPointName.create("com.jetbrains.python.remote.projectSynchronizerProvider")
+      ExtensionPointName.create("Pythonid.projectSynchronizerProvider")
 
     fun find(credsType: CredentialsType<*>, sdk: Sdk) = EP.extensions.mapNotNull { it.getSynchronizer(credsType, sdk) }.firstOrNull()
   }
