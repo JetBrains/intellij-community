@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -359,6 +360,9 @@ public class ProjectUtil {
       if (executeIfAppInactive) {
         AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
         f.toFront();
+        if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
+          IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+        }
       }
       else {
         IdeFocusManager.getInstance(p).requestFocusInProject(f.getMostRecentFocusOwner(), p);
