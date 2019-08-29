@@ -103,6 +103,7 @@ open class MultipleFileMergeDialog(
 
     updateTree()
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
+    updateButtonState()
     selectFirstFile()
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
