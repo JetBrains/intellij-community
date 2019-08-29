@@ -216,15 +216,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @NotNull
   public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass), baseClass);
+    return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
-  @NotNull
-  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
-    return getComponentInstancesOfType(baseClass, false);
-  }
-
   @NotNull
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     List<T> result = null;

@@ -29,5 +29,5 @@ val ComponentManager.stateStore: IComponentStore
 @Deprecated(message = "do not use", replaceWith = ReplaceWith("getComponentInstancesOfType(baseClass)"))
 fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> {
   @Suppress("DEPRECATION")
-  return getComponentInstancesOfType(baseClass)
+  return getComponentInstancesOfType(baseClass, false)
 }

@@ -196,16 +196,18 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
   }
 
+  @SuppressWarnings("deprecation")
   @NotNull
   @Override
-  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
-    return getDelegate().getComponentInstancesOfType(baseClass);
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+    return getDelegate().getComponentInstancesOfType(baseClass, createIfNotYet);
   }
 
   @Override

@@ -103,9 +103,10 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   @NotNull
-  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType, boolean createIfNotYet) {
     List<T> result = new ArrayList<>();
     DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
     for (ComponentAdapter componentAdapter : container.getComponentAdapters()) {

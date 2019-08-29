@@ -157,6 +157,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   // todo make pluginDescriptor as not-null
   @NotNull
+  @ApiStatus.Internal
   default <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
     try {
       //noinspection unchecked
@@ -167,11 +168,21 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
     }
   }
 
+  /**
+   * @deprecated Do not use.
+   */
+  @NotNull
+  @ApiStatus.Internal
+  @Deprecated
+  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    return getComponentInstancesOfType(baseClass, false);
+  }
+
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @NotNull
   @Deprecated
   @ApiStatus.Internal
-  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     throw new UnsupportedOperationException();
   }
 }

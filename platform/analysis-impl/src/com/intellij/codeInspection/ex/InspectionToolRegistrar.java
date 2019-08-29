@@ -25,7 +25,7 @@ public final class InspectionToolRegistrar implements Supplier<List<InspectionTo
   @NotNull
   private final NotNullLazyValue<List<Supplier<InspectionToolWrapper>>> myInspectionToolFactories = NotNullLazyValue.createValue(() -> {
     Set<InspectionToolProvider> providers = new THashSet<>();
-    providers.addAll(((ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
+    providers.addAll((ApplicationManager.getApplication().getComponentInstancesOfType(InspectionToolProvider.class)));
     providers.addAll(InspectionToolProvider.EXTENSION_POINT_NAME.getExtensionList());
 
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();

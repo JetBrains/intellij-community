@@ -32,6 +32,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
+    //noinspection deprecation
     myDecorators = project.getComponentInstancesOfType(ChangeListDecorator.class);
   }
 

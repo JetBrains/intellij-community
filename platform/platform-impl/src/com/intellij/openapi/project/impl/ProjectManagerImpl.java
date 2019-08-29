@@ -22,8 +22,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.impl.DummyProject;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -849,17 +849,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
     // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
     // (and, so, should be called after project initialization)
-    if (project instanceof ComponentManagerImpl) {
-      for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
-        StartupManagerImpl.runActivity(() -> {
-          ClassLoader loader = component.getClass().getClassLoader();
-          String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : null;
-          Activity componentActivity =
-            ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
-          component.projectOpened();
-          componentActivity.end();
-        });
-      }
+    for (ProjectComponent component : getProjectComponents(project)) {
+      StartupManagerImpl.runActivity(() -> {
+        ClassLoader loader = component.getClass().getClassLoader();
+        String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader)loader).getPluginIdString() : null;
+        Activity componentActivity =
+          ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
+        component.projectOpened();
+        componentActivity.end();
+      });
     }
     activity.end();
 
@@ -875,18 +873,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     getPublisher().projectClosed(project);
     // see "why is called after message bus" in the fireProjectOpened
-    if (project instanceof ComponentManagerImpl) {
-      List<ProjectComponent> components = ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class);
-      for (int i = components.size() - 1; i >= 0; i--) {
-        ProjectComponent component = components.get(i);
-        try {
-          component.projectClosed();
-        }
-        catch (Throwable e) {
-          LOG.error(component.toString(), e);
-        }
+    List<ProjectComponent> components = getProjectComponents(project);
+    for (int i = components.size() - 1; i >= 0; i--) {
+      ProjectComponent component = components.get(i);
+      try {
+        component.projectClosed();
+      }
+      catch (Throwable e) {
+        LOG.error(component.toString(), e);
       }
     }
+  }
+
+  @NotNull
+  private static List<ProjectComponent> getProjectComponents(@NotNull ComponentManager project) {
+    //noinspection deprecation
+    return project.getComponentInstancesOfType(ProjectComponent.class);
   }
 
   @Override

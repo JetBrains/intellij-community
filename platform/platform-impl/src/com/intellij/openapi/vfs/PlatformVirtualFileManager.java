@@ -27,8 +27,9 @@ public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull
   private static List<VirtualFileSystem> getVirtualFileSystems() {
     Application app = ApplicationManager.getApplication();
+    @SuppressWarnings("deprecation")
     List<VirtualFileSystem> result = app instanceof ComponentManagerImpl
-                                     ? ((ComponentManagerImpl)app).getComponentInstancesOfType(VirtualFileSystem.class, true)
+                                     ? app.getComponentInstancesOfType(VirtualFileSystem.class, true)
                                      : Collections.emptyList();
     if (!result.isEmpty()) {
       LOG.warn("Do not register file system as application component, instead, register as extension, for example:\n" +
