@@ -84,7 +84,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     LOG.debug("invoking commit dialog after update")
 
     val selectedChanges = context.selectedChanges
-    val selectedUnversioned = context.selectedUnversionedFiles
+    val selectedUnversioned = context.selectedUnversionedFilePaths
     val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
     val included: Collection<Any>
