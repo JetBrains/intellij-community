@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author peter
  */
-class ConverterManagerImpl implements ConverterManager {
+public class ConverterManagerImpl implements ConverterManager {
 
   private final ImplementationClassCache myImplementationClassCache = new ImplementationClassCache(DomImplementationClassEP.CONVERTER_EP_NAME);
 
@@ -44,7 +44,7 @@ class ConverterManagerImpl implements ConverterManager {
   );
   private final Map<Class,Converter> mySimpleConverters = new HashMap<>();
 
-  ConverterManagerImpl() {
+  protected ConverterManagerImpl() {
     mySimpleConverters.put(byte.class, new NumberValueConverter<>(byte.class, false));
     mySimpleConverters.put(Byte.class, new NumberValueConverter<>(Byte.class, true));
 
@@ -74,8 +74,7 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
   }
 
-  @Override
-  public void addConverter(Class clazz, Converter converter) {
+  protected void addConverter(Class clazz, Converter converter) {
     mySimpleConverters.put(clazz, converter);
   }
 

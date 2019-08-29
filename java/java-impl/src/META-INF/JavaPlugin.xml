@@ -872,7 +872,7 @@
     <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
     <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
-    <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
+    <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomUiControlProvider"/>
     <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
                    implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
     <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
@@ -1931,7 +1931,10 @@
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
-    <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
+                        serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"
+                        overrides="true"/>
+
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
