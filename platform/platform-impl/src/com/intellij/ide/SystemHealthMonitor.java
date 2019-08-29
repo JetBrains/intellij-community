@@ -3,8 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.VMOptions;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
@@ -18,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
@@ -33,8 +30,6 @@ import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
@@ -42,13 +37,11 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
-  private static final String IBUS_URL = "https://youtrack.jetbrains.com/issue/IDEA-78860";
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
     checkRuntime();
     checkReservedCodeCacheSize();
-    checkIBus();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
   }
@@ -107,24 +100,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }
   }
 
-  private static void checkIBus() {
-    if (SystemInfo.isXWindow) {
-      String xim = System.getenv("XMODIFIERS");
-      if (xim != null && xim.contains("im=ibus")) {
-        String version = ExecUtil.execAndReadLine(new GeneralCommandLine("ibus-daemon", "--version"));
-        if (version != null) {
-          Matcher m = Pattern.compile("ibus-daemon - Version ([0-9.]+)").matcher(version);
-          if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
-            String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
-            if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification("ibus.blocking.warn.message", detailsAction(IBUS_URL));
-            }
-          }
-        }
-      }
-    }
-  }
-
   private static void checkSignalBlocking() {
     if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
       try {
@@ -177,10 +152,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
     MyNotification(@NotNull String content) {
       super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
     }
-  }
-
-  private static NotificationAction detailsAction(String url) {
-    return new BrowseNotificationAction(IdeBundle.message("sys.health.details"), url);
   }
 
   private static void startDiskSpaceMonitoring() {
