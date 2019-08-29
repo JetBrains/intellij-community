@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
@@ -336,13 +335,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         return super.getAllExcludedUrls();
       }
-
-      @Override
-      public void dispose() {
-      }
     };
-    Disposable disposable = Disposer.newDisposable();
-    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, disposable);
+
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, test);
     assertSame(test, ProjectManager.getInstance());
 
     try {
@@ -369,7 +364,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
     finally {
-      Disposer.dispose(disposable);
       WriteAction.runAndWait(() -> Disposer.dispose(test));
     }
   }
