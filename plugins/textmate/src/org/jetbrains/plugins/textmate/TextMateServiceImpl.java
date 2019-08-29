@@ -76,10 +76,10 @@ public class TextMateServiceImpl extends TextMateService {
   @Override
   public void reloadEnabledBundles() {
     unregisterAllBundles();
-    registerEnabledBundles(true);
+    registerBundles(true);
   }
 
-  private void registerEnabledBundles(boolean fireEvents) {
+  private void registerBundles(boolean fireEvents) {
     TextMateSettings settings = TextMateSettings.getInstance();
     if (settings == null) {
       return;
@@ -225,7 +225,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   private void ensureInitialized() {
     if (myInitialized.compareAndSet(false, true)) {
-      registerEnabledBundles(false);
+      registerBundles(false);
     }
   }
 
