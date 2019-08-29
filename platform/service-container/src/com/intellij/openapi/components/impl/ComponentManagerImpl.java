@@ -32,7 +32,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Disposable;
 import org.picocontainer.MutablePicoContainer;
@@ -151,31 +150,16 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ProgressManager.getInstance().getProgressIndicator();
   }
 
-  @TestOnly
-  public final synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
-    MutablePicoContainer picoContainer = getPicoContainer();
-    ComponentAdapter adapter = picoContainer.getComponentAdapter(componentKey);
-    LOG.assertTrue(adapter instanceof MyComponentAdapter);
-    MyComponentAdapter componentAdapter = (MyComponentAdapter)adapter;
-    Object oldInstance = componentAdapter.myInitializedComponentInstance;
-    // we don't update pluginId - method is test only
-    componentAdapter.myInitializedComponentInstance = componentImplementation;
-    //noinspection unchecked
-    return (T)oldInstance;
-  }
-
   @SuppressWarnings("deprecation")
   @Override
   @NotNull
-  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNeeded) {
     List<T> result = null;
-    // we must use instances only from our adapter (could be service or extension point or something else)
+    // we must use instances only from our adapter (could be service or something else)
     for (ComponentAdapter componentAdapter : getPicoContainer().getComponentAdapters()) {
       if (componentAdapter instanceof MyComponentAdapter &&
           ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
-        MyComponentAdapter adapter = (MyComponentAdapter)componentAdapter;
-        //noinspection unchecked
-        T instance = (T)(createIfNotYet ? adapter.getComponentInstance(myPicoContainer) : (T)adapter.myInitializedComponentInstance);
+        T instance = ((MyComponentAdapter)componentAdapter).getInstance((PlatformComponentManagerImpl)this, createIfNeeded, null);
         if (instance != null) {
           if (result == null) {
             result = new ArrayList<>();
@@ -274,7 +258,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected static final class MyComponentAdapter extends InstantiatingComponentAdapter {
     private final PluginId myPluginId;
-    private volatile Object myInitializedComponentInstance;
 
     @NotNull
     private final PlatformComponentManagerImpl componentManager;
@@ -301,17 +284,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     @Override
     public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
-      return getComponentInstance(componentManager, null);
-    }
-
-    public Object getComponentInstance(@NotNull PlatformComponentManagerImpl componentManager, @Nullable ProgressIndicator indicator) {
-      Object instance = myInitializedComponentInstance;
-      // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
-      if (instance != null || componentManager.isDisposed()) {
-        return instance;
-      }
-
-      return getInstance(/* createIfNeeded = */ true, componentManager, indicator);
+      return getInstance(/* createIfNeeded = */ componentManager, true, null);
     }
 
     private static void registerComponentInstance(@NotNull Object instance, @NotNull ComponentManagerImpl componentManager) {

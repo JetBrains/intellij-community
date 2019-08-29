@@ -3,9 +3,11 @@ package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingPhase
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
 import org.picocontainer.PicoVisitor
@@ -26,9 +28,10 @@ internal abstract class BaseComponentAdapter(@field:Volatile protected var initi
   protected abstract val pluginId: PluginId
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any> getInstance(createIfNeeded: Boolean, componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean, indicator: ProgressIndicator? = null): T? {
+    // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     var instance = initializedInstance as T?
-    if (instance != null || !createIfNeeded) {
+    if (instance != null || !createIfNeeded || componentManager.isDisposed) {
       return instance
     }
 
@@ -57,6 +60,26 @@ internal abstract class BaseComponentAdapter(@field:Volatile protected var initi
   }
 
   protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T
+
+  @Synchronized
+  fun <T : Any> replaceInstance(instance: T, parentDisposable: Disposable?): T? {
+    val old = initializedInstance
+    initializedInstance = instance
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, Disposable {
+        synchronized(this) {
+          if (initializedInstance === instance && instance is Disposable && !Disposer.isDisposed(instance)) {
+            Disposer.dispose(instance)
+          }
+          initializedInstance = old
+        }
+      })
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    return old as T?
+  }
 }
 
 internal abstract class InstantiatingComponentAdapter(private val componentKey: Class<*>, private val componentImplementation: Class<*>) : BaseComponentAdapter(null) {

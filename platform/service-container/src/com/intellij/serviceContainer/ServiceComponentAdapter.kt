@@ -51,7 +51,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentImplementation() = getImplementationClass()
 
-  override fun getComponentInstance(container: PicoContainer): Any? = getInstance(true, componentManager)
+  override fun getComponentInstance(container: PicoContainer): Any? = getInstance(componentManager, createIfNeeded = true)
 
   override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T {
     val implementation = descriptor.implementation
@@ -95,20 +95,4 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun getAssignableToClassName(): String = descriptor.getInterface()
 
   override fun toString() = "ServiceComponentAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
-
-  fun <T> replaceInstance(instance: T, parentDisposable: Disposable) {
-    synchronized(this) {
-      val old = initializedInstance
-      initializedInstance = instance
-
-      Disposer.register(parentDisposable, Disposable {
-        synchronized(this) {
-          if (initializedInstance === instance && instance is Disposable && !Disposer.isDisposed(instance)) {
-            Disposer.dispose(instance)
-          }
-          initializedInstance = old
-        }
-      })
-    }
-  }
 }

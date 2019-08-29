@@ -4,7 +4,6 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
@@ -20,9 +19,19 @@ fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instan
   (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
+/**
+ * Returns old instance.
+ */
 @TestOnly
-fun <T> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T): T {
-  return (this as ComponentManagerImpl).registerComponentInstance(componentInterface, instance)
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?): T? {
+  return (this as PlatformComponentManagerImpl).registerComponentInstance(componentInterface, instance, parentDisposable)
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@TestOnly
+@Deprecated("Pass parentDisposable")
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T): T? {
+  return (this as PlatformComponentManagerImpl).registerComponentInstance(componentInterface, instance, null)
 }
 
 @TestOnly
@@ -32,7 +41,7 @@ fun ComponentManager.registerComponentImplementation(componentInterface: Class<*
 }
 
 @TestOnly
-fun <T> ComponentManager.registerExtension(name: BaseExtensionPointName, instance: T, parentDisposable: Disposable) {
+fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName, instance: T, parentDisposable: Disposable) {
   extensionArea.getExtensionPoint<T>(name.name).registerExtension(instance, parentDisposable)
 }
 

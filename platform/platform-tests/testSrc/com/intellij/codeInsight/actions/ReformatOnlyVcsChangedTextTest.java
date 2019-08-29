@@ -6,9 +6,7 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
@@ -304,15 +302,12 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     assertTrue(isImportsOptimized(toModify));
     assertTrue(isImportsOptimized(toModify2));
-    assertTrue(!isImportsOptimized(toKeep));
-    assertTrue(!isImportsOptimized(toKeep2));
+    assertFalse(isImportsOptimized(toKeep));
+    assertFalse(isImportsOptimized(toKeep2));
   }
 
   private void registerChangeListManager(@NotNull ChangeListManager manager) {
-    Project project = getProject();
-    assert (project instanceof ComponentManagerImpl);
-    ComponentManagerImpl projectComponentManager = (ComponentManagerImpl)project;
-    projectComponentManager.registerComponentInstance(ChangeListManager.class, manager);
+    ServiceContainerUtil.registerComponentInstance(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
   }
 
   private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {

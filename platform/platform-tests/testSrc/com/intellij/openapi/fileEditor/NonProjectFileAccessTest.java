@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -47,8 +46,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
-    ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
+    ServiceContainerUtil.registerComponentInstance(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
   }

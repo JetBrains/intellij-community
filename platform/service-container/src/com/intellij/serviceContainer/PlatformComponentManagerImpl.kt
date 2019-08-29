@@ -188,7 +188,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
     for (componentAdapter in myPicoContainer.componentAdapters) {
       if (componentAdapter is MyComponentAdapter) {
-        componentAdapter.getComponentInstance(this, indicator)
+        componentAdapter.getInstance<Any>(this, createIfNeeded = true, indicator = indicator)
       }
     }
 
@@ -205,6 +205,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
       LOG.assertTrue(adapter != null)
     }
     picoContainer.registerComponent(MyComponentAdapter(componentKey, componentImplementation, PluginId.getId("test registerComponentImplementation"), this, false))
+  }
+
+  @TestOnly
+  fun <T : Any> registerComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
+    val adapter = myPicoContainer.getComponentAdapter(componentKey) as MyComponentAdapter
+    return adapter.replaceInstance(componentImplementation, parentDisposable)
   }
 
   private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
@@ -279,7 +285,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     val key = serviceClass.name
     val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     if (adapter != null) {
-      return adapter.getInstance(createIfNeeded, this)
+      return adapter.getInstance(this, createIfNeeded)
     }
 
     ProgressManager.checkCanceled()
@@ -607,7 +613,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     val unloadedInstances = ArrayList<Any>()
     for (service in containerDescriptor.services) {
       val adapter = myPicoContainer.unregisterComponent(service.getInterface()) as? ServiceComponentAdapter ?: continue
-      val instance = adapter.getInstance<Any>(createIfNeeded = false, componentManager = this) ?: continue
+      val instance = adapter.getInstance<Any>(this, createIfNeeded = false) ?: continue
       if (instance is Disposable) {
         Disposer.dispose(instance)
       }
