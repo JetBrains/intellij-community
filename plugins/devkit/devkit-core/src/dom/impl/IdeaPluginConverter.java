@@ -14,8 +14,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomService;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -74,15 +72,7 @@ public class IdeaPluginConverter extends IdeaPluginConverterBase {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
         union(ProjectScope.getLibrariesScope(project));
-      return CachedValueProvider.Result.create(getPlugins(project, scope), PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(DescriptorUtil.getPlugins(project, scope), PsiModificationTracker.MODIFICATION_COUNT);
     });
-  }
-
-  @NotNull
-  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
-    if (DumbService.isDumb(project)) return Collections.emptyList();
-
-    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-    return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 }
