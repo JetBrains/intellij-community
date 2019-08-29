@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.Application;
@@ -224,10 +224,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
             buf.append(file.getPresentableUrl());
           }
 
-          return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
+          return IdeBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          return CommonBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
+          return IdeBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
       }
       throw new RuntimeException("No readonly files");
