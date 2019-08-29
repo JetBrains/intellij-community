@@ -7,16 +7,14 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
@@ -76,6 +74,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
   private var handlingInitComponentError = false
 
+  var componentCreated = false
+    private set
+
   private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
     parent == null || parent.picoContainer.parent == null -> ContainerUtil.newConcurrentMap()
     else -> null
@@ -126,13 +127,16 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
       val containerDescriptor = getContainerDescriptor(plugin)
 
       for (config in containerDescriptor.components) {
-        if (!config.prepareClasses(headless)) {
+        if (!config.prepareClasses(headless) || !isComponentSuitable(config)) {
           continue
         }
 
-        if (isComponentSuitable(config)) {
-          registerComponents(config, plugin)
+        try {
+          registerComponent(config, plugin)
           componentConfigCount++
+        }
+        catch (e: Throwable) {
+          handleInitComponentError(e, null, plugin.pluginId)
         }
       }
 
@@ -169,6 +173,60 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
   }
 
+  protected fun createComponents(indicator: ProgressIndicator?) {
+    LOG.assertTrue(!componentCreated)
+
+    if (indicator != null) {
+      indicator.isIndeterminate = false
+    }
+
+    val activityNamePrefix = activityNamePrefix()
+    val activity = when (activityNamePrefix) {
+      null -> null
+      else -> StartUpMeasurer.start("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
+    }
+
+    for (componentAdapter in myPicoContainer.componentAdapters) {
+      if (componentAdapter is MyComponentAdapter) {
+        componentAdapter.getComponentInstance(this, indicator)
+      }
+    }
+
+    activity?.end()
+
+    componentCreated = true
+  }
+
+  @TestOnly
+  fun registerComponentImplementation(componentKey: Class<*>, componentImplementation: Class<*>, shouldBeRegistered: Boolean) {
+    val picoContainer = picoContainer
+    val adapter = picoContainer.unregisterComponent(componentKey) as MyComponentAdapter?
+    if (shouldBeRegistered) {
+      LOG.assertTrue(adapter != null)
+    }
+    picoContainer.registerComponent(MyComponentAdapter(componentKey, componentImplementation, PluginId.getId("test registerComponentImplementation"), this, false))
+  }
+
+  private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
+    val loader = pluginDescriptor.pluginClassLoader
+    val interfaceClass = Class.forName(config.interfaceClass, true, loader)
+    val implementationClass = when {
+      config.interfaceClass == config.implementationClass -> interfaceClass
+      config.implementationClass.isNullOrEmpty() -> null
+      else -> Class.forName(config.implementationClass, true, loader)
+    }
+
+    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!["overrides"])) {
+      myPicoContainer.unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
+    }
+
+    // implementationClass == null means we want to unregister this component
+    if (implementationClass != null) {
+      val ws = config.options != null && java.lang.Boolean.parseBoolean(config.options!!["workspace"])
+      myPicoContainer.registerComponent(MyComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.pluginId, this, ws))
+    }
+  }
+
   internal fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
 
   private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
@@ -188,7 +246,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
   }
 
   @Internal
-  final override fun handleInitComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId) {
+  fun handleInitComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
     }
@@ -323,7 +381,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     if (override && picoContainer.unregisterComponent(key) == null) {
       throw PluginException("Component $key doesn't override anything", pluginId)
     }
-    picoContainer.registerComponent(ComponentConfigComponentAdapter(key, implementation, pluginId, this, false))
+    picoContainer.registerComponent(MyComponentAdapter(key, implementation, pluginId, this, false))
   }
 
   /**
@@ -541,7 +599,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
-  internal fun getActivityLevel(): StartUpMeasurer.Level = DefaultPicoContainer.getActivityLevel(myPicoContainer)
+  @Internal
+  fun getActivityLevel(): StartUpMeasurer.Level = DefaultPicoContainer.getActivityLevel(myPicoContainer)
 
   @Internal
   fun unloadServices(containerDescriptor: ContainerDescriptor): List<Any> {

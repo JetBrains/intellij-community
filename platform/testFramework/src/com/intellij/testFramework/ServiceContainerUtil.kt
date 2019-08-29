@@ -28,7 +28,7 @@ fun <T> ComponentManager.registerComponentInstance(componentInterface: Class<T>,
 @TestOnly
 @JvmOverloads
 fun ComponentManager.registerComponentImplementation(componentInterface: Class<*>, componentImplementation: Class<*>, shouldBeRegistered: Boolean = false) {
-  (this as ComponentManagerImpl).registerComponentImplementation(componentInterface, componentImplementation, shouldBeRegistered)
+  (this as PlatformComponentManagerImpl).registerComponentImplementation(componentInterface, componentImplementation, shouldBeRegistered)
 }
 
 @TestOnly

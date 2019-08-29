@@ -133,7 +133,7 @@ public class IdeaLogger extends Log4jBasedLogger {
     }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.isComponentsCreated() && !application.isDisposed()) {
+    if (application != null && application.getComponentCreated() && !application.isDisposed()) {
       String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         myLogger.error("Last Action: " + lastPreformedActionId);

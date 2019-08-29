@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -40,21 +41,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author mike
- */
-public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
+public final class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final FileStatusProvider myFileStatusProvider;
-  private final NotNullLazyValue<FileStatusProvider[]> myExtensions = new NotNullLazyValue<FileStatusProvider[]>() {
+
+  private final NotNullLazyValue<ExtensionPointImpl<FileStatusProvider>> myExtensionPoint = new NotNullLazyValue<ExtensionPointImpl<FileStatusProvider>>() {
     @NotNull
     @Override
-    protected FileStatusProvider[] compute() {
-      return FileStatusProvider.EP_NAME.getExtensions(myProject);
+    protected ExtensionPointImpl<FileStatusProvider> compute() {
+      return (ExtensionPointImpl<FileStatusProvider>)FileStatusProvider.EP_NAME.getPoint(myProject);
     }
   };
 
@@ -84,7 +83,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  public FileStatusManagerImpl(Project project, StartupManager startupManager, @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
+  public FileStatusManagerImpl(@NotNull Project project) {
+    // make sure index is initialized first
+    DirectoryIndex.getInstance(project);
+
     myProject = project;
     myFileStatusProvider = project.getComponent(VcsFileStatusProvider.class);
 
@@ -99,7 +101,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
     if (project.isDefault()) return;
 
-    startupManager.registerPreStartupActivity(() -> {
+    StartupManager startUpManager = StartupManager.getInstance(project);
+    startUpManager.registerPreStartupActivity(() -> {
       final EditorFactory factory = EditorFactory.getInstance();
       if (factory != null) {
         factory.getEventMulticaster().addDocumentListener(new BulkAwareDocumentListener() {
@@ -119,11 +122,11 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         }, myProject);
       }
     });
-    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
+    startUpManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
   }
 
   public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
-    for (FileStatusProvider extension : myExtensions.getValue()) {
+    for (FileStatusProvider extension : myExtensionPoint.getValue()) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
         if (LOG.isDebugEnabled()) {

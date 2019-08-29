@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCWatcher;
@@ -72,7 +72,7 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
     connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void projectComponentsRegistered(@NotNull Project project) {
-        ((ComponentManagerImpl)project).registerComponentImplementation(FileEditorManager.class, PsiAwareFileEditorManagerImpl.class, false);
+        ServiceContainerUtil.registerComponentImplementation(project, FileEditorManager.class, PsiAwareFileEditorManagerImpl.class, false);
       }
     });
   }
