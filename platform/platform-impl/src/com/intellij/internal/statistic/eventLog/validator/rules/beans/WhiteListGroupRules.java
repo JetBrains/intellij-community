@@ -96,7 +96,21 @@ public class WhiteListGroupRules {
 
     if (rules == null || rules.length == 0) return UNDEFINED_RULE;
 
-    return data == null ? REJECTED :  acceptRule(data.toString(), context, rules);
+    if (data == null) {
+      return REJECTED;
+    }
+    else if (data instanceof List<?>) {
+      for (Object dataPart : (List<?>) data) {
+        ValidationResultType resultType = acceptRule(dataPart.toString(), context, rules);
+        if (resultType != ACCEPTED) {
+          return resultType;
+        }
+      }
+      return ACCEPTED;
+    }
+    else {
+      return acceptRule(data.toString(), context, rules);
+    }
   }
 
   private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, @Nullable FUSRule... rules) {

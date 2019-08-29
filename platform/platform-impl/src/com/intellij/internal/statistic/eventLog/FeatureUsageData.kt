@@ -233,6 +233,10 @@ class FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  fun addData(key: String, value: List<String>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
     if (!ApplicationManager.getApplication().isUnitTestMode && platformDataKeys.contains(key)) {
       LOG.warn("Collectors should not reuse platform keys: $key")
