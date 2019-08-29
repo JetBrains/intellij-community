@@ -40,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -1319,6 +1320,10 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
+        dialogPanel.registerValidators(myDisposable, (map) -> {
+          setOKActionEnabled(map.isEmpty());
+          return Unit.INSTANCE;
+        });
         myDialogPanel = dialogPanel;
       }
     }

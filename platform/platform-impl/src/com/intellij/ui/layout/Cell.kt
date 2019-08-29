@@ -3,7 +3,6 @@ package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -25,6 +24,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -80,7 +80,8 @@ interface CellBuilder<T : JComponent> {
 
   fun comment(text: String, maxLineLength: Int = 70): CellBuilder<T>
   fun focused(): CellBuilder<T>
-  fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun withValidationOnApply(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun withValidationOnInput(callback: (T) -> String?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>
   fun onReset(callback: () -> Unit): CellBuilder<T>
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
@@ -99,10 +100,15 @@ interface CellBuilder<T : JComponent> {
   fun enabled(isEnabled: Boolean)
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 
-  fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
-    withValidation { if (callback(it)) ValidationInfo(message, it) else null }
+  fun withErrorOnApplyIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
+    withValidationOnApply { if (callback(it)) ValidationInfo(message, it) else null }
     return this
   }
+}
+
+fun <T : JTextComponent> CellBuilder<T>.validateTextOnInput(callback: (String) -> String?): CellBuilder<T> {
+  withValidationOnInput { callback(component.text) }
+  return this
 }
 
 internal interface CheckboxCellBuilder {
@@ -251,32 +257,35 @@ abstract class Cell : BaseBuilder {
     return comboBox(model, prop.toBinding().toNullable(), growPolicy, renderer)
   }
 
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(prop.get(),columns ?: 0)
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> = textField(prop.toBinding(), columns)
+
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
+
+  fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(binding.get(),columns ?: 0)
     val builder = component()
-    return builder.withTextBinding(prop.toBinding())
+    return builder.withTextBinding(binding)
   }
 
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(getter(),columns ?: 0)
-    val builder = component()
-    return builder.withTextBinding(PropertyBinding(getter, setter))
-  }
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+    intTextField(prop.toBinding(), columns, range)
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
+  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+    intTextField(PropertyBinding(getter, setter), columns, range)
+
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
     return textField(
-      { prop.get().toString() },
-      { value -> value.toIntOrNull()?.let { prop.set(range?.fit(it) ?: it) } },
+      { binding.get().toString() },
+      { value -> value.toIntOrNull()?.let { intValue -> binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue) } },
       columns
-    )
-  }
-
-  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
-    return textField(
-      { getter().toString() },
-      { value -> value.toIntOrNull()?.let { setter(range?.fit(it) ?: it) } },
-      columns
-    )
+    ).validateTextOnInput {
+      val value = it.toIntOrNull()
+      if (value == null)
+        "Please enter a number"
+      else if (range != null && value !in range)
+        "Please enter a number from ${range.first} to ${range.last}"
+      else null
+    }
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {

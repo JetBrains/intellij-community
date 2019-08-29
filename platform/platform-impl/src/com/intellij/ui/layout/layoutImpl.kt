@@ -21,7 +21,13 @@ interface LayoutBuilderImpl {
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
   val preferredFocusedComponent: JComponent?
+
+  // Validators applied when Apply is pressed
   val validateCallbacks: List<() -> ValidationInfo?>
+
+  // Validators applied immediately on input
+  val componentValidateCallbacks: Map<JComponent, () -> String?>
+
   val applyCallbacks: List<() -> Unit>
   val resetCallbacks: List<() -> Unit>
   val isModifiedCallbacks: List<() -> Boolean>

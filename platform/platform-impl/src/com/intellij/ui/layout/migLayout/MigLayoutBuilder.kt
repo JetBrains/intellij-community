@@ -57,6 +57,7 @@ internal class MigLayoutBuilder(
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
+  override var componentValidateCallbacks: MutableMap<JComponent, () -> String?> = hashMapOf()
   override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()

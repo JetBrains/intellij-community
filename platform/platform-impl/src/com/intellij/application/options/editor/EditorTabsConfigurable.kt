@@ -13,12 +13,9 @@ import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.max
 
 class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
-  companion object {
-    private val EDITOR_TABS_RANGE = UINumericRange(10, 1, Math.max(10, Registry.intValue("ide.max.editor.tabs", 100)))
-  }
-
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
 
@@ -61,7 +58,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
         row {
           cell {
             label(message("editbox.tab.limit"))
-            intTextField(ui::editorTabLimit, 4, EDITOR_TABS_RANGE)
+            intTextField(ui::editorTabLimit, 4, 1..max(10, Registry.intValue("ide.max.editor.tabs", 100)))
           }
         }
         row {

@@ -137,7 +137,7 @@ class NewThemeAction: AnAction() {
             name(growPolicy = GrowPolicy.MEDIUM_TEXT)
               .focused()
               //TODO max name length, maybe some other restrictions?
-              .withErrorIf(DevKitBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
+              .withErrorOnApplyIf(DevKitBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
           }
         }
         row("") {
