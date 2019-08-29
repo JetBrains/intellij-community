@@ -50,6 +50,8 @@ public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
+      // to prevent deadlock, ensure correct lock ordering: app write lock->sync(Timed)
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       doDispose.run();
     }
     else {
