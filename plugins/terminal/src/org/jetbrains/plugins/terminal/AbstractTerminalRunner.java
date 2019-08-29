@@ -114,7 +114,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                   @Nullable VirtualFile currentWorkingDirectory,
                                                   boolean deferSessionUntilFirstShown) {
 
-    JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
+    JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
     Runnable openSession = () -> openSessionForFile(terminalWidget, currentWorkingDirectory);
     if (deferSessionUntilFirstShown) {
       UiNotifyConnector.doWhenFirstShown(terminalWidget, openSession);
@@ -211,7 +211,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         // Create Server process
-        final T process = createProcess(directory, terminalWidget.getCommandHistoryFilePath());
+        final T process = createProcess(directory, ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget));
         TtyConnector connector = createTtyConnector(process);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Initial resize to " + size);

@@ -74,7 +74,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   private JBTerminalWidgetDisposableWrapper myDisposableWrapper;
   private VirtualFile myVirtualFile;
-  private String myCommandHistoryFilePath;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -308,15 +307,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     if (myListener != null) {
       myListener.onTerminalStarted();
     }
-  }
-
-  @Nullable
-  public String getCommandHistoryFilePath() {
-    return myCommandHistoryFilePath;
-  }
-
-  public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
-    myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
   @Nullable
