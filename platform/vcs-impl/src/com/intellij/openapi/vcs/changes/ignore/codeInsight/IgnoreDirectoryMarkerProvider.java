@@ -27,6 +27,7 @@ package com.intellij.openapi.vcs.changes.ignore.codeInsight;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
@@ -61,6 +62,7 @@ public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
     for (PsiElement element : elements) {
+      ProgressManager.checkCanceled();
       if (!(element instanceof IgnoreEntryFile)) {
         continue;
       }
@@ -100,6 +102,7 @@ public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
   private static boolean isDirectoryExist(@NotNull VirtualFile root, @NotNull Pattern pattern) {
     Ref<Boolean> found = Ref.create(false);
     VfsUtilCore.iterateChildrenRecursively(root, file -> file.isDirectory(), (dir) -> {
+      ProgressManager.checkCanceled();
       String path = VfsUtilCore.getRelativePath(dir, root);
       if (path != null && RegexUtil.match(pattern, path)) {
         found.set(true);
