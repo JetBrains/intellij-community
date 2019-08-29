@@ -246,15 +246,10 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  /**
-   * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
-   * Does one module at a time: slower, but avoids certain conflicts.
-   *
-   * @return blacklist data; whatever was not generated successfully is put here.
-   */
-  private boolean updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
+  @NotNull
+  private List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
     final long startTime = System.currentTimeMillis();
-    final boolean result = mySkeletonsGenerator.generateAllSkeletons(getExtraSyspath(), myIndicator);
+    final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator.generateAllSkeletons(getExtraSyspath(), myIndicator);
     finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
