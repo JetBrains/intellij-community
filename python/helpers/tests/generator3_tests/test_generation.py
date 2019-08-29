@@ -18,7 +18,7 @@ from generator3.constants import (
     ENV_VERSION,
 )
 from generator3.util_methods import mkdir
-from generator3_tests import GeneratorTestCase, python3_only, python2_only
+from generator3_tests import GeneratorTestCase, python3_only, python2_only, test_data_dir
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
@@ -317,6 +317,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
     def test_non_string_dunder_module(self):
         self.check_generator_output('mod', 'mod.py')
 
+    @test_data_dir('multiple_modules_mode')
     def test_progress_indication_in_multiple_modules_mode(self):
         result = self.run_generator(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
         self.assertContainsInRelativeOrder([
@@ -325,6 +326,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
             {'type': 'progress', 'fraction': 1.0},
         ], result.control_messages)
 
+    @test_data_dir('multiple_modules_mode')
     def test_multiple_modules_generation_mode(self):
         # This is a hack to keep the existing behavior where we keep discovering only binary files
         # (which can't be distributed with tests in a platform-independent manner), but user their .py
