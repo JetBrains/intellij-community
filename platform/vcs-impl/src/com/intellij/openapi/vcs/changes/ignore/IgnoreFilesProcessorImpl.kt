@@ -121,7 +121,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
             for ((ignoredFileProvider, descriptors) in providerToDescriptorMap) {
               for (ignoredFileDescriptor in descriptors.filter { it.matchesFile(VcsUtil.getFilePath(potentiallyIgnoredFile)) }) {
                 val ignoreFileContent = ignoreFileToContent.computeIfAbsent(ignoreFile) { mutableListOf() }
-                val groupDescription = " ${ignoredFileProvider.ignoredGroupDescription}"
+                val groupDescription = ignoredContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
                 val ignoreFileGroupContent = ignoreFileContent.getOrInitialize(groupDescription)
                 ignoreFileGroupContent.ignoredDescriptors.add(ignoredFileDescriptor)
               }
