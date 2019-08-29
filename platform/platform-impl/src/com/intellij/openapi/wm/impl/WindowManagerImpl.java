@@ -467,8 +467,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Nullable
   @ApiStatus.Internal
-  public IdeFrameImpl getRootFrame() {
-    return myProjectToFrame.get(null);
+  public IdeFrameImpl getAndRemoveRootFrame() {
+    return myProjectToFrame.remove(null);
   }
 
   public void assignFrame(@NotNull IdeFrameImpl frame, @NotNull Project project) {
@@ -535,7 +535,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       return frame;
     }
 
-    frame = myProjectToFrame.remove(null);
+    frame = getAndRemoveRootFrame();
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
@@ -639,7 +639,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final IdeFrameImpl rootFrame = myProjectToFrame.remove(null);
+      final IdeFrameImpl rootFrame = getAndRemoveRootFrame();
       if (rootFrame != null) {
         // disposing last frame if quitting
         rootFrame.dispose();

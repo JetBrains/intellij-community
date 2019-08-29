@@ -11,10 +11,8 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
@@ -48,26 +46,31 @@ internal open class ProjectFrameAllocator {
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
   // volatile not required because created in run (before executing run task)
   private var ideFrame: IdeFrameImpl? = null
+  private var ideFrameIsNew = false
 
   override fun run(task: Runnable, file: Path): Boolean {
     var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
-      val frame = createFrame(file)
+      ideFrame = createFrame(file)
       completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         {
-          ApplicationManager.getApplication().invokeLater {
-            runActivity("init frame") {
-              initFrame(frame)
+          if (ideFrameIsNew) {
+            ApplicationManager.getApplication().invokeLater {
+              ideFrame?.let { frame ->
+                runActivity("init frame") {
+                  initNewFrame(frame)
+                }
+              }
             }
           }
           task.run()
-        }, "Loading Project...", true, null, frame.component)
+        }, "Loading Project...", true, null, ideFrame!!.component)
     }
     return completed
   }
 
   @CalledInAwt
-  private fun initFrame(frame: IdeFrameImpl) {
+  private fun initNewFrame(frame: IdeFrameImpl) {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
@@ -96,7 +99,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   private fun createFrame(file: Path): IdeFrameImpl {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    val freeRootFrame = windowManager.rootFrame
+    @Suppress("UsePropertyAccessSyntax")
+    val freeRootFrame = windowManager.getAndRemoveRootFrame()
     if (freeRootFrame != null) {
       return freeRootFrame
     }
@@ -113,23 +117,18 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       }
     }
 
-    val frame = runActivity("create a frame") {
+    return runActivity("create a frame") {
+      ideFrameIsNew = true
       windowManager.createFrame(options)
     }
-    ideFrame = frame
-    return frame
   }
 
   override fun projectLoaded(project: Project) {
-    ApplicationManager.getApplication().invokeLater {
-      if (project.isDisposed) {
-        return@invokeLater
-      }
-
-      val frame = ideFrame ?: return@invokeLater
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      val frame = ideFrame ?: return@Runnable
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
 
-      if (options.frame?.bounds == null) {
+      if (ideFrameIsNew && options.frame?.bounds == null) {
         val frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
         if (frameInfo?.bounds != null) {
           windowManager.restoreFrameState(frame, frameInfo)
@@ -137,7 +136,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       }
 
       windowManager.assignFrame(frame, project)
-    }
+    }, project.disposed)
   }
 
   override fun projectNotLoaded(error: CannotConvertException?) {
