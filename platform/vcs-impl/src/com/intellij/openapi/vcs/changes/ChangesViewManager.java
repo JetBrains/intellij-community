@@ -477,7 +477,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
         List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
-        List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
+        List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
         TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
           .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
@@ -487,7 +487,7 @@ public class ChangesViewManager implements ChangesViewEx,
           .setSwitchedRoots(changeListManager.getSwitchedRoots())
           .setLockedFolders(changeListManager.getLockedFolders())
           .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-          .setUnversioned(changeListManager.getUnversionedFilesPaths());
+          .setUnversioned(unversionedFiles);
         if (myChangesViewManager.myState.myShowIgnored) {
           treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
         }

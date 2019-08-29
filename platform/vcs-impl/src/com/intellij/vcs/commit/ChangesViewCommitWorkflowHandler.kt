@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
@@ -85,7 +85,7 @@ class ChangesViewCommitWorkflowHandler(
     return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
-  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<VirtualFile>) {
+  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
       val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
