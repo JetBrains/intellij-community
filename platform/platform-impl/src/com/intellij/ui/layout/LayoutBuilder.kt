@@ -12,18 +12,25 @@ import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, override val buttonGroup: ButtonGroup? = null) : RowBuilder {
-  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.rootRow.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder {
+  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
+    return builder.rootRow.createChildRow(label, isSeparated, noGrid, title)
   }
 
   override fun createNoteOrCommentRow(component: JComponent): Row {
     return builder.rootRow.createNoteOrCommentRow(component)
   }
 
-  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    builder.withButtonGroup(buttonGroup, body)
+  }
+
+  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, crossinline init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
-    LayoutBuilder(builder, group).init()
+
+    builder.withButtonGroup(group) {
+      LayoutBuilder(builder).init()
+    }
 
     val listener = ActionListener { elementActionListener() }
     for (button in group.elements) {
@@ -39,18 +46,21 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     get() = builder
 }
 
+class CellBuilderWithButtonGroupProperty<T : Any>
+@PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
+
+  fun Cell.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, prop.get() == value)
+    return component()
+      .onApply { if (component.isSelected) prop.set(value) }
+      .onReset { component.isSelected = prop.get() == value }
+      .onIsModified { component.isSelected != (prop.get() == value) }
+  }
+}
+
+
 class RowBuilderWithButtonGroupProperty<T : Any>
-    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder {
-
-  override val buttonGroup: ButtonGroup? = ButtonGroup()
-
-  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    return builder.createNoteOrCommentRow(component)
-  }
+    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
   fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)

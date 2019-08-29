@@ -9,10 +9,16 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
-interface RowBuilder {
-  val buttonGroup: ButtonGroup?
+interface BaseBuilder {
+  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
-  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null,
+  fun buttonGroup(init: () -> Unit) {
+    withButtonGroup(ButtonGroup(), init)
+  }
+}
+
+interface RowBuilder : BaseBuilder {
+  fun createChildRow(label: JLabel? = null,
                      isSeparated: Boolean = false,
                      noGrid: Boolean = false,
                      title: String? = null): Row
@@ -20,11 +26,11 @@ interface RowBuilder {
   fun createNoteOrCommentRow(component: JComponent): Row
 
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
-    return createChildRow(label = label, isSeparated = separated, buttonGroup = buttonGroup).apply(init)
+    return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
   fun row(label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
-    return createChildRow(label?.let { Label(it) }, isSeparated = separated, buttonGroup = buttonGroup).apply(init)
+    return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
   }
 
   fun titledRow(title: String, init: Row.() -> Unit): Row {
@@ -41,18 +47,30 @@ interface RowBuilder {
   fun commentRow(text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
   }
+}
 
-  fun buttonGroup(init: Row.() -> Unit): Row {
-    return createChildRow(buttonGroup = ButtonGroup()).apply(init)
+inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  withButtonGroup(ButtonGroup()) {
+    CellBuilderWithButtonGroupProperty(prop.toBinding()).init()
   }
 }
 
-inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  RowBuilderWithButtonGroupProperty(this, prop.toBinding()).init()
+inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  withButtonGroup(ButtonGroup()) {
+    CellBuilderWithButtonGroupProperty(PropertyBinding(getter, setter)).init()
+  }
 }
 
-inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  RowBuilderWithButtonGroupProperty(this, PropertyBinding(getter, setter)).init()
+inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  withButtonGroup(ButtonGroup()) {
+    RowBuilderWithButtonGroupProperty(this, prop.toBinding()).init()
+  }
+}
+
+inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  withButtonGroup(ButtonGroup()) {
+    RowBuilderWithButtonGroupProperty(this, PropertyBinding(getter, setter)).init()
+  }
 }
 
 abstract class Row : Cell(), RowBuilder {
@@ -84,14 +102,14 @@ abstract class Row : Cell(), RowBuilder {
    *
    * @param isFullWidth If true, the cell occupies the full width of the enclosing component.
    */
-  inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: Cell.() -> Unit) {
+  inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
-    init()
+    InnerCell(this).init()
     setCellMode(false, isVerticalFlow, isFullWidth)
   }
 
   @PublishedApi
-  internal abstract fun createRow(label: String?, buttonGroup: ButtonGroup?): Row
+  internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)

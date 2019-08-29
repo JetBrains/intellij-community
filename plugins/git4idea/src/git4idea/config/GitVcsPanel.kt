@@ -36,7 +36,6 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import java.awt.Color
-import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 
@@ -226,13 +225,10 @@ internal class GitVcsPanel(private val project: Project,
     row {
       cell {
         label("Clean working tree using:")
-        val group = ButtonGroup()
-        GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
-          val rb = radioButton(saveSetting.name.toLowerCase().capitalize()).withSelectedBinding(PropertyBinding(
-            get = { projectSettings.updateChangesPolicy() == saveSetting },
-            set = { selected -> if (selected) projectSettings.setUpdateChangesPolicy(saveSetting) }
-          ))
-          group.add(rb.component)
+        buttonGroup({ projectSettings.updateChangesPolicy() }, { projectSettings.setUpdateChangesPolicy(it) }) {
+          GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
+            radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
+          }
         }
       }
     }

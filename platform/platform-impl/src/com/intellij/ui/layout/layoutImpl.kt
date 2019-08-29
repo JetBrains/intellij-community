@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
 import java.awt.Container
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @PublishedApi
@@ -14,6 +15,8 @@ internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
 
 interface LayoutBuilderImpl {
   val rootRow: Row
+  val topButtonGroup: ButtonGroup?
+  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 

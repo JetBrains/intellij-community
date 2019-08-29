@@ -26,7 +26,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
-                            override val buttonGroup: ButtonGroup? = null,
                             private val indent: Int /* level number (nested rows) */) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
@@ -77,6 +76,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private val spacing: SpacingConfiguration
     get() = builder.spacing
+
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    builder.withButtonGroup(buttonGroup, body)
+  }
 
   override var enabled = true
     set(value) {
@@ -148,14 +151,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val columnIndexIncludingSubRows: Int
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
-  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
+  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, componentConstraints, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = indent + computeChildRowIndent(isSeparated),
-                           buttonGroup = buttonGroup ?: this.buttonGroup)
+                           indent = indent + computeChildRowIndent(isSeparated))
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
@@ -171,12 +173,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (label != null) {
       row.addComponent(label)
-    }
-
-    if (buttonGroup != null) {
-      builder.resetCallbacks.add {
-        selectRadioButtonInGroup(buttonGroup)
-      }
     }
 
     return row
@@ -262,8 +258,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       addCommentRow(component, comment)
     }
 
-    if (buttonGroup != null && component is JRadioButton) {
-      buttonGroup.add(component)
+    if (component is JRadioButton) {
+      builder.topButtonGroup?.add(component)
     }
 
     builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
@@ -348,23 +344,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     gapAfter = "${spacing.largeVerticalGap * 2}px!"
   }
 
-  override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
-    return createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
-  }
-
-  private fun selectRadioButtonInGroup(buttonGroup: ButtonGroup) {
-    if (buttonGroup.selection == null && buttonGroup.buttonCount > 0) {
-      val e = buttonGroup.elements
-      while (e.hasMoreElements()) {
-        val radioButton = e.nextElement()
-        if (radioButton.getClientProperty(UNBOUND_RADIO_BUTTON) != null) {
-          buttonGroup.setSelected(radioButton.model, true)
-          return
-        }
-      }
-
-      buttonGroup.setSelected(buttonGroup.elements.nextElement().model, true)
-    }
+  override fun createRow(label: String?): Row {
+    return createChildRow(label = label?.let { Label(it) })
   }
 
   override fun createNoteOrCommentRow(component: JComponent): Row {

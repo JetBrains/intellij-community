@@ -27,7 +27,6 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KVisibility
 
 @DslMarker
 annotation class CellMarker
@@ -130,7 +129,7 @@ const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
-abstract class Cell {
+abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
    * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
@@ -383,7 +382,21 @@ abstract class Cell {
     growPolicy: GrowPolicy? = null,
     comment: String? = null
   ): CellBuilder<T>
+}
 
+class InnerCell(val cell: Cell) : Cell() {
+  override fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
+                                         gapLeft: Int,
+                                         growPolicy: GrowPolicy?,
+                                         comment: String?): CellBuilder<T> {
+    with(cell) {
+      return invoke(*constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = comment)
+    }
+  }
+
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    cell.withButtonGroup(buttonGroup, body)
+  }
 }
 
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): SimpleListCellRenderer<T?> {

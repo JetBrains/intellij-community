@@ -10,9 +10,13 @@ import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
-internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
+internal class MigLayoutBuilder(
+  val spacing: SpacingConfiguration,
+  val isUseMagic: Boolean = true
+) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
     private var vRelatedGap = -1
@@ -50,11 +54,46 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   override val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
+  private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+
+  override val topButtonGroup: ButtonGroup?
+    get() = buttonGroupStack.lastOrNull()
+
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    buttonGroupStack.add(buttonGroup)
+    try {
+      body()
+
+      resetCallbacks.add {
+        selectRadioButtonInGroup(buttonGroup)
+      }
+
+    }
+    finally {
+      buttonGroupStack.removeAt(buttonGroupStack.size - 1)
+    }
+  }
+
+  private fun selectRadioButtonInGroup(buttonGroup: ButtonGroup) {
+    if (buttonGroup.selection == null && buttonGroup.buttonCount > 0) {
+      val e = buttonGroup.elements
+      while (e.hasMoreElements()) {
+        val radioButton = e.nextElement()
+        if (radioButton.getClientProperty(UNBOUND_RADIO_BUTTON) != null) {
+          buttonGroup.setSelected(radioButton.model, true)
+          return
+        }
+      }
+
+      buttonGroup.setSelected(buttonGroup.elements.nextElement().model, true)
+    }
+  }
+
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
