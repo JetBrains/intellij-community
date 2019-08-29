@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -52,7 +37,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FileManagerImpl implements FileManager {
+public final class FileManagerImpl implements FileManager {
   private static final Key<Boolean> IN_COMA = Key.create("IN_COMA");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
   private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
@@ -70,15 +55,12 @@ public class FileManagerImpl implements FileManager {
 
   private boolean myDisposed;
 
-  private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
 
-  public FileManagerImpl(PsiManagerImpl manager, FileDocumentManager fileDocumentManager, FileIndexFacade fileIndex) {
+  public FileManagerImpl(PsiManagerImpl manager, FileIndexFacade fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
-
-    myFileDocumentManager = fileDocumentManager;
 
     Disposer.register(manager.getProject(), this);
     LowMemoryWatcher.register(this::processQueue, this);
@@ -565,9 +547,9 @@ public class FileManagerImpl implements FileManager {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
-    Document document = myFileDocumentManager.getCachedDocument(vFile);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (document != null) {
-      myFileDocumentManager.reloadFromDisk(document);
+      FileDocumentManager.getInstance().reloadFromDisk(document);
     }
     else {
       reloadPsiAfterTextChange(file.getViewProvider(), vFile);
@@ -593,10 +575,10 @@ public class FileManagerImpl implements FileManager {
     AbstractFileViewProvider vp = (AbstractFileViewProvider)file.getViewProvider();
     return evaluateValidity(vp) && vp.getCachedPsiFiles().contains(file);
   }
-  
+
   private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    
+
     VirtualFile file = viewProvider.getVirtualFile();
     if (getRawCachedViewProvider(file) != viewProvider) {
       return false;
@@ -619,7 +601,7 @@ public class FileManagerImpl implements FileManager {
       }
       return true;
     }
-    
+
     getVFileToViewProviderMap().remove(file, viewProvider);
     file.replace(myPsiHardRefKey, viewProvider, null);
     viewProvider.putUserData(IN_COMA, null);

@@ -27,19 +27,15 @@ import java.nio.charset.Charset;
 @Service
 public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
-  private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ExtensionPointImpl<VcsBaseContentProvider> myAdditionalProviderPoint;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
   VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
-    myChangeListManager.addChangeListListener(new ChangeListAdapter() {
+    ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
@@ -72,7 +68,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       return FileStatusManagerImpl.getDefaultStatus(virtualFile);
     }
 
-    final FileStatus status = myChangeListManager.getStatus(virtualFile);
+    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
     if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) {
       return FileStatus.MODIFIED;
     }
@@ -108,7 +104,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       fileStatusManager.fileStatusChanged(virtualFile);
       ChangeProvider cp = vcs.getChangeProvider();
       if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
-        myDirtyScopeManager.fileDirty(virtualFile);
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
       }
     }
   }
@@ -116,7 +112,12 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   @NotNull
   @Override
   public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    return VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(virtualFile) : ThreeState.NO;
+    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
+      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
+    }
+    else {
+      return ThreeState.NO;
+    }
   }
 
   @Override

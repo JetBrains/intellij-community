@@ -6,11 +6,6 @@
   </application-components>
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
     </component>
     <component>

@@ -50,9 +50,9 @@ public class CoreProjectEnvironment {
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
+    myProject.registerService(ResolveCache.class, new ResolveCache(myProject));
 
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
+    myPsiManager = new PsiManagerImpl(myProject);
     registerProjectComponent(PsiManager.class, myPsiManager);
     myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
     registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,

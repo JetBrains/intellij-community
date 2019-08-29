@@ -64,19 +64,17 @@ public class NewMappings implements Disposable {
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
   private volatile FilePathMapping myMappedRootsMapping = new FilePathMapping(Collections.emptyList());
-  private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
+  private volatile List<AbstractVcs<?>> myActiveVcses = Collections.emptyList();
   private volatile boolean myActivated = false;
 
   @NotNull private final MergingUpdateQueue myRootUpdateQueue;
   private final VirtualFilePointerListener myFilePointerListener;
 
-  public NewMappings(Project project,
-                     ProjectLevelVcsManagerImpl vcsManager,
-                     DefaultVcsRootPolicy defaultVcsRootPolicy) {
+  public NewMappings(Project project, ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
-    myVcsManager = vcsManager;
+    myVcsManager = (vcsManager);
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
-    myDefaultVcsRootPolicy = defaultVcsRootPolicy;
+    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
 
@@ -101,7 +99,7 @@ public class NewMappings implements Disposable {
   }
 
   @NotNull
-  public AbstractVcs[] getActiveVcses() {
+  public AbstractVcs<?>[] getActiveVcses() {
     return myActiveVcses.toArray(new AbstractVcs[0]);
   }
 
@@ -224,7 +222,7 @@ public class NewMappings implements Disposable {
       // direct mappings have priority over <Project> mappings
       for (VcsDirectoryMapping mapping : mappings) {
         if (mapping.isDefaultMapping()) continue;
-        AbstractVcs vcs = getMappingsVcs(mapping);
+        AbstractVcs<?> vcs = getMappingsVcs(mapping);
         String rootPath = mapping.getDirectory();
 
         ReadAction.run(() -> {
@@ -273,12 +271,12 @@ public class NewMappings implements Disposable {
   }
 
   @Nullable
-  private AbstractVcs getMappingsVcs(@NotNull VcsDirectoryMapping mapping) {
+  private AbstractVcs<?> getMappingsVcs(@NotNull VcsDirectoryMapping mapping) {
     String vcsName = mapping.getVcs();
     return vcsName != null ? AllVcses.getInstance(myProject).getByName(vcsName) : null;
   }
 
-  private boolean checkMappedRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile vcsRoot) {
+  private boolean checkMappedRoot(@Nullable AbstractVcs<?> vcs, @NotNull VirtualFile vcsRoot) {
     try {
       if (vcs == null) return false;
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
@@ -411,7 +409,7 @@ public class NewMappings implements Disposable {
   }
 
   @NotNull
-  public List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
+  public List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs<?> vcs) {
     return mapNotNull(myMappedRoots, root -> {
       return vcs.equals(root.vcs) ? root.root : null;
     });
@@ -504,29 +502,29 @@ public class NewMappings implements Disposable {
 
   @NotNull
   private MyVcsActivator updateActiveVcses() {
-    Set<AbstractVcs> newVcses = map2SetNotNull(myMappings, mapping -> getMappingsVcs(mapping));
+    Set<AbstractVcs<?>> newVcses = map2SetNotNull(myMappings, mapping -> getMappingsVcs(mapping));
 
-    List<AbstractVcs> oldVcses = myActiveVcses;
+    List<AbstractVcs<?>> oldVcses = myActiveVcses;
     myActiveVcses = unmodifiableList(new ArrayList<>(newVcses));
 
-    Collection<AbstractVcs> toAdd = subtract(myActiveVcses, oldVcses);
-    Collection<AbstractVcs> toRemove = subtract(oldVcses, myActiveVcses);
+    Collection<AbstractVcs<?>> toAdd = subtract(myActiveVcses, oldVcses);
+    Collection<AbstractVcs<?>> toRemove = subtract(oldVcses, myActiveVcses);
 
     return new MyVcsActivator(toAdd, toRemove);
   }
 
   private static class MyVcsActivator {
-    @NotNull private final Collection<? extends AbstractVcs> myAddVcses;
-    @NotNull private final Collection<? extends AbstractVcs> myRemoveVcses;
+    @NotNull private final Collection<? extends AbstractVcs<?>> myAddVcses;
+    @NotNull private final Collection<? extends AbstractVcs<?>> myRemoveVcses;
 
-    private MyVcsActivator(@NotNull Collection<? extends AbstractVcs> addVcses,
-                           @NotNull Collection<? extends AbstractVcs> removeVcses) {
+    private MyVcsActivator(@NotNull Collection<? extends AbstractVcs<?>> addVcses,
+                           @NotNull Collection<? extends AbstractVcs<?>> removeVcses) {
       myAddVcses = addVcses;
       myRemoveVcses = removeVcses;
     }
 
     public void activate() {
-      for (AbstractVcs vcs : myAddVcses) {
+      for (AbstractVcs<?> vcs : myAddVcses) {
         try {
           vcs.doActivate();
         }
@@ -534,7 +532,7 @@ public class NewMappings implements Disposable {
           LOG.error(e);
         }
       }
-      for (AbstractVcs vcs : myRemoveVcses) {
+      for (AbstractVcs<?> vcs : myRemoveVcses) {
         try {
           vcs.doDeactivate();
         }
@@ -557,11 +555,11 @@ public class NewMappings implements Disposable {
   }
 
   public static class MappedRoot {
-    @Nullable public final AbstractVcs vcs;
+    @Nullable public final AbstractVcs<?> vcs;
     @NotNull public final VcsDirectoryMapping mapping;
     @NotNull public final VirtualFile root;
 
-    private MappedRoot(@Nullable AbstractVcs vcs, @NotNull VcsDirectoryMapping mapping, @NotNull VirtualFile root) {
+    private MappedRoot(@Nullable AbstractVcs<?> vcs, @NotNull VcsDirectoryMapping mapping, @NotNull VirtualFile root) {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;

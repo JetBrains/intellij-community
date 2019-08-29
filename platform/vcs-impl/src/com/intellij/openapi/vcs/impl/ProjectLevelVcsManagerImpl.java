@@ -11,7 +11,10 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -64,7 +67,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
+public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -117,7 +120,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       });
     }
 
-    myMappings = new NewMappings(myProject, this, DefaultVcsRootPolicy.getInstance(project));
+    myMappings = new NewMappings(myProject, this);
   }
 
   public void registerVcs(AbstractVcs<?> vcs) {
@@ -165,29 +168,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener() {
     return myProject.getService(VcsAnnotationLocalChangesListener.class);
-  }
-
-  @Override
-  public void projectOpened() {
-    addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
-        if (checkers.size() != 0) {
-          VcsRootScanner.start(myProject, checkers);
-        }
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed() {
-    releaseConsole();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ProjectLevelVcsManager";
   }
 
   @Override
@@ -872,6 +852,30 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     @Override
     public String toString() {
       return getClass() + " - " + Arrays.toString(myObjects);
+    }
+  }
+
+  static final class MyProjectManagerListener implements ProjectManagerListener {
+    @Override
+    public void projectOpened(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
+      ((ProjectLevelVcsManagerImpl)getInstance(project)).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
+        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
+        if (checkers.size() != 0) {
+          VcsRootScanner.start(project, checkers);
+        }
+      });
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
+      if (manager != null) {
+        manager.releaseConsole();
+      }
     }
   }
 }

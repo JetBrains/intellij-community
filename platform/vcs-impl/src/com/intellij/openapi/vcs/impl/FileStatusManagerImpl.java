@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -19,7 +17,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -41,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
+public final class FileStatusManagerImpl extends FileStatusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
@@ -84,9 +82,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Pr
   }
 
   public FileStatusManagerImpl(@NotNull Project project) {
-    // make sure index is initialized first
-    DirectoryIndex.getInstance(project);
-
     myProject = project;
     myFileStatusProvider = project.getService(VcsFileStatusProvider.class);
 
@@ -99,30 +94,39 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Pr
     });
     projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> fileStatusesChanged());
 
-    if (project.isDefault()) return;
-
-    StartupManager startUpManager = StartupManager.getInstance(project);
-    startUpManager.registerPreStartupActivity(() -> {
-      final EditorFactory factory = EditorFactory.getInstance();
-      if (factory != null) {
-        factory.getEventMulticaster().addDocumentListener(new BulkAwareDocumentListener() {
-          @Override
-          public void documentChangedNonBulk(@NotNull DocumentEvent event) {
-            if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
-            bulkUpdateFinished(event.getDocument());
-          }
-
-          @Override
-          public void bulkUpdateFinished(@NotNull Document document) {
-            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-            if (file != null) {
-              refreshFileStatusFromDocument(file, document);
-            }
-          }
-        }, myProject);
+    if (!project.isDefault()) {
+      StartupManager startManager = StartupManager.getInstance(project);
+      if (!startManager.postStartupActivityPassed()) {
+        startManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
       }
-    });
-    startUpManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
+    }
+  }
+
+  static final class FileStatusManagerDocumentListener implements BulkAwareDocumentListener {
+    @Override
+    public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+      if (event.getOldLength() == 0 && event.getNewLength() == 0) {
+        return;
+      }
+      bulkUpdateFinished(event.getDocument());
+    }
+
+    @Override
+    public void bulkUpdateFinished(@NotNull Document document) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file == null) {
+        return;
+      }
+
+      ProjectManager projectManager = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+      if (projectManager == null) {
+        return;
+      }
+
+      for (Project project : projectManager.getOpenProjects()) {
+        getInstance(project).refreshFileStatusFromDocument(file, document);
+      }
+    }
   }
 
   public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
@@ -159,12 +163,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Pr
   @Override
   public void dispose() {
     myCachedStatuses.clear();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "FileStatusManager";
   }
 
   @Override

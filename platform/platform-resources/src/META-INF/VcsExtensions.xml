@@ -43,6 +43,12 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
+    <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
+
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.message.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
@@ -156,6 +162,8 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 </idea-plugin>
 

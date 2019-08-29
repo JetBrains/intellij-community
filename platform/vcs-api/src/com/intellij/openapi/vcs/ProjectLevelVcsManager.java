@@ -38,7 +38,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the manager instance.
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
-    return project.getComponent(ProjectLevelVcsManager.class);
+    return project.getService(ProjectLevelVcsManager.class);
   }
 
   /**
@@ -123,7 +123,7 @@ public abstract class ProjectLevelVcsManager {
 
   @Nullable
   public abstract VcsRoot getVcsRootObjectFor(final VirtualFile file);
-  
+
   @Nullable
   public abstract VcsRoot getVcsRootObjectFor(FilePath file);
 
@@ -245,7 +245,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator);
-  
+
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
