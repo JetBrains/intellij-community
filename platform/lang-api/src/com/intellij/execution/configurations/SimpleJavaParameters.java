@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.remote.IR;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -166,12 +167,23 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
+   * Consider using {@link #toCommandLine(IR.RemoteRunner)} instead with {@link IR.LocalRunner} as an argument
+   *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
   @NotNull
   public GeneralCommandLine toCommandLine() throws CantRunException {
     return JdkUtil.setupJVMCommandLine(this);
+  }
+
+  /**
+   * @throws CantRunException when incorrect Java SDK is specified
+   * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
+   */
+  @NotNull
+  public IR.NewCommandLine toCommandLine(@NotNull IR.RemoteRunner runner) throws CantRunException {
+    return JdkUtil.setupJVMCommandLine(this, runner);
   }
 
   @NotNull

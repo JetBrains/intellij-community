@@ -9,8 +9,10 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.remote.IR;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
@@ -140,17 +142,27 @@ public class JdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
+  @NotNull
+  public static IR.NewCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters, @NotNull IR.RemoteRunner runner) throws CantRunException {
     Sdk jdk = javaParameters.getJdk();
     if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
     SdkTypeId type = jdk.getSdkType();
     if (!(type instanceof JavaSdkType)) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
     String exePath = ((JavaSdkType)type).getVMExecutablePath(jdk);
     if (exePath == null) throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
-
+    /*
+    // todo[remoteServers]: fill the new command line
     GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
     setupCommandLine(commandLine, javaParameters);
-    return commandLine;
+    return commandLine;*/
+    return new IR.NewCommandLine();
+  }
+
+  @NotNull
+  public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
+    IR.LocalRunner runner = new IR.LocalRunner();
+    return runner.prepareRemoteEnvironment(runner.createRequest(), new EmptyProgressIndicator())
+      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, runner));
   }
 
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {

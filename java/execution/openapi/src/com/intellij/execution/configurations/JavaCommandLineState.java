@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.remote.IR;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,13 +41,19 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteRunner runner) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
+    return javaParameters.toCommandLine(runner);
+  }
+
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    IR.LocalRunner runner = new IR.LocalRunner();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
-    return javaParameters.toCommandLine().withRedirectErrorStream(redirectErrorStream);
+    return runner.prepareRemoteEnvironment(runner.createRequest(), new EmptyProgressIndicator())
+      .createGeneralCommandLine(createNewCommandLine(runner)).withRedirectErrorStream(redirectErrorStream);
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {

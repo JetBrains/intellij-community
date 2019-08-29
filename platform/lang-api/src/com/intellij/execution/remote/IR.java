@@ -38,7 +38,7 @@ public class IR {
   public interface RemoteEnvironmentRequest {
     RemotePlatform getRemotePlatform();
 
-    //TODO: change to Path
+    //todo[remoteServers]: change to Path
     RemoteValue<String> createUpload(@NotNull String localPath);
 
     RemoteValue<Integer> bindRemotePort(int remotePort);
@@ -121,7 +121,7 @@ public class IR {
     public List<String> prepareCommandLine(@NotNull RemoteEnvironment target) {
       String command = myExePath.getRemoteValue();
       if (command == null) {
-        // todo: handle this properly
+        // todo[remoteServers]: handle this properly
         throw new RuntimeException("Cannot find command");
       }
       return CommandLineUtil.toCommandLine(command, getParameters(target), target.getRemotePlatform().getPlatform());
@@ -155,7 +155,7 @@ public class IR {
       myEnvironment.put(name, new StringFixedValue(value));
     }
 
-    //todo: all `target`s are not used
+    //todo[remoteServers]: all `target`s are not used
     public String getExePath(@NotNull RemoteEnvironment target) {
       return myExePath.getRemoteValue();
     }
@@ -218,7 +218,7 @@ public class IR {
     }
 
     @Override
-    public RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request, ProgressIndicator indicator) {
+    public LocalRemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request, ProgressIndicator indicator) {
       return new LocalRemoteEnvironment();
     }
   }
@@ -235,7 +235,7 @@ public class IR {
     }
 
     @NotNull
-    protected GeneralCommandLine createGeneralCommandLine(NewCommandLine commandLine) {
+    public GeneralCommandLine createGeneralCommandLine(NewCommandLine commandLine) {
       GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
       String workingDirectory = commandLine.getWorkingDirectory(this);
       if (workingDirectory != null) {
