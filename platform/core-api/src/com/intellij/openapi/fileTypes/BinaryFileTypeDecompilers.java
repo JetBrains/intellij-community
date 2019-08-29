@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 
 @Service
-public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFileDecompiler>{
+public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFileDecompiler> {
   private BinaryFileTypeDecompilers() {
     super("com.intellij.filetype.decompiler");
   }
