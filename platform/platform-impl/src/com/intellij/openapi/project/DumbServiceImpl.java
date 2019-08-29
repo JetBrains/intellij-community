@@ -543,6 +543,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
           task = pair.first;
           ProgressIndicatorEx taskIndicator = pair.second;
+          suspender.attachToProgress(taskIndicator);
           taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
             @Override
             protected void delegateProgressChange(@NotNull IndicatorAction action) {
