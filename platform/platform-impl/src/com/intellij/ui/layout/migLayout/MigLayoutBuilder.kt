@@ -51,8 +51,8 @@ internal class MigLayoutBuilder(
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
-  private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
-  override val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+  internal val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
+  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null

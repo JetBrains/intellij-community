@@ -15,14 +15,12 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
-import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
-                            private val componentConstraints: MutableMap<Component, CC>,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
@@ -154,13 +152,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
-    val row = MigLayoutRow(this, componentConstraints, builder,
+    val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
                            indent = indent + computeChildRowIndent(isSeparated))
 
     if (isSeparated) {
-      val separatorRow = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
+      val separatorRow = MigLayoutRow(this, builder, indent = indent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
       separatorRow.enabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
@@ -200,7 +198,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       // do not add split if cell empty or contains the only component
       if ((components.size - firstComponentIndex) > 1) {
         val component = components.get(firstComponentIndex)
-        val cc = componentConstraints.getOrPut(component) { CC() }
+        val cc = builder.componentConstraints.getOrPut(component) { CC() }
         cc.split(components.size - firstComponentIndex)
         if (fullWidth) {
           cc.spanX(LayoutUtil.INF)
@@ -251,7 +249,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (labeled && components.size == 2 && component.border is LineBorder) {
-      componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
+      builder.componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
     }
 
     if (comment != null && comment.isNotEmpty()) {
@@ -286,7 +284,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     // MigLayout doesn't check baseline if component has grow
     if (labeled && component is JScrollPane && component.viewport.view is JTextArea) {
-      val labelCC = componentConstraints.getOrPut(components.get(0)) { CC() }
+      val labelCC = builder.componentConstraints.getOrPut(components.get(0)) { CC() }
       labelCC.alignY("top")
 
       val labelTop = component.border?.getBorderInsets(component)?.top ?: 0
@@ -296,7 +294,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (cc.isInitialized()) {
-      componentConstraints.put(component, cc.value)
+      builder.componentConstraints.put(component, cc.value)
     }
   }
 
@@ -314,10 +312,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
       if (lastComponentConstraintsWithSplit == null) {
         val prevComponent = components.get(components.size - 2)
-        var cc = componentConstraints.get(prevComponent)
+        var cc = builder.componentConstraints.get(prevComponent)
         if (cc == null) {
           cc = CC()
-          componentConstraints.put(prevComponent, cc)
+          builder.componentConstraints.put(prevComponent, cc)
         }
         cc.split++
         lastComponentConstraintsWithSplit = cc
