@@ -35,7 +35,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private final Project myProject;
   private final ProjectLevelVcsManagerImpl myVcsManager;
-  private final VcsDirtyScopePathMapper myGuess;
 
   private final DirtBuilder myDirtBuilder;
   @Nullable private DirtBuilder myDirtInProgress;
@@ -47,7 +46,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myProject = project;
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
-    myGuess = new VcsDirtyScopePathMapper(myProject);
     myDirtBuilder = new DirtBuilder();
 
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -105,7 +103,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (from == null) return MultiMap.empty();
     MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
     for (FilePath path : from) {
-      AbstractVcs vcs = myGuess.getVcsForDirty(path);
+      AbstractVcs vcs = myVcsManager.getVcsFor(path);
       if (vcs != null) {
         map.putValue(vcs, path);
       }
@@ -118,7 +116,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (from == null) return MultiMap.empty();
     MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
     for (VirtualFile file : from) {
-      AbstractVcs vcs = myGuess.getVcsForDirty(file);
+      AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs != null) {
         map.putValue(vcs, VcsUtil.getFilePath(file));
       }
