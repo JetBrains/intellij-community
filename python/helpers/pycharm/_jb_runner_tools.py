@@ -52,9 +52,6 @@ class _TreeManagerHolder(object):
         return self._manager_imp
 
     def _fill_manager(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        if path not in sys.path:
-            sys.path.append(path)
         if self.parallel:
             from _jb_parallel_tree_manager import ParallelTreeManager
             self._manager_imp = ParallelTreeManager(self.offset)
@@ -306,7 +303,9 @@ def parse_arguments():
     # But sys.path should be same as when launched with test runner directly
     try:
         if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
-            sys.path.pop(0)
+            path = sys.path.pop(0)
+            if path not in sys.path:
+                sys.path.append(path)
     except KeyError:
         pass
     _TREE_MANAGER_HOLDER.offset = int(namespace.offset if namespace.offset else 0)
