@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.editor.Document
@@ -165,43 +151,55 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
 
   override fun getByIndex(index: Int): MappingEntry = mappings.get(index)
 
-  // entries will be processed in this list order
-  fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {
+  // entries will be iterated in this list order
+  fun getMappingsInLine(line: Int): Iterable<MappingEntry> {
     var low = 0
     var high = mappings.size - 1
-    while (low <= high) {
-      val middle = (low + high).ushr(1)
-      val mapping = mappings.get(middle)
+    var middle: Int = -1
+
+    loop@ while (low <= high) {
+      middle = (low + high).ushr(1)
+      val mapping = mappings[middle]
       val mappingLine = getLine(mapping)
       when {
         line == mappingLine -> {
-          // find first
-          var firstIndex = middle
-          while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
-            firstIndex--
-          }
-
-          var entry: MappingEntry? = mappings.get(firstIndex)
-          do {
-            var nextEntry = mappings.getOrNull(++firstIndex)
-            if (nextEntry != null && getLine(nextEntry) != line) {
-              nextEntry = null
-            }
-
-            if (!entryProcessor.process(entry!!, nextEntry)) {
-              return true
-            }
-
-            entry = nextEntry
-          }
-          while (entry != null)
-          return true
+          break@loop
         }
         line > mappingLine -> low = middle + 1
         else -> high = middle - 1
       }
     }
-    return false
+
+    if (middle == -1) {
+      return emptyList()
+    }
+
+    var firstIndex = middle
+    while (firstIndex > 0 && getLine(mappings[firstIndex - 1]) == line) {
+      firstIndex--
+    }
+
+    var lastIndex = middle
+    while (lastIndex < mappings.size - 1 && getLine(mappings[lastIndex + 1]) == line) {
+      lastIndex++
+    }
+
+    return mappings.subList(firstIndex, lastIndex + 1)
+  }
+
+  fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {
+    val mappingsInLine = getMappingsInLine(line).iterator()
+    if (!mappingsInLine.hasNext()) return false
+    var prevEntry = mappingsInLine.next()
+    while (mappingsInLine.hasNext()) {
+      val currentEntry = mappingsInLine.next()
+      if (!entryProcessor.process(prevEntry, currentEntry)) {
+        return true
+      }
+      prevEntry = currentEntry
+    }
+    entryProcessor.process(prevEntry, null)
+    return true
   }
 }
 
