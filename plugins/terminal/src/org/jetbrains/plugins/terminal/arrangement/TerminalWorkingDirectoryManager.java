@@ -3,13 +3,16 @@ package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
@@ -30,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TerminalWorkingDirectoryManager extends TerminalWatchManager {
+public class TerminalWorkingDirectoryManager {
   private static final Logger LOG = Logger.getInstance(TerminalWorkingDirectoryManager.class);
   private static final int MERGE_WAIT_MILLIS = 500;
   private static final int FETCH_WAIT_MILLIS = 2000;
@@ -47,8 +50,25 @@ public class TerminalWorkingDirectoryManager extends TerminalWatchManager {
     return data != null ? data.myWorkingDirectory : null;
   }
 
-  @Override
-  protected void watchTab(@NotNull Project project, @NotNull Content content) {
+  void init(@NotNull ToolWindow terminalToolWindow) {
+    ContentManager contentManager = terminalToolWindow.getContentManager();
+    for (Content content : contentManager.getContents()) {
+      watchTab(content);
+    }
+    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void contentAdded(@NotNull ContentManagerEvent event) {
+        watchTab(event.getContent());
+      }
+
+      @Override
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
+        unwatchTab(event.getContent());
+      }
+    });
+  }
+
+  private void watchTab(@NotNull Content content) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, content);
     AtomicReference<Data> dataRef = new AtomicReference<>();
     KeyAdapter listener = new KeyAdapter() {
@@ -114,8 +134,7 @@ public class TerminalWorkingDirectoryManager extends TerminalWatchManager {
     return null;
   }
 
-  @Override
-  protected void unwatchTab(@NotNull Content content) {
+  private void unwatchTab(@NotNull Content content) {
     Data data = getData(content);
     if (data != null) {
       myDataByContentMap.remove(content);

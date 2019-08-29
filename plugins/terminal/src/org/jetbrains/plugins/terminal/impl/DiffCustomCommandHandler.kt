@@ -2,14 +2,10 @@
 package org.jetbrains.plugins.terminal.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.TerminalCustomCommandHandler
+import com.intellij.terminal.TerminalShellCommandHandler
 
-class DiffCustomCommandHandler : TerminalCustomCommandHandler {
-  override fun isAcceptable(command: String): Boolean {
-    return "diff" == command
-  }
-
+class DiffCustomCommandHandler : TerminalShellCommandHandler {
   override fun execute(project: Project, command: String): Boolean {
-    return false
+    return "diff" == command
   }
 }

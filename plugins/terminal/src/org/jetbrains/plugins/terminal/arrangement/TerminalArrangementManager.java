@@ -32,20 +32,17 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   private static final Logger LOG = Logger.getInstance(TerminalArrangementManager.class);
 
   private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
-  private final TerminalCustomCommandManager myCustomCommandManager;
   private ToolWindow myTerminalToolWindow;
   private TerminalArrangementState myState;
   private final Set<String> myTrackingCommandHistoryFileNames = ContainerUtil.newConcurrentSet();
 
   public TerminalArrangementManager() {
     myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();
-    myCustomCommandManager = new TerminalCustomCommandManager();
   }
 
-  public void setToolWindow(Project project, @NotNull ToolWindow terminalToolWindow) {
+  public void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
     myTerminalToolWindow = terminalToolWindow;
-    myWorkingDirectoryManager.init(project, terminalToolWindow);
-    myCustomCommandManager.init(project, terminalToolWindow);
+    myWorkingDirectoryManager.init(terminalToolWindow);
   }
 
   @Nullable
