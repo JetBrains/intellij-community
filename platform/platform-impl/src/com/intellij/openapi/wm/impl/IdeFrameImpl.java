@@ -401,24 +401,27 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
 
     myProject = project;
-    if (project != null) {
+    if (project == null) {
+      //already disposed
       if (myRootPane != null) {
-        myRootPane.installNorthComponents(project);
-        StatusBar statusBar = myRootPane.getStatusBar();
-        if (statusBar != null) {
-          project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
-        }
+        myRootPane.deinstallNorthComponents();
       }
+      return;
+    }
 
-      installDefaultProjectStatusBarWidgets(myProject);
-      //noinspection CodeBlock2Expr
-      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
-        selfie = null;
-      });
+    if (myRootPane != null) {
+      myRootPane.installNorthComponents(project);
+      StatusBar statusBar = myRootPane.getStatusBar();
+      if (statusBar != null) {
+        project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
+      }
     }
-    else if (myRootPane != null) { //already disposed
-      myRootPane.deinstallNorthComponents();
-    }
+
+    installDefaultProjectStatusBarWidgets(myProject);
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      selfie = null;
+    });
   }
 
   private final Set<String> widgetIds = new THashSet<>();
