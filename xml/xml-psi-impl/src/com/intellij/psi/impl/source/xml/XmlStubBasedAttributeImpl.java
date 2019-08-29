@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.xml.stub.XmlAttributeStub;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,27 +17,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
-
-/**
- * @author Mike
- */
-public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
-
-  private final int myHC = ourHC++;
+@ApiStatus.Experimental
+public class XmlStubBasedAttributeImpl extends XmlStubBasedElement<XmlAttributeStub<?>>
+  implements XmlAttribute, HintedReferenceHost, StubBasedPsiElement<XmlAttributeStub<?>> {
 
   //cannot be final because of clone implementation
   @Nullable
   private volatile XmlAttributeDelegateImpl myImpl;
 
-  @Override
-  public final int hashCode() {
-    return myHC;
+  public XmlStubBasedAttributeImpl(@NotNull XmlAttributeStub<?> stub,
+                                   @NotNull IStubElementType<XmlAttributeStub<?>, XmlAttribute> nodeType) {
+    super(stub, nodeType);
   }
 
-  public XmlAttributeImpl() {
-    super(XmlElementType.XML_ATTRIBUTE);
+  public XmlStubBasedAttributeImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @NotNull
@@ -66,28 +46,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return impl;
   }
 
-  protected XmlAttributeImpl(@NotNull IElementType elementType) {
-    super(elementType);
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_ATTRIBUTE_VALUE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
 
   @Override
   public XmlAttributeValue getValueElement() {
-    return (XmlAttributeValue)XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
+    return (XmlAttributeValue)XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this.getNode());
   }
 
   @Override
@@ -102,8 +64,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
 
   @Override
   public XmlElement getNameElement() {
-    ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
-    return child == null ? null : (XmlElement)child.getPsi();
+    return (XmlElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this.getNode());
   }
 
   @Override
@@ -177,8 +138,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public void clearCaches() {
-    super.clearCaches();
+  public void subtreeChanged() {
+    super.subtreeChanged();
     myImpl = null;
   }
 
@@ -206,11 +167,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return ArrayUtil.getFirstElement(getReferences(PsiReferenceService.Hints.NO_HINTS));
   }
 
-  @Override
-  public boolean shouldAskParentForReferences(@NotNull PsiReferenceService.Hints hints) {
-    return false;
-  }
-
   /**
    * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
@@ -228,22 +184,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
+  public boolean shouldAskParentForReferences(@NotNull PsiReferenceService.Hints hints) {
+    return false;
+  }
+
+  @Override
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public String getRealLocalName() {
-    XmlAttribute attribute = this;
-    return getRealName(attribute);
-  }
-
-  @NotNull
-  public static String getRealName(@NotNull XmlAttribute attribute) {
-    final String name = attribute.getLocalName();
-    return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
   }
 }

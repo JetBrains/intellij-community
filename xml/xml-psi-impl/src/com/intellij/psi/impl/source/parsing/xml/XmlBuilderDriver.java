@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.IXmlAttributeElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
@@ -165,7 +166,7 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       final IElementType tt = child.getTokenType();
-      if (tt == XmlElementType.XML_ATTRIBUTE) checkForXmlns(child, structure);
+      if (tt instanceof IXmlAttributeElementType) checkForXmlns(child, structure);
       if (tt == XmlTokenType.XML_TAG_END || tt == XmlTokenType.XML_EMPTY_ELEMENT_END) {
         headerEndOffset = child.getEndOffset();
         break;
@@ -190,7 +191,7 @@ public class XmlBuilderDriver {
       IElementType tt = child.getTokenType();
       if (tt == TokenType.ERROR_ELEMENT) processErrorNode(psiBuilder, child, builder);
       if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) processTagNode(psiBuilder, structure, child, builder);
-      if (processAttrs && tt == XmlElementType.XML_ATTRIBUTE) processAttributeNode(child, structure, builder);
+      if (processAttrs && tt instanceof IXmlAttributeElementType) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
       if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(getTokenText(child), child.getStartOffset(), child.getEndOffset());
     }

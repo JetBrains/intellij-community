@@ -527,7 +527,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {
       return XmlChildRole.XML_TAG_NAME;
     }
-    else if (i == XmlElementType.XML_ATTRIBUTE) {
+    else if (i instanceof IXmlAttributeElementType) {
       return XmlChildRole.XML_ATTRIBUTE;
     }
     else {
@@ -1106,7 +1106,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
     LOG.assertTrue(child.getPsi() instanceof XmlAttribute || child.getPsi() instanceof XmlTagChild);
     final InsertTransaction transaction;
-    if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
+    if (child.getElementType() instanceof IXmlAttributeElementType) {
       transaction = new InsertAttributeTransaction(child, anchor, before, model);
     }
     else if (anchor == null) {
@@ -1128,7 +1128,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
 
-    if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
+    if (child.getElementType() instanceof IXmlAttributeElementType) {
       try {
         model.runTransaction(new PomTransactionBase(this, aspect) {
           @Override
@@ -1295,8 +1295,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
     @Override
     public PomModelEvent runInner() {
-      final String value = ((XmlAttribute)myChild).getValue();
-      final String name = ((XmlAttribute)myChild).getName();
+      final String value = ((XmlAttribute)(myChild.getPsi())).getValue();
+      final String name = ((XmlAttribute)(myChild.getPsi())).getName();
       if (myAnchor == null) {
         ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
         if (startTagEnd == null) startTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(XmlTagImpl.this);

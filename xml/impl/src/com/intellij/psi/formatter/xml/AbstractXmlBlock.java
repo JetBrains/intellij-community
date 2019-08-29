@@ -322,7 +322,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean isAttributeElementType(final IElementType elementType) {
-    return elementType == XmlElementType.XML_ATTRIBUTE;
+    return elementType instanceof IXmlAttributeElementType;
   }
 
   protected boolean isXmlTag(final ASTNode child) {
