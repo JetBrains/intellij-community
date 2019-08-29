@@ -451,6 +451,16 @@ def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_sk
     return GenerationStatus.GENERATED
 
 
+def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
+    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir)
+    control_message('generation_result', {
+        'module_name': name,
+        'module_origin': get_module_origin(mod_file_name, name),
+        'generation_status': status
+    })
+    return status
+
+
 # noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     """
@@ -541,9 +551,8 @@ BinaryModule = collections.namedtuple('BinaryModule', ['qname', 'path'])
 
 
 def progress(text=None, fraction=None, minor=False):
-    data = {
-        'type': 'progress',
-    }
+    data = {}
+
     if text is not None:
         data['text'] = text
         data['minor'] = minor
@@ -551,11 +560,16 @@ def progress(text=None, fraction=None, minor=False):
     if fraction is not None:
         data['fraction'] = round(fraction, 2)
 
+    control_message('progress', data)
+
+
+def control_message(msg_type, data):
+    data['type'] = msg_type
     say(json.dumps(data))
 
 
 def log(msg, level='debug'):
-    say(json.dumps({'type': 'log', 'level': level, 'message': msg}))
+    control_message('log', {'level': level, 'message': msg})
 
 
 def info(msg):
@@ -585,7 +599,7 @@ def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
         name_pattern = '*'
     for name in names:
         if fnmatch.fnmatchcase(name, name_pattern):
-            status = process_one(name, None, True, sdk_skeletons_dir)
+            status = process_one_with_results_reporting(name, None, True, sdk_skeletons_dir)
             # Assume that if a skeleton for one built-in module was copied, all of them were copied.
             if status == GenerationStatus.COPIED:
                 break
@@ -608,5 +622,5 @@ def process_all(sdk_skeletons_dir, name_pattern=None):
     binaries.sort(key=(lambda b: b.qname))
     for i, binary in enumerate(binaries):
         progress(text=binary.qname, fraction=float(i) / len(binaries), minor=True)
-        process_one(binary.qname, binary.path, False, sdk_skeletons_dir)
+        process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir)
     progress(fraction=1.0)

@@ -327,6 +327,20 @@ class SkeletonGenerationTest(GeneratorTestCase):
         ], result.control_messages)
 
     @test_data_dir('multiple_modules_mode')
+    def test_intermediate_results_in_multiple_modules_mode(self):
+        result = self.run_generator(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+        self.assertContainsInRelativeOrder([
+            {'type': 'generation_result',
+             'module_name': 'mod1',
+             'module_origin': 'mod1.so',
+             'generation_status': 'GENERATED'},
+            {'type': 'generation_result',
+             'module_name': 'mod2',
+             'module_origin': 'mod2.so',
+             'generation_status': 'GENERATED'}
+        ], result.control_messages)
+
+    @test_data_dir('multiple_modules_mode')
     def test_multiple_modules_generation_mode(self):
         # This is a hack to keep the existing behavior where we keep discovering only binary files
         # (which can't be distributed with tests in a platform-independent manner), but user their .py
