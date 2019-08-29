@@ -1,5 +1,6 @@
 # encoding: utf-8
 import collections
+import fnmatch
 import json
 
 from generator3.util_methods import *
@@ -456,7 +457,6 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     Processes a single module named name defined in file_name (autodetect if not given).
     Returns True on success.
     """
-    progress(name, minor=True)
     if has_regular_python_ext(name):
         report("Ignored a regular Python file %r", name)
         return True
@@ -574,30 +574,39 @@ def collect_binaries(paths):
     return [BinaryModule(qname, path) for (qname, path, _, _) in list_binaries(paths)]
 
 
-def process_builtin_modules(sdk_skeletons_dir):
+def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
     names = list(sys.builtin_module_names)
     if BUILTIN_MOD_NAME not in names:
         names.append(BUILTIN_MOD_NAME)
     if '__main__' in names:
         names.remove('__main__')
     result = True
+    if name_pattern is None:
+        name_pattern = '*'
     for name in names:
-        status = process_one(name, None, True, sdk_skeletons_dir)
-        # Assume that if a skeleton for one built-in module was copied, all of them were copied.
-        if status == GenerationStatus.COPIED:
-            break
-        elif status == GenerationStatus.FAILED:
-            result = False
+        if fnmatch.fnmatchcase(name, name_pattern):
+            status = process_one(name, None, True, sdk_skeletons_dir)
+            # Assume that if a skeleton for one built-in module was copied, all of them were copied.
+            if status == GenerationStatus.COPIED:
+                break
+            elif status == GenerationStatus.FAILED:
+                result = False
     return result
 
 
-def process_all(sdk_skeletons_dir):
+def process_all(sdk_skeletons_dir, name_pattern=None):
+    if name_pattern is None:
+        name_pattern = '*'
+
     interpreter = collapse_user(sys.executable)
     progress("Updating skeletons of builtins for {}...".format(interpreter))
-    process_builtin_modules(sdk_skeletons_dir)
+    process_builtin_modules(sdk_skeletons_dir, name_pattern)
     progress("Querying skeleton generator for {}...".format(interpreter))
     binaries = collect_binaries(sys.path)
     progress("Updating skeletons for {}...".format(interpreter))
+    binaries = [b for b in binaries if fnmatch.fnmatchcase(b.qname, name_pattern)]
+    binaries.sort(key=(lambda b: b.qname))
     for i, binary in enumerate(binaries):
-        progress(fraction=(i + 1.0) / len(binaries))
+        progress(text=binary.qname, fraction=float(i) / len(binaries), minor=True)
         process_one(binary.qname, binary.path, False, sdk_skeletons_dir)
+    progress(fraction=1.0)

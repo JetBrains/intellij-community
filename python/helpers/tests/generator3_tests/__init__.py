@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from io import open
 
 import six
-
 from generator3.constants import ENV_TEST_MODE_FLAG
 
 _test_dir = os.path.dirname(__file__)
@@ -139,3 +138,19 @@ class GeneratorTestCase(unittest.TestCase):
                     shutil.copytree(child_path, child_dst_path)
         yield dst_dir
         self.assertDirsEqual(dst_dir, after_dir)
+
+    def assertContainsInRelativeOrder(self, expected, actual):
+        actual_list = list(actual)
+        prev_index, prev_item = -1, None
+        for item in expected:
+            try:
+                prev_index = actual_list.index(item, prev_index + 1)
+                prev_item = item
+            except ValueError:
+                try:
+                    index = actual_list.index(item)
+                    if index <= prev_index:
+                        raise AssertionError(
+                            'Item {!r} is expected after {!r} in {!r}'.format(item, prev_item, actual_list))
+                except ValueError:
+                    raise AssertionError('Item {!r} not found in {!r}'.format(item, actual_list))
