@@ -87,7 +87,7 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
     File[] sourceRoots = Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE).stream(),
                                        moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE).stream())
       .map(vf -> new File(vf.getPath())).toArray(File[]::new);
-    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots);
+    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots).get();
     return DatatypeConverter.printHexBinary(hash).toLowerCase();
   }
 
@@ -95,7 +95,7 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
     File[] sourceRoots = Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream(),
                                        moduleRootManager.getSourceRoots(JavaResourceRootType.TEST_RESOURCE).stream())
       .map(vf -> new File(vf.getPath())).toArray(File[]::new);
-    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots);
+    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots).get();
     return DatatypeConverter.printHexBinary(hash).toLowerCase();
   }
 

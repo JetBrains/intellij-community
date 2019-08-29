@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class ModuleHashingService {
@@ -16,7 +17,7 @@ public class ModuleHashingService {
 
   private ModuleHashingService() {}
 
-  public static byte[] hashDirectories(File[] directories) {
+  public static Optional<byte[]> hashDirectories(File[] directories) {
     byte[] hash = new byte[HASH_SIZE_IN_BYTES];
 
     for (File curContentRoot : directories) {
@@ -24,7 +25,7 @@ public class ModuleHashingService {
       sum(hash, curHash);
     }
 
-    return hash;
+    return Arrays.equals(hash, new byte[HASH_SIZE_IN_BYTES]) ? Optional.empty() : Optional.of(hash);
   }
 
   private static byte[] hashDirectory(File dir, RelativeToDirectoryRelativizer relativizer) {

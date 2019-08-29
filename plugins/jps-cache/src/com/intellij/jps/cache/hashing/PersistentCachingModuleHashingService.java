@@ -127,8 +127,7 @@ public class PersistentCachingModuleHashingService {
     return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
       File[] productionSources = getProductionSources(module);
       if (productionSources.length == 0) return null;
-      byte[] hash = ModuleHashingService.hashDirectories(productionSources);
-      return new Pair<>(module.getName(), hash);
+      return ModuleHashingService.hashDirectories(productionSources).map(hash -> new Pair<>(module.getName(), hash)).orElse(null);
     }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
   }
 
@@ -136,8 +135,7 @@ public class PersistentCachingModuleHashingService {
     return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
       File[] testSources = getTestSources(module);
       if (testSources.length == 0) return null;
-      byte[] hash = ModuleHashingService.hashDirectories(testSources);
-      return new Pair<>(module.getName(), hash);
+      return ModuleHashingService.hashDirectories(testSources).map(hash -> new Pair<>(module.getName(), hash)).orElse(null);
     }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
   }
 
@@ -209,8 +207,14 @@ public class PersistentCachingModuleHashingService {
     if (directories == null || directories.length == 0) {
       return Optional.empty();
     }
-    byte[] directoriesHash = ModuleHashingService.hashDirectories(directories);
-    hashCache.put(name, directoriesHash);
-    return Optional.of(directoriesHash);
+    return ModuleHashingService.hashDirectories(directories).map(hash -> {
+      try {
+        hashCache.put(name, hash);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+      return hash;
+    });
   }
 }
