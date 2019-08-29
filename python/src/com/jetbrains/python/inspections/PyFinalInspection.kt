@@ -278,7 +278,12 @@ class PyFinalInspection : PyInspection() {
         return
       }
 
-      val resolved = PyUtil.multiResolveTopPriority(target, resolveContext)
+      // TODO: revert back to PyUtil#multiResolveTopPriority when resolve into global statement is implemented
+      val resolved = when (target) {
+        is PyReferenceOwner -> target.getReference(resolveContext).multiResolve(false).mapNotNull { it.element }
+        else -> PyUtil.multiResolveTopPriority(target, resolveContext)
+      }
+
       if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
         registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
         return
