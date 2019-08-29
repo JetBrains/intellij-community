@@ -308,7 +308,7 @@ class CommunityRepositoryModules {
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
-      withResource("../android/lib/jdk8/layoutlib.jar", "lib/jdk8")
+      withProjectLibrary("layoutlib", "jdk8")
       withResource("../android/lib/jdk11/layoutlib.jar", "lib/jdk11")
 
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
