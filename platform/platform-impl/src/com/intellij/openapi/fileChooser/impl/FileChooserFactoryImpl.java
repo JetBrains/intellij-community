@@ -46,7 +46,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
-    else if (useNativeWinChooser()) {
+    else if (useNativeWinChooser(descriptor)) {
       return new WinPathChooserDialog(descriptor, parent, project);
     }
     else {
@@ -71,12 +71,13 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     }
   }
 
-  private static boolean useNativeWinChooser () {
+  private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isWindows &&
+           !descriptor.isForcedToUseIdeaFileChooser() &&
            Registry.is("ide.win.file.chooser.native");
   }
 
-  private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
+  private static boolean useNativeMacChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
            SystemInfo.isJetBrainsJvm &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
@@ -85,7 +86,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   @NotNull
   @Override
-  public FileTextField createFileTextField(@NotNull final FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
+  public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
     return new FileTextFieldImpl.Vfs(new JTextField(), getMacroMap(), parent, new LocalFsFinder.FileChooserFilter(descriptor, showHidden));
   }
 
@@ -100,9 +101,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   public static Map<String, String> getMacroMap() {
-    final PathMacros macros = PathMacros.getInstance();
-    final Set<String> allNames = macros.getAllMacroNames();
-    final Map<String, String> map = new THashMap<>(allNames.size());
+    PathMacros macros = PathMacros.getInstance();
+    Set<String> allNames = macros.getAllMacroNames();
+    Map<String, String> map = new THashMap<>(allNames.size());
     for (String eachMacroName : allNames) {
       map.put("$" + eachMacroName + "$", macros.getValue(eachMacroName));
     }
