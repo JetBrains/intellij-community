@@ -29,7 +29,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean, maxLineLength: Int) {
       val cc = CC()
-      parent.createChildRow().addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), lazyOf(cc))
+      val commentRow = parent.createChildRow()
+      commentRow.isComment = true
+      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), lazyOf(cc))
       if (isParentRowLabeled) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip()
@@ -54,6 +56,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.growX()
       }
       row.addComponent(separatorComponent, lazyOf(cc))
+      row.isSeparator = true
     }
   }
 
@@ -74,6 +77,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private val spacing: SpacingConfiguration
     get() = builder.spacing
+
+  private var isSeparator = false
+  private var isComment = false
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)
@@ -165,7 +171,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
-    subRows.add(row)
+    var insertIndex = subRows.size
+    if (insertIndex > 0 && subRows[insertIndex-1].isSeparator) {
+      insertIndex--;
+    }
+    if (insertIndex > 0 && subRows[insertIndex-1].isComment) {
+      insertIndex--;
+    }
+    subRows.add(insertIndex, row)
+
     row.enabled = subRowsEnabled
     row.visible = subRowsVisible
 
@@ -302,8 +316,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
-    // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
-    createCommentRow(parent!!, comment, component, indent, isParentRowLabeled, maxLineLength)
+    createCommentRow(this, comment, component, indent, isParentRowLabeled, maxLineLength)
   }
 
   private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {

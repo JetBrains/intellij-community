@@ -300,3 +300,11 @@ fun checkBoxFollowedBySpinner(): JPanel {
 
   }
 }
+
+fun separatorAndComment() : JPanel {
+  return panel {
+    row("Label", separated = true) {
+      textField({ "abc" }, {}).comment("comment")
+    }
+  }
+}
