@@ -1,15 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
@@ -20,12 +16,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
-import com.intellij.util.xml.ResolvingConverter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
@@ -38,7 +32,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
+public class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId());
 
@@ -62,30 +56,8 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return DevKitBundle.message("error.cannot.resolve.plugin", s);
-  }
-
-  @Override
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
-  }
-
-  @Override
-  public String toString(@Nullable final IdeaPlugin ideaPlugin, final ConvertContext context) {
-    return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
-  }
-
-  @Nullable
-  @Override
-  public LookupElement createLookupElement(IdeaPlugin plugin) {
-    final String pluginId = plugin.getPluginId();
-    if (pluginId == null) return null;
-
-    return LookupElementBuilder.create(pluginId)
-      .withPsiElement(plugin.getXmlElement())
-      .withTailText(" " + StringUtil.notNullize(plugin.getName().getValue()))
-      .withIcon(AllIcons.Nodes.Plugin);
   }
 
   private static Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
