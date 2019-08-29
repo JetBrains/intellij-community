@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -228,7 +229,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
     };
 

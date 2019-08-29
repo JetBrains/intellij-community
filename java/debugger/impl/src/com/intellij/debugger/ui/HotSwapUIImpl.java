@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerManagerListener;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -209,7 +209,7 @@ public class HotSwapUIImpl extends HotSwapUI {
               DebuggerBundle.message("hotswap.dialog.hang.warning"),
               DebuggerBundle.message("hotswap.dialog.title"),
               new String[]{"Perform &Reload Classes", "&Skip Reload Classes"},
-              CommonBundle.message("dialog.options.do.not.show"),
+              UIBundle.message("dialog.options.do.not.show"),
               false, 1, 1, Messages.getWarningIcon(),
               (exitCode, cb) -> {
                 settings.HOTSWAP_HANG_WARNING_ENABLED = !cb.isSelected();

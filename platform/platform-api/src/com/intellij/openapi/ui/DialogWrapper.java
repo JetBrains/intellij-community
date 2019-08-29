@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -303,7 +304,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
+    return UIBundle.message("dialog.options.do.not.show");
   }
 
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
@@ -2170,7 +2171,7 @@ public abstract class DialogWrapper {
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
 
       @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
@@ -479,7 +479,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
                @NotNull
                @Override
                public String getDoNotShowMessage() {
-                 return CommonBundle.message("dialog.options.do.not.ask");
+                 return UIBundle.message("dialog.options.do.not.ask");
                }
              }).show();
   }
