@@ -313,17 +313,6 @@ public class ExtensionPointImplTest {
       return null;
     }
 
-    @Override
-    public boolean hasComponent(@NotNull Class<?> interfaceClass) {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-      return null;
-    }
-
     @NotNull
     @Override
     public PicoContainer getPicoContainer() {

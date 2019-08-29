@@ -99,6 +99,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myLight = false;
   }
 
+
+
   @Override
   public boolean isDisposed() {
     return super.isDisposed() || temporarilyDisposed;

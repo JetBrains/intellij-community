@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
@@ -82,18 +81,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     return null;
-  }
-
-  @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
-    return false;
-  }
-
-  @Override
-  @NotNull
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    @SuppressWarnings("unchecked") T[] components = (T[])ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    return components;
   }
 
   @Override

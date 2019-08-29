@@ -72,7 +72,7 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
     connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void projectComponentsRegistered(@NotNull Project project) {
-        ((ComponentManagerImpl)project).registerComponentImplementation(FileEditorManager.class, PsiAwareFileEditorManagerImpl.class);
+        ((ComponentManagerImpl)project).registerComponentImplementation(FileEditorManager.class, PsiAwareFileEditorManagerImpl.class, false);
       }
     });
   }

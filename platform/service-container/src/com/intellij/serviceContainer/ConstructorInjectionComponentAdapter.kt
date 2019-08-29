@@ -3,17 +3,13 @@ package com.intellij.serviceContainer
 
 import com.intellij.util.pico.DefaultPicoContainer
 import gnu.trove.THashSet
-import org.picocontainer.*
+import org.picocontainer.ComponentAdapter
+import org.picocontainer.PicoInitializationException
+import org.picocontainer.PicoIntrospectionException
 import org.picocontainer.defaults.AmbiguousComponentResolutionException
 import org.picocontainer.defaults.TooManySatisfiableConstructorsException
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
-
-internal class ConstructorInjectionComponentAdapter(componentKey: Any, implementation: Class<*>, private val componentManager: PlatformComponentManagerImpl) : InstantiatingComponentAdapter(componentKey, implementation) {
-  override fun getComponentInstance(container: PicoContainer): Any {
-    return instantiateUsingPicoContainer(componentImplementation, componentKey, componentManager, ConstructorParameterResolver.INSTANCE)
-  }
-}
 
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): T {
   val result = getGreediestSatisfiableConstructor(aClass, requestorKey, componentManager, parameterResolver)
@@ -121,20 +117,6 @@ private fun getSortedMatchingConstructors(componentImplementation: Class<*>): Ar
   val declaredConstructors = componentImplementation.declaredConstructors
   declaredConstructors.sortWith(constructorComparator)
   return declaredConstructors
-}
-
-abstract class InstantiatingComponentAdapter(private val componentKey: Any, private val componentImplementation: Class<*>) : ComponentAdapter {
-  override fun getComponentKey() = componentKey
-
-  override fun getComponentImplementation() = componentImplementation
-
-  override fun verify(container: PicoContainer) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun accept(visitor: PicoVisitor) {
-    throw UnsupportedOperationException()
-  }
 }
 
 internal open class ConstructorParameterResolver {

@@ -226,18 +226,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
-    return getDelegate().hasComponent(interfaceClass);
-  }
-
-  @Override
-  @NotNull
-  @Deprecated
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return getDelegate().getComponents(baseClass);
-  }
-
-  @Override
   @NotNull
   public PicoContainer getPicoContainer() {
     return getDelegate().getPicoContainer();

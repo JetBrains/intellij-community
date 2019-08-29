@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
@@ -58,7 +59,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @return {@code true} if there is a component with the specified interface class;
    * {@code false} otherwise
    */
-  boolean hasComponent(@NotNull Class<?> interfaceClass);
+  default boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return getPicoContainer().getComponentAdapter(interfaceClass) != null;
+  }
 
   /**
    * Gets all components whose implementation class is derived from {@code baseClass}.
@@ -67,7 +70,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   @Deprecated
   @NotNull
-  <T> T[] getComponents(@NotNull Class<T> baseClass);
+  default <T> T[] getComponents(@NotNull Class<T> baseClass) {
+    return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
+  }
 
   @NotNull
   PicoContainer getPicoContainer();

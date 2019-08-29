@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -96,7 +95,7 @@ public final class ServiceManagerImpl implements Disposable {
         }
       }
       else if (!(o instanceof ExtensionComponentAdapter)) {
-        PluginId pluginId = ComponentManagerImpl.getConfig(o);
+        PluginId pluginId = o instanceof BaseComponentAdapter ? ((BaseComponentAdapter)o).getPluginId() : null;
         // allow InstanceComponentAdapter without pluginId to test
         if (pluginId != null || o instanceof InstanceComponentAdapter) {
           try {

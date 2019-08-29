@@ -7,7 +7,10 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -73,19 +76,15 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
   private var handlingInitComponentError = false
 
-  private val lightServices: ConcurrentMap<Class<*>, Any>?
+  private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
+    parent == null || parent.picoContainer.parent == null -> ContainerUtil.newConcurrentMap()
+    else -> null
+  }
 
-  private val componentStore: IComponentStore
-    get() = this.stateStore
+  protected open val componentStore: IComponentStore
+    get() = getService(IComponentStore::class.java)
 
   init {
-    if (parent == null || parent.picoContainer.parent == null) {
-      lightServices = ContainerUtil.newConcurrentMap()
-    }
-    else {
-      lightServices = null
-    }
-
     if (setExtensionsRootArea) {
       Extensions.setRootArea(myExtensionArea)
     }
@@ -188,6 +187,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
   }
 
+  @Internal
   final override fun handleInitComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
@@ -203,7 +203,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
   }
 
   @Internal
-  public final override fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
+  fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
       LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
       componentStore.initComponent(component, serviceDescriptor)
@@ -254,7 +254,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
   }
 
-  final override fun getServiceImplementationClassNames(prefix: String): List<String> {
+  @Internal
+  fun getServiceImplementationClassNames(prefix: String): List<String> {
     val result = ArrayList<String>()
     ServiceManagerImpl.processAllDescriptors(this) { serviceDescriptor ->
       val implementation = serviceDescriptor.implementation ?: return@processAllDescriptors
@@ -322,7 +323,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     if (override && picoContainer.unregisterComponent(key) == null) {
       throw PluginException("Component $key doesn't override anything", pluginId)
     }
-    picoContainer.registerComponent(ComponentConfigComponentAdapter(key, implementation, pluginId, false))
+    picoContainer.registerComponent(ComponentConfigComponentAdapter(key, implementation, pluginId, this, false))
   }
 
   /**

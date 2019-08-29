@@ -1,12 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -20,12 +26,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.serviceContainer.InstantiatingComponentAdapter;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
@@ -35,7 +41,6 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +55,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private volatile MessageBus myMessageBus;
 
-  private final Map<String, BaseComponent> myNameToComponent = new THashMap<>(); // contents guarded by this
+  // contents guarded by this
+  private final Map<String, BaseComponent> myNameToComponent = new THashMap<>();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected int myComponentConfigCount;
@@ -83,10 +89,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     String activityNamePrefix = activityNamePrefix();
     Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX);
 
-    DefaultPicoContainer picoContainer = getPicoContainer();
-    for (ComponentAdapter componentAdapter : picoContainer.getComponentAdapters()) {
+    for (ComponentAdapter componentAdapter : myPicoContainer.getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter) {
-        ((ComponentConfigComponentAdapter)componentAdapter).getComponentInstance(picoContainer, indicator);
+        ((ComponentConfigComponentAdapter)componentAdapter).getComponentInstance(this, indicator);
       }
     }
 
@@ -176,27 +181,23 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ProgressManager.getInstance().getProgressIndicator();
   }
 
-  protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
-    LOG.error(ex);
-  }
+  @ApiStatus.Internal
+  public abstract void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId);
 
   @TestOnly
-  public void registerComponentImplementation(@NotNull Class<?> componentKey, @NotNull Class<?> componentImplementation) {
-    registerComponentImplementation(componentKey, componentImplementation, false);
-  }
-
-  @TestOnly
-  public void registerComponentImplementation(@NotNull Class<?> componentKey,
-                                              @NotNull Class<?> componentImplementation,
-                                              boolean shouldBeRegistered) {
+  public final void registerComponentImplementation(@NotNull Class<?> componentKey,
+                                                    @NotNull Class<?> componentImplementation,
+                                                    boolean shouldBeRegistered) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)picoContainer.unregisterComponent(componentKey);
-    if (shouldBeRegistered) LOG.assertTrue(adapter != null);
-    picoContainer.registerComponent(new ComponentConfigComponentAdapter(componentKey, componentImplementation, null, false));
+    if (shouldBeRegistered) {
+      LOG.assertTrue(adapter != null);
+    }
+    picoContainer.registerComponent(new ComponentConfigComponentAdapter(componentKey, componentImplementation, null, this, false));
   }
 
   @TestOnly
-  public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
+  public final synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(componentKey);
     LOG.assertTrue(adapter instanceof ComponentConfigComponentAdapter);
@@ -206,17 +207,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     componentAdapter.myInitializedComponentInstance = componentImplementation;
     //noinspection unchecked
     return (T)oldInstance;
-  }
-
-  @Override
-  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
-    return getPicoContainer().getComponentAdapter(interfaceClass) != null;
-  }
-
-  @Override
-  @NotNull
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
   }
 
   @SuppressWarnings("deprecation")
@@ -292,12 +282,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 
-  @Nullable
-  @ApiStatus.Internal
-  public static PluginId getConfig(@NotNull ComponentAdapter adapter) {
-    return adapter instanceof ComponentConfigComponentAdapter ? ((ComponentConfigComponentAdapter)adapter).myPluginId : null;
-  }
-
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {
     ComponentConfigComponentAdapter adapter = getComponentAdapter(componentImplementation);
     return adapter != null && adapter.isWorkspaceComponent;
@@ -345,7 +329,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // implementationClass == null means we want to unregister this component
       if (implementationClass != null) {
         boolean ws = config.options != null && Boolean.parseBoolean(config.options.get("workspace"));
-        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.getPluginId(), ws));
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.getPluginId(), this, ws));
       }
     }
     catch (Throwable t) {
@@ -353,132 +337,119 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  private void registerComponentInstance(@NotNull Object instance) {
-    myInstantiatedComponentCount++;
-
-    if (instance instanceof com.intellij.openapi.Disposable) {
-      Disposer.register(this, (com.intellij.openapi.Disposable)instance);
-    }
-
-    if (!(instance instanceof BaseComponent)) {
-      return;
-    }
-
-    BaseComponent baseComponent = (BaseComponent)instance;
-    String componentName = baseComponent.getComponentName();
-    if (myNameToComponent.containsKey(componentName)) {
-      BaseComponent loadedComponent = myNameToComponent.get(componentName);
-      // component may have been already loaded by PicoContainer, so fire error only if components are really different
-      if (!instance.equals(loadedComponent)) {
-        String errorMessage = "Component name collision: " + componentName +
-                              ' ' + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
-      }
-    }
-    else {
-      myNameToComponent.put(componentName, baseComponent);
-    }
-
-    myBaseComponents.add(baseComponent);
-  }
-
+  @SuppressWarnings("deprecation")
   @Override
-  public synchronized BaseComponent getComponent(@NotNull String name) {
+  public final synchronized BaseComponent getComponent(@NotNull String name) {
     return myNameToComponent.get(name);
   }
 
-  protected void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
-  }
-
-  protected final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {
+  protected static final class ComponentConfigComponentAdapter extends InstantiatingComponentAdapter {
     private final PluginId myPluginId;
     private volatile Object myInitializedComponentInstance;
-    private boolean myInitializing;
+
+    @NotNull
+    private final ComponentManagerImpl componentManager;
 
     final boolean isWorkspaceComponent;
 
     public ComponentConfigComponentAdapter(@NotNull Class<?> key,
                                            @NotNull Class<?> implementationClass,
                                            @Nullable PluginId pluginId,
+                                           @NotNull ComponentManagerImpl componentManager,
                                            boolean isWorkspaceComponent) {
-      super(key, implementationClass, null, true);
+      super(key, implementationClass);
 
       myPluginId = pluginId;
+      this.componentManager = componentManager;
       this.isWorkspaceComponent = isWorkspaceComponent;
+    }
+
+    @NotNull
+    @Override
+    protected PluginId getPluginId() {
+      return myPluginId;
     }
 
     @Override
     public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
-      return getComponentInstance(picoContainer, null);
+      return getComponentInstance(componentManager, null);
     }
 
-    Object getComponentInstance(@NotNull PicoContainer picoContainer, @Nullable ProgressIndicator indicator) {
+    Object getComponentInstance(@NotNull ComponentManagerImpl componentManager, @Nullable ProgressIndicator indicator) {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
-      if (instance != null || myDisposed) {
+      if (instance != null || componentManager.myDisposed) {
         return instance;
       }
 
-      LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
+      return getInstance(/* createIfNeeded = */ true, (PlatformComponentManagerImpl)componentManager, indicator);
+    }
 
-      try {
-        //noinspection SynchronizeOnThis
-        synchronized (this) {
-          instance = myInitializedComponentInstance;
-          if (instance != null) {
-            return instance;
-          }
+    private static void registerComponentInstance(@NotNull Object instance, @NotNull ComponentManagerImpl componentManager) {
+      componentManager.myInstantiatedComponentCount++;
 
-          Activity activity = createMeasureActivity(picoContainer);
-          instance = super.getComponentInstance(picoContainer);
+      if (instance instanceof com.intellij.openapi.Disposable) {
+        Disposer.register(componentManager, (com.intellij.openapi.Disposable)instance);
+      }
 
-          if (myInitializing) {
-            String errorMessage = "Cyclic component initialization: " + getComponentKey();
-            if (myPluginId != null) {
-              LOG.error(new PluginException(errorMessage, myPluginId));
-            }
-            else {
-              LOG.error(new Throwable(errorMessage));
-            }
-          }
+      if (!(instance instanceof BaseComponent)) {
+        return;
+      }
 
-          try {
-            myInitializing = true;
-            registerComponentInstance(instance);
-
-            if (indicator != null) {
-              indicator.checkCanceled();
-              setProgressDuringInit(indicator);
-            }
-            initializeComponent(instance, null);
-            if (instance instanceof BaseComponent) {
-              ((BaseComponent)instance).initComponent();
-            }
-
-            if (activity != null) {
-              activity.end();
-            }
-          }
-          finally {
-            myInitializing = false;
-          }
-          myInitializedComponentInstance = instance;
+      BaseComponent baseComponent = (BaseComponent)instance;
+      String componentName = baseComponent.getComponentName();
+      if (componentManager.myNameToComponent.containsKey(componentName)) {
+        BaseComponent loadedComponent = componentManager.myNameToComponent.get(componentName);
+        // component may have been already loaded by PicoContainer, so fire error only if components are really different
+        if (!instance.equals(loadedComponent)) {
+          String errorMessage = "Component name collision: " + componentName +
+                                ' ' + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+          PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
         }
+      }
+      else {
+        componentManager.myNameToComponent.put(componentName, baseComponent);
+      }
+
+      componentManager.myBaseComponents.add(baseComponent);
+    }
+
+    @Override
+    @NotNull
+    protected <T> T doCreateInstance(@NotNull PlatformComponentManagerImpl componentManager, @Nullable ProgressIndicator indicator) {
+      try {
+        Activity activity = createMeasureActivity(componentManager);
+        T instance = createComponentInstance(componentManager);
+        registerComponentInstance(instance, componentManager);
+
+        if (indicator != null) {
+          indicator.checkCanceled();
+          componentManager.setProgressDuringInit(indicator);
+        }
+        componentManager.initializeComponent(instance, null);
+        if (instance instanceof BaseComponent) {
+          ((BaseComponent)instance).initComponent();
+        }
+
+        if (activity != null) {
+          activity.end();
+        }
+
+        return instance;
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Throwable t) {
-        handleInitComponentError(t, ((Class<?>)getComponentKey()).getName(), myPluginId);
+        componentManager.handleInitComponentError(t, getComponentKey().getName(), myPluginId);
+        throw t;
       }
-
-      return instance;
     }
 
     @Nullable
-    private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
-      Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
-      if (level == Level.APPLICATION || level == Level.PROJECT && activityNamePrefix() != null) {
+    private Activity createMeasureActivity(@NotNull PlatformComponentManagerImpl componentManager) {
+      Level level = DefaultPicoContainer.getActivityLevel(componentManager.myPicoContainer);
+      if (level == Level.APPLICATION || level == Level.PROJECT && componentManager.activityNamePrefix() != null) {
         return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId != null ? myPluginId.getIdString() : null);
       }
       return null;
@@ -488,10 +459,5 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     public String toString() {
       return "ComponentConfigAdapter[" + getComponentKey() + "]: implementation=" + getComponentImplementation() + ", plugin=" + myPluginId;
     }
-  }
-
-  @TestOnly
-  public List<String> getServiceImplementationClassNames(@NotNull String prefix) {
-    return Collections.emptyList();
   }
 }
