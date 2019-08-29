@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -10,7 +11,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public class UIBundle {
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
