@@ -723,6 +723,7 @@ sharding
 shellcheck
 shfmt
 sigabrt
+sigaction
 sigaio
 sigalrm
 sigbus
@@ -743,6 +744,7 @@ sigprof
 sigpwr
 sigquit
 sigsegv
+sigset
 sigstop
 sigsys
 sigterm
