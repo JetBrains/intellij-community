@@ -39,6 +39,8 @@ public abstract class StartupManager {
    */
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 
+  public abstract boolean postStartupActivityPassed();
+
   /**
    * Executes the specified runnable immediately if invoked from AWT thread and the initialization of the current project
    * is complete; otherwise, registers it as a post-startup activity. In the latter case, the runnable will be executed

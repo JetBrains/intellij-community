@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -228,13 +230,34 @@ public abstract class AbstractExternalSystemSettings<
     state.setLinkedExternalProjectsSettings(ContainerUtilRt.newTreeSet(myLinkedProjectsSettings.values()));
   }
 
-  @SuppressWarnings("unchecked")
+  private final AtomicReference<Set<?>> pendingSettings = new AtomicReference<>();
+
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings == null) {
+      pendingSettings.set(null);
       return;
     }
 
+    // todo remove when https://youtrack.jetbrains.com/issue/IDEA-220429 will be fixed
+    // only for unit test — don't care about production (reduce scope of regression due to this yet another workaround)
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      StartupManager startupManager = StartupManager.getInstance(getProject());
+      if (!startupManager.postStartupActivityPassed()) {
+        startupManager.registerPostStartupActivity(() -> {
+          if (pendingSettings.compareAndSet(settings, null)) {
+            doSetSettings(settings);
+          }
+        });
+        return;
+      }
+    }
+
+    pendingSettings.set(null);
+    doSetSettings(settings);
+  }
+
+  private void doSetSettings(Set<PS> settings) {
     setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection linked) {
