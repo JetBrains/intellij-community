@@ -4,6 +4,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
@@ -20,6 +21,22 @@ fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instan
 }
 
 @TestOnly
+fun <T> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T): T {
+  return (this as ComponentManagerImpl).registerComponentInstance(componentInterface, instance)
+}
+
+@TestOnly
+@JvmOverloads
+fun ComponentManager.registerComponentImplementation(componentInterface: Class<*>, componentImplementation: Class<*>, shouldBeRegistered: Boolean = false) {
+  (this as ComponentManagerImpl).registerComponentImplementation(componentInterface, componentImplementation, shouldBeRegistered)
+}
+
+@TestOnly
 fun <T> ComponentManager.registerExtension(name: BaseExtensionPointName, instance: T, parentDisposable: Disposable) {
   extensionArea.getExtensionPoint<T>(name.name).registerExtension(instance, parentDisposable)
+}
+
+@TestOnly
+fun ComponentManager.getServiceImplementationClassNames(prefix: String): List<String> {
+  return (this as PlatformComponentManagerImpl).getServiceImplementationClassNames(prefix)
 }

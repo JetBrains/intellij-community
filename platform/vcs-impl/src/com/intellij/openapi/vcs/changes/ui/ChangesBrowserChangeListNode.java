@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -33,7 +32,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = ServiceKt.getComponents(project, ChangeListDecorator.class);
+    myDecorators = project.getComponentInstancesOfType(ChangeListDecorator.class);
   }
 
   @Override
@@ -53,7 +52,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       final String freezed = myClManager.isFreezed();
       if (freezed != null) {
         renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      } 
+      }
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }

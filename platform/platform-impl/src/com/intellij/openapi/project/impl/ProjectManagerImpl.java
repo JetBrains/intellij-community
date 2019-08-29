@@ -839,9 +839,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void fireProjectOpened(@NotNull Project project) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("projectOpened");
-    }
+    LOG.debug("projectOpened");
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);

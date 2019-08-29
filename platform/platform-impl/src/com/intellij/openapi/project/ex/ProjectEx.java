@@ -3,11 +3,8 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.List;
 
 public interface ProjectEx extends Project {
   String NAME_FILE = ".name";
@@ -26,10 +23,6 @@ public interface ProjectEx extends Project {
   }
 
   void setProjectName(@NotNull String name);
-
-  @NotNull
-  @ApiStatus.Internal
-  <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass);
 
   @TestOnly
   default boolean isLight() {

@@ -219,6 +219,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass), baseClass);
   }
 
+  @Override
   @NotNull
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
     return getComponentInstancesOfType(baseClass, false);

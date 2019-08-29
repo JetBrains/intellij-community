@@ -4,7 +4,6 @@ package com.intellij.project;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,6 +22,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class LoadProjectTest extends HeavyPlatformTestCase {
@@ -30,7 +30,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
     myProject = ProjectManager.getInstance().loadAndOpenProject(projectPath);
-    ((ComponentManagerImpl)getProject()).registerComponentImplementation(FileEditorManager.class, FileEditorManagerImpl.class);
+    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
   }
 
   @Override

@@ -254,7 +254,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
   }
 
-  final override fun getServiceImplementationClassNames(prefix: String): MutableList<String> {
+  final override fun getServiceImplementationClassNames(prefix: String): List<String> {
     val result = ArrayList<String>()
     ServiceManagerImpl.processAllDescriptors(this) { serviceDescriptor ->
       val implementation = serviceDescriptor.implementation ?: return@processAllDescriptors

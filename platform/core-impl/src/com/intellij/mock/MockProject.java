@@ -103,6 +103,7 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
+  @Override
   @NotNull
   public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
     List<T> result = new ArrayList<>();

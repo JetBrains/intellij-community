@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
+
 /**
  * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
  * and {@link com.intellij.openapi.project.Project}.
@@ -163,5 +165,13 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @NotNull
+  @Deprecated
+  @ApiStatus.Internal
+  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    throw new UnsupportedOperationException();
   }
 }
