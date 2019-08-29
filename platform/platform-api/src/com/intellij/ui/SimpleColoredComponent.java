@@ -473,7 +473,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return font;
   }
 
-  private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
+  private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font) {
+    FontRenderContext frc = getFontMetrics(font).getFontRenderContext();
     Font baseFont = getBaseFont();
     if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
       myFragments.forEach(ColoredFragment::invalidateLayout);
@@ -486,14 +487,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, float x, float y) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return;
-    getTextRenderer(fragment, g.getFont(), g.getFontRenderContext()).draw(g, x, y);
+    getTextRenderer(fragment, g.getFont()).draw(g, x, y);
   }
 
   private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return 0;
-    FontRenderContext fontRenderContext = getFontMetrics(font).getFontRenderContext();
-    return getTextRenderer(fragment, font, fontRenderContext).getWidth();
+    return getTextRenderer(fragment, font).getWidth();
   }
 
   @NotNull
