@@ -5,6 +5,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -100,6 +101,41 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
       "    <excludeFolder url=\"file://$MODULE_DIR$/exclude\" />\n" +
       "  </content>\n" +
       "  <orderEntry type=\"jdk\" jdkName=\"java 1.7\" jdkType=\"JavaSDK\" />\n" +
+      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      "</component>",
+      JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
+    );
+  }
+
+  public void testJavaExternalPaths() throws JDOMException, IOException {
+    File content = new File(getProject().getBasePath());
+    VirtualFile contentRoot = refreshAndFindFile(content);
+    File javadocDir = new File(content, "javadoc");
+    File annotationsDir = new File(content, "annotations");
+    FileUtil.createDirectory(javadocDir);
+    FileUtil.createDirectory(annotationsDir);
+    String javadocUrl = refreshAndFindFile(javadocDir).getUrl();
+    String annotationsUrl = refreshAndFindFile(annotationsDir).getUrl();
+    File moduleFile = new File(content, "test.iml");
+    Module module = createModule(moduleFile);
+    ModuleRootModificationUtil.updateModel(module, (model) -> {
+      JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
+      extension.setExternalAnnotationUrls(new String[]{annotationsUrl});
+      extension.setJavadocUrls(new String[]{javadocUrl});
+      WriteAction.run(() -> extension.commit());
+    });
+
+    StoreUtil.saveSettings(module);
+
+    assertEquals(
+      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+      "  <exclude-output />\n" +
+      "  <annotation-paths>\n" +
+      "    <root url=\"file://$MODULE_DIR$/annotations\" />\n" +
+      "  </annotation-paths>\n" +
+      "  <javadoc-paths>\n" +
+      "    <root url=\"file://$MODULE_DIR$/javadoc\" />\n" +
+      "  </javadoc-paths>\n" +
       "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
       "</component>",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
