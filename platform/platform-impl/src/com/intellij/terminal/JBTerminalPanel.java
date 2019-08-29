@@ -41,6 +41,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
@@ -91,6 +93,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
+  private final List<Consumer<KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
 
   private List<AnAction> myActionsToSkip;
 
@@ -176,7 +179,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       }
     }
     myEscapeKeyListener.handleKeyEvent(e);
-    super.handleKeyEvent(e);
+    for (Consumer<KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
+      preKeyEventConsumer.accept(e);
+    }
+    if (!e.isConsumed()) {
+      super.handleKeyEvent(e);
+    }
+  }
+
+  public void addPreKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
+    myPreKeyEventConsumers.add(preKeyEventHandler);
   }
 
   @Override
