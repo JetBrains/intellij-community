@@ -44,6 +44,12 @@ public class LocalFilePath implements FilePath {
     myIsDirectory = isDirectory;
   }
 
+  private LocalFilePath(@NotNull String path, boolean isDirectory,
+                        @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
+    myPath = path;
+    myIsDirectory = isDirectory;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -93,7 +99,7 @@ public class LocalFilePath implements FilePath {
   @Nullable
   public FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
-    return parent.isEmpty() ? null : new LocalFilePath(parent, true);
+    return parent.isEmpty() ? null : new LocalFilePath(parent, true, null);
   }
 
   @Override
