@@ -40,6 +40,12 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/jps/kotlin-jps-plugin.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/kotlin-plugin-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/kotlinc/lib/kotlin-stdlib-jdk7-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/kotlinc/lib/kotlin-stdlib-jdk8-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/kotlinc/lib/kotlin-stdlib-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/kotlinc/lib/kotlin-reflect-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
