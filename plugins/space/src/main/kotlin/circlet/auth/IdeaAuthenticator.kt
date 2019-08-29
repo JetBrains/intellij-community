@@ -20,7 +20,7 @@ val log = KLoggers.logger()
 
 suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
 
-    val port = selectFreePort(10000)
+    val port = selectFreePort()
     val codeFlow = CodeFlowConfig(config, "http://localhost:$port/auth")
 
     return suspendCoroutine { cnt ->
