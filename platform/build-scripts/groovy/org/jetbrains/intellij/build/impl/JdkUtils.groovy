@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
@@ -15,51 +16,45 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
  */
 @CompileStatic
 class JdkUtils {
-  static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath) {
+  static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath, BuildMessages messages) {
     def sdk = JpsJavaExtensionService.instance.addJavaSdk(global, jdkName, jdkHomePath)
     def toolsJar = new File(jdkHomePath, "lib/tools.jar")
     if (toolsJar.exists()) {
       sdk.addRoot(toolsJar, JpsOrderRootType.COMPILED)
     }
+    messages.info("'$jdkName' Java SDK set to $jdkHomePath")
   }
 
-  static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName) {
-    String jdkDir = System.getProperty(propertyName)
-    if (jdkDir != null) {
-      return jdkDir
-    }
-
-    if (defaultDir != null) {
-      jdkDir = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
-      if (new File(jdkDir).exists()) {
-        messages.info("$propertyName set to $jdkDir")
+  static String computeJdkHome(BuildMessages messages, String name, String propertyName, String defaultDir, String envVarName) {
+    String jdkDir
+    if (propertyName != null) {
+      jdkDir = System.getProperty(propertyName)
+      if (jdkDir != null) {
         return jdkDir
       }
     }
-    jdkDir = System.getenv(envVarName)
-    if (jdkDir != null) {
-      if (defaultDir != null) {
-        messages.info("'$defaultDir' doesn't exist, $propertyName set to '$envVarName' environment variable: $jdkDir")
+    if (defaultDir != null) {
+      jdkDir = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
+      if (new File(jdkDir).exists()) {
+        return jdkDir
       }
       else {
-        messages.info("$propertyName set to '$envVarName' environment variable: $jdkDir")
+        jdkDir = null
       }
     }
-    else {
+    messages.info("$name: property=$propertyName, dir=$defaultDir, env=$envVarName")
+    if (envVarName != null) {
+      jdkDir = System.getenv(envVarName)
+    }
+    if (jdkDir == null) {
       jdkDir = getCurrentJdk()
       def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdkDir)
-      if (propertyName.contains("8") && !jdkInfo.version.contains("1.8.")) {
-        messages.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
-                       " aren't defined and default JDK $jdkDir ($jdkInfo) cannot be used as JDK 1.8")
-        return null
-      }
-      if (defaultDir != null) {
-        messages.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdkDir")
-      }
-      else {
-        messages.info("'$envVarName' isn't defined, $propertyName set to $jdkDir")
+      def jdkVersion = jdkInfo.@version.feature.toString()
+      if (!name.contains(jdkVersion)) {
+        messages.warning("JDK $name is required, but default JDK $jdkDir ($jdkInfo) cannot be used as JDK $name")
       }
     }
+    messages.info("$name set to $jdkDir")
     return jdkDir
   }
 
@@ -69,5 +64,15 @@ class JdkUtils {
       return new File(javaHome).getParent()
     }
     return javaHome
+  }
+
+  static List<String> readModulesFromReleaseFile(File jbrBaseDir) {
+    File releaseFile = new File(jbrBaseDir, "release")
+    new FileInputStream(releaseFile).withReader { stream ->
+      Properties p = new Properties()
+      p.load(stream)
+      String modules = p.getProperty("MODULES")
+      return StringUtil.split(StringUtil.unquoteString(modules), " ")
+    }
   }
 }

@@ -5,29 +5,22 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-task setupJdks(dependsOn: ['setupJdk', 'checkJdk', 'setupJdk16'])
-cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 
-project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
-project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
-def isModular = jdkVersion > 8
-project.ext.build = isModular ? jdkBuild : secondJreBuild
-def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
-project.ext.jdkArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
-
+def jbrVersionToUnpack = System.getProperty('intellij.build.jdk.version', '8').toInteger()
+task setupJdks(dependsOn: ["setupJbr$jbrVersionToUnpack"])
+cleanSetupJdks.dependsOn('cleanSetupJbr8', 'cleanSetupJbr11', 'cleanDownloadJbr8', 'cleanDownloadJbr11', 'cleanSetupJdk16')
+project.ext.jbrRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
   it
 } ?: "${intellijProjectDir()}/build/jdk"
 
-project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${!isModular ? "1.$jdkVersion" : jdkVersion}")
-
 /**
  * Update this method together with:
- *  `setupJbre.gradle` 
+ *  `setupJbre.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  */
-static def splitJdkBuild(String jreBuild, String version) {
+static def splitJbrBuild(String jreBuild, String version) {
   def split = jreBuild.split('b')
   if (split.length > 2) {
     throw new IllegalArgumentException(
@@ -46,60 +39,69 @@ static def splitJdkBuild(String jreBuild, String version) {
   }
 }
 
-task downloadJdk {
-  def arch = jdkArch()
-  def platform = currentPlatformName()
-  def jdkUrl = jdkUrl()
-  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
-  def artifactName = "$jdkArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
-  def outputFile = "$project.buildDir/jbsdk/${artifactName}"
+[8, 11].each { jbrVersion ->
+  def isModular = jbrVersion > 8
+  def jbrBuild = isModular ? jdkBuild : secondJreBuild
+  def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
+  def jbrArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
 
-  inputs.property('version', jdkVersion)
-  inputs.property('build', build)
-  inputs.property('url', jdkUrl)
-  outputs.file(outputFile)
-  doLast {
-    logger.info("Downloading up JDK $jdkVersion to compile (using $jdkUrl)")
-    download {
-      src jdkUrl
-      dest outputFile
-      tempAndMove true
-      timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+  def jbrOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${!isModular ? "1.$jbrVersion" : jbrVersion}")
+
+  def downloadJbr = task("downloadJbr$jbrVersion") {
+    def arch = jbrArch()
+    def platform = currentPlatformName()
+    def jbrUrl = jbrUrl(jbrVersion.toString(), jbrBuild.toString(), jbrArtifactPrefix)
+    def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), jbrVersion.toString())
+    def artifactName = "$jbrArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+    def outputFile = "$project.buildDir/jbsdk/${artifactName}"
+
+    inputs.property('version', jbrVersion)
+    inputs.property('build', jbrBuild)
+    inputs.property('url', jbrUrl)
+    outputs.file(outputFile)
+    doLast {
+      logger.info("Downloading up JBR $jbrVersion to compile (using $jbrUrl)")
+      download {
+        src jbrUrl
+        dest outputFile
+        tempAndMove true
+        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+      }
     }
   }
+
+  def setupJbr = tasks.create(name: "setupJbr$jbrVersion", dependsOn: [downloadJbr, 'setupJdk16']) {
+    def outputDir = jbrOutputDir
+    def downloadOutputs = downloadJbr.outputs.files
+    inputs.files(downloadOutputs)
+    inputs.property("jdkOutputDir", outputDir)
+    outputs.dir(outputDir)
+    outputs.upToDateWhen {
+      !fileTree(outputDir).isEmpty()
+    }
+    doLast {
+      logger.info("Setting up JBR $jbrVersion to compile")
+      unpackJdk(downloadOutputs.singleFile, outputDir)
+    }
+  }
+  setupJbr.finalizedBy(checkJbr(jbrVersion, jbrOutputDir))
 }
 
-task setupJdk(dependsOn: downloadJdk) {
-  def outputDir = jdkOutputDir
-  def downloadOutputs = downloadJdk.outputs.files
-
-  inputs.files(downloadOutputs)
-  inputs.property("jdkOutputDir", outputDir)
-  outputs.dir(outputDir)
-  outputs.upToDateWhen {
-    !fileTree(outputDir).isEmpty()
-  }
-  doLast {
-    logger.info("Setting up JDK $jdkVersion to compile")
-    unpackJdk(downloadOutputs.singleFile, outputDir)
-  }
-}
-
-def unpackJdk(jdkArchive, outputDir) {
-  logger.info("Unpacking $jdkArchive to ${outputDir}")
+def unpackJdk(jbrArchive, outputDir) {
+  logger.info("Unpacking $jbrArchive to ${outputDir}")
   if (file(outputDir).exists()) {
     delete(outputDir)
   }
   def currentOs = OperatingSystem.current()
   if (currentOs.isWindows()) {
     copy {
-      from tarTree(jdkArchive)
+      from tarTree(jbrArchive)
       into outputDir
     }
   }
   else {
     exec { commandLine 'mkdir', '-p', outputDir }
-    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+    exec { commandLine 'tar', 'xpf', "$jbrArchive.absolutePath", '--directory', outputDir }
   }
   def rootDirs = ['jbrsdk', 'jbr', 'jdk']
   if (file(outputDir).list()?.any { rootDirs.contains(it) }) {
@@ -123,7 +125,7 @@ def unpackJdk(jdkArchive, outputDir) {
   }
 }
 
-static def jdkArch() {
+static def jbrArch() {
   def arch = System.getProperty("intellij.jdk.arch", "")
   if (arch == '32') return 'i586'
   if (arch == '64') return 'x64'
@@ -132,13 +134,13 @@ static def jdkArch() {
 }
 
 @SuppressWarnings("GrMethodMayBeStatic")
-def jdkUrl() {
-  def arch = jdkArch()
+def jbrUrl(String jbrVersion, String jbrBuild, String jbrArtifactPrefix) {
+  def arch = jbrArch()
   def platform = currentPlatformName()
-  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
-  // base url of TeamCity build to download JDK from
+  def (update, buildNumber) = splitJbrBuild(jbrBuild, jbrVersion)
+  // base url of TeamCity build to download JBR from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
-  "${teamCityBuild ?: jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  "${teamCityBuild ?: jbrRepo}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
 }
 
 static def currentPlatformName() {
@@ -235,30 +237,32 @@ static def jdk16Version() {
   return '6.45:linux_x64'
 }
 
-task checkJdk(dependsOn: setupJdk) {
-  doLast {
-    def path = OperatingSystem.current().isMacOsX() ? "$jdkOutputDir/Contents/Home/bin" : "$jdkOutputDir/bin"
-    def project = project
-    new ByteArrayOutputStream().withStream { output ->
-      project.exec {
-        standardOutput = output
-        errorOutput = output
-        commandLine file("$path/java"), '-XshowSettings:properties', '-version'
-      }
-      String vendor = null
-      String version = null
-      output.toString().readLines().each {
-        if (it.contains('java.vendor =')) {
-          vendor = it
+def checkJbr(int jbrVersion, String outputDir) {
+  tasks.create(name: "checkJbr$jbrVersion") {
+    doLast {
+      def path = OperatingSystem.current().isMacOsX() ? "$outputDir/Contents/Home/bin" : "$outputDir/bin"
+      def project = project
+      new ByteArrayOutputStream().withStream { output ->
+        project.exec {
+          standardOutput = output
+          errorOutput = output
+          commandLine file("$path/java"), '-XshowSettings:properties', '-version'
         }
-        else if (it.contains('java.runtime.version =')) {
-          version = it
+        String vendor = null
+        String version = null
+        output.toString().readLines().each {
+          if (it.contains('java.vendor =')) {
+            vendor = it
+          }
+          else if (it.contains('java.runtime.version =')) {
+            version = it
+          }
         }
+        println(vendor)
+        println(version)
+        if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
+        if (!version?.contains("$jbrVersion")) throw new IllegalStateException("java.runtime.version is not $jbrVersion")
       }
-      println(vendor)
-      println(version)
-      if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
-      if (!version?.contains("$jdkVersion")) throw new IllegalStateException("java.runtime.version is not $jdkVersion")
     }
   }
 }
