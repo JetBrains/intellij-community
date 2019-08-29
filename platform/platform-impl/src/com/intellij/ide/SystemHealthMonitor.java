@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -22,11 +23,10 @@ import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.JavaVersion;
+import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
 
 import javax.swing.*;
 import java.io.File;
@@ -43,7 +43,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
   private static final String IBUS_URL = "https://youtrack.jetbrains.com/issue/IDEA-78860";
-  private static final String SIGINT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360004770440";
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
@@ -127,24 +126,22 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkSignalBlocking() {
-    if (SystemInfo.isUnix) {
+    if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
       try {
-        Signal sigInt = new Signal("INT");
-        SignalHandler oldInt = Signal.handle(sigInt, NO_OP_HANDLER);
-        if (oldInt == SignalHandler.SIG_IGN) {
-          showNotification("ide.sigint.ignored.message", detailsAction(SIGINT_URL));
-        }
-        else {
-          Signal.handle(sigInt, oldInt);
+        Memory sa = new Memory(256);
+
+        if (LibC.sigaction(LibC.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+          LibC.Handler newHandler = sig -> { System.exit(130); };  // 128 + SIGINT (ref: java.lang.Terminator)
+          SIGINT_CALLBACK_REF = newHandler;
+          LibC.signal(LibC.SIGINT, newHandler);
+          LOG.info("restored ignored INT handler");
         }
 
-        Signal sigPipe = new Signal("PIPE");
-        SignalHandler oldPipe = Signal.handle(sigPipe, NO_OP_HANDLER);
-        if (oldPipe == SignalHandler.SIG_IGN) {
-          LOG.info("restored ignored PIPE handler");  // no-op handler unmasks the signal in child processes
-        }
-        else {
-          Signal.handle(sigInt, oldPipe);
+        if (LibC.sigaction(LibC.SIGPIPE, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+          LibC.Handler newHandler = sig -> { };  // no-op handler unmasks the signal in child processes
+          SIGPIPE_CALLBACK_REF = newHandler;
+          LibC.signal(LibC.SIGPIPE, newHandler);
+          LOG.info("restored ignored PIPE handler");
         }
       }
       catch (Throwable t) {
@@ -268,5 +265,24 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }, 1, TimeUnit.SECONDS);
   }
 
-  private static final SignalHandler NO_OP_HANDLER = sig -> { };
+  private static class LibC {
+    static {
+      Native.register(LibC.class, NativeLibrary.getInstance("c"));
+    }
+
+    static final int SIGINT = 2;
+    static final int SIGPIPE = 13;
+
+    static final Pointer SIG_IGN = new Pointer(1L);
+
+    interface Handler extends Callback {
+      void callback(int sig);
+    }
+
+    static native int sigaction(int sig, Pointer action, Pointer oldAction);
+    static native Pointer signal(int sig, Handler handler);
+  }
+
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object SIGINT_CALLBACK_REF;
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object SIGPIPE_CALLBACK_REF;
 }
