@@ -18,6 +18,27 @@ python3_only = unittest.skipUnless(six.PY3, 'Python 3 only test')
 python2_only = unittest.skipUnless(six.PY2, 'Python 2 only test')
 
 
+def test_data_dir(name):
+    """
+    Decorator allowing to customize test data directory for a test.
+
+    The specified name will be used only as the last component of the path
+    following the directory corresponding to the test class (by default
+    test name itself is used for this purpose).
+
+    Example::
+
+        @test_data_dir('common_test_data')
+        def test_scenario():
+            ...
+    """
+    def decorator(f):
+        f._test_data_dir = name
+        return f
+
+    return decorator
+
+
 class GeneratorTestCase(unittest.TestCase):
     longMessage = True
     maxDiff = None
@@ -82,7 +103,9 @@ class GeneratorTestCase(unittest.TestCase):
 
     @property
     def test_data_dir(self):
-        return os.path.join(self.class_test_data_dir, self.test_name)
+        test_method = getattr(self, self._testMethodName)
+        dir_name = getattr(test_method, '_test_data_dir', self.test_name)
+        return os.path.join(self.class_test_data_dir, dir_name)
 
     @property
     def class_test_data_dir(self):
