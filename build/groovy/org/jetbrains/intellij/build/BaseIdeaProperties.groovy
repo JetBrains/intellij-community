@@ -117,6 +117,9 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
+
+        //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
+        withoutProjectLibrary("layoutlib")
       }
     } as Consumer<PlatformLayout>
 
