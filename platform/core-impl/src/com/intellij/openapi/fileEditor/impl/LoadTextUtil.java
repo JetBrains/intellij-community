@@ -487,7 +487,7 @@ public final class LoadTextUtil {
   public static CharSequence loadText(@NotNull final VirtualFile file) {
     FileType type = file.getFileType();
     if (type.isBinary()) {
-      final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(type);
+      final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.getInstance().forFileType(type);
       if (decompiler != null) {
         CharSequence text = decompiler.decompile(file);
         try {

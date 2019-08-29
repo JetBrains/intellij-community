@@ -307,7 +307,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     };
 
     ExtensionTestUtil.addExtension((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea(),
-                                   BinaryFileTypeDecompilers.INSTANCE, ArchiveFileType.INSTANCE.getName(), decompiler);
+                                   BinaryFileTypeDecompilers.getInstance(), ArchiveFileType.INSTANCE.getName(), decompiler);
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

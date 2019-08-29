@@ -588,12 +588,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
     final FileType ft = file.getFileType();
-    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    return ft.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
+    return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 
   @Override

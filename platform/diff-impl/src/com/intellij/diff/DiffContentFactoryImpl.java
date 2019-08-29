@@ -353,7 +353,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                               @NotNull FilePath path,
                                               @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
-    boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
+    boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.getInstance().forFileType(type) != null;
 
     VirtualFile file;
     if (useTemporalFile) {
