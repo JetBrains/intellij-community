@@ -27,11 +27,14 @@ internal abstract class BaseComponentAdapter(@field:Volatile protected var initi
 
   protected abstract val pluginId: PluginId
 
+  protected open val createIfContainerDisposed: Boolean
+    get() = false
+
   @Suppress("UNCHECKED_CAST")
   fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     var instance = initializedInstance as T?
-    if (instance != null || !createIfNeeded || componentManager.isDisposed) {
+    if (instance != null || !createIfNeeded || (!createIfContainerDisposed && componentManager.isDisposed)) {
       return instance
     }
 

@@ -30,6 +30,9 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   @Synchronized
   fun isImplementationClassResolved() = implementationClass != null
 
+  override val createIfContainerDisposed: Boolean
+    get() = true
+
   @Synchronized
   fun getImplementationClass(): Class<*> {
     var result = implementationClass
