@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -28,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -35,31 +24,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
-/**
- * @author yole
- */
-public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
+@Service
+public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  private final VcsConfiguration myConfiguration;
-  private final VcsBaseContentProvider[] myAdditionalProviders;
+  private final ExtensionPointImpl<VcsBaseContentProvider> myAdditionalProviderPoint;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
-  public VcsFileStatusProvider(final Project project,
-                               final ProjectLevelVcsManager vcsManager,
-                               ChangeListManager changeListManager,
-                               VcsDirtyScopeManager dirtyScopeManager, VcsConfiguration configuration) {
+  VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
-    myVcsManager = vcsManager;
-    myChangeListManager = changeListManager;
-    myDirtyScopeManager = dirtyScopeManager;
-    myConfiguration = configuration;
-    myAdditionalProviders = VcsBaseContentProvider.EP_NAME.getExtensions(project);
+    myChangeListManager = ChangeListManager.getInstance(project);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
-    changeListManager.addChangeListListener(new ChangeListAdapter() {
+    myChangeListManager.addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
@@ -84,7 +64,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   @Override
   @NotNull
   public FileStatus getFileStatus(@NotNull final VirtualFile virtualFile) {
-    final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
+    AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
     if (vcs == null) {
       if (ScratchUtil.isScratch(virtualFile)) {
         return FileStatus.SUPPRESSED;
@@ -115,10 +95,10 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     FileStatusManagerImpl fileStatusManager = (FileStatusManagerImpl)FileStatusManager.getInstance(myProject);
     FileStatus cachedStatus = fileStatusManager.getCachedStatus(virtualFile);
     if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(virtualFile)) {
-      final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
+      AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
       if (vcs == null) return;
       if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(virtualFile)) {
-        if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
+        if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
           RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
           if (rollbackEnvironment != null) {
             rollbackEnvironment.rollbackIfUnchanged(virtualFile);
@@ -136,7 +116,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   @NotNull
   @Override
   public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    return myConfiguration.SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(virtualFile) : ThreeState.NO;
+    return VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(virtualFile) : ThreeState.NO;
   }
 
   @Override
@@ -157,7 +137,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
     FileStatus status = changeListManager.getStatus(file);
     if (status == FileStatus.HIJACKED) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
       DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
       if (diffProvider != null) {
         VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
@@ -170,8 +150,10 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   @Nullable
   private VcsBaseContentProvider findProviderFor(@NotNull VirtualFile file) {
-    for (VcsBaseContentProvider support : myAdditionalProviders) {
-      if (support.isSupported(file)) return support;
+    for (VcsBaseContentProvider support : myAdditionalProviderPoint) {
+      if (support.isSupported(file)) {
+        return support;
+      }
     }
     return null;
   }
@@ -182,7 +164,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   }
 
   private boolean isHandledByVcs(@NotNull VirtualFile file) {
-    return file.isInLocalFileSystem() && myVcsManager.getVcsFor(file) != null;
+    return file.isInLocalFileSystem() && ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != null;
   }
 
   private static class BaseContentImpl implements BaseContent {

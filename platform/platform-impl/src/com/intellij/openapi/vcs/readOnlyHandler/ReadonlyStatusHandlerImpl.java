@@ -49,6 +49,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }

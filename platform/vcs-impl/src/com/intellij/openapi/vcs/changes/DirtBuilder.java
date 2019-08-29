@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -7,11 +7,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-public class DirtBuilder implements DirtBuilderReader {
+public final class DirtBuilder implements DirtBuilderReader {
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
-  private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();
-  private final MultiMap<AbstractVcs, FilePath> myDirs = MultiMap.createSet();
+  private final MultiMap<AbstractVcs<?>, FilePath> myFiles = MultiMap.createSet();
+  private final MultiMap<AbstractVcs<?>, FilePath> myDirs = MultiMap.createSet();
   private boolean myEverythingDirty = false;
 
   public DirtBuilder() {
@@ -33,12 +33,12 @@ public class DirtBuilder implements DirtBuilderReader {
     myEverythingDirty = true;
   }
 
-  public void addDirtyFile(@NotNull AbstractVcs vcs, @NotNull FilePath file) {
+  public void addDirtyFile(@NotNull AbstractVcs<?> vcs, @NotNull FilePath file) {
     if (myFileTypeManager.isFileIgnored(file.getName())) return;
     myFiles.putValue(vcs, file);
   }
 
-  public void addDirtyDirRecursively(@NotNull AbstractVcs vcs, @NotNull FilePath dir) {
+  public void addDirtyDirRecursively(@NotNull AbstractVcs<?> vcs, @NotNull FilePath dir) {
     if (myFileTypeManager.isFileIgnored(dir.getName())) return;
     myDirs.putValue(vcs, dir);
   }
@@ -50,13 +50,13 @@ public class DirtBuilder implements DirtBuilderReader {
 
   @Override
   @NotNull
-  public MultiMap<AbstractVcs, FilePath> getFilesForVcs() {
+  public MultiMap<AbstractVcs<?>, FilePath> getFilesForVcs() {
     return myFiles;
   }
 
   @Override
   @NotNull
-  public MultiMap<AbstractVcs, FilePath> getDirsForVcs() {
+  public MultiMap<AbstractVcs<?>, FilePath> getDirsForVcs() {
     return myDirs;
   }
 

@@ -95,16 +95,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = new ArrayList<>();
 
   private final FileIndexFacade myExcludedIndex;
-  private final FileTypeManager myFileTypeManager;
 
-  public ProjectLevelVcsManagerImpl(Project project,
-                                    FileIndexFacade excludedFileIndex,
-                                    ProjectManager projectManager,
-                                    FileTypeManager fileTypeManager,
-                                    DefaultVcsRootPolicy defaultVcsRootPolicy) {
+  public ProjectLevelVcsManagerImpl(@NotNull Project project) {
     myProject = project;
-    myExcludedIndex = excludedFileIndex;
-    myFileTypeManager = fileTypeManager;
+    myExcludedIndex = FileIndexFacade.getInstance(project);
 
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
@@ -115,7 +109,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     else {
       myInitialization = new VcsInitialization(myProject);
       Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-      projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
+      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
           Disposer.dispose(myInitialization);
@@ -123,7 +117,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       });
     }
 
-    myMappings = new NewMappings(myProject, this, defaultVcsRootPolicy);
+    myMappings = new NewMappings(myProject, this, DefaultVcsRootPolicy.getInstance(project));
   }
 
   public void registerVcs(AbstractVcs<?> vcs) {
@@ -807,7 +801,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
       else {
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
-          if (myFileTypeManager.isFileIgnored(name)) return true;
+          if (FileTypeManager.getInstance().isFileIgnored(name)) {
+            return true;
+          }
         }
         return false;
       }

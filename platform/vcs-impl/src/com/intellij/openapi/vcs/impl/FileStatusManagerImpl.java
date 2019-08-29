@@ -88,7 +88,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Pr
     DirectoryIndex.getInstance(project);
 
     myProject = project;
-    myFileStatusProvider = project.getComponent(VcsFileStatusProvider.class);
+    myFileStatusProvider = project.getService(VcsFileStatusProvider.class);
 
     MessageBusConnection projectBus = project.getMessageBus().connect();
     projectBus.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {

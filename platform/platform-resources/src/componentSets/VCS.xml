@@ -78,9 +78,6 @@
       <headless-implementation-class/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>

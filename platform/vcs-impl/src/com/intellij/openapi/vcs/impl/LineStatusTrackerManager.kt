@@ -14,6 +14,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -58,16 +59,7 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Future
 
-class LineStatusTrackerManager(
-  private val project: Project,
-  private val application: Application,
-  private val statusProvider: VcsBaseContentProvider,
-  private val changeListManager: ChangeListManagerImpl,
-  private val fileDocumentManager: FileDocumentManager,
-  private val fileEditorManager: FileEditorManagerEx,
-  @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
-) : LineStatusTrackerManagerI, Disposable {
-
+class LineStatusTrackerManager(private val project: Project, @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
   private var isDisposed = false
 
@@ -108,7 +100,7 @@ class LineStatusTrackerManager(
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
 
-      application.addApplicationListener(MyApplicationListener(), this)
+      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
 
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
@@ -116,7 +108,7 @@ class LineStatusTrackerManager(
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
       editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
 
-      changeListManager.addChangeListListener(MyChangeListListener())
+      ChangeListManagerImpl.getInstance(project).addChangeListListener(MyChangeListListener())
 
       VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(), this)
     }
@@ -150,19 +142,19 @@ class LineStatusTrackerManager(
   }
 
   override fun getLineStatusTracker(file: VirtualFile): LineStatusTracker<*>? {
-    val document = fileDocumentManager.getCachedDocument(file) ?: return null
+    val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
     return getLineStatusTracker(document)
   }
 
   @CalledInAwt
   override fun requestTrackerFor(document: Document, requester: Any) {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments.computeIfAbsent(document) { HashMultiset.create<Any>() }
       multiset.add(requester)
 
       if (trackers[document] == null) {
-        val virtualFile = fileDocumentManager.getFile(document) ?: return
+        val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
         installTracker(virtualFile, document)
       }
     }
@@ -170,7 +162,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   override fun releaseTrackerFor(document: Document, requester: Any) {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments[document]
       if (multiset == null || !multiset.contains(requester)) {
@@ -240,7 +232,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun onEverythingChanged() {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -251,7 +243,7 @@ class LineStatusTrackerManager(
         files.add(data.tracker.virtualFile)
       }
       for (document in forcedDocuments.keys) {
-        val file = fileDocumentManager.getFile(document)
+        val file = FileDocumentManager.getInstance().getFile(document)
         if (file != null) files.add(file)
       }
 
@@ -263,7 +255,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun onFileChanged(virtualFile: VirtualFile) {
-    val document = fileDocumentManager.getCachedDocument(virtualFile) ?: return
+    val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
 
     synchronized(LOCK) {
       if (isDisposed) return
@@ -300,7 +292,7 @@ class LineStatusTrackerManager(
       return
     }
 
-    changeListManager.registerChangeTracker(filePath, tracker)
+    ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(filePath, tracker)
     data.clmFilePath = filePath
   }
 
@@ -314,7 +306,7 @@ class LineStatusTrackerManager(
       return
     }
 
-    changeListManager.unregisterChangeTracker(filePath, tracker)
+    ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(filePath, tracker)
     data.clmFilePath = null
 
     val actualFilePath = VcsUtil.getFilePath(tracker.virtualFile)
@@ -336,27 +328,27 @@ class LineStatusTrackerManager(
     }
 
     if (oldFilePath != newFilePath) {
-      changeListManager.unregisterChangeTracker(oldFilePath, tracker)
-      changeListManager.registerChangeTracker(newFilePath, tracker)
+      ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(oldFilePath, tracker)
+      ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(newFilePath, tracker)
       data.clmFilePath = newFilePath
     }
   }
 
 
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
-    if (isDisposed) return false
-    if (virtualFile == null || virtualFile is LightVirtualFile) return false
-    if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
-    if (!statusProvider.isSupported(virtualFile)) return false
-
-    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
-    if (status == FileStatus.ADDED ||
-        status == FileStatus.DELETED ||
-        status == FileStatus.UNKNOWN ||
-        status == FileStatus.IGNORED) {
-      return false
+    return when {
+      isDisposed || virtualFile == null || virtualFile is LightVirtualFile -> false
+      runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) } -> false
+      !project.service<VcsFileStatusProvider>().isSupported(virtualFile) -> false
+      else -> {
+        val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
+        !(status == FileStatus.ADDED ||
+          status == FileStatus.DELETED ||
+          status == FileStatus.UNKNOWN ||
+          status == FileStatus.IGNORED)
+      }
     }
-    return true
+
   }
 
   private fun canCreatePartialTrackerFor(virtualFile: VirtualFile): Boolean {
@@ -391,7 +383,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun doInstallTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return null
       if (trackers[document] != null) return null
@@ -421,7 +413,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun releaseTracker(document: Document) {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       if (isDisposed) return
       val data = trackers.remove(document) ?: return
@@ -478,7 +470,7 @@ class LineStatusTrackerManager(
     override fun loadRequest(request: RefreshRequest): Result<RefreshData> {
       if (isDisposed) return Result.Canceled()
       val document = request.document
-      val virtualFile = fileDocumentManager.getFile(document)
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)
 
       log("Loading started", virtualFile)
 
@@ -492,7 +484,7 @@ class LineStatusTrackerManager(
         return Result.Error()
       }
 
-      val baseContent = statusProvider.getBaseRevision(virtualFile)
+      val baseContent = project.service<VcsFileStatusProvider>().getBaseRevision(virtualFile)
       if (baseContent == null) {
         log("Loading error: base revision not found", virtualFile)
         return Result.Error()
@@ -538,7 +530,7 @@ class LineStatusTrackerManager(
     }
 
     private fun LineStatusTrackerManager.handleCanceled(document: Document) {
-      val virtualFile = fileDocumentManager.getFile(document) ?: return
+      val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
 
       val state = synchronized(LOCK) {
         fileStatesAwaitingRefresh.remove(virtualFile) ?: return
@@ -562,7 +554,7 @@ class LineStatusTrackerManager(
 
     private fun LineStatusTrackerManager.handleSuccess(document: Document,
                                                        refreshData: RefreshData) {
-      val virtualFile = fileDocumentManager.getFile(document)!!
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)!!
 
       synchronized(LOCK) {
         val data = trackers[document]
@@ -619,7 +611,9 @@ class LineStatusTrackerManager(
 
     private fun isTrackedEditor(editor: Editor): Boolean {
       // can't filter out "!isInLocalFileSystem" files, custom VcsBaseContentProvider can handle them
-      if (fileDocumentManager.getFile(editor.document) == null) return false
+      if (FileDocumentManager.getInstance().getFile(editor.document) == null) {
+        return false
+      }
       return editor.project == null || editor.project == project
     }
   }
@@ -669,7 +663,7 @@ class LineStatusTrackerManager(
         }
       }
       else {
-        val document = fileDocumentManager.getCachedDocument(file) ?: return
+        val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
         val data = trackers[document] ?: return
 
         action(data)
@@ -685,12 +679,12 @@ class LineStatusTrackerManager(
       val document = event.document
       if (documentsInDefaultChangeList.contains(document)) return
 
-      val virtualFile = fileDocumentManager.getFile(document) ?: return
+      val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
       if (getLineStatusTracker(document) != null) return
       if (!canGetBaseRevisionFor(virtualFile)) return
       if (!canCreatePartialTrackerFor(virtualFile)) return
 
-      val changeList = changeListManager.getChangeList(virtualFile)
+      val changeList = ChangeListManagerImpl.getInstanceImpl(project).getChangeList(virtualFile)
       if (changeList != null && !changeList.isDefault) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
@@ -848,7 +842,7 @@ class LineStatusTrackerManager(
   }
 
   private fun warn(message: String, document: Document?) {
-    val file = document?.let { fileDocumentManager.getFile(it) }
+    val file = document?.let { FileDocumentManager.getInstance().getFile(it) }
     warn(message, file)
   }
 
@@ -864,7 +858,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   fun resetExcludedFromCommitMarkers() {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     synchronized(LOCK) {
       val documents = mutableListOf<Document>()
 
@@ -885,7 +879,7 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    application.assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -907,7 +901,7 @@ class LineStatusTrackerManager(
       synchronized(LOCK) {
         for (state in trackerStates) {
           val virtualFile = state.virtualFile
-          val document = fileDocumentManager.getDocument(virtualFile) ?: continue
+          val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: continue
 
           if (!canCreatePartialTrackerFor(virtualFile)) continue
 
@@ -973,9 +967,10 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    application.assertIsDispatchThread()
-    if (filesWithDamagedInactiveRanges.contains(virtualFile)) return
-    if (virtualFile == fileEditorManager.currentFile) return
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
+      return
+    }
     filesWithDamagedInactiveRanges.add(virtualFile)
   }
 
