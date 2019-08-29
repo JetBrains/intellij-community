@@ -21,17 +21,9 @@
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="fc652" class="javax.swing.JCheckBox" binding="focusApplicationOnBreakpointCheckBox" default-binding="true">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/XDebuggerBundle" key="setting.focus.app.on.breakpoint.label"/>
-        </properties>
-      </component>
       <component id="4c3e" class="javax.swing.JCheckBox" binding="myShowDebugWindowOnCheckBox" default-binding="true">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/XDebuggerBundle" key="settings.show.window.label"/>
@@ -93,6 +85,14 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/XDebuggerBundle" key="settings.run.to.cursor.gesture"/>
+        </properties>
+      </component>
+      <component id="fc652" class="javax.swing.JCheckBox" binding="focusApplicationOnBreakpointCheckBox" default-binding="true">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/XDebuggerBundle" key="setting.focus.app.on.breakpoint.label"/>
         </properties>
       </component>
     </children>
