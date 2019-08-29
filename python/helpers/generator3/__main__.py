@@ -41,7 +41,8 @@ def get_help_text():
         '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
         ' -i -- read module_name, file_name and list of imported CLR assemblies from stdin line-by-line' '\n'
         ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
-        ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>'
+        ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>\n'
+        '--name-pattern pattern -- shell-like glob pattern restricting generation only to binaries with matching qualified names\n'
     )
 
 
@@ -57,7 +58,7 @@ def main():
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzu")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzu", longopts=['name-pattern='])
     opts = dict(opts)
 
     generator3.core.quiet = '-q' in opts
@@ -122,7 +123,7 @@ def main():
         if args:
             report("No names should be specified with -b")
             sys.exit(1)
-        ok = process_builtin_modules(subdir)
+        ok = process_builtin_modules(subdir, name_pattern=opts.get('--name-pattern'))
         if not ok:
             sys.exit(1)
     else:
@@ -141,7 +142,7 @@ def main():
             report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
             sys.exit(1)
         elif not args:
-            process_all(subdir)
+            process_all(subdir, name_pattern=opts.get('--name-pattern'))
             sys.exit()
         else:
             name = args[0]

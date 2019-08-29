@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import collections
+import json
 import os
 import subprocess
 import sys
@@ -21,6 +23,18 @@ from generator3_tests import GeneratorTestCase, python3_only, python2_only
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
 _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
+
+ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
+
+
+class GeneratorResult(ProcessResult):
+    @property
+    def control_messages(self):
+        result = []
+        for line in self.stdout.splitlines(False):  # type: str
+            if line.startswith('{'):
+                result.append(json.loads(line))
+        return result
 
 
 class SkeletonGenerationTest(GeneratorTestCase):
@@ -44,15 +58,28 @@ class SkeletonGenerationTest(GeneratorTestCase):
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
-    def run_generator(self, mod_qname=None, mod_path=None, builtins=False, extra_syspath_entry=None, gen_version=None,
-                      required_gen_version_file_path=None, extra_env=None, extra_args=None, output_dir=None):
+    def run_generator(self,
+                      mod_qname=None,
+                      mod_path=None,
+                      builtins=False,
+                      extra_syspath=None,
+                      gen_version=None,
+                      required_gen_version_file_path=None,
+                      extra_env=None,
+                      extra_args=None,
+                      output_dir=None):
         if output_dir is None:
             output_dir = self.temp_skeletons_dir
         else:
             output_dir = os.path.join(self.temp_dir, output_dir)
 
-        if not extra_syspath_entry:
-            extra_syspath_entry = self.test_data_dir
+        if not extra_syspath:
+            extra_syspath = [self.test_data_dir]
+
+        extra_syspath = [p if os.path.isabs(p) else os.path.join(self.test_data_dir, p) for p in extra_syspath]
+
+        if mod_path and not os.path.isabs(mod_path):
+            mod_path = os.path.join(extra_syspath[0], mod_path)
 
         env = {
             ENV_TEST_MODE_FLAG: 'True',
@@ -70,7 +97,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
             '-m',
             'generator3',
             '-d', output_dir,
-            '-s', extra_syspath_entry,
+            '-s', os.pathsep.join(extra_syspath),
         ]
 
         if extra_args:
@@ -78,23 +105,22 @@ class SkeletonGenerationTest(GeneratorTestCase):
 
         if builtins:
             args.append('-b')
-        else:
+        elif mod_qname:
             args.append(mod_qname)
             if mod_path:
                 args.append(mod_path)
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
-        process = self.run_process(args, env=env)
-        return process.returncode == 0
+        result = self.run_process(args, env=env)
+        return GeneratorResult(*result)
 
     def run_process(self, args, env=None):
-        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.wait()
-        self.process_stdout.write(process.stdout.read().decode('utf-8'))
-        process.stdout.close()
-        self.process_stderr.write(process.stderr.read().decode('utf-8'))
-        process.stderr.close()
-        return process
+        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   universal_newlines=True)
+        stdout, stderr = process.communicate()
+        self.process_stdout.write(stdout)
+        self.process_stderr.write(stderr)
+        return ProcessResult(process.returncode, stdout, stderr)
 
     @property
     def temp_skeletons_dir(self):
@@ -291,7 +317,21 @@ class SkeletonGenerationTest(GeneratorTestCase):
     def test_non_string_dunder_module(self):
         self.check_generator_output('mod', 'mod.py')
 
-    def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
+    def test_progress_indication_in_multiple_modules_mode(self):
+        result = self.run_generator(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+        self.assertContainsInRelativeOrder([
+            {'type': 'progress', 'text': 'mod1', 'minor': True, 'fraction': 0.0},
+            {'type': 'progress', 'text': 'mod2', 'minor': True, 'fraction': 0.5},
+            {'type': 'progress', 'fraction': 1.0},
+        ], result.control_messages)
+
+    def test_multiple_modules_generation_mode(self):
+        # This is a hack to keep the existing behavior where we keep discovering only binary files
+        # (which can't be distributed with tests in a platform-independent manner), but user their .py
+        # counterparts for actual importing and introspection
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+
+    def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False,
                                success=True, **kwargs):
         if custom_required_gen:
@@ -300,17 +340,16 @@ class SkeletonGenerationTest(GeneratorTestCase):
         if standalone_mode:
             kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
 
-        if not mod_root:
+        if mod_name and not mod_root:
             mod_root = self.test_data_dir
-        elif not os.path.isabs(mod_root):
-            mod_root = os.path.join(self.test_data_dir, mod_root)
 
-        if mod_path:
-            mod_path = os.path.join(mod_root, mod_path)
+        roots = kwargs.pop('extra_syspath', [])
+        if mod_root:
+            roots.insert(0, mod_root)
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_root, **kwargs)
-            self.assertEqual(success, result)
+            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath=roots, **kwargs)
+            self.assertEqual(success, result.exit_code == 0)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
