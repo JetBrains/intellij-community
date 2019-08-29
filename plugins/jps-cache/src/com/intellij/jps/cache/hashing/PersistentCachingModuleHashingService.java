@@ -180,6 +180,7 @@ public class PersistentCachingModuleHashingService {
           rootTypes.stream().map(moduleRootManager::getSourceRoots).flatMap(List::stream).map(vFile -> new File(vFile.getPath()))
             .toArray(File[]::new);
         getFromCacheOrCalcAndPersist(moduleName, hashCache, sourceRoots).map(hash -> result.put(moduleName, hash));
+        hashCache.remove(moduleName);
         return;
       }
       catch (IOException e) {
