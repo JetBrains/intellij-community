@@ -18,11 +18,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     super(project, settingsProvider, parent);
   }
 
-  @Nullable
-  public String getCommandHistoryFilePath() {
-    return myCommandHistoryFilePath;
-  }
-
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
