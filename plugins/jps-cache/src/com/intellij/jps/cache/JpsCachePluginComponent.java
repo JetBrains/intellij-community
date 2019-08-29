@@ -2,6 +2,7 @@ package com.intellij.jps.cache;
 
 import com.intellij.jps.cache.hashing.JpsCacheUtils;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -20,12 +21,15 @@ public class JpsCachePluginComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    try {
-      this.moduleHashingService = new PersistentCachingModuleHashingService(new File(JpsCacheUtils.getPluginStorageDir(project)), project);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        this.moduleHashingService =
+          new PersistentCachingModuleHashingService(new File(JpsCacheUtils.getPluginStorageDir(project)), project);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   public PersistentCachingModuleHashingService getModuleHashingService() {
