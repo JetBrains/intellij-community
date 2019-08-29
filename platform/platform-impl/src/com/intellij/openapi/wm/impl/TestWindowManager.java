@@ -211,7 +211,7 @@ public final class TestWindowManager extends WindowManagerEx {
       return new Dimension(0, 0);
     }
 
-    @NotNull
+    @Nullable
     @Override
     public StatusBar createChild(@NotNull IdeFrame frame) {
       return null;
