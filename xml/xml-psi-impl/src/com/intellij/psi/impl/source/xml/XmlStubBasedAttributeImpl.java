@@ -5,8 +5,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.xml.stub.XmlAttributeStub;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -85,6 +87,18 @@ public class XmlStubBasedAttributeImpl extends XmlStubBasedElement<XmlAttributeS
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }
+
+  @Override
+  public PsiElement getContext() {
+    XmlAttributeStub<?> stub = getGreenStub();
+    if (stub != null) {
+      if (!(stub instanceof PsiFileStub)) {
+        return stub.getParentStub().getPsi();
+      }
+    }
+    return super.getParent();
+  }
+
 
   @Override
   @NotNull
