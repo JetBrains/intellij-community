@@ -1133,7 +1133,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         model.runTransaction(new PomTransactionBase(this, aspect) {
           @Override
           public PomModelEvent runInner() {
-            final String name = ((XmlAttribute)child).getName();
+            final String name = ((XmlAttribute)child.getPsi()).getName();
             XmlTagImpl.super.deleteChildInternal(child);
             return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, null);
           }
