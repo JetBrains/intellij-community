@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -11,16 +10,14 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public class UIBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = "messages.UIBundle") String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;
-  @NonNls protected static final String PATH_TO_BUNDLE = "messages.UIBundle";
+  private static final String PATH_TO_BUNDLE = "messages.UIBundle";
 
-  private UIBundle() {
-  }
+  private UIBundle() { }
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
