@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.skeletons;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.*;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
@@ -86,7 +87,8 @@ public class PySkeletonGenerator {
     myEnv = env;
   }
 
-  public boolean generateAllSkeletons(@NotNull String extraSysPath, @Nullable ProgressIndicator indicator)
+  @NotNull
+  public List<GenerationResult> generateAllSkeletons(@NotNull String extraSysPath, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     final String binaryPath = mySdk.getHomePath();
     if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
@@ -96,6 +98,7 @@ public class PySkeletonGenerator {
     final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, PythonSdkType.activateVirtualEnv(mySdk));
     final GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+    final List<GenerationResult> results = new ArrayList<>();
     handler.addProcessListener(new LineProcessOutputListener() {
       @Override
       protected void onStdoutLine(@NotNull String line) {
@@ -142,6 +145,9 @@ public class PySkeletonGenerator {
               LOG.trace(message);
             }
           }
+          else if (msgType.equals("generation_result")) {
+            results.add(ourGson.fromJson(trimmed, GenerationResult.class));
+          }
         }
       }
 
@@ -153,8 +159,8 @@ public class PySkeletonGenerator {
         }
       }
     });
-    final ProcessOutput runResult = handler.runProcess(MINUTE * 20);
-    return runResult.getExitCode() == 0;
+    handler.runProcess(MINUTE * 20);
+    return results;
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
@@ -399,6 +405,41 @@ public class PySkeletonGenerator {
 
     protected void onStderrLine(@NotNull String line) {
 
+    }
+  }
+
+  public enum GenerationStatus {
+    UP_TO_DATE,
+    GENERATED,
+    COPIED,
+    FAILED,
+  }
+
+  public static class GenerationResult {
+    @SerializedName("module_name")
+    public String myModuleName;
+    @SerializedName("module_origin")
+    public String myModuleOrigin;
+    @SerializedName("generation_status")
+    public GenerationStatus myGenerationStatus;
+
+    @NotNull
+    public String getModuleName() {
+      return myModuleName;
+    }
+
+    @NotNull
+    public String getModuleOrigin() {
+      return myModuleOrigin;
+    }
+
+    @NotNull
+    public GenerationStatus getGenerationStatus() {
+      return myGenerationStatus;
+    }
+
+    public boolean isBuiltin() {
+      return myModuleOrigin.equals("(built-in)");
     }
   }
 }
