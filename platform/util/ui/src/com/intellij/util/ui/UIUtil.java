@@ -462,7 +462,10 @@ public final class UIUtil extends StartupUiUtil {
   public static final int DEFAULT_VGAP = 4;
   public static final int LARGE_VGAP = 12;
 
-  public static final Insets PANEL_REGULAR_INSETS = JBInsets.create(8, 12);
+  public static final int REGULAR_PANEL_TOP_BOTTOM_INSET = 8;
+  public static final int REGULAR_PANEL_LEFT_RIGHT_INSET = 12;
+
+  public static final Insets PANEL_REGULAR_INSETS = JBInsets.create(REGULAR_PANEL_TOP_BOTTOM_INSET, REGULAR_PANEL_LEFT_RIGHT_INSET);
   public static final Insets PANEL_SMALL_INSETS = JBInsets.create(5, 8);
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
