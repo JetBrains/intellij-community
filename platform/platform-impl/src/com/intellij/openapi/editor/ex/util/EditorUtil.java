@@ -609,11 +609,8 @@ public final class EditorUtil {
     editor.getSelectionModel().removeSelection();
     Document document = editor.getDocument();
     int lastLine = Math.max(0, document.getLineCount() - 1);
-    if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(document.getTextLength());
-    } else {
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
-    }
+    boolean caretWasAtLastLine = editor.getCaretModel().getLogicalPosition().line == lastLine;
+    editor.getCaretModel().moveToOffset(document.getTextLength());
     ScrollingModel scrollingModel = editor.getScrollingModel();
     if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
       // don't move 'focus' to empty last line
@@ -627,7 +624,12 @@ public final class EditorUtil {
       }
       scrollingModel.scrollVertically(scrollOffset);
     }
+    else if (!caretWasAtLastLine) {
+      // don't scroll to the end of the last line (IDEA-124688)...
+      scrollingModel.scrollTo(new LogicalPosition(lastLine, 0), ScrollType.RELATIVE);
+    }
     else {
+      // ...unless the caret was already on the last line - then scroll to the end of it.
       scrollingModel.scrollToCaret(ScrollType.RELATIVE);
     }
   }

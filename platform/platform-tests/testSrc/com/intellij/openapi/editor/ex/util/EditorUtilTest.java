@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+
+import java.awt.*;
 
 public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
   public void testGetNotFoldedLineStartEndOffsets() {
@@ -30,6 +33,45 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
     assertVisualLineRange(8, 4, 11);
     assertVisualLineRange(9, 4, 11);
     assertVisualLineRange(13, 12, 15);
+  }
+
+  public void testScrollFromBeginToEnd() {
+    createSmallEditor("<caret>12345\n67890");
+    EditorUtil.scrollToTheEnd(getEditor());
+    // caret should be at the end, but editor shouldn't be scrolled to it
+    assertCaretAt(1, 5, false);
+  }
+
+  public void testScrollFromLastLineToEnd() {
+    createSmallEditor("12345\n<caret>12345");
+    EditorUtil.scrollToTheEnd(getEditor());
+    // caret should be at the end, and visible
+    assertCaretAt(1, 5, true);
+  }
+
+  public void testScrollToEndWithEmptyLastLine() {
+    createSmallEditor("12345\n12345<caret>\n");
+    Rectangle oldVisibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
+    EditorUtil.scrollToTheEnd(getEditor(), true);
+
+    // caret should be at the end, but only vertical scrolling should happen
+    assertCaretAt(2, 0, false);
+    Rectangle newVisibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
+    assertEquals(oldVisibleArea.x, newVisibleArea.x);
+    assertTrue(oldVisibleArea.y < newVisibleArea.y);
+  }
+
+  private void createSmallEditor(String text) {
+    configureFromFileText(getTestName(false) + ".txt", text);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 4, 2);
+  }
+
+  private void assertCaretAt(int line, int column, boolean isVisible) {
+    LogicalPosition position = getEditor().getCaretModel().getLogicalPosition();
+    assertEquals(line, position.line);
+    assertEquals(column, position.column);
+    Point caretXY = getEditor().logicalPositionToXY(position);
+    assertEquals(isVisible, getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished().contains(caretXY));
   }
 
   private void assertVisualLineRange(int offset, int lineStartOffset, int lineEndOffset) {
