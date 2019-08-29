@@ -9,11 +9,14 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.function.Consumer
 
 /**
- * Describes layout of the platform (*.jar files in IDE_HOME/lib directory). By default it includes all modules specified in {@link org.jetbrains.intellij.build.ProductModulesLayout},
+ * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
+ * <p>
+ * By default it includes all modules specified in {@link org.jetbrains.intellij.build.ProductModulesLayout},
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
  * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled},
  * {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledOsPluginModules bundled for different OSes}
- * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish}  published}) with the product.
+ * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish} published}) with the product (except
+ * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
  *
  * @author nik
  */
