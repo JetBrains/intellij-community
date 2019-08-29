@@ -105,7 +105,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
 
     result.addAll(PluginIdDependenciesIndex.getPluginAndDependsIds(project, Collections.singleton(currentFile)));
 
-    final String pluginId = ideaPlugin.getPluginId();
+    final String pluginId = PluginIdDependenciesIndex.getPluginId(project, currentFile);
     if (pluginId != null) {
       result.remove(pluginId);
       return result;

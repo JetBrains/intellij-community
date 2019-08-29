@@ -15,10 +15,14 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
 
@@ -26,6 +30,9 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
 
   @NonNls
   private static final String FILENAME_KEY_PREFIX = "___FILENAME___";
+
+  @NonNls
+  private static final String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
 
   @NotNull
   @Override
@@ -47,7 +54,11 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
       if (plugin == null) return Collections.emptyMap();
 
       List<String> ids = new SmartList<>();
-      ContainerUtil.addIfNotNull(ids, plugin.getPluginId());
+      final String pluginId = plugin.getPluginId();
+      if (pluginId != null) {
+        ids.add(PLUGIN_ID_KEY_PREFIX + pluginId);
+      }
+
       for (Dependency dependency : plugin.getDependencies()) {
         ContainerUtil.addIfNotNull(ids, dependency.getStringValue());
 
@@ -64,7 +75,7 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
@@ -81,10 +92,27 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
     Set<String> ids = new SmartHashSet<>();
     for (VirtualFile file : files) {
-      final Map<String, Void> data = FileBasedIndex.getInstance().getFileData(NAME, file, project);
-      ids.addAll(ContainerUtil.filter(data.keySet(), s -> !StringUtil.startsWith(s, FILENAME_KEY_PREFIX)));
+      final Set<String> keys = FileBasedIndex.getInstance().getFileData(NAME, file, project).keySet();
+      final String pluginId = findPluginId(keys);
+      ContainerUtil.addIfNotNull(ids, pluginId);
+
+      ids.addAll(ContainerUtil.filter(keys, s ->
+        !StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX) &&
+        !StringUtil.startsWith(s, FILENAME_KEY_PREFIX)));
     }
     return ids;
+  }
+
+  @Nullable
+  public static String getPluginId(Project project, VirtualFile file) {
+    final Set<String> keys = FileBasedIndex.getInstance().getFileData(NAME, file, project).keySet();
+    return findPluginId(keys);
+  }
+
+  @Nullable
+  private static String findPluginId(Set<String> data) {
+    final String pluginIdEntry = ContainerUtil.find(data, s -> StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX));
+    return pluginIdEntry == null ? null : StringUtil.substringAfter(pluginIdEntry, PLUGIN_ID_KEY_PREFIX);
   }
 
   public static Collection<VirtualFile> findDependsTo(Project project, VirtualFile file) {
@@ -92,7 +120,7 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
                                                            GlobalSearchScopesCore.projectProductionScope(project));
   }
 
-  private static String getDependsIndexingKey(String filename) {
+  private static String getDependsIndexingKey(@NotNull String filename) {
     return FILENAME_KEY_PREFIX + filename;
   }
 }
