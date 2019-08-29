@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.gson.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
@@ -29,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
@@ -38,6 +37,7 @@ import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionStri
  * @author traff
  */
 public class PySkeletonGenerator {
+  private static final Gson ourGson = new GsonBuilder().create();
 
   // Some flavors need current folder to be passed as param. Here are they.
   private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
@@ -96,95 +96,65 @@ public class PySkeletonGenerator {
     final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, PythonSdkType.activateVirtualEnv(mySdk));
     final GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new LineProcessOutputListener() {
       @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          for (String line : StringUtil.splitByLines(event.getText())) {
-            final String trimmed = line.trim();
-            if (indicator != null) {
-              indicator.checkCanceled();
+      protected void onStdoutLine(@NotNull String line) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+        final String trimmed = line.trim();
+        if (trimmed.startsWith("{")) {
+          final JsonObject controlMessage;
+          try {
+            controlMessage = ourGson.fromJson(trimmed, JsonObject.class);
+          }
+          catch (JsonSyntaxException e) {
+            LOG.warn("Malformed control message: " + line);
+            return;
+          }
+          final String msgType = controlMessage.get("type").getAsString();
+          if (msgType.equals("progress") && indicator != null) {
+            final JsonElement text = controlMessage.get("text");
+            if (text != null) {
+              if (controlMessage.get("minor").getAsBoolean()) {
+                indicator.setText2(text.getAsString());
+              }
+              else {
+                indicator.setText(text.getAsString());
+              }
             }
-            final ControlMessage msg = ControlMessage.fromLine(trimmed);
-            if (msg != null) {
-              final String msgType = msg.getType();
-              final String msgStubType = msg.getSubType();
-              if (msgType.equals("progress") && indicator != null) {
-                if (msgStubType.equals("minor")) {
-                  indicator.setText2(msg.getContent());
-                }
-                else if (msgStubType.equals("fraction")) {
-                  indicator.setIndeterminate(false);
-                  indicator.setFraction(StringUtil.parseDouble(msg.getContent(), 0));
-                }
-                else {
-                  indicator.setText(msg.getContent());
-                }
-              }
-              else if (msgType.equals("log")) {
-                if (msgStubType.equals("info")) {
-                  LOG.info(msg.getContent());
-                }
-                else if (msgStubType.equals("debug")) {
-                  LOG.debug(msg.getContent());
-                }
-                else if (msgStubType.equals("trace")) {
-                  LOG.trace(msg.myContent);
-                }
-              }
+            final JsonElement fraction = controlMessage.get("fraction");
+            if (fraction != null) {
+              indicator.setIndeterminate(false);
+              indicator.setFraction(fraction.getAsDouble());
+            }
+          }
+          else if (msgType.equals("log")) {
+            final String level = controlMessage.get("level").getAsString();
+            final String message = controlMessage.get("message").getAsString();
+            if (level.equals("info")) {
+              LOG.info(message);
+            }
+            else if (level.equals("debug")) {
+              LOG.debug(message);
+            }
+            else if (level.equals("trace")) {
+              LOG.trace(message);
             }
           }
         }
-        else if (outputType == ProcessOutputType.STDERR) {
-          // Tracebacks are handled line-by-line, thus leading indent must be preserved
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        super.onTextAvailable(event, outputType);
+        if (ProcessOutputType.isStderr(outputType)) {
           LOG.info(StringUtil.trimTrailing(event.getText()));
         }
       }
     });
     final ProcessOutput runResult = handler.runProcess(MINUTE * 20);
     return runResult.getExitCode() == 0;
-  }
-
-  private static class ControlMessage {
-    private static final Pattern CONTROL_LINE_PATTERN = Pattern.compile("\\[(?<type>\\w+)(:(?<subtype>\\w+))?]\\s*(?<content>.*)");
-
-    private ControlMessage(@NotNull String type, @NotNull String subType, @NotNull String content) {
-      myType = type;
-      mySubType = subType;
-      myContent = content;
-    }
-
-    final String myType;
-    final String mySubType;
-    final String myContent;
-
-    @NotNull
-    private String getContent() {
-      return myContent;
-    }
-
-    @NotNull
-    private String getType() {
-      return myType;
-    }
-
-    @NotNull
-    private String getSubType() {
-      return mySubType;
-    }
-
-    @Nullable
-    public static ControlMessage fromLine(@NotNull String line) {
-      final Matcher matcher = CONTROL_LINE_PATTERN.matcher(line);
-      if (!matcher.matches()) {
-        return null;
-      }
-
-      return new ControlMessage(matcher.group("type"),
-                                StringUtil.notNullize(matcher.group("subtype")),
-                                matcher.group("content").trim()
-      );
-    }
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
@@ -388,5 +358,47 @@ public class PySkeletonGenerator {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
+  }
+
+  private static class LineProcessOutputListener extends ProcessAdapter {
+    private final StringBuilder myStdoutLine = new StringBuilder();
+    private final StringBuilder myStderrLine = new StringBuilder();
+
+    @Override
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+      final boolean isStdout = ProcessOutputType.isStdout(outputType);
+      final StringBuilder lineBuilder = isStdout ? myStdoutLine : myStderrLine;
+      for (String chunk : StringUtil.splitByLinesKeepSeparators(event.getText())) {
+        lineBuilder.append(chunk);
+        if (StringUtil.isLineBreak(lineBuilder.charAt(lineBuilder.length() - 1))) {
+          final String line = lineBuilder.toString();
+          if (isStdout) {
+            onStdoutLine(line);
+          }
+          else {
+            onStderrLine(line);
+          }
+          lineBuilder.setLength(0);
+        }
+      }
+    }
+
+    @Override
+    public void processTerminated(@NotNull ProcessEvent event) {
+      if (myStdoutLine.length() != 0) {
+        onStdoutLine(myStdoutLine.toString());
+      }
+      if (myStderrLine.length() != 0) {
+        onStderrLine(myStderrLine.toString());
+      }
+    }
+
+    protected void onStdoutLine(@NotNull String line) {
+
+    }
+
+    protected void onStderrLine(@NotNull String line) {
+
+    }
   }
 }

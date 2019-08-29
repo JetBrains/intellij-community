@@ -1,5 +1,6 @@
 # encoding: utf-8
 import collections
+import json
 
 from generator3.util_methods import *
 
@@ -539,16 +540,22 @@ def delete_failed_version_stamp(base_dir, mod_qname):
 BinaryModule = collections.namedtuple('BinaryModule', ['qname', 'path'])
 
 
-def progress(msg, minor=False):
-    if isinstance(msg, float):
-        say('[progress:fraction] ' + str(msg))
-    else:
-        prefix = '[progress:minor] ' if minor else '[progress] '
-        say(prefix + msg)
+def progress(text=None, fraction=None, minor=False):
+    data = {
+        'type': 'progress',
+    }
+    if text is not None:
+        data['text'] = text
+        data['minor'] = minor
+
+    if fraction is not None:
+        data['fraction'] = round(fraction, 2)
+
+    say(json.dumps(data))
 
 
 def log(msg, level='debug'):
-    say('[log:{}] {}'.format(level, msg))
+    say(json.dumps({'type': 'log', 'level': level, 'message': msg}))
 
 
 def info(msg):
@@ -592,5 +599,5 @@ def process_all(sdk_skeletons_dir):
     binaries = collect_binaries(sys.path)
     progress("Updating skeletons for {}...".format(interpreter))
     for i, binary in enumerate(binaries):
-        progress((i + 1.0) / len(binaries))
+        progress(fraction=(i + 1.0) / len(binaries))
         process_one(binary.qname, binary.path, False, sdk_skeletons_dir)
