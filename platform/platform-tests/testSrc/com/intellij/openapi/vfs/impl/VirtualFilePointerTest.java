@@ -24,7 +24,10 @@ import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TestTimeOut;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -433,6 +436,21 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testPointerToJarRootFromUrlMustNotBeMangled() throws IOException {
+    File jar = new File(tempDir.getRoot(), "jarParent/x.jar");
+    FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar"), jar);
+
+    String jarPath = FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR;
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, jarPath);
+    VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(jarUrl);
+    VirtualFilePointer jarRootPointer = myVirtualFilePointerManager.create(jarUrl + "/", disposable, null);
+
+    assertThat(jarRootPointer.getUrl()).as("jar root pointer url before getting file").isEqualTo(jarUrl);
+    assertThat(jarRootPointer.getFile()).as("jar root pointer file").isEqualTo(jarRoot);
+    assertThat(jarRootPointer.getUrl()).as("jar root pointer url after getting file").isEqualTo(jarUrl);
+  }
+
+  @Test
   public void testFilePointerUpdate() throws IOException {
     VirtualFile vTemp = getVirtualTempRoot();
     File file = new File(tempDir.getRoot(), "f1");
@@ -828,5 +846,24 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
       assertEquals("[before:false, after:true]", listener.log.toString());
     });
+  }
+
+  @Test
+  public void testPointerToRootFromUrlMustNotBeMangled() {
+    VirtualFile root = ManagingFS.getInstance().getLocalRoots()[0];
+    String rootPath = root.getPath();
+    String rootUrl = root.getUrl();
+
+    VirtualFilePointer rootPointer = myVirtualFilePointerManager.create(rootUrl, disposable, null);
+    assertThat(rootPointer.getUrl()).as("root pointer url before getting file").isEqualTo(rootUrl);
+    assertThat(rootPointer.getFile()).as("root pointer file").isEqualTo(root);
+    assertThat(rootPointer.getUrl()).as("root pointer url after getting file").isEqualTo(rootUrl);
+
+    assertThat(Arrays.asList(
+      createPointerByFile(new File(rootPath + "//"), null),
+      createPointerByFile(new File(rootPath + "/."), null),
+      createPointerByFile(new File(rootPath + "/.//"), null),
+      createPointerByFile(new File(rootPath + "/.//."), null)
+    )).containsOnly(rootPointer);
   }
 }
