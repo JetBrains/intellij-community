@@ -173,6 +173,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       row.addComponent(label)
     }
 
+    if (buttonGroup != null) {
+      builder.resetCallbacks.add {
+        selectRadioButtonInGroup(buttonGroup)
+      }
+    }
+
     return row
   }
 
@@ -343,13 +349,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
-    val row = createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
-    if (buttonGroup != null) {
-      builder.resetCallbacks.add {
-        selectRadioButtonInGroup(buttonGroup)
-      }
-    }
-    return row
+    return createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
   }
 
   private fun selectRadioButtonInGroup(buttonGroup: ButtonGroup) {
