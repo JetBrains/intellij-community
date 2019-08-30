@@ -666,7 +666,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public final void cancel() {
-    cancel(ObjectUtils.tryCast(IdeEventQueue.getInstance().getTrueCurrentEvent(), InputEvent.class));
+    InputEvent inputEvent = null;
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof InputEvent && myPopup != null) {
+      InputEvent ie = (InputEvent)event;
+      Window window = myPopup.getWindow();
+      if (window != null && UIUtil.isDescendingFrom(ie.getComponent(), window)) {
+        inputEvent = ie;
+      }
+    }
+    cancel(inputEvent);
   }
 
   @Override
