@@ -15,12 +15,19 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -35,17 +42,99 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassSystemProperties(true);
   }
 
-  public void testAddClassPath() {
+  public void testExcludeClassPathElement() throws CantRunException {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
                                            "<artifactId>m1</artifactId>\n" +
                                            "<version>1</version>\n" +
                                            "<dependencies>\n" +
                                            "  <dependency>\n" +
-                                           "    <groupId>test</groupId>\n" +
-                                           "    <artifactId>m2</artifactId>\n" +
-                                           "    <version>1</version>\n" +
+                                           "    <groupId>org.jetbrains</groupId>\n" +
+                                           "    <artifactId>annotations</artifactId>\n" +
+                                           "    <version>17.0.0</version>\n" +
+                                           "  </dependency>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>org.jetbrains</groupId>\n" +
+                                           "    <artifactId>annotations-java5</artifactId>\n" +
+                                           "    <version>17.0.0</version>\n" +
                                            "  </dependency>\n" +
                                            "</dependencies>\n" +
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.16</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <classpathDependencyExcludes>\n" +
+                                           "          <classpathDependencyExclude>org.jetbrains:annotations</classpathDependencyExclude>\n" +
+                                           "        </classpathDependencyExcludes>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18());
+    assertEquals(asList("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
+                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    List<String> classPath = javaParameters.getClassPath().getPathList();
+    assertEquals(Collections.singletonList("annotations-java5-17.0.0.jar"),
+                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+  }
+
+  public void testExcludeScope() throws CantRunException {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m1</artifactId>\n" +
+                                           "<version>1</version>\n" +
+                                           "<dependencies>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>org.jetbrains</groupId>\n" +
+                                           "    <artifactId>annotations</artifactId>\n" +
+                                           "    <version>17.0.0</version>\n" +
+                                           "    <scope>runtime</scope>\n" +
+                                           "  </dependency>\n" +
+                                           "  <dependency>\n" +
+                                           "    <groupId>org.jetbrains</groupId>\n" +
+                                           "    <artifactId>annotations-java5</artifactId>\n" +
+                                           "    <version>17.0.0</version>\n" +
+                                           "  </dependency>\n" +
+                                           "</dependencies>\n" +
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.16</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <classpathDependencyScopeExclude>runtime</classpathDependencyScopeExclude>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18());
+    assertEquals(asList("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
+                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    List<String> classPath = javaParameters.getClassPath().getPathList();
+    assertEquals(Collections.singletonList("annotations-java5-17.0.0.jar"),
+                 ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
+  }
+
+  public void testAddClassPath() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m1</artifactId>\n" +
+                                           "<version>1</version>\n" +
                                            "<build>\n" +
                                            "  <plugins>\n" +
                                            "    <plugin>\n" +

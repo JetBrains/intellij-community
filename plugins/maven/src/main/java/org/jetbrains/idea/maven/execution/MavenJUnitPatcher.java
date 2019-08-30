@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -25,9 +26,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,6 +68,19 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (paths.size() > 0) {
       for (String path : paths) {
         javaParameters.getClassPath().add(resolvePluginProperties(plugin, path, domModel));
+      }
+    }
+
+    List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(config, "classpathDependencyExcludes", "classpathDependencyExclude");
+    String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
+
+    if (scopeExclude != null || !excludes.isEmpty()) {
+      for (MavenArtifact dependency : mavenProject.getDependencies()) {
+        if (scopeExclude != null && scopeExclude.equals(dependency.getScope()) ||
+            excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
+          File file = dependency.getFile();
+          javaParameters.getClassPath().remove(file.getAbsolutePath());
+        }
       }
     }
 
