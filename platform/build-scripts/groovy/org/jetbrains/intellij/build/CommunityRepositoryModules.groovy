@@ -169,7 +169,6 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
       withModule("intellij.gradle.toolingLoaderRt")
-      withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
     plugin("intellij.gradle.java.maven"),
