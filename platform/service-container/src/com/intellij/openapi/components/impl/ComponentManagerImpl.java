@@ -9,8 +9,6 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
@@ -39,7 +37,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   protected final DefaultPicoContainer myPicoContainer;
-  protected final ExtensionsAreaImpl myExtensionArea;
 
   private volatile boolean myDisposed;
   private volatile boolean myDisposeCompleted;
@@ -58,7 +55,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
     myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
-    myExtensionArea = new ExtensionsAreaImpl(this);
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
@@ -147,12 +143,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       throwAlreadyDisposed();
     }
     return container;
-  }
-
-  @NotNull
-  @Override
-  public final ExtensionsArea getExtensionArea() {
-    return myExtensionArea;
   }
 
   @Contract("->fail")

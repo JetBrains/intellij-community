@@ -13,6 +13,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -44,7 +45,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, expectedType)) {
           return true
         }
-        return isExtensionSupported && componentManager.myExtensionArea.findExtensionByClass(expectedType) != null
+        return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
       }
 
       override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
@@ -54,7 +55,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
         val result = super.resolveInstance(componentManager, requestorKey, expectedType)
         if (result == null && isExtensionSupported) {
-          val extension = componentManager.myExtensionArea.findExtensionByClass(expectedType)
+          val extension = componentManager.extensionArea.findExtensionByClass(expectedType)
           if (extension != null) {
             LOG.warn("Do not use constructor injection to get extension instance (requestorKey=$requestorKey, extensionClass=${expectedType.name})")
           }
@@ -72,6 +73,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
+  @Suppress("LeakingThis")
+  private val extensionArea = ExtensionsAreaImpl(this)
+
   private var handlingInitComponentError = false
 
   var componentCreated = false
@@ -87,9 +91,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   init {
     if (setExtensionsRootArea) {
-      Extensions.setRootArea(myExtensionArea)
+      Extensions.setRootArea(extensionArea)
     }
   }
+
+  final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   @Internal
   open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
@@ -105,7 +111,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         registerServices(containerDescriptor.services, plugin)
 
         containerDescriptor.extensionPoints?.let {
-          myExtensionArea.registerExtensionPoints(plugin, it, this)
+          extensionArea.registerExtensionPoints(plugin, it, this)
         }
       }
     }
@@ -113,7 +119,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     parallelActivity.run("${activityNamePrefix}extension registration") {
       val notifyListeners = LoadingPhase.isStartupComplete()
       for (descriptor in plugins) {
-        descriptor.registerExtensions(myExtensionArea, this, notifyListeners)
+        descriptor.registerExtensions(extensionArea, this, notifyListeners)
       }
     }
 

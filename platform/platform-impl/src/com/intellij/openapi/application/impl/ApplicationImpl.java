@@ -317,7 +317,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired) {
+  public void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
     invokeLater(runnable, ModalityState.defaultModalityState(), expired);
   }
 
@@ -327,7 +327,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
+  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     LaterInvocator.invokeLaterWithCallback(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired, null);
   }
 
@@ -366,7 +366,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : myExtensionArea.<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
+      for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
           break;
         }
@@ -1154,7 +1154,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(@NotNull Class clazz) {
+  public AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
     return new WriteAccessToken(clazz);
   }
 

@@ -231,7 +231,7 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
    */
-  void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -259,7 +259,7 @@ public interface Application extends ComponentManager {
    * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
    */
-  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
@@ -430,7 +430,7 @@ public interface Application extends ComponentManager {
    */
   @NotNull
   @Deprecated
-  AccessToken acquireWriteActionLock(@NotNull Class marker);
+  AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /**
    * Checks if IDE is running in <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a> to enable additional features for plugin development.
