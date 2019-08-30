@@ -64,6 +64,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -663,13 +665,28 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @NotNull
     private Font getProductFont(int size) {
       try {
-        //noinspection SpellCheckingInspection
-        return new Font("Roboto Light", Font.PLAIN, JBUIScale.scale(size));
+        return loadFont("/fonts/Roboto-Light.ttf").deriveFont((float)JBUIScale.scale(size));
       }
       catch (Throwable t) {
         Logger.getInstance(AppUIUtil.class).warn(t);
       }
       return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
+    }
+
+    private Font loadFont(String path) {
+      URL url = AppUIUtil.class.getResource(path);
+      if (url == null) {
+        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + path);
+      } else {
+
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
+        }
+        catch (Throwable t) {
+          Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
+        }
+      }
+      return StartupUiUtil.getLabelFont();
     }
 
     private JComponent createRecentProjects() {
