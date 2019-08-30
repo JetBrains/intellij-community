@@ -103,7 +103,7 @@ class YAMLBlockScalarItemBlock implements Block {
     YAMLBlockScalarImpl blockScalarImpl = (YAMLBlockScalarImpl)blockScalarNode.getPsi();
 
     // possible performance problem: parent full indent for every block scalar line
-    int parentFullIndent = getParentFullIndent(blockScalarNode.getTreeParent());
+    int parentFullIndent = getParentFullIndent(context, blockScalarNode.getTreeParent());
 
     Indent indent;
     TextRange range;
@@ -115,7 +115,7 @@ class YAMLBlockScalarItemBlock implements Block {
     }
     else {
       // possible performance problem: calculating first line offset for every block scalar line
-      int needOffset = Math.max(oldOffset - getFirstLineOffset(blockScalarImpl), 0);
+      int needOffset = Math.max(oldOffset - getFirstLineOffset(context, blockScalarImpl), 0);
       range = new TextRange(node.getStartOffset() - needOffset, node.getTextRange().getEndOffset());
       alignment = context.computeAlignment(node);
       indent = Indent.getNormalIndent(true);
@@ -123,8 +123,8 @@ class YAMLBlockScalarItemBlock implements Block {
     return new YAMLBlockScalarItemBlock(range, indent, alignment);
   }
 
-  private static int getFirstLineOffset(@NotNull YAMLBlockScalarImpl blockScalarPsi) {
-    int parentFullIndent = getParentFullIndent(blockScalarPsi.getNode().getTreeParent());
+  private static int getFirstLineOffset(@NotNull YAMLFormattingContext context, @NotNull YAMLBlockScalarImpl blockScalarPsi) {
+    int parentFullIndent = getParentFullIndent(context, blockScalarPsi.getNode().getTreeParent());
     ASTNode firstLine = blockScalarPsi.getNthContentTypeChild(1);
     if (firstLine == null) {
       return 0;
@@ -133,13 +133,17 @@ class YAMLBlockScalarItemBlock implements Block {
     return Math.max(getNodeFullIndent(firstLine) - parentFullIndent, 0);
   }
 
-  private static int getParentFullIndent(@NotNull ASTNode node) {
-    String fullText = node.getPsi().getContainingFile().getText();
+  private static int getParentFullIndent(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
+    String fullText = context.getFullText();
     int start = node.getTextRange().getStartOffset();
 
     for (int cur = start - 1; cur >= 0; cur--) {
       if (fullText.charAt(cur) == '\n') {
         return start - cur - 1;
+      }
+      if (start - cur > 1000) {
+        // So big indent has no practical use...
+        return 0;
       }
     }
     return start;
