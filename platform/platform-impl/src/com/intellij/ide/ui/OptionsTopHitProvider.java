@@ -270,11 +270,6 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
           }
           getCachedOptions(provider, project, pluginDescriptor);
         });
-      
-        StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
-        if (startUpPerformanceReporter != null) {
-          startUpPerformanceReporter.lastEdtOptionTopHitProviderFinishedForProject();
-        }
       }
       activity.end();
     }
