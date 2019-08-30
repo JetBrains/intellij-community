@@ -43,7 +43,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class UndoManagerImpl extends UndoManager implements Disposable {
+public final class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly
