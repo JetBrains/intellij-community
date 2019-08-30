@@ -366,5 +366,7 @@
     <extensionPoint name="editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener"/>
     <extensionPoint name="editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener"/>
     <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener"/>
+
+    <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
   </extensionPoints>
 </idea-plugin>

@@ -26,6 +26,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -73,6 +74,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
+
+  private static final ExtensionPointName<ProjectCloseHandler> CLOSE_HANDLER_EP = new ExtensionPointName<>("com.intellij.projectCloseHandler");
 
   private @NotNull Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
@@ -898,10 +901,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: canClose()");
     }
 
+    for (ProjectCloseHandler handler : CLOSE_HANDLER_EP.getIterable()) {
+      if (handler == null) {
+        break;
+      }
+
+      try {
+        if (!handler.canClose(project)) {
+          LOG.debug("close canceled by " + handler);
+          return false;
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
     for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
-        @SuppressWarnings("deprecation") boolean canClose =
-          listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
+        @SuppressWarnings("deprecation")
+        boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
         if (!canClose) {
           LOG.debug("close canceled by " + listener);
           return false;

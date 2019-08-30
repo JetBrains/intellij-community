@@ -89,9 +89,9 @@ public class CoreApplicationEnvironment {
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    final MutablePicoContainer appContainer = myApplication.getPicoContainer();
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
-      charSequence -> new DocumentImpl(charSequence), null));
+    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
+      return new DocumentImpl(charSequence);
+    }, null));
 
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)

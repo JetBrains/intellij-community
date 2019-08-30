@@ -11,6 +11,14 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
+    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
+    <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
+                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="true"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
+                        serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
+                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>
 

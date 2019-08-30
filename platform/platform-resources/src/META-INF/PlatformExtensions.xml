@@ -27,6 +27,12 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
+    <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"
+                        serviceImplementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl"/>
+    <projectCloseHandler implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyProjectCloseHandler"/>
+    <vfs.asyncListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyAsyncFileListener"/>
+
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"/>
 
