@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -47,7 +48,7 @@ class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
       if (module.isDisposed) continue
 
       for (excludeRoot in ModuleRootManager.getInstance(module).excludeRoots) {
-        if (!fileIndex.isExcluded(excludeRoot)) {
+        if (runReadAction { !fileIndex.isExcluded(excludeRoot) }) {
           //root is included into some inner module so it shouldn't be ignored
           continue
         }
