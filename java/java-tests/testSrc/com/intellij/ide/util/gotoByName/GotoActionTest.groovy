@@ -99,6 +99,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     ]
 
     OptionsTopHitProvider provider = new OptionsTopHitProvider() {
+      @NotNull
       @Override
       Collection<OptionDescription> getOptions(@Nullable Project project) {
         return options
