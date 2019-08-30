@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -32,7 +34,8 @@ public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
   PS extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<PS>>
-  implements Disposable {
+  implements Disposable
+{
 
   @NotNull private final Topic<L> myChangesTopic;
   @NotNull private final Project myProject;
@@ -72,9 +75,10 @@ public abstract class AbstractExternalSystemSettings<
    * <p/>
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
    *
-   * @param listener         target generic listener to wrap to external system-specific implementation
+   * @param listener  target generic listener to wrap to external system-specific implementation
    * @param parentDisposable is a disposable to unsubscribe from external system settings events
    * @note lifetime of parentDisposable must be shorter of project lifetime
+   *
    * @abstract at 2021
    */
   public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
@@ -82,9 +86,10 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   /**
-   * @remove at 2021
-   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
+   * @remove at 2021
+   *
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
   @Deprecated
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
@@ -118,10 +123,10 @@ public abstract class AbstractExternalSystemSettings<
   @Nullable
   public PS getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     PS ps = myLinkedProjectsSettings.get(linkedProjectPath);
-    if (ps == null) {
+    if(ps == null) {
       for (PS ps1 : myLinkedProjectsSettings.values()) {
         for (String modulePath : ps1.getModules()) {
-          if (linkedProjectPath.equals(modulePath)) return ps1;
+          if(linkedProjectPath.equals(modulePath)) return ps1;
         }
       }
     }
@@ -143,10 +148,10 @@ public abstract class AbstractExternalSystemSettings<
   /**
    * Un-links given external project from the current ide project.
    *
-   * @param linkedProjectPath path of external project to be unlinked
-   * @return {@code true} if there was an external project with the given config path linked to the current
-   * ide project;
-   * {@code false} otherwise
+   * @param linkedProjectPath  path of external project to be unlinked
+   * @return                   {@code true} if there was an external project with the given config path linked to the current
+   *                           ide project;
+   *                           {@code false} otherwise
    */
   public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
     PS removed = myLinkedProjectsSettings.remove(linkedProjectPath);
@@ -206,8 +211,8 @@ public abstract class AbstractExternalSystemSettings<
    * Is assumed to check if given old settings external system-specific state differs from the given new one
    * and {@link #getPublisher() notify} listeners in case of the positive answer.
    *
-   * @param old     old settings state
-   * @param current current settings state
+   * @param old      old settings state
+   * @param current  current settings state
    */
   protected abstract void checkSettings(@NotNull PS old, @NotNull PS current);
 
@@ -225,12 +230,34 @@ public abstract class AbstractExternalSystemSettings<
     state.setLinkedExternalProjectsSettings(ContainerUtilRt.newTreeSet(myLinkedProjectsSettings.values()));
   }
 
+  private final AtomicReference<Set<?>> pendingSettings = new AtomicReference<>();
+
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings == null) {
+      pendingSettings.set(null);
       return;
     }
 
+    // todo remove when https://youtrack.jetbrains.com/issue/IDEA-220429 will be fixed
+    // only for unit test — don't care about production (reduce scope of regression due to this yet another workaround)
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      StartupManager startupManager = StartupManager.getInstance(getProject());
+      if (!startupManager.postStartupActivityPassed()) {
+        startupManager.registerPostStartupActivity(() -> {
+          if (pendingSettings.compareAndSet(settings, null)) {
+            doSetSettings(settings);
+          }
+        });
+        return;
+      }
+    }
+
+    pendingSettings.set(null);
+    doSetSettings(settings);
+  }
+
+  private void doSetSettings(Set<PS> settings) {
     setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection linked) {
@@ -242,19 +269,17 @@ public abstract class AbstractExternalSystemSettings<
         for (Object o : linked) {
           final ExternalProjectSettings settings = (ExternalProjectSettings)o;
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
-            ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {
-              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
-              ProjectSystemId externalSystemId = manager.getSystemId();
-              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-                ExternalProjectsManager.getInstance(project).refreshProject(
-                  settings.getExternalProjectPath(),
-                  new ImportSpecBuilder(project, externalSystemId)
-                    .useDefaultCallback()
-                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                    .build()
-                );
-              }
-            });
+            AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
+            ProjectSystemId externalSystemId = manager.getSystemId();
+            if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
+              ExternalProjectsManager.getInstance(project).refreshProject(
+                settings.getExternalProjectPath(),
+                new ImportSpecBuilder(project, externalSystemId)
+                  .useDefaultCallback()
+                  .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                  .build()
+              );
+            }
           }
         }
       }
