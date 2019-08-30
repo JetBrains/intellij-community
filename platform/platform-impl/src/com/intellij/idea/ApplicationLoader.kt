@@ -44,6 +44,7 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.CustomProtocolHandler
 import com.intellij.ui.mac.MacOSApplicationProvider
+import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -142,6 +143,7 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
       // do not wait completion - it is thread safe and not required for application start
       AppExecutorUtil.getAppExecutorService().execute {
         ParallelActivity.PREPARE_APP_INIT.run("mac touchbar") {
+          Foundation.init()
           TouchBarsManager.isTouchBarAvailable()
         }
       }

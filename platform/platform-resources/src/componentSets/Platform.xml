@@ -45,11 +45,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.util.FoundationLoader</implementation-class>
-      <headless-implementation-class/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader</implementation-class>
       <headless-implementation-class/>
     </component>
