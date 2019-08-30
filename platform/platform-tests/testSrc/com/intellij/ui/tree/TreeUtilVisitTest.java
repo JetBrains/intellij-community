@@ -848,6 +848,16 @@ public final class TreeUtilVisitTest {
   }
 
   @Test
+  public void testSelectFirstLeafInvisibleRoot() {
+    testSelectFirstLeaf(() -> node("root"), false, "");
+  }
+
+  @Test
+  public void testSelectFirstLeafWhenNoMoreLeafs() {
+    testSelectFirstLeaf(() -> node("root", node("middle", node("leaf"))), false, " -middle\n  [leaf]\n");
+  }
+
+  @Test
   public void testSelectFirstLeafWithRoot() {
     testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, true, "-Root\n" +
                                                            " -1\n" +

@@ -1576,9 +1576,13 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
-    return promiseSelect(tree, path -> !tree.isRootVisible() && path.getParentPath() == null
+    return promiseSelect(tree, path -> isHiddenRoot(tree, path)
                                        ? TreeVisitor.Action.CONTINUE
                                        : TreeVisitor.Action.INTERRUPT);
+  }
+
+  private static boolean isHiddenRoot(@NotNull JTree tree, @NotNull TreePath path) {
+    return !tree.isRootVisible() && path.getParentPath() == null;
   }
 
   /**
@@ -1603,7 +1607,16 @@ public final class TreeUtil {
     }, promise)
       .onError(promise::setError)
       .onSuccess(path -> {
-        if (!promise.isDone()) promise.cancel();
+        if (!promise.isDone()) {
+          TreePath tail = reference.get();
+          if (tail == null || isHiddenRoot(tree, tail)) {
+            promise.cancel();
+          }
+          else {
+            internalSelectPath(tree, tail);
+            promise.setResult(tail);
+          }
+        }
       });
     return promise;
   }
