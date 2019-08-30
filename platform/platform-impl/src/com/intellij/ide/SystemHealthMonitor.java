@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
@@ -105,17 +106,17 @@ final class SystemHealthMonitor extends PreloadingActivity {
       try {
         Memory sa = new Memory(256);
 
-        if (LibC.sigaction(LibC.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.Handler newHandler = sig -> { System.exit(130); };  // 128 + SIGINT (ref: java.lang.Terminator)
+        if (LibC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+          LibC.Handler newHandler = sig -> { System.exit(128 + sig); };  // ref: java.lang.Terminator
           SIGINT_CALLBACK_REF = newHandler;
-          LibC.signal(LibC.SIGINT, newHandler);
+          LibC.signal(UnixProcessManager.SIGINT, newHandler);
           LOG.info("restored ignored INT handler");
         }
 
-        if (LibC.sigaction(LibC.SIGPIPE, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+        if (LibC.sigaction(UnixProcessManager.SIGPIPE, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
           LibC.Handler newHandler = sig -> { };  // no-op handler unmasks the signal in child processes
           SIGPIPE_CALLBACK_REF = newHandler;
-          LibC.signal(LibC.SIGPIPE, newHandler);
+          LibC.signal(UnixProcessManager.SIGPIPE, newHandler);
           LOG.info("restored ignored PIPE handler");
         }
       }
@@ -240,9 +241,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
     static {
       Native.register(LibC.class, NativeLibrary.getInstance("c"));
     }
-
-    static final int SIGINT = 2;
-    static final int SIGPIPE = 13;
 
     static final Pointer SIG_IGN = new Pointer(1L);
 
