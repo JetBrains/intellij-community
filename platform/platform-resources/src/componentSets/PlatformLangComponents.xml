@@ -16,12 +16,6 @@
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
-    </component>
-  </project-components>
-
   <applicationListeners>
     <listener class="com.intellij.util.gist.GistManagerImpl$MyBulkFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false"/>

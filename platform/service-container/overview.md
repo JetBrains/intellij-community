@@ -36,7 +36,7 @@ To register:
 
 An activity to be executed after project opening.
 
-See [StartupActivity](https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/startup/StartupActivity.java).
+See [StartupActivity](https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/startup/StartupActivity.java). Do not forget to implement `DumbAware` to indicate that activity can be performed not in EDT and not during indexing.
 
 There are two extension points:
 

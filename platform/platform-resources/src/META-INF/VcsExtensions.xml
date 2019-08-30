@@ -157,6 +157,8 @@
         id="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
         implementation="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
         order="first"/>
+
+    <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
   </extensions>
 
   <applicationListeners>

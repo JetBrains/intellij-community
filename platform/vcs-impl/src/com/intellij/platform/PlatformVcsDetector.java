@@ -2,8 +2,10 @@
 package com.intellij.platform;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -22,8 +24,9 @@ import static java.util.Collections.singletonList;
 /**
  * @author yole
  */
-final class PlatformVcsDetector {
-  PlatformVcsDetector(@NotNull Project project) {
+final class PlatformVcsDetector implements StartupActivity, DumbAware {
+  @Override
+  public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         String projectBasePath = project.getBasePath();
