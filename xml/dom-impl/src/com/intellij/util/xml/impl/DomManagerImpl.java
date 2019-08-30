@@ -473,7 +473,7 @@ public final class DomManagerImpl extends DomManager {
     }
   }
 
-  public void clearCache() {
+  private void clearCache() {
     incModificationCount();
   }
 }

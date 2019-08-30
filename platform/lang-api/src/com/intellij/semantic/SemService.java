@@ -25,6 +25,4 @@ public abstract class SemService {
   }
 
   public abstract <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi);
-
-  public abstract void clearCache();
 }
