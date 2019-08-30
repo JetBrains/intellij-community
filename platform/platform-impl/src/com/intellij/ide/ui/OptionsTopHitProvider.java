@@ -9,12 +9,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -233,6 +233,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   }
 
   static final class Activity extends PreloadingActivity implements StartupActivity, DumbAware {
+    Activity() {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw ExtensionNotApplicableException.INSTANCE;
+      }
+    }
+
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
       cacheAll(indicator, null); // for application
@@ -240,17 +246,16 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     @Override
     public void runActivity(@NotNull Project project) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> cacheAll(null, project)); // for given project
+      // for given project
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        cacheAll(null, project);
+        StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter.class).lastOptionTopHitProviderFinishedForProject();
+      });
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
-      Application app = ApplicationManager.getApplication();
-      if (app == null || app.isUnitTestMode()) {
-        return;
-      }
-
-      long millis = System.currentTimeMillis();
       String name = project == null ? "application" : "project";
+      com.intellij.diagnostic.Activity activity = ParallelActivity.PREPARE_APP_INIT.start("cache options in " + name);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider) {
           if (project != null && provider instanceof ApplicationLevelProvider) return;
@@ -271,9 +276,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
           startUpPerformanceReporter.lastEdtOptionTopHitProviderFinishedForProject();
         }
       }
-
-      long delta = System.currentTimeMillis() - millis;
-      LOG.info(delta + " ms spent to cache options in " + name);
+      activity.end();
     }
 
     private static void cache(@NotNull OptionsSearchTopHitProvider provider,

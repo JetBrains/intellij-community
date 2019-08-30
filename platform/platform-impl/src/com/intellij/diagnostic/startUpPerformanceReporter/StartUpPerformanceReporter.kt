@@ -22,9 +22,10 @@ import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.write
 import gnu.trove.THashMap
-import java.io.File
 import java.io.StringWriter
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -79,7 +80,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     }
   }
 
-  fun lastEdtOptionTopHitProviderFinishedForProject() {
+  fun lastOptionTopHitProviderFinishedForProject() {
     if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
       return
     }
@@ -185,29 +186,26 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val perfFilePath = System.getProperty("idea.log.perf.stats.file")
     if (!perfFilePath.isNullOrBlank()) {
       LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
-      val perfFile = File(perfFilePath)
-      perfFile.parentFile?.mkdirs()
-      perfFile.writeBytes(currentReport)
+      Paths.get(perfFilePath).write(currentReport)
     }
   }
 
   private fun computePluginCostMap(): MutableMap<String, ObjectLongHashMap<String>> {
-    var pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>
+    var result: MutableMap<String, ObjectLongHashMap<String>>
     synchronized(StartUpMeasurer.pluginCostMap) {
-      pluginCostMap = THashMap(StartUpMeasurer.pluginCostMap)
+      result = THashMap(StartUpMeasurer.pluginCostMap)
       StartUpMeasurer.pluginCostMap.clear()
     }
-    this.pluginCostMap = pluginCostMap
-
+    this.pluginCostMap = result
 
     for (plugin in PluginManagerCore.getLoadedPlugins()) {
       val id = plugin.pluginId.idString
       val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
-      val costPerPhaseMap = pluginCostMap.getOrPut(id) { ObjectLongHashMap() }
+      val costPerPhaseMap = result.getOrPut(id) { ObjectLongHashMap() }
       costPerPhaseMap.put("classloading (EDT)", classLoader.edtTime)
       costPerPhaseMap.put("classloading (background)", classLoader.backgroundTime)
     }
-    return pluginCostMap
+    return result
   }
 }
 
