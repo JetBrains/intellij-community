@@ -32,7 +32,7 @@ class GitCloneDialogComponent(project: Project) :
     val parentDirectory = parent.toAbsolutePath().toString()
 
     GitCheckoutProvider.clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory)
-    val rememberedInputs = GitRememberedInputs.getInstance();
+    val rememberedInputs = GitRememberedInputs.getInstance()
     rememberedInputs.addUrl(sourceRepositoryURL)
     rememberedInputs.cloneParentDir = parentDirectory
   }
