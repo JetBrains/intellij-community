@@ -115,9 +115,7 @@ class FilePointerPartNode {
   }
 
   /**
-   * Tries to match the given path ({@code (parent != null ? parent.getPath() : "") + (separator ? "/" : "") + childName.substring(childStart)})
-   * with the trie structure of FilePointerPartNodes
-   * @return the node (in outNode[0]) and length of matched characters in that node, or -1 if there is no match.
+   * Tries to match the given path (parent, childNameId) with the trie structure of FilePointerPartNodes
    * <p>Recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs.
    * @param parentNameId is equal to {@code parent != null ? parent.getName() : null}
    */
@@ -125,16 +123,17 @@ class FilePointerPartNode {
                                         int parentNameId,
                                         int childNameId,
                                         @Nullable List<? super FilePointerPartNode> outDirs,
-                                        boolean createIfNotFound) {
+                                        boolean createIfNotFound,
+                                        @NotNull VirtualFileSystem fs) {
     assert childNameId != -1 && (parent == null) == (parentNameId == -1);
     FilePointerPartNode leaf;
     if (parent == null) {
       leaf = this;
     }
     else {
-      VirtualFile gParent = parent.getParent();
+      VirtualFile gParent = getParentThroughJars(parent, fs);
       int gParentNameId = getNameId(gParent);
-      leaf = matchById(gParent, gParentNameId, parentNameId, outDirs, createIfNotFound);
+      leaf = matchById(gParent, gParentNameId, parentNameId, outDirs, createIfNotFound, fs);
       if (leaf == null) return null;
     }
 
@@ -148,7 +147,8 @@ class FilePointerPartNode {
 
   private FilePointerPartNode findByExistingNameId(@Nullable VirtualFile parent,
                                                    int childNameId,
-                                                   @Nullable List<? super FilePointerPartNode> outDirs) {
+                                                   @Nullable List<? super FilePointerPartNode> outDirs,
+                                                   @NotNull VirtualFileSystem fs) {
     if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     FilePointerPartNode leaf;
     if (parent == null) {
@@ -156,9 +156,9 @@ class FilePointerPartNode {
     }
     else {
       int nameId = getNameId(parent);
-      VirtualFile gParent = parent.getParent();
+      VirtualFile gParent = getParentThroughJars(parent, fs);
       int gParentNameId = getNameId(gParent);
-      leaf = matchById(gParent, gParentNameId, nameId, outDirs, false);
+      leaf = matchById(gParent, gParentNameId, nameId, outDirs, false, fs);
       if (leaf == null) return null;
     }
 
@@ -229,9 +229,10 @@ class FilePointerPartNode {
   void addRelevantPointersFrom(@Nullable VirtualFile parent,
                                int childNameId,
                                @NotNull List<? super FilePointerPartNode> out,
-                               boolean addSubdirectoryPointers) {
+                               boolean addSubdirectoryPointers,
+                               @NotNull VirtualFileSystem fs) {
     if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
-    FilePointerPartNode node = findByExistingNameId(parent, childNameId, out);
+    FilePointerPartNode node = findByExistingNameId(parent, childNameId, out, fs);
     if (node != null) {
       if (node.leaves != null) {
         out.add(node);
@@ -428,11 +429,23 @@ class FilePointerPartNode {
   }
 
   @NotNull
-  FilePointerPartNode findOrCreateNodeByFile(@NotNull VirtualFile file) {
+  FilePointerPartNode findOrCreateNodeByFile(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem fs) {
     int nameId = getNameId(file);
-    VirtualFile parent = file.getParent();
+    VirtualFile parent = getParentThroughJars(file, fs);
     int parentNameId = getNameId(parent);
-    return matchById(parent, parentNameId, nameId, null, true);
+    return matchById(parent, parentNameId, nameId, null, true, fs);
+  }
+
+  // for "file://a/b/c.txt" return "a/b", for "jar://a/b/j.jar!/c.txt" return "/a/b/j.jar"
+  private static VirtualFile getParentThroughJars(@NotNull VirtualFile file, @NotNull VirtualFileSystem fs) {
+    VirtualFile parent = file.getParent();
+    if (parent == null && fs instanceof ArchiveFileSystem) {
+      VirtualFile local = ((ArchiveFileSystem)fs).getLocalByEntry(file);
+      if (local != null) {
+        parent = local.getParent();
+      }
+    }
+    return parent;
   }
 
   @NotNull

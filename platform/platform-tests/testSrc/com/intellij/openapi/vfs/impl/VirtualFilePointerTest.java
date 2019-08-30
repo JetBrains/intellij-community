@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -865,5 +866,32 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       createPointerByFile(new File(rootPath + "/.//"), null),
       createPointerByFile(new File(rootPath + "/.//."), null)
     )).containsOnly(rootPointer);
+  }
+
+  @Test
+  public void testDifferentFileSystemsLocalFSAndJarFSWithSimilarUrlsMustReturnDifferentInstances() throws IOException {
+    VirtualFile vDir = getVirtualTempRoot();
+    WriteAction.runAndWait(() -> {
+      VirtualFile v1 = vDir.createChildDirectory(this, "p1").createChildData(this, "p.jar");
+      IoTestUtil.createTestJar(new File(v1.getPath()));
+      v1.refresh(false, true);
+      VirtualFile j1 = JarFileSystem.getInstance().getJarRootForLocalFile(v1);
+      assertNotNull(j1);
+      VirtualFile v2 = vDir.createChildDirectory(this, "p2").createChildData(this, "p.jar");
+      IoTestUtil.createTestJar(new File(v2.getPath()));
+      v2.refresh(false, true);
+      VirtualFile j2 = JarFileSystem.getInstance().getJarRootForLocalFile(v2);
+      assertNotNull(j2);
+      assertNotSame(j1, j2);
+      assertNotSame(v1, v2);
+      VirtualFilePointer p1 = myVirtualFilePointerManager.create(v1, disposable, null);
+      VirtualFilePointer p2 = myVirtualFilePointerManager.create(v2, disposable, null);
+      assertNotSame(p1, p2);
+      VirtualFilePointer pj1 = myVirtualFilePointerManager.create(j1, disposable, null);
+      VirtualFilePointer pj2 = myVirtualFilePointerManager.create(j2, disposable, null);
+      assertNotSame(pj1, pj2);
+      assertNotSame(p1, pj1);
+      assertNotSame(p2, pj2);
+    });
   }
 }
