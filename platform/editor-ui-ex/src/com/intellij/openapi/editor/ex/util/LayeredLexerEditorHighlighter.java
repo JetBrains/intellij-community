@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -47,7 +46,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @NotNull
   @Override
   protected SegmentArrayWithData createSegments() {
-    return new MappingSegments(getLexer() instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage());
+    return new MappingSegments(createStorage());
   }
 
   public synchronized void registerLayer(@NotNull IElementType tokenType, @NotNull LayerDescriptor layerHighlighter) {
