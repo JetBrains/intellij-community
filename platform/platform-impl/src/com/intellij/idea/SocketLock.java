@@ -2,7 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
@@ -147,8 +147,8 @@ public final class SocketLock {
       System.exit(0);
     }
 
-    Activity builtinServerLaunch = StartUpMeasurer.start("builtin server launch");
     myBuiltinServerFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      Activity builtinServerLaunch = ParallelActivity.PREPARE_APP_INIT.start("builtin server launch");
       myToken = UUID.randomUUID().toString();
       Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
       // parent directories are already created (see underLocks)
