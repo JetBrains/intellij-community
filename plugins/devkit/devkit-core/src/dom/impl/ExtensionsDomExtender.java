@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
@@ -15,6 +16,7 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.Extensions;
@@ -39,6 +41,8 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     Project project = extensions.getManager().getProject();
     VirtualFile currentFile = getVirtualFile(extensions);
+    if (currentFile == null) return;
+
     Set<VirtualFile> files = getVisibleFiles(project, currentFile);
 
     String epPrefix = extensions.getEpPrefix();
@@ -51,18 +55,20 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  @Nullable
   private static VirtualFile getVirtualFile(DomElement domElement) {
-    return DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
+    final VirtualFile file = DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
+    return file instanceof VirtualFileWithId ? file : null;
   }
 
-  private static Set<VirtualFile> getVisibleFiles(Project project, VirtualFile file) {
+  private static Set<VirtualFile> getVisibleFiles(Project project, @NotNull VirtualFile file) {
     Set<VirtualFile> result = new HashSet<>();
     collectFiles(project, file, result);
     result.addAll(PluginIdModuleIndex.getFiles(project, ""));
     return result;
   }
 
-  private static void collectFiles(Project project, VirtualFile file, Set<VirtualFile> result) {
+  private static void collectFiles(Project project, @NotNull VirtualFile file, Set<VirtualFile> result) {
     ProgressManager.checkCanceled();
     if (!result.add(file)) {
       return;
@@ -85,7 +91,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     return getDependencies(project, currentFile);
   }
 
-  private static Collection<String> getDependencies(Project project, VirtualFile currentFile) {
+  private static Collection<String> getDependencies(Project project, @NotNull VirtualFile currentFile) {
     Set<String> result = new HashSet<>();
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
