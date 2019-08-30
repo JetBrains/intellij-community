@@ -10,9 +10,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
-import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -26,6 +27,7 @@ import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoCon
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
 
@@ -496,5 +498,49 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     type('(');
     waitForAllAsyncStuff();
     checkHintContents(null);
+  }
+
+  public void testCustomHandlerHighlighterWithEscaping() {
+    myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
+    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new ParameterInfoHandler<Object, Object>() {
+      @Override
+      public boolean couldShowInLookup() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Object findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+        context.setItemsToShow(new Object[]{this});
+        return this;
+      }
+
+      @Override
+      public void showParameterInfo(@NotNull Object element, @NotNull CreateParameterInfoContext context) {
+        context.showHint(context.getFile(), context.getOffset(), this);
+      }
+
+      @Nullable
+      @Override
+      public Object findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+        return this;
+      }
+
+      @Override
+      public void updateParameterInfo(@NotNull Object o, @NotNull UpdateParameterInfoContext context) {}
+
+      @Override
+      public void updateUI(Object p, @NotNull ParameterInfoUIContext context) {
+        context.setupUIComponentPresentation("<ABC>, DEF", 7, 10, true, true, false, context.getDefaultParameterColor());
+      }
+    }, getTestRootDisposable());
+    showParameterInfo();
+    checkHintContents("<html><strike>&lt;ABC&gt;, <b>DEF</b></strike></html>");
   }
 }
