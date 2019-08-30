@@ -2283,7 +2283,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptName(), 8);
+        toggleBreakpoint(getFilePath(getScriptName()), 8);
       }
 
       @Override
@@ -2325,6 +2325,37 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       private boolean hasPython2Tag() throws NullPointerException {
         return hasTag(PYTHON2_TAG);
+      }
+    });
+  }
+
+  @Test
+  public void testStepIntoWithThreads() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_step_into_with_threads.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 15);
+        toggleBreakpoint(getFilePath(getScriptName()), 17);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepInto();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        waitForOutput("foo");
+        resume();
+        waitForOutput("bar");
+        waitForPause();
+        stepInto();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        waitForOutput("baz");
+        resume();
+        waitForTerminate();
       }
     });
   }

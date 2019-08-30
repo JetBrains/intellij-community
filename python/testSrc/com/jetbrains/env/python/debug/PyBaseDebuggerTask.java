@@ -101,7 +101,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void resume() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Resume called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.resume();
@@ -110,7 +110,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepOver() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Step over called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.stepOver(false);
@@ -119,7 +119,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepInto() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Step into called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.stepInto();

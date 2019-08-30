@@ -173,7 +173,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   protected String getFilePath(@NotNull final String path) {
     final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(path);
-    assert virtualFile != null && virtualFile.exists() : String.format("No file in %s", myFixture.getTempDirPath());
+    assert virtualFile != null && virtualFile.exists() : String.format("No file '%s' in %s", path,  myFixture.getTempDirPath());
     return virtualFile.getPath();
   }
 
