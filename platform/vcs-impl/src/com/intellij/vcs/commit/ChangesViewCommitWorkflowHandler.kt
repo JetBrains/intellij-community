@@ -101,7 +101,15 @@ class ChangesViewCommitWorkflowHandler(
     ui.setCompletionContext(changeLists)
   }
 
-  fun setCommitState(items: Collection<Any>, force: Boolean) {
+  fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
+    setInclusion(items, force)
+
+    val inclusion = inclusionModel.getInclusion()
+    val isChangeListFullyIncluded = changeList.changes.run { isNotEmpty() && all { it in inclusion } }
+    if (isChangeListFullyIncluded) ui.select(changeList) else ui.selectFirst(inclusion)
+  }
+
+  private fun setInclusion(items: Collection<Any>, force: Boolean) {
     val activeChanges = changeListManager.defaultChangeList.changes
 
     if (force || inclusionModel.isInclusionEmpty()) {
