@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,8 @@ import java.util.stream.Collectors;
  * @author Eugene.Kudelevsky
  */
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
+
+  private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
 
   public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", "Default");
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
@@ -687,11 +690,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, final ReplaceOptions options, final ReplacementBuilder builder) {
+  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, ReplaceOptions options, ReplacementBuilder builder) {
     node.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
+      }
+
+      @Override
+      public void visitNameValuePair(PsiNameValuePair pair) {
+        super.visitNameValuePair(pair);
+        setParameterContext(pair, pair.getName(), pair.getValue());
       }
 
       @Override
@@ -720,20 +729,75 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           }
         }
       }
+
+      private void setParameterContext(@Nullable PsiElement element, String name, PsiElement scopeElement) {
+        if (name == null || !StructuralSearchUtil.isTypedVariable(name)) {
+          return;
+        }
+        final ParameterInfo nameInfo = builder.findParameterization(Replacer.stripTypedVariableDecoration(name));
+        assert nameInfo != null;
+        nameInfo.setArgumentContext(false);
+        final THashMap<String, ParameterInfo> infos = new THashMap<>();
+        infos.put(nameInfo.getName(), nameInfo);
+        nameInfo.putUserData(PARAMETER_CONTEXT, infos);
+        nameInfo.setElement(element);
+
+        if (scopeElement == null) return;
+        scopeElement.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            super.visitElement(element);
+            String type = element.getText();
+            if (StructuralSearchUtil.isTypedVariable(type)) {
+              type = Replacer.stripTypedVariableDecoration(type);
+              final ParameterInfo typeInfo = builder.findParameterization(type);
+              if (typeInfo != null) {
+                typeInfo.setArgumentContext(false);
+                typeInfo.putUserData(PARAMETER_CONTEXT, Collections.emptyMap());
+                infos.put(typeInfo.getName(), typeInfo);
+              }
+            }
+          }
+        });
+      }
     });
   }
 
+  private static int findAnnotationParameterEnd(CharSequence s, int fromIndex) {
+    boolean comment = false;
+    boolean string = false;
+    final int max = s.length();
+    for (int i = fromIndex; i < max; i++) {
+      final char c = s.charAt(i);
+      if (c == '"' && !comment) string = !string;
+      if (string) continue;
+      if (!comment && c == '/' && (i == max - 1 || s.charAt(i + 1) == '*')) comment = true;
+      if (comment && c == '*' && (i == max - 1 || s.charAt(i + 1) == '/')) comment = false;
+      if (c == ',' || c == ')') return i;
+    }
+    return -1;
+  }
+
   @Override
-  public int handleSubstitution(final ParameterInfo info,
-                                MatchResult match,
-                                StringBuilder result,
-                                int offset,
-                                ReplacementInfo replacementInfo) {
+  public int handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset, ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean forceAddingNewLine = false;
 
-      if (info.isMethodParameterContext()) {
+      final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
+      if (typeInfos != null) {
+        if (info.getElement() instanceof PsiNameValuePair) {
+          final int parameterStart = offset + info.getStartIndex();
+          final int parameterEnd = findAnnotationParameterEnd(result, parameterStart);
+          final String template = result.substring(parameterStart, parameterEnd);
+          replacementString = handleAnnotationParameter(info, replacementInfo, offset - parameterStart, template);
+          result.delete(parameterStart, parameterEnd);
+        }
+        else {
+          replacementString = "";
+        }
+      }
+      else if (info.isMethodParameterContext()) {
         final StringBuilder buf = new StringBuilder();
         handleMethodParameter(buf, info, replacementInfo);
         replacementString = buf.toString();
@@ -899,6 +963,35 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public boolean isDocCommentOwner(PsiElement match) {
     return match instanceof PsiMember;
+  }
+
+  private static String handleAnnotationParameter(ParameterInfo info, ReplacementInfo replacementInfo, int offset, String template) {
+    final MatchResult matchResult = replacementInfo.getNamedMatchResult(info.getName());
+    assert matchResult != null;
+
+    final StringBuilder result = new StringBuilder();
+    if (matchResult.isMultipleMatch()) {
+      for (MatchResult child : matchResult.getChildren()) {
+        if (result.length() != 0) result.append(", ");
+        appendAnnotationParameter(info, child, offset + result.length(), result.append(template));
+      }
+    }
+    else {
+      result.append(template);
+      appendAnnotationParameter(info, matchResult, offset, result);
+    }
+    return result.toString();
+  }
+
+  private static void appendAnnotationParameter(ParameterInfo parameterInfo, MatchResult matchResult, int offset, StringBuilder out) {
+    Map<String, ParameterInfo> infos = parameterInfo.getUserData(PARAMETER_CONTEXT);
+    final List<MatchResult> matches = new SmartList<>(matchResult.getChildren());
+    matches.add(matchResult);
+    Collections.sort(matches, Comparator.comparingInt((MatchResult result) -> result.getMatch().getTextOffset()).reversed());
+    for (MatchResult match : matches) {
+      final ParameterInfo typeInfo = infos.get(match.getName());
+      if (typeInfo != null) out.insert(typeInfo.getStartIndex() + offset, match.getMatchImage());
+    }
   }
 
   private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, ReplacementInfo replacementInfo) {

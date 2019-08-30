@@ -2075,40 +2075,61 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceAnnotation() {
-    String in = "@SuppressWarnings(\"ALL\")\n" +
+    String in1 = "@SuppressWarnings(\"ALL\")\n" +
                 "public class A {}";
     String what = "@SuppressWarnings(\"ALL\")";
 
-    final String by1 = "";
-    assertEquals("public class A {}", replace(in, what, by1));
+    final String expected1a = "public class A {}";
+    assertEquals(expected1a, replace(in1, what, ""));
 
-    final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
-    assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
-                 "public class A {}", replace(in, what, by2));
+    final String expected1b = "@SuppressWarnings(\"NONE\") @Deprecated\n" +
+                             "public class A {}";
+    assertEquals(expected1b, replace(in1, what, "@SuppressWarnings(\"NONE\") @Deprecated"));
 
-    final String expected = "@SuppressWarnings(\"ALL\") class B {}";
+    final String expected1c = "@SuppressWarnings(\"ALL\") class B {}";
     assertEquals("Should replace unmatched annotation parameters",
-                 expected, replace(in, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
+                 expected1c, replace(in1, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
 
-    final String expected2 = "@ SuppressWarnings(\"ALL\")\n" +
+    final String expected1d = "@ SuppressWarnings(\"ALL\")\n" +
                              "public class A {}";
     assertEquals("Should replace unmatched annotation parameters when matching just annotation",
-                 expected2, replace(in, "@SuppressWarnings", "@ SuppressWarnings"));
+                 expected1d, replace(in1, "@SuppressWarnings", "@ SuppressWarnings"));
 
     final String in2 = "class X {" +
                  "  @SuppressWarnings(\"unused\") String s;" +
                  "}";
-    final String what2 = "@SuppressWarnings(\"unused\") String '_s;";
-    final String by3 = "@SuppressWarnings({\"unused\", \"other\"}) String $s$;";
-    assertEquals("class X {" +
-                 "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
-                 "}", replace(in2, what2, by3));
+    final String expected2a = "class X {" +
+                             "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
+                             "}";
+    assertEquals(expected2a, replace(in2, "@SuppressWarnings(\"unused\") String '_s;",
+                                    "@SuppressWarnings({\"unused\", \"other\"}) String $s$;"));
 
-    final String what3 = "@'_Anno('_v) String '_s;";
-    final String by4 = "@$Anno$($v$) String $s$ = \"undoubtedly\";";
-    assertEquals("class X {" +
-                 "  @SuppressWarnings(\"unused\") String s = \"undoubtedly\";" +
-                 "}", replace(in2, what3, by4));
+    final String expected2b = "class X {" +
+                             "  @SuppressWarnings(\"unused\") String s = \"undoubtedly\";" +
+                             "}";
+    assertEquals(expected2b, replace(in2, "@'_Anno('_v) String '_s;", "@$Anno$($v$) String $s$ = \"undoubtedly\";"));
+
+    final String expected2c = "class X {" +
+                             "  @SuppressWarnings(value=\"unused\") String s;" +
+                             "}";
+    assertEquals(expected2c, replace(in2, "@'_A('_v='_x)", "@$A$($v$=$x$)"));
+
+
+    final String in3 = "class X {" +
+                       "  @Language(value=\"RegExp\", prefix=\"xxx\") String pattern;" +
+                       "}";
+    final String expected3 = "class X {" +
+                             "  @ A(value=\"RegExp\", prefix=\"xxx\", suffix=\"\") String pattern;" +
+                             "}";
+    assertEquals(expected3, replace(in3, "@'_A('_v*='_x)", "@ A($v$=$x$, suffix=\"\")"));
+
+    final String in4 = "class X {" +
+                       "  @Anno(one=1, two=1) String s;" +
+                       "}";
+    final String expected4 = "class X {" +
+                             "  @Anno(one=1, two=1, three=1) String s;" +
+                             "}";
+    assertEquals(expected4, replace(in4, "@'_A('_p*=1)", "@$A$($p$=1, three=1)"));
   }
 
   public void testReplacePolyadicExpression() {
