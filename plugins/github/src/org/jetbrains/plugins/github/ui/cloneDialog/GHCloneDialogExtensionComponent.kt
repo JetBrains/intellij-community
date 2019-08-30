@@ -239,7 +239,7 @@ internal class GHCloneDialogExtensionComponent(
       JLabel().apply {
         icon = defaultAvatar
         toolTipText = account.name
-        isOpaque = !isOpaque
+        isOpaque = false
         addMouseListener(popupMenuMouseAdapter)
       }
     }
