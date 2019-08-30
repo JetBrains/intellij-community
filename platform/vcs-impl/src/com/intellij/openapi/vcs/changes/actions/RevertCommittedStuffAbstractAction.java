@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -76,7 +75,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
           List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
           List<FilePatch> patches =
             new ArrayList<>(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
-          new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
+          new PatchApplier(project, baseDir, patches, chooser.getSelectedList(), null).execute();
         }
         catch (final VcsException ex) {
           WaitForProgressToShow

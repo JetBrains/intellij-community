@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -58,7 +61,7 @@ public class ConflictCreator {
     }
 
     if (!filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myVcs.getProject(), myTheirsDir, filePatchList, null, null);
+      PatchApplier applier = new PatchApplier(myVcs.getProject(), myTheirsDir, filePatchList, null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
       assertThat(applier.getRemainingPatches(), is(empty()));

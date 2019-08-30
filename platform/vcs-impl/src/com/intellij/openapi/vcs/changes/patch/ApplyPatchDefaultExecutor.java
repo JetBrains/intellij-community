@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -60,10 +59,10 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
                                                       @NotNull CommitContext commitContext) {
     final Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
-      appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
-                                                     ContainerUtil
-                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
-                                                     commitContext));
+      appliers.add(new PatchApplier(myProject, base,
+                                    ContainerUtil
+                                      .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
+                                    commitContext));
     }
     return appliers;
   }

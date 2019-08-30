@@ -689,10 +689,10 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
     }
 
-    final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
-      new PatchApplier<>(myProject, myProject.getBaseDir(),
-                         patches, targetChangeList, commitContext, reverse, leftConflictTitle,
-                         rightConflictTitle);
+    final PatchApplier patchApplier =
+      new PatchApplier(myProject, myProject.getBaseDir(),
+                       patches, targetChangeList, commitContext, reverse, leftConflictTitle,
+                       rightConflictTitle);
     patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());

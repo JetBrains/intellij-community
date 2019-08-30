@@ -61,7 +61,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 /**
  * for patches. for shelve.
  */
-public class PatchApplier<Unused> {
+public class PatchApplier {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
@@ -229,7 +229,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier<?> applier : group) {
+      for (PatchApplier applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }

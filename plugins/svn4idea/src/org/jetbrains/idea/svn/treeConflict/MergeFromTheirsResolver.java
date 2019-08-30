@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -191,7 +190,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
-            new PatchApplier<BinaryFilePatch>(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
+            new PatchApplier(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
               patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
           }
