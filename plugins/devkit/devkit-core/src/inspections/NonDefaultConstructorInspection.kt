@@ -96,7 +96,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       }
       errors.add(manager.createProblemDescriptor(anchorElement,
                                                  "$kind should not have constructor with parameters${suffix}. To not instantiate services in constructor.", true,
-                                                 ProblemHighlightType.ERROR, isOnTheFly))
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly))
     }
     return errors?.toTypedArray()
   }
