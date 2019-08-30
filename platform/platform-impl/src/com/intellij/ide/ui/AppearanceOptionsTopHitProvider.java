@@ -59,6 +59,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
 
   public static BooleanOptionDescription option(String option, String propertyName, String configurableId) {
     return new PublicMethodBasedOptionDescription(option, configurableId, "get" + StringUtil.capitalize(propertyName), "set" + StringUtil.capitalize(propertyName)) {
+      @NotNull
       @Override
       public Object getInstance() {
         return UISettings.getInstance().getState();
@@ -73,6 +74,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
 
   static BooleanOptionDescription notifications(String option, String field) {
     return new PublicFieldBasedOptionDescription(option, "reference.settings.ide.settings.notifications", field) {
+      @NotNull
       @Override
       public Object getInstance() {
         return NotificationsConfigurationImpl.getInstanceImpl();

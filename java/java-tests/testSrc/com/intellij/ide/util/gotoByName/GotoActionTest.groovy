@@ -105,6 +105,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return options
       }
 
+      @NotNull
       @Override
       String getId() {
         return "testprovider"
