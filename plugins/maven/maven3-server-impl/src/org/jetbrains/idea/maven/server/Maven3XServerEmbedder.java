@@ -1223,6 +1223,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     org.eclipse.aether.resolution.ArtifactResolutionException {
 
     final String mavenVersion = getMavenVersion();
+    myImporterSpy.setIndicator(myCurrentIndicator);
     // org.eclipse.aether.RepositorySystem.newResolutionRepositories() method doesn't exist in aether-api-0.9.0.M2.jar used before maven 3.2.5
     // see https://youtrack.jetbrains.com/issue/IDEA-140208 for details
     if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING || VersionComparatorUtil.compare(mavenVersion, "3.2.5") < 0) {
