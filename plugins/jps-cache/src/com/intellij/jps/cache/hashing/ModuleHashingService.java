@@ -1,6 +1,8 @@
 package com.intellij.jps.cache.hashing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet;
+import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,11 +11,20 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ModuleHashingService {
   protected static final int HASH_SIZE_IN_BYTES = 16;
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.hashing.ModuleHashingService");
+  private static final IgnoredPatternSet IGNORED_PATTERN_SET;
+
+  static {
+    JpsFileTypesConfigurationImpl configuration = new JpsFileTypesConfigurationImpl();
+    IGNORED_PATTERN_SET = new IgnoredPatternSet();
+    IGNORED_PATTERN_SET.setIgnoreMasks(configuration.getIgnoredPatternString());
+  }
 
   private ModuleHashingService() {}
 
@@ -29,11 +40,12 @@ public class ModuleHashingService {
   }
 
   private static byte[] hashDirectory(File dir, RelativeToDirectoryRelativizer relativizer) {
-    File[] fileList = Optional.ofNullable(dir.listFiles()).orElse(new File[0]);
-    byte[] hash = new byte[HASH_SIZE_IN_BYTES];
+    List<File> filesList = Arrays.stream(Optional.ofNullable(dir.listFiles()).orElse(new File[0]))
+      .filter(file -> !IGNORED_PATTERN_SET.isIgnored(file.getName())).collect(Collectors.toList());
 
-    if (fileList.length == 1 && fileList[0].getName().endsWith(".iml")) return hash;
-    for (File file : fileList) {
+    byte[] hash = new byte[HASH_SIZE_IN_BYTES];
+    if (filesList.size() == 1 && filesList.get(0).getName().endsWith(".iml")) return hash;
+    for (File file : filesList) {
       byte[] curHash = file.isDirectory() ? hashDirectory(file, relativizer) : hashFile(file, relativizer);
       sum(hash, curHash);
     }
