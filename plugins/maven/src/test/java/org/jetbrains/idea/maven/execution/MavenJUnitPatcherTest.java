@@ -145,7 +145,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                                            "        <additionalClasspathElements>\n" +
                                            "          <additionalClasspathElement>path/to/additional/resources</additionalClasspathElement>\n" +
                                            "          <additionalClasspathElement>path/to/additional/jar</additionalClasspathElement>\n" +
-                                           "          <additionalClasspathElement>path/to/csv/jar1</additionalClasspathElement>\n" +
+                                           "          <additionalClasspathElement>path/to/csv/jar1, path/to/csv/jar2</additionalClasspathElement>\n" +
                                            "        </additionalClasspathElements>\n" +
                                            "      </configuration>\n" +
                                            "    </plugin>\n" +
@@ -159,7 +159,7 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     JavaParameters javaParameters = new JavaParameters();
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
     List<String> classPath = javaParameters.getClassPath().getPathList();
-    assertEquals(asList("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1"), classPath);
+    assertEquals(asList("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath);
   }
 
   public void testArgList() {

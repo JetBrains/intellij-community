@@ -66,8 +66,10 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
     if (paths.size() > 0) {
-      for (String path : paths) {
-        javaParameters.getClassPath().add(resolvePluginProperties(plugin, path, domModel));
+      for (String pathLine : paths) {
+        for (String path : pathLine.split(",")) {
+          javaParameters.getClassPath().add(resolvePluginProperties(plugin, path.trim(), domModel));
+        }
       }
     }
 
