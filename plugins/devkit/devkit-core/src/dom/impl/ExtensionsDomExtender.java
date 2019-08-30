@@ -6,16 +6,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +19,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointsIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -34,72 +31,61 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new ExtensionDomExtender();
 
   @Override
-  public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
-    IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
-    if (ideaPlugin == null) return;
-
-    String epPrefix = extensions.getEpPrefix();
-    Set<IdeaPlugin> visiblePlugins = getVisiblePlugins(ideaPlugin);
-    for (IdeaPlugin plugin : visiblePlugins) {
-      for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
-        for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
-          registerExtensionPoint(registrar, (ExtensionPoint)point, epPrefix);
-        }
-      }
-    }
-  }
-
-  private static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, String tagName) {
-    AbstractCollectionChildDescription collectionChildDescription =
-      (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
-    DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
-    return handler.getCollectionChildren(collectionChildDescription, false);
-  }
-
-  @Override
   public boolean supportsStubs() {
     return false;
   }
 
-  private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = new HashSet<>();
-    collectDependencies(ideaPlugin, result);
-    result.addAll(PluginIdModuleIndex.findPlugins(ideaPlugin, ""));
+  @Override
+  public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
+    Project project = extensions.getManager().getProject();
+    VirtualFile currentFile = getVirtualFile(extensions);
+    Set<VirtualFile> files = getVisibleFiles(project, currentFile);
+
+    String epPrefix = extensions.getEpPrefix();
+    Map<String, ExtensionPoint> points = ExtensionPointsIndex.getExtensionPoints(project, files, epPrefix);
+
+    for (Map.Entry<String, ExtensionPoint> entry : points.entrySet()) {
+      registrar.registerCollectionChildrenExtension(new XmlName(entry.getKey().substring(epPrefix.length())), Extension.class)
+        .setDeclaringElement(entry.getValue())
+        .addExtender(EXTENSION_EXTENDER);
+    }
+  }
+
+  private static VirtualFile getVirtualFile(DomElement domElement) {
+    return DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
+  }
+
+  private static Set<VirtualFile> getVisibleFiles(Project project, VirtualFile file) {
+    Set<VirtualFile> result = new HashSet<>();
+    collectFiles(project, file, result);
+    result.addAll(PluginIdModuleIndex.getFiles(project, ""));
     return result;
   }
 
-  private static void collectDependencies(IdeaPlugin ideaPlugin, Set<IdeaPlugin> result) {
+  private static void collectFiles(Project project, VirtualFile file, Set<VirtualFile> result) {
     ProgressManager.checkCanceled();
-    if (!result.add(ideaPlugin)) {
+    if (!result.add(file)) {
       return;
     }
 
-    for (String id : getDependencies(ideaPlugin)) {
-      for (IdeaPlugin dep : PluginIdModuleIndex.findPlugins(ideaPlugin, id)) {
-        collectDependencies(dep, result);
+    for (String id : getDependencies(project, file)) {
+      for (VirtualFile dep : PluginIdModuleIndex.getFiles(project, id)) {
+        collectFiles(project, dep, result);
       }
     }
   }
 
-  private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
-                                             final ExtensionPoint extensionPoint,
-                                             String epPrefix) {
-    String epName = extensionPoint.getEffectiveQualifiedName();
-    if (!StringUtil.startsWith(epName, epPrefix)) return;
-
-    registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class)
-      .setDeclaringElement(extensionPoint)
-      .addExtender(EXTENSION_EXTENDER);
-  }
-
   static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    final VirtualFile currentFile = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
+    final VirtualFile currentFile = getVirtualFile(ideaPlugin);
     if (currentFile == null) {
       return Collections.emptySet();
     }
 
     final Project project = ideaPlugin.getManager().getProject();
+    return getDependencies(project, currentFile);
+  }
 
+  private static Collection<String> getDependencies(Project project, VirtualFile currentFile) {
     Set<String> result = new HashSet<>();
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
@@ -111,7 +97,6 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
       return result;
     }
 
-    
     final VirtualFile[] includingFiles = FileIncludeManager.getManager(project).getIncludingFiles(currentFile, false);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

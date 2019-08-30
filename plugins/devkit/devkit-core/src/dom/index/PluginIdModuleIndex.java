@@ -74,10 +74,15 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
     return true;
   }
 
+  public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {
+    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
+      .union(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, idOrModule, scope);
+  }
+
   public static List<IdeaPlugin> findPlugins(@NotNull DomElement place, @NotNull String idOrModule) {
     Project project = place.getManager().getProject();
-    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).union(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
-    Collection<VirtualFile> vFiles = FileBasedIndex.getInstance().getContainingFiles(NAME, idOrModule, scope);
+    Collection<VirtualFile> vFiles = getFiles(project, idOrModule);
     return JBIterable.from(vFiles)
       .map(PsiManager.getInstance(project)::findFile)
       .filter(XmlFile.class)
