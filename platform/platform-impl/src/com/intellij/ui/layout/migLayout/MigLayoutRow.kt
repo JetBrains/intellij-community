@@ -49,6 +49,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
       if (title == null) {
         cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        row.isTrailingSeparator = true
       }
       else {
         cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
@@ -56,7 +57,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.growX()
       }
       row.addComponent(separatorComponent, lazyOf(cc))
-      row.isSeparator = true
     }
   }
 
@@ -78,7 +78,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private val spacing: SpacingConfiguration
     get() = builder.spacing
 
-  private var isSeparator = false
+  private var isTrailingSeparator = false
   private var isComment = false
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
@@ -172,7 +172,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     var insertIndex = subRows.size
-    if (insertIndex > 0 && subRows[insertIndex-1].isSeparator) {
+    if (insertIndex > 0 && subRows[insertIndex-1].isTrailingSeparator) {
       insertIndex--;
     }
     if (insertIndex > 0 && subRows[insertIndex-1].isComment) {
