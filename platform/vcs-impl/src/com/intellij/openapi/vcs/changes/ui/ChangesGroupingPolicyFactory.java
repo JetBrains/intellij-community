@@ -16,15 +16,6 @@ public abstract class ChangesGroupingPolicyFactory {
     return ServiceManager.getService(project, ChangesGroupingPolicyFactory.class);
   }
 
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   @NotNull
-  @Deprecated
-  public ChangesGroupingPolicy createGroupingPolicy(@NotNull DefaultTreeModel model) {
-    throw new AbstractMethodError();
-  }
-
-  @NotNull
-  public ChangesGroupingPolicy createGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model) {
-    return createGroupingPolicy(model);
-  }
+  public abstract ChangesGroupingPolicy createGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model);
 }
