@@ -8,10 +8,10 @@ inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
   return result
 }
 
-inline fun ParallelActivity.run(name: String, task: () -> Unit) {
-  val activity = start(name)
+inline fun ParallelActivity?.run(name: String, task: () -> Unit) {
+  val activity = this?.start(name)
   task()
-  activity.end()
+  activity?.end()
 }
 
 inline fun <T> runActivity(name: String, task: () -> T): T {

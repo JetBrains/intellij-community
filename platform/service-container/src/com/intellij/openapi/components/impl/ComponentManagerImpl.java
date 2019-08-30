@@ -355,10 +355,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
 
       Level level = componentManager.getActivityLevel();
-      if (level == Level.APPLICATION || level == Level.PROJECT) {
-        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId.getIdString());
-      }
-      return null;
+      return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId.getIdString());
     }
 
     @Override

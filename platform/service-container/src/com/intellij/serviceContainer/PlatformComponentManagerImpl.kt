@@ -95,7 +95,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
   open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
-    ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_SERVICES) {
+    val activityNamePrefix = activityNamePrefix()
+    val parallelActivity = if (activityNamePrefix == null) null else ParallelActivity.PREPARE_APP_INIT
+    parallelActivity.run("${activityNamePrefix}service and ep registration") {
       // register services before registering extensions because plugins can access services in their
       // extensions which can be invoked right away if the plugin is loaded dynamically
       for (plugin in plugins) {
@@ -108,7 +110,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
       }
     }
 
-    ParallelActivity.PREPARE_APP_INIT.run(ActivitySubNames.REGISTER_EXTENSIONS) {
+    parallelActivity.run("${activityNamePrefix}extension registration") {
       val notifyListeners = LoadingPhase.isStartupComplete()
       for (descriptor in plugins) {
         descriptor.registerExtensions(myExtensionArea, this, notifyListeners)
