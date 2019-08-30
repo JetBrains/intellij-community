@@ -17,8 +17,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -53,10 +55,98 @@ public class PySkeletonGenerator {
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
   private final Sdk mySdk;
+  @Nullable private String myCurrentFolder;
   private final String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
 
   private boolean myPrebuilt = false;
+  private Map<String, String> myExtraEnv;
+  private List<String> myExtraSysPath;
+  private List<String> myAssemblyRefs;
+  private List<String> myExtraArgs;
+
+  @NotNull
+  public PySkeletonGenerator withExtraEnvironment(@NotNull Map<String, String> environment) {
+    myExtraEnv = environment;
+    return this;
+  }
+
+  @NotNull
+  public PySkeletonGenerator withExtraSysPath(@NotNull List<String> roots) {
+    myExtraSysPath = roots;
+    return this;
+  }
+
+  @NotNull
+  public PySkeletonGenerator withAssemblyRefs(@NotNull List<String> assemblyRefs) {
+    myAssemblyRefs = assemblyRefs;
+    return this;
+  }
+
+  @NotNull
+  public PySkeletonGenerator withExtraArgs(@NotNull List<String> args) {
+    myExtraArgs = args;
+    return this;
+  }
+
+  @NotNull
+  public PySkeletonGenerator inPrebuildingMode() {
+    myPrebuilt = true;
+    return this;
+  }
+
+  @NotNull
+  public ProcessOutput runProcess() throws ExecutionException, InvalidSdkException {
+    return getProcessOutput(new File(mySdk.getHomePath()).getParent(),
+                            ArrayUtil.toStringArray(buildCommandLine()),
+                            buildEnvironment(),
+                            MINUTE * 10);
+  }
+
+  @NotNull
+  public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
+    return generateAllSkeletons(indicator);
+  }
+
+
+  @NotNull
+  protected List<String> buildCommandLine() {
+    final List<String> commandLine = new ArrayList<>();
+    commandLine.add(mySdk.getHomePath());
+    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+    commandLine.add("-d");
+    commandLine.add(mySkeletonsPath);
+    if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
+      commandLine.add("-c");
+      commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
+    }
+    if (ApplicationManager.getApplication().isInternal()) {
+      commandLine.add("-x");
+    }
+    if (!ContainerUtil.isEmpty(myExtraSysPath)) {
+      commandLine.add("-s");
+      commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
+    }
+    if (!ContainerUtil.isEmpty(myExtraArgs)) {
+      commandLine.addAll(myExtraArgs);
+    }
+    return commandLine;
+  }
+
+  @NotNull
+  protected Map<String, String> buildEnvironment() {
+    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+    //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+    //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+    //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
+    //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+    //}
+    if (myExtraEnv != null) {
+      env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
+    }
+    env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
+    return env;
+  }
 
   public void finishSkeletonsGeneration() {
   }
@@ -77,6 +167,7 @@ public class PySkeletonGenerator {
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
     mySdk = pySdk;
+    myCurrentFolder = currentFolder;
     Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
 
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
@@ -88,15 +179,12 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  public List<GenerationResult> generateAllSkeletons(@NotNull String extraSysPath, @Nullable ProgressIndicator indicator)
+  public List<GenerationResult> generateAllSkeletons(@Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     final String binaryPath = mySdk.getHomePath();
     if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
 
-    final List<String> command =
-      Arrays.asList(binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", mySkeletonsPath, "-s", extraSysPath);
-    final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, PythonSdkType.activateVirtualEnv(mySdk));
-    final GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(buildCommandLine()).withEnvironment(buildEnvironment());
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final List<GenerationResult> results = new ArrayList<>();
     handler.addProcessListener(new LineProcessOutputListener() {
