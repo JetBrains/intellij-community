@@ -186,7 +186,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     LocalChangeList defaultList = manager.getDefaultChangeList();
     List<LocalChangeList> changeLists = manager.getChangeListsCopy();
 
-    Set<AbstractVcs<?>> affectedVcses = new HashSet<>();
+    Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
     for (LocalChangeList list : changeLists) {
       //noinspection unchecked
@@ -205,7 +205,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       return false;
     }
 
-    AbstractVcs<?>[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(asList(vcses))) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
       if (handler != null && !handler.beforeCommitDialogShown(project, changes, (Iterable<CommitExecutor>)executors, showVcsCommit)) {

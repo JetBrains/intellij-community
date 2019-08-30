@@ -23,7 +23,7 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun isInUpdatingMode() = vcsIgnoredHolderMap.values.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
-  override fun notifyVcsStarted(vcs: AbstractVcs<*>?) {}
+  override fun notifyVcsStarted(vcs: AbstractVcs?) {}
 
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {}
 

@@ -161,7 +161,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     registerRootMapping(root, vcs)
   }
 
-  private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs<*>) {
+  private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
     dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
   }

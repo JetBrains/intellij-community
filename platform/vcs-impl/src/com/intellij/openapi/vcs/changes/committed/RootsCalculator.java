@@ -27,7 +27,7 @@ public class RootsCalculator {
   private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final AbstractVcs<?> myVcs;
+  @NotNull private final AbstractVcs myVcs;
   @NotNull private final ProjectLevelVcsManager myPlManager;
   @NotNull private final RepositoryLocationCache myLocationCache;
 

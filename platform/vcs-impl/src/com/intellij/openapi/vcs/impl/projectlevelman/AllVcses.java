@@ -33,7 +33,7 @@ import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 public class AllVcses implements AllVcsesI, Disposable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
-  private final Map<String, AbstractVcs<?>> myVcses;
+  private final Map<String, AbstractVcs> myVcses;
 
   private final Object myLock;
   private final Project myProject;
@@ -58,12 +58,12 @@ public class AllVcses implements AllVcsesI, Disposable {
     return ServiceManager.getService(project, AllVcsesI.class);
   }
 
-  private void addVcs(final AbstractVcs<?> vcs) {
+  private void addVcs(final AbstractVcs vcs) {
     registerVcs(vcs);
     myVcses.put(vcs.getName(), vcs);
   }
 
-  private void registerVcs(final AbstractVcs<?> vcs) {
+  private void registerVcs(final AbstractVcs vcs) {
     try {
       vcs.loadSettings();
       vcs.doStart();
@@ -75,7 +75,7 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   @Override
-  public void registerManually(@NotNull final AbstractVcs<?> vcs) {
+  public void registerManually(@NotNull final AbstractVcs vcs) {
     synchronized (myLock) {
       if (myVcses.containsKey(vcs.getName())) return;
       addVcs(vcs);
@@ -83,7 +83,7 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   @Override
-  public void unregisterManually(@NotNull final AbstractVcs<?> vcs) {
+  public void unregisterManually(@NotNull final AbstractVcs vcs) {
     synchronized (myLock) {
       if (! myVcses.containsKey(vcs.getName())) return;
       unregisterVcs(vcs);
@@ -92,9 +92,9 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   @Override
-  public AbstractVcs<?> getByName(final String name) {
+  public AbstractVcs getByName(final String name) {
     synchronized (myLock) {
-      final AbstractVcs<?> vcs = myVcses.get(name);
+      final AbstractVcs vcs = myVcses.get(name);
       if (vcs != null) {
         return vcs;
       }
@@ -111,7 +111,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     }
 
     // VcsEP guarantees to always return the same vcs value
-    final AbstractVcs<?> vcs1 = ep.getVcs(myProject);
+    final AbstractVcs vcs1 = ep.getVcs(myProject);
     LOG.assertTrue(vcs1 != null, name);
 
     synchronized (myLock) {
@@ -132,13 +132,13 @@ public class AllVcses implements AllVcsesI, Disposable {
   @Override
   public void dispose() {
     synchronized (myLock) {
-      for (AbstractVcs<?> vcs : myVcses.values()) {
+      for (AbstractVcs vcs : myVcses.values()) {
         unregisterVcs(vcs);
       }
     }
   }
 
-  private void unregisterVcs(AbstractVcs<?> vcs) {
+  private void unregisterVcs(AbstractVcs vcs) {
     try {
       vcs.doShutdown();
     }

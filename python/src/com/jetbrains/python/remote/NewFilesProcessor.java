@@ -74,7 +74,7 @@ public final class NewFilesProcessor {
     final Project project = module.getProject();
     Arrays.stream(localFileNames).map(o -> fs.findFileByPath(o)).filter(o -> o != null).forEach(file -> {
 
-      final AbstractVcs<?> vcs = VcsUtil.getVcsFor(project, file);
+      final AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs == null) {
         return;
       }

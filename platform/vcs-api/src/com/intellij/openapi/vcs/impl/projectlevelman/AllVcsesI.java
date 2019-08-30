@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Irina.Chernushina
  */
 public interface AllVcsesI {
-  void registerManually(@NotNull AbstractVcs<?> vcs);
-  void unregisterManually(@NotNull AbstractVcs<?> vcs);
-  AbstractVcs<?> getByName(String name);
+  void registerManually(@NotNull AbstractVcs vcs);
+  void unregisterManually(@NotNull AbstractVcs vcs);
+  AbstractVcs getByName(String name);
   @Nullable
   VcsDescriptor getDescriptor(final String name);
   VcsDescriptor[] getAll();

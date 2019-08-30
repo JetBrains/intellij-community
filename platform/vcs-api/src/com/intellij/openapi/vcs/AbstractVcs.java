@@ -38,7 +38,7 @@ import java.util.function.Function;
  *
  * @see ProjectLevelVcsManager
  */
-public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
+public abstract class AbstractVcs extends StartedActivated {
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
@@ -482,12 +482,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @Nullable
-  protected VcsOutgoingChangesProvider<ComList> getOutgoingProviderImpl() {
+  protected VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
     return null;
   }
 
   @Nullable
-  public final VcsOutgoingChangesProvider<ComList> getOutgoingChangesProvider() {
+  public final VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingChangesProvider() {
     return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
 

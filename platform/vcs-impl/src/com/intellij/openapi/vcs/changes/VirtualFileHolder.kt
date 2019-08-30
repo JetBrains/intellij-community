@@ -19,7 +19,7 @@ class VirtualFileHolder(private val myProject: Project, private val myType: File
     return myType
   }
 
-  override fun notifyVcsStarted(vcs: AbstractVcs<*>) {}
+  override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
   override fun cleanAll() = myFiles.clear()
 

@@ -65,8 +65,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   abstract val isDefaultCommitEnabled: Boolean
 
-  private val _vcses = mutableSetOf<AbstractVcs<*>>()
-  val vcses: Set<AbstractVcs<*>> get() = unmodifiableOrEmptySet(_vcses.toSet())
+  private val _vcses = mutableSetOf<AbstractVcs>()
+  val vcses: Set<AbstractVcs> get() = unmodifiableOrEmptySet(_vcses.toSet())
 
   private val _commitExecutors = mutableListOf<CommitExecutor>()
   val commitExecutors: List<CommitExecutor> get() = newUnmodifiableList(_commitExecutors)
@@ -77,7 +77,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private val _commitOptions = MutableCommitOptions()
   val commitOptions: CommitOptions get() = _commitOptions.toUnmodifiableOptions()
 
-  protected fun updateVcses(vcses: Set<AbstractVcs<*>>) {
+  protected fun updateVcses(vcses: Set<AbstractVcs>) {
     if (_vcses != vcses) {
       _vcses.clear()
       _vcses += vcses
@@ -218,12 +218,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getCommitHandlerFactories(vcses: Collection<AbstractVcs<*>>): List<BaseCheckinHandlerFactory> =
+    fun getCommitHandlerFactories(vcses: Collection<AbstractVcs>): List<BaseCheckinHandlerFactory> =
       CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(vcses.toTypedArray())
 
     @JvmStatic
     fun getCommitHandlers(
-      vcses: Collection<AbstractVcs<*>>,
+      vcses: Collection<AbstractVcs>,
       commitPanel: CheckinProjectPanel,
       commitContext: CommitContext
     ): List<CheckinHandler> =
@@ -235,7 +235,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
       getCommitExecutors(project, getAffectedVcses(changes, project))
 
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs<*>>): List<CommitExecutor> =
+    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> =
       vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors
   }
 }

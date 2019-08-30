@@ -70,7 +70,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or null if none is found.
    */
   @Nullable
-  public abstract AbstractVcs<?> findVcsByName(@NonNls String name);
+  public abstract AbstractVcs findVcsByName(@NonNls String name);
 
   @Nullable
   public abstract VcsDescriptor getDescriptor(final String name);
@@ -81,7 +81,7 @@ public abstract class ProjectLevelVcsManager {
    * @param files       the files to check.
    * @return true if all files are managed by the VCS, false otherwise.
    */
-  public abstract boolean checkAllFilesAreUnder(AbstractVcs<?> abstractVcs, VirtualFile[] files);
+  public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
 
   /**
    * Returns the VCS managing the specified file.
@@ -91,7 +91,7 @@ public abstract class ProjectLevelVcsManager {
    *         it belongs to is not under version control.
    */
   @Nullable
-  public abstract AbstractVcs<?> getVcsFor(@NotNull VirtualFile file);
+  public abstract AbstractVcs getVcsFor(@NotNull VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file path.
@@ -101,7 +101,7 @@ public abstract class ProjectLevelVcsManager {
    *         it belongs to is not under version control.
    */
   @Nullable
-  public abstract AbstractVcs<?> getVcsFor(FilePath file);
+  public abstract AbstractVcs getVcsFor(FilePath file);
 
   /**
    * Return the parent directory of the specified file which is mapped to a VCS.
@@ -133,7 +133,7 @@ public abstract class ProjectLevelVcsManager {
    * @param vcs the VCS to check.
    * @return true if the VCS is used by any of the modules, false otherwise
    */
-  public abstract boolean checkVcsIsActive(AbstractVcs<?> vcs);
+  public abstract boolean checkVcsIsActive(AbstractVcs vcs);
 
   /**
    * Checks if the VCS with the specified name is used by any of the modules in the project.
@@ -149,7 +149,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the list of VCSes used in the project.
    */
   @NotNull
-  public abstract AbstractVcs<?>[] getAllActiveVcss();
+  public abstract AbstractVcs[] getAllActiveVcss();
 
   public abstract boolean hasActiveVcss();
 
@@ -162,15 +162,15 @@ public abstract class ProjectLevelVcsManager {
 
   @NotNull
   public abstract VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
-                                                         @NotNull AbstractVcs<?> vcs);
+                                                         @NotNull AbstractVcs vcs);
 
   @NotNull
   public abstract VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
-                                                                    AbstractVcs<?> vcs);
+                                                                    AbstractVcs vcs);
 
   @NotNull
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
-                                                               @NotNull AbstractVcs<?> vcs);
+                                                               @NotNull AbstractVcs vcs);
 
   @CalledInAwt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
@@ -210,14 +210,14 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 
-  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs<?> vcs);
+  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs);
 
-  public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs<?> vcs);
+  public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs);
 
   /**
    * Also includes into list all modules under roots
    */
-  public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs<?> vcs);
+  public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs);
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
@@ -231,7 +231,7 @@ public abstract class ProjectLevelVcsManager {
   public void updateActiveVcss() {}
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
-  public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs<?> vcs);
+  public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
   @Nullable
   public abstract VcsDirectoryMapping getDirectoryMappingFor(FilePath path);
@@ -250,10 +250,10 @@ public abstract class ProjectLevelVcsManager {
                                       @Nullable VirtualFileFilter directoryFilter);
 
   @Nullable
-  public abstract AbstractVcs<?> findVersioningVcs(VirtualFile file);
+  public abstract AbstractVcs findVersioningVcs(VirtualFile file);
 
   @NotNull
-  public abstract VcsRootChecker getRootChecker(@NotNull AbstractVcs<?> vcs);
+  public abstract VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs);
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 

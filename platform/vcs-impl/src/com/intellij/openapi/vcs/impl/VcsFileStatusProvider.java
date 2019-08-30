@@ -60,7 +60,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   @Override
   @NotNull
   public FileStatus getFileStatus(@NotNull final VirtualFile virtualFile) {
-    AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
     if (vcs == null) {
       if (ScratchUtil.isScratch(virtualFile)) {
         return FileStatus.SUPPRESSED;
@@ -91,7 +91,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     FileStatusManagerImpl fileStatusManager = (FileStatusManagerImpl)FileStatusManager.getInstance(myProject);
     FileStatus cachedStatus = fileStatusManager.getCachedStatus(virtualFile);
     if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(virtualFile)) {
-      AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
       if (vcs == null) return;
       if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(virtualFile)) {
         if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
@@ -138,7 +138,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
     FileStatus status = changeListManager.getStatus(file);
     if (status == FileStatus.HIJACKED) {
-      AbstractVcs<?> vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
       DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
       if (diffProvider != null) {
         VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);

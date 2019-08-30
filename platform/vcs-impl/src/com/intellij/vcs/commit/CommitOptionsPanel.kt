@@ -15,7 +15,7 @@ import javax.swing.JPanel
 import kotlin.collections.set
 
 class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
-  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
+  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
   private val vcsOptionsPanel = verticalPanel()
   private val beforeOptionsPanel = simplePanel()
   private val afterOptionsPanel = simplePanel()
@@ -49,10 +49,10 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
     setAfterOptions(options.afterOptions)
   }
 
-  override fun setVisible(vcses: Collection<AbstractVcs<*>>) =
+  override fun setVisible(vcses: Collection<AbstractVcs>) =
     perVcsOptionsPanels.forEach { (vcs, vcsPanel) -> vcsPanel.isVisible = vcs in vcses }
 
-  private fun setVcsOptions(newOptions: Map<AbstractVcs<*>, RefreshableOnComponent>) {
+  private fun setVcsOptions(newOptions: Map<AbstractVcs, RefreshableOnComponent>) {
     if (vcsOptions != newOptions) {
       vcsOptions.clear()
       perVcsOptionsPanels.clear()

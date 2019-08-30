@@ -41,7 +41,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
                                             Alarm.ThreadToUse.POOLED_THREAD)
   }
 
-  fun findIgnoreFileType(vcs: AbstractVcs<*>): IgnoreFileType? {
+  fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
     val ignoredFileContentProvider = findIgnoredFileContentProvider(vcs) ?: return null
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }

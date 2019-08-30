@@ -103,7 +103,7 @@ abstract class AbstractCommitter(
 
   protected abstract fun onFinish()
 
-  protected fun commit(vcs: AbstractVcs<*>, changes: List<Change>) {
+  protected fun commit(vcs: AbstractVcs, changes: List<Change>) {
     val environment = vcs.checkinEnvironment
     if (environment != null) {
       _pathsToRefresh.addAll(ChangesUtil.getPaths(changes))

@@ -17,6 +17,6 @@ class CheckinHandlersManagerImpl : CheckinHandlersManager() {
     VcsCheckinHandlerFactory.EP_NAME.extensions.forEach { putValue(it.key, it) }
   }
 
-  override fun getRegisteredCheckinHandlerFactories(vcses: Array<AbstractVcs<*>>): List<BaseCheckinHandlerFactory> =
+  override fun getRegisteredCheckinHandlerFactories(vcses: Array<AbstractVcs>): List<BaseCheckinHandlerFactory> =
     unmodifiableOrEmptyList(vcses.flatMap { vcsFactories.get(it.keyInstanceMethod) } + factories)
 }

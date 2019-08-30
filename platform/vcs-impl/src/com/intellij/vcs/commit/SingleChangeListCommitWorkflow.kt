@@ -33,8 +33,8 @@ open class SingleChangeListCommitWorkflow(
   val initialChangeList: LocalChangeList? = null,
   executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  val vcsToCommit: AbstractVcs<*>? = null,
-  affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
+  val vcsToCommit: AbstractVcs? = null,
+  affectedVcses: Set<AbstractVcs> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null

@@ -34,7 +34,7 @@ private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
 class ExternallyAddedFilesProcessorImpl(project: Project,
                                         private val parentDisposable: Disposable,
-                                        private val vcs: AbstractVcs<*>,
+                                        private val vcs: AbstractVcs,
                                         private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
 

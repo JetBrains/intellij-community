@@ -15,7 +15,7 @@ class FilePathHolder(private val project: Project, private val type: FileHolder.
 
   override fun getType() = type
 
-  override fun notifyVcsStarted(vcs: AbstractVcs<*>) {}
+  override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
   override fun cleanAll() {
     files.clear()

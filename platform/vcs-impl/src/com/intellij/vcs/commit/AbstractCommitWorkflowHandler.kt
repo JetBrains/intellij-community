@@ -18,7 +18,7 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>> = emptyList()): String =
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): String =
   replaceMnemonicAmpersand(
     (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
@@ -33,7 +33,7 @@ internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
 
 internal val CheckinProjectPanel.isNonModalCommit: Boolean get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
 
-private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
+private val VCS_COMPARATOR = compareBy<AbstractVcs, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
   CommitWorkflowHandler,
@@ -154,7 +154,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, commitContext: CommitContext) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs>, commitContext: CommitContext) =
     vcses.sortedWith(VCS_COMPARATOR)
       .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
       .filterValues { it != null }

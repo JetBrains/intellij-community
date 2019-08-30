@@ -310,7 +310,7 @@ public class DvcsUtil {
   }
 
   @Nullable
-  private static VirtualFile guessRootForVcs(@NotNull Project project, @Nullable AbstractVcs<?> vcs, @Nullable String defaultRootPathValue) {
+  private static VirtualFile guessRootForVcs(@NotNull Project project, @Nullable AbstractVcs vcs, @Nullable String defaultRootPathValue) {
     if (project.isDisposed()) return null;
     LOG.debug("Guessing vcs root...");
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -435,7 +435,7 @@ public class DvcsUtil {
   }
 
   @Nullable
-  public static PushSupport getPushSupport(@NotNull final AbstractVcs<?> vcs) {
+  public static PushSupport getPushSupport(@NotNull final AbstractVcs vcs) {
     return ContainerUtil.find(PushSupport.PUSH_SUPPORT_EP.getExtensions(vcs.getProject()),
                               support -> support.getVcs().equals(vcs));
   }

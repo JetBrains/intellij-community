@@ -10,10 +10,10 @@ public interface DirtBuilderReader {
   boolean isEverythingDirty();
 
   @NotNull
-  MultiMap<AbstractVcs<?>, FilePath> getFilesForVcs();
+  MultiMap<AbstractVcs, FilePath> getFilesForVcs();
 
   @NotNull
-  MultiMap<AbstractVcs<?>, FilePath> getDirsForVcs();
+  MultiMap<AbstractVcs, FilePath> getDirsForVcs();
 
   boolean isEmpty();
 }

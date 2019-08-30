@@ -69,7 +69,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Git VCS implementation
  */
-public final class GitVcs extends AbstractVcs<CommittedChangeList> {
+public final class GitVcs extends AbstractVcs {
   public static final String NAME = "Git";
   public static final String ID = "git";
 

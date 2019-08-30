@@ -21,7 +21,7 @@ class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,
-  private val vcsToCommit: AbstractVcs<*>?,
+  private val vcsToCommit: AbstractVcs?,
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {

@@ -15,11 +15,11 @@ import java.util.List;
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T> {
 
-  @NotNull private final AbstractVcs<?> myVcs;
+  @NotNull private final AbstractVcs myVcs;
   @NotNull private final String myRepoDirName;
   @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
 
-  protected AbstractRepositoryManager(@NotNull AbstractVcs<?> vcs, @NotNull String repoDirName) {
+  protected AbstractRepositoryManager(@NotNull AbstractVcs vcs, @NotNull String repoDirName) {
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(vcs.getProject());
     myVcs = vcs;
     myRepoDirName = repoDirName;

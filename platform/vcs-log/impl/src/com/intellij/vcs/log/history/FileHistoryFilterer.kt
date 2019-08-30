@@ -111,7 +111,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     @Throws(VcsException::class)
-    private fun filterWithProvider(vcs: AbstractVcs<*>,
+    private fun filterWithProvider(vcs: AbstractVcs,
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
                                    filters: VcsLogFilterCollection): VisiblePack {

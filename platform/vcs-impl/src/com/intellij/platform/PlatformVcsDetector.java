@@ -40,7 +40,7 @@ final class PlatformVcsDetector {
 
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
         if (virtualFile != null) {
-          AbstractVcs<?> vcs = vcsManager.findVersioningVcs(virtualFile);
+          AbstractVcs vcs = vcsManager.findVersioningVcs(virtualFile);
           if (vcs != null && vcs != vcsManager.getVcsFor(virtualFile)) {
             vcsManager.setAutoDirectoryMappings(singletonList(new VcsDirectoryMapping(virtualFile.getPath(), vcs.getName())));
           }

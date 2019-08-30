@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public final class DirtBuilder implements DirtBuilderReader {
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
-  private final MultiMap<AbstractVcs<?>, FilePath> myFiles = MultiMap.createSet();
-  private final MultiMap<AbstractVcs<?>, FilePath> myDirs = MultiMap.createSet();
+  private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();
+  private final MultiMap<AbstractVcs, FilePath> myDirs = MultiMap.createSet();
   private boolean myEverythingDirty = false;
 
   public DirtBuilder() {
@@ -33,12 +33,12 @@ public final class DirtBuilder implements DirtBuilderReader {
     myEverythingDirty = true;
   }
 
-  public void addDirtyFile(@NotNull AbstractVcs<?> vcs, @NotNull FilePath file) {
+  public void addDirtyFile(@NotNull AbstractVcs vcs, @NotNull FilePath file) {
     if (myFileTypeManager.isFileIgnored(file.getName())) return;
     myFiles.putValue(vcs, file);
   }
 
-  public void addDirtyDirRecursively(@NotNull AbstractVcs<?> vcs, @NotNull FilePath dir) {
+  public void addDirtyDirRecursively(@NotNull AbstractVcs vcs, @NotNull FilePath dir) {
     if (myFileTypeManager.isFileIgnored(dir.getName())) return;
     myDirs.putValue(vcs, dir);
   }
@@ -50,13 +50,13 @@ public final class DirtBuilder implements DirtBuilderReader {
 
   @Override
   @NotNull
-  public MultiMap<AbstractVcs<?>, FilePath> getFilesForVcs() {
+  public MultiMap<AbstractVcs, FilePath> getFilesForVcs() {
     return myFiles;
   }
 
   @Override
   @NotNull
-  public MultiMap<AbstractVcs<?>, FilePath> getDirsForVcs() {
+  public MultiMap<AbstractVcs, FilePath> getDirsForVcs() {
     return myDirs;
   }
 
