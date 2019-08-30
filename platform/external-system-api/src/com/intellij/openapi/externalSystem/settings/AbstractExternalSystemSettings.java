@@ -239,20 +239,6 @@ public abstract class AbstractExternalSystemSettings<
       return;
     }
 
-    // todo remove when https://youtrack.jetbrains.com/issue/IDEA-220429 will be fixed
-    // only for unit test — don't care about production (reduce scope of regression due to this yet another workaround)
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      StartupManager startupManager = StartupManager.getInstance(getProject());
-      if (!startupManager.postStartupActivityPassed()) {
-        startupManager.registerPostStartupActivity(() -> {
-          if (pendingSettings.compareAndSet(settings, null)) {
-            doSetSettings(settings);
-          }
-        });
-        return;
-      }
-    }
-
     pendingSettings.set(null);
     doSetSettings(settings);
   }
@@ -269,17 +255,19 @@ public abstract class AbstractExternalSystemSettings<
         for (Object o : linked) {
           final ExternalProjectSettings settings = (ExternalProjectSettings)o;
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
-            AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
-            ProjectSystemId externalSystemId = manager.getSystemId();
-            if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-              ExternalProjectsManager.getInstance(project).refreshProject(
-                settings.getExternalProjectPath(),
-                new ImportSpecBuilder(project, externalSystemId)
-                  .useDefaultCallback()
-                  .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                  .build()
-              );
-            }
+            ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {
+              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
+              ProjectSystemId externalSystemId = manager.getSystemId();
+              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
+                ExternalProjectsManager.getInstance(project).refreshProject(
+                  settings.getExternalProjectPath(),
+                  new ImportSpecBuilder(project, externalSystemId)
+                    .useDefaultCallback()
+                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                    .build()
+                );
+              }
+            });
           }
         }
       }
