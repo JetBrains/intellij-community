@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,7 +84,9 @@ public class GitReferenceValidator {
         myLastResultText = revisionExpression;
         myLastResult = false;
         try {
-          GitRevisionNumber revision = GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
+          GitRevisionNumber revision = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+            return GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
+          }, "Validating Revision...", true, project);
           GitUtil.showSubmittedFiles(myProject, revision.asString(), gitRoot(), false, false);
           myLastResult = true;
         }
