@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.python
 
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
@@ -48,11 +47,6 @@ class PythonCommunityPluginModules {
       withModule(mainModuleName, mainJarName)
       withModule(buildPatchesModule, mainJarName, null)
       withResourceFromModule("intellij.python.helpers", "", "helpers")
-      withCustomVersion { BuildContext context ->
-        // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE
-        def pluginBuildNumber = getPluginBuildNumber()
-        "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
-      }
       doNotCreateSeparateJarForLocalizableResources()
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
