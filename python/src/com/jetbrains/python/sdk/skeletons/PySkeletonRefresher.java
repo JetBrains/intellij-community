@@ -80,7 +80,7 @@ public class PySkeletonRefresher {
 
   private static int ourGeneratingCount = 0;
 
-  private String myExtraSyspath;
+  private List<String> myExtraSyspath;
   private PyPregeneratedSkeletons myPregeneratedSkeletons;
   private int myGeneratorVersion;
   private Map<String, Pair<Integer, Long>> myBlacklist;
@@ -200,7 +200,7 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
+  private static List<String> calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
     final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
 
     final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
@@ -214,7 +214,7 @@ public class PySkeletonRefresher {
     paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
     paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
 
-    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(paths, (Function<VirtualFile, Object>)file -> {
+    return ContainerUtil.mapNotNull(paths, file -> {
       if (file.isInLocalFileSystem()) {
         // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
         final File canonicalFile = new File(file.getPath());
@@ -226,7 +226,7 @@ public class PySkeletonRefresher {
         }
       }
       return null;
-    }));
+    });
   }
 
   /**
@@ -249,7 +249,9 @@ public class PySkeletonRefresher {
   @NotNull
   private List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
     final long startTime = System.currentTimeMillis();
-    final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator.generateAllSkeletons(getExtraSyspath(), myIndicator);
+    final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator
+      .withExtraSysPath(getExtraSyspath())
+      .runGeneration(myIndicator);
     finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
@@ -276,7 +278,7 @@ public class PySkeletonRefresher {
       indicate("Copying base SDK skeletons for virtualenv...");
       final String baseSkeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), base.getHomePath());
       final PySkeletonGenerator.ListBinariesResult baseBinaries =
-        mySkeletonsGenerator.listBinaries(base, calculateExtraSysPath(base, baseSkeletonsPath));
+        mySkeletonsGenerator.listBinaries(base, StringUtil.join(calculateExtraSysPath(base, baseSkeletonsPath), File.pathSeparator));
       for (Map.Entry<String, PyBinaryItem> entry : binaries.modules.entrySet()) {
         final String module = entry.getKey();
         final PyBinaryItem binary = entry.getValue();
@@ -619,11 +621,12 @@ public class PySkeletonRefresher {
    */
   public void generateSkeleton(@NotNull String modname, @Nullable String modfilename,
                                @Nullable List<String> assemblyRefs, Consumer<Boolean> resultConsumer) throws InvalidSdkException {
-    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk, resultConsumer);
+    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, StringUtil.join(getExtraSyspath(), File.pathSeparator),
+                                          mySdk, resultConsumer);
   }
 
 
-  private String getExtraSyspath() {
+  private List<String> getExtraSyspath() {
     if (myExtraSyspath == null) {
       myExtraSyspath = calculateExtraSysPath(mySdk, mySkeletonsPath);
     }
