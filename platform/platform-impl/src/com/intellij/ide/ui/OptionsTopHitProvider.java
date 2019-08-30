@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -264,6 +265,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
           }
           getCachedOptions(provider, project, pluginDescriptor);
         });
+      
+        StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
+        if (startUpPerformanceReporter != null) {
+          startUpPerformanceReporter.lastEdtOptionTopHitProviderFinishedForProject();
+        }
       }
 
       long delta = System.currentTimeMillis() - millis;
