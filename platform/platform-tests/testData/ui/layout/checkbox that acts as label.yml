@@ -32,19 +32,7 @@ columnConstraints:
   count: 3
 componentConstrains:
   Thread dump capture delay (ms) [label]: {}
-  'JBIntSpinner #1': {spanX: 2097051, wrap: true}
+  'JBIntSpinner #1': {spanX: INF, wrap: true}
   Create: {}
   'JBIntSpinner #3': {}
-  files to start background indexing [label]: {spanX: 2097051, wrap: true}
-cellBounds:
-- [0, 0, 204, 21]
-- [210, 0, 332, 21]
-- [0, 31, 204, 21]
-- [210, 31, 111, 21]
-- [329, 31, 213, 21]
-componentBounds:
-  Thread dump capture delay (ms) [label]: [0, 3, 204, 15]
-  'JBIntSpinner #1': [207, -3, 81, 27]
-  Create: [-4, 30, 65, 22]
-  'JBIntSpinner #3': [207, 28, 117, 27]
-  files to start background indexing [label]: [329, 34, 213, 15]
+  files to start background indexing [label]: {spanX: INF, wrap: true}

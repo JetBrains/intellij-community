@@ -50,7 +50,7 @@ columnConstraints:
 componentConstrains:
   Async Profiler [titledSeparator]:
     horizontal: {grow: 100.0}
-    spanX: 2097051
+    spanX: INF
     vertical:
       gapAfter:
         min: &id008 {horizontal: false, value: 10.0}
@@ -59,89 +59,75 @@ componentConstrains:
         min: &id009 {horizontal: false, value: 12.0}
         preferred: *id009
     wrap: true
-  'HyperlinkLabel #1': {spanX: 2097051, wrap: true}
-  Agent path [label]: {}
+  'HyperlinkLabel #1':
+    horizontal:
+      gapBefore:
+        min: &id010 {horizontal: true, value: 24.0}
+        preferred: *id010
+    spanX: INF
+    wrap: true
+  Agent path [label]:
+    horizontal:
+      gapBefore:
+        min: &id011 {horizontal: true, value: 24.0}
+        preferred: *id011
   'TextFieldWithBrowseButton #3':
     horizontal:
       grow: 100.0
       size:
         min: {horizontal: true, value: 350.0}
-    spanX: 2097051
+    spanX: INF
     wrap: true
   If field is empty bundled agent will be used [label]:
     horizontal:
-      gapBefore:
-        min: &id010 {horizontal: true, value: 4.0}
-        preferred: *id010
+      gapBefore: &id013 {}
     skip: 1
-    spanX: 2097051
+    spanX: INF
     wrap: true
-  Agent options [label]: {}
+  Agent options [label]:
+    horizontal:
+      gapBefore:
+        min: &id012 {horizontal: true, value: 24.0}
+        preferred: *id012
   'TextFieldWithBrowseButton #6':
     horizontal:
       grow: 100.0
       size:
         min: {horizontal: true, value: 350.0}
-    spanX: 2097051
+    spanX: INF
     wrap: true
   Don't add output format (collapsed is used) or output file options [label]:
     horizontal:
-      gapBefore:
-        min: &id011 {horizontal: true, value: 4.0}
-        preferred: *id011
+      gapBefore: *id013
     skip: 1
-    spanX: 2097051
+    spanX: INF
     wrap: true
   Java Flight Recorder [titledSeparator]:
     horizontal: {grow: 100.0}
-    spanX: 2097051
+    spanX: INF
     vertical:
       gapAfter:
-        min: &id012 {horizontal: false, value: 10.0}
-        preferred: *id012
+        min: &id014 {horizontal: false, value: 10.0}
+        preferred: *id014
       gapBefore:
-        min: &id013 {horizontal: false, value: 12.0}
-        preferred: *id013
+        min: &id015 {horizontal: false, value: 12.0}
+        preferred: *id015
     wrap: true
-  JRE home [label]: {}
+  JRE home [label]:
+    horizontal:
+      gapBefore:
+        min: &id016 {horizontal: true, value: 24.0}
+        preferred: *id016
   'TextFieldWithBrowseButton #10':
     horizontal:
       grow: 100.0
       size:
         min: {horizontal: true, value: 350.0}
-    spanX: 2097051
+    spanX: INF
     wrap: true
   At least OracleJRE 9 or OpenJRE 11 is required to import dump [label]:
     horizontal:
-      gapBefore:
-        min: &id014 {horizontal: true, value: 4.0}
-        preferred: *id014
+      gapBefore: *id013
     skip: 1
-    spanX: 2097051
+    spanX: INF
     wrap: true
-cellBounds:
-- [0, 0, 480, 36]
-- [0, 46, 480, 15]
-- [0, 71, 92, 24]
-- [98, 71, 382, 24]
-- [98, 101, 382, 13]
-- [0, 124, 92, 24]
-- [98, 124, 382, 24]
-- [98, 154, 382, 13]
-- [0, 177, 480, 36]
-- [0, 223, 92, 24]
-- [98, 223, 382, 24]
-- [98, 253, 382, 13]
-componentBounds:
-  Async Profiler [titledSeparator]: [0, 5, 480, 26]
-  'HyperlinkLabel #1': [0, 46, 159, 15]
-  Agent path [label]: [0, 76, 72, 15]
-  'TextFieldWithBrowseButton #3': [95, 68, 388, 30]
-  If field is empty bundled agent will be used [label]: [102, 101, 227, 13]
-  Agent options [label]: [0, 129, 92, 15]
-  'TextFieldWithBrowseButton #6': [95, 121, 388, 30]
-  Don't add output format (collapsed is used) or output file options [label]: [102, 154, 340, 13]
-  Java Flight Recorder [titledSeparator]: [0, 182, 480, 26]
-  JRE home [label]: [0, 228, 62, 15]
-  'TextFieldWithBrowseButton #10': [95, 220, 388, 30]
-  At least OracleJRE 9 or OpenJRE 11 is required to import dump [label]: [102, 253, 327, 13]

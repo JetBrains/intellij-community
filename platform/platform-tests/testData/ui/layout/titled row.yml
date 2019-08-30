@@ -31,7 +31,7 @@ columnConstraints:
 componentConstrains:
   Remote settings [titledSeparator]:
     horizontal: {grow: 100.0}
-    spanX: 2097051
+    spanX: INF
     vertical:
       gapAfter:
         min: &id005 {horizontal: false, value: 10.0}
@@ -40,25 +40,21 @@ componentConstrains:
         min: &id006 {horizontal: false, value: 12.0}
         preferred: *id006
     wrap: true
-  Default notebook name [label]: {}
+  Default notebook name [label]:
+    horizontal:
+      gapBefore:
+        min: &id007 {horizontal: true, value: 24.0}
+        preferred: *id007
   'JTextField #2':
     horizontal: {grow: 100.0}
-    spanX: 2097051
+    spanX: INF
     wrap: true
-  Spark version [label]: {}
+  Spark version [label]:
+    horizontal:
+      gapBefore:
+        min: &id008 {horizontal: true, value: 24.0}
+        preferred: *id008
   'JTextField #4':
     horizontal: {grow: 100.0}
-    spanX: 2097051
+    spanX: INF
     wrap: true
-cellBounds:
-- [0, 0, 480, 36]
-- [0, 46, 151, 24]
-- [157, 46, 323, 24]
-- [0, 80, 151, 24]
-- [157, 80, 323, 24]
-componentBounds:
-  Remote settings [titledSeparator]: [0, 5, 480, 26]
-  Default notebook name [label]: [0, 50, 151, 15]
-  'JTextField #2': [154, 43, 329, 30]
-  Spark version [label]: [0, 84, 88, 15]
-  'JTextField #4': [154, 77, 329, 30]

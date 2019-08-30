@@ -24,27 +24,13 @@ columnConstraints:
       min: *id004
       preferred: *id004
     grow: 0.0
-  - gapAfter:
-      max: &id005 {horizontal: true, value: 8.0}
-      min: *id005
-      preferred: *id005
   - {}
-  count: 3
+  count: 2
 componentConstrains:
-  Thread dump capture delay (ms) [label]: {}
-  'JBIntSpinner #1': {spanX: 2097051, wrap: true}
-  Create: {}
-  'JBIntSpinner #3': {}
-  files to start background indexing [label]: {spanX: 2097051, wrap: true}
-cellBounds:
-- [0, 0, 204, 24]
-- [210, 0, 338, 24]
-- [0, 34, 204, 24]
-- [210, 34, 117, 24]
-- [335, 34, 213, 24]
-componentBounds:
-  Thread dump capture delay (ms) [label]: [0, 4, 204, 15]
-  'JBIntSpinner #1': [207, -3, 87, 30]
-  Create: [-3, 37, 63, 18]
-  'JBIntSpinner #3': [207, 31, 123, 30]
-  files to start background indexing [label]: [335, 38, 213, 15]
+  Create Android module [label]: {}
+  FooBar module name foo: {spanX: INF, wrap: true}
+  Android module name [label]: {}
+  'JTextField #3':
+    horizontal: {grow: 100.0}
+    spanX: INF
+    wrap: true
