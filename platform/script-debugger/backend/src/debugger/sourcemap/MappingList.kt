@@ -149,7 +149,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
     return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
-  override fun getByIndex(index: Int): MappingEntry = mappings.get(index)
+  override fun getByIndex(index: Int): MappingEntry = mappings[index]
 
   // entries will be iterated in this list order
   fun getMappingsInLine(line: Int): Iterable<MappingEntry> {
@@ -188,21 +188,27 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
   }
 
   fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {
-    val mappingsInLine = getMappingsInLine(line).iterator()
-    if (!mappingsInLine.hasNext()) return false
-    var prevEntry = mappingsInLine.next()
-    while (mappingsInLine.hasNext()) {
-      val currentEntry = mappingsInLine.next()
-      if (!entryProcessor.process(prevEntry, currentEntry)) {
-        return true
-      }
-      prevEntry = currentEntry
-    }
-    entryProcessor.process(prevEntry, null)
-    return true
+    val mappingsInLine = getMappingsInLine(line)
+    return entryProcessor.processIterable(mappingsInLine)
   }
 }
 
 interface MappingsProcessorInLine {
+
   fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean
+
+  fun processIterable(mappingsInLine: Iterable<MappingEntry>): Boolean {
+    val iterator = mappingsInLine.iterator()
+    if (!iterator.hasNext()) return false
+    var prevEntry = iterator.next()
+    while (iterator.hasNext()) {
+      val currentEntry = iterator.next()
+      if (!process(prevEntry, currentEntry)) {
+        return true
+      }
+      prevEntry = currentEntry
+    }
+    process(prevEntry, null)
+    return true
+  }
 }
