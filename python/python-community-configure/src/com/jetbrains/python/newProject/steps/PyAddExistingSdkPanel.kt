@@ -18,7 +18,7 @@ import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager
+import com.jetbrains.python.remote.PyProjectSynchronizerProvider
 import com.jetbrains.python.remote.PythonSshInterpreterManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
@@ -155,7 +155,7 @@ class PyAddExistingSdkPanel(project: Project?,
 
   companion object {
     private val Sdk.projectSynchronizer: PyProjectSynchronizer?
-      get() = PythonRemoteInterpreterManager.getInstance()?.getSynchronizer(this)
+      get() = PyProjectSynchronizerProvider.getSynchronizer(this)
 
     private fun Sdk.chooseRemotePath(owner: Component): String? {
       val remoteManager = PythonSshInterpreterManager.Factory.getInstance() ?: return null

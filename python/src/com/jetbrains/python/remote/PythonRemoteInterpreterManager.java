@@ -59,31 +59,6 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
-  /**
-   * @param sdk current sdk
-   * @return project synchronizer for this sdk. See {@link PyProjectSynchronizer} for more info
-   * @see PyProjectSynchronizer
-   */
-  @Nullable
-  public abstract PyProjectSynchronizer getSynchronizer(@NotNull final Sdk sdk);
-
-  /**
-   * Short-cut to get {@link PyProjectSynchronizer} for sdk or null if sdk does not have any
-   */
-  @Nullable
-  public static PyProjectSynchronizer getSynchronizerInstance(@NotNull final Sdk sdk) {
-    final PythonRemoteInterpreterManager remoteManager = getInstance();
-    if (remoteManager == null) {
-      return null;
-    }
-    final PyProjectSynchronizer synchronizer = remoteManager.getSynchronizer(sdk);
-    if (synchronizer == null) {
-      return null;
-    }
-    return synchronizer;
-  }
-
-
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
     if (EP_NAME.getExtensions().length > 0) {

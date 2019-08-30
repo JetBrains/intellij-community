@@ -66,8 +66,8 @@ import java.util.function.Consumer;
  * <br/>
  * <h2>Module vs PyCharm projects</h2>
  * <p>
- *   When you create project in PyCharm it always calls {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)},
- *   but in Intellij Plugin settings are not ready to the moment of project creation, so there are 2 ways to support plugin:
+ * When you create project in PyCharm it always calls {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)},
+ * but in Intellij Plugin settings are not ready to the moment of project creation, so there are 2 ways to support plugin:
  *   <ol>
  *     <li>Do not lean on settings at all. You simply implement {@link #configureProjectNoSettings(Project, VirtualFile, Module)}
  *     This way is common for project templates.
@@ -140,7 +140,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // Check if project synchronizer could be used with this project dir
     // No project can be created remotely if project synchronizer can't work with it
 
-    final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
+    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
     if (synchronizer == null) {
       return;
     }
@@ -166,7 +166,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     /*Instead of this method overwrite ``configureProject``*/
 
     // If we deal with remote project -- use remote manager to configure it
-    final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
     final Sdk sdk = settings.getSdk();
 
     if (sdk instanceof PyLazySdk) {
@@ -177,7 +176,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
 
-    final PyProjectSynchronizer synchronizer = (remoteManager != null ? remoteManager.getSynchronizer(sdk) : null);
+    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
 
     if (synchronizer != null) {
       // Before project creation we need to configure sync
@@ -332,6 +331,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
 
   //TODO: Support for plugin also
+
   /**
    * Installs framework and runs callback on success.
    * Installation runs in modal dialog and callback is posted to AWT thread.
