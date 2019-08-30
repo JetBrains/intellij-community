@@ -73,6 +73,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     options.isIncludeInherited = false;
 
     FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindClassUsages", createFeatureUsageData(options));
+    options.storeDefaults(myProject);
   }
 
   @Override

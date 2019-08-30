@@ -15,6 +15,7 @@
  */
 package com.intellij.find.findUsages;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,20 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
   public JavaVariableFindUsagesOptions(@NotNull SearchScope searchScope) {
     super(searchScope);
     isSearchForTextOccurrences = false;
+  }
+
+  @Override
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.setDefaults(properties, prefix);
+    isReadAccess = properties.getBoolean(prefix + "isReadAccess", true);
+    isWriteAccess = properties.getBoolean(prefix + "isWriteAccess", true);
+  }
+
+  @Override
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.storeDefaults(properties, prefix);
+    properties.setValue(prefix + "isReadAccess", isReadAccess);
+    properties.setValue(prefix + "isWriteAccess", isWriteAccess);
   }
 
   public boolean equals(final Object o) {
