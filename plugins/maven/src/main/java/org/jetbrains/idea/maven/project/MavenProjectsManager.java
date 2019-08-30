@@ -114,6 +114,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  private volatile AsyncPromise<List<Module>> myRunningImportPromise;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenProjectsManager.class);
@@ -148,6 +149,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
+  }
+
+  public AsyncPromise<List<Module>> getRunningImportPromise() {
+    return myRunningImportPromise;
   }
 
   public ModificationTracker getModificationTracker() {
@@ -870,10 +875,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
+    Promise<List<Module>> toCheck = myRunningImportPromise;
+    if(toCheck != null){
+      return toCheck;
+    }
     getSyncConsole().startImport(mySyncViewManager, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
+    myRunningImportPromise = promise;
+    promise.onProcessed(m -> {
+      completeMavenSyncOnImportCompletion(console);
+    });
     fireImportAndResolveScheduled();
     return promise;
   }
@@ -900,6 +912,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   myPostProcessor.waitForCompletion();
                                 }
                                 console.finishImport();
+                                myRunningImportPromise = null;
                               });
   }
 
