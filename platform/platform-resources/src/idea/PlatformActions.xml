@@ -1136,6 +1136,8 @@
                 class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
                 text="Show Statistics Event Log">
         </action>
+        <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"
+                text="Configure Whitelist"/>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">
