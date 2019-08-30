@@ -102,7 +102,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     val workflowHandler = project.getNonModalCommitWorkflowHandler()
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
-        setCommitState(included, isForceUpdateCommitStateFromContext())
+        setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())
         activate()
       }
     }

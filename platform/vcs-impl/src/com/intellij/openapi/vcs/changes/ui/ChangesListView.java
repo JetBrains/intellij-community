@@ -155,7 +155,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
                                                                        .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
@@ -428,6 +428,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
     if (userObject instanceof ChangeListChange) {
       return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
     }
