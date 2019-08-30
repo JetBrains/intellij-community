@@ -450,6 +450,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     else {
       indicator.setText("Preparing workspace...");
+      indicator.setIndeterminate(true);
       try {
         doLoadProject(project);
         return true;
