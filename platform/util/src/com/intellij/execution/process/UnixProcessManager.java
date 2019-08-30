@@ -33,7 +33,6 @@ public class UnixProcessManager {
   public static final int SIGKILL = getSignalNumber("KILL");
   public static final int SIGTERM = getSignalNumber("TERM");
 
-  @SuppressWarnings("SpellCheckingInspection")
   private interface CLib extends Library {
     int getpid();
     int kill(int pid, int signal);
@@ -65,7 +64,7 @@ public class UnixProcessManager {
       return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
-      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+      throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 
