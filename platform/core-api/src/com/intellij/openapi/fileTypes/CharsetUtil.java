@@ -34,8 +34,8 @@ public class CharsetUtil {
   private static boolean overridesExtractCharsetFromContent(LanguageFileType fileType) {
     Class<?> ftClass = fileType.getClass();
     String methodName = "extractCharsetFromFileContent";
-    Class declaring1 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, String.class);
-    Class declaring2 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, CharSequence.class);
+    Class<?> declaring1 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, String.class);
+    Class<?> declaring2 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, CharSequence.class);
     return !LanguageFileType.class.equals(declaring1) || !LanguageFileType.class.equals(declaring2);
   }
 
@@ -46,7 +46,7 @@ public class CharsetUtil {
     if (fileType instanceof LanguageFileType &&
         // otherwise the default implementations will always convert CharSequence to String unnecessarily, producing garbage  
         ourSupportsCharsetDetection.computeIfAbsent(fileType.getName(),
-                                                    (name) -> overridesExtractCharsetFromContent((LanguageFileType)fileType))) {
+                                                    __ -> overridesExtractCharsetFromContent((LanguageFileType)fileType))) {
       return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
     }
     return null;

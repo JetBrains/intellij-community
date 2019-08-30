@@ -421,7 +421,9 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertNotNull(aClass);
 
     // wait until unlock the file?
-    while (!FileUtil.delete(new File(libDir.getPath(), "lib.jar"))) {}
+    while (!FileUtil.delete(new File(libDir.getPath(), "lib.jar"))) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
     UIUtil.dispatchAllInvocationEvents();
     libDir.refresh(false, false);
     UIUtil.dispatchAllInvocationEvents();

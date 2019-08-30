@@ -73,7 +73,7 @@ public class HtmlUtil {
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-  public static final String[] RFC2616_HEADERS = new String[]{"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language",
+  public static final String[] RFC2616_HEADERS = {"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language",
     "Accept-Ranges", "Age", "Allow", "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language",
     "Content-Length", "Content-Location", "Content-MD5", "Content-Range", "Content-Type", "Date", "ETag", "Expect", "Expires", "From",
     "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location",
@@ -138,7 +138,8 @@ public class HtmlUtil {
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || (tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive()) ? name : StringUtil.toLowerCase(name));
+    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive()
+                                             ? name : StringUtil.toLowerCase(name));
     return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
@@ -284,7 +285,7 @@ public class HtmlUtil {
 
     while (tokenizer.hasMoreElements()) {
       final String customName = tokenizer.nextToken();
-      if (customName.length() == 0) continue;
+      if (customName.isEmpty()) continue;
 
       descriptors[index++] = new XmlAttributeDescriptorImpl() {
         @Override
@@ -312,7 +313,7 @@ public class HtmlUtil {
 
     while (tokenizer.hasMoreElements()) {
       final String tagName = tokenizer.nextToken();
-      if (tagName.length() == 0) continue;
+      if (tagName.isEmpty()) continue;
 
       descriptors[index++] = new CustomXmlTagDescriptor(tagName);
     }
@@ -390,12 +391,7 @@ public class HtmlUtil {
     final String htmlFileFullName;
     if (htmlFile != null) {
       final VirtualFile vFile = htmlFile.getVirtualFile();
-      if (vFile != null) {
-        htmlFileFullName = vFile.getPath();
-      }
-      else {
-        htmlFileFullName = htmlFile.getName();
-      }
+      htmlFileFullName = vFile == null ? htmlFile.getName() : vFile.getPath();
     }
     else {
       htmlFileFullName = "unknown";
@@ -503,15 +499,15 @@ public class HtmlUtil {
       int charsetPrefixEnd = charPrefix + CHARSET.length();
       while (charsetPrefixEnd < content.length() && Character.isWhitespace(content.charAt(charsetPrefixEnd))) ++charsetPrefixEnd;
       if (charsetPrefixEnd < content.length() && content.charAt(charsetPrefixEnd) == '=') break;
-      charPrefix = StringUtil.indexOf(content,CHARSET, charsetPrefixEnd);
+      charPrefix = StringUtil.indexOf(content, CHARSET, charsetPrefixEnd);
     } while(true);
 
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
         @NonNls final Set<String> inTag = new THashSet<>();
-        boolean metHttpEquiv = false;
-        boolean metHttml5Charset = false;
+        boolean metHttpEquiv;
+        boolean metHttml5Charset;
 
         @Override
         public void doctype(@Nullable final CharSequence publicId,
@@ -521,7 +517,7 @@ public class HtmlUtil {
         }
 
         @Override
-        public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
+        public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startOffset, final int endOffset,
                                         final int headerEndOffset) {
           @NonNls String name = StringUtil.toLowerCase(localName.toString());
           inTag.add(name);
@@ -545,7 +541,8 @@ public class HtmlUtil {
               int end = contentAttributeValue.indexOf(';', start);
               if (end == -1) end = contentAttributeValue.length();
               charsetName = contentAttributeValue.substring(start, end);
-            } else /*if (metHttml5Charset) */ {
+            }
+            else /*if (metHttml5Charset) */ {
               charsetName = StringUtil.stripQuotesAroundValue(contentAttributeValue);
             }
             charsetNameRef.set(charsetName);
@@ -569,7 +566,8 @@ public class HtmlUtil {
             @NonNls String value = StringUtil.toLowerCase(v.toString());
             if (name.equals("http-equiv")) {
               metHttpEquiv |= value.equals("content-type");
-            } else if (name.equals(CHARSET)) {
+            }
+            else if (name.equals(CHARSET)) {
               metHttml5Charset = true;
               contentAttributeValue = value;
             }
@@ -604,7 +602,7 @@ public class HtmlUtil {
   }
 
   public static boolean isTagWithoutAttributes(@NonNls String tagName) {
-    return tagName != null && "br".equalsIgnoreCase(tagName);
+    return "br".equalsIgnoreCase(tagName);
   }
 
   public static boolean hasHtml(@NotNull PsiFile file) {
@@ -674,7 +672,7 @@ public class HtmlUtil {
   public static class CustomXmlTagDescriptor extends XmlElementDescriptorImpl {
     private final String myTagName;
 
-    public CustomXmlTagDescriptor(String tagName) {
+    CustomXmlTagDescriptor(String tagName) {
       super(null);
       myTagName = tagName;
     }
@@ -695,14 +693,14 @@ public class HtmlUtil {
     }
   }
 
-  @Nullable
+  @NotNull
   public static Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
     // comma is useduse as separator because class name cannot contain comma but it can be part of JSF classes attributes
     return classAttributeValue != null ? StringUtil.tokenize(classAttributeValue, " \t,") : Collections.emptyList();
   }
 
   @Contract("!null -> !null")
-  public static String getTagPresentation(final @Nullable XmlTag tag) {
+  public static String getTagPresentation(@Nullable XmlTag tag) {
     if (tag == null) return null;
     StringBuilder builder = new StringBuilder(tag.getLocalName());
     String idValue = getAttributeValue(tag, ID_ATTRIBUTE_NAME);
@@ -751,7 +749,7 @@ public class HtmlUtil {
       if (child instanceof CompositeElement) {
         return containsOuterLanguageElements(child);
       }
-      else if (child instanceof OuterLanguageElement) {
+      if (child instanceof OuterLanguageElement) {
         return true;
       }
       child = child.getNextSibling();

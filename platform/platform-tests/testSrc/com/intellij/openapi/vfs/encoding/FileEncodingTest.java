@@ -542,12 +542,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     FileDocumentManager.getInstance().saveAllDocuments();
     FileType fileType = file.getFileType();
     assertEquals(StdFileTypes.HTML, fileType);
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(file);
-    assertEquals(StandardCharsets.UTF_8, charsetFromContent);
     Charset fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(myProject, file, (CharSequence)content);
     assertEquals(StandardCharsets.UTF_8, fromType);
     String fromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     assertNull(fromProlog);
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(file);
+    assertEquals(StandardCharsets.UTF_8, charsetFromContent);
     EncodingUtil.FailReason result = EncodingUtil.checkCanConvert(file);
     assertEquals(EncodingUtil.FailReason.BY_FILE, result);
   }
