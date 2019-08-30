@@ -49,7 +49,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
         @Nullable
         @Override
-        protected String activityNamePrefix() {
+        public String activityNamePrefix() {
           // exclude from measurement because default project initialization is not a sequential activity
           // (so, complicates timeline because not applicable)
           // for now we don't measure default project initialization at all, because it takes only ~10 ms

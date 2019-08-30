@@ -24,7 +24,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Constructor
@@ -207,7 +206,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     if (shouldBeRegistered) {
       LOG.assertTrue(adapter != null)
     }
-    picoContainer.registerComponent(MyComponentAdapter(componentKey, componentImplementation, PluginId.getId("test registerComponentImplementation"), this, false))
+    picoContainer.registerComponent(MyComponentAdapter(componentKey, componentImplementation.name, DefaultPluginDescriptor("test registerComponentImplementation"), this, componentImplementation))
   }
 
   @TestOnly
@@ -217,22 +216,21 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
-    val loader = pluginDescriptor.pluginClassLoader
-    val interfaceClass = Class.forName(config.interfaceClass, true, loader)
-    val implementationClass = when {
-      config.interfaceClass == config.implementationClass -> interfaceClass
-      config.implementationClass.isNullOrEmpty() -> null
-      else -> Class.forName(config.implementationClass, true, loader)
-    }
+    val interfaceClass = Class.forName(config.interfaceClass, true, pluginDescriptor.pluginClassLoader)
 
-    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!["overrides"])) {
+    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("overrides"))) {
       myPicoContainer.unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
     }
 
+    val implementationClass = when {
+      config.interfaceClass == config.implementationClass -> interfaceClass.name
+      else -> config.implementationClass
+    }
+
     // implementationClass == null means we want to unregister this component
-    if (implementationClass != null) {
-      val ws = config.options != null && java.lang.Boolean.parseBoolean(config.options!!["workspace"])
-      myPicoContainer.registerComponent(MyComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.pluginId, this, ws))
+    if (!implementationClass.isNullOrEmpty()) {
+      val ws = config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("workspace"))
+      myPicoContainer.registerComponent(MyComponentAdapter(interfaceClass, implementationClass, pluginDescriptor, this, null, ws))
     }
   }
 
@@ -400,12 +398,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
    * Use only if approved by core team.
    */
   @Internal
-  fun registerComponent(key: Class<*>, implementation: Class<*>, pluginId: PluginId, override: Boolean) {
+  fun registerComponent(key: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean) {
     val picoContainer = picoContainer
     if (override && picoContainer.unregisterComponent(key) == null) {
-      throw PluginException("Component $key doesn't override anything", pluginId)
+      throw PluginException("Component $key doesn't override anything", pluginDescriptor.pluginId)
     }
-    picoContainer.registerComponent(MyComponentAdapter(key, implementation, pluginId, this, false))
+    picoContainer.registerComponent(MyComponentAdapter(key, implementation.name, pluginDescriptor, this, implementation))
   }
 
   /**
@@ -640,10 +638,13 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return unloadedInstances
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun precreateService(serviceClass: String) {
     (myPicoContainer.getServiceAdapter(serviceClass) as ServiceComponentAdapter?)?.getInstance<Any>(this)
   }
+
+  @Internal
+  open fun activityNamePrefix(): String? = null
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {

@@ -341,8 +341,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Nullable
+  @ApiStatus.Internal
   @Override
-  protected String activityNamePrefix() {
+  public String activityNamePrefix() {
     return "project ";
   }
 }

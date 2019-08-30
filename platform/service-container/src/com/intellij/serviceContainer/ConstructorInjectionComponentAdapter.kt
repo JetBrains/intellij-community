@@ -104,7 +104,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
     else -> {
       throw PicoInitializationException("The specified parameters not match any of the following constructors: " +
                                         "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" +
-                                        "for '$aClass'")
+                                        "for $aClass")
     }
   }
 }
@@ -119,11 +119,7 @@ private fun getSortedMatchingConstructors(componentImplementation: Class<*>): Ar
   return declaredConstructors
 }
 
-internal open class ConstructorParameterResolver {
-  companion object {
-    val INSTANCE = ConstructorParameterResolver()
-  }
-
+internal abstract class ConstructorParameterResolver {
   open fun isResolvable(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Boolean {
     return resolveAdapter(componentManager, requestorKey, expectedType) != null
   }

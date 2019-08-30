@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
@@ -13,15 +10,13 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.serviceContainer.InstantiatingComponentAdapter;
+import com.intellij.serviceContainer.MyComponentAdapter;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -29,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,11 +59,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
     myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
     myExtensionArea = new ExtensionsAreaImpl(this);
-  }
-
-  @Nullable
-  protected String activityNamePrefix() {
-    return null;
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
@@ -200,7 +191,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {
     MyComponentAdapter adapter = getComponentAdapter(componentImplementation);
-    return adapter != null && adapter.isWorkspaceComponent;
+    return adapter != null && adapter.isWorkspaceComponent();
   }
 
   @Nullable
@@ -233,88 +224,34 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myNameToComponent.get(name);
   }
 
-  protected static final class MyComponentAdapter extends InstantiatingComponentAdapter {
-    final boolean isWorkspaceComponent;
+  @ApiStatus.Internal
+  public final void registerComponentInstance(@NotNull Object instance, @Nullable ProgressIndicator indicator) {
+    myInstantiatedComponentCount++;
 
-    public MyComponentAdapter(@NotNull Class<?> key,
-                              @NotNull Class<?> implementationClass,
-                              @NotNull PluginId pluginId,
-                              @NotNull PlatformComponentManagerImpl componentManager,
-                              boolean isWorkspaceComponent) {
-      super(key, implementationClass, pluginId, componentManager);
-
-      this.isWorkspaceComponent = isWorkspaceComponent;
+    if (indicator != null) {
+      indicator.checkCanceled();
+      setProgressDuringInit(indicator);
     }
 
-    private static void registerComponentInstance(@NotNull Object instance, @NotNull ComponentManagerImpl componentManager) {
-      componentManager.myInstantiatedComponentCount++;
-
-      if (instance instanceof com.intellij.openapi.Disposable) {
-        Disposer.register(componentManager, (com.intellij.openapi.Disposable)instance);
-      }
-
-      if (!(instance instanceof BaseComponent)) {
-        return;
-      }
-
-      BaseComponent baseComponent = (BaseComponent)instance;
-      String componentName = baseComponent.getComponentName();
-      if (componentManager.myNameToComponent.containsKey(componentName)) {
-        BaseComponent loadedComponent = componentManager.myNameToComponent.get(componentName);
-        // component may have been already loaded by PicoContainer, so fire error only if components are really different
-        if (!instance.equals(loadedComponent)) {
-          String errorMessage = "Component name collision: " + componentName + ' ' +
-                                (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-          PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
-        }
-      }
-      else {
-        componentManager.myNameToComponent.put(componentName, baseComponent);
-      }
-
-      componentManager.myBaseComponents.add(baseComponent);
+    if (!(instance instanceof BaseComponent)) {
+      return;
     }
 
-    @Override
-    @NotNull
-    protected <T> T doCreateInstance(@NotNull PlatformComponentManagerImpl componentManager, @Nullable ProgressIndicator indicator) {
-      try {
-        Activity activity = createMeasureActivity(componentManager);
-        T instance = createComponentInstance(componentManager);
-        registerComponentInstance(instance, componentManager);
-
-        if (indicator != null) {
-          indicator.checkCanceled();
-          componentManager.setProgressDuringInit(indicator);
-        }
-        componentManager.initializeComponent(instance, null);
-        if (instance instanceof BaseComponent) {
-          ((BaseComponent)instance).initComponent();
-        }
-
-        if (activity != null) {
-          activity.end();
-        }
-
-        return instance;
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable t) {
-        componentManager.handleInitComponentError(t, getComponentKey().getName(), getPluginId());
-        throw t;
+    BaseComponent baseComponent = (BaseComponent)instance;
+    String componentName = baseComponent.getComponentName();
+    if (myNameToComponent.containsKey(componentName)) {
+      BaseComponent loadedComponent = myNameToComponent.get(componentName);
+      // component may have been already loaded by PicoContainer, so fire error only if components are really different
+      if (!instance.equals(loadedComponent)) {
+        String errorMessage = "Component name collision: " + componentName + ' ' +
+                              (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
       }
     }
-
-    @Nullable
-    private Activity createMeasureActivity(@NotNull PlatformComponentManagerImpl componentManager) {
-      if (componentManager.activityNamePrefix() == null) {
-        return null;
-      }
-
-      Level level = componentManager.getActivityLevel();
-      return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, getPluginId().getIdString());
+    else {
+      myNameToComponent.put(componentName, baseComponent);
     }
+
+    myBaseComponents.add(baseComponent);
   }
 }

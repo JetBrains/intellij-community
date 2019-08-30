@@ -5,6 +5,7 @@ import com.intellij.diagnostic.LoadingPhase
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -13,7 +14,9 @@ import org.picocontainer.PicoContainer
 import org.picocontainer.PicoVisitor
 
 internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
-                                             @field:Volatile protected var initializedInstance: Any?) : ComponentAdapter {
+                                             val pluginDescriptor: PluginDescriptor,
+                                             @field:Volatile protected var initializedInstance: Any?,
+                                             private var implementationClass: Class<*>?) : ComponentAdapter {
   companion object {
     private val LOG = logger<BaseComponentAdapter>()
   }
@@ -26,10 +29,35 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     visitor.visitComponentAdapter(this)
   }
 
-  protected abstract val pluginId: PluginId
+  protected val pluginId: PluginId
+    get() = pluginDescriptor.pluginId
+
+  protected abstract val implementationClassName: String
 
   protected open val createIfContainerDisposed: Boolean
     get() = false
+
+  @Synchronized
+  fun isImplementationClassResolved() = implementationClass != null
+
+  final override fun getComponentImplementation() = getImplementationClass()
+
+  @Synchronized
+  fun getImplementationClass(): Class<*> {
+    var result = implementationClass
+    if (result == null) {
+      val implClass: Class<*> = try {
+        Class.forName(implementationClassName, true, pluginDescriptor.pluginClassLoader)
+      }
+      catch (e: ClassNotFoundException) {
+        throw PluginException("Failed to load class: ${toString()}", e, pluginDescriptor.pluginId)
+      }
+
+      result = implClass
+      implementationClass = result
+    }
+    return result
+  }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
@@ -91,19 +119,4 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     @Suppress("UNCHECKED_CAST")
     return old as T?
   }
-}
-
-internal abstract class InstantiatingComponentAdapter(private val componentKey: Class<*>,
-                                                      private val componentImplementation: Class<*>,
-                                                      final override val pluginId: PluginId,
-                                                      componentManager: PlatformComponentManagerImpl) : BaseComponentAdapter(componentManager, null) {
-  final override fun getComponentKey() = componentKey
-
-  final override fun getComponentImplementation() = componentImplementation
-
-  protected fun <T : Any> createComponentInstance(componentManager: PlatformComponentManagerImpl): T {
-    return instantiateUsingPicoContainer(componentImplementation, componentKey, componentManager, ConstructorParameterResolver.INSTANCE)
-  }
-
-  final override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${getComponentImplementation()}, plugin=$pluginId)"
 }

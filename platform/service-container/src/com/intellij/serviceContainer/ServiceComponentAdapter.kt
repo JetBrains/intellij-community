@@ -2,14 +2,12 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ParallelActivity
-import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
@@ -19,52 +17,29 @@ import com.intellij.util.pico.AssignableToComponentAdapter
 private val LOG = logger<ServiceComponentAdapter>()
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
-                                       val pluginDescriptor: PluginDescriptor,
+                                       pluginDescriptor: PluginDescriptor,
                                        componentManager: PlatformComponentManagerImpl,
-                                       private var implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, initializedInstance), AssignableToComponentAdapter {
-  override val pluginId: PluginId
-    get() = pluginDescriptor.pluginId
-
-  @Synchronized
-  fun isImplementationClassResolved() = implementationClass != null
-
+                                       implementationClass: Class<*>? = null,
+                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass), AssignableToComponentAdapter {
   override val createIfContainerDisposed: Boolean
     get() = true
 
-  @Synchronized
-  fun getImplementationClass(): Class<*> {
-    var result = implementationClass
-    if (result == null) {
-      val implClass: Class<*> = try {
-        Class.forName(descriptor.implementation, true, pluginDescriptor.pluginClassLoader)
-      }
-      catch (e: ClassNotFoundException) {
-        throw PluginException("Failed to load class: $descriptor", e, pluginDescriptor.pluginId)
-      }
-
-      result = implClass
-      implementationClass = result
-    }
-    return result
-  }
+  override val implementationClassName: String
+    get() = descriptor.implementation!!
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun getComponentImplementation() = getImplementationClass()
-
   override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T {
-    val implementation = descriptor.implementation
     if (LOG.isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(getImplementationClass())) {
-        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${implementation!!}"))
+        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${implementationClassName}"))
       }
     }
 
     // heavy to prevent storages from flushing and blocking FS
-    HeavyProcessLatch.INSTANCE.processStarted("Creating service: $implementation").use {
+    HeavyProcessLatch.INSTANCE.processStarted(implementationClassName).use {
       if (ProgressManager.getGlobalProgressIndicator() == null) {
         return createAndInitialize(componentManager)
       }

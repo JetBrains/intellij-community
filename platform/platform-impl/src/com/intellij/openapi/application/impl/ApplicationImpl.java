@@ -1355,8 +1355,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Nullable
+  @ApiStatus.Internal
   @Override
-  protected String activityNamePrefix() {
+  public String activityNamePrefix() {
     return "app ";
   }
 
