@@ -23,16 +23,11 @@ import java.util.function.Consumer;
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
-public class AppScheduledExecutorService extends SchedulingWrapper {
+public final class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
   private final MyThreadFactory myCountingThreadFactory;
-
-  @NotNull
-  private static Logger getLogger() {
-    return Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
-  }
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");

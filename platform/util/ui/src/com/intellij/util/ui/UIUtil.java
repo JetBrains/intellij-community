@@ -78,16 +78,15 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil extends StartupUiUtil {
-
   static {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
+    LoadingPhase.LAF_INITIALIZED.assertAtLeast();
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux") && Registry.is("suppress.focus.stealing");
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux", false) && Registry.is("suppress.focus.stealing", true);
 
   @NotNull
   // cannot be static because logging maybe not configured yet
@@ -105,13 +104,13 @@ public final class UIUtil extends StartupUiUtil {
 
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") &&
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations", false) &&
                                                                    StartupUiUtil.isUnderDarcula());
     }
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
-    if(SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+    if(SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       JBInsets topWindowInset = JBUI.insetsTop(24);
       rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
       AbstractBorder customDecorationBorder = new AbstractBorder() {
@@ -489,7 +488,7 @@ public final class UIUtil extends StartupUiUtil {
       return true;
     }
 
-    if (Registry.is("new.retina.detection")) {
+    if (Registry.is("new.retina.detection", false)) {
       return DetectRetinaKit.isRetina();
     }
     else {
@@ -1330,11 +1329,11 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui") && !isCustomTheme();
+    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui", true) && !isCustomTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui") && !isCustomTheme();
+    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui", true) && !isCustomTheme();
   }
 
   private static boolean isCustomTheme() {
@@ -3087,7 +3086,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
+    int lcdContrastValue  = Registry.intValue("lcd.contrast.value", 0);
 
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
@@ -3140,7 +3139,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return Registry.is("ui.no.bangs.and.whistles") ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return Registry.is("ui.no.bangs.and.whistles", false) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   @Nullable

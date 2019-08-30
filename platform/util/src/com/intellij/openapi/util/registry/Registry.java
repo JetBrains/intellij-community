@@ -48,6 +48,11 @@ public final class Registry  {
   }
 
   public static boolean is(@NotNull String key, boolean defaultValue) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+      return defaultValue;
+    }
+
     try {
       return get(key).asBoolean();
     }
@@ -61,6 +66,11 @@ public final class Registry  {
   }
 
   public static int intValue(@NotNull String key, int defaultValue) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+      return defaultValue;
+    }
+
     try {
       return get(key).asInteger();
     }

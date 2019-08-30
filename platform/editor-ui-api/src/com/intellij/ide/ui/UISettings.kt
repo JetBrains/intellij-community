@@ -379,10 +379,10 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical")) {
+    if (Registry.`is`("tabs.alphabetical", false)) {
       sortTabsAlphabetically = true
     }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
       openTabsAtTheEnd = true
     }
   }

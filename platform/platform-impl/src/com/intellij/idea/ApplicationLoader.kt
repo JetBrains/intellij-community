@@ -264,11 +264,16 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   }
 }
 
-fun initApplication(rawArgs: Array<String>) {
+fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
   val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
-  EventQueue.invokeLater {
-    executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
+  AppExecutorUtil.getAppExecutorService().execute {
+    initAppActivity.runChild("wait UI init") {
+      initUiTask?.get()
+    }
+    EventQueue.invokeLater {
+      executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
+    }
   }
 
   val plugins = try {

@@ -77,7 +77,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       int code = disabled ? KeyEvent.VK_UNDEFINED : myCode;
       if (code != getMnemonicCode()) setMnemonicCode(code);
       // update input map to support Alt-based mnemonics
-      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl", true)) {
         InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         if (map != null) updateInputMap(map, code);
       }
@@ -145,7 +145,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
           sb.append(ch);
         }
         else if (i + 1 < length) {
-          code = KeyEvent.getExtendedKeyCodeForChar((int)text.charAt(i + 1));
+          code = KeyEvent.getExtendedKeyCodeForChar(text.charAt(i + 1));
           index = sb.length();
         }
       }
