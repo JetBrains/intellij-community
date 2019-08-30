@@ -7,6 +7,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathMacroFilter;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -65,6 +66,8 @@ public class PathMacroManagerTest {
     myModule = context.mock(Module.class);
     myPathMacros = context.mock(PathMacrosImpl.class);
     myProject = context.mock(ProjectEx.class);
+
+    myApplication.registerService(PathMacros.class, myPathMacros);
 
     final VirtualFile projectFile = context.mock(VirtualFile.class, "projectFile");
 
@@ -133,7 +136,7 @@ public class PathMacroManagerTest {
   public void testPathsOutsideProject() {
     setUpMocks("/tmp/foo");
 
-    final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
+    ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myProject).getReplacePathMap();
     assertReplacements(replacePathMap, "file:/tmp/foo -> file:$PROJECT_DIR$\n" +
                  "file://tmp/foo -> file:/$PROJECT_DIR$\n" +
                  "file:///tmp/foo -> file://$PROJECT_DIR$\n" +
@@ -178,7 +181,7 @@ public class PathMacroManagerTest {
   public void testProjectUnderUserHome_ReplaceRecursively() {
     setUpMocks("/home/user/foo");
 
-    ReplacePathToMacroMap map = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
+    ReplacePathToMacroMap map = new ProjectPathMacroManager(myProject).getReplacePathMap();
     String src = "-Dfoo=/home/user/foo/bar/home -Dbar=\"/home/user\"";
     String dst = "-Dfoo=$PROJECT_DIR$/bar/home -Dbar=\"$PROJECT_DIR$/..\"";
     assertEquals(dst, map.substituteRecursively(src, true));

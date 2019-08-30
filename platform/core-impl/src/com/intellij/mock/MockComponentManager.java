@@ -102,11 +102,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    return getComponent(interfaceClass);
-  }
-
-  @Override
   @NotNull
   public MutablePicoContainer getPicoContainer() {
     return myPicoContainer;

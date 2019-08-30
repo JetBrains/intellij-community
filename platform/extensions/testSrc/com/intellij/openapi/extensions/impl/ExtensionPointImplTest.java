@@ -308,11 +308,6 @@ public class ExtensionPointImplTest {
       return null;
     }
 
-    @Override
-    public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
-      return null;
-    }
-
     @NotNull
     @Override
     public PicoContainer getPicoContainer() {

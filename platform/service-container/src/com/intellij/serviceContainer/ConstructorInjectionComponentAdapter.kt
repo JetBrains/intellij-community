@@ -129,8 +129,21 @@ internal open class ConstructorParameterResolver {
   }
 
   open fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
-    val componentAdapter = resolveAdapter(componentManager, requestorKey, expectedType) ?: return null
-    return componentManager.picoContainer.getComponentInstance(componentAdapter.componentKey)
+    val adapter = resolveAdapter(componentManager, requestorKey, expectedType) ?: return null
+    return when (adapter) {
+      is BaseComponentAdapter -> {
+        // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
+        adapter.getInstance(adapter.componentManager)
+      }
+      else -> {
+        if (componentManager.parent == null) {
+          adapter.getComponentInstance(componentManager.picoContainer)
+        }
+        else {
+          componentManager.picoContainer.getComponentInstance(adapter.componentKey)
+        }
+      }
+    }
   }
 
   private fun resolveAdapter(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): ComponentAdapter? {

@@ -197,14 +197,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return null;
   }
 
-  @ApiStatus.Internal
-  public final void precreateService(@NotNull String serviceClass) {
-    ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass);
-    if (adapter != null) {
-      adapter.getComponentInstance(this);
-    }
-  }
-
   @Nullable
   public <T> T getService(@NotNull Class<T> serviceClass) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass.getName());

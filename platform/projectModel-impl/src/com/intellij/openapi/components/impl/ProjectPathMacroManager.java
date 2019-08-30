@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 public final class ProjectPathMacroManager extends PathMacroManager {
@@ -19,7 +18,10 @@ public final class ProjectPathMacroManager extends PathMacroManager {
     myProject = project;
   }
 
-  @TestOnly
+  /**
+   * @deprecated Do not pass PathMacros.
+   */
+  @Deprecated
   public ProjectPathMacroManager(@NotNull PathMacros pathMacros, @NotNull Project project) {
     super(pathMacros);
     myProject = project;

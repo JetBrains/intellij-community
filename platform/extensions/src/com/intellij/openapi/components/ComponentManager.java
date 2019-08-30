@@ -43,14 +43,13 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**
-   * Gets the component by its interface class but returns a specified default implementation
-   * if the actual component doesn't exist in the container.
-   *
-   * @param interfaceClass the interface class of the component
-   * @param defaultImplementationIfAbsent the default implementation
-   * @return component that matches interface class or default if there is no such component
+   * @deprecated Useless.
    */
-  <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent);
+  @Deprecated
+  default <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
+    T component = getComponent(interfaceClass);
+    return component == null ? defaultImplementationIfAbsent : component;
+  }
 
   /**
    * Checks whether there is a component with the specified interface class.

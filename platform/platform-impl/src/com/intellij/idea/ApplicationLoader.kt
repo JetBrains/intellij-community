@@ -453,12 +453,12 @@ open class IdeStarter : ApplicationStarter {
     if (SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread {
         TouchBarsManager.onApplicationInitialized()
-        if (TouchBarsManager.isTouchBarAvailable())
+        if (TouchBarsManager.isTouchBarAvailable()) {
           CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
+        }
 
-        var keymap = KeymapManager.getInstance().activeKeymap
-        val sysConflictChecker = SystemShortcuts()
-        sysConflictChecker.checkConflictsAndNotify(keymap)
+        val keymap = KeymapManager.getInstance().activeKeymap
+        SystemShortcuts().checkConflictsAndNotify(keymap)
       }
     }
 
@@ -511,14 +511,13 @@ private fun processProgramArguments(args: Array<String>): List<String> {
 @ApiStatus.Internal
 fun preloadServices(app: ApplicationImpl, plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
   val futures = mutableListOf<CompletableFuture<Void>>()
-  val picoContainer = app.picoContainer
   val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors()) as BoundedTaskExecutor
   // do not mangle thread names
   executor.setChangeThreadName(false)
   for (plugin in plugins) {
     for (service in (plugin as IdeaPluginDescriptorImpl).app.services) {
       if (service.preload) {
-        futures.add(CompletableFuture.runAsync(Runnable { picoContainer.precreateService(service.getInterface()) }, executor))
+        futures.add(CompletableFuture.runAsync(Runnable { app.precreateService(service.getInterface()) }, executor))
       }
     }
   }

@@ -24,6 +24,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Constructor
@@ -32,7 +33,7 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ConcurrentMap
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
+abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
     private val LOG = logger<PlatformComponentManagerImpl>()
 
@@ -190,7 +191,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
     for (componentAdapter in myPicoContainer.componentAdapters) {
       if (componentAdapter is MyComponentAdapter) {
-        componentAdapter.getInstance<Any>(this, createIfNeeded = true, indicator = indicator)
+        componentAdapter.getInstance<Any>(this, indicator = indicator)
       }
     }
 
@@ -278,6 +279,21 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
+  final override fun <T : Any> getComponent(interfaceClass: Class<T>): T? {
+    val picoContainer = picoContainer
+    val adapter = picoContainer.getComponentAdapter(interfaceClass) ?: return null
+    @Suppress("UNCHECKED_CAST")
+    return when (adapter) {
+      is BaseComponentAdapter -> {
+        if (parent != null) {
+          LOG.assertTrue(adapter.componentManager == this)
+        }
+        adapter.getInstance(this)
+      }
+      else -> adapter.getComponentInstance(picoContainer) as T
+    }
+  }
+
   final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
@@ -292,8 +308,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
     ProgressManager.checkCanceled()
 
-    if (myParent != null) {
-      val result = myParent.getService(serviceClass, createIfNeeded)
+    if (parent != null) {
+      val result = parent.getService(serviceClass, createIfNeeded)
       if (result != null) {
         LOG.error("$key is registered as application service, but requested as project one")
         return result
@@ -302,7 +318,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
 
     val result = getComponent(serviceClass) ?: return null
     PluginException.logPluginError(LOG, "$key requested as a service, but it is a component - convert it to a service or " +
-                                        "change call to ${if (myParent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}",
+                                        "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}",
                                    null, serviceClass)
     return result
   }
@@ -358,7 +374,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
   }
 
   final override fun createMessageBus(): MessageBus {
-    val messageBus: MessageBus = MessageBusFactory.newMessageBus(this, myParent?.messageBus)
+    val messageBus: MessageBus = MessageBusFactory.newMessageBus(this, parent?.messageBus)
     if (messageBus is MessageBusImpl && StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
         if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
@@ -455,7 +471,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
     }
 
     try {
-      if (myParent == null) {
+      if (parent == null) {
         val constructor = aClass.getDeclaredConstructor()
         constructor.isAccessible = true
         return constructor.newInstance()
@@ -622,6 +638,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(parent: Co
       unloadedInstances.add(instance)
     }
     return unloadedInstances
+  }
+
+  @ApiStatus.Internal
+  fun precreateService(serviceClass: String) {
+    (myPicoContainer.getServiceAdapter(serviceClass) as ServiceComponentAdapter?)?.getInstance<Any>(this)
   }
 }
 

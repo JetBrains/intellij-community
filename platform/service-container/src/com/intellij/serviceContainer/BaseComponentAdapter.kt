@@ -12,7 +12,8 @@ import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
 import org.picocontainer.PicoVisitor
 
-internal abstract class BaseComponentAdapter(@field:Volatile protected var initializedInstance: Any?) : ComponentAdapter {
+internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
+                                             @field:Volatile protected var initializedInstance: Any?) : ComponentAdapter {
   companion object {
     private val LOG = logger<BaseComponentAdapter>()
   }
@@ -30,8 +31,15 @@ internal abstract class BaseComponentAdapter(@field:Volatile protected var initi
   protected open val createIfContainerDisposed: Boolean
     get() = false
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Do not use")
+  final override fun getComponentInstance(container: PicoContainer): Any? {
+    //LOG.error("Use getInstance() instead")
+    return getInstance(componentManager)
+  }
+
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     var instance = initializedInstance as T?
     if (instance != null || !createIfNeeded || (!createIfContainerDisposed && componentManager.isDisposed)) {
@@ -85,7 +93,10 @@ internal abstract class BaseComponentAdapter(@field:Volatile protected var initi
   }
 }
 
-internal abstract class InstantiatingComponentAdapter(private val componentKey: Class<*>, private val componentImplementation: Class<*>) : BaseComponentAdapter(null) {
+internal abstract class InstantiatingComponentAdapter(private val componentKey: Class<*>,
+                                                      private val componentImplementation: Class<*>,
+                                                      final override val pluginId: PluginId,
+                                                      componentManager: PlatformComponentManagerImpl) : BaseComponentAdapter(componentManager, null) {
   final override fun getComponentKey() = componentKey
 
   final override fun getComponentImplementation() = componentImplementation
@@ -93,4 +104,6 @@ internal abstract class InstantiatingComponentAdapter(private val componentKey: 
   protected fun <T : Any> createComponentInstance(componentManager: PlatformComponentManagerImpl): T {
     return instantiateUsingPicoContainer(componentImplementation, componentKey, componentManager, ConstructorParameterResolver.INSTANCE)
   }
+
+  final override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${getComponentImplementation()}, plugin=$pluginId)"
 }

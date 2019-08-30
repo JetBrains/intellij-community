@@ -369,7 +369,7 @@ internal class GitTest : GitTestCase() {
     repositoryManager.createRepositoryIfNeeded()
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
-    val store = ApplicationStoreImpl(null)
+    val store = ApplicationStoreImpl()
     val localConfigPath = tempDirManager.newPath("local_config", refreshVfs = true)
 
     val lafData = """<application>

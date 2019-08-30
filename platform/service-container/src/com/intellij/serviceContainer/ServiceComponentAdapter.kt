@@ -15,15 +15,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.pico.AssignableToComponentAdapter
-import org.picocontainer.PicoContainer
 
 private val LOG = logger<ServiceComponentAdapter>()
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        val pluginDescriptor: PluginDescriptor,
-                                       private val componentManager: PlatformComponentManagerImpl,
+                                       componentManager: PlatformComponentManagerImpl,
                                        private var implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(initializedInstance), AssignableToComponentAdapter {
+                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, initializedInstance), AssignableToComponentAdapter {
   override val pluginId: PluginId
     get() = pluginDescriptor.pluginId
 
@@ -53,8 +52,6 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun getComponentKey(): String = descriptor.getInterface()
 
   override fun getComponentImplementation() = getImplementationClass()
-
-  override fun getComponentInstance(container: PicoContainer): Any? = getInstance(componentManager, createIfNeeded = true)
 
   override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T {
     val implementation = descriptor.implementation
@@ -97,5 +94,5 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getAssignableToClassName(): String = descriptor.getInterface()
 
-  override fun toString() = "ServiceComponentAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
+  override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
 }

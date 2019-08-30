@@ -23,7 +23,7 @@ import java.util.Objects;
 public class PathMacroManager implements PathMacroSubstitutor {
   @NotNull
   public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
-    return Objects.requireNonNull(componentManager.getService(PathMacroManager.class, true));
+    return Objects.requireNonNull(componentManager.getService(PathMacroManager.class));
   }
 
   private static class Holder {

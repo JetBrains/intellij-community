@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Disposable;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,10 +60,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
-  protected final ComponentManager myParent;
-
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
-    myParent = parent;
     myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
     myExtensionArea = new ExtensionsAreaImpl(this);
   }
@@ -125,24 +120,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     myComponentConfigCount = -1;
-  }
-
-  @Override
-  public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    MutablePicoContainer picoContainer = getPicoContainer();
-    ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
-    if (adapter == null) {
-      return null;
-    }
-
-    //noinspection unchecked
-    return (T)adapter.getComponentInstance(picoContainer);
-  }
-
-  @Override
-  public final <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    T component = getComponent(interfaceClass);
-    return component == null ? defaultImplementation : component;
   }
 
   @Nullable
@@ -257,11 +234,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected static final class MyComponentAdapter extends InstantiatingComponentAdapter {
-    private final PluginId myPluginId;
-
-    @NotNull
-    private final PlatformComponentManagerImpl componentManager;
-
     final boolean isWorkspaceComponent;
 
     public MyComponentAdapter(@NotNull Class<?> key,
@@ -269,22 +241,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                               @NotNull PluginId pluginId,
                               @NotNull PlatformComponentManagerImpl componentManager,
                               boolean isWorkspaceComponent) {
-      super(key, implementationClass);
+      super(key, implementationClass, pluginId, componentManager);
 
-      myPluginId = pluginId;
-      this.componentManager = componentManager;
       this.isWorkspaceComponent = isWorkspaceComponent;
-    }
-
-    @NotNull
-    @Override
-    protected PluginId getPluginId() {
-      return myPluginId;
-    }
-
-    @Override
-    public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
-      return getInstance(/* createIfNeeded = */ componentManager, true, null);
     }
 
     private static void registerComponentInstance(@NotNull Object instance, @NotNull ComponentManagerImpl componentManager) {
@@ -304,8 +263,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         BaseComponent loadedComponent = componentManager.myNameToComponent.get(componentName);
         // component may have been already loaded by PicoContainer, so fire error only if components are really different
         if (!instance.equals(loadedComponent)) {
-          String errorMessage = "Component name collision: " + componentName +
-                                ' ' + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+          String errorMessage = "Component name collision: " + componentName + ' ' +
+                                (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
           PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
         }
       }
@@ -343,7 +302,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         throw e;
       }
       catch (Throwable t) {
-        componentManager.handleInitComponentError(t, getComponentKey().getName(), myPluginId);
+        componentManager.handleInitComponentError(t, getComponentKey().getName(), getPluginId());
         throw t;
       }
     }
@@ -355,12 +314,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
 
       Level level = componentManager.getActivityLevel();
-      return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId.getIdString());
-    }
-
-    @Override
-    public String toString() {
-      return "ComponentConfigAdapter[" + getComponentKey() + "]: implementation=" + getComponentImplementation() + ", plugin=" + myPluginId;
+      return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, getPluginId().getIdString());
     }
   }
 }
