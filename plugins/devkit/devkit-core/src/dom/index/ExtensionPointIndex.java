@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,7 +10,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -27,7 +27,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
 
-public class ExtensionPointIndex extends FileBasedIndexExtension<String, Integer> {
+public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointIndex");
 
@@ -37,27 +37,16 @@ public class ExtensionPointIndex extends FileBasedIndexExtension<String, Integer
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Integer, FileContent> getIndexer() {
-    return new DataIndexer<String, Integer, FileContent>() {
-      @NotNull
-      @Override
-      public Map<String, Integer> map(@NotNull FileContent inputData) {
-        IdeaPlugin plugin = RegistrationIndexer.obtainIdeaPlugin(inputData);
-        if (plugin == null) return Collections.emptyMap();
-
-
-        Map<String, Integer> result = new HashMap<>();
-        for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
-          for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
-            ExtensionPoint extensionPoint = (ExtensionPoint)point;
-            result.put(extensionPoint.getEffectiveQualifiedName(), extensionPoint.getXmlTag().getTextOffset());
-          }
-        }
-        return result;
+  protected Map<String, Integer> performIndexing(IdeaPlugin plugin) {
+    Map<String, Integer> result = new HashMap<>();
+    for (DomElement points : getChildrenWithoutIncludes(plugin, "extensionPoints")) {
+      for (DomElement point : getChildrenWithoutIncludes(points, "extensionPoint")) {
+        ExtensionPoint extensionPoint = (ExtensionPoint)point;
+        result.put(extensionPoint.getEffectiveQualifiedName(), extensionPoint.getXmlTag().getTextOffset());
       }
-    };
+    }
+    return result;
   }
 
   // skip any xi:include
@@ -84,17 +73,6 @@ public class ExtensionPointIndex extends FileBasedIndexExtension<String, Integer
   @Override
   public int getVersion() {
     return 0;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
-  }
-
-  @Override
-  public boolean dependsOnFileContent() {
-    return true;
   }
 
   public static Map<String, ExtensionPoint> getExtensionPoints(Project project, Set<VirtualFile> files, String epPrefix) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Condition;
@@ -13,21 +12,21 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
+public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
   @NotNull
@@ -38,18 +37,18 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
-    return inputData -> {
-      IdeaPlugin plugin = RegistrationIndexer.obtainIdeaPlugin(inputData);
-      if (plugin == null) return Collections.emptyMap();
+  public DataExternalizer<Void> getValueExternalizer() {
+    return VoidDataExternalizer.INSTANCE;
+  }
 
-      List<String> ids = new ArrayList<>();
-      ids.add(StringUtil.notNullize(plugin.getPluginId()));
-      for (PluginModule module : plugin.getModules()) {
-        ContainerUtil.addIfNotNull(ids, module.getValue().getStringValue());
-      }
-      return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
-    };
+  @Override
+  protected Map<String, Void> performIndexing(IdeaPlugin plugin) {
+    List<String> ids = new ArrayList<>();
+    ids.add(StringUtil.notNullize(plugin.getPluginId()));
+    for (PluginModule module : plugin.getModules()) {
+      ContainerUtil.addIfNotNull(ids, module.getValue().getStringValue());
+    }
+    return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
   @NotNull
@@ -61,17 +60,6 @@ public class PluginIdModuleIndex extends ScalarIndexExtension<String> {
   @Override
   public int getVersion() {
     return 1;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
-  }
-
-  @Override
-  public boolean dependsOnFileContent() {
-    return true;
   }
 
   public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {

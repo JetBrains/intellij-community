@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
 import java.io.DataInput;
@@ -35,7 +38,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class IdeaPluginRegistrationIndex extends FileBasedIndexExtension<String, List<RegistrationEntry>> {
+public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 1;
 
@@ -67,16 +70,9 @@ public class IdeaPluginRegistrationIndex extends FileBasedIndexExtension<String,
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, List<RegistrationEntry>, FileContent> getIndexer() {
-    return new DataIndexer<String, List<RegistrationEntry>, FileContent>() {
-      @NotNull
-      @Override
-      public Map<String, List<RegistrationEntry>> map(@NotNull FileContent inputData) {
-        return new RegistrationIndexer(inputData).indexFile();
-      }
-    };
+  protected Map<String, List<RegistrationEntry>> performIndexing(IdeaPlugin plugin) {
+    return new RegistrationIndexer(plugin).indexFile();
   }
 
   @NotNull
@@ -105,11 +101,6 @@ public class IdeaPluginRegistrationIndex extends FileBasedIndexExtension<String,
         return file.isInLocalFileSystem();
       }
     };
-  }
-
-  @Override
-  public boolean dependsOnFileContent() {
-    return true;
   }
 
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {

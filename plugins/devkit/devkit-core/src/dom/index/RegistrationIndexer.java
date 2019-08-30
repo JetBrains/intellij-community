@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,57 +16,33 @@
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 class RegistrationIndexer {
 
-  private final FileContent myContent;
-  private Map<String, List<RegistrationEntry>> myValueMap;
+  private final IdeaPlugin myPlugin;
+  private final Map<String, List<RegistrationEntry>> myValueMap = FactoryMap.create(s -> new SmartList<>());
 
-  RegistrationIndexer(FileContent content) {
-    myContent = content;
+  RegistrationIndexer(IdeaPlugin plugin) {
+    myPlugin = plugin;
   }
 
   @NotNull
   Map<String, List<RegistrationEntry>> indexFile() {
-    IdeaPlugin plugin = obtainIdeaPlugin(myContent);
-    if (plugin == null) return Collections.emptyMap();
-
-    myValueMap = FactoryMap.create(s -> new SmartList<>());
-    process(plugin);
+    process(myPlugin);
 
     return myValueMap;
-  }
-
-  @Nullable
-  static IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
-    CharSequence text = content.getContentAsText();
-    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
-      return null;
-    }
-
-    PsiFile file = content.getPsiFile();
-    if (!(file instanceof XmlFile)) return null;
-
-    return DescriptorUtil.getIdeaPlugin((XmlFile)file);
   }
 
   private void process(IdeaPlugin ideaPlugin) {
