@@ -56,7 +56,7 @@ public class PySkeletonGenerator {
 
   private final Sdk mySdk;
   @Nullable private String myCurrentFolder;
-  private final String mySkeletonsPath;
+  private String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
 
   private boolean myPrebuilt = false;
@@ -90,6 +90,18 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
+  public PySkeletonGenerator withSkeletonsDir(@NotNull String path) {
+    mySkeletonsPath = path;
+    return this;
+  }
+
+  @NotNull
+  public PySkeletonGenerator withWorkingDir(@NotNull String path) {
+    myCurrentFolder = path;
+    return this;
+  }
+
+  @NotNull
   public PySkeletonGenerator inPrebuildingMode() {
     myPrebuilt = true;
     return this;
@@ -105,91 +117,14 @@ public class PySkeletonGenerator {
 
   @NotNull
   public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
-    return generateAllSkeletons(indicator);
-  }
-
-
-  @NotNull
-  protected List<String> buildCommandLine() {
-    final List<String> commandLine = new ArrayList<>();
-    commandLine.add(mySdk.getHomePath());
-    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
-    commandLine.add("-d");
-    commandLine.add(mySkeletonsPath);
-    if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
-      commandLine.add("-c");
-      commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
-    }
-    if (ApplicationManager.getApplication().isInternal()) {
-      commandLine.add("-x");
-    }
-    if (!ContainerUtil.isEmpty(myExtraSysPath)) {
-      commandLine.add("-s");
-      commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
-    }
-    if (!ContainerUtil.isEmpty(myExtraArgs)) {
-      commandLine.addAll(myExtraArgs);
-    }
-    return commandLine;
-  }
-
-  @NotNull
-  protected Map<String, String> buildEnvironment() {
-    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
-    //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
-    //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-    //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
-    //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
-    //}
-    if (myExtraEnv != null) {
-      env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
-    }
-    env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
-    return env;
-  }
-
-  public void finishSkeletonsGeneration() {
-  }
-
-  public boolean exists(@NotNull final String name) {
-    return new File(name).exists();
-  }
-
-  public void setPrebuilt(boolean prebuilt) {
-    myPrebuilt = prebuilt;
-  }
-
-  /**
-   * @param skeletonPath path where skeletons should be generated
-   * @param pySdk SDK
-   * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
-   */
-  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
-    mySkeletonsPath = skeletonPath;
-    mySdk = pySdk;
-    myCurrentFolder = currentFolder;
-    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
-
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
-    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
-      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
-    }
-    myEnv = env;
-  }
-
-  @NotNull
-  public List<GenerationResult> generateAllSkeletons(@Nullable ProgressIndicator indicator)
-    throws InvalidSdkException, ExecutionException {
     final String binaryPath = mySdk.getHomePath();
     if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+    final String homePath = new File(binaryPath).getParent();
 
-    final GeneralCommandLine commandLine = new GeneralCommandLine(buildCommandLine()).withEnvironment(buildEnvironment());
-    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final List<GenerationResult> results = new ArrayList<>();
-    handler.addProcessListener(new LineProcessOutputListener() {
+    final LineWiseProcessOutputListener listener = new LineWiseProcessOutputListener() {
       @Override
-      protected void onStdoutLine(@NotNull String line) {
+      public void onStdoutLine(@NotNull String line) {
         if (indicator != null) {
           indicator.checkCanceled();
         }
@@ -240,15 +175,100 @@ public class PySkeletonGenerator {
       }
 
       @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        super.onTextAvailable(event, outputType);
-        if (ProcessOutputType.isStderr(outputType)) {
-          LOG.info(StringUtil.trimTrailing(event.getText()));
-        }
+      public void onStderrLine(@NotNull String line) {
+        LOG.info(StringUtil.trimTrailing(line));
       }
-    });
-    handler.runProcess(MINUTE * 20);
+    };
+
+    runProcessWithLineOutputListener(homePath, buildCommandLine(), buildEnvironment(), MINUTE * 20, listener);
     return results;
+  }
+
+
+  @NotNull
+  protected List<String> buildCommandLine() {
+    final List<String> commandLine = new ArrayList<>();
+    commandLine.add(mySdk.getHomePath());
+    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+    commandLine.add("-d");
+    commandLine.add(mySkeletonsPath);
+    if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
+      commandLine.add("-c");
+      commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
+    }
+    if (ApplicationManager.getApplication().isInternal()) {
+      commandLine.add("-x");
+    }
+    if (!ContainerUtil.isEmpty(myExtraSysPath)) {
+      commandLine.add("-s");
+      commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
+    }
+    if (!ContainerUtil.isEmpty(myExtraArgs)) {
+      commandLine.addAll(myExtraArgs);
+    }
+    return commandLine;
+  }
+
+  @NotNull
+  protected Map<String, String> buildEnvironment() {
+    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+    //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+    //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+    //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
+    //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+    //}
+    if (myExtraEnv != null) {
+      env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
+    }
+    env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
+    PythonEnvUtil.setPythonDontWriteBytecode(env);
+    if (myPrebuilt) {
+      env.put("IS_PREGENERATED_SKELETONS", "1");
+    }
+    return env;
+  }
+
+  public void finishSkeletonsGeneration() {
+  }
+
+  public boolean exists(@NotNull final String name) {
+    return new File(name).exists();
+  }
+
+  public void setPrebuilt(boolean prebuilt) {
+    myPrebuilt = prebuilt;
+  }
+
+  /**
+   * @param skeletonPath path where skeletons should be generated
+   * @param pySdk SDK
+   * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
+   */
+  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
+    mySkeletonsPath = skeletonPath;
+    mySdk = pySdk;
+    myCurrentFolder = currentFolder;
+    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
+    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
+      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+    }
+    myEnv = env;
+  }
+
+  protected void runProcessWithLineOutputListener(@NotNull String homePath,
+                                                  @NotNull List<String> cmd,
+                                                  @NotNull Map<String, String> env,
+                                                  int timeout,
+                                                  @NotNull LineWiseProcessOutputListener listener) throws ExecutionException {
+    final GeneralCommandLine commandLine = new GeneralCommandLine(cmd)
+      .withWorkDirectory(homePath)
+      .withEnvironment(env);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+    handler.addProcessListener(new LineWiseProcessOutputListenerAdapter(listener));
+    handler.runProcess(timeout);
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
@@ -454,9 +474,14 @@ public class PySkeletonGenerator {
     skeletonsVFile.refresh(false, true);
   }
 
-  private static class LineProcessOutputListener extends ProcessAdapter {
+  private static class LineWiseProcessOutputListenerAdapter extends ProcessAdapter {
     private final StringBuilder myStdoutLine = new StringBuilder();
     private final StringBuilder myStderrLine = new StringBuilder();
+    private final LineWiseProcessOutputListener myListener;
+
+    private LineWiseProcessOutputListenerAdapter(@NotNull LineWiseProcessOutputListener listener) {
+      myListener = listener;
+    }
 
     @Override
     public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
@@ -467,10 +492,10 @@ public class PySkeletonGenerator {
         if (StringUtil.isLineBreak(lineBuilder.charAt(lineBuilder.length() - 1))) {
           final String line = lineBuilder.toString();
           if (isStdout) {
-            onStdoutLine(line);
+            myListener.onStdoutLine(line);
           }
           else {
-            onStderrLine(line);
+            myListener.onStderrLine(line);
           }
           lineBuilder.setLength(0);
         }
@@ -480,19 +505,11 @@ public class PySkeletonGenerator {
     @Override
     public void processTerminated(@NotNull ProcessEvent event) {
       if (myStdoutLine.length() != 0) {
-        onStdoutLine(myStdoutLine.toString());
+        myListener.onStdoutLine(myStdoutLine.toString());
       }
       if (myStderrLine.length() != 0) {
-        onStderrLine(myStderrLine.toString());
+        myListener.onStderrLine(myStderrLine.toString());
       }
-    }
-
-    protected void onStdoutLine(@NotNull String line) {
-
-    }
-
-    protected void onStderrLine(@NotNull String line) {
-
     }
   }
 
@@ -529,5 +546,11 @@ public class PySkeletonGenerator {
     public boolean isBuiltin() {
       return myModuleOrigin.equals("(built-in)");
     }
+  }
+
+  public interface LineWiseProcessOutputListener {
+    void onStdoutLine(@NotNull String line);
+
+    default void onStderrLine(@NotNull String line) {}
   }
 }
