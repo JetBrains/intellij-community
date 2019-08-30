@@ -23,10 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +52,22 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Nullable private final ProjectEx myProject;
 
-  private List<UndoProvider> myUndoProviders;
+  private final NotNullLazyValue<List<UndoProvider>> myUndoProviders = new AtomicNotNullLazyValue<List<UndoProvider>>() {
+    @NotNull
+    @Override
+    protected List<UndoProvider> compute() {
+      List<UndoProvider> list = myProject == null
+                                ? UndoProvider.EP_NAME.getExtensionList()
+                                : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
+      for (UndoProvider undoProvider : list) {
+        if (undoProvider instanceof Disposable) {
+          Disposer.register(UndoManagerImpl.this, (Disposable)undoProvider);
+        }
+      }
+      return list;
+    }
+  };
+
   private CurrentEditorProvider myEditorProvider;
 
   private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
@@ -92,12 +104,48 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
 
   public UndoManagerImpl(@Nullable ProjectEx project) {
     myProject = project;
+    myMerger = new CommandMerger(this);
 
-    if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity(myProject);
+    if (myProject != null && myProject.isDefault()) {
+      return;
     }
 
-    myMerger = new CommandMerger(this);
+    myEditorProvider = new FocusBasedCurrentEditorProvider();
+
+    MessageBus messageBus = myProject == null ? ApplicationManager.getApplication().getMessageBus() : myProject.getMessageBus();
+    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
+      private boolean myStarted;
+
+      @Override
+      public void commandStarted(@NotNull CommandEvent event) {
+        if (myProject != null && myProject.isDisposed() || myStarted) return;
+        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
+      }
+
+      @Override
+      public void commandFinished(@NotNull CommandEvent event) {
+        if (myProject != null && myProject.isDisposed() || myStarted) return;
+        onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
+      }
+
+      @Override
+      public void undoTransparentActionStarted() {
+        if (myProject != null && myProject.isDisposed()) return;
+        if (!isInsideCommand()) {
+          myStarted = true;
+          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
+        }
+      }
+
+      @Override
+      public void undoTransparentActionFinished() {
+        if (myProject != null && myProject.isDisposed()) return;
+        if (myStarted) {
+          myStarted = false;
+          onCommandFinished(myProject, "", null);
+        }
+      }
+    });
   }
 
   @Nullable
@@ -107,55 +155,6 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  private void runStartupActivity(@Nullable Project project) {
-    myUndoProviders = project == null
-                      ? UndoProvider.EP_NAME.getExtensionList()
-                      : UndoProvider.PROJECT_EP_NAME.getExtensionList(project);
-    for (UndoProvider undoProvider : myUndoProviders) {
-      if (undoProvider instanceof Disposable) {
-        Disposer.register(this, (Disposable)undoProvider);
-      }
-    }
-
-    myEditorProvider = new FocusBasedCurrentEditorProvider();
-
-    MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-
-    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
-      private boolean myStarted;
-
-      @Override
-      public void commandStarted(@NotNull CommandEvent event) {
-        if (project != null && project.isDisposed() || myStarted) return;
-        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
-      }
-
-      @Override
-      public void commandFinished(@NotNull CommandEvent event) {
-        if (project != null && project.isDisposed() || myStarted) return;
-        onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
-      }
-
-      @Override
-      public void undoTransparentActionStarted() {
-        if (project != null && project.isDisposed()) return;
-        if (!isInsideCommand()) {
-          myStarted = true;
-          onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
-        }
-      }
-
-      @Override
-      public void undoTransparentActionFinished() {
-        if (project != null && project.isDisposed()) return;
-        if (myStarted) {
-          myStarted = false;
-          onCommandFinished(project, "", null);
-        }
-      }
-    });
   }
 
   public boolean isActive() {
@@ -168,7 +167,7 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
 
   private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
-      for (UndoProvider undoProvider : myUndoProviders) {
+      for (UndoProvider undoProvider : myUndoProviders.getValue()) {
         undoProvider.commandStarted(project);
       }
       myCurrentActionProject = project;
@@ -182,7 +181,7 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
-      for (UndoProvider undoProvider : myUndoProviders) {
+      for (UndoProvider undoProvider : myUndoProviders.getValue()) {
         undoProvider.commandFinished(project);
       }
       myCurrentActionProject = DummyProject.getInstance();
