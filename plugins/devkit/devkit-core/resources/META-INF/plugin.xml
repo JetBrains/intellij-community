@@ -360,7 +360,8 @@
               text="Toggle Expected Highlighting Markup"
               id="ToggleHighlightingMarkup"/>
 
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
+      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" 
+              text="Shuffle/Scramble/Anonymize/Permute Names"
               id="ShuffleNamesAction"/>
 
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
