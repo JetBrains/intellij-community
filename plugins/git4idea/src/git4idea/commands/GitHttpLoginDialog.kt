@@ -2,7 +2,6 @@
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
