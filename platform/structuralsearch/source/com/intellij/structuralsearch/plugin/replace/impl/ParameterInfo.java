@@ -9,7 +9,6 @@ public final class ParameterInfo extends UserDataHolderBase {
   private final int startIndex;
   private final boolean replacementVariable;
   private boolean argumentContext;
-  private boolean methodParameterContext;
   private boolean statementContext;
   private int afterDelimiterPos;
   private boolean hasCommaBefore;
@@ -37,14 +36,6 @@ public final class ParameterInfo extends UserDataHolderBase {
 
   public void setArgumentContext(boolean argumentContext) {
     this.argumentContext = argumentContext;
-  }
-
-  public boolean isMethodParameterContext() {
-    return methodParameterContext;
-  }
-
-  public void setMethodParameterContext(boolean methodParameterContext) {
-    this.methodParameterContext = methodParameterContext;
   }
 
   public boolean isStatementContext() {

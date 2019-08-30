@@ -705,29 +705,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
       @Override
       public void visitParameter(PsiParameter parameter) {
-        super.visitParameter(parameter);
-
-        String name = parameter.getName();
-        String type = parameter.getType().getCanonicalText();
-
-        if (StructuralSearchUtil.isTypedVariable(name)) {
-          name = Replacer.stripTypedVariableDecoration(name);
-
-          if (StructuralSearchUtil.isTypedVariable(type)) {
-            type = Replacer.stripTypedVariableDecoration(type);
-          }
-          final ParameterInfo nameInfo = builder.findParameterization(name);
-          final ParameterInfo typeInfo = builder.findParameterization(type);
-
-          final PsiElement scope = parameter.getDeclarationScope();
-          if (nameInfo != null && typeInfo != null && !(scope instanceof PsiCatchSection) && !(scope instanceof PsiForeachStatement)) {
-            nameInfo.setArgumentContext(false);
-            typeInfo.setArgumentContext(false);
-            typeInfo.setMethodParameterContext(true);
-            nameInfo.setMethodParameterContext(true);
-            typeInfo.setElement(parameter.getTypeElement());
-          }
+        final PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof PsiCatchSection || scope instanceof PsiForeachStatement) {
+          return;
         }
+        setParameterContext(parameter, parameter.getName(), parameter.getTypeElement());
       }
 
       private void setParameterContext(@Nullable PsiElement element, String name, PsiElement scopeElement) {
@@ -778,29 +760,49 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return -1;
   }
 
+  private static int findMethodParameterStart(CharSequence s, int fromIndex) {
+    int nesting = 0;
+    boolean comment = false;
+    for (int i = fromIndex - 1; i >= 0; i--) {
+      final char c = s.charAt(i);
+      if (!comment && c == '/' && (i == 0 || s.charAt(i - 1) == '*')) comment = true;
+      else if (comment && c == '*' && (i == 0 || s.charAt(i - 1) == '/')) comment = false;
+      if (comment) continue;
+      if (c == '>') nesting++;
+      else if (c == '<') nesting--;
+      if (nesting > 0) continue;
+      if (c == ',' || c == '(') return i + 1;
+    }
+    return -1;
+  }
+
   @Override
   public int handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset, ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean forceAddingNewLine = false;
 
+      final PsiElement element = info.getElement();
       final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
       if (typeInfos != null) {
-        if (info.getElement() instanceof PsiNameValuePair) {
+        if (element instanceof PsiParameter) {
+          final int parameterEnd = offset + info.getStartIndex();
+          final int parameterStart = findMethodParameterStart(result, parameterEnd);
+          final String template = result.substring(parameterStart, parameterEnd);
+          replacementString = handleParameter(info, replacementInfo, offset - parameterStart, template);
+          result.delete(parameterStart, parameterEnd);
+          offset -= template.length();
+        }
+        else if (element instanceof PsiNameValuePair) {
           final int parameterStart = offset + info.getStartIndex();
           final int parameterEnd = findAnnotationParameterEnd(result, parameterStart);
           final String template = result.substring(parameterStart, parameterEnd);
-          replacementString = handleAnnotationParameter(info, replacementInfo, offset - parameterStart, template);
+          replacementString = handleParameter(info, replacementInfo, offset - parameterStart, template);
           result.delete(parameterStart, parameterEnd);
         }
         else {
-          replacementString = "";
+          return offset;
         }
-      }
-      else if (info.isMethodParameterContext()) {
-        final StringBuilder buf = new StringBuilder();
-        handleMethodParameter(buf, info, replacementInfo);
-        replacementString = buf.toString();
       }
       else if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
@@ -965,7 +967,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return match instanceof PsiMember;
   }
 
-  private static String handleAnnotationParameter(ParameterInfo info, ReplacementInfo replacementInfo, int offset, String template) {
+  private static String handleParameter(ParameterInfo info, ReplacementInfo replacementInfo, int offset, String template) {
     final MatchResult matchResult = replacementInfo.getNamedMatchResult(info.getName());
     assert matchResult != null;
 
@@ -973,17 +975,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (matchResult.isMultipleMatch()) {
       for (MatchResult child : matchResult.getChildren()) {
         if (result.length() != 0) result.append(", ");
-        appendAnnotationParameter(info, child, offset + result.length(), result.append(template));
+        appendParameter(info, child, offset + result.length(), result.append(template));
       }
     }
     else {
       result.append(template);
-      appendAnnotationParameter(info, matchResult, offset, result);
+      appendParameter(info, matchResult, offset, result);
     }
     return result.toString();
   }
 
-  private static void appendAnnotationParameter(ParameterInfo parameterInfo, MatchResult matchResult, int offset, StringBuilder out) {
+  private static void appendParameter(ParameterInfo parameterInfo, MatchResult matchResult, int offset, StringBuilder out) {
     Map<String, ParameterInfo> infos = parameterInfo.getUserData(PARAMETER_CONTEXT);
     final List<MatchResult> matches = new SmartList<>(matchResult.getChildren());
     matches.add(matchResult);
@@ -992,37 +994,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       final ParameterInfo typeInfo = infos.get(match.getName());
       if (typeInfo != null) out.insert(typeInfo.getStartIndex() + offset, match.getMatchImage());
     }
-  }
-
-  private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, ReplacementInfo replacementInfo) {
-    if(!(info.getElement() instanceof PsiTypeElement)) {
-      // no specific handling for name of method parameter since it is handled with type
-      return;
-    }
-
-    String name = ((PsiParameter)info.getElement().getParent()).getName();
-    name = StructuralSearchUtil.isTypedVariable(name) ? Replacer.stripTypedVariableDecoration(name):name;
-
-    final MatchResult matchResult = replacementInfo.getNamedMatchResult(name);
-    if (matchResult == null) return;
-
-    if (matchResult.isMultipleMatch()) {
-      for (MatchResult result : matchResult.getChildren()) {
-        if (buf.length() > 0) {
-          buf.append(',');
-        }
-
-        appendParameter(buf, result);
-      }
-    } else {
-      appendParameter(buf, matchResult);
-    }
-  }
-
-  private static void appendParameter(final StringBuilder buf, final MatchResult matchResult) {
-    final List<MatchResult> sons = matchResult.getChildren();
-    assert sons.size() == 1;
-    buf.append(sons.get(0).getMatchImage()).append(' ').append(matchResult.getMatchImage());
   }
 
   private static int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {

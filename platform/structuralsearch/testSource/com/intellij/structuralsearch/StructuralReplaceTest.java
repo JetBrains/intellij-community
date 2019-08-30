@@ -449,12 +449,41 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceParameter() {
-    String s1 = "class A { void b(int c, int d, int e) {} }";
-    String s2 = "int d;";
-    String s3 = "int d2;";
-    String expectedResult = "class A { void b(int c, int d2, int e) {} }";
+    String in1 = "class A { void b(int c, int d, int e) {} }";
 
-    assertEquals("replace method parameter", expectedResult, replace(s1, s2, s3));
+    String expected1a = "class A { void b(int c, int d2, int e) {} }";
+    assertEquals("replace method parameter", expected1a, replace(in1, "int d;", "int d2;"));
+
+    String expected1b = "class A { void b(int /*!*/ c, int /*!*/ d, int /*!*/ e) {} }";
+    assertEquals(expected1b, replace(in1, "void b('_T '_v*);", "void b($T$ /*!*/ $v$);"));
+
+    String expected1c = "class A { void /**/ b(int c, int d, int e) {} }";
+    assertEquals("replace multi match parameter", expected1c, replace(in1, "void b(int '_x*);", "void /**/ b(int $x$);"));
+
+    String in2 = "class X {" +
+                 "  void x() {}" +
+                 "}";
+    String expected2 = "class X {" +
+                       "  void /**/ x() {}" +
+                       "}";
+    assertEquals("replace no match parameter", expected2, replace(in2, "void x(int '_a*);", "void /**/ x() {}"));
+
+    String in3 = "class X {" +
+                 "  void x(String s, Integer i) {}" +
+                 "}";
+    String expected3 = "class X {" +
+                       "  void x(List<String> /*>*/ s, List<Integer> /*>*/ i) {}" +
+                       "}";
+    assertEquals(expected3, replace(in3, "void x('_T '_v*);", "void x(List<$T$> /*>*/ $v$);"));
+
+    String in4 = "class X {" +
+                 "  void a(Map<String, Integer> b, Map<String, Integer> c) {}" +
+                 "}";
+    String expected4 = "class X {" +
+                       "  void a(Map<String, Integer> /*!*/ b, Map<, > /*!*/ c) {}" + // todo fix replacement of second parameter type
+                       "}";
+    assertEquals(expected4, replace(in4, "void a('_T<'_K, '_V> '_p*);", "void a($T$<$K$, $V$> /*!*/ $p$);"));
+
   }
 
   public void testReplaceWithComments() {
@@ -1184,7 +1213,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i ){//s\n" +
+                            "   private void f(int i){//s\n" +
                             "}\n" +
                             "}";
 
@@ -1194,7 +1223,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i ){int a = 1;\n" +
+                            "   private void f(int i){int a = 1;\n" +
                             "       //s\n" +
                             "}\n" +
                             "}";
@@ -2565,7 +2594,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("should keep array brackets 2",
                  "public abstract class Bar {\n" +
                  "    String[] x;\n" +
-                 "    abstract String[] foo (String[] x );\n" +
+                 "    abstract String[] foo (String[] x);\n" +
                  "}",
                  replace(in, "'_ReturnType '_Method('_ParameterType '_Parameter*);",
                          "$ReturnType$ $Method$ ($ParameterType$ $Parameter$);", true));
