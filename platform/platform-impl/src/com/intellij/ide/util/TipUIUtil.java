@@ -138,8 +138,7 @@ public class TipUIUtil {
       replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
       replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
       String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground())+ ";overflow:hidden;}";
-      replaced = replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
-      return replaced;
+      return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
     }
     catch (IOException e) {
       return getCantReadText(tip);
