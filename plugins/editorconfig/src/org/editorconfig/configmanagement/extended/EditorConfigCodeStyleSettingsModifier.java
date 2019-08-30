@@ -29,6 +29,7 @@ import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
+import org.editorconfig.core.ParsingException;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -197,9 +198,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
   private static void processEditorConfig(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull MyContext context)
     throws EditorConfigException {
-    String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
-    final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
-    context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
+    try {
+      String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
+      final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
+      context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
+    }
+    catch (ParsingException pe) {
+      // Parsing exceptions may occur with incomplete files which is a normal case when .editorconfig is being edited.
+      // Thus the error is logged only when debug mode is enabled.
+      LOG.debug(pe);
+    }
   }
 
   private static class MyContext extends EditorConfigFilesCollector {
