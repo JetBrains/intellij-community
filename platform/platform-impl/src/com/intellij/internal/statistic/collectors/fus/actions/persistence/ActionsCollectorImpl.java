@@ -45,8 +45,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
     "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  private boolean myKeymapsInitialized;
-
   public static boolean isCustomAllowedAction(@NotNull String actionId) {
     return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
   }
@@ -122,20 +120,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   private boolean canReportActionId(@NotNull String actionId) {
-    ensureMapInitialized();
     return myXmlActionIds.contains(actionId);
-  }
-
-  private synchronized void ensureMapInitialized() {
-    if (!myKeymapsInitialized) {
-      for (Keymap keymap : DefaultKeymap.getInstance().getKeymaps()) {
-        if (!(keymap instanceof DefaultKeymapImpl)) continue;
-        Class<BundledKeymapProvider> providerClass = ((DefaultKeymapImpl)keymap).getProviderClass();
-        if (!PluginInfoDetectorKt.getPluginInfo(providerClass).isDevelopedByJetBrains()) continue;
-        myXmlActionIds.addAll(keymap.getActionIdList());
-      }
-      myKeymapsInitialized = true;
-    }
   }
 
   @Override
@@ -153,4 +138,13 @@ public class ActionsCollectorImpl extends ActionsCollector {
     }
   }
 
+  @Override
+  public void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
+    if (keymap instanceof DefaultKeymapImpl) {
+      Class<BundledKeymapProvider> provider = ((DefaultKeymapImpl)keymap).getProviderClass();
+      if (PluginInfoDetectorKt.getPluginInfo(provider).isDevelopedByJetBrains()) {
+        myXmlActionIds.addAll(actionIds);
+      }
+    }
+  }
 }
