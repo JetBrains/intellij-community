@@ -1485,7 +1485,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void addMigLayoutComponentConstraints(CC cc) {
-      myProperties.add(new PropertyBean("MigLayout component constraints", cc));
+      myProperties.add(new PropertyBean("MigLayout component constraints", componentConstraintsToString(cc)));
       DimConstraint horizontal = cc.getHorizontal();
       addDimConstraintProperties("  cc.horizontal", horizontal);
       DimConstraint vertical = cc.getVertical();
@@ -1512,15 +1512,76 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
+    private static String componentConstraintsToString(CC cc) {
+      CC newCC = new CC();
+      StringBuilder stringBuilder = new StringBuilder();
+      if (cc.getSkip() != newCC.getSkip()) {
+        stringBuilder.append(" skip=").append(cc.getSkip());
+      }
+      if (cc.getSpanX() != newCC.getSpanX()) {
+        stringBuilder.append(" spanX=").append(cc.getSpanX() == LayoutUtil.INF ? "INF" : cc.getSpanX());
+      }
+      if (cc.getSpanY() != newCC.getSpanY()) {
+        stringBuilder.append(" spanY=").append(cc.getSpanY() == LayoutUtil.INF ? "INF" : cc.getSpanY());
+      }
+      if (cc.getPushX() != null) {
+        stringBuilder.append(" pushX=").append(cc.getPushX());
+      }
+      if (cc.getPushY() != null) {
+        stringBuilder.append(" pushY=").append(cc.getPushY());
+      }
+      if (cc.getSplit() != newCC.getSplit()) {
+        stringBuilder.append(" split=").append(cc.getSplit());
+      }
+      if (cc.isWrap()) {
+        stringBuilder.append(" wrap=");
+        if (cc.getWrapGapSize() != null) {
+          stringBuilder.append(cc.getWrapGapSize());
+        }
+        else {
+          stringBuilder.append("true");
+        }
+      }
+      if (cc.isNewline()) {
+        stringBuilder.append(" newline=");
+        if (cc.getNewlineGapSize() != null) {
+          stringBuilder.append(cc.getNewlineGapSize());
+        }
+        else {
+          stringBuilder.append("true");
+        }
+      }
+      return stringBuilder.toString().trim();
+    }
+
     private static String dimConstraintToString(DimConstraint constraint) {
-      return "grow=" + constraint.getGrow() +
-             " growPrio=" + constraint.getGrowPriority() +
-             " shrink=" + constraint.getShrink() +
-             " shrinkPrio=" + constraint.getShrinkPriority() +
-             " fill=" + constraint.isFill() +
-             " noGrid=" + constraint.isNoGrid() +
-             " sizeGroup=" + constraint.getSizeGroup() +
-             " endGroup=" + constraint.getEndGroup();
+      StringBuilder stringBuilder = new StringBuilder();
+      DimConstraint newConstraint = new DimConstraint();
+      if (!Comparing.equal(constraint.getGrow(), newConstraint.getGrow())) {
+        stringBuilder.append(" grow=").append(constraint.getGrow());
+      }
+      if (constraint.getGrowPriority() != newConstraint.getGrowPriority()) {
+        stringBuilder.append(" growPrio=").append(constraint.getGrowPriority());
+      }
+      if (!Comparing.equal(constraint.getShrink(), newConstraint.getShrink())) {
+        stringBuilder.append(" shrink=").append(constraint.getShrink());
+      }
+      if (constraint.getShrinkPriority() != newConstraint.getShrinkPriority()) {
+        stringBuilder.append(" shrinkPrio=").append(constraint.getShrinkPriority());
+      }
+      if (constraint.isFill() != newConstraint.isFill()) {
+        stringBuilder.append(" fill=").append(constraint.isFill());
+      }
+      if (constraint.isNoGrid() != newConstraint.isNoGrid()) {
+        stringBuilder.append(" noGrid=").append(constraint.isNoGrid());
+      }
+      if (!Comparing.equal(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
+        stringBuilder.append(" sizeGroup=").append(constraint.getSizeGroup());
+      }
+      if (!Comparing.equal(constraint.getEndGroup(), newConstraint.getEndGroup())) {
+        stringBuilder.append(" endGroup=").append(constraint.getEndGroup());
+      }
+      return stringBuilder.toString();
     }
 
     @NotNull
