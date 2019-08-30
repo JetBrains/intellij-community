@@ -27,9 +27,9 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
 
-public class ExtensionPointsIndex extends FileBasedIndexExtension<String, Integer> {
+public class ExtensionPointIndex extends FileBasedIndexExtension<String, Integer> {
 
-  private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointsIndex");
+  private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointIndex");
 
   @NotNull
   @Override

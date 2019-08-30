@@ -19,7 +19,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.dom.index.ExtensionPointsIndex;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -42,7 +42,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     Set<VirtualFile> files = getVisibleFiles(project, currentFile);
 
     String epPrefix = extensions.getEpPrefix();
-    Map<String, ExtensionPoint> points = ExtensionPointsIndex.getExtensionPoints(project, files, epPrefix);
+    Map<String, ExtensionPoint> points = ExtensionPointIndex.getExtensionPoints(project, files, epPrefix);
 
     for (Map.Entry<String, ExtensionPoint> entry : points.entrySet()) {
       registrar.registerCollectionChildrenExtension(new XmlName(entry.getKey().substring(epPrefix.length())), Extension.class)
