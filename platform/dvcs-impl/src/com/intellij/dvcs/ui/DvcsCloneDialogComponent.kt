@@ -34,8 +34,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                            project,
                                            fcd)
     mainPanel = panel {
-      row("URL:") { urlEditor(CCFlags.growX) }
-      row("Directory:") { directoryField(CCFlags.growX) }
+      row("URL:") { urlEditor(growX) }
+      row("Directory:") { directoryField(growX) }
     }
     val insets = UIUtil.PANEL_REGULAR_INSETS
     mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
