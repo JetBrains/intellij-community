@@ -70,7 +70,7 @@ public final class SocketLock {
   private final String mySystemPath;
   private final BlockingQueue<FileLock> myLockedFiles = new LinkedBlockingQueue<>();
   @Nullable private Future<? extends Disposable> myBuiltinServerFuture;
-  private String myToken;
+  private volatile String myToken;
   private BuiltInServer myServer;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
@@ -147,9 +147,22 @@ public final class SocketLock {
       System.exit(0);
     }
 
-    myToken = UUID.randomUUID().toString();
     Activity builtinServerLaunch = StartUpMeasurer.start("builtin server launch");
     myBuiltinServerFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      myToken = UUID.randomUUID().toString();
+      Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
+      // parent directories are already created (see underLocks)
+      Files.write(tokenFile, myToken.getBytes(StandardCharsets.UTF_8));
+      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
+      if (view != null) {
+        try {
+          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        }
+        catch (IOException e) {
+          log(e);
+        }
+      }
+
       try {
         return launchBuiltinServer(new String[]{myConfigPath, mySystemPath});
       }
@@ -157,19 +170,6 @@ public final class SocketLock {
         builtinServerLaunch.end();
       }
     });
-
-    Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
-    // parent directories are already created (see underLocks)
-    Files.write(tokenFile, myToken.getBytes(StandardCharsets.UTF_8));
-    PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
-    if (view != null) {
-      try {
-        view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-      }
-      catch (IOException e) {
-        log(e);
-      }
-    }
 
     log("exit: lock(): succeed");
     return ActivateStatusAndResponse.emptyResponse(ActivateStatus.NO_INSTANCE);
