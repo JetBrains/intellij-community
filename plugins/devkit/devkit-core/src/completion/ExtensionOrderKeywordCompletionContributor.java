@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
@@ -18,6 +17,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -57,8 +57,11 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
         XmlPatterns.xmlTag().with(new PatternCondition<XmlTag>("extension tag") {
           @Override
           public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
-            Project project = tag.getProject();
-            DomManager domManager = DomManager.getDomManager(project);
+            if (!PsiUtil.isPluginXmlPsiElement(tag)) {
+              return false;
+            }
+
+            DomManager domManager = DomManager.getDomManager(tag.getProject());
             return domManager.getDomElement(tag) instanceof Extension;
           }
         })));
