@@ -44,7 +44,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, expectedType)) {
           return true
         }
-        return isExtensionSupported && componentManager.myExtensionArea.findExtensionPointByClass(expectedType) != null
+        return isExtensionSupported && componentManager.myExtensionArea.findExtensionByClass(expectedType) != null
       }
 
       override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
@@ -54,7 +54,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
         val result = super.resolveInstance(componentManager, requestorKey, expectedType)
         if (result == null && isExtensionSupported) {
-          val extension = componentManager.myExtensionArea.findExtensionPointByClass(expectedType)
+          val extension = componentManager.myExtensionArea.findExtensionByClass(expectedType)
           if (extension != null) {
             LOG.warn("Do not use constructor injection to get extension instance (requestorKey=$requestorKey, extensionClass=${expectedType.name})")
           }

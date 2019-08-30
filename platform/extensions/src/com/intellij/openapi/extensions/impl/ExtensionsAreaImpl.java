@@ -109,12 +109,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtension(@NotNull ExtensionPoint extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
+  public void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
     ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myComponentManager);
   }
 
   // don't want to expose clearCache directly
-  public void extensionsRegistered(@NotNull ExtensionPointImpl<?>[] points) {
+  public static void extensionsRegistered(@NotNull ExtensionPointImpl<?>[] points) {
     for (ExtensionPointImpl<?> point : points) {
       point.clearCache();
     }
@@ -271,7 +271,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Nullable
-  public <T> T findExtensionPointByClass(@NotNull Class<T> aClass) {
+  @ApiStatus.Internal
+  public <T> T findExtensionByClass(@NotNull Class<T> aClass) {
+    // TeamCity plugin wants DefaultDebugExecutor in constructor
+    if (aClass.getName().equals("com.intellij.execution.executors.DefaultDebugExecutor")) {
+      //noinspection unchecked
+      return ((ExtensionPointImpl<T>)myExtensionPoints.get("com.intellij.executor")).findExtension(aClass, false, /* strictMatch = */ true);
+    }
+
     for (ExtensionPointImpl<?> point : myExtensionPoints.values()) {
       if (!(point instanceof InterfaceExtensionPoint)) {
         continue;
@@ -282,7 +289,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         extensionClass = point.getExtensionClass();
       }
       catch (Throwable e) {
-        LOG.warn("error during findExtensionPointByName", e);
+        LOG.warn("error during findExtensionPointByClass", e);
         continue;
       }
 
