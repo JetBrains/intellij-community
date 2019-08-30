@@ -1,45 +1,54 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.COMPLETION_DATA_KEY
+import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.CompletionData
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import runCompletion
 
-class GradleStringStyleGroupIdHandler : InsertHandler<LookupElement> {
+abstract class ReplaceEndInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     val element = getLiteral(context) ?: return
-    val info = item.`object` as? MavenRepositoryArtifactInfo ?: return
-    element.updateText("'${info.groupId}:'")
-    runCompletion(element, context)
+    val completed = getCompletedString(item) ?: return
+    val (suffix, quote) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", '\'')
+    val insertedSuffix = if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) "" else suffix.orEmpty()
+    val newText = completed + insertedSuffix
+    element.updateText("${quote}$newText${quote}")
+    postProcess(completed, element.textRange.endOffset - (insertedSuffix.length + 1), context)
     context.commitDocument()
   }
 
-  companion object {
-    val INSTANCE = GradleStringStyleGroupIdHandler()
+  abstract fun getCompletedString(item: LookupElement): String?
+  open fun postProcess(completedString: String, completedStringEndOffset: Int, context: InsertionContext) {}
+}
+
+object GradleStringStyleVersionHandler : ReplaceEndInsertHandler() {
+  override fun getCompletedString(item: LookupElement): String? {
+    return (item.`object` as? MavenRepositoryArtifactInfo?)?.version
   }
 }
 
-class GradleStringStyleArtifactIdHandler : InsertHandler<LookupElement> {
-  override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    val element = getLiteral(context) ?: return
-    val info = item.`object` as? MavenRepositoryArtifactInfo ?: return
-    if(info.items.size ==1){
-      element.updateText("'${info.groupId}:${info.artifactId}:${info.version}'")
-    } else {
-      element.updateText("'${info.groupId}:${info.artifactId}:'")
-      runCompletion(element, context)
-
-    }
-    context.commitDocument()
+object GradleStringStyleGroupAndArtifactHandler : ReplaceEndInsertHandler() {
+  override fun getCompletedString(item: LookupElement): String? {
+    val info = item.`object` as? MavenRepositoryArtifactInfo ?: return null
+    val completed = MavenDependencyCompletionUtil.getPresentableText(info)
+    val moreCompletionNeeded = completed.count { it == ':' } < 2
+    return completed + if (moreCompletionNeeded) ":" else ""
   }
 
-  companion object {
-    val INSTANCE = GradleStringStyleArtifactIdHandler()
+  override fun postProcess(completedString: String, completedStringEndOffset: Int, context: InsertionContext) {
+    if (!completedString.endsWith(':')) return
+    context.editor.caretModel.moveToOffset(completedStringEndOffset)
+    context.setLaterRunnable { CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(context.project, context.editor) }
   }
 }
 

@@ -107,7 +107,7 @@ public class MavenDependencyCompletionUtil {
     return elementBuilder;
   }
 
-  private static String getPresentableText(MavenRepositoryArtifactInfo info) {
+  public static String getPresentableText(MavenRepositoryArtifactInfo info) {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);
     }
