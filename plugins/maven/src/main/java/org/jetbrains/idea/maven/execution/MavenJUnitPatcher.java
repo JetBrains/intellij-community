@@ -22,6 +22,9 @@ import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +35,7 @@ import java.util.regex.Pattern;
  * @author Sergey Evdokimov
  */
 public class MavenJUnitPatcher extends JUnitPatcher {
-  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
 
   @Override
@@ -93,15 +96,9 @@ public class MavenJUnitPatcher extends JUnitPatcher {
             systemPropertiesFilePath = mavenProject.getDirectory() + '/' + systemPropertiesFilePath;
           }
           if (StringUtil.isNotEmpty(systemPropertiesFilePath) && new File(systemPropertiesFilePath).exists()) {
-            try {
-              Reader fis = new BufferedReader(new FileReader(systemPropertiesFilePath));
-              try {
-                Map<String, String> properties = PropertiesUtil.loadProperties(fis);
-                properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
-              }
-              finally {
-                fis.close();
-              }
+            try (Reader fis = Files.newBufferedReader(Paths.get(systemPropertiesFilePath), StandardCharsets.ISO_8859_1)) {
+              Map<String, String> properties = PropertiesUtil.loadProperties(fis);
+              properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
             }
             catch (IOException e) {
               LOG.warn("Can't read property file '" + systemPropertiesFilePath + "': " + e.getMessage());
@@ -151,7 +148,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (domModel != null) {
       value = MavenPropertyResolver.resolve(value, domModel);
     }
-    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)\\}", "1");
+    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)}", "1");
   }
 
   private static String resolveVmProperties(@NotNull ParametersList vmParameters, @NotNull String value) {
