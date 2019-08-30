@@ -110,6 +110,9 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
         return;
       }
       String name = getDefaultBranchName(indicator, userAndRepo);
+      if (name == null) {
+        return;
+      }
       String onto = UPSTREAM_REMOTE + "/" + name;
 
       LOG.info("Fetching upstream");
@@ -144,6 +147,7 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
       }
     }
 
+    @Nullable
     private String getDefaultBranchName(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath userAndRepo) {
       try {
         GithubRepo repo = myRequestExecutor.execute(indicator,
