@@ -32,6 +32,7 @@ public class ModuleHashingService {
     File[] fileList = Optional.ofNullable(dir.listFiles()).orElse(new File[0]);
     byte[] hash = new byte[HASH_SIZE_IN_BYTES];
 
+    if (fileList.length == 1 && fileList[0].getName().endsWith(".iml")) return hash;
     for (File file : fileList) {
       byte[] curHash = file.isDirectory() ? hashDirectory(file, relativizer) : hashFile(file, relativizer);
       sum(hash, curHash);

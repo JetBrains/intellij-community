@@ -50,7 +50,11 @@ public class PersistentCachingModuleHashingService {
     this.projectFileIndex = ProjectFileIndex.getInstance(project);
 
     if (shouldComputeHashesForEntireProject) {
+      long start = System.currentTimeMillis();
+      System.out.println("Start filling productionHashes and testHashes");
       computeHashesForProjectAndPersist();
+      long end = System.currentTimeMillis() - start;
+      System.out.println("Finish in itialization: " + end);
     }
 
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -104,39 +108,42 @@ public class PersistentCachingModuleHashingService {
 
   public void computeHashesForProjectAndPersist() {
     Module[] modules = ModuleManager.getInstance(project).getModules();
+    System.out.println("Modules count " + modules.length);
     Arrays.stream(modules).forEach(module -> {
       File[] productionSourceRoots = getProductionSources(module);
-      try {
-        hashDirectoriesAndPersist(module.getName(), productionSourceRoots, productionHashes);
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
+      hashDirectoriesAndPersist(module.getName(), productionSourceRoots, productionHashes);
 
       File[] testSourceRoots = getTestSources(module);
-      try {
-        hashDirectoriesAndPersist(module.getName(), testSourceRoots, testHashes);
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
+      hashDirectoriesAndPersist(module.getName(), testSourceRoots, testHashes);
     });
   }
 
   public Map<String, byte[]> computeProductionHashesForProject() {
-    return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
-      File[] productionSources = getProductionSources(module);
-      if (productionSources.length == 0) return null;
-      return ModuleHashingService.hashDirectories(productionSources).map(hash -> new Pair<>(module.getName(), hash)).orElse(null);
-    }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
+    Map<String, byte[]> result = new HashMap<>();
+    try {
+      Collection<String> keys = productionHashes.getAllKeysWithExistingMapping();
+      for (String key : keys) {
+        result.put(key, productionHashes.get(key));
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return result;
   }
 
   public Map<String, byte[]> computeTestHashesForProject() {
-    return Arrays.stream(ModuleManager.getInstance(project).getModules()).map(module -> {
-      File[] testSources = getTestSources(module);
-      if (testSources.length == 0) return null;
-      return ModuleHashingService.hashDirectories(testSources).map(hash -> new Pair<>(module.getName(), hash)).orElse(null);
-    }).filter(Objects::nonNull).collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
+    Map<String, byte[]> result = new HashMap<>();
+    try {
+      Collection<String> keys = testHashes.getAllKeysWithExistingMapping();
+      for (String key : keys) {
+        result.put(key, testHashes.get(key));
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return result;
   }
 
   public Map<String, byte[]> getAffectedTests() {
@@ -180,12 +187,9 @@ public class PersistentCachingModuleHashingService {
           rootTypes.stream().map(moduleRootManager::getSourceRoots).flatMap(List::stream).map(vFile -> new File(vFile.getPath()))
             .toArray(File[]::new);
         getFromCacheOrCalcAndPersist(moduleName, hashCache, sourceRoots).map(hash -> result.put(moduleName, hash));
-        hashCache.remove(moduleName);
-        return;
       }
       catch (IOException e) {
         LOG.warn(e);
-        return;
       }
     });
 
@@ -203,8 +207,7 @@ public class PersistentCachingModuleHashingService {
     return hashDirectoriesAndPersist(moduleName, sourceRoots, hashCache);
   }
 
-  private static Optional<byte[]> hashDirectoriesAndPersist(String name, File[] directories,
-                                                            PersistentHashMap<String, byte[]> hashCache) throws IOException {
+  private static Optional<byte[]> hashDirectoriesAndPersist(String name, File[] directories, PersistentHashMap<String, byte[]> hashCache) {
     if (directories == null || directories.length == 0) {
       return Optional.empty();
     }

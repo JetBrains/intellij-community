@@ -86,9 +86,19 @@ public class JpsCompilationOutputLoader implements JpsOutputLoader{
   }
 
   private void downloadAffectedModuleBinaryData(@NotNull Map<String, byte[]> affectedModules, @NotNull File targetDir, @NotNull String prefix) {
+    int[] i = new int[1];
     affectedModules.forEach((moduleName, moduleHash) -> {
+      if (i[0] % 10  == 0) {
+        try {
+          Thread.sleep(1000);
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
       String stringHash = DatatypeConverter.printHexBinary(moduleHash).toLowerCase();
       myClient.downloadCompiledModuleByNameAndHash(myProject, moduleName, prefix, stringHash, targetDir, JpsCompilationOutputLoader::renameTmpModuleFolder);
+      i[0]++;
     });
   }
 

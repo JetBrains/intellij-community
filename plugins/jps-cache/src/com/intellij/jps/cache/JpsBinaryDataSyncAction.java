@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -76,6 +77,7 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
       }
 
       String sourceRootsHash = sourceRootHashFunction.apply(ModuleRootManager.getInstance(module));
+      if (sourceRootsHash.isEmpty()) continue;
       File zipFile = new File(sourceRoot, sourceRootsHash);
       zipBinaryData(zipFile, moduleFolder);
       myCacheServerClient.uploadBinaryData(zipFile, module.getName(), prefix);
@@ -83,20 +85,18 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
     }
   }
 
-  private static String calculateProductionSourceRootsHash(ModuleRootManager moduleRootManager) {
+  public static String calculateProductionSourceRootsHash(ModuleRootManager moduleRootManager) {
     File[] sourceRoots = Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE).stream(),
                                        moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE).stream())
       .map(vf -> new File(vf.getPath())).toArray(File[]::new);
-    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots).get();
-    return DatatypeConverter.printHexBinary(hash).toLowerCase();
+    return ModuleHashingService.hashDirectories(sourceRoots).map(hash -> DatatypeConverter.printHexBinary(hash).toLowerCase()).orElse("");
   }
 
-  private static String calculateTestSourceRootsHash(ModuleRootManager moduleRootManager) {
+  public static String calculateTestSourceRootsHash(ModuleRootManager moduleRootManager) {
     File[] sourceRoots = Stream.concat(moduleRootManager.getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream(),
                                        moduleRootManager.getSourceRoots(JavaResourceRootType.TEST_RESOURCE).stream())
       .map(vf -> new File(vf.getPath())).toArray(File[]::new);
-    byte[] hash = ModuleHashingService.hashDirectories(sourceRoots).get();
-    return DatatypeConverter.printHexBinary(hash).toLowerCase();
+    return ModuleHashingService.hashDirectories(sourceRoots).map(hash -> DatatypeConverter.printHexBinary(hash).toLowerCase()).orElse("");
   }
 
   private static void zipBinaryData(File zipFile, File dir) {
