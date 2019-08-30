@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.util.messages.Topic
 import java.util.*
 
-private val isNonModalCommit = Registry.get("vcs.non.modal.commit")
+private val isForceNonModalCommit = Registry.get("vcs.force.non.modal.commit")
 private val appSettings = VcsApplicationSettings.getInstance()
 
 class CommitWorkflowManager(private val project: Project) : ProjectComponent {
@@ -36,7 +36,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
   private fun updateWorkflow() = ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
 
   fun isNonModal(): Boolean {
-    if (isNonModalCommit.asBoolean()) return true
+    if (isForceNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
@@ -44,7 +44,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
   }
 
   private fun subscribeToChanges() {
-    isNonModalCommit.addListener(object : RegistryValueListener.Adapter() {
+    isForceNonModalCommit.addListener(object : RegistryValueListener.Adapter() {
       override fun afterValueChanged(value: RegistryValue) = updateWorkflow()
     }, project)
 

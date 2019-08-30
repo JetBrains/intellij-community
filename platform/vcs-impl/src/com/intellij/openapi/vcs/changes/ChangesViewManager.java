@@ -228,7 +228,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
     else if (isNonModal) {
       // CommitWorkflowManager needs our ChangesViewCommitWorkflowHandler to work
-      initToolWindowPanel();
+      initToolWindowPanel().updateCommitWorkflow(isNonModal);
     }
   }
 
@@ -342,7 +342,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
       scheduleRefresh();
       updatePreview(false);
-      updateCommitWorkflow(CommitWorkflowManager.getInstance(myProject).isNonModal());
     }
 
     @Override
