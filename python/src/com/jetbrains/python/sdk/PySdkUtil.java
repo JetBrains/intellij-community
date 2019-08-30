@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,9 +138,11 @@ public class PySdkUtil {
       }
       if (SwingUtilities.isEventDispatchThread()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
-        assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "Background task can't be run under write action";
+        final Application application = ApplicationManager.getApplication();
+        assert application.isUnitTestMode() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
         return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout), "Wait...", false, null);
-      } else {
+      }
+      else {
         return processHandler.runProcess();
       }
     }
