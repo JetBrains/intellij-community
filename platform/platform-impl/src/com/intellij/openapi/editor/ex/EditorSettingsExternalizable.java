@@ -80,8 +80,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
-    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
@@ -508,6 +508,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setRefrainFromScrolling(boolean b) {
     myOptions.REFRAIN_FROM_SCROLLING = b;
+  }
+
+  public boolean isShowNotificationAfterReformat() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION;
+  }
+
+  public void setShowNotificationAfterReformat(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = b;
+  }
+
+  public boolean isShowNotificationAfterOptimizeImports() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION;
+  }
+
+  public void setShowNotificationAfterOptimizeImports(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = b;
   }
 
   public boolean isWhitespacesShown() {
