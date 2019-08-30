@@ -112,7 +112,7 @@ public class PluginIdDependenciesIndex extends ScalarIndexExtension<String> {
   @Nullable
   private static String findPluginId(Set<String> data) {
     final String pluginIdEntry = ContainerUtil.find(data, s -> StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX));
-    return pluginIdEntry == null ? null : StringUtil.substringAfter(pluginIdEntry, PLUGIN_ID_KEY_PREFIX);
+    return pluginIdEntry == null ? null : StringUtil.trimStart(pluginIdEntry, PLUGIN_ID_KEY_PREFIX);
   }
 
   public static Collection<VirtualFile> findDependsTo(Project project, VirtualFile file) {
