@@ -81,8 +81,8 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun RowBuilder.buildCredentialsPanel() {
-    row("Username:") { usernameField(CCFlags.growX) }
-    row("Password:") { passwordField(CCFlags.growX) }
+    row("Username:") { usernameField(growX) }
+    row("Password:") { passwordField(growX) }
     row { rememberCheckbox() }
   }
 
