@@ -18,10 +18,7 @@ import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
@@ -63,6 +60,11 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   public int size() {
     return myChanges.get().size();
+  }
+
+  @NotNull
+  protected Changes getChangesObject() {
+    return myChanges.get();
   }
 
   protected interface Changes {
@@ -178,6 +180,16 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
+    }
+
+    @ApiStatus.Internal
+    @NotNull
+    public Collection<VcsFileStatusInfo> getMergedStatuses() {
+      Collection<VcsFileStatusInfo> result = new HashSet<>();
+      for (MergedStatusInfo<VcsFileStatusInfo> mergedStatusInfo : getMergedStatusInfo()) {
+        result.add(mergedStatusInfo.getStatusInfo());
+      }
+      return result;
     }
   }
 

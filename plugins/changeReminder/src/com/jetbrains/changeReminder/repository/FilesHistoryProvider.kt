@@ -39,12 +39,12 @@ internal class FilesHistoryProvider(private val project: Project,
     val commitsData = mutableSetOf<Commit>()
 
     processCommitsFromHashes(project, root, hashes.keys.toList()) consume@{ commit ->
-      if (commit.changes.isNotEmpty()) {
+      val affectedPaths = commit.affectedPaths
+      if (affectedPaths.isNotEmpty()) {
         val id = hashes[commit.id.asString()] ?: return@consume
         val time = commit.commitTime
-        val files = commit.changes.mapNotNull { ChangesUtil.getFilePath(it) }.toSet()
         val author = commit.author
-        commitsData.add(Commit(id, time, author.name, files))
+        commitsData.add(Commit(id, time, author.name, affectedPaths))
       }
     }
     return commitsData
