@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
@@ -88,8 +89,11 @@ internal class GHCloneDialogExtensionComponent(
   private val progressManager: ProgressVisibilityManager
 
   // UI
-  private val defaultAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize.get())
-  private val defaultPopupAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize.get())
+  private val defaultAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize)
+  private val defaultPopupAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
+  private val avatarSizeUiInt = JBValue.UIInteger("GHCloneDialogExtensionComponent.popupAvatarSize",
+                                                  VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
+
 
   private val wrapper: Wrapper = Wrapper()
   private val repositoriesPanel: DialogPanel
@@ -280,14 +284,14 @@ internal class GHCloneDialogExtensionComponent(
         user = accountInformationProvider.getInformation(executor, indicator, account)
         iconProvider = CachingGithubAvatarIconsProvider
           .Factory(avatarLoader, imageResizer, executor)
-          .create(VcsCloneDialogUiSpec.Components.popupMenuAvatarSize, accountsPanel)
+          .create(avatarSizeUiInt, accountsPanel)
       }
 
       override fun onSuccess() {
         userDetailsByAccount[account] = user
         val avatar = iconProvider.getIcon(user.avatarUrl)
         avatarsByAccount[account] = avatar
-        accountComponents[account]?.icon = resizeIcon(avatar, VcsCloneDialogUiSpec.Components.avatarSize.get())
+        accountComponents[account]?.icon = resizeIcon(avatar, VcsCloneDialogUiSpec.Components.avatarSize)
         refillRepositories()
       }
 

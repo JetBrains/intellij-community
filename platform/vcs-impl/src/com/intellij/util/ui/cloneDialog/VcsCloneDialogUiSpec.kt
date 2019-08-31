@@ -15,7 +15,7 @@ object VcsCloneDialogUiSpec {
   }
 
   object Components {
-    val avatarSize = JBValue.UIInteger("VcsCloneDialog.Accounts.AvatarSize", 24)
-    val popupMenuAvatarSize = JBValue.UIInteger("VcsCloneDialog.Accounts.Popup.AvatarSize", 40)
+    const val avatarSize = 24
+    const val popupMenuAvatarSize = 40
   }
 }
