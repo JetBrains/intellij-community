@@ -56,8 +56,9 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.PROTECTED)
       .withParameter(BUILDER_VARIABLE_NAME, psiTypeBaseWithGenerics);
 
-    //TODO fix bType
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, builderClass, psiTypeBaseWithGenerics);
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, builderClass);
+    //dont need initBuilderInfosBuilderClassType here
+
     final String buildMethodPrepare = builderInfos.stream()
       .map(BuilderInfo::renderSuperBuilderConstruction)
       .collect(Collectors.joining());
@@ -158,7 +159,8 @@ public class SuperBuilderHandler extends BuilderHandler {
       }
     }
 
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder, bType);
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+    initBuilderInfosBuilderClassType(builderInfos, bType);
 
     // create builder Fields
     builderInfos.stream()
@@ -174,14 +176,19 @@ public class SuperBuilderHandler extends BuilderHandler {
 
   @NotNull
   private List<BuilderInfo> createBuilderInfos(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
-                                               @NotNull PsiClass baseClassBuilder, @NotNull PsiClassType bType) {
+                                               @NotNull PsiClass baseClassBuilder) {
     final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, psiClass, null, baseClassBuilder);
     for (BuilderInfo builderInfo : builderInfos) {
-      builderInfo.withBuilderClassType(bType)
-        .withBuilderChainResult("self()")
+      builderInfo.withBuilderChainResult("self()")
         .withInstanceVariableName(INSTANCE_VARIABLE_NAME);
     }
     return builderInfos;
+  }
+
+  private void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
+    for (BuilderInfo builderInfo : builderInfos) {
+      builderInfo.withBuilderClassType(bType);
+    }
   }
 
   public Collection<PsiMethod> createAllMethodsOfBaseBuilder(@NotNull PsiClass psiParentClass,
@@ -200,7 +207,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     final PsiClassType bType = factory.createType(bTypeClass);
     final PsiClassType cType = factory.createType(cTypeClass);
 
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiParentClass, psiAnnotation, psiBuilderClass, bType);
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiParentClass, psiAnnotation, psiBuilderClass);
+    initBuilderInfosBuilderClassType(builderInfos, bType);
 
     // create all methods
     return addAllMethodsForBaseBuilderClass(psiParentClass, psiAnnotation, psiBuilderClass, builderInfos, bType, cType);
