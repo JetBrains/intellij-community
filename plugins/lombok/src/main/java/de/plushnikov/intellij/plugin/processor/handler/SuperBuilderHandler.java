@@ -160,10 +160,10 @@ public class SuperBuilderHandler extends BuilderHandler {
     if (null != superClass && !"Object".equals(superClass.getName())) {
       final PsiClass parentBuilderClass = superClass.findInnerClassByName(getBuilderClassName(superClass), false);
       if (null != parentBuilderClass) {
-        final PsiClassType[] explicitTypes = Stream.concat(
-          Stream.of(psiClass.getTypeParameters()).map(factory::createType),
+        final PsiType[] explicitTypes = Stream.concat(
+          Stream.of(psiClass.getExtendsListTypes()).map(PsiClassType::getParameters).flatMap(Stream::of),
           Stream.of(cType, bType))
-          .toArray(PsiClassType[]::new);
+          .toArray(PsiType[]::new);
 
         final PsiClassType extendsType = getTypeWithSpecificTypeParameters(parentBuilderClass, explicitTypes);
         baseClassBuilder.withExtends(extendsType);
