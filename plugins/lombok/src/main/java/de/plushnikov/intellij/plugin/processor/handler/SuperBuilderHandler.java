@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SuperBuilderHandler extends BuilderHandler {
 
@@ -46,6 +47,11 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                            @NotNull PsiClassType psiTypeBaseWithGenerics) {
     final String className = psiClass.getName();
     if (null == className) {
+      return Optional.empty();
+    }
+
+    final Collection<PsiMethod> existedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+    if (existedConstructors.stream().anyMatch(psiMethod -> psiMethod.getParameterList().getParametersCount() == 1)) {
       return Optional.empty();
     }
 
@@ -154,7 +160,12 @@ public class SuperBuilderHandler extends BuilderHandler {
     if (null != superClass && !"Object".equals(superClass.getName())) {
       final PsiClass parentBuilderClass = superClass.findInnerClassByName(getBuilderClassName(superClass), false);
       if (null != parentBuilderClass) {
-        final PsiClassType extendsType = getTypeWithWildcardsForSuperBuilderTypeParameters(parentBuilderClass, cType, bType);
+        final PsiClassType[] explicitTypes = Stream.concat(
+          Stream.of(psiClass.getTypeParameters()).map(factory::createType),
+          Stream.of(cType, bType))
+          .toArray(PsiClassType[]::new);
+
+        final PsiClassType extendsType = getTypeWithSpecificTypeParameters(parentBuilderClass, explicitTypes);
         baseClassBuilder.withExtends(extendsType);
       }
     }
@@ -317,7 +328,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
 
-    final PsiClassType extendsType = getTypeWithWildcardsForSuperBuilderTypeParameters(psiBaseBuilderClass,
+    final PsiClassType extendsType = getTypeWithSpecificTypeParameters(psiBaseBuilderClass,
       PsiClassUtil.getTypeWithGenerics(psiClass), PsiClassUtil.getTypeWithGenerics(implClassBuilder));
     implClassBuilder.withExtends(extendsType);
 
@@ -381,22 +392,25 @@ public class SuperBuilderHandler extends BuilderHandler {
   @NotNull
   public PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
     final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
-    return getTypeWithWildcardsForSuperBuilderTypeParameters(psiClass, wildcardType, wildcardType);
+    return getTypeWithSpecificTypeParameters(psiClass, wildcardType, wildcardType);
   }
 
   @NotNull
-  private PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
+  private PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final int substituteTypesCount = psiTypes.length;
     if (classTypeParameters.length >= substituteTypesCount) {
-      PsiType[] newTypes = new PsiType[classTypeParameters.length];
+      PsiSubstitutor newSubstitutor = PsiSubstitutor.EMPTY;
+
       final int fromIndex = classTypeParameters.length - substituteTypesCount;
       for (int i = 0; i < fromIndex; i++) {
-        newTypes[i] = elementFactory.createType(classTypeParameters[i]);
+        newSubstitutor = newSubstitutor.put(classTypeParameters[i], elementFactory.createType(classTypeParameters[i]));
       }
-      System.arraycopy(psiTypes, 0, newTypes, fromIndex, substituteTypesCount);
-      return elementFactory.createType(psiClass, newTypes);
+      for (int i = fromIndex; i < classTypeParameters.length; i++) {
+        newSubstitutor = newSubstitutor.put(classTypeParameters[i], psiTypes[i - fromIndex]);
+      }
+      return elementFactory.createType(psiClass, newSubstitutor);
     }
     return elementFactory.createType(psiClass);
   }

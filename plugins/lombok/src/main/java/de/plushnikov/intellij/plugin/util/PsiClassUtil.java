@@ -132,10 +132,4 @@ public class PsiClassUtil {
   public static Collection<String> getNames(Collection<? extends PsiMember> psiMembers) {
     return psiMembers.stream().map(PsiMember::getName).collect(Collectors.toSet());
   }
-
-  @NotNull
-  public static PsiClassType createTypeWithGenerics(@NotNull PsiClass psiClass, @NotNull PsiClass a, @NotNull PsiClass b) {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    return factory.createType(psiClass, factory.createType(a), factory.createType(b));
-  }
 }
