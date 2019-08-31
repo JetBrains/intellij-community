@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -242,8 +244,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl chainedQualifier = (PsiReferenceExpressionImpl)element;
-          ourQualifierCache.get()
-            .put(chainedQualifier, resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile));
+          RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+          ResolveResult[] res = resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile);
+          if (stamp.mayCacheNow()) {
+            ourQualifierCache.get().put(chainedQualifier, res);
+          }
         }
 
         // walk only qualifiers, not their argument and other associated stuff

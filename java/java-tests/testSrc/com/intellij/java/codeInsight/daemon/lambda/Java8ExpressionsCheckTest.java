@@ -38,6 +38,25 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testForbidCachingForAllQualifiersWhenDependOnThreadLocalTypes() {
+    configure();
+    PsiMethodCallExpression getKeyCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    PsiLambdaExpression l1 = PsiTreeUtil.getParentOfType(getKeyCall, PsiLambdaExpression.class);
+    PsiLambdaExpression l2 = (PsiLambdaExpression)PsiTreeUtil.skipWhitespacesForward(l1.getNextSibling());
+
+    //ensure chained method calls inside lambda are resolved
+    //including entry.getKey()
+    //these calls depend on ThreadLocalTypes and should not be cached
+    //note that their types should not be cached as well
+    l2.getFunctionalInterfaceType();
+
+    //check that getKey was not cached in the line above
+    PsiType type = getKeyCall.getType();
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
+  }
+
   public void testLambdaParameterTypeDetection() {
     configure();
     PsiReferenceExpression referenceExpression =
