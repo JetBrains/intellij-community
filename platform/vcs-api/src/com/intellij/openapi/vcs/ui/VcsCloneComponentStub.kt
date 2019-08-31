@@ -8,7 +8,6 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
