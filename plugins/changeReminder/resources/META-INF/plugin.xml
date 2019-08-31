@@ -30,6 +30,10 @@
     <registryKey key="vcs.changeReminder.prediction.threshold"
                  defaultValue="0.8"
                  description="Do not show files which have probability less than threshold in Related Files node in Local Changes."/>
+    <registryKey key="vcs.changeReminder.changes.limit"
+                 defaultValue="25"
+                 description="A maximum number of changes for which predictions are calculated"/>
+    
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
     <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="1"/>
     <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
