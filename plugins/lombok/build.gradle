@@ -168,8 +168,7 @@ test {
     logger.lifecycle("Running test: " + descriptor)
   }
 }
-//plugins.withType(JavaPlugin) {
-//  test {
-//    systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
-//  }
-//}
+
+runIde {
+//  jvmArgs '-agentpath:"D:\\yjpagent.dll"'
+}

@@ -23,12 +23,17 @@ public class PsiTypeUtil {
 
   @NotNull
   public static PsiType extractOneElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
+    PsiType oneElementType = substituteTypeParameter(psiType, superClass, paramIndex);
+    if (null == oneElementType) {
+      oneElementType = getJavaLangObject(psiManager);
+    }
+    return oneElementType;
+  }
+
+  private static PsiType substituteTypeParameter(@NotNull PsiType psiType, String superClass, int paramIndex) {
     PsiType oneElementType = PsiUtil.substituteTypeParameter(psiType, superClass, paramIndex, true);
     if (oneElementType instanceof PsiWildcardType) {
       oneElementType = ((PsiWildcardType) oneElementType).getBound();
-    }
-    if (null == oneElementType) {
-      oneElementType = PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
     }
     return oneElementType;
   }
@@ -40,20 +45,18 @@ public class PsiTypeUtil {
 
   @NotNull
   public static PsiType extractAllElementType(@NotNull PsiType psiType, @NotNull PsiManager psiManager, final String superClass, final int paramIndex) {
-    PsiType oneElementType = PsiUtil.substituteTypeParameter(psiType, superClass, paramIndex, true);
-    if (oneElementType instanceof PsiWildcardType) {
-      oneElementType = ((PsiWildcardType) oneElementType).getBound();
-    }
+    PsiType oneElementType = substituteTypeParameter(psiType, superClass, paramIndex);
 
-    PsiType result;
-    final PsiClassType javaLangObject = PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
-    if (null == oneElementType || Comparing.equal(javaLangObject, oneElementType)) {
-      result = PsiWildcardType.createUnbounded(psiManager);
+    if (null == oneElementType || Comparing.equal(getJavaLangObject(psiManager), oneElementType)) {
+      return PsiWildcardType.createUnbounded(psiManager);
     } else {
-      result = PsiWildcardType.createExtends(psiManager, oneElementType);
+      return PsiWildcardType.createExtends(psiManager, oneElementType);
     }
+  }
 
-    return result;
+  @NotNull
+  private static PsiClassType getJavaLangObject(@NotNull PsiManager psiManager) {
+    return PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
   }
 
   @NotNull
@@ -66,7 +69,7 @@ public class PsiTypeUtil {
     if (null != genericClass) {
       return JavaPsiFacade.getElementFactory(project).createType(genericClass, psiTypes);
     } else {
-      return PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiManager.getProject()));
+      return getJavaLangObject(psiManager);
     }
   }
 

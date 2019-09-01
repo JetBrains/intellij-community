@@ -169,7 +169,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     final List<Psi> result = new ArrayList<>();
     final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance(psiClass.getProject()).getLombokProcessors(type);
     for (Processor processor : lombokProcessors) {
-      result.addAll((Collection<Psi>) processor.process(psiClass));
+      final List<? super PsiElement> generatedElements = processor.process(psiClass);
+      for (Object psiElement : generatedElements) {
+        result.add((Psi) psiElement);
+      }
     }
     return result;
   }
