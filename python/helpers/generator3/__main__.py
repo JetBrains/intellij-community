@@ -6,7 +6,7 @@ import generator3.core
 import generator3.extra
 from generator3.clr_tools import get_namespace_by_name
 from generator3.constants import Timer
-from generator3.core import version, list_binaries, process_one, \
+from generator3.core import version, list_binaries, process_one_with_results_reporting, \
     GenerationStatus, process_builtin_modules, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
@@ -167,7 +167,7 @@ def main():
             # We take module name from import statement
             name = get_namespace_by_name(name)
 
-        if process_one(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
+        if process_one_with_results_reporting(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
             sys.exit(1)
 
     say("Generation completed in %d ms", timer.elapsed())

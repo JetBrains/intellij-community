@@ -340,6 +340,15 @@ class SkeletonGenerationTest(GeneratorTestCase):
              'generation_status': 'GENERATED'}
         ], result.control_messages)
 
+    def test_results_in_single_module_mode(self):
+        result = self.run_generator('mod', 'mod.py')
+        self.assertIn({
+            'type': 'generation_result',
+            'module_name': 'mod',
+            'module_origin': 'mod.py',
+            'generation_status': 'GENERATED'
+        }, result.control_messages)
+
     @test_data_dir('multiple_modules_mode')
     def test_multiple_modules_generation_mode(self):
         # This is a hack to keep the existing behavior where we keep discovering only binary files
