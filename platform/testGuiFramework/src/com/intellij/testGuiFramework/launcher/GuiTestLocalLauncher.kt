@@ -301,7 +301,6 @@ object GuiTestLocalLauncher {
   private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
     val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
     classpath.addAll(getTestClasspath(testClassNames))
-    classpath.add(getToolsJarFile())
     return classpath.toList()
   }
 
