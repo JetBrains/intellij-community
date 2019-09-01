@@ -29,7 +29,7 @@ public class VcsExecutablePathSelector {
   public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
-    myPathSelector = new TextFieldWithBrowseButton(new JBTextField(10));
+    myPathSelector = new TextFieldWithBrowseButton();
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,
