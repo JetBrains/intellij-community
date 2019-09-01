@@ -96,6 +96,14 @@ public interface ApplicationEx extends Application {
   void restart(boolean exitConfirmed);
 
   /**
+   * Restarts the IDE with optional process elevation (on Windows).
+   *
+   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
+   * @param elevate       if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
+   */
+  void restart(boolean exitConfirmed, boolean elevate);
+
+  /**
    * Runs modal process. For internal use only, see {@link Task}
    */
   @ApiStatus.Internal

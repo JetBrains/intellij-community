@@ -648,13 +648,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     exit(false, exitConfirmed, true);
   }
 
-  /**
-   * Restarts the IDE with optional process elevation (on Windows).
-   *
-   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
-   * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
-   */
-  public void restart(boolean exitConfirmed, boolean elevate) {
+  @Override
+  public final void restart(boolean exitConfirmed, boolean elevate) {
     exit(false, exitConfirmed, true, elevate, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
