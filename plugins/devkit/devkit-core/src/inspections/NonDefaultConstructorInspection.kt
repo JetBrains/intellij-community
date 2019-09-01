@@ -95,7 +95,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
         if (isAppLevelExtensionPoint) "" else " (except ${if (area == Area.IDEA_PROJECT) "Project" else "Module"})"
       }
       errors.add(manager.createProblemDescriptor(anchorElement,
-                                                 "$kind should not have constructor with parameters${suffix}. To not instantiate services in constructor.", true,
+                                                 "$kind should not have constructor with parameters${suffix}.\nDo not instantiate services in constructor because should be requested only when needed.", true,
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly))
     }
     return errors?.toTypedArray()

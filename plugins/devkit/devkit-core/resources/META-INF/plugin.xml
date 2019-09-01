@@ -202,7 +202,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
-    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for extension class"
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for service and extension class"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
@@ -360,7 +360,7 @@
               text="Toggle Expected Highlighting Markup"
               id="ToggleHighlightingMarkup"/>
 
-      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" 
+      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction"
               text="Shuffle/Scramble/Anonymize/Permute Names"
               id="ShuffleNamesAction"/>
 
