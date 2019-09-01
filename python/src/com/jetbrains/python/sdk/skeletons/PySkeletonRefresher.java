@@ -646,4 +646,9 @@ public class PySkeletonRefresher {
     return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
       .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
   }
+
+  @NotNull
+  public PySkeletonGenerator getGenerator() {
+    return mySkeletonsGenerator;
+  }
 }
