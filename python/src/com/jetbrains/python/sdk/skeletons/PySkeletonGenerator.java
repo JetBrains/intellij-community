@@ -64,6 +64,8 @@ public class PySkeletonGenerator {
   private List<String> myExtraSysPath;
   private List<String> myAssemblyRefs;
   private List<String> myExtraArgs;
+  private String myTargetModuleName;
+  private String myTargetModulePath;
 
   @NotNull
   public PySkeletonGenerator withExtraEnvironment(@NotNull Map<String, String> environment) {
@@ -108,8 +110,15 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
+  public PySkeletonGenerator withTargetModule(@NotNull String name, @Nullable String path) {
+    myTargetModuleName = name;
+    myTargetModulePath = path;
+    return this;
+  }
+
+  @NotNull
   public ProcessOutput runProcess() throws ExecutionException, InvalidSdkException {
-    return getProcessOutput(new File(mySdk.getHomePath()).getParent(),
+    return getProcessOutput(getWorkingDir(),
                             ArrayUtil.toStringArray(buildCommandLine()),
                             buildEnvironment(),
                             MINUTE * 10);
@@ -117,9 +126,6 @@ public class PySkeletonGenerator {
 
   @NotNull
   public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
-    final String binaryPath = mySdk.getHomePath();
-    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
-    final String homePath = new File(binaryPath).getParent();
 
     final List<GenerationResult> results = new ArrayList<>();
     final LineWiseProcessOutputListener listener = new LineWiseProcessOutputListener() {
@@ -180,8 +186,18 @@ public class PySkeletonGenerator {
       }
     };
 
-    runProcessWithLineOutputListener(homePath, buildCommandLine(), buildEnvironment(), MINUTE * 20, listener);
+    runProcessWithLineOutputListener(getWorkingDir(), buildCommandLine(), buildEnvironment(), MINUTE * 20, listener);
     return results;
+  }
+
+  @NotNull
+  private String getWorkingDir() throws InvalidSdkException {
+    if (myCurrentFolder != null) {
+      return myCurrentFolder;
+    }
+    final String binaryPath = mySdk.getHomePath();
+    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+    return new File(binaryPath).getParent();
   }
 
 
@@ -205,6 +221,12 @@ public class PySkeletonGenerator {
     }
     if (!ContainerUtil.isEmpty(myExtraArgs)) {
       commandLine.addAll(myExtraArgs);
+    }
+    if (StringUtil.isNotEmpty(myTargetModuleName)) {
+      commandLine.add(myTargetModuleName);
+      if (StringUtil.isNotEmpty(myTargetModulePath)) {
+        commandLine.add(myTargetModulePath);
+      }
     }
     return commandLine;
   }
