@@ -289,10 +289,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     @Suppress("UNCHECKED_CAST")
     return when (adapter) {
       is BaseComponentAdapter -> {
-        if (parent != null) {
-          LOG.assertTrue(adapter.componentManager == this)
+        if (parent != null && adapter.componentManager !== this) {
+          LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
         }
-        adapter.getInstance(this)
+        adapter.getInstance(adapter.componentManager)
       }
       else -> adapter.getComponentInstance(picoContainer) as T
     }
