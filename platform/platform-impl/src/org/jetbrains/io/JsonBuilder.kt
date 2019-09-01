@@ -1,11 +1,10 @@
-package com.intellij.configurationScript
-
-import org.jetbrains.io.JsonUtil
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.io
 
 @DslMarker
 annotation class JsonBuilderDsl
 
-internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
+inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
   val builder = JsonObjectBuilder(this)
   appendCommaIfNeeded()
   builder.appendComplexValue('{', '}', isColonRequired = false) {
@@ -15,7 +14,7 @@ internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): Str
 }
 
 @JsonBuilderDsl
-internal class JsonObjectBuilder(private val builder: StringBuilder, private var indentLevel: Int = 0, private val indent: String? = "  ") {
+class JsonObjectBuilder(val builder: StringBuilder, var indentLevel: Int = 0, val indent: String? = "  ") {
   inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
     val builder = JsonObjectBuilder(this, indentLevel = indentLevel + 1)
     appendCommaIfNeeded()
@@ -69,6 +68,14 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private var
     indentLevel--
   }
 
+  fun array(key: CharSequence, build: JsonObjectBuilder.() -> Unit) {
+    indentLevel++
+    appendNameAndValue(key, '[', ']') {
+      build()
+    }
+    indentLevel--
+  }
+
   fun rawMap(key: CharSequence, build: (StringBuilder) -> Unit) {
     mapOrArray('{', '}', key, build)
   }
@@ -108,7 +115,7 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private var
       .append('"')
   }
 
-  private fun appendColon() {
+  fun appendColon() {
     builder.append(':')
     if (indent != null) {
       builder.append(' ')
@@ -133,6 +140,7 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private var
     appendComplexValue(openChar, closeChar, isColonRequired, valueAppender)
   }
 
+  @PublishedApi
   internal inline fun appendComplexValue(openChar: Char, closeChar: Char, isColonRequired: Boolean = true, valueAppender: () -> Unit) {
     if (isColonRequired) {
       appendColon()
@@ -172,7 +180,8 @@ private fun appendCommaIfNeeded(builder: StringBuilder): Boolean {
   return false
 }
 
-private fun StringBuilder.appendCommaIfNeeded(): StringBuilder {
+@PublishedApi
+internal fun StringBuilder.appendCommaIfNeeded(): StringBuilder {
   appendCommaIfNeeded(this)
   return this
 }

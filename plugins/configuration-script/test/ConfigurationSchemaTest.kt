@@ -15,6 +15,7 @@ import com.intellij.util.io.sanitizeFileName
 import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
+import org.jetbrains.io.JsonObjectBuilder
 import java.nio.file.Paths
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency

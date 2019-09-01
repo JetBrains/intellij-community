@@ -24,31 +24,31 @@ public final class ActivityImpl implements Activity {
 
   @Nullable
   private final ParallelActivity parallelActivity;
-  @Nullable private final String myPluginId;
+  @Nullable
+  private final String pluginId;
 
   ActivityImpl(@Nullable String name, @Nullable String description, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
-    this(name, description, System.nanoTime(), null, level, null, pluginId);
+    this(name, System.nanoTime(), null, level, null, pluginId);
+    this.description = description;
   }
 
   @NotNull
   static ActivityImpl createParallelActivity(@NotNull ParallelActivity parallelActivity, @NotNull String name) {
-    return new ActivityImpl(name, /* description = */ null, System.nanoTime(), /* parent = */ null, /* level = */ null, parallelActivity, null);
+    return new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* level = */ null, parallelActivity, null);
   }
 
   ActivityImpl(@Nullable String name,
-               @Nullable String description,
                long start,
                @Nullable ActivityImpl parent,
                @Nullable StartUpMeasurer.Level level,
                @Nullable ParallelActivity parallelActivity,
                @Nullable String pluginId) {
     this.name = name;
-    this.description = description == null || description.isEmpty() ? null : description;
     this.start = start;
     this.parent = parent;
     this.level = level;
     this.parallelActivity = parallelActivity;
-    myPluginId = pluginId;
+    this.pluginId = pluginId;
 
     this.thread = Thread.currentThread().getName();
   }
@@ -78,7 +78,7 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, null, System.nanoTime(), this, null, null, myPluginId);
+    return new ActivityImpl(name, System.nanoTime(), this, null, null, pluginId);
   }
 
   @NotNull
@@ -93,7 +93,7 @@ public final class ActivityImpl implements Activity {
 
   @Nullable
   public String getPluginId() {
-    return myPluginId;
+    return pluginId;
   }
 
   public long getStart() {
@@ -123,11 +123,11 @@ public final class ActivityImpl implements Activity {
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();
-    return new ActivityImpl(name, /* description = */null, /* start = */end, parent, /* level = */null, parallelActivity, myPluginId);
+    return new ActivityImpl(name, /* start = */end, parent, /* level = */null, parallelActivity, pluginId);
   }
 
   @Override
   public String toString() {
-    return "ActivityImpl(name=" + name + ", start=" + TimeUnit.NANOSECONDS.toMillis(start) + ", end=" + TimeUnit.NANOSECONDS.toMillis(start) + ")";
+    return "ActivityImpl(name=" + name + ", start=" + TimeUnit.NANOSECONDS.toMillis(start) + ", end=" + TimeUnit.NANOSECONDS.toMillis(end) + ")";
   }
 }

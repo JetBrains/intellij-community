@@ -19,7 +19,7 @@ internal fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: Objec
     respectedItems.clear()
 
     if (index > 0 && list.get(index - 1).start > item.start) {
-      LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
+      StartUpPerformanceReporter.LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
     }
 
     for (j in (index + 1) until list.size) {
@@ -44,7 +44,7 @@ internal fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: Objec
   val diff = actualTotalDurationForAll - computedDurationForAll
   val diffInMs = TimeUnit.NANOSECONDS.toMillis(diff)
   if (diff < 0 || diffInMs > 3) {
-    LOG.debug("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
+    StartUpPerformanceReporter.LOG.debug("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
   }
 }
 

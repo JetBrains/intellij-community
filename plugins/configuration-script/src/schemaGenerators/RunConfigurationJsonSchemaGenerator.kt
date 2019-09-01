@@ -1,6 +1,5 @@
 package com.intellij.configurationScript.schemaGenerators
 
-import com.intellij.configurationScript.JsonObjectBuilder
 import com.intellij.configurationScript.Keys
 import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.SchemaGenerator
@@ -11,6 +10,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.io.JsonObjectBuilder
 
 internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, factories: Array<ConfigurationFactory>) -> Unit) {
   for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
@@ -76,8 +76,7 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
           }
 
           map("properties") {
-            processFactories(factories,
-                                                                               typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
+            processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
               addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = false)
               // describeFactory cannot be here because JsonBuilder instance here equals to definitions - recursive building is not supported (to reuse StringBuilder instance)
             }
@@ -312,7 +311,7 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
     }
     else {
       @Suppress("NAME_SHADOWING")
-      for (i in 0 until builder.length) {
+      for (i in builder.indices) {
         builder.setCharAt(i, builder.get(i).toLowerCase())
       }
       return builder

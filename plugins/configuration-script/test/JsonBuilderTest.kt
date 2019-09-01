@@ -1,6 +1,7 @@
 package com.intellij.configurationScript
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import org.jetbrains.io.json
 import org.junit.Test
 
 class JsonBuilderTest {

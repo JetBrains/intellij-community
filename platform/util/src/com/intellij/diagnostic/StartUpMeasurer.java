@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
@@ -82,7 +83,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  private static final long classInitStartTime = System.nanoTime();
+  private static long startTime = System.nanoTime();
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
@@ -102,9 +103,9 @@ public final class StartUpMeasurer {
   /**
    * Since start in ms.
    */
+  @SuppressWarnings("unused")
   public static long sinceStart() {
-    ActivityImpl first = items.iterator().next();
-    return (getCurrentTime() - first.getStart()) / 1_000_000;
+    return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
   }
 
   @NotNull
@@ -136,8 +137,8 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static long getClassInitStartTime() {
-    return classInitStartTime;
+  public static long getStartTime() {
+    return startTime;
   }
 
   static void add(@NotNull ActivityImpl activity) {
@@ -147,30 +148,39 @@ public final class StartUpMeasurer {
   }
 
   public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
+    if (!items.isEmpty()) {
+      throw new IllegalStateException("addTimings must be not called if some events were already added using API");
+    }
+
     if (timings.isEmpty()) {
       return;
     }
 
     List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
 
-    ActivityImpl parent = new ActivityImpl(groupName, null, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < entries.size(); i++) {
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), null, entries.get(i).getValue(), parent, Level.APPLICATION, null, null);
+      long start = entries.get(i).getValue();
+      if (start < startTime) {
+        startTime = start;
+      }
+
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null, null);
       activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
       items.add(activity);
     }
     items.add(parent);
   }
 
-  public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos) {
+  public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long time) {
     if (!isMeasuringPluginStartupCosts()) {
       return;
     }
 
     synchronized (pluginCostMap) {
-      doAddPluginCost(pluginId, phase, timeNanos, pluginCostMap);
+      doAddPluginCost(pluginId, phase, time, pluginCostMap);
     }
   }
 
@@ -179,7 +189,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
+  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
     ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
     if (costPerPhaseMap == null) {
       costPerPhaseMap = new ObjectLongHashMap<>();
@@ -189,6 +199,6 @@ public final class StartUpMeasurer {
     if (oldCost == -1) {
       oldCost = 0L;
     }
-    costPerPhaseMap.put(phase, oldCost + timeNanos);
+    costPerPhaseMap.put(phase, oldCost + time);
   }
 }

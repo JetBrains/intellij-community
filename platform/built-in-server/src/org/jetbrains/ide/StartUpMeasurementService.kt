@@ -39,7 +39,7 @@ internal class StartUpMeasurementService : RestService() {
       return "Cannot find StartUpPerformanceReporter instance"
     }
 
-    val lastReport = reporter.lastReport ?: return "Report is not ready yet, start-up in progress"
+    val lastReport = reporter.lastReport ?: return """{"error": "Report is not ready yet, start-up in progress"}"""
     val response = response("application/json", Unpooled.wrappedBuffer(lastReport))
     sendResponse(request, context, response)
     return null

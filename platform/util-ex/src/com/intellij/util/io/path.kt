@@ -8,6 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.channels.Channels
 import java.nio.file.*
@@ -158,17 +159,23 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
 @JvmOverloads
 @Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
-  if (createParentDirs) {
-    parent?.createDirectories()
-  }
-
   if (data is String) {
     Files.write(this, data.toByteArray())
   }
   else {
-    Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
-      it.write(Charsets.UTF_8.encode(CharBuffer.wrap(data)))
-    }
+    write(Charsets.UTF_8.encode(CharBuffer.wrap(data)), createParentDirs)
+  }
+  return this
+}
+
+@Throws(IOException::class)
+fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
+  if (createParentDirs) {
+    parent?.createDirectories()
+  }
+
+  Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+    it.write(data)
   }
   return this
 }
