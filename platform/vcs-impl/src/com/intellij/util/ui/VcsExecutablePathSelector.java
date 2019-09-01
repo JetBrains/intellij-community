@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
   private final TextFieldWithBrowseButton myPathSelector;
-  private final JButton myTestButton;
   private final JBCheckBox myProjectPathCheckbox;
 
   @Nullable private String mySavedPath;
@@ -36,9 +35,9 @@ public class VcsExecutablePathSelector {
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     panel.addToCenter(myPathSelector);
 
-    myTestButton = new JButton(VcsBundle.getString("executable.test"));
-    myTestButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
-    panel.addToRight(myTestButton);
+    JButton testButton = new JButton(VcsBundle.getString("executable.test"));
+    testButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
+    panel.addToRight(testButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
