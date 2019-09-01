@@ -214,17 +214,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  @Override
-  protected List<String> getAdditionalTargetModules() {
-    String preferredRunner = getRunner();
-    if (!JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
-      return Arrays.asList("junit", "idea.rt", "junit.rt");
-    }
-    else {
-      return Arrays.asList("org.junit.platform.launcher", "org.junit.platform.engine", "idea.rt", "junit.rt");
-    }
-  }
-
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
     String junit4Name = junit4Rt.getName();

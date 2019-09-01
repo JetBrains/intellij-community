@@ -217,9 +217,4 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       parametersList.addAt(paramIdx, ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
-
-  @Override
-  protected List<String> getAdditionalTargetModules() {
-    return Arrays.asList("testng", "jcommander", "testng.rt");
-  }
 }
