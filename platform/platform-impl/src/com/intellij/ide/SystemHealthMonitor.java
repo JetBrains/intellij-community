@@ -105,18 +105,12 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
       try {
         Memory sa = new Memory(256);
-
         if (LibC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.Handler newHandler = sig -> { System.exit(128 + sig); };  // ref: java.lang.Terminator
-          SIGINT_CALLBACK_REF = newHandler;
-          LibC.signal(UnixProcessManager.SIGINT, newHandler);
+          LibC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
           LOG.info("restored ignored INT handler");
         }
-
         if (LibC.sigaction(UnixProcessManager.SIGPIPE, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.Handler newHandler = sig -> { };  // no-op handler unmasks the signal in child processes
-          SIGPIPE_CALLBACK_REF = newHandler;
-          LibC.signal(UnixProcessManager.SIGPIPE, newHandler);
+          LibC.signal(UnixProcessManager.SIGPIPE, LibC.Handler.NO_OP);
           LOG.info("restored ignored PIPE handler");
         }
       }
@@ -246,12 +240,12 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     interface Handler extends Callback {
       void callback(int sig);
+
+      Handler TERMINATE = sig -> System.exit(128 + sig);  // ref: java.lang.Terminator
+      Handler NO_OP = sig -> { };  // no-op handler just unmasks a signal for child processes
     }
 
     static native int sigaction(int sig, Pointer action, Pointer oldAction);
     static native Pointer signal(int sig, Handler handler);
   }
-
-  @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object SIGINT_CALLBACK_REF;
-  @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object SIGPIPE_CALLBACK_REF;
 }
