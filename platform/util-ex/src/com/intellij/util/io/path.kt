@@ -160,6 +160,9 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
 @Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   if (data is String) {
+    if (createParentDirs) {
+      parent?.createDirectories()
+    }
     Files.write(this, data.toByteArray())
   }
   else {
