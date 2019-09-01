@@ -303,6 +303,10 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public void restart(boolean exitConfirmed, boolean elevate) {
+  }
+
+  @Override
   public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
                                                      @NotNull final String progressTitle,
                                                      final boolean canBeCanceled,
