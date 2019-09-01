@@ -41,12 +41,15 @@ public class PsiMethodUtil {
 
   private static boolean isSimilarMethod(@NotNull PsiMethod classMethod, @NotNull String methodName, int methodArgCount) {
     boolean equalNames = methodName.equalsIgnoreCase(classMethod.getName());
-
-    int parametersCount = classMethod.getParameterList().getParametersCount();
-    if (classMethod.isVarArgs()) {
-      parametersCount--;
+    if (equalNames) {
+      int minArgs = classMethod.getParameterList().getParametersCount();
+      int maxArgs = minArgs;
+      if (classMethod.isVarArgs()) {
+        minArgs--;
+        maxArgs = Integer.MAX_VALUE;
+      }
+      return !(methodArgCount < minArgs || methodArgCount > maxArgs);
     }
-
-    return equalNames && methodArgCount == parametersCount;
+    return false;
   }
 }

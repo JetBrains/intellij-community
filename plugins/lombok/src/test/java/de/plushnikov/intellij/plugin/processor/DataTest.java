@@ -47,4 +47,8 @@ public class DataTest extends AbstractLombokParsingTestCase {
   public void testData$DataWithGeneric176() {
     doTest(true);
   }
+
+  public void testData$Klasse663() {
+    doTest(true);
+  }
 }
