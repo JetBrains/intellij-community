@@ -335,24 +335,22 @@ public class JBTabsImpl extends JComponent
           }
         });
 
-        if (!myTestMode) {
-          IdeGlassPane gp = IdeGlassPaneUtil.find(child);
-          myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
-          Disposer.register(child, myTabActionsAutoHideListenerDisposable);
-          gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
-          myGlassPane = gp;
+        IdeGlassPane gp = IdeGlassPaneUtil.find(child);
+        myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
+        Disposer.register(child, myTabActionsAutoHideListenerDisposable);
+        gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
+        myGlassPane = gp;
 
-          UIUtil.addAwtListener(new AWTEventListener() {
-            @Override
-            public void eventDispatched(final AWTEvent event) {
-              if (mySingleRowLayout.myMorePopup != null) return;
-              processFocusChange();
-            }
-          }, AWTEvent.FOCUS_EVENT_MASK, child);
+        UIUtil.addAwtListener(new AWTEventListener() {
+          @Override
+          public void eventDispatched(final AWTEvent event) {
+            if (mySingleRowLayout.myMorePopup != null) return;
+            processFocusChange();
+          }
+        }, AWTEvent.FOCUS_EVENT_MASK, child);
 
-          myDragHelper = new DragHelper(child);
-          myDragHelper.start();
-        }
+        myDragHelper = new DragHelper(child);
+        myDragHelper.start();
 
         if (myProject != null && myFocusManager == getGlobalInstance()) {
           myFocusManager = IdeFocusManager.getInstance(myProject);
@@ -582,10 +580,6 @@ public class JBTabsImpl extends JComponent
       myActionManager.removeTimerListener(this);
       myListenerAdded = false;
     }
-  }
-
-  void setTestMode(final boolean testMode) {
-    myTestMode = testMode;
   }
 
   public void layoutComp(SingleRowPassInfo data, int deltaX, int deltaY, int deltaWidth, int deltaHeight) {
@@ -1089,12 +1083,6 @@ public class JBTabsImpl extends JComponent
   @NotNull
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return ActionCallback.DONE;
-
-    if (myTestMode) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
-      return ActionCallback.DONE;
-    }
-
 
     if (isShowing()) {
       return myFocusManager.requestFocus(toFocus, true);

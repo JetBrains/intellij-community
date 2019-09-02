@@ -1,18 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tabs.impl;
+package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,17 +27,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class JBTabsDemo {
-  public static void main(String[] args) {
-    System.out.println("JBTabs.main");
+public class JBTabsDemoAction extends AnAction {
 
-    IconLoader.activate();
-
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
     final JBTabsImpl tabs = new JBTabsImpl(null, ActionManager.getInstance(), null, Disposer.newDisposable());
-    tabs.setTestMode(true);
 
 
     //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -253,8 +253,5 @@ public class JBTabsDemo {
 
     frame.setBounds(1400, 200, 1000, 800);
     frame.show();
-
-
   }
-
 }
