@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * The base class for all programming language support implementations.
  * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@link com.intellij.openapi.fileTypes.FileTypeFactory} extension point.
+ * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
