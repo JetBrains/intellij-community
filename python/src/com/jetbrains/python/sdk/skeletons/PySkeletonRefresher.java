@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -80,10 +79,8 @@ public class PySkeletonRefresher {
   private static int ourGeneratingCount = 0;
 
   private List<String> myExtraSyspath;
-  private PyPregeneratedSkeletons myPregeneratedSkeletons;
   private int myGeneratorVersion;
   private Map<String, Pair<Integer, Long>> myBlacklist;
-  private SkeletonVersionChecker myVersionChecker;
 
   private final PySkeletonGenerator mySkeletonsGenerator;
 
@@ -392,37 +389,6 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static class UpdateResult {
-    private final String myPath;
-    private final String myName;
-    private final long myTimestamp;
-
-    public boolean isFresh() {
-      return myIsFresh;
-    }
-
-    private final boolean myIsFresh;
-
-    private UpdateResult(String name, String path, long timestamp, boolean fresh) {
-      myName = name;
-      myPath = path;
-      myTimestamp = timestamp;
-      myIsFresh = fresh;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public Long getTimestamp() {
-      return myTimestamp;
-    }
-  }
-
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
                                            @Nullable Component ownerComponent,
                                            @Nullable String skeletonsPath,
@@ -477,107 +443,6 @@ public class PySkeletonRefresher {
 
   private void finishSkeletonsGeneration() {
     mySkeletonsGenerator.finishSkeletonsGeneration();
-  }
-
-  private static File getSkeleton(String moduleName, String skeletonsPath) {
-    final File module = getModuleSkeleton(moduleName, skeletonsPath);
-    return module.exists() ? module : getPackageSkeleton(moduleName, skeletonsPath);
-  }
-
-  private static File getModuleSkeleton(String module, String skeletonsPath) {
-    final String modulePath = module.replace('.', '/');
-    return new File(skeletonsPath, modulePath + ".py");
-  }
-
-  private static File getPackageSkeleton(String pkg, String skeletonsPath) {
-    final String packagePath = pkg.replace('.', '/');
-    return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
-  }
-
-  private void updateOrCreateSkeleton(final PyBinaryItem binaryItem,
-                                      final List<UpdateResult> errorList) throws InvalidSdkException {
-    final String moduleName = binaryItem.getModule();
-
-    final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
-    final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(skeleton);
-    boolean mustRebuild = true; // guilty unless proven fresh enough
-    if (header != null) {
-      int requiredVersion = myVersionChecker.getRequiredVersion(moduleName);
-      mustRebuild = header.getVersion() < requiredVersion;
-    }
-    if (!mustRebuild) { // ...but what if the lib was updated?
-      mustRebuild = (skeleton.exists() && binaryItem.lastModified() > skeleton.lastModified());
-      // really we can omit both exists() calls but I keep these to make the logic clear
-    }
-    if (myBlacklist != null) {
-      Pair<Integer, Long> versionInfo = myBlacklist.get(binaryItem.getPath());
-      if (versionInfo != null) {
-        int failedGeneratorVersion = versionInfo.getFirst();
-        long failedTimestamp = versionInfo.getSecond();
-        mustRebuild &= failedGeneratorVersion < myGeneratorVersion || failedTimestamp < binaryItem.lastModified();
-        if (!mustRebuild) { // we're still failing to rebuild, it, keep it in blacklist
-          errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), false));
-        }
-      }
-    }
-    if (mustRebuild) {
-      indicateMinor(moduleName);
-      if (myPregeneratedSkeletons != null && myPregeneratedSkeletons.copyPregeneratedSkeleton(moduleName, getSkeletonsPath())) {
-        return;
-      }
-      LOG.info("Skeleton for " + moduleName);
-
-      generateSkeleton(moduleName, binaryItem.getPath(), null, generated -> {
-        if (!generated) {
-          errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
-        }
-      });
-    }
-  }
-
-  public static class PyBinaryItem {
-    private final String myPath;
-    private final String myModule;
-    private final long myLength;
-    private final long myLastModified;
-
-    PyBinaryItem(String module, String path, long length, long lastModified) {
-      myPath = path;
-      myModule = module;
-      myLength = length;
-      myLastModified = lastModified * 1000;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public String getModule() {
-      return myModule;
-    }
-
-    public long length() {
-      return myLength;
-    }
-
-    public long lastModified() {
-      return myLastModified;
-    }
-  }
-
-
-  /**
-   * Generates a skeleton for a particular binary module.
-   *
-   * @param modname        name of the binary module as known to Python (e.g. 'foo.bar')
-   * @param modfilename    name of file which defines the module, null for built-in modules
-   * @param assemblyRefs   refs that generator wants to know in .net environment, if applicable
-   * @param resultConsumer accepts true if generation completed successfully
-   */
-  public void generateSkeleton(@NotNull String modname, @Nullable String modfilename,
-                               @Nullable List<String> assemblyRefs, Consumer<Boolean> resultConsumer) throws InvalidSdkException {
-    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, StringUtil.join(getExtraSyspath(), File.pathSeparator),
-                                          mySdk, resultConsumer);
   }
 
 

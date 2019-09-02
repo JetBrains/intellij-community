@@ -7,7 +7,6 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,8 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -53,7 +50,7 @@ public class PySkeletonGenerator {
   protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
-  private final Sdk mySdk;
+  protected final Sdk mySdk;
   @Nullable private String myCurrentFolder;
   private String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
@@ -297,88 +294,6 @@ public class PySkeletonGenerator {
   }
 
   public void prepare() {
-  }
-
-  protected void generateSkeleton(String modname,
-                                  String modfilename,
-                                  List<String> assemblyRefs,
-                                  String syspath,
-                                  Sdk sdk,
-                                  Consumer<Boolean> resultConsumer)
-    throws InvalidSdkException {
-
-    final ProcessOutput genResult = runSkeletonGeneration(modname, modfilename, assemblyRefs, sdk, syspath);
-
-    final Application app = ApplicationManager.getApplication();
-    if (app.isInternal() || app.isEAP()) {
-      final String stdout = genResult.getStdout();
-      if (StringUtil.isNotEmpty(stdout)) {
-        LOG.info(stdout);
-      }
-    }
-    if (!genResult.getStderrLines().isEmpty()) {
-      StringBuilder sb = new StringBuilder("Skeleton for ");
-      sb.append(modname);
-      if (genResult.getExitCode() != 0) {
-        sb.append(" failed on ");
-      }
-      else {
-        sb.append(" had some minor errors on ");
-      }
-      sb.append(sdk.getHomePath()).append(". stderr: --\n");
-      for (String err_line : genResult.getStderrLines()) {
-        sb.append(err_line).append("\n");
-      }
-      sb.append("--");
-      if (app.isInternal()) {
-        LOG.warn(sb.toString());
-      }
-      else {
-        LOG.info(sb.toString());
-      }
-    }
-
-    resultConsumer.consume(genResult.getExitCode() == 0);
-  }
-
-  public ProcessOutput runSkeletonGeneration(String modname,
-                                             String modfilename,
-                                             List<String> assemblyRefs,
-                                             Sdk sdk, String extraSyspath)
-    throws InvalidSdkException {
-    final String binaryPath = sdk.getHomePath();
-    final String parent_dir = new File(binaryPath).getParent();
-    final List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
-    return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), PythonSdkType.activateVirtualEnv(sdk), MINUTE * 10);
-  }
-
-  @NotNull
-  protected final List<String> buildSkeletonGeneratorCommandLine(@NotNull String modname,
-                                                                 @Nullable String modfilename,
-                                                                 @Nullable List<String> assemblyRefs,
-                                                                 @NotNull String binaryPath,
-                                                                 @Nullable String extraSyspath) {
-    List<String> commandLine = new ArrayList<>();
-    commandLine.add(binaryPath);
-    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
-    commandLine.add("-d");
-    commandLine.add(getSkeletonsPath());
-    if (assemblyRefs != null && !assemblyRefs.isEmpty()) {
-      commandLine.add("-c");
-      commandLine.add(StringUtil.join(assemblyRefs, ";"));
-    }
-    if (ApplicationManager.getApplication().isInternal()) {
-      commandLine.add("-x");
-    }
-    if (!StringUtil.isEmpty(extraSyspath)) {
-      commandLine.add("-s");
-      commandLine.add(extraSyspath);
-    }
-    commandLine.add(modname);
-    if (modfilename != null) {
-      commandLine.add(modfilename);
-    }
-    return commandLine;
   }
 
   protected ProcessOutput getProcessOutput(String homePath, @NotNull String[] commandLine, Map<String, String> extraEnv,
