@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
 import com.intellij.psi.impl.source.PsiClassImpl
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass
 
 @ModifierConstant
 internal fun JvmModifier.toPsiModifier(): String = when (this) {
@@ -39,9 +40,14 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
 internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
-  if (this !is PsiClassImpl) return null
-  if (this.language != JavaLanguage.INSTANCE) return null
-  return this
+  if (this is PsiClassImpl || this is JspClass) {
+    // `is JspClass` check should be removed when JSP will define its own action factory,
+    // since Java should know nothing about JSP.
+    if ((this as PsiClass).language == JavaLanguage.INSTANCE) {
+      return this
+    }
+  }
+  return null
 }
 
 internal val visibilityModifiers = setOf(
