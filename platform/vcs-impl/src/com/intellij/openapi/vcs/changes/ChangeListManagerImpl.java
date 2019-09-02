@@ -77,7 +77,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     new Topic<>("LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private final Project myProject;
-  private final VcsConfiguration myConfig;
   private final ChangesViewI myChangesViewManager;
   private final ChangelistConflictTracker myConflictTracker;
 
@@ -112,9 +111,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return (ChangeListManagerImpl)getInstance(project);
   }
 
+  /**
+   * @deprecated Binary compatibility with Upsource
+   */
+  @Deprecated
   public ChangeListManagerImpl(@NotNull Project project, VcsConfiguration config) {
+    this(project);
+  }
+
+  public ChangeListManagerImpl(@NotNull Project project) {
     myProject = project;
-    myConfig = config;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this, EditorNotifications.getInstance(project));
 
@@ -174,6 +180,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @CalledInAwt
   private void deleteEmptyChangeLists() {
+    VcsConfiguration config = VcsConfiguration.getInstance(myProject);
+
     List<LocalChangeList> listsToBeDeletedSilently;
     List<LocalChangeList> listsToBeDeleted;
 
@@ -195,7 +203,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myListsToBeDeletedSilently.clear();
 
       boolean askLater = myModalNotificationsBlocked &&
-                         myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION;
+                         config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION;
       if (!askLater) {
         listsToBeDeleted = ContainerUtil.mapNotNull(myListsToBeDeleted, toDeleteMapping);
         myListsToBeDeleted.clear();
@@ -212,16 +220,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
 
-    if (myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
-        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
+    if (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
+        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
         ApplicationManager.getApplication().isUnitTestMode()) {
       listsToBeDeleted.clear();
     }
 
     ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
 
-    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_ACTION_SILENTLY ||
-                                                                                              showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk));
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted,
+                                                          toAsk -> config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_ACTION_SILENTLY ||
+                                                                   showRemoveEmptyChangeListsProposal(myProject, config, toAsk));
   }
 
   /**
@@ -1511,7 +1520,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
-    myConfig.replaceMessage(oldMessage, newMessage);
+    VcsConfiguration.getInstance(myProject).replaceMessage(oldMessage, newMessage);
 
     for (LocalChangeList changeList : getChangeLists()) {
       if (oldMessage.equals(changeList.getComment())) {
