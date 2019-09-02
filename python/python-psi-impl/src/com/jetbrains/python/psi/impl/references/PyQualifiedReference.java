@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,6 +43,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
 import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -119,6 +119,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if ("__doc__".equals(referencedName)) {
       addDocReference(ret, qualifier, qualifierType);
     }
+
+    PyHasAttrHelper.INSTANCE.addHasAttrResolveResults(myElement, referencedName, qualifier, ret);
+
     return ret;
   }
 
@@ -272,7 +275,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
     ctx.put(PyType.CTX_NAMES, namesAlready);
     final Collection<Object> variants = new ArrayList<>();
     if (qualifierType != null) {
-      Collections.addAll(variants, getVariantFromHasAttr(qualifier));
       if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
         final PyClassType guessedType = guessClassTypeByName();
         if (guessedType != null) {
@@ -298,7 +300,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
           }
         }
         Collections.addAll(variants, qualifierType.getCompletionVariants(element.getName(), element, ctx));
-        return variants.toArray();
       }
       else {
         return qualifierType.getCompletionVariants(element.getName(), element, ctx);
@@ -312,24 +313,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifier instanceof PyReferenceExpression) {
         Collections.addAll(variants, collectSeenMembers(qualifier.getText()));
       }
-      return variants.toArray();
     }
-  }
 
-  private Object[] getVariantFromHasAttr(PyExpression qualifier) {
-    Collection<Object> variants = new ArrayList<>();
-    PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(myElement, PyIfStatement.class);
-    while (ifStatement != null) {
-      PyExpression condition = ifStatement.getIfPart().getCondition();
-      if (condition instanceof PyCallExpression && ((PyCallExpression)condition).isCalleeText(PyNames.HAS_ATTR)) {
-        PyCallExpression call = (PyCallExpression)condition;
-        if (call.getArguments().length > 1 && call.getArguments()[0].getText().equals(qualifier.getText())) {
-          PyStringLiteralExpression string = call.getArgument(1, PyStringLiteralExpression.class);
-          if (string != null && StringUtil.isJavaIdentifier(string.getStringValue())) variants.add(string.getStringValue());
-        }
-      }
-      ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
-    }
+    PyHasAttrHelper.INSTANCE.addHasAttrCompletionResults(element, qualifier, namesAlready, variants);
+
     return variants.toArray();
   }
 

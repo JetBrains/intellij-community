@@ -1661,6 +1661,72 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertTrue(indImport < ind__import__);
   }
 
+  // PY-10184
+  public void testHasattrSimpleAnd() {
+    String[] inList = {"foo", "bar"};
+    doTestHasattrContributor(inList, null);
+  }
+
+  // PY-10184
+  public void testHasattrAndWithNot() {
+    String[] inList = {"foo", "baz"};
+    String[] notInList = {"bar"};
+    doTestHasattrContributor(inList, notInList);
+  }
+
+  // PY-10184
+  public void testHasattrIfPyramidAndOr() {
+    String[] inList = {"foo", "qux", "corge", "bar", "baz", "quux", "quuz"};
+    doTestHasattrContributor(inList, null);
+  }
+
+  // PY-10184
+  public void testHasattrInElseBranch() {
+    String[] notInList = {"ajjj"};
+    doTestHasattrContributor(null, notInList);
+  }
+
+  // PY-10184
+  public void testHasattrInElseBranchAfterElif() {
+    String[] notInList = {"foo1", "foo2"};
+    doTestHasattrContributor(null, notInList);
+  }
+
+  // PY-10184
+  public void testHasattrInElifBranch() {
+    String[] inList = {"foo2"};
+    String[] notInList = {"foo1"};
+    doTestHasattrContributor(inList, notInList);
+  }
+
+  // PY-10184
+  public void testHasattrInRightPartOfAnd() {
+    String[] inList = {"foo", "bar"};
+    doTestHasattrContributor(inList, null);
+  }
+
+  // PY-10184
+  public void testHasattrInConditionalExpression() {
+    String[] inList = {"foo", "bar"};
+    doTestHasattrContributor(inList, null);
+  }
+
+  private void doTestHasattrContributor(String[] inList, String[] notInList) {
+    doTestHasattrContributor("hasattrCompletion/" + getTestName(true) + ".py", inList, notInList);
+  }
+
+  private void doTestHasattrContributor(String testFileName, String[] inList, String[] notInList) {
+    myFixture.configureByFile(testFileName);
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    if (inList != null) {
+      assertContainsElements(suggested, inList);
+    }
+    if (notInList != null) {
+      assertDoesntContain(suggested, notInList);
+    }
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");

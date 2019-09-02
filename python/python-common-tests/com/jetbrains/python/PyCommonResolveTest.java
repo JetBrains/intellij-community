@@ -1465,4 +1465,18 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     assertEmpty(file.findTopLevelAttribute("t").multiResolveAssignedValue(PyResolveContext.noImplicits().withTypeEvalContext(context)));
   }
+
+  // PY-10184
+  public void testHasattrResolveTrueIfBranch() {
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyStringLiteralExpression.class);
+    assertEquals("ajjj", ((PyStringLiteralExpression)targetElement).getStringValue());
+  }
+
+  // PY-10184
+  public void testHasattrResolveConditionalExpression() {
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyStringLiteralExpression.class);
+    assertEquals("fld", ((PyStringLiteralExpression)targetElement).getStringValue());
+  }
 }
