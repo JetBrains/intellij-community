@@ -314,8 +314,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    CHECK_CANCELED.run();
-
     if (isInReadOnlyMode()) {
       for (T extension : myExtensionsCache) {
         consumer.accept(extension, myDescriptor /* doesn't matter for tests */);
@@ -325,15 +323,16 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(true)) {
       T extension = processAdapter(adapter);
-      if (extension == null) {
-        break;
+      if (extension != null) {
+        consumer.accept(extension, adapter.getPluginDescriptor());
       }
-      consumer.accept(extension, adapter.getPluginDescriptor());
     }
   }
 
   @NotNull
   private synchronized List<ExtensionComponentAdapter> getThreadSafeAdapterList(boolean failIfListenerAdded) {
+    CHECK_CANCELED.run();
+
     if (!myDynamic && myListeners.length > 0) {
       String message = "Listeners not allowed for extension point " + getName();
       if (failIfListenerAdded) {
