@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
  */
 public class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
+  public static final Pattern ARG_LINE_PATTERN = Pattern.compile("\\$\\{(.+?)}|@(.+?)@|@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
 
   @Override
@@ -160,7 +161,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
   private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
     if (domModel != null) {
-      value = MavenPropertyResolver.resolve(value, domModel);
+      value = MavenPropertyResolver.resolve(ARG_LINE_PATTERN, value, domModel);
     }
     return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)}", "1");
   }

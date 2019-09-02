@@ -252,4 +252,35 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     assertEquals(asList("-ea", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
                  javaParameters.getVMParametersList().getList());
   }
+
+  public void testResolvePropertiesUsingAt() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
+                                           "<artifactId>m1</artifactId>\n" +
+                                           "<version>1</version>\n" +
+                                           "<properties>\n" +
+                                           "    <test.argLine>-Dfoo=bar</test.argLine>\n" +
+                                           "</properties>\n" +
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.16</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <argLine>@{test.argLine}</argLine>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-ea", "-Dfoo=bar"),
+                 javaParameters.getVMParametersList().getList());
+  }
 }
