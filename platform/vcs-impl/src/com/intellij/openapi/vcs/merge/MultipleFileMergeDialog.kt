@@ -55,6 +55,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
@@ -223,6 +224,7 @@ open class MultipleFileMergeDialog(
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
     tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
+    (table.model as? AbstractTableModel)?.fireTableDataChanged()
   }
 
   private fun updateButtonState() {
