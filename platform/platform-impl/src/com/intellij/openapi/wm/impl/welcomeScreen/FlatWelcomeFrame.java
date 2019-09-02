@@ -127,9 +127,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (UIUtil.SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
-      setAutoRequestFocus(false);
-    }
+    setAutoRequestFocus(false);
 
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
