@@ -32,10 +32,14 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
 
   public JavaFindUsagesOptions(@NotNull Project project) {
     super(project);
+
+    isUsages = true;
   }
 
   public JavaFindUsagesOptions(@NotNull SearchScope searchScope) {
     super(searchScope);
+
+    isUsages = true;
   }
 
   public final void setDefaults(@NotNull Project project) {
