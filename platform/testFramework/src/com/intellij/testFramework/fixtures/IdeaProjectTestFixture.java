@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This is to be provided by IDEA and not by plugin authors.
+ * This is to be provided by the test framework and not by plugin authors.
  *
  * @see IdeaTestFixtureFactory#createFixtureBuilder(String)
  * @see IdeaTestFixtureFactory#createLightFixtureBuilder()
