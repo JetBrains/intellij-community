@@ -384,6 +384,7 @@
     <customFileDropHandler implementation="com.intellij.ide.plugins.PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Data Sharing"/>
+<!--    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.ui.text.DateTimeFormatConfigurable" id="ide.date.format" displayName="Date Formats"/>-->
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>

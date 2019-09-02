@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -60,6 +61,16 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
       }
     }
     return null;
+  }
+
+  public Set<String> getIds() {
+    return myPatterns.keySet();
+  }
+
+  @Nullable
+  public String getDateFormatPattern(String formatterID) {
+    DateFormatPattern pattern = myPatterns.get(formatterID);
+    return pattern == null ? null : pattern.myFormat;
   }
 
   public boolean isPrettyFormattingAllowed() {
