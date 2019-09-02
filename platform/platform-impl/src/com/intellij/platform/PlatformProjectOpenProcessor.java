@@ -214,7 +214,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
                                            ? new ProjectFrameAllocator()
-                                           : new ProjectUiFrameAllocator(options);
+                                           : new ProjectUiFrameAllocator(options, file);
     Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
     boolean isCompleted = frameAllocator.run(() -> {
       Pair<Project, Module> result;
@@ -249,7 +249,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       else {
         refResult.set(Pair.empty());
       }
-    }, file);
+    });
     if (!isCompleted) {
       refResult.set(Pair.empty());
     }

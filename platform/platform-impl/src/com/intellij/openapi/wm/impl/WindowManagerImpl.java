@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -488,14 +487,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
    */
   @NotNull
   @ApiStatus.Internal
-  public IdeFrameImpl createFrame(@NotNull OpenProjectTask options) {
+  public IdeFrameImpl createFrame() {
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
-
-    IdeFrameImpl frame = new IdeFrameImpl();
-    if (options.sendFrameBack) {
-      frame.setAutoRequestFocus(false);
-    }
-    return frame;
+    return new IdeFrameImpl();
   }
 
   public void restoreFrameState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {

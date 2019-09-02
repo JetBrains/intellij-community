@@ -24,7 +24,7 @@ import java.io.EOFException
 import java.nio.file.Path
 
 internal open class ProjectFrameAllocator {
-  open fun run(task: Runnable, file: Path): Boolean {
+  open fun run(task: Runnable): Boolean {
     task.run()
     return true
   }
@@ -43,18 +43,18 @@ internal open class ProjectFrameAllocator {
   open fun projectOpened(project: Project) {}
 }
 
-internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
+internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectFile: Path) : ProjectFrameAllocator() {
   // volatile not required because created in run (before executing run task)
   private var ideFrame: IdeFrameImpl? = null
-  private var ideFrameIsNew = false
+  private var isNewFrame = false
 
-  override fun run(task: Runnable, file: Path): Boolean {
+  override fun run(task: Runnable): Boolean {
     var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
-      ideFrame = createFrame(file)
+      ideFrame = createFrame()
       completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         {
-          if (ideFrameIsNew) {
+          if (isNewFrame) {
             ApplicationManager.getApplication().invokeLater {
               ideFrame?.let { frame ->
                 runActivity("init frame") {
@@ -71,6 +71,18 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   @CalledInAwt
   private fun initNewFrame(frame: IdeFrameImpl) {
+    if (options.frame?.bounds == null) {
+      val recentProjectManager = RecentProjectsManager.getInstance()
+      if (recentProjectManager is RecentProjectsManagerBase) {
+        val info = recentProjectManager.getProjectMetaInfo(projectFile)
+        if (info != null) {
+          options = options.copy()
+          options.frame = info.frame
+          options.projectWorkspaceId = info.projectWorkspaceId
+        }
+      }
+    }
+
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
@@ -97,7 +109,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
     frame.init()
   }
 
-  private fun createFrame(file: Path): IdeFrameImpl {
+  private fun createFrame(): IdeFrameImpl {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     @Suppress("UsePropertyAccessSyntax")
     val freeRootFrame = windowManager.getAndRemoveRootFrame()
@@ -105,21 +117,13 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       return freeRootFrame
     }
 
-    if (options.frame?.bounds == null) {
-      val recentProjectManager = RecentProjectsManager.getInstance()
-      if (recentProjectManager is RecentProjectsManagerBase) {
-        val info = recentProjectManager.getProjectMetaInfo(file)
-        if (info != null) {
-          options = options.copy()
-          options.frame = info.frame
-          options.projectWorkspaceId = info.projectWorkspaceId
-        }
+    runActivity("create a frame") {
+      isNewFrame = true
+      val frame = windowManager.createFrame()
+      if (options.sendFrameBack) {
+        frame.isAutoRequestFocus = false
       }
-    }
-
-    return runActivity("create a frame") {
-      ideFrameIsNew = true
-      windowManager.createFrame(options)
+      return frame
     }
   }
 
@@ -128,7 +132,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
       val frame = ideFrame ?: return@Runnable
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
 
-      if (ideFrameIsNew && options.frame?.bounds == null) {
+      if (isNewFrame && options.frame?.bounds == null) {
         val frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
         if (frameInfo?.bounds != null) {
           windowManager.restoreFrameState(frame, frameInfo)
