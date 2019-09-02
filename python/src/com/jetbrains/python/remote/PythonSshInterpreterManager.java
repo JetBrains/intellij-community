@@ -22,16 +22,18 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * This service provides extended functionality for SSH remote interpreters.
+ * This service provides functionality for SSH remote interpreters. It is
+ * expected to be implemented in Python Remote Interpreter plugin using the
+ * extension point {@link #EP_NAME}.
  */
 public interface PythonSshInterpreterManager {
   Logger LOG = Logger.getInstance(PythonSshInterpreterManager.class);
 
   ExtensionPointName<PythonSshInterpreterManager> EP_NAME = ExtensionPointName.create("Pythonid.sshInterpreterManager");
 
-  void copyFromRemote(Sdk sdk, @NotNull Project project,
-                      RemoteSdkCredentials data,
-                      List<PathMappingSettings.PathMapping> mappings);
+  void copyFromRemote(@NotNull Project project,
+                      @NotNull RemoteSdkCredentials data,
+                      @NotNull List<PathMappingSettings.PathMapping> mappings);
 
   /**
    * Creates form to browse remote box.
@@ -49,8 +51,8 @@ public interface PythonSshInterpreterManager {
 
 
   @NotNull
-  RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
-                                                                                       RemoteConnectionCredentialsWrapper connectionWrapper);
+  RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(@NotNull Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
+                                                                                       @NotNull RemoteConnectionCredentialsWrapper connectionWrapper);
 
   class Factory {
     @Nullable
