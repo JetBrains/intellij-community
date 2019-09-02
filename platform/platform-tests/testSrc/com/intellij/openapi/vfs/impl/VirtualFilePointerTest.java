@@ -25,10 +25,7 @@ import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.TestTimeOut;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -434,21 +431,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       assertFalse(jarPointer.isValid());
     }
     LOG.debug("i = " + i);
-  }
-
-  @Test
-  public void testPointerToJarRootFromUrlMustNotBeMangled() throws IOException {
-    File jar = new File(tempDir.getRoot(), "jarParent/x.jar");
-    FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar"), jar);
-
-    String jarPath = FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR;
-    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, jarPath);
-    VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(jarUrl);
-    VirtualFilePointer jarRootPointer = myVirtualFilePointerManager.create(jarUrl + "/", disposable, null);
-
-    assertThat(jarRootPointer.getUrl()).as("jar root pointer url before getting file").isEqualTo(jarUrl);
-    assertThat(jarRootPointer.getFile()).as("jar root pointer file").isEqualTo(jarRoot);
-    assertThat(jarRootPointer.getUrl()).as("jar root pointer url after getting file").isEqualTo(jarUrl);
   }
 
   @Test

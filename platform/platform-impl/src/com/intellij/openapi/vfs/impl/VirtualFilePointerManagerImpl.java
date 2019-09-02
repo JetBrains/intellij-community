@@ -10,10 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -332,9 +328,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   private static String trimTrailingSeparators(@NotNull String path) {
-    int lastIndex = CharArrayUtil.shiftBackward(path, 1, path.length() - 1, "/");
-    if (CharArrayUtil.regionMatches(path, lastIndex, JarFileSystem.JAR_SEPARATOR)) lastIndex--;
-    return path.substring(0, lastIndex + 1);
+    path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
+    path = StringUtil.trimTrailing(path, '/');
+    return path;
   }
 
   @NotNull
