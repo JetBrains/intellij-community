@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -53,6 +54,12 @@ object GithubUIUtil {
         setTransparentRecursively(c)
       }
     }
+  }
+
+  fun getFontEM(component: JComponent): Float {
+    val metrics = component.getFontMetrics(component.font)
+    //em dash character
+    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
   }
 
   fun formatActionDate(date: Date): String {

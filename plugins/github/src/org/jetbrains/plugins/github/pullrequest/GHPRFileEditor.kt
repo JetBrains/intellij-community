@@ -20,6 +20,9 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
@@ -29,7 +32,6 @@ import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
-import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
@@ -92,13 +94,20 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
         isOpaque = false
         border = JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2)
 
-        layout = BorderLayout()
+        val maxWidth = (GithubUIUtil.getFontEM(this) * 42).toInt()
+
+        layout = MigLayout(LC().gridGap("0", "0")
+                             .insets("0", "0", "0", "0")
+                             .fillX()
+                             .flowY()).apply {
+          columnConstraints = "[:$maxWidth:$maxWidth]push"
+        }
 
         emptyText.clear()
 
-        add(header, BorderLayout.NORTH)
-        add(timeline, BorderLayout.CENTER)
-        add(loadingIcon, BorderLayout.SOUTH)
+        add(header)
+        add(timeline)
+        add(loadingIcon, CC().alignX("center"))
       }
 
       override fun getEmptyText() = timeline.emptyText
