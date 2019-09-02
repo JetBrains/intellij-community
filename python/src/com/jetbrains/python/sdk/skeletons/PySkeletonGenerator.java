@@ -56,73 +56,176 @@ public class PySkeletonGenerator {
   @NotNull protected final Map<String, String> myEnv;
 
   private boolean myPrebuilt = false;
-  private Map<String, String> myExtraEnv;
-  private List<String> myExtraSysPath;
-  private List<String> myAssemblyRefs;
-  private List<String> myExtraArgs;
-  private String myTargetModuleName;
-  private String myTargetModulePath;
 
-  @NotNull
-  public PySkeletonGenerator withExtraEnvironment(@NotNull Map<String, String> environment) {
-    myExtraEnv = environment;
-    return this;
+  /**
+   * @param skeletonPath path where skeletons should be generated
+   * @param pySdk SDK
+   * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
+   */
+  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
+    mySkeletonsPath = skeletonPath;
+    mySdk = pySdk;
+    myCurrentFolder = currentFolder;
+    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
+    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
+      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+    }
+    myEnv = env;
+  }
+
+  public final Builder commandBuilder() {
+    return new Builder();
+  }
+
+  public final class Builder {
+    private Map<String, String> myExtraEnv;
+    private List<String> myExtraSysPath;
+    private List<String> myAssemblyRefs;
+    private List<String> myExtraArgs;
+    private String myTargetModuleName;
+    private String myTargetModulePath;
+    private int myTimeout;
+
+    @NotNull
+    public Builder extraEnvironment(@NotNull Map<String, String> environment) {
+      myExtraEnv = environment;
+      return this;
+    }
+
+    @NotNull
+    public Builder extraSysPath(@NotNull List<String> roots) {
+      myExtraSysPath = roots;
+      return this;
+    }
+
+    @NotNull
+    public Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
+      myAssemblyRefs = assemblyRefs;
+      return this;
+    }
+
+    @NotNull
+    public Builder extraArgs(@NotNull List<String> args) {
+      myExtraArgs = args;
+      return this;
+    }
+
+    @NotNull
+    public Builder skeletonsDir(@NotNull String path) {
+      mySkeletonsPath = path;
+      return this;
+    }
+
+    @NotNull
+    public Builder workingDir(@NotNull String path) {
+      myCurrentFolder = path;
+      return this;
+    }
+
+    @NotNull
+    public Builder inPrebuildingMode() {
+      myPrebuilt = true;
+      return this;
+    }
+
+    @NotNull
+    public Builder targetModule(@NotNull String name, @Nullable String path) {
+      myTargetModuleName = name;
+      myTargetModulePath = path;
+      return this;
+    }
+
+    @NotNull
+    public Builder timeout(int timeout) {
+      myTimeout = timeout;
+      return this;
+    }
+
+    @NotNull
+    public List<String> getCommandLine() {
+      final List<String> commandLine = new ArrayList<>();
+      commandLine.add(mySdk.getHomePath());
+      commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+      commandLine.add("-d");
+      commandLine.add(mySkeletonsPath);
+      if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
+        commandLine.add("-c");
+        commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
+      }
+      if (ApplicationManager.getApplication().isInternal()) {
+        commandLine.add("-x");
+      }
+      if (!ContainerUtil.isEmpty(myExtraSysPath)) {
+        commandLine.add("-s");
+        commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
+      }
+      if (!ContainerUtil.isEmpty(myExtraArgs)) {
+        commandLine.addAll(myExtraArgs);
+      }
+      if (StringUtil.isNotEmpty(myTargetModuleName)) {
+        commandLine.add(myTargetModuleName);
+        if (StringUtil.isNotEmpty(myTargetModulePath)) {
+          commandLine.add(myTargetModulePath);
+        }
+      }
+      return commandLine;
+    }
+
+    @NotNull
+    public Map<String, String> getEnvironment() {
+      Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+      //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+      //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
+      //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+      //}
+      if (myExtraEnv != null) {
+        env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
+      }
+      env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
+      PythonEnvUtil.setPythonDontWriteBytecode(env);
+      if (myPrebuilt) {
+        env.put("IS_PREGENERATED_SKELETONS", "1");
+      }
+      return env;
+    }
+
+    @NotNull
+    public String getWorkingDir() throws InvalidSdkException {
+      if (myCurrentFolder != null) {
+        return myCurrentFolder;
+      }
+      final String binaryPath = mySdk.getHomePath();
+      if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+      return new File(binaryPath).getParent();
+    }
+
+    public int getTimeout(int defaultTimeout) {
+      return myTimeout > 0 ? myTimeout : defaultTimeout;
+    }
+
+    @NotNull
+    public ProcessOutput runProcess() throws InvalidSdkException, ExecutionException {
+      return PySkeletonGenerator.this.runProcess(this);
+    }
+
+    @NotNull
+    public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws InvalidSdkException, ExecutionException {
+      return PySkeletonGenerator.this.runGeneration(this, indicator);
+    }
   }
 
   @NotNull
-  public PySkeletonGenerator withExtraSysPath(@NotNull List<String> roots) {
-    myExtraSysPath = roots;
-    return this;
+  public final List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
+    return commandBuilder().runGeneration(indicator);
   }
 
   @NotNull
-  public PySkeletonGenerator withAssemblyRefs(@NotNull List<String> assemblyRefs) {
-    myAssemblyRefs = assemblyRefs;
-    return this;
-  }
-
-  @NotNull
-  public PySkeletonGenerator withExtraArgs(@NotNull List<String> args) {
-    myExtraArgs = args;
-    return this;
-  }
-
-  @NotNull
-  public PySkeletonGenerator withSkeletonsDir(@NotNull String path) {
-    mySkeletonsPath = path;
-    return this;
-  }
-
-  @NotNull
-  public PySkeletonGenerator withWorkingDir(@NotNull String path) {
-    myCurrentFolder = path;
-    return this;
-  }
-
-  @NotNull
-  public PySkeletonGenerator inPrebuildingMode() {
-    myPrebuilt = true;
-    return this;
-  }
-
-  @NotNull
-  public PySkeletonGenerator withTargetModule(@NotNull String name, @Nullable String path) {
-    myTargetModuleName = name;
-    myTargetModulePath = path;
-    return this;
-  }
-
-  @NotNull
-  public ProcessOutput runProcess() throws ExecutionException, InvalidSdkException {
-    return getProcessOutput(getWorkingDir(),
-                            ArrayUtil.toStringArray(buildCommandLine()),
-                            buildEnvironment(),
-                            MINUTE * 10);
-  }
-
-  @NotNull
-  public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
-
+  protected List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
+    throws InvalidSdkException, ExecutionException {
     final List<GenerationResult> results = new ArrayList<>();
     final LineWiseProcessOutputListener listener = new LineWiseProcessOutputListener() {
       @Override
@@ -182,68 +285,25 @@ public class PySkeletonGenerator {
       }
     };
 
-    runProcessWithLineOutputListener(getWorkingDir(), buildCommandLine(), buildEnvironment(), MINUTE * 20, listener);
+    runProcessWithLineOutputListener(builder.getWorkingDir(),
+                                     builder.getCommandLine(),
+                                     builder.getEnvironment(),
+                                     builder.getTimeout(MINUTE * 20),
+                                     listener);
     return results;
   }
 
   @NotNull
-  private String getWorkingDir() throws InvalidSdkException {
-    if (myCurrentFolder != null) {
-      return myCurrentFolder;
-    }
-    final String binaryPath = mySdk.getHomePath();
-    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
-    return new File(binaryPath).getParent();
-  }
-
-
-  @NotNull
-  protected List<String> buildCommandLine() {
-    final List<String> commandLine = new ArrayList<>();
-    commandLine.add(mySdk.getHomePath());
-    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
-    commandLine.add("-d");
-    commandLine.add(mySkeletonsPath);
-    if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
-      commandLine.add("-c");
-      commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
-    }
-    if (ApplicationManager.getApplication().isInternal()) {
-      commandLine.add("-x");
-    }
-    if (!ContainerUtil.isEmpty(myExtraSysPath)) {
-      commandLine.add("-s");
-      commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
-    }
-    if (!ContainerUtil.isEmpty(myExtraArgs)) {
-      commandLine.addAll(myExtraArgs);
-    }
-    if (StringUtil.isNotEmpty(myTargetModuleName)) {
-      commandLine.add(myTargetModuleName);
-      if (StringUtil.isNotEmpty(myTargetModulePath)) {
-        commandLine.add(myTargetModulePath);
-      }
-    }
-    return commandLine;
+  public final ProcessOutput runProcess() throws ExecutionException, InvalidSdkException {
+    return runProcess(commandBuilder());
   }
 
   @NotNull
-  protected Map<String, String> buildEnvironment() {
-    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
-    //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
-    //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-    //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
-    //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
-    //}
-    if (myExtraEnv != null) {
-      env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
-    }
-    env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
-    PythonEnvUtil.setPythonDontWriteBytecode(env);
-    if (myPrebuilt) {
-      env.put("IS_PREGENERATED_SKELETONS", "1");
-    }
-    return env;
+  protected ProcessOutput runProcess(@NotNull Builder builder) throws InvalidSdkException, ExecutionException {
+    return getProcessOutput(builder.getWorkingDir(),
+                            ArrayUtil.toStringArray(builder.getCommandLine()),
+                            builder.getEnvironment(),
+                            builder.getTimeout(MINUTE * 10));
   }
 
   public void finishSkeletonsGeneration() {
@@ -255,25 +315,6 @@ public class PySkeletonGenerator {
 
   public void setPrebuilt(boolean prebuilt) {
     myPrebuilt = prebuilt;
-  }
-
-  /**
-   * @param skeletonPath path where skeletons should be generated
-   * @param pySdk SDK
-   * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
-   */
-  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
-    mySkeletonsPath = skeletonPath;
-    mySdk = pySdk;
-    myCurrentFolder = currentFolder;
-    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
-
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
-    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
-      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
-    }
-    myEnv = env;
   }
 
   protected void runProcessWithLineOutputListener(@NotNull String homePath,
