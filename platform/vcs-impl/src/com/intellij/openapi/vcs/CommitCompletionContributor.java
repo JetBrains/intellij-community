@@ -60,7 +60,7 @@ public class CommitCompletionContributor extends CompletionContributor {
     if (count == 0 && prefix.length() < 5) return;
     CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(
       count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
-    CompletionResultSet prefixed = result.withPrefixMatcher(prefix);
+    CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
     for (ChangeList list : lists) {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
