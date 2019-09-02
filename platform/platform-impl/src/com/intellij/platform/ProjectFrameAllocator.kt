@@ -14,9 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.ProjectFrameBounds
-import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.scale.ScaleContext
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Image
@@ -89,7 +87,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       frameInfo = windowManager.defaultFrameInfo
     }
     if (frameInfo != null) {
-      windowManager.restoreFrameState(frame, frameInfo)
+      restoreFrameState(frame, frameInfo)
     }
 
     var projectSelfie: Image? = null
@@ -130,16 +128,15 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   override fun projectLoaded(project: Project) {
     ApplicationManager.getApplication().invokeLater(Runnable {
       val frame = ideFrame ?: return@Runnable
-      val windowManager = WindowManager.getInstance() as WindowManagerImpl
 
       if (isNewFrame && options.frame?.bounds == null) {
         val frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace()
         if (frameInfo?.bounds != null) {
-          windowManager.restoreFrameState(frame, frameInfo)
+          restoreFrameState(frame, frameInfo)
         }
       }
 
-      windowManager.assignFrame(frame, project)
+      (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
     }, project.disposed)
   }
 
@@ -161,5 +158,18 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       ideFrame?.isAutoRequestFocus = true
     }
 
+  }
+}
+
+private fun restoreFrameState(frame: IdeFrameImpl, frameInfo: FrameInfo) {
+  val deviceBounds = frameInfo.bounds
+  val bounds = if (deviceBounds == null) null else WindowManagerImpl.convertFromDeviceSpaceAndValidateFrameBounds(deviceBounds)
+  frame.setExtendedState(frameInfo, bounds)
+  if (bounds != null) {
+    frame.bounds = bounds
+  }
+
+  if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+    frame.toggleFullScreen(true)
   }
 }

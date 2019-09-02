@@ -26,7 +26,6 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import gnu.trove.THashMap;
@@ -492,31 +491,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return new IdeFrameImpl();
   }
 
-  public void restoreFrameState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
-    Rectangle deviceBounds = frameInfo.getBounds();
-    Rectangle bounds = deviceBounds == null ? null : validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(deviceBounds));
-    frame.setExtendedState(frameInfo, bounds);
-    if (bounds != null) {
-      frame.setBounds(bounds);
-    }
-
-    if (frameInfo.getFullScreen() && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-      frame.toggleFullScreen(true);
-    }
-  }
-
   @NotNull
-  private static Rectangle validateFrameBounds(@Nullable Rectangle frameBounds) {
-    Rectangle bounds = frameBounds != null ? frameBounds.getBounds() : null;
-    if (bounds == null) {
-      bounds = ScreenUtil.getMainScreenBounds();
-      int xOff = bounds.width / 8;
-      int yOff = bounds.height / 8;
-      //noinspection UseDPIAwareInsets
-      JBInsets.removeFrom(bounds, new Insets(yOff, xOff, yOff, xOff));
-    } else {
-      ScreenUtil.fitToScreen(bounds);
-    }
+  @ApiStatus.Internal
+  public static Rectangle convertFromDeviceSpaceAndValidateFrameBounds(@NotNull Rectangle deviceFrameBounds) {
+    Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(deviceFrameBounds);
+    Rectangle bounds = frameBounds.getBounds();
+    ScreenUtil.fitToScreen(bounds);
     return bounds;
   }
 
@@ -556,7 +536,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
           defaultFrameInfoHelper.copyFrom(frameInfo);
         }
 
-        setFrameBoundsFromDeviceSpace(frame, frameInfo);
+        Rectangle bounds = frameInfo.getBounds();
+        if (bounds != null) {
+          frame.setBounds(convertFromDeviceSpaceAndValidateFrameBounds(bounds));
+        }
       }
     }
 
@@ -584,13 +567,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     myEventDispatcher.getMulticaster().frameCreated(frame);
 
     return frame;
-  }
-
-  public static void setFrameBoundsFromDeviceSpace(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
-    Rectangle bounds = frameInfo.getBounds();
-    if (bounds != null) {
-      frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(bounds)));
-    }
   }
 
   private void proceedDialogDisposalQueue(@NotNull Project project) {
