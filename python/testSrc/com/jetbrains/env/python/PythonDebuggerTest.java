@@ -2019,7 +2019,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testWarningsSuppressing() {
     runPythonTest(new PyDebuggerTask("/debug", "test_warnings_suppressing.py") {
       @Override
@@ -2038,6 +2037,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertFalse(out.contains("This property is deprecated!"));
         resume();
         waitForOutput("This property is deprecated!");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron"); // PY-37793
       }
     });
   }
@@ -2098,7 +2103,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testDontStopOnSystemExit() {
     runPythonTest(new PyDebuggerTask("/debug", "test_sys_exit.py") {
       @Override
@@ -2109,8 +2113,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        setProcessCanTerminate(true);
         resume();
         waitForOutput("Process finished with exit code 0");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron"); // PY-37791
       }
     });
   }
@@ -2232,6 +2243,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
         outputContains("PYDEV DEBUGGER WARNING:\nsys.settrace() should not be used when the debugger is being used.");
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron"); // PY-37796
+      }
     });
   }
 
@@ -2253,6 +2270,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         catch (AssertionError e) {
           if (!e.getMessage().contains("SyntaxError: invalid syntax")) throw e;
         }
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron"); // PY-36367
       }
     });
   }
