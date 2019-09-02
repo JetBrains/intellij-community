@@ -2,12 +2,11 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -169,7 +168,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
   }
 
   public void testEntryPointWithPredefinedVisibility() {
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 

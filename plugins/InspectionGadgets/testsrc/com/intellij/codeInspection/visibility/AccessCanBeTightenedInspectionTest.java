@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -322,7 +321,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                "public class MyTest {\n" +
                                "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
                                "}");
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 
@@ -378,7 +377,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
                                "    {foo();}\n" +
                                "}");
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 

@@ -1,19 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,7 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
+public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
+  private static final ExtensionPointName<VisibilityExtension> EP_NAME = new ExtensionPointName<>("com.intellij.visibility");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -97,8 +97,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       gc.gridy++;
       add(mySuggestForConstantsCheckbox, gc);
 
-      final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-      for (EntryPoint entryPoint : point.getExtensions()) {
+      for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
         if (entryPoint instanceof EntryPointWithVisibilityLevel) {
           gc.gridy++;
           final JCheckBox checkBox = new JCheckBox(((EntryPointWithVisibilityLevel)entryPoint).getTitle());
@@ -107,7 +106,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
           add(checkBox, gc);
         }
       }
-      
+
       gc.gridy++;
       gc.weighty = 1;
       add(new VerticalBox(), gc);
@@ -119,7 +118,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return new OptionsPanel();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return new AccessCanBeTightenedInspection(this);
@@ -238,7 +237,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private boolean keepVisibilityLevel(@NotNull RefJavaElement refElement) {
-    return StreamEx.of(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
+    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList())
       .select(EntryPointWithVisibilityLevel.class)
       .anyMatch(point -> point.keepVisibilityLevel(isEntryPointEnabled(point), refElement));
   }
@@ -277,7 +276,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
   int getMinVisibilityLevel(@NotNull PsiMember member) {
     //noinspection MagicConstant
-    return StreamEx.of(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
+    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions())
       .select(EntryPointWithVisibilityLevel.class)
       .filter(point -> isEntryPointEnabled(point))
       .mapToInt(point -> point.getMinVisibilityLevel(member))
@@ -382,8 +381,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         if (!isAccessibleFrom(subClass, to, accessModifier)) return false;
       }
 
-      List children = refClass.getChildren();
-      for (Object refElement : children) {
+      List<RefEntity> children = refClass.getChildren();
+      for (RefEntity refElement : children) {
         if (!isAccessible((RefJavaElement)refElement, accessModifier)) return false;
       }
 
@@ -509,8 +508,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       ignoreElement(processor, entryPoint);
     }
 
-    ExtensionPoint<VisibilityExtension> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.VISIBLITY_TOOL);
-    for (VisibilityExtension addin : point.getExtensions()) {
+    for (VisibilityExtension addin : EP_NAME.getExtensionList()) {
       addin.fillIgnoreList(manager, processor);
     }
     manager.iterate(new RefJavaVisitor() {
@@ -600,9 +598,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     composer.appendElementInReferences(buf, (RefElement)refEntity);
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public QuickFix getQuickFix(final String hint) {
+  public QuickFix<?> getQuickFix(final String hint) {
     return new AcceptSuggestedAccess(null, hint, null);
   }
 

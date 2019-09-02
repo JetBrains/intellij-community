@@ -3,14 +3,12 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.pom.Navigatable;
@@ -39,11 +37,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.util.Hashtable;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class JavaDocLocalInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
+
   public static final String SHORT_NAME = "JavaDoc";
   protected static final String NONE = "none";
   protected static final String PACKAGE_LOCAL = "package";
@@ -331,8 +330,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     else if (required && !hasSupers) {
       PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null) {
-        ExtensionPoint<Condition<PsiMember>> ep = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVADOC_LOCAL);
-        if (Stream.of(ep.getExtensions()).noneMatch(condition -> condition.value(method))) {
+        if (EP_NAME.extensions().noneMatch(condition -> condition.value(method))) {
           JavadocHighlightUtil.reportMissingTag(nameIdentifier, holder);
         }
       }

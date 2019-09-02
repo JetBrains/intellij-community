@@ -676,7 +676,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       highlightExperimental(extension, holder);
     }
 
-    if (ExtensionPoints.ERROR_HANDLER.equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
+    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);

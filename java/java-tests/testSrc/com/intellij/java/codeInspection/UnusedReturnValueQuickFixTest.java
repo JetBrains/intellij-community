@@ -2,14 +2,13 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
@@ -43,7 +42,7 @@ public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTe
         return false;
       }
     }, getTestRootDisposable());
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPoint() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPoint() {
       @Override
       public void readExternal(Element element) throws InvalidDataException { }
 
