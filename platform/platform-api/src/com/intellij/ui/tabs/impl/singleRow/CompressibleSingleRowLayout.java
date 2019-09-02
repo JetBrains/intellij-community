@@ -21,8 +21,6 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
     calculateRequiredLength(data);
-    data.firstGhostVisible = false;
-    data.lastGhostVisible = false;
   }
 
   @Override

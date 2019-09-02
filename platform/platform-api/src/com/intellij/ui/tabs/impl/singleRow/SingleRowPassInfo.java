@@ -25,12 +25,6 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
 
-  public Rectangle firstGhost;
-  public boolean firstGhostVisible;
-
-  public Rectangle lastGhost;
-  public boolean lastGhostVisible;
-
   public Insets insets;
 
   public WeakReference<JComponent> comp;

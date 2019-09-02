@@ -314,10 +314,6 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    add(mySingleRowLayout.myLeftGhost);
-    add(mySingleRowLayout.myRightGhost);
-
-
     new LazyUiDisposable<JBTabsImpl>(parent, this, this) {
       @Override
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
@@ -384,21 +380,15 @@ public class JBTabsImpl extends JComponent
 
   private void updateRowLayout() {
     boolean wasSingleRow = isSingleRow();
-    if (mySingleRowLayout != null) {
-      remove(mySingleRowLayout.myLeftGhost);
-      remove(mySingleRowLayout.myRightGhost);
-    }
     mySingleRowLayout = createSingleRowLayout();
     if (wasSingleRow) {
       myLayout = mySingleRowLayout;
     }
-    add(mySingleRowLayout.myLeftGhost);
-    add(mySingleRowLayout.myRightGhost);
     relayout(true, true);
   }
 
   protected SingleRowLayout createSingleRowLayout() {
-    return new SingleRowLayout(this);
+    return new ScrollableSingleRowLayout(this);
   }
 
 
@@ -1621,11 +1611,6 @@ public class JBTabsImpl extends JComponent
   }
 
   public void resetLayout(boolean resetLabels) {
-    if (resetLabels) {
-      mySingleRowLayout.myLeftGhost.reset();
-      mySingleRowLayout.myRightGhost.reset();
-    }
-
     for (TabInfo each : myVisibleInfos) {
       reset(each, resetLabels);
     }
@@ -1659,10 +1644,6 @@ public class JBTabsImpl extends JComponent
 
   private static int getArcSize() {
     return 4;
-  }
-
-  public int getGhostTabLength() {
-    return 15;
   }
 
   protected JBTabsPosition getPosition() {

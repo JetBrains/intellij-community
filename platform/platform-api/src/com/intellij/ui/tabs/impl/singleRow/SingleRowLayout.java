@@ -8,12 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class SingleRowLayout extends TabLayout {
+public abstract class SingleRowLayout extends TabLayout {
 
   final JBTabsImpl myTabs;
   public SingleRowPassInfo myLastSingRowLayout;
@@ -31,16 +29,6 @@ public class SingleRowLayout extends TabLayout {
     }
   };
   public JPopupMenu myMorePopup;
-
-
-  public final GhostComponent myLeftGhost = new GhostComponent(RowDropPolicy.first, RowDropPolicy.first);
-  public final GhostComponent myRightGhost = new GhostComponent(RowDropPolicy.last, RowDropPolicy.first);
-
-  private enum RowDropPolicy {
-    first, last
-  }
-
-  private RowDropPolicy myRowDropPolicy = RowDropPolicy.first;
 
   @Override
   public boolean isSideComponentOnTabs() {
@@ -197,18 +185,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
   protected void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
-    if (data.firstGhostVisible) {
-      data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
-      myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getTabHGap();
-    }
-
     int deltaToFit = 0;
-    if (data.firstGhostVisible || data.lastGhostVisible) {
-      if (data.requiredLength < data.toFitLength && getStrategy().canBeStretched()) {
-        deltaToFit = (int)Math.floor((data.toFitLength - data.requiredLength) / (double)data.toLayout.size());
-      }
-    }
 
     int totalLength = 0;
     int positionStart = data.position;
@@ -248,11 +225,6 @@ public class SingleRowLayout extends TabLayout {
     for (TabInfo eachInfo : data.toDrop) {
       JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
     }
-
-    if (data.lastGhostVisible) {
-      data.lastGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
-      myTabs.layout(myRightGhost, data.lastGhost);
-    }
   }
 
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
@@ -264,56 +236,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
 
-  protected void recomputeToLayout(final SingleRowPassInfo data) {
-    calculateRequiredLength(data);
-
-    while (true) {
-      if (data.requiredLength <= data.toFitLength - data.position) break;
-      if (data.toLayout.size() == 0) break;
-
-      final TabInfo first = data.toLayout.get(0);
-      final TabInfo last = data.toLayout.get(data.toLayout.size() - 1);
-
-
-      if (myRowDropPolicy == RowDropPolicy.first) {
-        if (first != myTabs.getSelectedInfo()) {
-          processDrop(data, first, true);
-        }
-        else if (last != myTabs.getSelectedInfo()) {
-          processDrop(data, last, false);
-        }
-        else {
-          break;
-        }
-      }
-      else {
-        if (last != myTabs.getSelectedInfo()) {
-          processDrop(data, last, false);
-        }
-        else if (first != myTabs.getSelectedInfo()) {
-          processDrop(data, first, true);
-        }
-        else {
-          break;
-        }
-      }
-    }
-
-    for (int i = 1; i < data.myVisibleInfos.size() - 1; i++) {
-      final TabInfo each = data.myVisibleInfos.get(i);
-      final TabInfo prev = data.myVisibleInfos.get(i - 1);
-      final TabInfo next = data.myVisibleInfos.get(i + 1);
-
-      if (data.toLayout.contains(each) && data.toDrop.contains(prev)) {
-        myLeftGhost.setInfo(prev);
-      }
-      else if (data.toLayout.contains(each) && data.toDrop.contains(next)) {
-        myRightGhost.setInfo(next);
-      }
-    }
-
-
-  }
+  protected abstract void recomputeToLayout(final SingleRowPassInfo data);
 
   protected void calculateRequiredLength(SingleRowPassInfo data) {
     for (TabInfo eachInfo : data.myVisibleInfos) {
@@ -334,57 +257,6 @@ public class SingleRowLayout extends TabLayout {
 
   public boolean isTabHidden(TabInfo tabInfo) {
     return myLastSingRowLayout != null && myLastSingRowLayout.toDrop.contains(tabInfo);
-  }
-
-  public class GhostComponent extends JLabel {
-    private TabInfo myInfo;
-
-    private GhostComponent(final RowDropPolicy before, final RowDropPolicy after) {
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (JBTabsImpl.isSelectionClick(e, true) && myInfo != null) {
-            myRowDropPolicy = before;
-            myTabs.select(myInfo, true).doWhenDone(() -> myRowDropPolicy = after);
-          } else {
-            MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myTabs);
-            myTabs.processMouseEvent(event);
-          }
-        }
-      });
-    }
-
-    public void setInfo(@Nullable final TabInfo info) {
-      myInfo = info;
-      setToolTipText(info != null ? info.getTooltipText() : null);
-    }
-
-    public void reset() {
-      JBTabsImpl.resetLayout(this);
-      setInfo(null);
-    }
-  }
-
-  private void processDrop(final SingleRowPassInfo data, final TabInfo info, boolean isFirstSide) {
-    data.requiredLength -= getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(info).getPreferredSize());
-    data.toDrop.add(info);
-    data.toLayout.remove(info);
-    if (data.toDrop.size() == 1) {
-      data.toFitLength -= data.moreRectAxisSize;
-    }
-
-    if (!data.firstGhostVisible && isFirstSide) {
-      data.firstGhostVisible = !myTabs.isEditorTabs();
-      if (!myTabs.isEditorTabs()) {
-        data.toFitLength -= myTabs.getGhostTabLength();
-      }
-    }
-    else if (!data.lastGhostVisible && !isFirstSide) {
-      data.lastGhostVisible = !myTabs.isEditorTabs();
-      if (!myTabs.isEditorTabs()) {
-        data.toFitLength -= myTabs.getGhostTabLength();
-      }
-    }
   }
 
   @Override
@@ -440,20 +312,6 @@ public class SingleRowLayout extends TabLayout {
         result = index;
       } else if (index < myLastSingRowLayout.myVisibleInfos.size()) {
         result = index;
-      }
-    } else if (c instanceof GhostComponent) {
-      GhostComponent ghost = (GhostComponent)c;
-      TabInfo info = ghost.myInfo;
-      if (info != null) {
-        int index = myLastSingRowLayout.myVisibleInfos.indexOf(info);
-        index += myLeftGhost == ghost ? -1 : 1;
-        result =  index >= 0 && index < myLastSingRowLayout.myVisibleInfos.size() ? index : -1;
-      } else {
-        if (myLastSingRowLayout.myVisibleInfos.size() == 0) {
-          result = 0;
-        } else {
-          result =  myLeftGhost == ghost ? 0 : myLastSingRowLayout.myVisibleInfos.size() - 1;
-        }
       }
     }
 
