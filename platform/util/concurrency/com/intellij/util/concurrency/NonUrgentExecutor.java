@@ -22,9 +22,12 @@ import java.util.concurrent.Executor;
  */
 public class NonUrgentExecutor implements Executor {
   private static final NonUrgentExecutor ourInstance = new NonUrgentExecutor();
-  private final Executor myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
+  private final Executor myBackend;
 
-  private NonUrgentExecutor() {}
+  private NonUrgentExecutor() {
+    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
+    ((BoundedTaskExecutor)myBackend).setChangeThreadName(false);
+  }
 
   @Override
   public void execute(@NotNull Runnable command) {

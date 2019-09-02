@@ -90,7 +90,12 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
 
+    val threadNameManager = ThreadNameManager()
+
     StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
+      // process it now to ensure that thread will have first name (because report writer can process events in any order)
+      threadNameManager.getThreadName(item)
+
       if (item.end == -1L) {
         instantEvents.add(item)
       }
@@ -116,16 +121,17 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     sortItems(items)
 
-    val w = IdeaFormatWriter()
-    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
     val pluginCostMap = computePluginCostMap()
     this.pluginCostMap = pluginCostMap
+
+    val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
     for (item in items) {
       val pluginId = item.pluginId ?: continue
       StartUpMeasurer.doAddPluginCost(pluginId, item.parallelActivity?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
 
-    w.write(startTime, items, activities, instantEvents, pluginCostMap, end)
+    w.write(startTime, items, instantEvents, end)
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport
@@ -214,14 +220,5 @@ private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
         else -> 0
       }
     }
-  }
-}
-
-internal fun normalizeThreadName(name: String): String {
-  return when {
-    name.startsWith("AWT-EventQueue-") -> "edt"
-    name.startsWith("Idea Main Thread") -> "idea main"
-    name.startsWith("ApplicationImpl pooled thread ") -> name.replace("ApplicationImpl pooled thread ", "pooled ")
-    else -> name
   }
 }

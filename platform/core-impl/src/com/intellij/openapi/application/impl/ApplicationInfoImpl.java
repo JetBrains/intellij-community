@@ -2,6 +2,8 @@
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -10,7 +12,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -608,12 +609,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressSlides;
   }
 
-  private static ApplicationInfoImpl ourShadowInstance;
+  private static volatile ApplicationInfoImpl ourShadowInstance;
 
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
-      ourShadowInstance = new ApplicationInfoImpl();
+      //noinspection SynchronizeOnThis
+      synchronized (ApplicationInfoImpl.class) {
+        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("load app info");
+        ourShadowInstance = new ApplicationInfoImpl();
+        activity.end();
+      }
     }
     return ourShadowInstance;
   }
@@ -668,14 +674,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
       }
     }
-
-    Thread currentThread = Thread.currentThread();
-    currentThread.setName(
-      currentThread.getName() + " " +
-      myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
-      " " + ApplicationNamesInfo.getInstance().getProductName() +
-      ", eap:" + myEAP + ", os:" + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-      ", java-version:" + SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {

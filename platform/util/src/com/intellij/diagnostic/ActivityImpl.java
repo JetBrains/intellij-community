@@ -11,7 +11,8 @@ public final class ActivityImpl implements Activity {
   private final String name;
   private String description;
 
-  private final String thread;
+  private final String threadName;
+  private final long threadId;
 
   private final long start;
   private long end;
@@ -49,12 +50,18 @@ public final class ActivityImpl implements Activity {
     this.parallelActivity = parallelActivity;
     this.pluginId = pluginId;
 
-    this.thread = Thread.currentThread().getName();
+    Thread thread = Thread.currentThread();
+    threadId = thread.getId();
+    threadName = thread.getName();
   }
 
   @NotNull
-  public String getThread() {
-    return thread;
+  public String getThreadName() {
+    return threadName;
+  }
+
+  public long getThreadId() {
+    return threadId;
   }
 
   @Nullable

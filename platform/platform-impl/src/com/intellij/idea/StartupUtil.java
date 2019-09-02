@@ -162,6 +162,15 @@ public class StartupUtil {
     Logger log = lockDirsAndConfigureLogger(args);
 
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
+
+    // no need to wait
+    executorService.submit(() -> {
+      ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("log essential info about ide");
+      logEssentialInfoAboutIde(log, appInfo);
+      activity.end();
+    });
+
     List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
@@ -310,8 +319,10 @@ public class StartupUtil {
     Logger.setFactory(new LoggerFactory());
     Logger log = Logger.getInstance(Main.class);
 
-    activity = activity.endAndStart(Phases.START_LOGGING);
-    startLogging(log);
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+    });
     activity.end();
     return log;
   }
@@ -515,6 +526,7 @@ public class StartupUtil {
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     String ideTempPath = PathManager.getTempPath();
 
@@ -548,16 +560,7 @@ public class StartupUtil {
     activity.end();
   }
 
-  private static void startLogging(@NotNull Logger log) {
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-    AppExecutorUtil.getAppExecutorService().execute(() -> startLoggingAsync(log));
-  }
-
-  private static void startLoggingAsync(@NotNull Logger log) {
-    ShutDownTracker.getInstance().registerShutdownTask(() ->
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
-
-    ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+  private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");

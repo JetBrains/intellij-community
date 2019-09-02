@@ -36,9 +36,11 @@ public final class SplashManager {
       }
     }
 
+    // must be out of activity measurement
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
-    SPLASH_WINDOW = new Splash(ApplicationInfoImpl.getShadowInstance());
+    SPLASH_WINDOW = new Splash(appInfo);
     activity.end();
   }
 

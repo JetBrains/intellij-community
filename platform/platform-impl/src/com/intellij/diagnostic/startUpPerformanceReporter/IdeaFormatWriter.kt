@@ -25,12 +25,14 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
   }
 }
 
-internal class IdeaFormatWriter {
+internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
+                                private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
+                                private val threadNameManager: ThreadNameManager) {
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, activities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>, end: Long) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -68,7 +70,7 @@ internal class IdeaFormatWriter {
           totalDuration += writeUnknown(writer, items.last().end, end, timeOffset)
         }
 
-        writeParallelActivities(activities, timeOffset, writer, pluginCostMap)
+        writeParallelActivities(timeOffset, writer)
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
         writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - timeOffset))
@@ -84,24 +86,75 @@ internal class IdeaFormatWriter {
     stringWriter.write("\n=== Stop: StartUp Measurement ===")
     log.info(stringWriter.toString())
   }
-}
 
-private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
-  val ownDurations = ObjectLongHashMap<ActivityImpl>()
+  private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
+    val ownDurations = ObjectLongHashMap<ActivityImpl>()
 
-  // sorted to get predictable JSON
-  for (name in activities.keys.sorted()) {
-    ownDurations.clear()
+    // sorted to get predictable JSON
+    for (name in activities.keys.sorted()) {
+      ownDurations.clear()
 
-    val list = activities.getValue(name)
-    StartUpPerformanceReporter.sortItems(list)
+      val list = activities.getValue(name)
+      StartUpPerformanceReporter.sortItems(list)
 
-    if (name.endsWith("Component") || name.endsWith("Service")) {
-      computeOwnTime(list, ownDurations)
+      if (name.endsWith("Component") || name.endsWith("Service")) {
+        computeOwnTime(list, ownDurations)
+      }
+
+      val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
+    }
+  }
+
+  private fun writeActivities(activities: List<ActivityImpl>,
+                              offset: Long, writer: JsonGenerator,
+                              fieldName: String,
+                              ownDurations: ObjectLongHashMap<ActivityImpl>,
+                              measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
+    if (activities.isEmpty()) {
+      return
     }
 
-    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
+    writer.array(fieldName) {
+      var skippedDuration = 0L
+      for (item in activities) {
+        val computedOwnDuration = ownDurations.get(item)
+        val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
+
+        item.pluginId?.let {
+          StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
+        }
+
+        if (duration <= measureThreshold) {
+          skippedDuration += duration
+          continue
+        }
+
+        writer.obj {
+          writer.writeStringField("name", item.name)
+          writeItemTimeInfo(item, duration, offset, writer)
+        }
+      }
+
+      if (skippedDuration > 0) {
+        writer.obj {
+          writer.writeStringField("name", "Other")
+          writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(skippedDuration))
+          writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(activities.last().start - offset))
+          writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(activities.last().end - offset))
+        }
+      }
+    }
+  }
+
+  private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
+    writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(duration))
+    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
+    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
+    writer.writeStringField("thread", threadNameManager.getThreadName(item))
+    if (item.pluginId != null) {
+      writer.writeStringField("plugin", item.pluginId)
+    }
   }
 }
 
@@ -109,48 +162,6 @@ private fun activityNameToJsonFieldName(name: String): String {
   return when {
     name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
     else -> name.substring(0) + 's'
-  }
-}
-
-private fun writeActivities(activities: List<ActivityImpl>,
-                            offset: Long, writer: JsonGenerator,
-                            fieldName: String,
-                            ownDurations: ObjectLongHashMap<ActivityImpl>,
-                            pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
-                            measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
-  if (activities.isEmpty()) {
-    return
-  }
-
-  writer.array(fieldName) {
-    var skippedDuration = 0L
-    for (item in activities) {
-      val computedOwnDuration = ownDurations.get(item)
-      val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
-
-      item.pluginId?.let {
-        StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
-      }
-
-      if (duration <= measureThreshold) {
-        skippedDuration += duration
-        continue
-      }
-
-      writer.obj {
-        writer.writeStringField("name", item.name)
-        writeItemTimeInfo(item, duration, offset, writer)
-      }
-    }
-
-    if (skippedDuration > 0) {
-      writer.obj {
-        writer.writeStringField("name", "Other")
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(skippedDuration))
-        writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(activities.last().start - offset))
-        writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(activities.last().end - offset))
-      }
-    }
   }
 }
 
@@ -179,15 +190,5 @@ private fun writeIcons(writer: JsonGenerator) {
         writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalTime))
       }
     }
-  }
-}
-
-private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
-  writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(duration))
-  writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
-  writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
-  writer.writeStringField("thread", normalizeThreadName(item.thread))
-  if (item.pluginId != null) {
-    writer.writeStringField("plugin", item.pluginId)
   }
 }

@@ -24,7 +24,6 @@ public final class StartUpMeasurer {
     public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
     public static final String CHECK_SYSTEM_DIR = "check system dirs";
     public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-    public static final String START_LOGGING = "start logging";
 
     public static final String WAIT_TASKS = "wait tasks";
     public static final String IMPORT_CONFIGS = "import configs";

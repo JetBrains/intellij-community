@@ -39,7 +39,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
-  public boolean myChangeThreadName = true;
+  private boolean myChangeThreadName = true;
 
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
     myName = name;

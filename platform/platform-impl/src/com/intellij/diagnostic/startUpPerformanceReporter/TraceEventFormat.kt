@@ -4,7 +4,6 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
@@ -15,10 +14,7 @@ import java.util.concurrent.TimeUnit
 // dur - duration
 // pid - process id
 // tid - thread id
-class TraceEventFormat(private val timeOffset: Long, private val instantEvents: List<ActivityImpl>) {
-  private val threadNameToId = ObjectIntHashMap<String>()
-  private var threadIdCounter = 0
-
+internal class TraceEventFormat(private val timeOffset: Long, private val instantEvents: List<ActivityImpl>) {
   fun writeInstantEvents(writer: JsonGenerator) {
     for (event in instantEvents) {
       writer.obj {
@@ -62,16 +58,6 @@ class TraceEventFormat(private val timeOffset: Long, private val instantEvents: 
     writer.writeStringField("name", event.name)
     writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
     writer.writeNumberField("pid", 1)
-    writer.writeNumberField("tid", getThreadId(event))
-  }
-
-  private fun getThreadId(item: ActivityImpl): Int {
-    val key = normalizeThreadName(item.thread)
-    var result = threadNameToId.get(key)
-    if (result == -1) {
-      result = threadIdCounter++
-      threadNameToId.put(key, result)
-    }
-    return result
+    writer.writeNumberField("tid", event.threadId)
   }
 }
