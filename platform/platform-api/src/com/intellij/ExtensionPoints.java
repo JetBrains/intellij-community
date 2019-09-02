@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Extension points provided by IDEA core are listed here.
+ * Extension points provided by IDE core are listed here.
  */
 public interface ExtensionPoints extends ToolExtensionPoints {
   /**
@@ -35,7 +35,7 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    *   &lt;errorHandler implementation="my.plugin.package.MyErrorHandler"/&gt;
    * &lt;/extensions&gt;
    * </pre>
-   * my.plugin.package.MyErrorHandler class must implement {@link ErrorReportSubmitter} abstract class.
+   * {@code my.plugin.package.MyErrorHandler} class must implement {@link ErrorReportSubmitter} abstract class.
    */
   @NonNls
   String ERROR_HANDLER = "com.intellij.errorHandler";
@@ -50,7 +50,7 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    *   &lt;junitPatcher implementation="my.plugin.package.MyJUnitPatcher"/&gt;
    * &lt;/extensions&gt;
    * </pre>
-   * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
+   * {@code my.plugin.package.MyJUnitPatcher} class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
    */
   @NonNls
   String JUNIT_PATCHER = "com.intellij.junitPatcher";
