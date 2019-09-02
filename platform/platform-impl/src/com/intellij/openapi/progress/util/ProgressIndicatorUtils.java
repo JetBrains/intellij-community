@@ -295,8 +295,8 @@ public class ProgressIndicatorUtils {
     });
   }
 
-  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUtil) {
-    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUtil));
+  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
   }
 
   private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
