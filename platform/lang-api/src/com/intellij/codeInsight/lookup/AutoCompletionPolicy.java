@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * What to do if there's only one element in completion lookup? Should IDEA show lookup or just insert this element? Call
- * {@link #applyPolicy(LookupElement)} to decorate {@link com.intellij.codeInsight.lookup.LookupElement} with correct policy.
+ * What to do if there's only one element in completion lookup? Should the IDE show lookup or just insert this element? Call
+ * {@link #applyPolicy(LookupElement)} to decorate {@link LookupElement} with correct policy.
  *
  * Use this only in simple cases, use {@link com.intellij.codeInsight.completion.CompletionContributor#handleAutoCompletionPossibility(com.intellij.codeInsight.completion.AutoCompletionContext)}
  * for finer tuning.
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum AutoCompletionPolicy {
   /**
-   * Self-explaining
+   * Self-explaining.
    */
   NEVER_AUTOCOMPLETE,
 
@@ -45,7 +45,7 @@ public enum AutoCompletionPolicy {
   GIVE_CHANCE_TO_OVERWRITE,
 
   /**
-   * Self-explaining
+   * Self-explaining.
    */
   ALWAYS_AUTOCOMPLETE;
 
