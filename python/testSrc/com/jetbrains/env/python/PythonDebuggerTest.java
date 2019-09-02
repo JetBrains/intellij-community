@@ -456,6 +456,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         waitForOutput("message=\"python-exceptions.ZeroDivisionError\"", "message=\"python-builtins.ZeroDivisionError\"");
+        waitForOutput("Traceback (most recent call last):");
+        waitForOutput("line 7, in foo");
+        waitForOutput("return 1 / x");
+        waitForOutput("ZeroDivisionError: ");
         eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
         resume();
         waitForTerminate();
