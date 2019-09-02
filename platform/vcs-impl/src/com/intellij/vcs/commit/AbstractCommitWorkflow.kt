@@ -160,7 +160,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val previousResult = result
       result = Runnable {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-        metaHandler.runCheckinHandlers(previousResult)
+        try {
+          metaHandler.runCheckinHandlers(previousResult)
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          previousResult.run()
+        }
       }
     }
     return result
