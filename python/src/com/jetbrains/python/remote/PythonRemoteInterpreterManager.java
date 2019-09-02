@@ -55,7 +55,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public static final String PYTHON_PREFIX = "python";
 
-  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
+  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, @NotNull Collection<Sdk> existingSdks);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
@@ -67,7 +67,7 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  public static void addUnbuffered(ParamsGroup exeGroup) {
+  public static void addUnbuffered(@NotNull ParamsGroup exeGroup) {
     for (String param : exeGroup.getParametersList().getParameters()) {
       if ("-u".equals(param)) {
         return;
@@ -76,7 +76,7 @@ public abstract class PythonRemoteInterpreterManager {
     exeGroup.addParameter("-u");
   }
 
-  public static String toSystemDependent(String path, boolean isWin) {
+  public static String toSystemDependent(@NotNull String path, boolean isWin) {
     char separator = isWin ? '\\' : '/';
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
   }
@@ -88,7 +88,7 @@ public abstract class PythonRemoteInterpreterManager {
   @NotNull
   public static PyRemotePathMapper appendBasicMappings(@Nullable Project project,
                                                        @Nullable PyRemotePathMapper pathMapper,
-                                                       RemoteSdkAdditionalData data) {
+                                                       @NotNull RemoteSdkAdditionalData<?> data) {
     @NotNull PyRemotePathMapper newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper);
 
     addHelpersMapping(data, newPathMapper);
@@ -112,7 +112,7 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   @NotNull
-  public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
+  public abstract SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
 
   @NotNull
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
