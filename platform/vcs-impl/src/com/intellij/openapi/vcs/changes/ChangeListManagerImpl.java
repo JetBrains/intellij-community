@@ -287,13 +287,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     };
 
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
       myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
     }
     else {
-      ((ProjectLevelVcsManagerImpl)vcsManager).addInitializationRequest(
+      vcsManager.addInitializationRequest(
         VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();

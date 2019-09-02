@@ -4,7 +4,6 @@ package git4idea.config
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -15,7 +14,7 @@ const val GC_AUTO = "gc.auto"
 
 class GitSetupProjectConfig: StartupActivity {
   override fun runActivity(project: Project) {
-    (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
       if (ApplicationManager.getApplication().isDispatchThread) {
         NonUrgentExecutor.getInstance().execute {
           setupGcAutoIfNeeded(project)

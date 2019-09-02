@@ -51,13 +51,13 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     });
   }
 
-  private static ProjectLevelVcsManagerImpl getVcsManager(@NotNull Project project) {
-    return (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+  private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
+    return ProjectLevelVcsManager.getInstance(project);
   }
 
   @Override
   public void projectOpened() {
-    getVcsManager(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
       boolean ready = false;
       synchronized (LOCK) {
         if (!myProject.isDisposed() && myProject.isOpen()) {

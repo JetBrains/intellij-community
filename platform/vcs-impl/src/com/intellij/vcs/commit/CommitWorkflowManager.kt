@@ -25,7 +25,7 @@ private val appSettings = VcsApplicationSettings.getInstance()
 class CommitWorkflowManager(private val project: Project) : ProjectComponent {
 
   override fun projectOpened() {
-    (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
       runInEdt {
         subscribeToChanges()
         updateWorkflow()

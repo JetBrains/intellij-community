@@ -120,7 +120,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return project.getComponent(CommittedChangesCache.class);
   }
 
-  public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {
+  public CommittedChangesCache(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
     myConnection = myBus.connect();
@@ -142,13 +142,14 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
-    ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE,
-                                                                       () -> ApplicationManager.getApplication().runReadAction(() -> {
-                                                                         if (myProject.isDisposed()) return;
-                                                                         myTaskQueue.start();
-                                                                         myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-                                                                         myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-                                                                       }));
+    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
+    vcsManager.addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE,
+                                        () -> ApplicationManager.getApplication().runReadAction(() -> {
+                                          if (myProject.isDisposed()) return;
+                                          myTaskQueue.start();
+                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+                                        }));
     myVcsManager = vcsManager;
     Disposer.register(project, new Disposable() {
       @Override

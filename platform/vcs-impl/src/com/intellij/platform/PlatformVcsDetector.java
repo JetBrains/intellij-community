@@ -9,7 +9,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,7 +33,7 @@ final class PlatformVcsDetector implements StartupActivity, DumbAware {
           return;
         }
 
-        ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+        ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
 
         Path file = ProjectBaseDirectory.getInstance(project).getBaseDir(Paths.get(projectBasePath));
         if (!vcsManager.needAutodetectMappings()) {

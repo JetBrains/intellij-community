@@ -123,6 +123,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings = new NewMappings(myProject, this);
   }
 
+  public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
+    return (ProjectLevelVcsManagerImpl)getInstance(project);
+  }
+
   public void registerVcs(AbstractVcs vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
@@ -863,7 +867,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return;
       }
 
-      ((ProjectLevelVcsManagerImpl)getInstance(project)).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
+      getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
         List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
         if (checkers.size() != 0) {
           VcsRootScanner.start(project, checkers);

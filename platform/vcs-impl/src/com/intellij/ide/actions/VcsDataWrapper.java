@@ -30,7 +30,7 @@ import java.util.Map;
 
 class VcsDataWrapper {
   private final Project myProject;
-  private final ProjectLevelVcsManager myManager;
+  private final ProjectLevelVcsManagerImpl myManager;
   private Map<String, String> myVcses;
 
   VcsDataWrapper(final AnActionEvent e) {
@@ -41,7 +41,7 @@ class VcsDataWrapper {
       myVcses = null;
       return;
     }
-    myManager = ProjectLevelVcsManager.getInstance(myProject);
+    myManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
   }
 
   public boolean enabled() {
@@ -51,7 +51,7 @@ class VcsDataWrapper {
     if (checkMappings()) {
       return false;
     }
-    if (! ((ProjectLevelVcsManagerImpl) myManager).haveVcses()) {
+    if (!myManager.haveVcses()) {
       return false;
     }
     return true;
