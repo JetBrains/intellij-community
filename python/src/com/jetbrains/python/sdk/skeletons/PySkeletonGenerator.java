@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
@@ -390,77 +389,6 @@ public class PySkeletonGenerator {
       env.put("IS_PREGENERATED_SKELETONS", "1");
     }
     return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
-  }
-
-  public static class ListBinariesResult {
-    public final int generatorVersion;
-    public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
-
-    public ListBinariesResult(int generatorVersion, Map<String, PySkeletonRefresher.PyBinaryItem> modules) {
-      this.generatorVersion = generatorVersion;
-      this.modules = modules;
-    }
-  }
-
-  @NotNull
-  public ListBinariesResult listBinaries(@NotNull Sdk sdk, @NotNull String extraSysPath) throws InvalidSdkException {
-    final String homePath = sdk.getHomePath();
-    final long startTime = System.currentTimeMillis();
-    if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
-    final String parentDir = new File(homePath).getParent();
-
-    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"));
-    if (!StringUtil.isEmpty(extraSysPath)) {
-      cmd.add("-s");
-      cmd.add(extraSysPath);
-    }
-
-    final ProcessOutput process = getProcessOutput(parentDir,
-                                                   ArrayUtilRt.toStringArray(cmd),
-                                                   PythonSdkType.activateVirtualEnv(sdk),
-                                                   MINUTE * 4); // see PY-3898
-
-    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
-    if (process.getExitCode() != 0) {
-      final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
-      if (process.isTimeout()) {
-        sb.append(": timed out.");
-      }
-      else {
-        sb.append(", exit code ")
-          .append(process.getExitCode())
-          .append(", stderr: \n-----\n");
-        for (String line : process.getStderrLines()) {
-          sb.append(line).append("\n");
-        }
-        sb.append("-----");
-      }
-      throw new InvalidSdkException(sb.toString());
-    }
-    final List<String> lines = process.getStdoutLines();
-    if (lines.size() < 1) {
-      throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + homePath);
-    }
-    final Iterator<String> iter = lines.iterator();
-    final int generatorVersion = fromVersionString(iter.next().trim());
-    final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
-    while (iter.hasNext()) {
-      final String line = iter.next();
-      int cutpos = line.indexOf('\t');
-      if (cutpos >= 0) {
-        String[] strs = line.split("\t");
-        String moduleName = strs[0];
-        String path = strs[1];
-        int length = Integer.parseInt(strs[2]);
-        int lastModified = Integer.parseInt(strs[3]);
-
-        binaries.put(moduleName, new PySkeletonRefresher.PyBinaryItem(moduleName, path, length, lastModified));
-      }
-      else {
-        LOG.error("Bad binaries line: '" + line + "', SDK " + homePath); // but don't die yet
-      }
-    }
-    return new ListBinariesResult(generatorVersion, binaries);
   }
 
   public boolean deleteOrLog(@NotNull File item) {

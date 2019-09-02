@@ -6,7 +6,7 @@ import generator3.core
 import generator3.extra
 from generator3.clr_tools import get_namespace_by_name
 from generator3.constants import Timer
-from generator3.core import version, list_binaries, process_one_with_results_reporting, \
+from generator3.core import version, process_one_with_results_reporting, \
     GenerationStatus, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
@@ -35,9 +35,6 @@ def get_help_text():
         ' -p -- run CLR profiler ' '\n'
         ' -s path_list -- add paths to sys.path before run; path_list lists directories' '\n'
         '    separated by path separator char, e.g. "c:\\foo;d:\\bar;c:\\with space"' '\n'
-        ' -L -- print version and then a list of binary module files found ' '\n'
-        '    on sys.path and in directories in directory_list;' '\n'
-        '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
         ' -i -- read module_name, file_name and list of imported CLR assemblies from stdin line-by-line' '\n'
         ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
         ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>\n'
@@ -79,18 +76,6 @@ def main():
             if p and p not in sys.path:
                 sys.path.append(p)  # we need this to make things in additional dirs importable
         note("Altered sys.path: %r", sys.path)
-
-    # find binaries?
-    if "-L" in opts:
-        if len(args) > 0:
-            report("Expected no args with -L, got %d args", len(args))
-            sys.exit(1)
-        say(version())
-        results = list(list_binaries(sys.path))
-        results.sort()
-        for name, path, size, last_modified in results:
-            say("%s\t%s\t%d\t%d", name, path, size, last_modified)
-        sys.exit(0)
 
     if "-S" in opts:
         if len(args) > 0:
