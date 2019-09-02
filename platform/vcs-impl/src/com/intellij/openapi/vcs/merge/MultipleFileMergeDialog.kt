@@ -355,6 +355,7 @@ open class MultipleFileMergeDialog(
         selIndex = table.rowCount - 1
       }
       table.selectionModel.setSelectionInterval(selIndex, selIndex)
+      table.requestFocusInWindow()
     }
   }
 
@@ -427,7 +428,6 @@ open class MultipleFileMergeDialog(
       DiffManager.getInstance().showMerge(project, request)
     }
     updateModelFromFiles()
-    IdeFocusManager.getInstance(project).requestFocus(table, false)
   }
 
   private fun getSessionResolution(result: MergeResult): MergeSession.Resolution = when (result) {
