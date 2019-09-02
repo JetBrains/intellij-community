@@ -39,7 +39,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
         if (ConcurrencyUtil.cacheOrGet(map, key, value) == value) break;
       }
       else if (current instanceof MostlySingularMultiMap.ValueList) {
-        ValueList<?> curList = (ValueList)current;
+        ValueList<?> curList = (ValueList<?>)current;
         ValueList<Object> newList = new ValueList<>(curList.size() + 1);
         newList.addAll(curList);
         newList.add(value);
@@ -59,7 +59,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
     // not implemented
   }
 
-  public boolean replace(@NotNull K key, @NotNull Collection<V> expectedValue, @NotNull Collection<V> newValue) {
+  public boolean replace(@NotNull K key, @NotNull Collection<? extends V> expectedValue, @NotNull Collection<? extends V> newValue) {
     ConcurrentMap<K, Object> map = (ConcurrentMap<K, Object>)myMap;
     Object newValueToPut = newValue.isEmpty() ? null : newValue.size() == 1 ? newValue.iterator().next() : new ValueList<Object>(newValue);
 
@@ -77,7 +77,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
   }
 
   @Override
-  public void addAll(MostlySingularMultiMap<K, V> other) {
+  public void addAll(MostlySingularMultiMap<? extends K, ? extends V> other) {
     throw new AbstractMethodError("Not yet re-implemented for concurrency");
   }
 

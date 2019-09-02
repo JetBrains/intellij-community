@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
-  implements DependencyData, Named, OrderAware {
+  implements DependencyData<T>, Named, OrderAware {
 
   @NotNull private ModuleData ownerModule;
   @NotNull private T target;

@@ -18,7 +18,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
-public class Range<T extends Comparable<T>> {
+public class Range<T extends Comparable<? super T>> {
 
   @NotNull private final T myFrom;
   @NotNull private final T myTo;

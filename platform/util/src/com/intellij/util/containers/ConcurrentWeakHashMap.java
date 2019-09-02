@@ -32,7 +32,7 @@ import java.lang.ref.WeakReference;
  */
 @Deprecated
 public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
+  private static class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
 
@@ -50,7 +50,8 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
       K t = get();
-      K u = ((KeyReference<K,V>)o).get();
+      //noinspection unchecked
+      K u = ((KeyReference<K>)o).get();
       if (t == null || u == null) return false;
       return t == u || myStrategy.equals(t, u);
     }
@@ -63,8 +64,8 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
   @NotNull
   @Override
-  protected KeyReference<K, V> createKeyReference(@NotNull K key,
-                                                  @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+  protected KeyReference<K> createKeyReference(@NotNull K key,
+                                               @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     return new WeakKey<>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 

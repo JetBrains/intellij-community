@@ -78,7 +78,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
     if (!resourceBundle.isValid()) {
       //noinspection unchecked
-      return MultiMap.EMPTY;
+      return (MultiMap<String, IProperty>)MultiMap.EMPTY;
     }
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     final MultiMap<String, IProperty> propertyNames;

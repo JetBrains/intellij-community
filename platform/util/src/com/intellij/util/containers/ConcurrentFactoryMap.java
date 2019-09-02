@@ -45,6 +45,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     V value = map.get(k);
     if (value == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      //noinspection unchecked
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);
@@ -66,7 +67,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? ConcurrentFactoryMap.FAKE_NULL() : (T)key;
+    return key == null ? FAKE_NULL() : (T)key;
   }
 
   @Override
@@ -139,7 +140,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     return new CollectionWrapper.Set<Entry<K, V>>(myMap.entrySet()) {
       @Override
       public Object wrap(Object val) {
-        return val instanceof EntryWrapper ? ((EntryWrapper)val).myEntry : val;
+        //noinspection unchecked
+        return val instanceof EntryWrapper ? ((EntryWrapper<K, V>)val).myEntry : val;
       }
 
       @Override
@@ -156,7 +158,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public V putIfAbsent(@NotNull K key, V value) {
-    return nullize(myMap.putIfAbsent(ConcurrentFactoryMap.notNull(key), ConcurrentFactoryMap.notNull(value)));
+    return nullize(myMap.putIfAbsent(notNull(key), notNull(value)));
   }
 
   @Override
@@ -166,12 +168,12 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    return myMap.replace(ConcurrentFactoryMap.notNull(key), ConcurrentFactoryMap.notNull(oldValue), ConcurrentFactoryMap.notNull(newValue));
+    return myMap.replace(notNull(key), notNull(oldValue), notNull(newValue));
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    return nullize(myMap.replace(ConcurrentFactoryMap.notNull(key), ConcurrentFactoryMap.notNull(value)));
+    return nullize(myMap.replace(notNull(key), notNull(value)));
   }
 
   @NotNull
@@ -318,7 +320,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
       @Override
       public V setValue(V value) {
-        return myEntry.setValue(ConcurrentFactoryMap.notNull(value));
+        return myEntry.setValue(notNull(value));
       }
 
       @Override
@@ -328,7 +330,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
       @Override
       public boolean equals(Object obj) {
-        return myEntry.equals(obj instanceof EntryWrapper ? ((EntryWrapper)obj).myEntry : obj);
+        //noinspection unchecked
+        return myEntry.equals(obj instanceof EntryWrapper ? ((EntryWrapper<K,V>)obj).myEntry : obj);
       }
     }
   }

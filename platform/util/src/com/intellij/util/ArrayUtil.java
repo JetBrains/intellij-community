@@ -633,7 +633,7 @@ public final class ArrayUtil extends ArrayUtilRt {
       if (o1 == null) return -1;
       if (o2 == null) return 1;
       //noinspection unchecked
-      int res = ((Comparable)o1).compareTo(o2);
+      int res = ((Comparable<T>)o1).compareTo(o2);
       if (res != 0) return res;
     }
     return 0;

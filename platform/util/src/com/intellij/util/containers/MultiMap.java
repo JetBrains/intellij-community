@@ -21,7 +21,7 @@ import java.util.*;
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiMap<K, V> implements Serializable {
-  public static final MultiMap EMPTY = new EmptyMap();
+  public static final MultiMap<?,?> EMPTY = new EmptyMap();
   private static final long serialVersionUID = -2632269270151455493L;
 
   protected final Map<K, Collection<V>> myMap;
@@ -398,7 +398,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof MultiMap && myMap.equals(((MultiMap)o).myMap);
+    return this == o || o instanceof MultiMap && myMap.equals(((MultiMap<?,?>)o).myMap);
   }
 
   @Override
@@ -416,13 +416,13 @@ public class MultiMap<K, V> implements Serializable {
    */
   public static <K, V> MultiMap<K, V> empty() {
     //noinspection unchecked
-    return EMPTY;
+    return (MultiMap<K, V>)EMPTY;
   }
 
-  private static class EmptyMap extends MultiMap {
+  private static class EmptyMap extends MultiMap<Object, Object> {
     @NotNull
     @Override
-    protected Map createMap() {
+    protected Map<Object, Collection<Object>> createMap() {
       return Collections.emptyMap();
     }
 
@@ -453,7 +453,7 @@ public class MultiMap<K, V> implements Serializable {
 
     @Nullable
     @Override
-    public Collection remove(Object key) {
+    public Collection<Object> remove(Object key) {
       throw new UnsupportedOperationException();
     }
   }

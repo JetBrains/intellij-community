@@ -126,6 +126,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
   }
 
+  @FunctionalInterface
   interface Key<T> {
     T get();
   }
@@ -289,7 +290,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     public boolean equals(Object o) {
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
-      Entry<K,V> e = (Entry)o;
+      Entry<K,V> e = (Entry<K,V>)o;
       return keyEqual(key, e.getKey(), myStrategy) && Objects.equals(getValue(), e.getValue());
     }
 

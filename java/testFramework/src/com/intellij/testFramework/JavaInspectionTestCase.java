@@ -82,21 +82,21 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange, runDeadCodeFirst);
   }
 
-  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper<?,?> tool) {
     doTest(folderName, tool, false);
   }
 
   public void doTest(@NonNls @NotNull String folderName,
-                     @NotNull InspectionToolWrapper tool,
+                     @NotNull InspectionToolWrapper<?,?> tool,
                      boolean checkRange) {
     doTest(folderName, tool, checkRange, false);
   }
 
   public void doTest(@NonNls @NotNull String folderName,
-                     @NotNull InspectionToolWrapper toolWrapper,
+                     @NotNull InspectionToolWrapper<?,?> toolWrapper,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     @NotNull InspectionToolWrapper... additional) {
+                     @NotNull InspectionToolWrapper<?,?>... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
     GlobalInspectionContextImpl context = runTool(folderName, toolWrapper, tools);
@@ -109,7 +109,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   }
 
   protected GlobalInspectionContextImpl runTool(@NotNull final String testName,
-                                                @NotNull InspectionToolWrapper toolWrapper,
+                                                @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                 List<? extends InspectionToolWrapper<?, ?>> tools) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath(), testName));
     assertNotNull(projectDir);
@@ -140,8 +140,8 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
 
   @NotNull
   private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
-                                                            @NotNull InspectionToolWrapper toolWrapper,
-                                                            @NotNull InspectionToolWrapper[] additional) {
+                                                            @NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                                            @NotNull InspectionToolWrapper<?,?>[] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());
