@@ -89,8 +89,8 @@ public class PySkeletonRefresher {
     ourGeneratingCount += increment;
   }
 
+  @NotNull
   public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker checker) throws InvalidSdkException, ExecutionException {
-    final List<String> errorList = new SmartList<>();
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
@@ -106,7 +106,13 @@ public class PySkeletonRefresher {
 
     mySkeletonsGenerator.prepare();
 
-    updateOrCreateSkeletons();
+    final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
+    final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
+      if (result.myGenerationStatus == PySkeletonGenerator.GenerationStatus.FAILED) {
+        return result.getModuleName();
+      }
+      return null;
+    });
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
@@ -116,27 +122,7 @@ public class PySkeletonRefresher {
 
     ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
 
-    return errorList;
-  }
-
-  private static void logErrors(@NotNull final Map<String, List<String>> errors, @NotNull final List<String> failedSdks,
-                                @NotNull final String message) {
-    LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-    LOG.warn(message);
-
-    if (failedSdks.size() > 0) {
-      LOG.warn(PyBundle.message("sdk.error.dialog.failed.sdks"));
-      LOG.warn(StringUtil.join(failedSdks, ", "));
-    }
-
-    if (errors.size() > 0) {
-      LOG.warn(PyBundle.message("sdk.error.dialog.failed.modules"));
-      for (String sdkName : errors.keySet()) {
-        for (String moduleName : errors.get(sdkName)) {
-          LOG.warn(moduleName);
-        }
-      }
-    }
+    return failedModules;
   }
 
   /**
@@ -306,8 +292,6 @@ public class PySkeletonRefresher {
                                            @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
-    final Map<String, List<String>> errors = new TreeMap<>();
-    final List<String> failedSdks = new SmartList<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
@@ -320,15 +304,11 @@ public class PySkeletonRefresher {
 
       changeGeneratingSkeletons(1);
       try {
-        List<String> sdkErrors = refresher.regenerateSkeletons(checker);
-        if (sdkErrors.size() > 0) {
-          String sdkName = sdk.getName();
-          List<String> knownErrors = errors.get(sdkName);
-          if (knownErrors == null) {
-            errors.put(sdkName, sdkErrors);
-          }
-          else {
-            knownErrors.addAll(sdkErrors);
+        final List<String> errors = refresher.regenerateSkeletons(checker);
+        if (!errors.isEmpty()) {
+          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
+          for (String moduleName : errors) {
+            LOG.warn(moduleName);
           }
         }
       }
@@ -338,18 +318,6 @@ public class PySkeletonRefresher {
       finally {
         changeGeneratingSkeletons(-1);
       }
-    }
-    if (failedSdks.size() > 0 || errors.size() > 0) {
-      int module_errors = 0;
-      for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
-      String message;
-      if (failedSdks.size() > 0) {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failedSdks.size());
-      }
-      else {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
-      }
-      logErrors(errors, failedSdks, message);
     }
   }
 
