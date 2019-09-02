@@ -64,9 +64,13 @@ public class JdkBundle {
     return myJdk;
   }
 
-  public boolean isOperational() {
-    if (myBoot) return true;
+  @NotNull
+  public File getHome() {
+    return getVMExecutable().getParentFile().getParentFile();
+  }
 
+  @NotNull
+  public File getVMExecutable() {
     File home = myLocation;
     if (SystemInfo.isMac) {
       File contents = new File(home, "Contents/Home");
@@ -78,6 +82,13 @@ public class JdkBundle {
     if (!javaPath.isFile()) {
       javaPath = new File(home, SystemInfo.isWindows ? "jre\\bin\\java.exe" : "jre/bin/java");
     }
+    return javaPath;
+  }
+
+  public boolean isOperational() {
+    if (myBoot) return true;
+
+    File javaPath = getVMExecutable();
 
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(javaPath.getPath(), "-version"));
