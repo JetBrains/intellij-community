@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * Possible places in the IDEA user interface where an action can appear.
+ * Possible places in the IDE user interface where an action can appear.
  */
-
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
@@ -190,7 +189,7 @@ public abstract class ActionPlaces {
   }
 
   /**
-   * Returns true if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
+   * Returns {@code true} if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
    * (Used to avoid duplicate processing of the same action.)
    */
   @ApiStatus.Internal
