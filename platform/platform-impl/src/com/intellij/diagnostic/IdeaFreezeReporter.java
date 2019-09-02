@@ -51,7 +51,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   @Nullable
-  private static List<StackTraceElement> findDominantCommonStack(CallTreeNode root, int threshold) {
+  private static List<StackTraceElement> findDominantCommonStack(CallTreeNode root, long threshold) {
     // find dominant
     CallTreeNode node = root.getMostHitChild();
     if (node == null) {
@@ -305,7 +305,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
     }
     CallTreeNode root = buildTree(reasonStacks, time);
-    List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() / 2);
+    List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() * time / 2);
     if (ContainerUtil.isEmpty(commonStack)) {
       commonStack = myStacktraceCommonPart; // fallback to simple EDT common
     }
