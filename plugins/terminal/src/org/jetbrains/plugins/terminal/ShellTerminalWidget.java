@@ -72,6 +72,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   @NotNull
   public String getTypedShellCommand() {
+    if (myPromptUpdateNeeded) {
+      return "";
+    }
     String line = getLineAtCursor();
     return StringUtil.trimStart(line, myPrompt);
   }
