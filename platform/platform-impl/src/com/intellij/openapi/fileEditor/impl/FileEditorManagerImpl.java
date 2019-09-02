@@ -206,15 +206,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         ContainerUtil.addAll(providers, composite.getProviders());
       }
       FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(project, file);
-      if (newProviders.length > providers.size()) {
-        List<FileEditorProvider> toOpen = new ArrayList<>(Arrays.asList(newProviders));
-        toOpen.removeAll(providers);
-        // need to open additional non dumb-aware editors
-        for (EditorWithProviderComposite composite : composites) {
-          for (FileEditorProvider provider : toOpen) {
-            FileEditor editor = provider.createEditor(myProject, file);
-            composite.addEditor(editor, provider);
-          }
+      List<FileEditorProvider> toOpen = new ArrayList<>(Arrays.asList(newProviders));
+      toOpen.removeAll(providers);
+      // need to open additional non dumb-aware editors
+      for (EditorWithProviderComposite composite : composites) {
+        for (FileEditorProvider provider : toOpen) {
+          FileEditor editor = provider.createEditor(myProject, file);
+          composite.addEditor(editor, provider);
         }
       }
     }
