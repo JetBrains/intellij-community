@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,14 +72,12 @@ public class PySkeletonRefresher {
   private String mySkeletonsPath;
 
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  private final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
   // we use the equals sign after filename so that we can freely include space in the filename
 
   private static int ourGeneratingCount = 0;
 
   private List<String> myExtraSyspath;
   private int myGeneratorVersion;
-  private Map<String, Pair<Integer, Long>> myBlacklist;
 
   private final PySkeletonGenerator mySkeletonsGenerator;
 
@@ -108,7 +105,6 @@ public class PySkeletonRefresher {
     }
 
     mySkeletonsGenerator.prepare();
-    myBlacklist = loadBlacklist();
 
     updateOrCreateSkeletons();
 
@@ -251,90 +247,6 @@ public class PySkeletonRefresher {
     finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
-  }
-
-
-  private Map<String, Pair<Integer, Long>> loadBlacklist() {
-    Map<String, Pair<Integer, Long>> ret = new HashMap<>();
-    File blacklistFile = new File(mySkeletonsPath, BLACKLIST_FILE_NAME);
-    if (blacklistFile.exists() && blacklistFile.canRead()) {
-      Reader input;
-      try {
-        input = new FileReader(blacklistFile);
-        LineNumberReader lines = new LineNumberReader(input);
-        try {
-          String line;
-          do {
-            line = lines.readLine();
-            if (line != null && line.length() > 0 && line.charAt(0) != '#') { // '#' begins a comment
-              Matcher matcher = BLACKLIST_LINE.matcher(line);
-              boolean notParsed = true;
-              if (matcher.matches()) {
-                final int version = fromVersionString(matcher.group(2));
-                if (version > 0) {
-                  try {
-                    final long timestamp = Long.parseLong(matcher.group(3));
-                    final String filename = matcher.group(1);
-                    ret.put(filename, new Pair<>(version, timestamp));
-                    notParsed = false;
-                  }
-                  catch (NumberFormatException ignore) {
-                  }
-                }
-              }
-              if (notParsed) LOG.warn("In blacklist at " + mySkeletonsPath + " strange line '" + line + "'");
-            }
-          }
-          while (line != null);
-        }
-        catch (IOException ex) {
-          LOG.warn("Failed to read blacklist in " + mySkeletonsPath, ex);
-        }
-        finally {
-          lines.close();
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-    return ret;
-  }
-
-  private static void storeBlacklist(File skeletonDir, Map<String, Pair<Integer, Long>> blacklist) {
-    File blacklistFile = new File(skeletonDir, BLACKLIST_FILE_NAME);
-    PrintWriter output;
-    try {
-      output = new PrintWriter(blacklistFile);
-      try {
-        output.println("# PyCharm failed to generate skeletons for these modules.");
-        output.println("# These skeletons will be re-generated automatically");
-        output.println("# when a newer module version or an updated generator becomes available.");
-        // each line:   filename = version.string timestamp
-        for (String fname : blacklist.keySet()) {
-          Pair<Integer, Long> data = blacklist.get(fname);
-          output.print(fname);
-          output.print(" = ");
-          output.print(SkeletonVersionChecker.toVersionString(data.getFirst()));
-          output.print(" ");
-          output.print(data.getSecond());
-          output.println();
-        }
-      }
-      finally {
-        output.close();
-      }
-    }
-    catch (IOException ex) {
-      LOG.warn("Failed to store blacklist in " + skeletonDir.getPath(), ex);
-    }
-  }
-
-  private static void removeBlacklist(File skeletonDir) {
-    File blacklistFile = new File(skeletonDir, BLACKLIST_FILE_NAME);
-    if (blacklistFile.exists()) {
-      boolean okay = blacklistFile.delete();
-      if (!okay) LOG.warn("Could not delete blacklist file in " + skeletonDir.getPath());
-    }
   }
 
   /**
