@@ -243,7 +243,6 @@ public class JavadocParser {
     IElementType tokenType;
     while ((tokenType = builder.getTokenType()) == JavaDocTokenType.DOC_SPACE) {
       builder.remapCurrentToken(TokenType.WHITE_SPACE);
-      builder.advanceLexer();
     }
     return tokenType;
   }
