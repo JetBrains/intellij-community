@@ -30,6 +30,9 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
   var useDefaultProjectAsTemplate = true
 
   @JvmField
+  var isRefreshVfsNeeded = true
+
+  @JvmField
   var callback: ProjectOpenedCallback? = null
 
   fun copy(): OpenProjectTask {
@@ -42,6 +45,7 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
     copy.checkDirectoryForFileBasedProjects = checkDirectoryForFileBasedProjects
     copy.useDefaultProjectAsTemplate = useDefaultProjectAsTemplate
     copy.callback = callback
+    copy.isRefreshVfsNeeded = isRefreshVfsNeeded
     return copy
   }
 }

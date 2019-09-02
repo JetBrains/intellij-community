@@ -11,6 +11,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -178,17 +179,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public Project newProject(@NotNull Path file, boolean useDefaultProjectSettings) {
-    return newProject(file, null, useDefaultProjectSettings, true);
+    OpenProjectTask options = new OpenProjectTask();
+    options.useDefaultProjectAsTemplate = useDefaultProjectSettings;
+    options.isNewProject = true;
+    return newProject(file, null, options);
   }
 
   @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    return newProject(Paths.get(toCanonicalName(filePath)), projectName, useDefaultProjectSettings, true);
+    OpenProjectTask options = new OpenProjectTask();
+    options.useDefaultProjectAsTemplate = useDefaultProjectSettings;
+    options.isNewProject = true;
+    return newProject(Paths.get(toCanonicalName(filePath)), projectName, options);
   }
 
   @Nullable
-  public Project newProject(@NotNull Path projectFile, @Nullable String projectName, boolean useDefaultProjectSettings, boolean isRefreshVfsNeeded) {
+  public Project newProject(@NotNull Path projectFile, @Nullable String projectName, @NotNull OpenProjectTask options) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
@@ -215,8 +222,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     ProjectImpl project = doCreateProject(projectName, projectFile);
     try {
-      Project template = useDefaultProjectSettings ? getDefaultProject() : null;
-      initProject(projectFile, project, isRefreshVfsNeeded, template, ProgressManager.getInstance().getProgressIndicator());
+      Project template = options.useDefaultProjectAsTemplate ? getDefaultProject() : null;
+      initProject(projectFile, project, options.isRefreshVfsNeeded, template, ProgressManager.getInstance().getProgressIndicator());
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }

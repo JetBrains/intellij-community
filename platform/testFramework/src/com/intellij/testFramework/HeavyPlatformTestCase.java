@@ -7,6 +7,7 @@ import com.intellij.ide.GeneratedSourceFileChangeTracker;
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -292,8 +293,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   public static Project createProject(@NotNull Path file) {
     try {
       ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+      OpenProjectTask options = new OpenProjectTask();
+      options.useDefaultProjectAsTemplate = false;
       // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
-      return Objects.requireNonNull(projectManager.newProject(file, null, /* useDefaultProjectSettings = */ false, /* isRefreshVfsNeeded = */ false));
+      options.isRefreshVfsNeeded = false;
+      return Objects.requireNonNull(projectManager.newProject(file, null, options));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {

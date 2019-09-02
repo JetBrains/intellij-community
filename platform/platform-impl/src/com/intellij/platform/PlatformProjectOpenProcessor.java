@@ -109,18 +109,18 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     }
   }
 
-  /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  /**
+   * @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)}
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
                                       int line,
-                                      @Nullable ProjectOpenedCallback callback,
+                                      @SuppressWarnings("unused") @Nullable ProjectOpenedCallback callback,
                                       @SuppressWarnings("unused") boolean isReopen) {
-    OpenProjectTask openProjectOptions = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
-    openProjectOptions.callback = callback;
-    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
+    return doOpenProject(Paths.get(virtualFile.getPath()), new OpenProjectTask(forceOpenInNewFrame, projectToClose), line);
   }
 
   /**
@@ -282,7 +282,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     boolean isNewProject = options.isNewProject;
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, !options.useDefaultProjectAsTemplate, true);
+      project = projectManager.newProject(baseDir, projectName, options);
     }
     else {
       for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
@@ -388,8 +388,8 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return moduleRef.get();
   }
 
-  public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
+  public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getIterable()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }
