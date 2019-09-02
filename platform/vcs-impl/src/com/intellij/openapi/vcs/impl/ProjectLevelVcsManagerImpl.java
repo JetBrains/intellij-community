@@ -780,8 +780,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
+        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
-          if (FileTypeManager.getInstance().isFileIgnored(name)) {
+          if (fileTypeManager.isFileIgnored(name)) {
             return true;
           }
         }
