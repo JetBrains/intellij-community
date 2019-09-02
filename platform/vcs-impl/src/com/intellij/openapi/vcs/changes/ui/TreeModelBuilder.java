@@ -395,8 +395,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                   @NotNull ChangesBrowserNode<?> node,
                                   @NotNull Function<StaticFilePath, ChangesBrowserNode<?>> nodeBuilder) {
     PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
-    if (!GROUPING_POLICY.isIn(subtreeRoot) && myProject != null) {
-      GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myProject, myModel));
+    if (!GROUPING_POLICY.isIn(subtreeRoot)) {
+      ChangesGroupingPolicy policy = myProject != null ? myGroupingPolicyFactory.createGroupingPolicy(myProject, myModel)
+                                                       : NoneChangesGroupingPolicy.INSTANCE;
+      GROUPING_POLICY.set(subtreeRoot, policy);
     }
 
     StaticFilePath pathKey = getKey(change);
