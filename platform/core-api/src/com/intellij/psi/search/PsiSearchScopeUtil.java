@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.lang.LanguageMatcher;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,5 +66,19 @@ public class PsiSearchScopeUtil {
       (LocalSearchScope)originalScope,
       fileTypes
     );
+  }
+
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  @NotNull
+  public static SearchScope restrictScopeToFileLanguage(@NotNull Project project,
+                                                        @NotNull SearchScope originalScope,
+                                                        @NotNull LanguageMatcher matcher) {
+    if (originalScope instanceof GlobalSearchScope) {
+      return new FileLanguageGlobalScope(project, (GlobalSearchScope)originalScope, matcher);
+    }
+    else {
+      return LocalSearchScope.getScopeRestrictedByFileLanguage((LocalSearchScope)originalScope, matcher);
+    }
   }
 }
