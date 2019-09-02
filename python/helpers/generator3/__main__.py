@@ -54,7 +54,7 @@ def main():
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzu", longopts=['name-pattern='])
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern='])
     opts = dict(opts)
 
     generator3.core.quiet = '-q' in opts
@@ -97,6 +97,10 @@ def main():
             report("Expected 1 arg with -u, got %d args", len(args))
             sys.exit(1)
         generator3.extra.zip_stdlib(args[0])
+        sys.exit(0)
+
+    if "-V" in opts:
+        say(version())
         sys.exit(0)
 
     # build skeleton(s)

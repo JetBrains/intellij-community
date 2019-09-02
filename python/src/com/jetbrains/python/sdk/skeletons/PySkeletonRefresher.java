@@ -172,6 +172,28 @@ public class PySkeletonRefresher {
 
     mySkeletonsGenerator.prepare();
 
+    myGeneratorVersion = fromVersionString(mySkeletonsGenerator
+                                             .commandBuilder()
+                                             .extraArgs(Collections.singletonList("-V"))
+                                             .runProcess()
+                                             .getStdout()
+                                             .trim());
+
+    final PyPregeneratedSkeletons preGeneratedSkeletons =
+      PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
+
+    indicate(PyBundle.message("sdk.gen.reading.versions.file"));
+
+    final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
+    final File builtinsFile = new File(skeletonsPath, builtinsFileName);
+
+    final SkeletonHeader oldHeader = readSkeletonHeader(builtinsFile);
+    final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
+
+    if (preGeneratedSkeletons != null && oldOrNonExisting) {
+      preGeneratedSkeletons.unpackPreGeneratedSkeletons(getSkeletonsPath());
+    }
+
     final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
     final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
       if (result.getGenerationStatus() == PySkeletonGenerator.GenerationStatus.FAILED) {
@@ -261,7 +283,8 @@ public class PySkeletonRefresher {
   private List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
     final long startTime = System.currentTimeMillis();
     final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator
-      .withExtraSysPath(getExtraSyspath())
+      .commandBuilder()
+      .extraSysPath(getExtraSyspath())
       .runGeneration(myIndicator);
     finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");

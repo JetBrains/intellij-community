@@ -150,8 +150,9 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
           }
           else {
             refresher.getGenerator()
-              .withTargetModule(myQualifiedName, null)
-              .withAssemblyRefs(assemblyRefs)
+              .commandBuilder()
+              .assemblyRefs(assemblyRefs)
+              .targetModule(myQualifiedName, null)
               .runGeneration(indicator);
           }
           final VirtualFile skeletonDir;
@@ -178,15 +179,16 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
                                                                PythonSdkType.activateVirtualEnv(mySdk), 5000
     );
     if (runResult.checkSuccess(LOG)) {
-      final PySkeletonGenerator generator = refresher.getGenerator()
-        .withExtraSysPath(StringUtil.split(runResult.getStdout(), File.pathSeparator))
-        .withExtraArgs(Arrays.asList("--name-pattern", "gi.repository.*"));
+      final PySkeletonGenerator.Builder builder = refresher.getGenerator()
+        .commandBuilder()
+        .extraSysPath(StringUtil.split(runResult.getStdout(), File.pathSeparator))
+        .extraArgs(Arrays.asList("--name-pattern", "gi.repository.*"));
 
       if (currentBinaryFilesPath != null) {
-        generator.withWorkingDir(currentBinaryFilesPath);
+        builder.workingDir(currentBinaryFilesPath);
       }
 
-      generator.runGeneration(indicator);
+      builder.runGeneration(indicator);
     }
     return true;
   }
