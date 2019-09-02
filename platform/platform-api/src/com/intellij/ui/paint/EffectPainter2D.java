@@ -312,7 +312,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     };
 
-    // we should not recalculate caches when IDEA is on Retina and non-Retina
+    // we should not recalculate caches when IDE is on Retina and non-Retina
     private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 
