@@ -152,6 +152,10 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   @Nullable
   private VcsBaseContentProvider findProviderFor(@NotNull VirtualFile file) {
     for (VcsBaseContentProvider support : myAdditionalProviderPoint) {
+      if (support == null) {
+        break;
+      }
+
       if (support.isSupported(file)) {
         return support;
       }
