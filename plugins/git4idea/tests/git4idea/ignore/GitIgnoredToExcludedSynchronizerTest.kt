@@ -23,6 +23,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
+    Registry.get("vcs.enable.add.ignored.directories.to.exclude").setValue(true, testRootDisposable)
     Registry.get("vcs.propose.add.ignored.directories.to.exclude").setValue(true, testRootDisposable)
   }
 
