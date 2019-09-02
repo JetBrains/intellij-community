@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
@@ -33,6 +32,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 
 public class VfsRootAccess {
@@ -60,7 +60,7 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = ReadAction.compute(VfsRootAccess::allowedRoots);
+      Set<String> allowed = allowedRoots();
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
@@ -130,11 +130,11 @@ public class VfsRootAccess {
         if (!project.isInitialized()) {
           return null; // all is allowed
         }
-        for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
-          allowed.add(root.getPath());
+        for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
+          allowed.add(VfsUtilCore.urlToPath(url));
         }
-        for (VirtualFile root : getAllRoots(project)) {
-          allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+        for (String url : getAllRootUrls(project)) {
+          allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
         }
         String location = project.getBasePath();
         assert location != null : project;
@@ -162,16 +162,16 @@ public class VfsRootAccess {
   }
 
   @NotNull
-  private static VirtualFile[] getAllRoots(@NotNull Project project) {
+  private static Collection<String> getAllRootUrls(@NotNull Project project) {
     insideGettingRoots = true;
-    final Set<VirtualFile> roots = new THashSet<>();
+    final Set<String> roots = new THashSet<>();
 
     final OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries();
-    ContainerUtil.addAll(roots, enumerator.getClassesRoots());
-    ContainerUtil.addAll(roots, enumerator.getSourceRoots());
+    ContainerUtil.addAll(roots, enumerator.classes().getUrls());
+    ContainerUtil.addAll(roots, enumerator.sources().getUrls());
 
     insideGettingRoots = false;
-    return VfsUtilCore.toVirtualFileArray(roots);
+    return roots;
   }
 
   @TestOnly
