@@ -10,7 +10,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +38,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
-  private boolean myChangeThreadName = true;
+  private final boolean myChangeThreadName;
 
-  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
+  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
@@ -51,24 +50,20 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
     }
     myMaxThreads = maxThreads;
-  }
-
-  @ApiStatus.Internal
-  public void setChangeThreadName(boolean value) {
-    myChangeThreadName = value;
+    myChangeThreadName = changeThreadName;
   }
 
   /** @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead */
   @Deprecated
   public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
-    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks);
+    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks, true);
   }
 
   /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
-    this(name, backendExecutor, maxSimultaneousTasks);
+    this(name, backendExecutor, maxSimultaneousTasks, true);
     Disposer.register(parent, () -> shutdownNow());
   }
 

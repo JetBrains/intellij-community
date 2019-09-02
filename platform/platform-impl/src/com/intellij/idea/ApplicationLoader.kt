@@ -48,7 +48,6 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.BoundedTaskExecutor
 import com.intellij.util.io.exists
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -518,9 +517,7 @@ private fun processProgramArguments(args: Array<String>): List<String> {
 @ApiStatus.Internal
 fun preloadServices(app: ApplicationImpl, plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
   val futures = mutableListOf<CompletableFuture<Void>>()
-  val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors()) as BoundedTaskExecutor
-  // do not mangle thread names
-  executor.setChangeThreadName(false)
+  val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
   for (plugin in plugins) {
     for (service in (plugin as IdeaPluginDescriptorImpl).app.services) {
       if (service.preload) {

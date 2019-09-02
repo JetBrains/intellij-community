@@ -25,8 +25,7 @@ public class NonUrgentExecutor implements Executor {
   private final Executor myBackend;
 
   private NonUrgentExecutor() {
-    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
-    ((BoundedTaskExecutor)myBackend).setChangeThreadName(false);
+    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2, false);
   }
 
   @Override
