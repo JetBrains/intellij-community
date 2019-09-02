@@ -280,7 +280,8 @@ public class PySkeletonGenerator {
                                                   @NotNull List<String> cmd,
                                                   @NotNull Map<String, String> env,
                                                   int timeout,
-                                                  @NotNull LineWiseProcessOutputListener listener) throws ExecutionException {
+                                                  @NotNull LineWiseProcessOutputListener listener)
+    throws ExecutionException, InvalidSdkException {
     final GeneralCommandLine commandLine = new GeneralCommandLine(cmd)
       .withWorkDirectory(homePath)
       .withEnvironment(env);
