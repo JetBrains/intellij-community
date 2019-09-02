@@ -150,13 +150,13 @@ def walk_python_path(path):
         yield root, [f for f in files if os.path.exists(os.path.join(root, f))]
 
 
-def list_binaries(paths):
+def collect_binaries(paths):
     """
     Finds binaries in the given list of paths.
     Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
     Tries to be case-insensitive, but case-preserving.
     @param paths: list of paths.
-    @return: dict[module_name, full_path]
+    @return: list of ``BinaryItem``s
     """
     SEP = os.path.sep
     res = {}  # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
@@ -194,10 +194,7 @@ def list_binaries(paths):
                         debug("done with %s" % name)
                     file_path = os.path.join(root, f)
 
-                    res[the_name.upper()] = (the_name,
-                                             file_path,
-                                             os.path.getsize(file_path),
-                                             file_modification_timestamp(file_path))
+                    res[the_name.upper()] = BinaryModule(the_name, file_path)
     return list(res.values())
 
 
@@ -582,10 +579,6 @@ def debug(msg):
 
 def trace(msg):
     log(msg, level='trace')
-
-
-def collect_binaries(paths):
-    return [BinaryModule(qname, path) for (qname, path, _, _) in list_binaries(paths)]
 
 
 def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):

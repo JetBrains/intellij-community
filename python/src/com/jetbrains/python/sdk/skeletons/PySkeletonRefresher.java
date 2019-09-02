@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
-import com.google.common.base.Joiner;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +30,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -41,6 +39,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -255,36 +254,6 @@ public class PySkeletonRefresher {
     finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
-  }
-
-  private void copyBaseSdkSkeletonsToVirtualEnv(String skeletonsPath, PySkeletonGenerator.ListBinariesResult binaries)
-    throws InvalidSdkException {
-    final Sdk base = PythonSdkType.getInstance().getVirtualEnvBaseSdk(mySdk);
-    if (base != null) {
-      indicate("Copying base SDK skeletons for virtualenv...");
-      final String baseSkeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), base.getHomePath());
-      final PySkeletonGenerator.ListBinariesResult baseBinaries =
-        mySkeletonsGenerator.listBinaries(base, StringUtil.join(calculateExtraSysPath(base, baseSkeletonsPath), File.pathSeparator));
-      for (Map.Entry<String, PyBinaryItem> entry : binaries.modules.entrySet()) {
-        final String module = entry.getKey();
-        final PyBinaryItem binary = entry.getValue();
-        final PyBinaryItem baseBinary = baseBinaries.modules.get(module);
-        final File fromFile = getSkeleton(module, baseSkeletonsPath);
-        if (baseBinaries.modules.containsKey(module) &&
-            fromFile.exists() &&
-            binary.length() == baseBinary.length()) { // Weak binary modules equality check
-          final File toFile = fromFile.isDirectory() ?
-                              getPackageSkeleton(module, skeletonsPath) :
-                              getModuleSkeleton(module, skeletonsPath);
-          try {
-            FileUtil.copy(fromFile, toFile);
-          }
-          catch (IOException e) {
-            LOG.info("Error copying base virtualenv SDK skeleton for " + module, e);
-          }
-        }
-      }
-    }
   }
 
 
