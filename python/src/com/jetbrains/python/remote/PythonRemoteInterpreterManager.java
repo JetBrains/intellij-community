@@ -128,13 +128,6 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract String[] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
     throws ExecutionException, InterruptedException;
 
-  public static class PyRemoteInterpreterRuntimeException extends RuntimeException {
-
-    public PyRemoteInterpreterRuntimeException() {
-      super(WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
-    }
-  }
-
   public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 
   /**
