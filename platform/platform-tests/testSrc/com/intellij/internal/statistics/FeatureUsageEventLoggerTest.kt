@@ -312,7 +312,7 @@ class TestFeatureUsageFileEventLogger(session: String,
 
   override fun dispose() {
     super.dispose()
-    myLogExecutor.awaitTermination(10, TimeUnit.SECONDS)
+    logExecutor.awaitTermination(10, TimeUnit.SECONDS)
   }
 }
 

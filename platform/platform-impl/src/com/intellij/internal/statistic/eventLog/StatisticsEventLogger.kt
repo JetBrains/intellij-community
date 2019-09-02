@@ -4,9 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +23,7 @@ interface StatisticsEventLogger {
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
-                                             val maxFileSize: String = "200KB") {
+                                             private val maxFileSize: String = "200KB") {
   open val logger: StatisticsEventLogger = createLogger()
 
   abstract fun isRecordEnabled() : Boolean
@@ -73,19 +71,12 @@ class EmptyStatisticsEventLogger : StatisticsEventLogger {
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
-  if (Extensions.getRootArea().hasExtensionPoint(EP_NAME.name)) {
-    return EP_NAME.extensionList
-  }
-  return emptyList()
+  return EP_NAME.extensionsIfPointIsRegistered
 }
 
-
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
-  val providers = getEventLogProviders()
-  for (provider in providers) {
-    if (StringUtil.equals(provider.recorderId, recorderId)) {
-      return provider
-    }
+  if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME.name)) {
+    EP_NAME.iterable.firstOrNull { it.recorderId == recorderId }?.let { return it }
   }
   LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
   return EmptyStatisticsEventLoggerProvider(recorderId)
