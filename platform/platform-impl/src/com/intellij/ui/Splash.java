@@ -53,9 +53,7 @@ public final class Splash extends Window {
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
     Dimension size = new Dimension(myWidth, myHeight);
-    if (!"false".equals(System.getProperty("suppress.focus.stealing")) && !"false".equals(System.getProperty("suppress.focus.stealing.auto.request.focus")) && Boolean.getBoolean("suppress.focus.stealing.linux")) {
-      setAutoRequestFocus(false);
-    }
+    setAutoRequestFocus(false);
     setSize(size);
     setLocationInTheCenterOfScreen();
 
