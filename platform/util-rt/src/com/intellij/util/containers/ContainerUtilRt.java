@@ -136,7 +136,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  protected static <T, C extends Collection<T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
+  protected static <T, C extends Collection<? super T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
     for (T element : elements) {
       collection.add(element);
     }
@@ -215,7 +215,7 @@ public class ContainerUtilRt {
   private static class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final EmptyList INSTANCE = new EmptyList();
+    private static final EmptyList<?> INSTANCE = new EmptyList<Object>();
 
     @Override
     public int size() {
@@ -273,7 +273,7 @@ public class ContainerUtilRt {
     @Override
     @Contract(pure = true)
     public boolean equals(Object o) {
-      return o instanceof List && ((List)o).isEmpty();
+      return o instanceof List && ((List<?>)o).isEmpty();
     }
 
     @Override
@@ -388,12 +388,12 @@ public class ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
+  public static <T> T getLastItem(@Nullable List<? extends T> list, @Nullable T def) {
     return isEmpty(list) ? def : list.get(list.size() - 1);
   }
 
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
+  public static <T> T getLastItem(@Nullable List<? extends T> list) {
     return getLastItem(list, null);
   }
 
@@ -403,14 +403,14 @@ public class ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     return find(iterable.iterator(), condition);
   }
 
   @Contract(pure=true)
-  public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
+  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull Condition<? super T> condition) {
     while (iterator.hasNext()) {
-      V value = iterator.next();
+      T value = iterator.next();
       if (condition.value(value)) return value;
     }
     return null;

@@ -932,7 +932,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     return ContainerUtilRt.find(iterable, condition);
   }
 
@@ -946,12 +946,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return find(iterator, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
-  public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
+  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull Condition<? super T> condition) {
     return ContainerUtilRt.find(iterator, condition);
   }
 
   @Contract(pure = true)
-  public static <T, V extends T> V findLast(@NotNull List<? extends V> list, @NotNull Condition<? super T> condition) {
+  public static <T> T findLast(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     int index = lastIndexOf(list, condition);
     if (index < 0) return null;
     return list.get(index);
@@ -1345,13 +1345,12 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param collection collection to add elements to
    * @param elements elements to add
    * @param <T> type of collection elements
-   * @param <A> type of elements to add (subtype of collection elements)
    * @param <C> type of the collection
    * @return the collection passed as first argument
    */
   @SafeVarargs
   @NotNull
-  public static <T, A extends T, C extends Collection<T>> C addAll(@NotNull C collection, @NotNull A... elements) {
+  public static <T, C extends Collection<? super T>> C addAll(@NotNull C collection, @NotNull T... elements) {
     //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
       //noinspection UseBulkOperation
@@ -1365,7 +1364,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @SafeVarargs
   @NotNull
-  public static <T, A extends T, C extends Collection<T>> C addAllNotNull(@NotNull C collection, @NotNull A... elements) {
+  public static <T, C extends Collection<T>> C addAllNotNull(@NotNull C collection, @NotNull T... elements) {
     for (T element : elements) {
       if (element != null) {
         collection.add(element);
@@ -1544,12 +1543,12 @@ public class ContainerUtil extends ContainerUtilRt {
       return (Iterable<T>)iterables[0];
     }
     return () -> {
-      Iterator[] iterators = new Iterator[iterables.length];
+      //noinspection unchecked
+      Iterator<? extends T>[] iterators = new Iterator[iterables.length];
       for (int i = 0; i < iterables.length; i++) {
         Iterable<? extends T> iterable = iterables[i];
         iterators[i] = iterable.iterator();
       }
-      //noinspection unchecked
       return concatIterators(iterators);
     };
   }
@@ -1557,7 +1556,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @SafeVarargs
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> concatIterators(@NotNull Iterator<T>... iterators) {
+  public static <T> Iterator<T> concatIterators(@NotNull Iterator<? extends T>... iterators) {
     return new SequenceIterator<>(iterators);
   }
 
@@ -1635,9 +1634,9 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<T> concat(@NotNull Iterable<? extends V> list, @NotNull Function<? super V, ? extends Collection<? extends T>> listGenerator) {
-    List<T> result = new ArrayList<>();
-    for (final V v : list) {
+  public static <T, V> List<V> concat(@NotNull Iterable<? extends T> list, @NotNull Function<? super T, ? extends Collection<? extends V>> listGenerator) {
+    List<V> result = new ArrayList<>();
+    for (final T v : list) {
       result.addAll(listGenerator.fun(v));
     }
     return result.isEmpty() ? emptyList() : result;
@@ -1817,12 +1816,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
+  public static <T> T getLastItem(@Nullable List<? extends T> list, @Nullable T def) {
     return ContainerUtilRt.getLastItem(list, def);
   }
 
   @Contract(pure=true)
-  public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
+  public static <T> T getLastItem(@Nullable List<? extends T> list) {
     return ContainerUtilRt.getLastItem(list);
   }
 
@@ -1856,7 +1855,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
 
-  public static <T extends Comparable<T>> void sort(@NotNull List<T> list) {
+  public static <T extends Comparable<? super T>> void sort(@NotNull List<T> list) {
     int size = list.size();
 
     if (size < 2) return;
@@ -1918,7 +1917,7 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
-  public static <T extends Comparable<T>> void sort(@NotNull T[] a) {
+  public static <T extends Comparable<? super T>> void sort(@NotNull T[] a) {
     int size = a.length;
 
     if (size < 2) return;
@@ -2916,12 +2915,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T, C extends Collection<T>> C nullize(@Nullable C collection) {
+  public static <T, C extends Collection<? extends T>> C nullize(@Nullable C collection) {
     return isEmpty(collection) ? null : collection;
   }
 
   @Contract(pure=true)
-  public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<? extends T> o1, @NotNull List<? extends T> o2) {
+  public static <T extends Comparable<? super T>> int compareLexicographically(@NotNull List<? extends T> o1, @NotNull List<? extends T> o2) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
       int result = Comparing.compare(o1.get(i), o2.get(i));
       if (result != 0) {
@@ -2960,7 +2959,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return sb.toString();
   }
 
-  public static class KeyOrderedMultiMap<K extends Comparable<K>, V> extends MultiMap<K, V> {
+  public static class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
     }
 
