@@ -117,7 +117,7 @@ public class PathsVerifier {
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
       if (!checker.canBeApplied(myDelayedPrecheckContext)) {
-        revert(checker.getErrorMessage());
+        PatchApplier.showError(myProject, checker.getErrorMessage());
         failedToApply.add(patch);
       }
     }
@@ -143,12 +143,12 @@ public class PathsVerifier {
       for (CheckPath checker : checkers) {
         if (!checker.check()) {
           failedPatches.add(checker.getPatch());
-          revert(checker.getErrorMessage());
+          PatchApplier.showError(myProject, checker.getErrorMessage());
         }
       }
     }
     catch (IOException e) {
-      revert(e.getMessage());
+      PatchApplier.showError(myProject, e.getMessage());
     }
     myPatches.removeAll(failedPatches);
     return failedPatches;
@@ -411,10 +411,6 @@ public class PathsVerifier {
 
   private static String fileAlreadyExists(final String path) {
     return VcsBundle.message("cannot.apply.file.already.exists", path);
-  }
-
-  private void revert(final String errorMessage) {
-    PatchApplier.showError(myProject, errorMessage);
   }
 
   private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
