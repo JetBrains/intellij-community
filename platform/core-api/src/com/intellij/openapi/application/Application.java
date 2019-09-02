@@ -106,10 +106,10 @@ public interface Application extends ComponentManager {
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
-   * Returns true if there is currently executing write action of the specified class.
+   * Returns {@code true} if there is currently executing write action of the specified class.
    *
    * @param actionClass the class of the write action to return.
-   * @return true if the action is running, or false if no action of the specified class is currently executing.
+   * @return {@code true} if the action is running, or {@code false} if no action of the specified class is currently executing.
    */
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
@@ -176,7 +176,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the write access is currently allowed.
    *
-   * @return true if the write access is currently allowed, false otherwise.
+   * @return {@code true} if the write access is currently allowed, {@code false} otherwise.
    * @see #assertWriteAccessAllowed()
    * @see #runWriteAction(Runnable)
    */
@@ -186,7 +186,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the read access is currently allowed.
    *
-   * @return true if the read access is currently allowed, false otherwise.
+   * @return {@code true} if the read access is currently allowed, {@code false} otherwise.
    * @see #assertReadAccessAllowed()
    * @see #runReadAction(Runnable)
    */
@@ -196,7 +196,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the Swing dispatch thread.
    *
-   * @return true if the current thread is the Swing dispatch thread, false otherwise.
+   * @return {@code true} if the current thread is the Swing dispatch thread, {@code false} otherwise.
    */
   @Contract(pure = true)
   boolean isDispatchThread();
@@ -235,7 +235,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDEA is in the specified modality
+   * AWT event dispatching thread, when IDE is in the specified modality
    * state (or a state with less modal dialogs open).
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
@@ -248,7 +248,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDEA is in the specified modality
+   * AWT event dispatching thread, when IDE is in the specified modality
    * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    * <p>
@@ -342,7 +342,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    *
-   * @return true if IDEA is running unit tests, false otherwise
+   * @return {@code true} if IDE is running unit tests, {@code false} otherwise
    */
   boolean isUnitTestMode();
 
@@ -350,7 +350,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * No UI should be shown when IDE is running in this mode.
    *
-   * @return true if IDE is running in UI-less mode, false otherwise
+   * @return {@code true} if IDE is running in UI-less mode, {@code false} otherwise
    */
   boolean isHeadlessEnvironment();
 
@@ -358,7 +358,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
-   * @return true if IDE is running in command line  mode, false otherwise
+   * @return {@code true} if IDE is running in command line  mode, {@code false} otherwise
    */
   boolean isCommandLine();
 
@@ -395,14 +395,14 @@ public interface Application extends ComponentManager {
   <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
-   * @return true if application is currently disposing (but not yet disposed completely)
+   * @return {@code true} if application is currently disposing (but not yet disposed completely)
    */
   boolean isDisposeInProgress();
 
   /**
    * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.
    *
-   * @return true if IDE can restart itself, false otherwise.
+   * @return {@code true} if IDE can restart itself, {@code false} otherwise.
    */
   boolean isRestartCapable();
 
@@ -414,7 +414,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the application is active.
    *
-   * @return true if one of application windows is focused, false -- otherwise
+   * @return {@code true} if one of application windows is focused, {@code false} otherwise
    */
   boolean isActive();
 
