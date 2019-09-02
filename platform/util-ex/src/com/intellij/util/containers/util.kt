@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import gnu.trove.THashSet
@@ -84,6 +85,33 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
     }
   }
   CompoundRuntimeException.throwIfNotEmpty(errors)
+}
+
+inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
+  return asSequence().forEachLoggingErrors(logger, operation)
+}
+
+inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
+  forEach {
+    try {
+      operation(it)
+    }
+    catch (e: Throwable) {
+      logger.error(e)
+    }
+  }
+}
+
+inline fun <T, R : Any> Collection<T>.mapNotNullLoggingErrors(logger: Logger, operation: (T) -> R?): List<R> {
+  return mapNotNull {
+    try {
+      operation(it)
+    }
+    catch (e: Throwable) {
+      logger.error(e)
+      null
+    }
+  }
 }
 
 fun <T> Array<T>?.stream(): Stream<T> = if (this != null) Stream.of(*this) else Stream.empty()

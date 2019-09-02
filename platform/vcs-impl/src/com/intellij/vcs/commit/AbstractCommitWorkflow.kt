@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import com.intellij.util.containers.forEachLoggingErrors
 import java.util.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -166,11 +167,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
-      LOG.debug("CheckinHandler.beforeCheckin: $handler")
+    commitHandlers.forEachLoggingErrors(LOG) { handler ->
+      if (handler.acceptExecutor(executor)) {
+        LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
-      val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-      if (result != CheckinHandler.ReturnResult.COMMIT) return result
+        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
+        if (result != CheckinHandler.ReturnResult.COMMIT) return result
+      }
     }
 
     return CheckinHandler.ReturnResult.COMMIT

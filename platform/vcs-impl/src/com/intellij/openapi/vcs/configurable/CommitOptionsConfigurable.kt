@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
+import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.vcs.commit.CommitOptionsPanel.Companion.verticalPanel
@@ -20,12 +22,14 @@ import com.intellij.vcs.commit.getDefaultCommitActionName
 import java.awt.GridLayout
 import java.io.File
 
+private val LOG = logger<CommitOptionsConfigurable>()
+
 class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsConfigurable>(GridLayout()), UnnamedConfigurable, Disposable {
   private val checkinPanel = CheckinPanel(project)
   private val commitContext = CommitContext()
   private val checkinHandlers = getCommitHandlers(
     ProjectLevelVcsManager.getInstance(project).allActiveVcss.toList(), checkinPanel, commitContext)
-  private val beforeSettings = checkinHandlers.mapNotNull { it.beforeCheckinSettings }
+  private val beforeSettings = checkinHandlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinSettings }
 
   init {
     val actionName = removeMnemonic(checkinPanel.commitActionName)
