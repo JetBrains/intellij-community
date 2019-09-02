@@ -127,7 +127,6 @@ public class JBTabsImpl extends JComponent
 
   boolean myAddNavigationGroup = true;
 
-  private boolean myGhostsAlwaysVisible = false;
   private boolean myDisposed;
   private Color myActiveTabFillIn;
 
@@ -142,7 +141,6 @@ public class JBTabsImpl extends JComponent
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
   private long myRemoveDeferredRequest;
-  private boolean myTestMode;
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
@@ -1852,15 +1850,6 @@ public class JBTabsImpl extends JComponent
       currentTab++;
     }
 
-    if (isSingleRow() && isGhostsAlwaysVisible()) {
-      if (horizontal) {
-        size.width += getGhostTabLength() * 2;
-      }
-      else {
-        size.height += getGhostTabLength() * 2;
-      }
-    }
-
     if (horizontal) {
       size.height += myBorder.getThickness();
     }
@@ -2394,15 +2383,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  @Override
-  public JBTabsPresentation setGhostsAlwaysVisible(final boolean visible) {
-    myGhostsAlwaysVisible = visible;
-
-    relayout(true, false);
-
-    return this;
-  }
-
   public int getSeparatorWidth() {
     return mySeparatorWidth;
   }
@@ -2413,10 +2393,6 @@ public class JBTabsImpl extends JComponent
 
   public boolean useBoldLabels() {
     return false;
-  }
-
-  public boolean isGhostsAlwaysVisible() {
-    return myGhostsAlwaysVisible;
   }
 
   @Override

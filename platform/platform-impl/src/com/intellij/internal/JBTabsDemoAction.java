@@ -107,15 +107,6 @@ public class JBTabsDemoAction extends AnAction {
     });
     south.add(row);
 
-    final JCheckBox ghosts = new JCheckBox("Ghosts always visible", false);
-    ghosts.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        tabs.setGhostsAlwaysVisible(ghosts.isSelected());
-      }
-    });
-    south.add(ghosts);
-
     final JCheckBox hide = new JCheckBox("Hide tabs", tabs.isHideTabs());
     hide.addItemListener(new ItemListener() {
       @Override
@@ -239,7 +230,6 @@ public class JBTabsDemoAction extends AnAction {
     tabs.setPaintBorder(1, 1, 1, 1);
 
     tabs.getPresentation().setActiveTabFillIn(Color.white);
-    tabs.setGhostsAlwaysVisible(true);
 
     //tabs.setBorder(new LineBorder(Color.blue, 5));
     tabs.setBorder(new EmptyBorder(30, 30, 30, 30));

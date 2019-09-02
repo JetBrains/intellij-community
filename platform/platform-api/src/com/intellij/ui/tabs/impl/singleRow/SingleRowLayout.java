@@ -183,10 +183,6 @@ public class SingleRowLayout extends TabLayout {
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
-
-    if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getTabHGap() * 2);
-    }
   }
 
   protected void updateMoreIconVisibility(SingleRowPassInfo data) {
@@ -201,7 +197,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
   protected void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
-    if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
+    if (data.firstGhostVisible) {
       data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
       data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getTabHGap();
@@ -253,7 +249,7 @@ public class SingleRowLayout extends TabLayout {
       JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
     }
 
-    if (data.lastGhostVisible || myTabs.isGhostsAlwaysVisible()) {
+    if (data.lastGhostVisible) {
       data.lastGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myRightGhost, data.lastGhost);
     }
@@ -379,13 +375,13 @@ public class SingleRowLayout extends TabLayout {
 
     if (!data.firstGhostVisible && isFirstSide) {
       data.firstGhostVisible = !myTabs.isEditorTabs();
-      if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
+      if (!myTabs.isEditorTabs()) {
         data.toFitLength -= myTabs.getGhostTabLength();
       }
     }
     else if (!data.lastGhostVisible && !isFirstSide) {
       data.lastGhostVisible = !myTabs.isEditorTabs();
-      if (!myTabs.isGhostsAlwaysVisible() && !myTabs.isEditorTabs()) {
+      if (!myTabs.isEditorTabs()) {
         data.toFitLength -= myTabs.getGhostTabLength();
       }
     }

@@ -61,11 +61,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public boolean isGhostsAlwaysVisible() {
-    return false;
-  }
-
-  @Override
   public boolean useSmallLabels() {
     return UISettings.getInstance().getUseSmallLabelsOnTabs();
   }
