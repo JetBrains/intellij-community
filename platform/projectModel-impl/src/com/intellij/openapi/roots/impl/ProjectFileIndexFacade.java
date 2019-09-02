@@ -21,7 +21,6 @@ import java.util.Collection;
  * @author yole
  */
 public final class ProjectFileIndexFacade extends FileIndexFacade {
-  // https://jetbrains.slack.com/archives/C0DEA0SKF/p1567099155016400?thread_ts=1567096441.013500&cid=C0DEA0SKF
   // PsiManagerImpl is created for default project, but DirectoryIndex must be not created for default project.
   private final NotNullLazyValue<DirectoryIndex> myDirectoryIndex = NotNullLazyValue.createValue(() -> DirectoryIndex.getInstance(myProject));
   private final ProjectFileIndex myFileIndex;
