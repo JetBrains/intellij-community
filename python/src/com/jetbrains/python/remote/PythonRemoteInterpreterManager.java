@@ -114,13 +114,14 @@ public abstract class PythonRemoteInterpreterManager {
   @NotNull
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
+  @NotNull
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
-                                                                      PythonConsoleView view,
-                                                                      PydevConsoleCommunication consoleCommunication,
-                                                                      String commandLine,
-                                                                      Charset charset,
-                                                                      PyRemotePathMapper pathMapper,
-                                                                      PyRemoteSocketToLocalHostProvider remoteSocketProvider);
+                                                                      @NotNull PythonConsoleView view,
+                                                                      @NotNull PydevConsoleCommunication consoleCommunication,
+                                                                      @NotNull String commandLine,
+                                                                      @NotNull Charset charset,
+                                                                      @Nullable PyRemotePathMapper pathMapper,
+                                                                      @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider);
 
   @NotNull
   public abstract String[] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)

@@ -33,10 +33,10 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   private final PydevConsoleCommunication myPydevConsoleCommunication;
 
   public PyConsoleProcessHandler(final Process process,
-                                 PythonConsoleView consoleView,
-                                 PydevConsoleCommunication pydevConsoleCommunication,
+                                 @NotNull PythonConsoleView consoleView,
+                                 @NotNull PydevConsoleCommunication pydevConsoleCommunication,
                                  @NotNull String commandLine,
-                                 final Charset charset) {
+                                 @NotNull Charset charset) {
     super(process, commandLine, charset);
     myConsoleView = consoleView;
     myPydevConsoleCommunication = pydevConsoleCommunication;
@@ -99,6 +99,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     }
   }
 
+  @NotNull
   public PydevConsoleCommunication getPydevConsoleCommunication() {
     return myPydevConsoleCommunication;
   }
