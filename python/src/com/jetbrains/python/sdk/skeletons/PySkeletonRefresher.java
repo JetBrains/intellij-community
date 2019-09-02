@@ -65,20 +65,21 @@ import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionStri
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
-
-  @Nullable private final Project myProject;
-  private @Nullable final ProgressIndicator myIndicator;
-  @NotNull private final Sdk mySdk;
-  private String mySkeletonsPath;
-
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  // we use the equals sign after filename so that we can freely include space in the filename
+  // Path (the first component) may contain spaces, this header spec is deprecated
+  private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
+  // Skeleton header spec v2
+  private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
+  private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
   private static int ourGeneratingCount = 0;
 
+  @Nullable private final Project myProject;
+  @Nullable private final ProgressIndicator myIndicator;
+  @NotNull private final Sdk mySdk;
+  private String mySkeletonsPath;
   private List<String> myExtraSyspath;
   private int myGeneratorVersion;
-
   private final PySkeletonGenerator mySkeletonsGenerator;
 
   public static synchronized boolean isGeneratingSkeletons() {
@@ -87,6 +88,71 @@ public class PySkeletonRefresher {
 
   private static synchronized void changeGeneratingSkeletons(int increment) {
     ourGeneratingCount += increment;
+  }
+
+  public static void refreshSkeletonsOfSdk(@Nullable Project project,
+                                           @Nullable Component ownerComponent,
+                                           @Nullable String skeletonsPath,
+                                           @NotNull Sdk sdk)
+    throws InvalidSdkException {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final String homePath = sdk.getHomePath();
+    if (skeletonsPath == null) {
+      LOG.info("Could not find skeletons path for SDK path " + homePath);
+    }
+    else {
+      LOG.info("Refreshing skeletons for " + homePath);
+      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
+
+      changeGeneratingSkeletons(1);
+      try {
+        final List<String> errors = refresher.regenerateSkeletons(checker);
+        if (!errors.isEmpty()) {
+          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
+          for (String moduleName : errors) {
+            LOG.warn(moduleName);
+          }
+        }
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+      finally {
+        changeGeneratingSkeletons(-1);
+      }
+    }
+  }
+
+  /**
+   * Creates a new object that refreshes skeletons of given SDK.
+   *
+   * @param sdk           a Python SDK
+   * @param skeletonsPath if known; null means 'determine and create as needed'.
+   * @param indicator     to report progress of long operations
+   */
+  public PySkeletonRefresher(@Nullable Project project,
+                             @Nullable Component ownerComponent,
+                             @NotNull Sdk sdk,
+                             @Nullable String skeletonsPath,
+                             @Nullable ProgressIndicator indicator,
+                             @Nullable String folder)
+    throws InvalidSdkException {
+    myProject = project;
+    myIndicator = indicator;
+    mySdk = sdk;
+    mySkeletonsPath = skeletonsPath;
+    if (PythonSdkUtil.isRemote(sdk)) {
+      try {
+        mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException(e.getMessage(), e.getCause());
+      }
+    }
+    else {
+      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
+    }
   }
 
   @NotNull
@@ -125,37 +191,6 @@ public class PySkeletonRefresher {
     return failedModules;
   }
 
-  /**
-   * Creates a new object that refreshes skeletons of given SDK.
-   *
-   * @param sdk           a Python SDK
-   * @param skeletonsPath if known; null means 'determine and create as needed'.
-   * @param indicator     to report progress of long operations
-   */
-  public PySkeletonRefresher(@Nullable Project project,
-                             @Nullable Component ownerComponent,
-                             @NotNull Sdk sdk,
-                             @Nullable String skeletonsPath,
-                             @Nullable ProgressIndicator indicator,
-                             @Nullable String folder)
-    throws InvalidSdkException {
-    myProject = project;
-    myIndicator = indicator;
-    mySdk = sdk;
-    mySkeletonsPath = skeletonsPath;
-    if (PythonSdkUtil.isRemote(sdk)) {
-      try {
-        mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
-      }
-      catch (ExecutionException e) {
-        throw new InvalidSdkException(e.getMessage(), e.getCause());
-      }
-    }
-    else {
-      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
-    }
-  }
-
   private void indicate(String msg) {
     LOG.debug("Progress message: " + msg);
     if (myIndicator != null) {
@@ -169,12 +204,6 @@ public class PySkeletonRefresher {
     LOG.debug("Progress message (minor): " + msg);
     if (myIndicator != null) {
       myIndicator.setText2(msg);
-    }
-  }
-
-  private void checkCanceled() {
-    if (myIndicator != null) {
-      myIndicator.checkCanceled();
     }
   }
 
@@ -283,40 +312,6 @@ public class PySkeletonRefresher {
           LOG.debug("Cleaning up skeleton " + item + (binaryFile != null ? " for non existing binary " + binaryFile : ""));
           mySkeletonsGenerator.deleteOrLog(item);
         }
-      }
-    }
-  }
-
-  public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable Component ownerComponent,
-                                           @Nullable String skeletonsPath,
-                                           @NotNull Sdk sdk)
-    throws InvalidSdkException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String homePath = sdk.getHomePath();
-    if (skeletonsPath == null) {
-      LOG.info("Could not find skeletons path for SDK path " + homePath);
-    }
-    else {
-      LOG.info("Refreshing skeletons for " + homePath);
-      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
-
-      changeGeneratingSkeletons(1);
-      try {
-        final List<String> errors = refresher.regenerateSkeletons(checker);
-        if (!errors.isEmpty()) {
-          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-          for (String moduleName : errors) {
-            LOG.warn(moduleName);
-          }
-        }
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
-      finally {
-        changeGeneratingSkeletons(-1);
       }
     }
   }
