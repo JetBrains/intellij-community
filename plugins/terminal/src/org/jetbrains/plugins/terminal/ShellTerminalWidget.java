@@ -17,12 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
   private final Project myProject;
+  private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
   private boolean myPromptUpdateNeeded = true;
   private String myPrompt = "";
@@ -34,6 +36,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myProject = project;
     ((JBTerminalPanel)getTerminalPanel()).addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
+      if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        myEscapePressed = true;
+      }
       if (myPromptUpdateNeeded)  {
         myPrompt = getLineAtCursor();
         if (LOG.isDebugEnabled()) {
@@ -44,6 +49,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         fireShellCommandTyped(getTypedShellCommand());
         myPromptUpdateNeeded = true;
+        myEscapePressed = false;
       }
     });
   }
@@ -89,5 +95,18 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return line.getText();
     }
     return "";
+  }
+
+  public void executeCommand(@NotNull String shellCommand) throws IOException {
+    String typedCommand = getTypedShellCommand();
+    if (!typedCommand.isEmpty()) {
+      throw new IOException("Cannot execute command when another command is typed: " + typedCommand);
+    }
+    StringBuilder result = new StringBuilder();
+    if (myEscapePressed) {
+      result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
+    }
+    result.append(shellCommand).append('\n');
+    getTtyConnector().write(result.toString());
   }
 }
