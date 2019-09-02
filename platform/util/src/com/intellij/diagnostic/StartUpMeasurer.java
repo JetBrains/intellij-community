@@ -110,17 +110,31 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
-    return new ActivityImpl(name, description, null, null);
+    ActivityImpl activity = new ActivityImpl(name, null, null);
+    activity.setDescription(description);
+    return activity;
+  }
+
+  /**
+   * The instant events correspond to something that happens but has no duration associated with it.
+   * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp
+   *
+   * Scope is not supported — reported as global.
+   */
+  public static void addInstantEvent(@NotNull String name) {
+    ActivityImpl activity = new ActivityImpl(name, null, null);
+    activity.setEnd(-1);
+    add(activity);
   }
 
   @NotNull
   public static Activity start(@NotNull String name) {
-    return new ActivityImpl(name, null, null, null);
+    return new ActivityImpl(name, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, null, level, null);
+    return new ActivityImpl(name, level, null);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {

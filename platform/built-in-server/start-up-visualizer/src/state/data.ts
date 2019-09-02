@@ -11,7 +11,16 @@ export interface Item {
   readonly thread: string
 }
 
+export interface TraceEvent {
+  readonly name: string
+  readonly ph: "i" | "X"
+  // timestamp in microseconds
+  readonly ts: number
+}
+
 export interface InputData {
+  traceEvents: Array<TraceEvent>
+
   readonly version: string
 
   readonly stats: Stats

@@ -43,8 +43,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    // need to be exposed for tests, but I don't want to expose as top-level function, so, as companion object
-    fun sortItems(items: MutableList<ActivityImpl>) {
+    internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
         if (o1 == o2.parent) {
           return@Comparator -1
@@ -88,20 +87,26 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   @Synchronized
   private fun logStats(end: Long, activationNumber: Int) {
     val items = mutableListOf<ActivityImpl>()
+    val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
 
     StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
-      val parallelActivity = item.parallelActivity
-      if (parallelActivity == null) {
-        items.add(item)
+      if (item.end == -1L) {
+        instantEvents.add(item)
       }
       else {
-        val level = item.level
-        var name = parallelActivity.jsonName
-        if (level != null) {
-          name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
+        val parallelActivity = item.parallelActivity
+        if (parallelActivity == null) {
+          items.add(item)
         }
-        activities.getOrPut(name) { mutableListOf() }.add(item)
+        else {
+          val level = item.level
+          var name = parallelActivity.jsonName
+          if (level != null) {
+            name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
+          }
+          activities.getOrPut(name) { mutableListOf() }.add(item)
+        }
       }
     })
 
@@ -120,7 +125,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       StartUpMeasurer.doAddPluginCost(pluginId, item.parallelActivity?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
 
-    w.write(startTime, items, activities, pluginCostMap, end)
+    w.write(startTime, items, activities, instantEvents, pluginCostMap, end)
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport
@@ -137,8 +142,9 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     val traceFilePath = System.getProperty("idea.log.perf.trace.file")
     if (!traceFilePath.isNullOrBlank()) {
+      val traceEventFormat = TraceEventFormat(startTime, instantEvents)
       Paths.get(traceFilePath).outputStream().writer().use {
-        TraceEventFormat(startTime).write(items, it)
+        traceEventFormat.write(items, it)
       }
     }
   }

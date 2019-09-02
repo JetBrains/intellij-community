@@ -1,3 +1,9 @@
+## 10
+* Instant events in Trace Event Format.
+
+## 9
+* icon stats.
+
 ## 8
 * compute own time for services.
 

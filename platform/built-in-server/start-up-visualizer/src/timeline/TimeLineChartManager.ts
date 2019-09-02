@@ -4,7 +4,7 @@ import * as am4core from "@amcharts/amcharts4/core"
 import {disableGridButKeepBorderLines, TimeLineItem, transformToTimeLineItems} from "./timeLineChartHelper"
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
-import {InputData, Item} from "@/state/data"
+import {Item} from "@/state/data"
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
@@ -107,15 +107,25 @@ export class TimelineChartManager extends XYChartManager {
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = Math.max(data.data.totalDurationComputed, data.data.totalDurationActual)
 
-    this.computeRangeMarkers(data.data)
+    this.computeRangeMarkers(data)
   }
 
-  private computeRangeMarkers(data: InputData) {
+  private computeRangeMarkers(data: DataManager) {
     const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     nameAxis.axisRanges.clear()
 
     const guides: Array<TimeLineGuide> = []
-    for (const item of data.prepareAppInitActivities) {
+
+    // if (data.isInstantEventProvided) {
+    //   for (const item of data.data.traceEvents) {
+    //     // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
+    //     if (item.ph === "i" && !item.name.startsWith("app component ") && item.name !== "LaF initialized" && item.name !== "shown") {
+    //       guides.push({label: item.name, value: Math.round(item.ts / 1000)})
+    //     }
+    //   }
+    // }
+
+    for (const item of data.data.prepareAppInitActivities) {
       if (item.name === "splash initialization") {
         guides.push({label: "splash", value: item.start})
       }

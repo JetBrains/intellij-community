@@ -27,9 +27,8 @@ public final class ActivityImpl implements Activity {
   @Nullable
   private final String pluginId;
 
-  ActivityImpl(@Nullable String name, @Nullable String description, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
+  ActivityImpl(@Nullable String name, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
     this(name, System.nanoTime(), null, level, null, pluginId);
-    this.description = description;
   }
 
   @NotNull
@@ -89,6 +88,10 @@ public final class ActivityImpl implements Activity {
   @Nullable
   public String getDescription() {
     return description;
+  }
+
+  void setDescription(String description) {
+    this.description = description;
   }
 
   @Nullable

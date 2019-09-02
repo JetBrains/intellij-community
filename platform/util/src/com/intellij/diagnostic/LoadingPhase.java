@@ -15,14 +15,20 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public enum LoadingPhase {
-  BOOTSTRAP,
-  SPLASH,
-  LAF_INITIALIZED,
-  COMPONENT_REGISTERED,
-  CONFIGURATION_STORE_INITIALIZED,
-  COMPONENT_LOADED,
-  PROJECT_OPENED,
-  INDEXING_FINISHED;
+  BOOTSTRAP("bootstrap"),
+  SPLASH("splash shown"),
+  LAF_INITIALIZED("LaF is initialized"),
+  COMPONENT_REGISTERED("app component registered"),
+  CONFIGURATION_STORE_INITIALIZED("app store initialized"),
+  COMPONENT_LOADED("app component loaded"),
+  PROJECT_OPENED("project opened"),
+  INDEXING_FINISHED("indexing finished");
+
+  private final String displayName;
+
+  LoadingPhase(@NotNull String displayName) {
+    this.displayName = displayName;
+  }
 
   @NotNull
   private static Logger getLogger() {
@@ -73,6 +79,8 @@ public enum LoadingPhase {
   }
 
   private static void logPhaseSet(@NotNull LoadingPhase phase) {
+    StartUpMeasurer.addInstantEvent(phase.displayName);
+
     if (phase.ordinal() >= CONFIGURATION_STORE_INITIALIZED.ordinal()) {
       getLogger().info("Reached the loading phase " + phase);
     }

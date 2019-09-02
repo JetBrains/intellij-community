@@ -15,8 +15,8 @@ import com.intellij.util.io.jackson.obj
 import java.io.CharArrayWriter
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 private class ExposingCharArrayWriter : CharArrayWriter(8192) {
@@ -30,21 +30,23 @@ internal class IdeaFormatWriter {
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  fun write(startTime: Long, items: List<ActivityImpl>, activities: Map<String, MutableList<ActivityImpl>>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>, end: Long) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, activities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>, end: Long) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "9")
+        writer.writeStringField("version", "10")
         writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
         writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
-        writer.writeStringField("generated",
-                                SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.MEDIUM, SimpleDateFormat.LONG, Locale.ENGLISH).format(
-                                  Date()))
+        writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writeServiceStats(writer)
         writeIcons(writer)
+
+        writer.array("traceEvents") {
+          TraceEventFormat(timeOffset, instantEvents).writeInstantEvents(writer)
+        }
 
         var totalDuration = 0L
         writer.array("items") {
@@ -60,16 +62,16 @@ internal class IdeaFormatWriter {
                 totalDuration += duration
               }
 
-              writeItemTimeInfo(item, duration, startTime, writer)
+              writeItemTimeInfo(item, duration, timeOffset, writer)
             }
           }
-          totalDuration += writeUnknown(writer, items.last().end, end, startTime)
+          totalDuration += writeUnknown(writer, items.last().end, end, timeOffset)
         }
 
-        writeParallelActivities(activities, startTime, writer, pluginCostMap)
+        writeParallelActivities(activities, timeOffset, writer, pluginCostMap)
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
-        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
+        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - timeOffset))
       }
     }
   }

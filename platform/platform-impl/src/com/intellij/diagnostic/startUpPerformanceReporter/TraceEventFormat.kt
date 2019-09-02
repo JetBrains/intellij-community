@@ -15,19 +15,31 @@ import java.util.concurrent.TimeUnit
 // dur - duration
 // pid - process id
 // tid - thread id
-class TraceEventFormat(private val timeOffset: Long) {
+class TraceEventFormat(private val timeOffset: Long, private val instantEvents: List<ActivityImpl>) {
   private val threadNameToId = ObjectIntHashMap<String>()
   private var threadIdCounter = 0
 
-  fun write(items: List<ActivityImpl>, outputWriter: OutputStreamWriter) {
+  fun writeInstantEvents(writer: JsonGenerator) {
+    for (event in instantEvents) {
+      writer.obj {
+        writeCommonFields(event, writer)
+        writer.writeStringField("ph", "i")
+        writer.writeStringField("s", "g")
+      }
+    }
+  }
+
+  fun write(events: List<ActivityImpl>, outputWriter: OutputStreamWriter) {
     val writer = JsonFactory().createGenerator(outputWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
         writer.array("traceEvents") {
-          for (item in items) {
+          writeInstantEvents(writer)
+
+          for (event in events) {
             writer.obj {
-              writeTraceEvent(item, writer)
+              writeTraceEvent(event, writer)
             }
           }
         }
@@ -35,18 +47,22 @@ class TraceEventFormat(private val timeOffset: Long) {
     }
   }
 
-  private fun writeTraceEvent(item: ActivityImpl, writer: JsonGenerator) {
-    writer.writeStringField("name", item.name)
+  private fun writeTraceEvent(event: ActivityImpl, writer: JsonGenerator) {
+    writeCommonFields(event, writer)
     writer.writeStringField("ph", "X")
-    writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(item.start - timeOffset))
-    writer.writeNumberField("dur", TimeUnit.NANOSECONDS.toMicros(item.end - item.start))
-    writer.writeNumberField("pid", 1)
-    writer.writeNumberField("tid", getThreadId(item))
-    if (item.description != null) {
+    writer.writeNumberField("dur", TimeUnit.NANOSECONDS.toMicros(event.end - event.start))
+    if (event.description != null) {
       writer.obj("args") {
-        writer.writeStringField("description", item.description)
+        writer.writeStringField("description", event.description)
       }
     }
+  }
+
+  private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator) {
+    writer.writeStringField("name", event.name)
+    writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
+    writer.writeNumberField("pid", 1)
+    writer.writeNumberField("tid", getThreadId(event))
   }
 
   private fun getThreadId(item: ActivityImpl): Int {
