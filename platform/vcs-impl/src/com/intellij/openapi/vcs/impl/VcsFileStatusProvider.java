@@ -31,6 +31,10 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
+  public static VcsFileStatusProvider getInstance(@NotNull Project project) {
+    return project.getService(VcsFileStatusProvider.class);
+  }
+
   VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
     myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);

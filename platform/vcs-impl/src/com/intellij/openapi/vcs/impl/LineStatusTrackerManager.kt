@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -339,7 +338,7 @@ class LineStatusTrackerManager(private val project: Project, @Suppress("UNUSED_P
     if (isDisposed) return false
     if (virtualFile == null || virtualFile is LightVirtualFile) return false
     if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
-    if (!project.service<VcsFileStatusProvider>().isSupported(virtualFile)) return false
+    if (!VcsFileStatusProvider.getInstance(project).isSupported(virtualFile)) return false
 
     val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
     if (status == FileStatus.ADDED ||
@@ -484,7 +483,7 @@ class LineStatusTrackerManager(private val project: Project, @Suppress("UNUSED_P
         return Result.Error()
       }
 
-      val baseContent = project.service<VcsFileStatusProvider>().getBaseRevision(virtualFile)
+      val baseContent = VcsFileStatusProvider.getInstance(project).getBaseRevision(virtualFile)
       if (baseContent == null) {
         log("Loading error: base revision not found", virtualFile)
         return Result.Error()
