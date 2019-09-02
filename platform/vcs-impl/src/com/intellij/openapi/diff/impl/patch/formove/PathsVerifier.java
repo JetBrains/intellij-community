@@ -214,6 +214,14 @@ public class PathsVerifier {
     private CheckModified(final FilePatch path) {
       super(path);
     }
+
+    @Override
+    protected boolean precheck(VirtualFile beforeFile, VirtualFile afterFile, DelayedPrecheckContext context) {
+      if (beforeFile == null) {
+        setErrorMessage(fileNotFoundMessage(myBeforeName));
+      }
+      return beforeFile != null;
+    }
   }
 
   private class CheckDeleted extends CheckPath {
