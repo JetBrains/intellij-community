@@ -14,6 +14,7 @@ import com.jediterm.terminal.ProcessTtyConnector;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalUtil;
@@ -87,7 +88,9 @@ public class ShTerminalRunner extends ShRunner {
   @Nullable
   private static Pair<Content, Process> getSuitableProcess(@NotNull Content content, @NotNull String workingDirectory) {
     JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
-    if (widget == null) return null;
+    if (!(widget instanceof ShellTerminalWidget)) return null;
+    ShellTerminalWidget shellTerminalWidget = (ShellTerminalWidget)widget;
+    if (!shellTerminalWidget.getTypedShellCommand().isEmpty()) return null;
     if (widget.getTtyConnector() instanceof ProcessTtyConnector) {
       ProcessTtyConnector ttyConnector = (ProcessTtyConnector)widget.getTtyConnector();
       String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, null);
