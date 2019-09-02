@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The IDEA side of a custom language parser. Provides lexical analysis results to the
+ * The IDE side of a custom language parser. Provides lexical analysis results to the
  * plugin and allows the plugin to build the AST tree.
  *
  * @see PsiParser
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns a project for which PSI builder was created (see {@link PsiBuilderFactory}).
+   *
    * @return project.
    */
   Project getProject();
@@ -42,7 +43,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns the type of current token from the lexer.
    *
-   * @return the token type, or null when the token stream is over.
+   * @return the token type, or {@code null} when the token stream is over.
    * @see #setTokenTypeRemapper(ITokenTypeRemapper).
    */
   @Nullable
@@ -50,45 +51,50 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
 
   /**
    * Sets optional remapper that can change the type of tokens.
-   * Output of getTokenType() is affected by it.
+   * Output of {@link #getTokenType()} is affected by it.
    *
-   * @param remapper the remapper object, or null.
+   * @param remapper the remapper object, or {@code null}.
    */
   void setTokenTypeRemapper(@Nullable ITokenTypeRemapper remapper);
 
   /**
    * Slightly easier way to what {@link ITokenTypeRemapper} does (i.e. it just remaps current token to a given type).
+   *
    * @param type new type for the current token.
    */
   void remapCurrentToken(IElementType type);
 
   /**
    * Subscribe for notification on default whitespace and comments skipped events.
+   *
    * @param callback an implementation for the callback
    */
   void setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback);
 
   /**
-   * See what token type is in {@code steps} ahead
+   * See what token type is in {@code steps} ahead.
+   *
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
-   * @return type element which getTokenType() will return if we call advance {@code steps} times in a row
+   * @return type element which {@link #getTokenType()} will return if we call advance {@code steps} times in a row
    */
   @Nullable
   IElementType lookAhead(int steps);
 
   /**
-   * See what token type is in {@code steps} ahead / behind
+   * See what token type is in {@code steps} ahead/behind.
+   *
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
-   * @return type element ahead or behind, including whitespace / comment tokens
+   * @return type element ahead or behind, including whitespace/comment tokens
    */
   @Nullable
   IElementType rawLookup(int steps);
 
   /**
-   * See what token type is in {@code steps} ahead / behind current position
-   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
-   * @return offset type element ahead or behind, including whitespace / comment tokens, -1 if first token,
-   * getOriginalText().getLength() at end
+   * See what token type is in {@code steps} ahead/behind current position.
+   *
+   * @param steps 0 is current token (i.e. the same {@link #getTokenType()} returns)
+   * @return offset type element ahead or behind, including whitespace/comment tokens, -1 if first token,
+   * {@code getOriginalText().getLength()} at end
    */
   int rawTokenTypeStart(int steps);
 
@@ -102,7 +108,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns the text of the current token from the lexer.
    *
-   * @return the token text, or null when the token stream is over.
+   * @return the token text, or {@code null} when the token stream is over.
    */
   @NonNls
   @Nullable
@@ -225,7 +231,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Checks if the lexer has reached the end of file.
    *
-   * @return true if the lexer is at end of file, false otherwise.
+   * @return {@code true} if the lexer is at end of file, {@code false} otherwise.
    */
   boolean eof();
 
@@ -249,7 +255,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
 
   /**
    * Enables or disables the builder debug mode. In debug mode, the builder will print stack trace
-   * to marker allocation position if one is not done when calling getTreeBuilt().
+   * to marker allocation position if one is not done when calling {@link #getTreeBuilt()}.
    *
    * @param dbgMode the debug mode value.
    */
