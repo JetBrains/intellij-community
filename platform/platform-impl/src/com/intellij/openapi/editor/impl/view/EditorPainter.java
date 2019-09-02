@@ -1113,9 +1113,7 @@ public class EditorPainter implements TextDrawingCallback {
       TextAttributes attributes = myBetweenLinesAttributes.get(visualLine);
       if (attributes != null) return attributes;
       // inlay shown below last document line
-      attributes = new TextAttributes();
-      attributes.setBackgroundColor(myBackgroundColor);
-      return attributes;
+      return new TextAttributes();
     }
 
     @NotNull
