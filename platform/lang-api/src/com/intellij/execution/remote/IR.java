@@ -177,6 +177,12 @@ public class IR {
         return value != null ? Pair.create(e.getKey(), value) : null;
       });
     }
+
+    public void addParameters(@NotNull List<String> parametersList) {
+      for (String parameter : parametersList) {
+        addParameter(parameter);
+      }
+    }
   }
 
   public static class LocalRunner implements RemoteRunner {
@@ -188,38 +194,40 @@ public class IR {
 
     @Override
     public RemoteEnvironmentRequest createRequest() {
-      return new RemoteEnvironmentRequest() {
-
-        @Override
-        public RemotePlatform getRemotePlatform() {
-          return LocalRunner.this.getRemotePlatform();
-        }
-
-        @Override
-        public RemoteValue<String> createUpload(@NotNull String localPath) {
-          return new StringFixedValue(localPath);
-        }
-
-        @Override
-        public RemoteValue<Integer> bindRemotePort(int remotePort) {
-          return new FixedValue<>(remotePort);
-        }
-
-        @Override
-        public RemoteLocation createRemoteLocation(@Nullable String remotePath) {
-          return null;
-        }
-
-        @Override
-        public RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv) {
-          return null;
-        }
-      };
+      return new LocalEnvironmentRequest();
     }
 
     @Override
     public LocalRemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request, ProgressIndicator indicator) {
       return new LocalRemoteEnvironment();
+    }
+
+    public class LocalEnvironmentRequest implements RemoteEnvironmentRequest {
+
+      @Override
+      public RemotePlatform getRemotePlatform() {
+        return LocalRunner.this.getRemotePlatform();
+      }
+
+      @Override
+      public RemoteValue<String> createUpload(@NotNull String localPath) {
+        return new StringFixedValue(localPath);
+      }
+
+      @Override
+      public RemoteValue<Integer> bindRemotePort(int remotePort) {
+        return new FixedValue<>(remotePort);
+      }
+
+      @Override
+      public RemoteLocation createRemoteLocation(@Nullable String remotePath) {
+        return null;
+      }
+
+      @Override
+      public RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv) {
+        return null;
+      }
     }
   }
 
