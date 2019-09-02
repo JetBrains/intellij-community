@@ -167,7 +167,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
-   * Consider using {@link #toCommandLine(IR.RemoteRunner)} instead with {@link IR.LocalRunner} as an argument
+   * Consider using {@link #toCommandLine(IR.RemoteEnvironmentRequest)} instead with request created by {@link IR.LocalRunner} as an argument
    *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
@@ -182,8 +182,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
   @NotNull
-  public IR.NewCommandLine toCommandLine(@NotNull IR.RemoteRunner runner) throws CantRunException {
-    return JdkUtil.setupJVMCommandLine(this, runner);
+  public IR.NewCommandLine toCommandLine(@NotNull IR.RemoteEnvironmentRequest request) throws CantRunException {
+    return JdkUtil.setupJVMCommandLine(this, request);
   }
 
   @NotNull

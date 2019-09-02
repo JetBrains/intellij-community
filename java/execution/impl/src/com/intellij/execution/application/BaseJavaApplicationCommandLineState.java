@@ -9,8 +9,13 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.remote.IR;
+import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +40,23 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(createCommandLine());
+    //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
+    ExecutionEnvironment environment = getEnvironment();
+    ExecutionTarget target = environment.getExecutionTarget();
+    IR.RemoteRunner runner = target instanceof IRExecutionTarget ? ((IRExecutionTarget)target).getRemoteRunner() : new IR.LocalRunner();
+    IR.RemoteEnvironmentRequest request = runner.createRequest();
+    IR.NewCommandLine newCommandLine = createNewCommandLine(request);
+
+    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+    //todo[remoteServers]: support input file
+    //super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
+    IR.RemoteEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
+    Process process = remoteEnvironment.createProcess(newCommandLine, indicator);
+
+    //todo[remoteServers]: invent the new method for building presentation string
+    String commandRepresentation = StringUtil.join(newCommandLine.prepareCommandLine(remoteEnvironment), " ");
+
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation);
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;

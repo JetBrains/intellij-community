@@ -41,19 +41,21 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
-  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteRunner runner) throws ExecutionException {
+  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteEnvironmentRequest request) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
-    return javaParameters.toCommandLine(runner);
+    return javaParameters.toCommandLine(request);
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
     IR.LocalRunner runner = new IR.LocalRunner();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
-    return runner.prepareRemoteEnvironment(runner.createRequest(), new EmptyProgressIndicator())
-      .createGeneralCommandLine(createNewCommandLine(runner)).withRedirectErrorStream(redirectErrorStream);
+    IR.RemoteEnvironmentRequest request = runner.createRequest();
+    return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
+      .createGeneralCommandLine(createNewCommandLine(request))
+      .withRedirectErrorStream(redirectErrorStream);
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {
