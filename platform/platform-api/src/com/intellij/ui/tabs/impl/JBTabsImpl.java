@@ -89,8 +89,6 @@ public class JBTabsImpl extends JComponent
 
   public boolean myHorizontalSide = true;
 
-  private boolean myStealthTabMode = false;
-
   private boolean mySideComponentOnTabs = true;
 
   private boolean mySideComponentBefore = true;
@@ -1558,14 +1556,6 @@ public class JBTabsImpl extends JComponent
         mySingleRowLayout.myLastSingRowLayout = null;
       }
 
-      if (isStealthModeEffective() && !isHideTabs()) {
-        final TabLabel label = getSelectedLabel();
-        final Rectangle bounds = label.getBounds();
-        final Insets insets = getLayoutInsets();
-        layout(label, insets.left, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
-      }
-
-
       moveDraggedTabLabel();
 
       myTabActionsAutoHideListener.processMouseOver();
@@ -1617,9 +1607,7 @@ public class JBTabsImpl extends JComponent
     int width = bounds.width - insets.left - insets.right - bounds.x - inner.left - inner.right;
     int height = bounds.height - insets.top - insets.bottom - bounds.y - inner.top - inner.bottom;
 
-    final boolean noTabsVisible = isStealthModeEffective() || isHideTabs();
-
-    if (!noTabsVisible) {
+    if (!isHideTabs()) {
       width += deltaWidth;
       height += deltaHeight;
     }
@@ -1760,15 +1748,7 @@ public class JBTabsImpl extends JComponent
     return 2;
   }
 
-  protected boolean isStealthModeEffective() {
-    return myStealthTabMode && getTabCount() == 1 &&
-           (isSideComponentVertical() || !isSideComponentOnTabs()) &&
-           getTabsPosition() == JBTabsPosition.top;
-  }
-
-
   private boolean isNavigationVisible() {
-    if (myStealthTabMode && getTabCount() == 1) return false;
     return !myVisibleInfos.isEmpty();
   }
 
@@ -2383,19 +2363,6 @@ public class JBTabsImpl extends JComponent
       myActivePopup.removePopupMenuListener(myPopupListener);
       myActivePopup = null;
     }
-  }
-
-  @Override
-  public JBTabsPresentation setStealthTabMode(final boolean stealthTabMode) {
-    myStealthTabMode = stealthTabMode;
-
-    relayout(true, false);
-
-    return this;
-  }
-
-  public boolean isStealthTabMode() {
-    return myStealthTabMode;
   }
 
   @Override

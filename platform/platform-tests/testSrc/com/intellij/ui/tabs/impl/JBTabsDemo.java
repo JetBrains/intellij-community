@@ -116,15 +116,6 @@ public class JBTabsDemo {
     });
     south.add(ghosts);
 
-    final JCheckBox stealth = new JCheckBox("Stealth tab", tabs.isStealthTabMode());
-    stealth.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        tabs.setStealthTabMode(stealth.isSelected());
-      }
-    });
-    south.add(stealth);
-
     final JCheckBox hide = new JCheckBox("Hide tabs", tabs.isHideTabs());
     hide.addItemListener(new ItemListener() {
       @Override
@@ -259,9 +250,6 @@ public class JBTabsDemo {
         return new UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
-
-
-    tabs.setStealthTabMode(true);
 
     frame.setBounds(1400, 200, 1000, 800);
     frame.show();
