@@ -215,7 +215,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
 
     if (file == null) {
-      String cleanPath = cleanupPath(path);
+      String cleanPath = cleanupPath(path, SystemInfo.isWindows);
       // if newly created path is the same as the one extracted from url then the url did not change, we can reuse it
       //noinspection StringEquality
       if (cleanPath != path) {
@@ -282,10 +282,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   // convert /. ->
   // trim trailing /
   @NotNull
-  private static String cleanupPath(@NotNull String path) {
-    return cleanupPath(path, SystemInfo.isWindows);
-  }
-
   static String cleanupPath(@NotNull String path, boolean isWindows) {
     path = FileUtilRt.toSystemIndependentName(path);
     path = trimTrailingSeparators(path);
