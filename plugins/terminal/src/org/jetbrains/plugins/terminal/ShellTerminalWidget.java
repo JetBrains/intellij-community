@@ -10,7 +10,9 @@ import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.TerminalShellCommandHandler;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import org.jetbrains.annotations.NotNull;
@@ -108,5 +110,13 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     }
     result.append(shellCommand).append('\n');
     getTtyConnector().write(result.toString());
+  }
+
+  public boolean hasRunningCommands() throws IllegalStateException {
+    TtyConnector connector = getTtyConnector();
+    if (connector instanceof ProcessTtyConnector) {
+      return TerminalUtil.hasRunningCommands((ProcessTtyConnector)connector);
+    }
+    throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass());
   }
 }
