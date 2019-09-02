@@ -44,16 +44,6 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   }
 
   @Override
-  public TabInfo getPreviousFor(final TabInfo info) {
-    return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
-  @Override
-  public TabInfo getNextFor(final TabInfo info) {
-    return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
-  @Override
   public int getRowCount() {
     return 1;
   }
@@ -71,10 +61,5 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
-  }
-
-  @Override
-  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
-    return true;
   }
 }

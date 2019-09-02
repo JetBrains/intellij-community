@@ -115,21 +115,21 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
     if (data.requiredLength > data.toFitLength) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {
         final int clippedLength = getStrategy().drawPartialOverflowTabs()
                                   ? data.toFitLength - data.position - moreRectSize - 4 : 0;
-        super.applyTabLayout(data, label, clippedLength, deltaToFit);
+        super.applyTabLayout(data, label, clippedLength);
         label.setAlignmentToCenter(false);
         label.setActionPanelVisible(false);
         return false;
       }
     }
     label.setActionPanelVisible(true);
-    return super.applyTabLayout(data, label, length, deltaToFit);
+    return super.applyTabLayout(data, label, length);
   }
 
   @Override

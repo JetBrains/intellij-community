@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   @Override
-  public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+  public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
     return getStrategy().isDragOut(tabLabel, deltaX, deltaY);
   }
 
@@ -185,8 +186,6 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected void layoutLabels(final SingleRowPassInfo data) {
-    int deltaToFit = 0;
-
     int totalLength = 0;
     int positionStart = data.position;
     boolean layoutStopped = false;
@@ -205,13 +204,13 @@ public abstract class SingleRowLayout extends TabLayout {
       boolean isLast = data.toLayout.indexOf(eachInfo) == data.toLayout.size() - 1;
 
       int length;
-      if (!isLast || deltaToFit == 0) {
-        length = getStrategy().getLengthIncrement(eachSize) + deltaToFit;
+      if (!isLast) {
+        length = getStrategy().getLengthIncrement(eachSize);
       }
       else {
         length = data.toFitLength - totalLength;
       }
-      boolean continueLayout = applyTabLayout(data, label, length, deltaToFit);
+      boolean continueLayout = applyTabLayout(data, label, length);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
       data.position += myTabs.getTabHGap();
@@ -227,11 +226,11 @@ public abstract class SingleRowLayout extends TabLayout {
     }
   }
 
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
     final Rectangle rec = getStrategy().getLayoutRect(data, data.position, length);
     myTabs.layout(label, rec);
 
-    label.setAlignmentToCenter((deltaToFit > 0 || myTabs.isEditorTabs()) && getStrategy().isToCenterTextWhenStretched());
+    label.setAlignmentToCenter(myTabs.isEditorTabs() && getStrategy().isToCenterTextWhenStretched());
     return true;
   }
 

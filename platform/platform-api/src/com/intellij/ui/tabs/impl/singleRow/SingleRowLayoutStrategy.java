@@ -49,8 +49,6 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract ShapeTransform createShapeTransform(Rectangle rectangle);
 
-  public abstract boolean canBeStretched();
-
   public abstract void layoutComp(SingleRowPassInfo data);
 
   public boolean isSideComponentOnTabs() {
@@ -81,11 +79,6 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isToCenterTextWhenStretched() {
-      return true;
-    }
-
-    @Override
-    public boolean canBeStretched() {
       return true;
     }
 
@@ -276,11 +269,6 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     int getMoreRectAxisSize() {
       return AllIcons.General.MoreTabs.getIconHeight() + 4;
-    }
-
-    @Override
-    public boolean canBeStretched() {
-      return false;
     }
 
     @Override

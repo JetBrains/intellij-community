@@ -844,7 +844,7 @@ public class JBTabsImpl extends JComponent
 
     adjust(info);
 
-    updateAll(false, false);
+    updateAll(false);
 
     if (info.isHidden()) {
       updateHiding();
@@ -911,9 +911,9 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  private void updateAll(final boolean forcedRelayout, final boolean now) {
+  private void updateAll(final boolean forcedRelayout) {
     mySelectedInfo = getSelectedInfo();
-    updateContainer(forcedRelayout, now);
+    updateContainer(forcedRelayout, false);
     removeDeferred();
     updateListeners();
     updateTabActions(false);
@@ -1141,7 +1141,7 @@ public class JBTabsImpl extends JComponent
       doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
-      updateColor(tabInfo);
+      revalidateAndRepaint();
     }
     else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
       boolean start = ((Boolean)evt.getNewValue()).booleanValue();
@@ -1206,7 +1206,7 @@ public class JBTabsImpl extends JComponent
       if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
         mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
       }
-      updateAll(true, false);
+      updateAll(true);
     }
   }
 
@@ -1229,10 +1229,6 @@ public class JBTabsImpl extends JComponent
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    revalidateAndRepaint();
-  }
-
-  private void updateColor(final TabInfo tabInfo) {
     revalidateAndRepaint();
   }
 
@@ -1937,7 +1933,7 @@ public class JBTabsImpl extends JComponent
     myInfo2Toolbar.remove(info);
     resetTabsCache();
 
-    updateAll(false, false);
+    updateAll(false);
   }
 
   @Nullable
@@ -1952,13 +1948,8 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public TabInfo findInfo(MouseEvent event) {
-    return findInfo(event, false);
-  }
-
-  @Nullable
-  private TabInfo findInfo(final MouseEvent event, final boolean labelsOnly) {
     final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
-    return _findInfo(point, labelsOnly);
+    return _findInfo(point, false);
   }
 
   @Override

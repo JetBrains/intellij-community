@@ -78,7 +78,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
         length = Math.max(lengthIncrement, actualGridSize);
       }
       spentLength += length + myTabs.getTabHGap();
-      applyTabLayout(data, label, length, 0);
+      applyTabLayout(data, label, length);
       data.position = (int)label.getBounds().getMaxX() + myTabs.getTabHGap();
     }
 
@@ -88,8 +88,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
-    boolean result = super.applyTabLayout(data, label, length, deltaToFit);
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
+    boolean result = super.applyTabLayout(data, label, length);
     label.setAlignmentToCenter(false);
     return result;
   }

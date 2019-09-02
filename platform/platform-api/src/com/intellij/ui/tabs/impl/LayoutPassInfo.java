@@ -16,12 +16,6 @@ public abstract class LayoutPassInfo {
   }
 
   @Nullable
-  public abstract TabInfo getPreviousFor(TabInfo info);
-
-  @Nullable
-  public abstract TabInfo getNextFor(TabInfo info);
-
-  @Nullable
   public static TabInfo getPrevious(List<TabInfo> list, int i) {
     return i > 0 ? list.get(i - 1) : null;
   }
@@ -37,7 +31,5 @@ public abstract class LayoutPassInfo {
 
   public abstract TabInfo getTabAt(int row, int column);
 
-  public abstract boolean hasCurveSpaceFor(final TabInfo tabInfo);
-  
   public abstract Rectangle getHeaderRectangle();
 }
