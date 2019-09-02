@@ -72,6 +72,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
+  private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
 
   private EditorWindow myCurrentWindow;
   private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<>();
@@ -751,6 +752,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return false;
   }
 
+  public static boolean isOpenedInBulk(@NotNull VirtualFile file) {
+    return file.getUserData(OPENED_IN_BULK) != null;
+  }
+
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
@@ -852,12 +857,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
         Activity activity = ParallelActivity.REOPENING_EDITOR
           .start(FileUtil.getLocationRelativeToUserHome(VirtualFileManager.extractPath(fileName), false));
+        VirtualFile virtualFile = null;
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
-          final VirtualFile virtualFile = entry.getFile();
+          virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+          virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
+          VirtualFile finalVirtualFile = virtualFile;
+          Document document =
+            ReadAction.compute(() -> finalVirtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(finalVirtualFile) : null);
 
           boolean isCurrentTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
@@ -881,6 +890,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           if (ApplicationManager.getApplication().isUnitTestMode()) {
             LOG.error(e);
           }
+        }
+        finally {
+          if (virtualFile != null) virtualFile.putUserData(OPENED_IN_BULK, null);
         }
         activity.end();
       }
