@@ -24,10 +24,10 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected void layoutLabelsAndGhosts(SingleRowPassInfo data) {
+  protected void layoutLabels(SingleRowPassInfo data) {
     if (myTabs.getPresentation().getTabsPosition() != JBTabsPosition.top
         && myTabs.getPresentation().getTabsPosition() != JBTabsPosition.bottom) {
-      super.layoutLabelsAndGhosts(data);
+      super.layoutLabels(data);
       return;
     }
 

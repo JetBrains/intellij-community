@@ -125,7 +125,7 @@ public abstract class SingleRowLayout extends TabLayout {
 
       recomputeToLayout(data);
 
-      layoutLabelsAndGhosts(data);
+      layoutLabels(data);
 
       layoutMoreButton(data);
     }
@@ -184,7 +184,7 @@ public abstract class SingleRowLayout extends TabLayout {
     }
   }
 
-  protected void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
+  protected void layoutLabels(final SingleRowPassInfo data) {
     int deltaToFit = 0;
 
     int totalLength = 0;
