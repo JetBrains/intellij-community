@@ -7,22 +7,30 @@ import com.intellij.projectImport.ProjectOpenedCallback
 
 class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFrame: Boolean = false,
                                                 @JvmField val projectToClose: Project? = null) {
-  @JvmField var frame: FrameInfo? = null
+  @JvmField
+  var frame: FrameInfo? = null
 
-  @JvmField var projectWorkspaceId: String? = null
+  @JvmField
+  var projectWorkspaceId: String? = null
 
-  @JvmField var showWelcomeScreen: Boolean = true
+  @JvmField
+  var showWelcomeScreen = true
 
-  @JvmField var sendFrameBack: Boolean = false
+  @JvmField
+  var sendFrameBack = false
 
-  @JvmField var isNewProject: Boolean = false
+  @JvmField
+  var isNewProject = false
 
   /** Used only by [ProjectUtil.openOrImport] */
-  @JvmField var checkDirectoryForFileBasedProjects: Boolean = true
+  @JvmField
+  var checkDirectoryForFileBasedProjects = true
 
-  @JvmField var useDefaultProjectAsTemplate: Boolean = true
+  @JvmField
+  var useDefaultProjectAsTemplate = true
 
-  @JvmField var callback: ProjectOpenedCallback? = null
+  @JvmField
+  var callback: ProjectOpenedCallback? = null
 
   fun copy(): OpenProjectTask {
     val copy = OpenProjectTask(forceOpenInNewFrame, projectToClose)
