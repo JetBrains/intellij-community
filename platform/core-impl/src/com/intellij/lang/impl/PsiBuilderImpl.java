@@ -75,6 +75,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private final char[] myTextArray;
   private boolean myDebugMode;
   private final int myLexemeCount;
+  private boolean myTokenTypeChecked;
   private ITokenTypeRemapper myRemapper;
   private WhitespaceSkippedCallback myWhitespaceSkippedCallback;
 
@@ -704,6 +705,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   @Override
   public void setTokenTypeRemapper(ITokenTypeRemapper remapper) {
     myRemapper = remapper;
+    myTokenTypeChecked = false;
     clearCachedTokenType();
   }
 
@@ -763,6 +765,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     if (eof()) return;
 
+    if (!myTokenTypeChecked) {
+      LOG.error("Probably a bug: eating token without its type checking");
+    }
+
+    myTokenTypeChecked = false;
     myCurrentLexeme++;
     clearCachedTokenType();
   }
@@ -826,7 +833,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @Override
   public final boolean eof() {
-    skipWhitespace();
+    if (!myTokenTypeChecked) {
+      myTokenTypeChecked = true;
+      skipWhitespace();
+    }
     return myCurrentLexeme >= myLexemeCount;
   }
 
@@ -836,6 +846,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myProduction.assertNoDoneMarkerAround(marker);
     }
     myCurrentLexeme = marker.myLexemeIndex;
+    myTokenTypeChecked = true;
     myProduction.rollbackTo(marker);
     clearCachedTokenType();
   }
@@ -1007,6 +1018,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     myOptionalData.compact();
 
+    myTokenTypeChecked = true;
     balanceWhiteSpaces();
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
