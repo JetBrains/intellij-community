@@ -81,15 +81,6 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       }
     }
 
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    var frameInfo = options.frame
-    if (frameInfo?.bounds == null) {
-      frameInfo = windowManager.defaultFrameInfo
-    }
-    if (frameInfo != null) {
-      restoreFrameState(frame, frameInfo)
-    }
-
     var projectSelfie: Image? = null
     if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
       try {
@@ -103,6 +94,16 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     }
 
     frame.preInit(projectSelfie)
+
+    // must be after preInit (frame decorator is required to set full screen mode)
+    var frameInfo = options.frame
+    if (frameInfo?.bounds == null) {
+      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfo
+    }
+    if (frameInfo != null) {
+      restoreFrameState(frame, frameInfo)
+    }
+
     frame.isVisible = true
     frame.init()
   }

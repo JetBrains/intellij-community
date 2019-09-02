@@ -119,6 +119,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     updateTitle();
 
     myRootPane = new IdeRootPane(this);
+    myFrameDecorator = IdeFrameDecorator.decorate(this);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     setRootPane(myRootPane);
@@ -131,8 +132,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     myRootPane.init(this);
 
     MnemonicHelper.init(this);
-
-    myFrameDecorator = IdeFrameDecorator.decorate(this);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
 
