@@ -43,6 +43,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -84,6 +85,7 @@ import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -380,22 +382,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @NotNull
   private CommandLineProcess createProcess(@NotNull Sdk sdk) throws ExecutionException {
-    if (PythonSdkUtil.isRemote(sdk)) {
+    PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(sdk);
+    if (remoteSdkAdditionalData != null) {
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
-      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, sdk, myConsoleSettings);
-      if (data != null && pathMapper != null) {
-        RemoteConsoleProcessData remoteConsoleProcessData =
-          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
-                                                                         pathMapper,
-                                                                         myProject, data, getRunnerFileFromHelpers());
-        myRemoteConsoleProcessData = remoteConsoleProcessData;
-        myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
+      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
+      RemoteConsoleProcessData remoteConsoleProcessData =
+        PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
+                                                                       pathMapper,
+                                                                       myProject, remoteSdkAdditionalData, getRunnerFileFromHelpers());
+      myRemoteConsoleProcessData = remoteConsoleProcessData;
+      myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
 
-        return new CommandLineProcess(remoteConsoleProcessData.getProcess(), remoteConsoleProcessData.getCommandLine());
-      }
-      throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
+      return new CommandLineProcess(remoteConsoleProcessData.getProcess(), remoteConsoleProcessData.getCommandLine());
     }
     else {
       int port = findAvailablePort(myProject, myConsoleType);
@@ -418,6 +417,23 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       Process process = generalCommandLine.createProcess();
       communicationServer.setPythonConsoleProcess(process);
       return new CommandLineProcess(process, generalCommandLine.getCommandLineString());
+    }
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PyRemoteSdkAdditionalDataBase getRemoteAdditionalData(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return null;
+    }
+    else {
+      SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
+        return (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
+      }
+      else {
+        return null;
+      }
     }
   }
 
