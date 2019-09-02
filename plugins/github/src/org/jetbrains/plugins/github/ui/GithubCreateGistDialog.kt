@@ -32,30 +32,30 @@ class GithubCreateGistDialog(project: Project,
                              secret: Boolean,
                              openInBrowser: Boolean,
                              copyLink: Boolean) : DialogWrapper(project, true) {
-  private val myFileNameField: JBTextField? = if (fileName != null) JBTextField(fileName) else null
-  private val myDescriptionField: JTextArea = JTextArea()
-  private val mySecretCheckBox: JBCheckBox = JBCheckBox("Secret", secret)
-  private val myOpenInBrowserCheckBox: JBCheckBox = JBCheckBox("Open in browser", openInBrowser)
-  private val myCopyLinkCheckBox: JBCheckBox = JBCheckBox("Copy URL", copyLink)
-  private val myAccountSelector: GithubAccountCombobox = GithubAccountCombobox(accounts, defaultAccount, null)
+  private val fileNameField: JBTextField? = if (fileName != null) JBTextField(fileName) else null
+  private val descriptionField: JTextArea = JTextArea()
+  private val secretCheckBox: JBCheckBox = JBCheckBox("Secret", secret)
+  private val browserCheckBox: JBCheckBox = JBCheckBox("Open in browser", openInBrowser)
+  private val copyLinkCheckBox: JBCheckBox = JBCheckBox("Copy URL", copyLink)
+  private val accountSelector: GithubAccountCombobox = GithubAccountCombobox(accounts, defaultAccount, null)
 
   val fileName: String?
-    get() = myFileNameField?.text
+    get() = fileNameField?.text
 
   val description: String
-    get() = myDescriptionField.text
+    get() = descriptionField.text
 
   val isSecret: Boolean
-    get() = mySecretCheckBox.isSelected
+    get() = secretCheckBox.isSelected
 
   val isOpenInBrowser: Boolean
-    get() = myOpenInBrowserCheckBox.isSelected
+    get() = browserCheckBox.isSelected
 
   val isCopyURL: Boolean
-    get() = myCopyLinkCheckBox.isSelected
+    get() = copyLinkCheckBox.isSelected
 
   val account: GithubAccount
-    get() = myAccountSelector.selectedItem as GithubAccount
+    get() = accountSelector.selectedItem as GithubAccount
 
   init {
     title = "Create Gist"
@@ -63,24 +63,24 @@ class GithubCreateGistDialog(project: Project,
   }
 
   override fun createCenterPanel() = panel {
-    myFileNameField?.let {
+    fileNameField?.let {
       row("Filename:") {
         it(pushX, growX)
       }
     }
     row("Description:") {
-      scrollPane(myDescriptionField)
+      scrollPane(descriptionField)
     }
     row("") {
       cell {
-        mySecretCheckBox()
-        myOpenInBrowserCheckBox()
-        myCopyLinkCheckBox()
+        secretCheckBox()
+        browserCheckBox()
+        copyLinkCheckBox()
       }
     }
-    if (myAccountSelector.isEnabled) {
+    if (accountSelector.isEnabled) {
       row("Create for:") {
-        myAccountSelector(pushX, growX)
+        accountSelector(pushX, growX)
       }
     }
   }
@@ -94,6 +94,6 @@ class GithubCreateGistDialog(project: Project,
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return myDescriptionField
+    return descriptionField
   }
 }
