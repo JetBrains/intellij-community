@@ -132,6 +132,7 @@ public class GitPushOperation {
       for (int pushAttempt = 0;
            pushAttempt < MAX_PUSH_ATTEMPTS && !remainingRoots.isEmpty();
            pushAttempt++, remainingRoots = getRejectedAndNotPushed(results)) {
+        LOG.debug("Starting push attempt #" + pushAttempt);
         Map<GitRepository, GitPushRepoResult> resultMap = push(myRepositoryManager.sortByDependency(remainingRoots));
         results.putAll(resultMap);
 
@@ -162,6 +163,7 @@ public class GitPushOperation {
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
           Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
+          LOG.debug("roots to update: " + rootsToUpdate);
           GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
@@ -215,21 +217,25 @@ public class GitPushOperation {
   }
 
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
-    return ContainerUtil.exists(rejected.entrySet(), entry -> {
+    boolean pushingToNotTrackedBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
       GitLocalBranch currentBranch = repository.getCurrentBranch();
       assert currentBranch != null;
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
       return trackInfo == null || !trackInfo.getRemoteBranch().getFullName().equals(entry.getValue().getTargetBranch());
     });
+    LOG.debug("Pushing to not tracked branch condition is [" + pushingToNotTrackedBranch + "]");
+    return pushingToNotTrackedBranch;
   }
 
   private static boolean pushingNotCurrentBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
-    return ContainerUtil.exists(rejected.entrySet(), entry -> {
+    boolean pushingNotCurrentBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
       String currentBranch = Objects.requireNonNull(repository.getCurrentBranch()).getFullName();
       return !StringUtil.equals(currentBranch, entry.getValue().getSourceBranch());
     });
+    LOG.debug("Pushing non current branch condition is [" + pushingNotCurrentBranch + "]");
+    return pushingNotCurrentBranch;
   }
 
   @NotNull
