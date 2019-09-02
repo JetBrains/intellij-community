@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.IdeControl
+import com.intellij.util.PathUtil
 import org.apache.log4j.Logger
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
@@ -301,15 +302,11 @@ object GuiTestLocalLauncher {
   private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
     val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
     classpath.addAll(getTestClasspath(testClassNames))
+    classpath.add(getToolsJarFile())
     return classpath.toList()
   }
 
-  private fun getToolsJarFile(): File {
-    val toolsJarUrl = getUrlPathsFromClassloader().firstOrNull {
-      it.endsWith("/tools.jar") or it.endsWith("\\tools.jar")
-    } ?: throw Exception("Unable to find tools.jar URL in the classloader URLs of ${GuiTestLocalLauncher::class.java.name} class")
-    return File(toolsJarUrl)
-  }
+  private fun getToolsJarFile(): File = File(PathUtil.getParentPath(System.getProperty("java.home")), "lib${File.separator}tools.jar")
 
   /**
    * Finds in a current classpath that built from a test module dependencies resolved macro path
