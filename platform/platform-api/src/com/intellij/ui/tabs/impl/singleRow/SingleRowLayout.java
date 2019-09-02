@@ -201,15 +201,7 @@ public abstract class SingleRowLayout extends TabLayout {
       label.setActionPanelVisible(true);
       final Dimension eachSize = label.getPreferredSize();
 
-      boolean isLast = data.toLayout.indexOf(eachInfo) == data.toLayout.size() - 1;
-
-      int length;
-      if (!isLast) {
-        length = getStrategy().getLengthIncrement(eachSize);
-      }
-      else {
-        length = data.toFitLength - totalLength;
-      }
+      int length = getStrategy().getLengthIncrement(eachSize);
       boolean continueLayout = applyTabLayout(data, label, length);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
