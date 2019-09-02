@@ -56,6 +56,7 @@ public class PersistentCachingModuleHashingService {
       long end = System.currentTimeMillis() - start;
       System.out.println("Finish in itialization: " + end);
     }
+    System.out.println("Finished");
 
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
