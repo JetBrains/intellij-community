@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
@@ -536,6 +537,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       throw e
     }
     catch (e: ExtensionNotApplicableException) {
+      throw e
+    }
+    catch (e: IncorrectOperationException) {
       throw e
     }
     catch (e: Exception) {
