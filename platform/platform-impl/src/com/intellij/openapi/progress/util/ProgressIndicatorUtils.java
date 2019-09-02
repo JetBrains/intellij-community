@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -267,9 +267,9 @@ public class ProgressIndicatorUtils {
 
   public static <T, E extends Throwable> T computeWithLockAndCheckingCanceled(@NotNull Lock lock,
                                                                               int timeout,
-                                                                              @NotNull TimeUnit timeUtil,
+                                                                              @NotNull TimeUnit timeUnit,
                                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    awaitWithCheckCancelled(lock, timeout, timeUtil);
+    awaitWithCheckCancelled(lock, timeout, timeUnit);
 
     try {
       return computable.compute();
