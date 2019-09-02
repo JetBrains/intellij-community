@@ -12,7 +12,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
-private const val SECRET_SCHEMA_NONE = 0
+// Matching by name fails on locked keyring, because matches against `org.freedesktop.Secret.Generic`
+// https://mail.gnome.org/archives/gnome-keyring-list/2015-November/msg00000.html
+private const val SECRET_SCHEMA_DONT_MATCH_NAME = 2
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 
 // explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
@@ -38,7 +40,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   }
 
   private val scheme by lazy {
-    library.secret_schema_new(schemeName, SECRET_SCHEMA_NONE,
+    library.secret_schema_new(schemeName, SECRET_SCHEMA_DONT_MATCH_NAME,
                               serviceAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
                               accountAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
                               null)
