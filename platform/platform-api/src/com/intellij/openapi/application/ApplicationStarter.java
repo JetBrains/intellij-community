@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 /**
- * This extension point allows running custom [command-line] application based on IDEA platform.
+ * This extension point allows running custom [command-line] application based on IntelliJ platform.
  *
  * @author max
  */
