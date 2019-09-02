@@ -72,7 +72,7 @@ public class NewMappings implements Disposable {
 
   public NewMappings(Project project, ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
-    myVcsManager = (vcsManager);
+    myVcsManager = vcsManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 

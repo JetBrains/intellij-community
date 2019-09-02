@@ -336,19 +336,19 @@ class LineStatusTrackerManager(private val project: Project, @Suppress("UNUSED_P
 
 
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
-    return when {
-      isDisposed || virtualFile == null || virtualFile is LightVirtualFile -> false
-      runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) } -> false
-      !project.service<VcsFileStatusProvider>().isSupported(virtualFile) -> false
-      else -> {
-        val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
-        !(status == FileStatus.ADDED ||
-          status == FileStatus.DELETED ||
-          status == FileStatus.UNKNOWN ||
-          status == FileStatus.IGNORED)
-      }
-    }
+    if (isDisposed) return false
+    if (virtualFile == null || virtualFile is LightVirtualFile) return false
+    if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
+    if (!project.service<VcsFileStatusProvider>().isSupported(virtualFile)) return false
 
+    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
+    if (status == FileStatus.ADDED ||
+        status == FileStatus.DELETED ||
+        status == FileStatus.UNKNOWN ||
+        status == FileStatus.IGNORED) {
+      return false
+    }
+    return true
   }
 
   private fun canCreatePartialTrackerFor(virtualFile: VirtualFile): Boolean {
