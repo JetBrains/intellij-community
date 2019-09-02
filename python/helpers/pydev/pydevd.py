@@ -1189,6 +1189,13 @@ class PyDB(object):
         pydev_log.debug("We are stopping in post-mortem\n")
         thread_id = get_thread_id(thread)
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
+        exctype, value, tb = arg
+        while tb:
+            if self.is_top_level_trace_in_project_scope(tb):
+                break
+            tb = tb.tb_next
+        sys.__excepthook__(exctype, value, tb)
+        sys.excepthook = lambda type, value, traceback: None  # Avoid printing the exception for the second time.
         try:
             try:
                 add_exception_to_frame(frame, arg)
