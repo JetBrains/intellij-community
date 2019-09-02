@@ -7,7 +7,7 @@ import generator3.extra
 from generator3.clr_tools import get_namespace_by_name
 from generator3.constants import Timer
 from generator3.core import version, list_binaries, process_one_with_results_reporting, \
-    GenerationStatus, process_builtin_modules, process_all
+    GenerationStatus, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
 
@@ -28,7 +28,6 @@ def get_help_text():
         'Options are:' '\n'
         ' -h -- prints this help message.' '\n'
         ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'
-        ' -b -- use names from sys.builtin_module_names' '\n'
         ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'
         ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'
         ' -v -- be verbose, print lots of debug output to stderr' '\n'
@@ -119,56 +118,48 @@ def main():
 
     timer = Timer()
     # determine names
-    if '-b' in opts:
+    if '-i' in opts:
         if args:
-            report("No names should be specified with -b")
+            report("No names should be specified with -i")
             sys.exit(1)
-        ok = process_builtin_modules(subdir, name_pattern=opts.get('--name-pattern'))
-        if not ok:
-            sys.exit(1)
+        name = sys.stdin.readline().strip()
+
+        mod_file_name = sys.stdin.readline().strip()
+        if not mod_file_name:
+            mod_file_name = None
+
+        refs = sys.stdin.readline().strip()
+    elif len(args) > 2:
+        report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
+        sys.exit(1)
+    elif not args:
+        process_all(subdir, name_pattern=opts.get('--name-pattern'))
+        sys.exit()
     else:
-        if '-i' in opts:
-            if args:
-                report("No names should be specified with -i")
-                sys.exit(1)
-            name = sys.stdin.readline().strip()
+        name = args[0]
 
-            mod_file_name = sys.stdin.readline().strip()
-            if not mod_file_name:
-                mod_file_name = None
-
-            refs = sys.stdin.readline().strip()
-        elif len(args) > 2:
-            report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
-            sys.exit(1)
-        elif not args:
-            process_all(subdir, name_pattern=opts.get('--name-pattern'))
-            sys.exit()
+        if len(args) == 2:
+            mod_file_name = args[1]
         else:
-            name = args[0]
+            mod_file_name = None
 
-            if len(args) == 2:
-                mod_file_name = args[1]
-            else:
-                mod_file_name = None
+        refs = opts.get('-c', '')
 
-            refs = opts.get('-c', '')
+    if sys.platform == 'cli':
+        # noinspection PyUnresolvedReferences
+        import clr
 
-        if sys.platform == 'cli':
-            # noinspection PyUnresolvedReferences
-            import clr
+        if refs:
+            for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
 
-            if refs:
-                for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+        if '-p' in opts:
+            atexit.register(print_profile)
 
-            if '-p' in opts:
-                atexit.register(print_profile)
+        # We take module name from import statement
+        name = get_namespace_by_name(name)
 
-            # We take module name from import statement
-            name = get_namespace_by_name(name)
-
-        if process_one_with_results_reporting(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
-            sys.exit(1)
+    if process_one_with_results_reporting(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
+        sys.exit(1)
 
     say("Generation completed in %d ms", timer.elapsed())
 

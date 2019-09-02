@@ -257,20 +257,6 @@ public class PySkeletonRefresher {
     return result;
   }
 
-  private boolean updateSkeletonsForBuiltins(String readablePath, File builtinsFile) throws InvalidSdkException {
-    final PySkeletonHeader newHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
-    final boolean mustUpdateBuiltins = myPregeneratedSkeletons == null &&
-                                       (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion());
-    if (mustUpdateBuiltins) {
-      indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readablePath));
-      mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
-      if (myProject != null) {
-        PythonSdkPathCache.getInstance(myProject, mySdk).clearBuiltins();
-      }
-    }
-    return mustUpdateBuiltins;
-  }
-
   private void copyBaseSdkSkeletonsToVirtualEnv(String skeletonsPath, PySkeletonGenerator.ListBinariesResult binaries)
     throws InvalidSdkException {
     final Sdk base = PythonSdkType.getInstance().getVirtualEnvBaseSdk(mySdk);

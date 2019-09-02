@@ -293,27 +293,6 @@ public class PySkeletonGenerator {
     handler.runProcess(timeout);
   }
 
-  public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
-    //noinspection ResultOfMethodCallIgnored
-    new File(mySkeletonsPath).mkdirs();
-    String binaryPath = sdk.getHomePath();
-    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
-
-    long startTime = System.currentTimeMillis();
-    final ProcessOutput runResult = getProcessOutput(
-      new File(binaryPath).getParent(),
-      new String[]{
-        binaryPath,
-        PythonHelpersLocator.getHelperPath(GENERATOR3),
-        "-d", mySkeletonsPath, // output dir
-        "-b", // for builtins
-      },
-      PythonSdkType.activateVirtualEnv(sdk), MINUTE * 5
-    );
-    runResult.checkSuccess(LOG);
-    LOG.info("Rebuilding builtin skeletons took Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
-  }
-
   public String getSkeletonsPath() {
     return mySkeletonsPath;
   }
