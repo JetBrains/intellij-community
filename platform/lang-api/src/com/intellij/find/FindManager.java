@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,9 +155,9 @@ public abstract class FindManager {
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
    * available to continue a previously started search operation. (The operations are
-   * available if at least one search was performed in the current IDEA session.)
+   * available if at least one search was performed in the current IDE session.)
    *
-   * @return true if the actions are available, false if there is no previous search
+   * @return {@code true} if the actions are available, {@code false} if there is no previous search
    *         operation to continue.
    */
   public abstract boolean findWasPerformed();
@@ -216,7 +216,7 @@ public abstract class FindManager {
    * Checks if the Find Usages action is available for the specified element.
    *
    * @param element the element to check the availability for.
-   * @return true if Find Usages is available, false otherwise.
+   * @return {@code true} if Find Usages is available, {@code false} otherwise.
    * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(PsiElement)
    */
   public abstract boolean canFindUsages(@NotNull PsiElement element);
@@ -251,8 +251,8 @@ public abstract class FindManager {
    * "Highlight Usages in File".
    *
    * @param editor the editor in which the find is performed.
-   * @return true if the operation was performed (not necessarily found anything),
-   *         false if an error occurred during the operation.
+   * @return {@code true} if the operation was performed (not necessarily found anything),
+   *         {@code false} if an error occurred during the operation.
    */
   public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
 
@@ -263,8 +263,8 @@ public abstract class FindManager {
    * "Highlight Usages in File".
    *
    * @param editor the editor in which the find is performed.
-   * @return true if the operation was performed (not necessarily found anything),
-   *         false if an error occurred during the operation.
+   * @return {@code true} if the operation was performed (not necessarily found anything),
+   *         {@code false} if an error occurred during the operation.
    */
   public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
 
