@@ -415,47 +415,7 @@ public class PathsVerifier {
 
   private void revert(final String errorMessage) {
     PatchApplier.showError(myProject, errorMessage);
-
-    // move back
-    /*for (MovedFileData movedFile : myMovedFiles) {
-      try {
-        final VirtualFile current = movedFile.getCurrent();
-        final VirtualFile newParent = current.getParent();
-        final VirtualFile file;
-        if (! Comparing.equal(newParent, movedFile.getOldParent())) {
-          file = moveFile(current, movedFile.getOldParent());
-        } else {
-          file = current;
-        }
-        if (! Comparing.equal(current.getName(), movedFile.getOldName())) {
-          file.rename(PatchApplier.class, movedFile.getOldName());
-        }
-      }
-      catch (IOException e) {
-        // ignore: revert as much as possible
-      }
-    }
-
-    // go back
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (int i = myCreatedDirectories.size() - 1; i >= 0; -- i) {
-          final VirtualFile file = myCreatedDirectories.get(i);
-          try {
-            file.delete(PatchApplier.class);
-          }
-          catch (IOException e) {
-            // ignore
-          }
-        }
-      }
-    });
-
-    myBinaryPatches.clear();
-    myTextPatches.clear();
-    myWritableFiles.clear();*/
   }
-
 
   private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
     return parent.createChildData(PatchApplier.class, name);
