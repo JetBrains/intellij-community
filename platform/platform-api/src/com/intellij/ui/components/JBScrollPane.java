@@ -718,12 +718,12 @@ public class JBScrollPane extends JScrollPane {
           result.width += viewportExtentSize.width;
           result.height += viewportExtentSize.height;
           if (!viewTracksViewportHeight && vsbPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
-            if (viewPreferredSize.height > viewportExtentSize.height || 0 != view.getY()) {
+            if (viewPreferredSize.height > viewportExtentSize.height) {
               vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
             }
           }
           if (!viewTracksViewportWidth && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-            if (viewPreferredSize.width > viewportExtentSize.width || 0 != view.getX()) {
+            if (viewPreferredSize.width > viewportExtentSize.width) {
               hsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
             }
           }
