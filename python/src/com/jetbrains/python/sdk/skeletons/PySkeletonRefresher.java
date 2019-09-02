@@ -174,11 +174,13 @@ public class PySkeletonRefresher {
 
     final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
     final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
-      if (result.myGenerationStatus == PySkeletonGenerator.GenerationStatus.FAILED) {
+      if (result.getGenerationStatus() == PySkeletonGenerator.GenerationStatus.FAILED) {
         return result.getModuleName();
       }
       return null;
     });
+    final boolean builtinsUpdated = ContainerUtil.exists(results,
+                                                         result -> result.getModuleOrigin().equals(SkeletonVersionChecker.BUILTIN_NAME));
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
@@ -186,7 +188,9 @@ public class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
     cleanUpSkeletons(skeletonsDir);
 
-    ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+    if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+    }
 
     return failedModules;
   }
