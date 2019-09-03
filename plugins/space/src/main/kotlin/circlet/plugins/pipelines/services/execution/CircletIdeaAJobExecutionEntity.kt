@@ -16,4 +16,12 @@ class CircletIdeaAJobExecutionEntity(
     override val isSnapshotPoint: Boolean,
     override val volumeSize: Int?,
     override var workerId: String? = null
-) : AContainerExecutionEntity
+) : AContainerExecutionEntity {
+    override fun equals(other: Any?): Boolean {
+        return (other as? CircletIdeaAJobExecutionEntity)?.id == this.id
+    }
+
+    override fun hashCode(): Int {
+        return this.id.hashCode()
+    }
+}

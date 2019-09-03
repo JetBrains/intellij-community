@@ -6,4 +6,12 @@ import circlet.pipelines.engine.api.storage.*
 class CircletIdeaAGraphMetaEntity(
     override val id: Long,
     override val originalMeta: ProjectAction
-) : AGraphMetaEntity
+) : AGraphMetaEntity {
+    override fun equals(other: Any?): Boolean {
+        return (other as? CircletIdeaAGraphMetaEntity)?.id == this.id
+    }
+
+    override fun hashCode(): Int {
+        return this.id.hashCode()
+    }
+}
