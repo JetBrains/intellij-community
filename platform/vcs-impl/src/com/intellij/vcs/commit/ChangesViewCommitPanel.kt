@@ -71,6 +71,8 @@ private fun JBPopup.showAbove(component: JComponent) {
   show(northWest)
 }
 
+internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
+
 class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
   BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
 
