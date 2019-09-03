@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
+  private static final Key<Integer> PARAMETER_LENGTH = new Key<>(("PARAMETER_LENGTH"));
 
   public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", "Default");
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
@@ -738,39 +739,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
             super.visitElement(element);
           }
         });
+        final int length = element.getTextLength() - infos.keySet().stream().mapToInt(key -> key.length() + 2).sum();
+        nameInfo.putUserData(PARAMETER_LENGTH, length);
       }
     });
-  }
-
-  private static int findAnnotationParameterEnd(CharSequence s, int fromIndex) {
-    boolean comment = false;
-    boolean string = false;
-    final int max = s.length();
-    for (int i = fromIndex; i < max; i++) {
-      final char c = s.charAt(i);
-      if (c == '"' && !comment) string = !string;
-      if (string) continue;
-      if (!comment && c == '/' && (i == max - 1 || s.charAt(i + 1) == '*')) comment = true;
-      if (comment && c == '*' && (i == max - 1 || s.charAt(i + 1) == '/')) comment = false;
-      if (c == ',' || c == ')') return i;
-    }
-    return -1;
-  }
-
-  private static int findMethodParameterStart(CharSequence s, int fromIndex) {
-    int nesting = 0;
-    boolean comment = false;
-    for (int i = fromIndex - 1; i >= 0; i--) {
-      final char c = s.charAt(i);
-      if (!comment && c == '/' && (i == 0 || s.charAt(i - 1) == '*')) comment = true;
-      else if (comment && c == '*' && (i == 0 || s.charAt(i - 1) == '/')) comment = false;
-      if (comment) continue;
-      if (c == '>') nesting++;
-      else if (c == '<') nesting--;
-      if (nesting > 0) continue;
-      if (c == ',' || c == '(') return i + 1;
-    }
-    return -1;
   }
 
   @Override
@@ -785,7 +757,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (typeInfos != null) {
         if (element instanceof PsiParameter) {
           final int parameterEnd = info.getStartIndex();
-          final int parameterStart = findMethodParameterStart(result, parameterEnd);
+          final Integer length = info.getUserData(PARAMETER_LENGTH);
+          assert length != null;
+          final int parameterStart = parameterEnd - length;
           final String template = result.substring(parameterStart, parameterEnd);
           replacementString = handleParameter(info, replacementInfo, -parameterStart, template);
           result.delete(parameterStart, parameterEnd);
@@ -793,7 +767,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
         else if (element instanceof PsiNameValuePair) {
           final int parameterStart = info.getStartIndex();
-          final int parameterEnd = findAnnotationParameterEnd(result, parameterStart);
+          final Integer length = info.getUserData(PARAMETER_LENGTH);
+          assert length != null;
+          final int parameterEnd = parameterStart + length;
           final String template = result.substring(parameterStart, parameterEnd);
           replacementString = handleParameter(info, replacementInfo, -parameterStart, template);
           result.delete(parameterStart, parameterEnd);
