@@ -24,6 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Project model-aware search scope.
+ *
+ * @see com.intellij.psi.search.GlobalSearchScopes
+ */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
   @Nullable private final Project myProject;
@@ -43,9 +48,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * @return a positive integer (e.g. +1), if file1 is located in the classpath before file2,
-   *         a negative integer (e.e -1), if file1 is located in the classpath after file2
-   *         zero - otherwise or when the files are not comparable.
+   * @return <ul>
+   * <li>a positive integer (e.g. +1), if file1 is located in the classpath before file2</li>
+   * <li>a negative integer (e.e -1), if file1 is located in the classpath after file2</li>
+   * <li>zero - otherwise or when the files are not comparable</li>
+   * </ul>
    */
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return 0;
