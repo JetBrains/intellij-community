@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
@@ -78,7 +79,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final Alarm myIconUpdaterAlarm = new Alarm();
   private final UIBuilder myUIBuilder = new UIBuilder();
 
-  EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
@@ -101,7 +102,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
       Disposer.register(manager.getProject(), dockable);
-      dockManager.register(dockable);
+      DockManager.getInstance(manager.getProject()).register(dockable);
     }
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
@@ -421,7 +422,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 
-      frame.setFileTitle(fileTitle, ioFile);
+      IdeFrameEx frameEx;
+      if (frame instanceof IdeFrameEx) {
+        frameEx = (IdeFrameEx)frame;
+      }
+      else {
+        frameEx = ((IdeRootPane)((IdeFrameImpl)frame).getRootPane()).getFrameHelper();
+      }
+      frameEx.setFileTitle(fileTitle, ioFile);
     }
   }
 
@@ -685,7 +693,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return res;
   }
 
-  @NotNull public EditorWindow [] getWindows() {
+  @NotNull
+  public EditorWindow [] getWindows() {
     return myWindows.toArray(new EditorWindow[0]);
   }
 

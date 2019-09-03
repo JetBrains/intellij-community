@@ -327,6 +327,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   @Override
+  @Nullable
   public IdeRootPaneNorthExtension getNorthExtension(String key) {
     return myRootPane.findByName(key);
   }
@@ -540,6 +541,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   @NotNull
   public IdeFrameImpl getFrame() {
     return myFrame;
+  }
+
+  @NotNull
+  IdeRootPane getRootPane() {
+    return myRootPane;
   }
 
   @NotNull

@@ -877,16 +877,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   @Override
-  public void setFileTitle(String fileTitle, File ioFile) {
-    setTitle(fileTitle);
-  }
-
-  @Override
-  public IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return null;
-  }
-
-  @Override
   public JComponent getComponent() {
     return getRootPane();
   }

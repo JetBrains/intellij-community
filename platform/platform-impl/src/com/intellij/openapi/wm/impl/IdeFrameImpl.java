@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.GraphicsUtil;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Objects;
 
 @ApiStatus.Internal
@@ -207,18 +205,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame {
     if (myFrameHelper != null) {
       myFrameHelper.getHelper().setFrameTitle(title);
     }
-  }
-
-  @Override
-  public void setFileTitle(String fileTitle, File ioFile) {
-    if (myFrameHelper != null) {
-      myFrameHelper.getHelper().setFileTitle(fileTitle, ioFile);
-    }
-  }
-
-  @Override
-  public IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return myFrameHelper == null ? null : myFrameHelper.getHelper().getNorthExtension(key);
   }
 
   @Override

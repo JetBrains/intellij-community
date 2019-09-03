@@ -436,8 +436,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Nullable
+  @ApiStatus.Internal
   public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return myProjectToFrame.get(project);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public IdeRootPane getProjectFrameRootPane(@Nullable Project project) {
+    ProjectFrameHelper helper = myProjectToFrame.get(project);
+    return helper == null ? null : helper.getRootPane();
   }
 
   @Override

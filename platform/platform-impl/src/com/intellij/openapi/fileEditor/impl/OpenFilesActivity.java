@@ -12,16 +12,18 @@ import org.jetbrains.annotations.NotNull;
 final class OpenFilesActivity implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    if (!(fileEditorManager instanceof FileEditorManagerImpl)) {
+      return;
+    }
+
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText("Reopening files...");
     }
 
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    if (fileEditorManager instanceof FileEditorManagerImpl) {
-      FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
-      manager.getMainSplitters().openFiles();
-      manager.initDockableContentFactory();
-    }
+    FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
+    manager.getMainSplitters().openFiles();
+    manager.initDockableContentFactory();
   }
 }

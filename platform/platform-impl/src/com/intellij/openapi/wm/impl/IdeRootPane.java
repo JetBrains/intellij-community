@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
@@ -342,9 +341,10 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     myNorthComponents.clear();
   }
 
-  public IdeRootPaneNorthExtension findByName(String name) {
+  @Nullable
+  public IdeRootPaneNorthExtension findByName(@NotNull String name) {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      if (Comparing.strEqual(name, northComponent.getKey())) {
+      if (northComponent.getKey().equals(name)) {
         return northComponent;
       }
     }

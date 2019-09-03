@@ -13,18 +13,15 @@ import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
-
+public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
   public static final String TYPE = "file-editors";
 
   private final Project myProject;
   private final FileEditorManagerImpl myFileEditorManager;
-  private final DockManager myDockManager;
 
-  public DockableEditorContainerFactory(Project project, FileEditorManagerImpl fileEditorManager, DockManager dockManager) {
-    this.myProject = project;
+  public DockableEditorContainerFactory(@NotNull Project project, @NotNull FileEditorManagerImpl fileEditorManager) {
+    myProject = project;
     myFileEditorManager = fileEditorManager;
-    myDockManager = dockManager;
   }
 
   @Override
@@ -34,7 +31,7 @@ public class DockableEditorContainerFactory implements DockContainerFactory.Pers
 
   private DockContainer createContainer(boolean loadingState) {
     final Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
-    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myDockManager, false) {
+    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, false) {
       @Override
       protected void afterFileClosed(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);

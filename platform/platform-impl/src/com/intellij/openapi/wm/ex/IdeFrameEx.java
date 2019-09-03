@@ -2,12 +2,21 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.File;
+
 public interface IdeFrameEx extends IdeFrame {
+  void setFileTitle(String fileTitle, File ioFile);
+
   boolean isInFullScreen();
 
   @NotNull
   Promise<?> toggleFullScreen(boolean state);
+
+  @Nullable
+  IdeRootPaneNorthExtension getNorthExtension(String key);
 }

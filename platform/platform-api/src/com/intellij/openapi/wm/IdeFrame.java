@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 public interface IdeFrame {
   DataKey<IdeFrame> KEY = DataKey.create("IdeFrame");
@@ -22,14 +21,12 @@ public interface IdeFrame {
   Project getProject();
 
   void setFrameTitle(String title);
-  void setFileTitle(String fileTitle, File ioFile);
-
-  IdeRootPaneNorthExtension getNorthExtension(String key);
 
   JComponent getComponent();
 
   @Nullable
   BalloonLayout getBalloonLayout();
 
-  interface Child extends IdeFrame { }
+  interface Child extends IdeFrame {
+  }
 }

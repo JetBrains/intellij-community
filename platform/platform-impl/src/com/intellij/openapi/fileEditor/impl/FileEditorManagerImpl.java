@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -135,7 +134,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    if (!FileEditorAssociateFinder.EP_NAME.getExtensionList().isEmpty()) {
+    if (FileEditorAssociateFinder.EP_NAME.hasAnyExtensions()) {
       myListenerList.add(new FileEditorManagerListener() {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -149,7 +148,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
       @Override
       public void exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
@@ -177,20 +175,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     });
 
-    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
-      new ExtensionPointListener<FileEditorProvider>() {
-        @Override
-        public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          for (EditorComposite editor : myOpenedEditors) {
-            for (FileEditorProvider provider : editor.getProviders()) {
-              if (provider.equals(extension)) {
-                closeFile(editor.getFile());
-                break;
-              }
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+      @Override
+      public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        for (EditorComposite editor : myOpenedEditors) {
+          for (FileEditorProvider provider : editor.getProviders()) {
+            if (provider.equals(extension)) {
+              closeFile(editor.getFile());
+              break;
             }
           }
         }
-      }, false, this);
+      }
+    }, false, this);
   }
 
   @Override
@@ -224,7 +221,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void initDockableContentFactory() {
     if (myContentFactory != null) return;
 
-    myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
+    myContentFactory = new DockableEditorContainerFactory(myProject, this);
     myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
     Disposer.register(this, myContentFactory);
   }
@@ -318,7 +315,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           final JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
           panel.setBorder(new MyBorder());
-          mySplitters = new EditorsSplitters(this, myDockManager, true);
+          mySplitters = new EditorsSplitters(this, true);
           Disposer.register(this, mySplitters);
           panel.add(mySplitters, BorderLayout.CENTER);
           myPanels = panel;
@@ -1045,7 +1042,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
 
   @Nullable
-  EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
+  EditorWithProviderComposite newEditorComposite(@Nullable VirtualFile file) {
     if (file == null) {
       return null;
     }

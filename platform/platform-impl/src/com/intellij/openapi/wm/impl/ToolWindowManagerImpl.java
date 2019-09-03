@@ -289,7 +289,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     int vks = getActivateToolWindowVKsMask();
-
     if (vks == 0) {
       resetHoldState();
       return false;
