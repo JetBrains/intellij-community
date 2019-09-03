@@ -44,11 +44,7 @@ public abstract class AdditionalLibraryRootsProvider {
    */
   @NotNull
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-    Collection<VirtualFile> roots = getAdditionalProjectLibrarySourceRoots(project);
-    if (roots.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(roots));
+    return Collections.emptyList();
   }
 
   /**
@@ -66,16 +62,6 @@ public abstract class AdditionalLibraryRootsProvider {
    */
   @NotNull
   public Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated use {@link #getAdditionalProjectLibraries(Project)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
-  public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
     return Collections.emptyList();
   }
 }
