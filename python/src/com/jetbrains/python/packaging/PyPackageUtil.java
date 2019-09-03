@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
@@ -521,11 +522,20 @@ public class PyPackageUtil {
         final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
         allEvents:
         for (VFileEvent event : events) {
+          if (event instanceof VFileContentChangeEvent) continue;
           // In case of create event getFile() returns null as the file hasn't been created yet
-          final VirtualFile file = event instanceof VFileCreateEvent ? ((VFileCreateEvent)event).getParent() : event.getFile();
-          if (file != null) {
+          VirtualFile parent = null;
+          if (event instanceof VFileCreateEvent) {
+            parent = ((VFileCreateEvent)event).getParent();
+          }
+          else {
+            VirtualFile file = event.getFile();
+            if (file != null) parent = file.getParent();
+          }
+
+          if (parent != null) {
             for (VirtualFile root : roots) {
-              if (VfsUtilCore.isAncestor(root, file, false)) {
+              if (root != null && root.equals(parent)) {
                 app.executeOnPooledThread(runnable);
                 break allEvents;
               }
