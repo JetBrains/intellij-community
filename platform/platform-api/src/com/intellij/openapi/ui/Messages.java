@@ -36,6 +36,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
+/**
+ * Provides several default notification dialogs ("OK|Cancel") as well as simple input dialogs.
+ */
 public class Messages {
   public static final int OK = 0;
   public static final int YES = 0;
