@@ -25,6 +25,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -364,6 +365,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return false;
   }
 
+  @ApiStatus.Internal
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
   private boolean fireRootsChanged(boolean fileTypes) {
@@ -390,23 +392,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     fireRootsChangedEvent(fileTypes);
 
-    doSynchronizeRoots();
-
-    addRootsToWatch();
-
     return true;
   }
 
+  @ApiStatus.Internal
   protected void fireRootsChangedEvent(boolean fileTypes) { }
-
-  protected void addRootsToWatch() { }
 
   @NotNull
   public Project getProject() {
     return myProject;
   }
-
-  protected void doSynchronizeRoots() { }
 
   @NotNull
   public static String extractLocalPath(@NotNull String url) {
