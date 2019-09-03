@@ -2,7 +2,6 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -11,7 +10,6 @@ import java.util.List;
 /**
  * Override this service in your IDE to set which languages are considered as the primary languages. It isn't supposed to be overridden in plugins.
  */
-@ApiStatus.Experimental
 public class IdeLanguageCustomization {
   public static IdeLanguageCustomization getInstance() {
     return ServiceManager.getService(IdeLanguageCustomization.class);
