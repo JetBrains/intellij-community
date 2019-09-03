@@ -9,7 +9,7 @@ class FeatureMappersTest {
     private val binary = BinaryFeature("is_in_same_file",
                                        "true" to 1.0,
                                        "false" to 0.0,
-                                       0.0, true)
+                                       10.0, true)
     private val float = FloatFeature("position", 3.0, true)
     private val floatWithoutUndefined = FloatFeature("duration", 300.0, false)
     private val simpleCategoricalFeature = CategoricalFeature("visibility", setOf("public", "private"))
@@ -34,6 +34,13 @@ class FeatureMappersTest {
     check(categoricalWithOther, categoricalWithOther.createMapper("green"))
     check(categoricalWithOther, categoricalWithOther.createMapper("blue"))
     check(categoricalWithOther, categoricalWithOther.createMapper(CategoricalFeature.OTHER))
+  }
+
+  @Test
+  fun `binary feature should handle boolean values`() {
+    assertEquals(binary.firstValueMapping.second, binary.createMapper(null).asArrayValue(true))
+    assertEquals(binary.secondValueMapping.second, binary.createMapper(null).asArrayValue(false))
+    assertEquals(binary.defaultValue, binary.createMapper(null).asArrayValue(100))
   }
 
   @Test(expected = InconsistentMetadataException::class)

@@ -30,7 +30,7 @@ data class BinaryFeature(override val name: String,
     override fun getFeatureName(): String = name
 
     override fun asArrayValue(value: Any?): Double {
-      return when (value) {
+      return when (value.toString()) {
         firstValueMapping.first -> firstValueMapping.second
         secondValueMapping.first -> secondValueMapping.second
         else -> defaultValue
