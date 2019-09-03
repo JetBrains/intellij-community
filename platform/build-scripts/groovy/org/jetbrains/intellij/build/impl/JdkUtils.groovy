@@ -28,14 +28,8 @@ class JdkUtils {
     messages.info("'$jdkName' Java SDK set to $jdkHomePath")
   }
 
-  static String computeJdkHome(BuildMessages messages, String name, String propertyName, String defaultDir, String envVarName) {
+  static String computeJdkHome(BuildMessages messages, String name, String defaultDir, String envVarName) {
     String jdkDir
-    if (propertyName != null) {
-      jdkDir = System.getProperty(propertyName)
-      if (jdkDir != null) {
-        return jdkDir
-      }
-    }
     if (defaultDir != null) {
       jdkDir = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
       if (new File(jdkDir).exists()) {
@@ -45,7 +39,7 @@ class JdkUtils {
         jdkDir = null
       }
     }
-    messages.info("$name: property=$propertyName, dir=$defaultDir, env=$envVarName")
+    messages.info("$name: dir=$defaultDir, env=$envVarName")
     if (envVarName != null) {
       jdkDir = System.getenv(envVarName)
     }

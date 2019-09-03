@@ -65,7 +65,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', "jdk8Home", null, "JDK_18_x64"))
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle, options)
@@ -89,21 +89,21 @@ class CompilationContextImpl implements CompilationContext {
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
     def jbrDir = jbrDir(projectHome, options)
-    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "jdkHome", "$jbrDir/1.6", "JDK_16_x64")
+    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
     JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
     sdks << "IDEA jdk"
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
     def jbrEnvVar = "JDK_${options.jbrVersion < 9 ? "1$options.jbrVersion" : options.jbrVersion}_x64"
-    def jbrHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, jbrVersionName, "jdk${options.jbrVersion}Home", jbrDefaultDir, jbrEnvVar))
+    def jbrHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, jbrVersionName, jbrDefaultDir, jbrEnvVar))
     JdkUtils.defineJdk(model.global, jbrVersionName, jbrHome, messages)
     model.project.modules
       .collect { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
       .findAll { it != null && !sdks.contains(it) }
       .toSet().each { sdkName ->
-      def sdkHome = JdkUtils.computeJdkHome(messages, sdkName, sdkName, "$jbrDir/$sdkName", null)?.with {
-        toCanonicalPath(it as String)
+      def sdkHome = JdkUtils.computeJdkHome(messages, sdkName, "$jbrDir/$sdkName", null)?.with {
+        toCanonicalPath(it)
       }
       if (sdkHome != null) {
         JdkUtils.defineJdk(model.global, sdkName, sdkHome, messages)
@@ -112,7 +112,7 @@ class CompilationContextImpl implements CompilationContext {
           def urls = jbr11.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
           JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
             if (!urls.contains(it)) {
-              jbr11.addRoot(it as String, JpsOrderRootType.COMPILED)
+              jbr11.addRoot(it, JpsOrderRootType.COMPILED)
             }
           }
         }
