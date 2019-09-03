@@ -151,6 +151,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
     myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
+    
+    JComponent toolbar = myMainFrame.getToolbar();
+    toolbar.revalidate();
+    toolbar.repaint();
   }
 
   public void addFilterListener(@NotNull VcsLogFilterListener listener) {

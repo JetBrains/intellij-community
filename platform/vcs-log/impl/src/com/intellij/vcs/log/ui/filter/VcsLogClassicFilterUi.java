@@ -28,6 +28,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -59,6 +60,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VcsLogDataPack myDataPack;
 
@@ -77,6 +79,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myLogData = logData;
     myUiProperties = uiProperties;
     myDataPack = VisiblePack.EMPTY;
+    myColorManager = myUi.getColorManager();
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
@@ -94,7 +97,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
-    myUi.applyFiltersAndUpdateUi(getFilters());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myUi.applyFiltersAndUpdateUi(getFilters());
+    });
   }
 
   @Override
@@ -116,7 +121,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     actionGroup.add(new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(
-      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myUi.getColorManager()).initUi()));
+      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi()));
     return actionGroup;
   }
 
@@ -150,10 +155,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     else if (filter instanceof VcsLogStructureFilter) {
       myStructureFilterModel.setStructureFilter((VcsLogStructureFilter)filter);
     }
-
-    JComponent toolbar = myUi.getToolbar();
-    toolbar.revalidate();
-    toolbar.repaint();
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
