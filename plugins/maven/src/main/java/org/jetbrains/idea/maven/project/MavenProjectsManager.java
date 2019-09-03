@@ -887,9 +887,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
     Promise<List<Module>> toCheck = myRunningImportPromise;
-    if(toCheck != null){
+   /* if(toCheck != null){
       return toCheck;
-    }
+    }*/
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
@@ -1182,6 +1182,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     unscheduleAllTasks(getProjects());
   }
 
+  @TestOnly
+  public void waitForImportFinishCompletion() {
+    completeMavenSyncOnImportCompletion(mySyncConsole);
+  }
+
+
   public void waitForReadingCompletion() {
     waitForTasksCompletion(null);
   }
@@ -1324,11 +1330,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void fireActivatedInTests() {
     fireActivated();
-  }
-
-  @TestOnly
-  public void replaceProgressListener(BuildProgressListener newProgressListener){
-    myProgressListener = newProgressListener;
   }
 
   private void fireActivated() {
