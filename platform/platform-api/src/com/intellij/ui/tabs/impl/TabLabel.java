@@ -543,10 +543,13 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   }
 
   void updateActionLabelPosition() {
-    if (!myActionPanel.isVisible()) {
-      remove(myActionPanel);
-    } else {
-      add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    if (myActionPanel != null) {
+      if (!myActionPanel.isVisible()) {
+        remove(myActionPanel);
+      }
+      else {
+        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+      }
     }
   }
 
