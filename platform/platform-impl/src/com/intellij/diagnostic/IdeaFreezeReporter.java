@@ -251,6 +251,37 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     myStacktraceCommonPart = null;
   }
 
+  private static ThreadInfo getCauseThread(ThreadInfo[] threadInfos) {
+    ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
+    if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
+      String lockName = edt.getLockName();
+      if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
+        for (ThreadInfo info : threadInfos) {
+          if (isRunningWithReadLock(info)) {
+            return info;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isRunningWithReadLock(ThreadInfo thread) {
+    if (thread.getThreadState() != Thread.State.RUNNABLE) {
+      return false;
+    }
+    boolean read = false;
+    for (StackTraceElement s : thread.getStackTrace()) {
+      if ("runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) {
+        read = true;
+      }
+      if ("waitABit".equals(s.getMethodName())) {
+        return false;
+      }
+    }
+    return read;
+  }
+
   @Nullable
   private IdeaLoggingEvent createEvent(int lengthInSeconds,
                                        Attachment[] attachments,
@@ -276,20 +307,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
         if (causeThreadId == -1) {
           // find probable cause thread
-          ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
-          if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
-            String lockName = edt.getLockName();
-            if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
-              for (ThreadInfo info : threadInfos) {
-                if (info.getThreadState() == Thread.State.RUNNABLE &&
-                    ContainerUtil.find(info.getStackTrace(), s ->
-                      "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
-                  causeThreadId = info.getThreadId();
-                  reasonStacks.add(info.getStackTrace());
-                  break;
-                }
-              }
-            }
+          ThreadInfo thread = getCauseThread(threadInfos);
+          if (thread != null) {
+            causeThreadId = thread.getThreadId();
+            reasonStacks.add(thread.getStackTrace());
           }
         }
         else {
