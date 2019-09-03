@@ -56,7 +56,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase implements BaseT
   public void testProperty() {
     myFixture.enableInspections(new GrUnresolvedAccessInspection());
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.launchAction(myFixture.findSingleIntention("Add Dynamic Property"));
+    myFixture.launchAction(myFixture.findSingleIntention("Add dynamic property"));
     GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class);
     assertNotNull(getDClassElement().getPropertyByName(referenceExpression.getReferenceName()));
   }
