@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -183,6 +184,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                 LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                 try {
                   PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);
+                  if (project1 != null) {
+                    application.invokeLater(() -> DaemonCodeAnalyzer.getInstance(project1).restart(), project1.getDisposed());
+                  }
                 }
                 catch (ExecutionException e) {
                   if (LOG.isDebugEnabled()) {

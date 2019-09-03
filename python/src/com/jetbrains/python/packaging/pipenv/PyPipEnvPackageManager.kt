@@ -33,18 +33,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
 
   init {
     PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk) {
-      val updated = PyPackageUtil.updatePackagesSynchronouslyWithGuard(this@PyPipEnvPackageManager, isUpdatingCache)
-      if (!updated) {
-        return@runOnChangeUnderInterpreterPaths
-      }
-      // Restart inspections once again because due to the changes in Pipfile.lock "Package Requirements" inspection
-      // might be restarted earlier than we finish updating the list of installed packages.
-      val project = guessProjectForFile(sdk.pipFileLock)
-      if (project != null) {
-        val analyzer = DaemonCodeAnalyzer.getInstance(project)
-        // Otherwise, with a plain method reference, Kotlin complains about signature ambiguity
-        ApplicationManager.getApplication().invokeLater(Runnable { analyzer.restart() }, project.disposed)
-      }
+      PythonSdkType.getInstance().setupSdkPaths(sdk)
     }
   }
 
