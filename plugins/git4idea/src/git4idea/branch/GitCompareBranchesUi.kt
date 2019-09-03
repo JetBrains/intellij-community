@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
+import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRangeFilter
@@ -24,6 +25,7 @@ import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
+import com.intellij.vcs.log.util.VcsLogUiUtil.getLinkAttributes
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
@@ -96,6 +98,20 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
     override fun createBranchComponent(): FilterActionComponent {
       return FilterActionComponent {
         LinkLabel.create("Swap Branches") {
+          setFilter(rangeFilter.asReversed())
+        }
+      }
+    }
+
+    override fun setCustomEmptyText(text: StatusText) {
+      if (filters.filters.any { it !is VcsLogRangeFilter && it !is VcsLogRootFilter }) {
+        // additional filters have been set => display the generic message
+        super.setCustomEmptyText(text)
+      }
+      else {
+        val (start, end) = rangeFilter.getRange()
+        text.text = "$start contains all commits from $end"
+        text.appendSecondaryText("Swap Branches", getLinkAttributes()) {
           setFilter(rangeFilter.asReversed())
         }
       }

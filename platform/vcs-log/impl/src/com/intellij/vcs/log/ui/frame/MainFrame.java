@@ -389,17 +389,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(), "Error loading commits");
         appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
-      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+      else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
           setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
           if (visiblePack.getFilters().isEmpty()) {
             appendActionToEmptyText("Refresh", myRefresh);
           }
           else {
-            appendResetFiltersActionToEmptyText();
+          VcsLogUiUtil.appendResetFiltersActionToEmptyText(myFilterUi, getEmptyText());
           }
-        }
-        else if (visiblePack.getFilters().isEmpty()) {
+      }
+      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+        if (visiblePack.getFilters().isEmpty()) {
           statusText.setText("No changes committed.").
             appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
                                 ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
@@ -410,8 +410,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
           }
         }
         else {
-          statusText.setText("No commits matching filters.");
-          appendResetFiltersActionToEmptyText();
+          myFilterUi.setCustomEmptyText(getEmptyText());
         }
       }
       else {
@@ -419,8 +418,5 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     }
 
-    private void appendResetFiltersActionToEmptyText() {
-      appendActionToEmptyText("Reset filters", () -> myFilterUi.setFilter(null));
-    }
   }
 }
