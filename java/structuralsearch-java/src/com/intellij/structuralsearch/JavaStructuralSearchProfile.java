@@ -700,7 +700,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       @Override
       public void visitNameValuePair(PsiNameValuePair pair) {
         super.visitNameValuePair(pair);
-        setParameterContext(pair, pair.getName(), pair.getValue());
+        setParameterContext(pair, pair.getNameIdentifier(), pair.getValue());
       }
 
       @Override
@@ -709,15 +709,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (scope instanceof PsiCatchSection || scope instanceof PsiForeachStatement) {
           return;
         }
-        setParameterContext(parameter, parameter.getName(), parameter.getTypeElement());
+        setParameterContext(parameter, parameter.getNameIdentifier(), parameter.getTypeElement());
       }
 
-      private void setParameterContext(@Nullable PsiElement element, String name, PsiElement scopeElement) {
-        if (name == null || !StructuralSearchUtil.isTypedVariable(name)) {
-          return;
-        }
-        final ParameterInfo nameInfo = builder.findParameterization(Replacer.stripTypedVariableDecoration(name));
-        assert nameInfo != null;
+      private void setParameterContext(PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
+        final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
+        if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
         final THashMap<String, ParameterInfo> infos = new THashMap<>();
         infos.put(nameInfo.getName(), nameInfo);
@@ -728,17 +725,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         scopeElement.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitElement(PsiElement element) {
-            super.visitElement(element);
-            String type = element.getText();
+            final String type = element.getText();
             if (StructuralSearchUtil.isTypedVariable(type)) {
-              type = Replacer.stripTypedVariableDecoration(type);
-              final ParameterInfo typeInfo = builder.findParameterization(type);
+              final ParameterInfo typeInfo = builder.findParameterization(element);
               if (typeInfo != null) {
                 typeInfo.setArgumentContext(false);
                 typeInfo.putUserData(PARAMETER_CONTEXT, Collections.emptyMap());
                 infos.put(typeInfo.getName(), typeInfo);
+                return;
               }
             }
+            super.visitElement(element);
           }
         });
       }
@@ -777,31 +774,32 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public int handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset, ReplacementInfo replacementInfo) {
+  public void handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean forceAddingNewLine = false;
+      int offset = 0;
 
       final PsiElement element = info.getElement();
       final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
       if (typeInfos != null) {
         if (element instanceof PsiParameter) {
-          final int parameterEnd = offset + info.getStartIndex();
+          final int parameterEnd = info.getStartIndex();
           final int parameterStart = findMethodParameterStart(result, parameterEnd);
           final String template = result.substring(parameterStart, parameterEnd);
-          replacementString = handleParameter(info, replacementInfo, offset - parameterStart, template);
+          replacementString = handleParameter(info, replacementInfo, -parameterStart, template);
           result.delete(parameterStart, parameterEnd);
           offset -= template.length();
         }
         else if (element instanceof PsiNameValuePair) {
-          final int parameterStart = offset + info.getStartIndex();
+          final int parameterStart = info.getStartIndex();
           final int parameterEnd = findAnnotationParameterEnd(result, parameterStart);
           final String template = result.substring(parameterStart, parameterEnd);
-          replacementString = handleParameter(info, replacementInfo, offset - parameterStart, template);
+          replacementString = handleParameter(info, replacementInfo, -parameterStart, template);
           result.delete(parameterStart, parameterEnd);
         }
         else {
-          return offset;
+          return;
         }
       }
       else if (match.hasChildren() && !match.isScopeMatch()) {
@@ -879,39 +877,36 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       offset = removeExtraSemicolon(info, offset, result, match);
       if (forceAddingNewLine && info.isStatementContext()) {
         result.insert(info.getStartIndex() + offset + 1, '\n');
-        offset++;
       }
     }
-    return offset;
   }
 
   @Override
-  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+  public void handleNoSubstitution(ParameterInfo info, StringBuilder result) {
     final PsiElement element = info.getElement();
     final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
     if (prevSibling instanceof PsiJavaToken && isRemovableToken(prevSibling)) {
-      final int start = info.getBeforeDelimiterPos() + offset - (prevSibling.getTextLength() - 1);
-      final int end = info.getStartIndex() + offset;
+      final int start = info.getBeforeDelimiterPos() - (prevSibling.getTextLength() - 1);
+      final int end = info.getStartIndex();
       result.delete(start, end);
-      return offset - (end - start);
+      return;
     }
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(element);
     if (isRemovableToken(nextSibling)) {
-      final int start = info.getStartIndex() + offset;
-      final int end = info.getAfterDelimiterPos() + nextSibling.getTextLength() + offset;
+      final int start = info.getStartIndex();
+      final int end = info.getAfterDelimiterPos() + nextSibling.getTextLength();
       result.delete(start, end);
-      return offset - 1;
+      return;
     }
     else if (element instanceof PsiTypeElement && nextSibling instanceof PsiIdentifier) {
-      final int start = info.getStartIndex() + offset;
-      final int end = info.getAfterDelimiterPos() + offset;
+      final int start = info.getStartIndex();
+      final int end = info.getAfterDelimiterPos();
       result.delete(start, end);
-      return offset - 1;
+      return;
     }
     if (element == null || !(element.getParent() instanceof PsiForStatement)) {
-      return removeExtraSemicolon(info, offset, result, null);
+      removeExtraSemicolon(info, 0, result, null);
     }
-    return offset;
   }
 
   private static boolean isRemovableToken(PsiElement element) {

@@ -460,6 +460,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expected1c = "class A { void /**/ b(int c, int d, int e) {} }";
     assertEquals("replace multi match parameter", expected1c, replace(in1, "void b(int '_x*);", "void /**/ b(int $x$);"));
 
+    String expected1d = "class A { void b(int c, int d, int e) {} void c(int c, int d, int e) {} }";
+    assertEquals("replace multiple occurrences of the same variable", expected1d, replace(in1, "void b('_T '_p*);", "void b($T$ $p$); " +
+                                                                                                                    "void c($T$ $p$) {}"));
+
     String in2 = "class X {" +
                  "  void x() {}" +
                  "}";
