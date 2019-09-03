@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * new Task.Backgroundable(project, "Synchronizing data", true) {
  *  public void run(ProgressIndicator indicator) {
  *    indicator.setText("Loading changes");
+ *    indicator.setIndeterminate(false);
  *    indicator.setFraction(0.0);
  *    // some code
  *    indicator.setFraction(1.0);
