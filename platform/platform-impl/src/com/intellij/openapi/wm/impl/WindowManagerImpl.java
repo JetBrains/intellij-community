@@ -492,7 +492,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NotNull
   @ApiStatus.Internal
   public static Rectangle convertFromDeviceSpaceAndValidateFrameBounds(@NotNull Rectangle deviceFrameBounds) {
-    return FrameBoundsConverter.convertFromDeviceSpace(deviceFrameBounds);
+    return FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceFrameBounds);
   }
 
   @Override
@@ -735,17 +735,18 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
      * @return the bounds in the user space
      */
     @NotNull
-    static Rectangle convertFromDeviceSpace(@NotNull Rectangle bounds) {
+    static Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
       Rectangle b = bounds.getBounds();
-      if (!shouldConvert()) return b;
-
+      int centerX = b.x + b.width / 2;
+      int centerY = b.y + b.height / 2;
+      boolean scaleNeeded = shouldConvert();
       try {
         for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
           GraphicsConfiguration gc = gd.getDefaultConfiguration();
           Rectangle devBounds = gc.getBounds(); // in user space
-          scaleUp(devBounds, gc); // to device space
-          if (devBounds.contains(b.x + b.width / 2, b.y + b.height / 2)) {
-            scaleDown(b, gc);
+          if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
+          if (devBounds.contains(centerX, centerY)) {
+            if (scaleNeeded) scaleDown(b, gc); // to user space if needed
             // do not return bounds bigger than the corresponding screen rectangle
             Rectangle screen = ScreenUtil.getScreenRectangle(gc);
             if (b.x < screen.x) b.x = screen.x;
