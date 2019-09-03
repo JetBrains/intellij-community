@@ -8,7 +8,7 @@
 ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
+    <backgroundPostStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
   </extensions>
 
   <actions>
@@ -22,10 +22,4 @@
       <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsBinaryDataSyncAction" group-id="BuildMenu"/>
     </action>
   </actions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.jps.cache.JpsCachePluginComponent</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>
