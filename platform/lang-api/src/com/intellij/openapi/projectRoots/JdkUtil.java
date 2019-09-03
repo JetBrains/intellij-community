@@ -300,19 +300,7 @@ public class JdkUtil {
 
       appendEncoding(javaParameters, commandLine, vmParameters);
 
-      //todo[remoteServers]: create delegate remote value
-      IR.RemoteValue<String> argFileUpload = request.createUpload(argFile.getAbsolutePath());
-      commandLine.addParameter(new IR.RemoteValue<String>() {
-        @Override
-        public String getLocalValue() {
-          return "@" + argFileUpload.getLocalValue();
-        }
-
-        @Override
-        public String getRemoteValue() {
-          return "@" + argFileUpload.getRemoteValue();
-        }
-      });
+      commandLine.addParameter(new IR.MapValue<>(request.createUpload(argFile.getAbsolutePath()), s -> "@" + s));
 
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
@@ -388,18 +376,7 @@ public class JdkUtil {
         }
       }
       commandLine.addParameter("-classpath");
-      //todo[remoteServers]: add composite remote values
-      commandLine.addParameter(new IR.RemoteValue<String>() {
-      @Override
-        public String getLocalValue() {
-          return StringUtil.join(classpath, path -> path.getLocalValue(), File.pathSeparator);
-        }
-
-        @Override
-        public String getRemoteValue() {
-          return StringUtil.join(classpath, path -> path.getRemoteValue(), File.pathSeparator);
-        }
-      });
+      commandLine.addParameter(new IR.CompositeValue<>(classpath, values -> StringUtil.join(values, File.pathSeparator)));
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(request.createUpload(classpathFile.getAbsolutePath()));
@@ -509,19 +486,8 @@ public class JdkUtil {
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
-      //todo[remoteServers]: introduce composite values
       List<IR.RemoteValue<String>> pathValues = ContainerUtil.map(classPath.getPathList(), path -> request.createUpload(path));
-      commandLine.addParameter(new IR.RemoteValue<String>() {
-        @Override
-        public String getLocalValue() {
-          return StringUtil.join(pathValues, path -> path.getLocalValue(), File.pathSeparator);
-        }
-
-        @Override
-        public String getRemoteValue() {
-          return StringUtil.join(pathValues, path -> path.getRemoteValue(), File.pathSeparator);
-        }
-      });
+      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator)));
     }
 
     PathsList modulePath = javaParameters.getModulePath();

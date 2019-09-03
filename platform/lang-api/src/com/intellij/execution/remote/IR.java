@@ -10,10 +10,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 public class IR {
   public interface RemoteRunner {
@@ -99,6 +97,46 @@ public class IR {
     @Override
     public T getLocalValue() {
       return myValue;
+    }
+  }
+
+  public static class CompositeValue<S, T> implements RemoteValue<T> {
+    @NotNull private final Collection<RemoteValue<S>> myValues;
+    @NotNull private final Function<Collection<S>, T> myMapper;
+
+    public CompositeValue(@NotNull Collection<RemoteValue<S>> values, @NotNull Function<Collection<S>, T> mapper) {
+      myValues = values;
+      myMapper = mapper;
+    }
+
+    @Override
+    public T getLocalValue() {
+      return myMapper.apply(ContainerUtil.map(myValues, RemoteValue::getLocalValue));
+    }
+
+    @Override
+    public T getRemoteValue() {
+      return myMapper.apply(ContainerUtil.map(myValues, RemoteValue::getRemoteValue));
+    }
+  }
+  
+  public static class MapValue<S, T> implements RemoteValue<T> {
+    @NotNull private final RemoteValue<S> myOriginalValue;
+    @NotNull private final Function<S, T> myMapper;
+
+    public MapValue(@NotNull RemoteValue<S> originalValue, @NotNull Function<S, T> mapper) {
+      myOriginalValue = originalValue;
+      myMapper = mapper;
+    }
+
+    @Override
+    public T getLocalValue() {
+      return myMapper.apply(myOriginalValue.getLocalValue());
+    }
+
+    @Override
+    public T getRemoteValue() {
+      return myMapper.apply(myOriginalValue.getRemoteValue());
     }
   }
 
