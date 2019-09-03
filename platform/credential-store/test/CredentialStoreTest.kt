@@ -5,7 +5,9 @@ import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AssumptionViolatedException
 import org.junit.Test
+import java.io.Closeable
 import java.util.*
 
 private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
@@ -24,6 +26,19 @@ internal class CredentialStoreTest {
     }
 
     doTest(SecretCredentialStore("com.intellij.test"))
+  }
+
+  @Test
+  fun linuxKWallet() {
+    if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
+      return
+    }
+    val kWallet = KWalletCredentialStore.create()
+    if (kWallet == null) {
+      throw AssumptionViolatedException("No KWallet")
+    }
+
+    doTest(kWallet)
   }
 
   @Test
@@ -116,6 +131,7 @@ internal class CredentialStoreTest {
     val unicodeAttributes = CredentialAttributes(TEST_SERVICE_NAME, unicodePassword)
     store.setPassword(unicodeAttributes, pass)
     assertThat(store.getPassword(unicodeAttributes)).isEqualTo(pass)
+    if (store is Closeable) store.close()
   }
 
   private fun testEmptyAccountName(store: CredentialStore) {

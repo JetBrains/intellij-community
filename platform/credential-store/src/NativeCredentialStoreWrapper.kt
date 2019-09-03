@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
+import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
 internal val NOTIFICATION_MANAGER by lazy {
@@ -21,7 +22,7 @@ internal val NOTIFICATION_MANAGER by lazy {
 }
 
 // used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
-private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
+private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore, Closeable {
   private val fallbackStore = lazy { InMemoryCredentialStore() }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
@@ -101,6 +102,13 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
       }
     }
   }
+
+  override fun close() {
+    if (store is Closeable) {
+      queueProcessor.waitFor()
+      store.close()
+    }
+  }
 }
 
 private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
@@ -125,3 +133,11 @@ private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
     else -> null
   }
 }
+
+private class KWalletSecretCredentialStoreFactory : CredentialStoreFactory {
+  override fun create(): CredentialStore? = when {
+    SystemInfo.isLinux && JnaLoader.isLoaded() -> KWalletCredentialStore.create()?.let { NativeCredentialStoreWrapper(it) }
+    else -> null
+  }
+}
+
