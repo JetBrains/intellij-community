@@ -3090,29 +3090,12 @@ public final class UIUtil extends StartupUiUtil {
 
   public static int getLcdContrastValue() {
     int lcdContrastValue  = Registry.intValue("lcd.contrast.value", 0);
-
-    // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
-      if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = StartupUiUtil.isUnderDarcula() ? 140 : 230;
-      } else {
-        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-
-        if (map == null) {
-          lcdContrastValue = 140;
-        } else {
-          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-          lcdContrastValue = o == null ? 140 : (Integer)o;
-        }
-      }
+      return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
     }
-
-    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
-      // the default value
-      lcdContrastValue = 140;
+    else {
+      return normalizeLcdContrastValue(lcdContrastValue);
     }
-
-    return lcdContrastValue;
   }
 
   /**

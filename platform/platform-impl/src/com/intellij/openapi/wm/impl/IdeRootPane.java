@@ -20,7 +20,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -47,6 +46,8 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class IdeRootPane extends JRootPane implements UISettingsListener, Disposable {
+  private final IdeFrameImpl myFrameHelper;
+
   /**
    * Toolbar and status bar.
    */
@@ -72,7 +73,9 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull IdeFrameImpl frame) {
+  IdeRootPane(@NotNull ProjectFrame frame, @NotNull IdeFrameImpl frameHelper) {
+    myFrameHelper = frameHelper;
+
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
@@ -124,14 +127,19 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     updateMainMenuVisibility();
   }
 
+  @NotNull
+  public IdeFrameImpl getFrameHelper() {
+    return myFrameHelper;
+  }
+
   public void init(@NotNull IdeFrameImpl frame) {
     createStatusBar(frame);
   }
 
-  private void updateScreenState(IdeFrame frame) {
-    myFullScreen = frame instanceof IdeFrameEx && ((IdeFrameEx)frame).isInFullScreen();
+  private void updateScreenState(@NotNull ProjectFrame frame) {
+    myFullScreen = frame.isInFullScreen();
 
-    if(isDecoratedMenu()) {
+    if (isDecoratedMenu()) {
       JMenuBar bar = getJMenuBar();
       if (bar != null) {
         bar.setVisible(myFullScreen);

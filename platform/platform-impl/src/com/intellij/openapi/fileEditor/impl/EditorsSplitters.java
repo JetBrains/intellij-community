@@ -27,15 +27,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -431,9 +425,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  protected IdeFrame getFrame(Project project) {
-    final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
-    final IdeFrame frame = windowManagerEx.getFrame(project);
+  protected IdeFrame getFrame(@NotNull Project project) {
+    IdeFrameImpl frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;
   }

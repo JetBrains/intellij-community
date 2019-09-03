@@ -754,6 +754,7 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
 
     <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
+    <preloadingActivity implementation="org.jetbrains.io.PowerSupplyKit" os="mac"/>
 
     <experimentalFeature id="copy.reference.popup" percentOfUsers="100"/>
   </extensions>

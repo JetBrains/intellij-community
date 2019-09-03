@@ -84,7 +84,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var projectSelfie: Image? = null
     if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
       try {
-        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!, ScaleContext.create(frame))
+        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!, ScaleContext.create(frame.frame))
       }
       catch (e: Throwable) {
         if (e.cause !is EOFException) {
@@ -104,7 +104,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       restoreFrameState(frame, frameInfo)
     }
 
-    frame.isVisible = true
+    frame.frame.isVisible = true
     frame.init()
   }
 
@@ -120,7 +120,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       isNewFrame = true
       val frame = windowManager.createFrame()
       if (options.sendFrameBack) {
-        frame.isAutoRequestFocus = false
+        frame.frame.isAutoRequestFocus = false
       }
       return frame
     }
@@ -147,16 +147,16 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       ideFrame = null
 
       if (error != null) {
-        ProjectManagerImpl.showCannotConvertMessage(error, frame)
+        ProjectManagerImpl.showCannotConvertMessage(error, frame?.frame)
       }
 
-      frame?.dispose()
+      frame?.frame?.dispose()
     }
   }
 
   override fun projectOpened(project: Project) {
     if (options.sendFrameBack) {
-      ideFrame?.isAutoRequestFocus = true
+      ideFrame?.frame?.isAutoRequestFocus = true
     }
 
   }
@@ -167,7 +167,7 @@ private fun restoreFrameState(frame: IdeFrameImpl, frameInfo: FrameInfo) {
   val bounds = if (deviceBounds == null) null else WindowManagerImpl.convertFromDeviceSpaceAndValidateFrameBounds(deviceBounds)
   frame.setExtendedState(frameInfo, bounds)
   if (bounds != null) {
-    frame.bounds = bounds
+    frame.frame.bounds = bounds
   }
 
   if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {

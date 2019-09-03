@@ -4,6 +4,9 @@ package org.jetbrains.io;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.loader.NativeLibraryLoader;
@@ -11,15 +14,21 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
-public final class PowerSupplyKit {
+final class PowerSupplyKit extends PreloadingActivity {
   private static final String POWER_SUPPLY_GROUP_ID = "Power Supply Integration";
-  private static boolean shouldCheckCordUnplug = SystemInfo.isMacIntel64 && Registry.is("check.power.supply.for.mbp");
+  private static final boolean shouldCheckCordUnplug = SystemInfo.isMacIntel64 && Registry.is("check.power.supply.for.mbp");
   //private static boolean shouldCheckDiscreteCard =
   // Registry.is("check.power.supply.for.mbp") && SystemInfo.isMacIntel64 && hasDiscreteCard();
 
   static {
     if (shouldCheckCordUnplug) {
       NativeLibraryLoader.loadPlatformLibrary("MacNativeKit");
+    }
+  }
+
+  PowerSupplyKit() {
+    if (!shouldCheckCordUnplug) {
+      throw ExtensionNotApplicableException.INSTANCE;
     }
   }
 
@@ -46,23 +55,6 @@ public final class PowerSupplyKit {
     }
 
     return false;
-  }
-
-  public static void checkPowerSupply() {
-    if (!shouldCheckCordUnplug) {
-      return;
-    }
-
-    new Thread(() -> {
-      startListenPowerSupply(new PowerSupplyKitCallback() {
-        @Override
-        public void call() {
-          initializeIfNeeded();
-          PowerSaveMode.setEnabled(automaticallySwitchInPowerSaveModeOnUnpluggedCordEvent && isPlugged());
-        }
-      });
-    }, "check power").start();
-    shouldCheckCordUnplug = false;
   }
 
   private static void initializeIfNeeded() {
@@ -113,9 +105,23 @@ public final class PowerSupplyKit {
     //final Notification powerSafeModeSwitchedNotification =
     //  new Notification(POWER_SUPPLY_GROUP_ID, "\"Power Save\" mode ", message, type, listener);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().getMessageBus().
-      syncPublisher(Notifications.TOPIC).notify(automaticPowerSafeModeSwitchNotification));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(automaticPowerSafeModeSwitchNotification);
+    });
 
     powerSupplyKitHasBeenInitialized = true;
+  }
+
+  @Override
+  public void preload(@NotNull ProgressIndicator indicator) {
+    new Thread(() -> {
+      startListenPowerSupply(new PowerSupplyKitCallback() {
+        @Override
+        public void call() {
+          initializeIfNeeded();
+          PowerSaveMode.setEnabled(automaticallySwitchInPowerSaveModeOnUnpluggedCordEvent && isPlugged());
+        }
+      });
+    }, "check power").start();
   }
 }

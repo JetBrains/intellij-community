@@ -95,7 +95,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private AWTEventListener awtFocusListener;
 
   private ToolWindowsPane myToolWindowsPane;
-  private IdeFrameImpl myFrame;
+  private ProjectFrame myFrame;
   private DesktopLayout myLayoutToRestoreLater;
   @NonNls private static final String EDITOR_ELEMENT = "editor";
   @NonNls private static final String ACTIVE_ATTR_VALUE = "active";
@@ -413,7 +413,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
+    myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject).getFrame();
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     Disposer.register(this, myToolWindowsPane);
@@ -539,9 +539,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
 
-    // remove ToolWindowsPane
-    ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-    WindowManagerEx.getInstanceEx().releaseFrame(myFrame);
+    myFrame.releaseFrame();
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -1755,7 +1753,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
-    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
+    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).getFrame().isActive()) {
       FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
       EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
       return splitters != null ? splitters : fem.getSplitters();

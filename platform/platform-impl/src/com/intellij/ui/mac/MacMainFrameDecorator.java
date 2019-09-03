@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -91,7 +90,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded();
+    storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
@@ -106,11 +105,16 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded();
+    storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullscreenQueue.runFromQueue();
+  }
+
+  private void storeFullScreenStateIfNeeded() {
+    // todo should we really check that frame has not null project as it was implented previously?
+    myFrame.doLayout();
   }
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
@@ -123,10 +127,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
       Class.forName("com.apple.eawt.FullScreenUtilities");
       requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
       HAS_FULLSCREEN_UTILITIES = true;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       HAS_FULLSCREEN_UTILITIES = false;
     }
   }
+
   public static final boolean FULL_SCREEN_AVAILABLE = HAS_FULLSCREEN_UTILITIES;
 
   private static boolean SHOWN = false;
@@ -180,7 +186,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
   private boolean myInFullScreen;
 
-  public MacMainFrameDecorator(@NotNull final IdeFrameImpl frame, final boolean navBar) {
+  public MacMainFrameDecorator(@NotNull JFrame frame, final boolean navBar) {
     super(frame);
 
     if (CURRENT_SETTER == null) {

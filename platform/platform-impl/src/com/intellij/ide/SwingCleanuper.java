@@ -56,9 +56,7 @@ public final class SwingCleanuper {
           myAlarm.addRequest(
             () -> {
               // request focus into some focusable component inside IdeFrame
-              final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-              IdeFrameImpl frame = (IdeFrameImpl)(window instanceof IdeFrameImpl ? window :
-                                                  SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, window));
+              IdeFrameImpl frame = IdeFrameImpl.getFrameHelper(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
               if (frame != null) {
                 final Application app = ApplicationManager.getApplication();
                 if (app != null && app.isActive()) {

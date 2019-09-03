@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.configurationStore.readProjectNameFile
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -18,11 +19,13 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
@@ -37,15 +40,19 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.pooledThreadSingleAlarm
+import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.image.BufferedImage
 import java.io.IOException
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
+import javax.imageio.IIOImage
+import javax.imageio.ImageIO
+import javax.imageio.ImageTypeSpecifier
+import javax.imageio.stream.MemoryCacheImageOutputStream
 import javax.swing.Icon
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
@@ -487,7 +494,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl) {
-    val frame = windowManager.getFrame(project) ?: return
+    val frame = windowManager.getFrameHelper(project) ?: return
     val workspaceId = project.stateStore.projectWorkspaceId
 
     // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
@@ -505,11 +512,47 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
     if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
       try {
-        frame.takeASelfie(workspaceId)
+        takeASelfie(frame, workspaceId)
       }
       catch (e: Exception) {
         logger<RecentProjectsManager>().warn(e)
       }
+    }
+  }
+
+  private fun takeASelfie(frameHelper: IdeFrameImpl, workspaceId: String) {
+    val frame = frameHelper.frame
+    val width = frame.width
+    val height = frame.height
+    val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)
+    UISettings.setupAntialiasing(image.graphics)
+    frame.paint(image.graphics)
+    val selfieFile = IdeFrameImpl.getSelfieLocation(workspaceId)
+    Files.createDirectories(selfieFile.parent)
+
+    // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
+    //long start = System.currentTimeMillis();
+    Files.newOutputStream(selfieFile).use { stream ->
+      MemoryCacheImageOutputStream(stream).use { out ->
+        val writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next()
+        try {
+          writer.output = out
+          writer.write(null, IIOImage(image, null, null), null)
+        }
+        finally {
+          writer.dispose()
+        }
+      }
+    }
+
+    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
+    val lastLink = selfieFile.parent.resolve("last.png")
+    if (SystemInfo.isUnix) {
+      Files.deleteIfExists(lastLink)
+      Files.createSymbolicLink(lastLink, selfieFile)
+    }
+    else {
+      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING)
     }
   }
 

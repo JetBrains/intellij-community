@@ -25,8 +25,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.openapi.wm.impl.ProjectFrame;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
@@ -69,7 +69,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       window = myWindowManager.suggestParentWindow(project);
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
-        if (focusedWindow instanceof IdeFrameImpl) {
+        if (focusedWindow instanceof ProjectFrame) {
           window = focusedWindow;
         }
       }
@@ -395,7 +395,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
                 if (myCachedSize == null) {
                   myCachedSize = c.getPreferredSize();
                   location = getLocationInCenter(myCachedSize, c.getLocation());
-                } else {
+                }
+                else {
                   location = c.getLocation();
                 }
 
@@ -404,11 +405,12 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
                 final DialogWrapper dialogWrapper = myDialogWrapper.get();
                 if (dialogWrapper != null) {
-                  final int width = (int) (_width * dialogWrapper.getHorizontalStretch());
-                  final int height = (int) (_height * dialogWrapper.getVerticalStretch());
-                  c.setBounds((int) location.getX(), (int) location.getY(), width, height);
-                } else {
-                  c.setBounds((int) location.getX(), (int) location.getY(), (int) _width, (int) _height);
+                  final int width = (int)(_width * dialogWrapper.getHorizontalStretch());
+                  final int height = (int)(_height * dialogWrapper.getVerticalStretch());
+                  c.setBounds((int)location.getX(), (int)location.getY(), width, height);
+                }
+                else {
+                  c.setBounds((int)location.getX(), (int)location.getY(), (int)_width, (int)_height);
                 }
               }
             }

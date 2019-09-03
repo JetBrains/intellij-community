@@ -54,7 +54,7 @@ public final class FloatingDecorator extends JDialog {
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
 
-  FloatingDecorator(final IdeFrameImpl owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
+  FloatingDecorator(@NotNull JFrame owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
     MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;

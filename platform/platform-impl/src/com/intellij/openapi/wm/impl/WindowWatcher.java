@@ -53,24 +53,25 @@ public final class WindowWatcher implements PropertyChangeListener{
    * @throws IllegalArgumentException if property name isn't {@code focusedWindow}.
    */
   @Override
-  public final void propertyChange(final PropertyChangeEvent e){
-    if(LOG.isDebugEnabled()){
-      LOG.debug("enter: propertyChange("+e+")");
+  public final void propertyChange(@NotNull PropertyChangeEvent e) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: propertyChange(" + e + ")");
     }
-    if(!FOCUSED_WINDOW_PROPERTY.equals(e.getPropertyName())){
-      throw new IllegalArgumentException("unknown property name: "+e.getPropertyName());
+    if (!FOCUSED_WINDOW_PROPERTY.equals(e.getPropertyName())) {
+      throw new IllegalArgumentException("unknown property name: " + e.getPropertyName());
     }
-    synchronized(myLock){
-      final Window window=(Window)e.getNewValue();
-      if(window==null || ApplicationManager.getApplication().isDisposed()){
+
+    synchronized (myLock) {
+      final Window window = (Window)e.getNewValue();
+      if (window == null || ApplicationManager.getApplication().isDisposed()) {
         return;
       }
-      if(!myWindow2Info.containsKey(window)){
-        myWindow2Info.put(window,new WindowInfo(window, true));
+      if (!myWindow2Info.containsKey(window)) {
+        myWindow2Info.put(window, new WindowInfo(window, true));
       }
-      myFocusedWindow=window;
+      myFocusedWindow = window;
       final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
-      for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext();) {
+      for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext(); ) {
         final Window w = i.next();
         final DataContext dataContext = DataManager.getInstance().getDataContext(w);
         if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
@@ -79,17 +80,18 @@ public final class WindowWatcher implements PropertyChangeListener{
       }
       myFocusedWindows.add(myFocusedWindow);
       // Set new root frame
-      final IdeFrameImpl frame;
-      if(window instanceof IdeFrameImpl){
-        frame=(IdeFrameImpl)window;
-      }else{
-        frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
+      JFrame frame;
+      if (window instanceof JFrame) {
+        frame = (JFrame)window;
       }
-      if(frame!=null){
+      else {
+        frame = (JFrame)SwingUtilities.getAncestorOfClass(ProjectFrame.class, window);
+      }
+      if (frame != null) {
         JOptionPane.setRootFrame(frame);
       }
     }
-    if(LOG.isDebugEnabled()){
+    if (LOG.isDebugEnabled()) {
       LOG.debug("exit: propertyChange()");
     }
   }

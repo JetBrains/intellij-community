@@ -84,7 +84,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final IdeFrameImpl getFrame(final Project project) {
+  public final ProjectFrame getFrame(final Project project) {
     return null;
   }
 
@@ -95,11 +95,6 @@ public final class TestWindowManager extends WindowManagerEx {
     frame.preInit(null);
     frame.init();
     return frame;
-  }
-
-  @Override
-  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
-    frame.dispose();
   }
 
   @Override

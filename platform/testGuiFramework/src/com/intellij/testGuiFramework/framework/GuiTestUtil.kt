@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrame
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
@@ -197,7 +197,7 @@ object GuiTestUtil {
       findFrame(object : GenericTypeMatcher<Frame>(Frame::class.java) {
         override fun isMatching(frame: Frame): Boolean {
           if (frame is IdeFrame) {
-            if (frame is IdeFrameImpl) {
+            if (frame is ProjectFrame) {
               listener.myActive = true
               connection.set(ApplicationManager.getApplication().messageBus.connect())
               connection.get().subscribe(ProjectManager.TOPIC, listener)

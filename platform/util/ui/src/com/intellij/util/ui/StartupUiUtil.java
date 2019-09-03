@@ -13,6 +13,7 @@ import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -100,6 +102,34 @@ public class StartupUiUtil {
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
+  }
+
+  @ApiStatus.Internal
+  public static int doGetLcdContrastValueForSplash(boolean isUnderDarcula) {
+    if (SystemInfo.isMacIntel64) {
+      return isUnderDarcula ? 140 : 230;
+    }
+    else {
+      @SuppressWarnings({"unchecked", "SpellCheckingInspection"})
+      Map<Object, Object> map = (Map<Object, Object>)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+      if (map == null) {
+        return 140;
+      }
+      else {
+        Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (o == null) {
+          return 140;
+        }
+        else {
+          int lcdContrastValue = (Integer)o;
+          return normalizeLcdContrastValue(lcdContrastValue);
+        }
+      }
+    }
+  }
+
+  protected static int normalizeLcdContrastValue(int lcdContrastValue) {
+    return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
   }
 
   /*

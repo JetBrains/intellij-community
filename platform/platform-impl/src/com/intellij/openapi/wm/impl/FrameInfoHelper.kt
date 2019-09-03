@@ -46,7 +46,7 @@ class FrameInfoHelper {
   }
 
   fun updateAndGetModificationCount(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
-    val frame = windowManager.getFrame(project) ?: return getModificationCount()
+    val frame = windowManager.getFrameHelper(project) ?: return getModificationCount()
     return updateAndGetModificationCount(frame, lastNormalFrameBounds, windowManager)
   }
 
@@ -68,7 +68,8 @@ class FrameInfoHelper {
   }
 }
 
-private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
+private fun updateFrameInfo(frameHelper: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
+  val frame = frameHelper.frame
   var extendedState = frame.extendedState
   if (SystemInfo.isMacOSLion) {
     val peer = AWTAccessor.getComponentAccessor().getPeer(frame)
@@ -78,7 +79,7 @@ private fun updateFrameInfo(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangl
     }
   }
 
-  val isInFullScreen = isFullScreenSupportedInCurrentOs() && frame.isInFullScreen
+  val isInFullScreen = isFullScreenSupportedInCurrentOs() && frameHelper.isInFullScreen
   val isMaximized = FrameInfoHelper.isMaximized(extendedState) || isInFullScreen
 
   val oldBounds = oldFrameInfo?.bounds

@@ -24,8 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
@@ -439,7 +437,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     if (focusOwner == null) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
+      JFrame frame = project == null ? null : WindowManager.getInstance().getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
         throw new IllegalArgumentException("focusOwner cannot be null");

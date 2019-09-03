@@ -89,9 +89,9 @@ public class EditorEmptyTextPainter {
   }
 
   protected static boolean isToolwindowVisible(@NotNull JComponent splitters, @NotNull String toolwindowId) {
-    Window frame = SwingUtilities.getWindowAncestor(splitters);
-    if (frame instanceof IdeFrameImpl) {
-      Project project = ((IdeFrameImpl)frame).getProject();
+    IdeFrameImpl frame = IdeFrameImpl.getFrameHelper(SwingUtilities.getWindowAncestor(splitters));
+    if (frame != null) {
+      Project project = frame.getProject();
       if (project != null) {
         if (!project.isInitialized()) return true;
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolwindowId);

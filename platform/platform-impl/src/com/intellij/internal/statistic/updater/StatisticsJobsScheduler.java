@@ -28,6 +28,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
@@ -142,9 +143,10 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
   }
 
-  private static boolean isEmpty(Window window) {
-    if (window instanceof IdeFrameImpl) {
-      BalloonLayout layout = ((IdeFrameImpl)window).getBalloonLayout();
+  private static boolean isEmpty(@Nullable Window window) {
+    IdeFrameImpl frameHelper = IdeFrameImpl.getFrameHelper(window);
+    if (frameHelper != null) {
+      BalloonLayout layout = frameHelper.getBalloonLayout();
       if (layout instanceof BalloonLayoutImpl) {
         // do not show notification if others exist
         return ((BalloonLayoutImpl)layout).isEmpty();

@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.SplashManager;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
@@ -37,7 +36,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import gnu.trove.THashSet;
@@ -45,26 +43,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Set;
 
@@ -72,10 +59,9 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
-  static final String NORMAL_STATE_BOUNDS = "normalBounds";
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
@@ -92,25 +78,46 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   private volatile Image selfie;
 
+  private final ProjectFrame myFrame = new ProjectFrame();
+
   public IdeFrameImpl() {
     super();
 
-    SplashManager.hideBeforeShow(this);
+    SplashManager.hideBeforeShow(myFrame);
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
     size.height = Math.min(1000, size.height - 40);
-    setSize(size);
-    setLocationRelativeTo(null);
-    setMinimumSize(new Dimension(340, getMinimumSize().height));
+    myFrame.setSize(size);
+    myFrame.setLocationRelativeTo(null);
+    myFrame.setMinimumSize(new Dimension(340, myFrame.getMinimumSize().height));
 
     if (UIUtil.SUPPRESS_FOCUS_STEALING &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
         !ApplicationManager.getApplication().isActive()) {
-      setAutoRequestFocus(false);
+      myFrame.setAutoRequestFocus(false);
     }
 
     setupCloseAction();
+  }
+
+  @Nullable
+  public static IdeFrameImpl getFrameHelper(@Nullable Window window) {
+    if (window == null) {
+      return null;
+    }
+
+    ProjectFrame projectFrame;
+    if (window instanceof ProjectFrame) {
+      projectFrame = (ProjectFrame)window;
+    }
+    else {
+      projectFrame = (ProjectFrame)SwingUtilities.getAncestorOfClass(ProjectFrame.class, window);
+      if (projectFrame == null) {
+        return null;
+      }
+    }
+    return ((IdeRootPane)projectFrame.getRootPane()).getFrameHelper();
   }
 
   public void preInit(@Nullable Image selfie) {
@@ -118,12 +125,49 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     updateTitle();
 
-    myRootPane = new IdeRootPane(this);
-    myFrameDecorator = IdeFrameDecorator.decorate(this);
+    myRootPane = new IdeRootPane(myFrame, this);
+    myFrameDecorator = IdeFrameDecorator.decorate(myFrame);
+
+    myFrame.setFrameHelper(new ProjectFrame.FrameHelper() {
+      @Override
+      public String getAccessibleName() {
+        StringBuilder builder = new StringBuilder();
+        if (myProject != null) {
+          builder.append(myProject.getName());
+          builder.append(" - ");
+        }
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
+        return builder.toString();
+      }
+
+      @Override
+      public void dispose() {
+        IdeFrameImpl.this.dispose();
+      }
+
+      @Override
+      public void setTitle(String title) {
+        if (ourUpdatingTitle) {
+          myFrame.doSetTitle(title);
+        }
+        else {
+          myTitle = title;
+        }
+
+        updateTitle();
+      }
+
+      @Override
+      public void releaseFrame() {
+        // remove ToolWindowsPane
+        myRootPane.setToolWindowsPane(null);
+        ((WindowManagerImpl)WindowManager.getInstance()).releaseFrame(IdeFrameImpl.this);
+      }
+    }, myFrameDecorator);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    setRootPane(myRootPane);
-    setBackground(UIUtil.getPanelBackground());
+    myFrame.setRootPane(myRootPane);
+    myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
@@ -131,21 +175,23 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   public void init() {
     myRootPane.init(this);
 
-    MnemonicHelper.init(this);
+    MnemonicHelper.init(myFrame);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> {
+      myFrame.setBackground(UIUtil.getPanelBackground());
+    });
 
-    setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
+    myFrame.setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfo.isMac) {
-      setIconImage(null);
+      myFrame.setIconImage(null);
     }
 
-    IdeMenuBar.installAppMenuIfNeeded(this);
+    IdeMenuBar.installAppMenuIfNeeded(myFrame);
     // in production (not from sources) makes sense only on Linux
-    AppUIUtil.updateWindowIcon(this);
+    AppUIUtil.updateWindowIcon(myFrame);
 
     MouseGestureManager.getInstance().add(this);
   }
@@ -207,61 +253,33 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    PowerSupplyKit.checkPowerSupply();
-  }
-
-  @NotNull
-  @Override
-  public Insets getInsets() {
-    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
-  }
-
-  @Override
   public JComponent getComponent() {
-    return getRootPane();
+    return myFrame.getRootPane();
   }
 
   @Nullable
   public static Window getActiveFrame() {
-    for (Frame frame : getFrames()) {
+    for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) return frame;
     }
     return null;
   }
 
-  @Override
-  @SuppressWarnings({"SSBasedInspection", "deprecation"})
-  public void show() {
-    super.show();
-    SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
-  }
-
-  @Override
-  public void setExtendedState(int state) {
-    if (getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
-      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
-    }
-    super.setExtendedState(state);
-  }
-
   public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
     int state = frameInfo.getExtendedState();
     boolean isMaximized = FrameInfoHelper.isMaximized(state);
-    if (bounds != null && isMaximized && getExtendedState() == Frame.NORMAL) {
-      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, bounds);
+    if (bounds != null && isMaximized && myFrame.getExtendedState() == Frame.NORMAL) {
+      myFrame.getRootPane().putClientProperty(ProjectFrame.NORMAL_STATE_BOUNDS, bounds);
     }
 
-    super.setExtendedState(state);
-
+    myFrame.setExtendedState(state);
     return isMaximized;
   }
 
   private void setupCloseAction() {
-    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
-    addWindowListener(new WindowAdapter() {
+    myFrame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
         if (isTemporaryDisposed() || LaterInvocator.isInModalContext()) {
@@ -281,21 +299,17 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
-  @Override
-  public void setTitle(final String title) {
-    if (ourUpdatingTitle) {
-      super.setTitle(title);
-    }
-    else {
-      myTitle = title;
-    }
-
-    updateTitle();
+  /**
+   * @deprecated Get frame and set title directly.
+   */
+  @Deprecated
+  public void setTitle(@NotNull String title) {
+    myFrame.setTitle(title);
   }
 
   @Override
   public void setFrameTitle(String text) {
-    super.setTitle(text);
+    myFrame.setTitle(text);
   }
 
   @Override
@@ -311,7 +325,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   private void updateTitle() {
-    updateTitle(this, myTitle, myFileTitle, myCurrentFile);
+    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile);
   }
 
   public static @Nullable String getSuperUserSuffix() {
@@ -344,14 +358,14 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   public void updateView() {
-    ((IdeRootPane)getRootPane()).updateToolbar();
-    ((IdeRootPane)getRootPane()).updateMainMenuActions();
-    ((IdeRootPane)getRootPane()).updateNorthComponents();
+    myRootPane.updateToolbar();
+    myRootPane.updateMainMenuActions();
+    myRootPane.updateNorthComponents();
   }
 
   @Override
   public AccessibleContext getCurrentAccessibleContext() {
-    return accessibleContext;
+    return myFrame.getAccessibleContext();
   }
 
   private static final class Builder {
@@ -478,15 +492,16 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     return myProject;
   }
 
-  @Override
-  public void dispose() {
+  private void dispose() {
     if (SystemInfo.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
+
     if (isTemporaryDisposed()) {
-      super.dispose();
+      myFrame.doDispose();
       return;
     }
+
     MouseGestureManager.getInstance().remove(this);
 
     if (myBalloonLayout != null) {
@@ -499,7 +514,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
-      setRootPane(new JRootPane());
+      myFrame.setRootPane(new JRootPane());
       Disposer.dispose(myRootPane);
       myRootPane = null;
     }
@@ -508,65 +523,16 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       myFrameDecorator = null;
     }
 
-    super.dispose();
+    myFrame.doDispose();
   }
 
   private boolean isTemporaryDisposed() {
     return myRootPane != null && myRootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
   }
 
-  public void storeFullScreenStateIfNeeded() {
-    if (myProject != null) {
-      doLayout();
-    }
-  }
-
-  @Override
-  public void paint(@NotNull Graphics g) {
-    UISettings.setupAntialiasing(g);
-
-    Image selfie = this.selfie;
-    if (selfie != null) {
-      StartupUiUtil.drawImage(g, selfie, 0, 0, null);
-      return;
-    }
-
-    super.paint(g);
-  }
-
-  public void takeASelfie(@NotNull String projectWorkspaceId) throws IOException {
-    int width = getWidth();
-    int height = getHeight();
-    BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
-    UISettings.setupAntialiasing(image.getGraphics());
-    super.paint(image.getGraphics());
-    Path selfieFile = getSelfieLocation(projectWorkspaceId);
-    Files.createDirectories(selfieFile.getParent());
-
-    // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
-    //long start = System.currentTimeMillis();
-    try (OutputStream stream = Files.newOutputStream(selfieFile)) {
-      try (MemoryCacheImageOutputStream out = new MemoryCacheImageOutputStream(stream)) {
-        ImageWriter writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next();
-        try {
-          writer.setOutput(out);
-          writer.write(null, new IIOImage(image, null, null), null);
-        }
-        finally {
-          writer.dispose();
-        }
-      }
-    }
-
-    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
-    Path lastLink = selfieFile.getParent().resolve("last.png");
-    if (SystemInfo.isUnix) {
-      Files.deleteIfExists(lastLink);
-      Files.createSymbolicLink(lastLink, selfieFile);
-    }
-    else {
-      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING);
-    }
+  @NotNull
+  public ProjectFrame getFrame() {
+    return myFrame;
   }
 
   @NotNull
@@ -576,7 +542,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @Override
   public Rectangle suggestChildFrameBounds() {
-    final Rectangle b = getBounds();
+    Rectangle b = myFrame.getBounds();
     b.x += 100;
     b.width -= 200;
     b.y += 100;
@@ -621,31 +587,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     return false;
   }
 
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
-      accessibleContext = new AccessibleIdeFrameImpl();
-    }
-    return accessibleContext;
-  }
-
-  protected class AccessibleIdeFrameImpl extends AccessibleJFrame {
-    @Override
-    public String getAccessibleName() {
-      final StringBuilder builder = new StringBuilder();
-
-      if (myProject != null) {
-        builder.append(myProject.getName());
-        builder.append(" - ");
-      }
-
-      builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
-
-      return builder.toString();
-    }
-  }
-
-  private class MyLayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicyExt {
+  private final class MyLayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicyExt {
     @Override
     protected Component getDefaultComponentImpl(Container focusCycleRoot) {
       Component component = findNextFocusComponent();

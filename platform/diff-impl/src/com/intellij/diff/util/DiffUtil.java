@@ -76,7 +76,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrame;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -108,6 +108,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -640,10 +641,10 @@ public class DiffUtil {
 
     JLabel label = new JLabel(text);
     // TODO: specific colors for other charsets
-    if (charset.equals(Charset.forName("UTF-8"))) {
+    if (charset.equals(StandardCharsets.UTF_8)) {
       label.setForeground(JBColor.BLUE);
     }
-    else if (charset.equals(Charset.forName("ISO-8859-1"))) {
+    else if (charset.equals(StandardCharsets.ISO_8859_1)) {
       label.setForeground(JBColor.RED);
     }
     else {
@@ -1566,8 +1567,9 @@ public class DiffUtil {
    * @return whether window was closed
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
-    if (window instanceof IdeFrameImpl) return false;
-    if (modalOnly && canBeHiddenBehind(window)) return false;
+    if (window instanceof ProjectFrame || (modalOnly && canBeHiddenBehind(window))) {
+      return false;
+    }
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
