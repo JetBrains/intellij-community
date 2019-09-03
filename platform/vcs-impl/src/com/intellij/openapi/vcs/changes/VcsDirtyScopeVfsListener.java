@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Alarm;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -113,7 +112,8 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
 
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
-        add(myVcsManager, dirtyFilesAndDirs, file);
+        FilePath path = VcsUtil.getFilePath(file);
+        add(myVcsManager, dirtyFilesAndDirs, path);
       }
     }
     markDirtyOnPooled(dirtyFilesAndDirs);
@@ -133,21 +133,24 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
 
       if (event instanceof VFileContentChangeEvent || event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
-        add(myVcsManager, dirtyFilesAndDirs, file);
+        add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));
       }
       else if (event instanceof VFileCopyEvent) {
         VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-        add(myVcsManager, dirtyFilesAndDirs, copyEvent.getNewParent().findChild(copyEvent.getNewChildName()));
+        VirtualFile newFile = copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
+        if (newFile != null) {
+          add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(newFile));
+        }
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
         if (pce.isRename()) {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
-          add(myVcsManager, dirtyFilesAndDirs, file);   // the file is dirty recursively
-          addToFiles(myVcsManager, dirtyFilesAndDirs, file.getParent()); // directory is dirty alone. if parent is null - is checked in the method
+          add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));   // the file is dirty recursively
+          addToFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file.getParent())); // directory is dirty alone. if parent is null - is checked in the method
         } else {
-          addToFiles(myVcsManager, dirtyFilesAndDirs, file);
+          addToFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));
         }
       }
     }
@@ -179,30 +182,27 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
 
   private static void add(@NotNull ProjectLevelVcsManager vcsManager,
                           @NotNull FilesAndDirs filesAndDirs,
-                          @Nullable VirtualFile file,
+                          @NotNull FilePath filePath,
                           boolean addToFiles) {
-    if (file == null) return;
-    if (vcsManager.getVcsFor(file) == null) return;
+    if (vcsManager.getVcsFor(filePath) == null) return;
 
-    boolean isDirectory = file.isDirectory();
-    FilePath path = VcsUtil.getFilePath(file.getPath(), isDirectory);
-    if (addToFiles || !isDirectory) {
-      filesAndDirs.dirtyFiles.add(path);
+    if (addToFiles || !filePath.isDirectory()) {
+      filesAndDirs.dirtyFiles.add(filePath);
     }
     else {
-      filesAndDirs.dirtyDirs.add(path);
+      filesAndDirs.dirtyDirs.add(filePath);
     }
   }
 
   private static void add(@NotNull ProjectLevelVcsManager vcsManager,
                           @NotNull FilesAndDirs filesAndDirs,
-                          @Nullable VirtualFile file) {
-    add(vcsManager, filesAndDirs, file, false);
+                          @NotNull FilePath filePath) {
+    add(vcsManager, filesAndDirs, filePath, false);
   }
 
   private static void addToFiles(@NotNull ProjectLevelVcsManager vcsManager,
                                  @NotNull FilesAndDirs filesAndDirs,
-                                 @Nullable VirtualFile file) {
-    add(vcsManager, filesAndDirs, file, true);
+                                 @NotNull FilePath filePath) {
+    add(vcsManager, filesAndDirs, filePath, true);
   }
 }
