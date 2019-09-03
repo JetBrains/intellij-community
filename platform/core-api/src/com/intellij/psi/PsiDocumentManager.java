@@ -82,7 +82,7 @@ public abstract class PsiDocumentManager {
 
   /**
    * Commits all modified but not committed documents under modal dialog (see {@link PsiDocumentManager#commitAllDocuments()}
-   * Should be called in UI thread
+   * Should be called in UI thread and outside of write-action
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean commitAllDocumentsUnderProgress();

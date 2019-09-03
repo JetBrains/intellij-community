@@ -215,6 +215,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean commitAllDocumentsUnderProgress() {
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Do not call commitAllDocumentsUnderProgress inside write-action";
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
