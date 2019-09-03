@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -20,7 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-public class PersistentCachingModuleHashingService {
+public class PersistentCachingModuleHashingService implements BulkFileListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService");
   private static final String PRODUCTION_CACHE_FILE_NAME = "productionCache";
   private static final String TEST_CACHE_FILE_NAME = "testCache";
@@ -52,35 +53,37 @@ public class PersistentCachingModuleHashingService {
       LOG.debug("Initialization finished");
     }
 
-    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent e : events) {
-          Module affectedModule = myProjectFileIndex.getModuleForFile(e.getFile());
-          if (affectedModule == null) {
-            continue;
-          }
-          final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
-          boolean isTest = moduleFileIndex.isInTestSourceContent(e.getFile());
-          if (isTest) {
-            try {
-              myTestHashes.remove(affectedModule.getName());
-            }
-            catch (IOException ex) {
-              LOG.warn(ex);
-            }
-          }
-          else {
-            try {
-              myProductionHashes.remove(affectedModule.getName());
-            }
-            catch (IOException ex) {
-              LOG.warn(ex);
-            }
-          }
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+  }
+
+  @Override
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent e : events) {
+      VirtualFile virtualFile = e.getFile();
+      if (virtualFile == null) continue;
+
+      Module affectedModule = myProjectFileIndex.getModuleForFile(virtualFile);
+      if (affectedModule == null) continue;
+
+      final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
+      boolean isTest = moduleFileIndex.isInTestSourceContent(e.getFile());
+      if (isTest) {
+        try {
+          myTestHashes.remove(affectedModule.getName());
+        }
+        catch (IOException ex) {
+          LOG.warn(ex);
         }
       }
-    });
+      else {
+        try {
+          myProductionHashes.remove(affectedModule.getName());
+        }
+        catch (IOException ex) {
+          LOG.warn(ex);
+        }
+      }
+    }
   }
 
   public void close() {

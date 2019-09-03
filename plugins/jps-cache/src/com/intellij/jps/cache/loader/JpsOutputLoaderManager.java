@@ -1,15 +1,18 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
+import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +22,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final int COMMITS_COUNT = 20;
+  private PersistentCachingModuleHashingService myModuleHashingService;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
   private final JpsServerClient myServerClient;
   private final Project myProject;
@@ -33,6 +37,15 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   public JpsOutputLoaderManager(@NotNull Project project) {
     myProject = project;
     myServerClient = ArtifactoryJpsServerClient.INSTANCE;
+  }
+
+  public void initialize(@NotNull Project project) {
+    try {
+      myModuleHashingService = new PersistentCachingModuleHashingService(new File(JpsCachesUtils.getPluginStorageDir(project)), project);
+    }
+    catch (Exception e) {
+      LOG.warn("Couldn't instantiate module hashing service", e);
+    }
   }
 
   public void load() {
@@ -52,6 +65,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     } else {
       load(allCacheKeys);
     }
+  }
+
+  public void close() {
+    myModuleHashingService.close();
   }
 
   private void load(Set<String> allCacheKeys) {
@@ -75,7 +92,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders == null) {
       myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                                new JpsCompilationOutputLoader(myServerClient, project));
+                                                new JpsCompilationOutputLoader(myServerClient, project, myModuleHashingService));
       return myJpsOutputLoadersLoaders;
     }
     return myJpsOutputLoadersLoaders;

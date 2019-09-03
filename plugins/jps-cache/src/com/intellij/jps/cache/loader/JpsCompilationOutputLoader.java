@@ -25,12 +25,14 @@ import java.util.stream.Collectors;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
+  private final PersistentCachingModuleHashingService myHashingService;
   private final JpsServerClient myClient;
   private final Project myProject;
 
-  JpsCompilationOutputLoader(JpsServerClient client, Project project) {
+  JpsCompilationOutputLoader(JpsServerClient client, Project project, PersistentCachingModuleHashingService hashingService) {
     myClient = client;
     myProject = project;
+    myHashingService = hashingService;
   }
 
   @Override
@@ -41,18 +43,15 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       return;
     }
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
-    JpsCachesProjectStateListener pluginComponent = myProject.getComponent(JpsCachesProjectStateListener.class);
-    PersistentCachingModuleHashingService moduleHashingService = pluginComponent.getModuleHashingService();
-
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
-    Map<String, byte[]> affectedProductionModules = getAffectedModules(productionDir, moduleHashingService::getAffectedProduction,
-                                                                       moduleHashingService::computeProductionHashesForProject);
+    Map<String, byte[]> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
+                                                                       myHashingService::computeProductionHashesForProject);
     FileUtil.createDirectory(productionDir);
     downloadAffectedModuleBinaryData(affectedProductionModules, productionDir, CompilerModuleExtension.PRODUCTION);
 
     File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
-    Map<String, byte[]> affectedTestModules = getAffectedModules(testDir, moduleHashingService::getAffectedTests,
-                                                                 moduleHashingService::computeTestHashesForProject);
+    Map<String, byte[]> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
+                                                                 myHashingService::computeTestHashesForProject);
     FileUtil.createDirectory(testDir);
     downloadAffectedModuleBinaryData(affectedTestModules, testDir, CompilerModuleExtension.TEST);
   }

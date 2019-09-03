@@ -13,7 +13,6 @@ import java.io.IOException;
 
 class JpsCacheLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
-  private static final int COMMITS_COUNT = 20;
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private final BuildManager myBuildManager;
   private final JpsServerClient myClient;
