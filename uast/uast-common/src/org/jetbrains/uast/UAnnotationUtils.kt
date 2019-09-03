@@ -96,7 +96,23 @@ fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String
     }
   }
 
-  return retrievePsiAnnotationEntry(uElement, null)
+  // The sole purpose of this function is to avoid possibly expensive parent.kind call
+  // inside retrievePsiAnnotationEntry above
+  tailrec fun isAnnotationComponent(uElement: UElement?): Boolean {
+    if (uElement == null) return false
+    val parent = uElement.uastParent
+    return when (parent) {
+      is UAnnotation -> true
+      is UReferenceExpression -> uElement is UExpression && parent.sourcePsi.toUElementOfType<UAnnotation>() != null
+      is UCallExpression ->
+        if (uElement is UExpression && parent.sourcePsi.toUElementOfType<UAnnotation>() != null) true
+        else isAnnotationComponent(parent)
+      is UPolyadicExpression, is UNamedExpression -> isAnnotationComponent(parent)
+      else -> false
+    }
+  }
+
+  return if (isAnnotationComponent(uElement)) retrievePsiAnnotationEntry(uElement, null) else null
 }
 
 fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
