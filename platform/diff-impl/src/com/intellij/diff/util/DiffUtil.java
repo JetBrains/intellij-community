@@ -873,9 +873,11 @@ public class DiffUtil {
     return inverted;
   }
 
-  public static boolean compareStreams(@Nullable InputStream stream1, @Nullable InputStream stream2) throws IOException {
-    try (InputStream s1 = stream1) {
-      try (InputStream s2 = stream2) {
+  public static boolean compareStreams(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream1,
+                                       @NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream2)
+    throws IOException {
+    try (InputStream s1 = stream1.compute()) {
+      try (InputStream s2 = stream2.compute()) {
         if (s1 == null && s2 == null) return true;
         if (s1 == null || s2 == null) return false;
 
