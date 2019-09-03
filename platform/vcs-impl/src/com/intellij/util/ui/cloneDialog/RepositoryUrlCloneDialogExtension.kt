@@ -20,6 +20,7 @@ import java.awt.event.ItemEvent
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
@@ -99,6 +100,8 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     override fun doValidateAll(): List<ValidationInfo> {
       return getCurrentVcsComponent()?.doValidateAll() ?: emptyList()
     }
+
+    override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
     private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
