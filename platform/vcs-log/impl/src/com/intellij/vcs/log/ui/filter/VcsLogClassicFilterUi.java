@@ -87,11 +87,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     myFilterField = new TextFilterField(myTextFilterModel);
 
-    updateUiOnFilterChange();
-    myUi.applyFiltersAndUpdateUi(getFilters());
-  }
-
-  private void updateUiOnFilterChange() {
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
@@ -99,6 +94,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
+    myUi.applyFiltersAndUpdateUi(getFilters());
   }
 
   @Override
