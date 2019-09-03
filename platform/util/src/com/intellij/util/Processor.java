@@ -16,12 +16,23 @@
 package com.intellij.util;
 
 /**
+ * Generic callback with continue/stop semantics.
+ *
  * @param <T> Input value type.
- * @see com.intellij.util.CommonProcessors
+ * @see CommonProcessors
  */
 public interface Processor<T> {
+
+  /**
+   * @see CommonProcessors#alwaysTrue()
+   */
   Processor TRUE = o -> true;
+
+  /**
+   * @see CommonProcessors#alwaysFalse()
+   */
   Processor FALSE = o -> false;
+
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    * @return {@code true} to continue processing or {@code false} to stop.

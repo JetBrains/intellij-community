@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Common {@link Processor} collect/find implementations.
+ * .
  * @author max
  */
 public class CommonProcessors {
@@ -176,8 +178,8 @@ public class CommonProcessors {
   }
   
   /**
-   * @return processor that process all elements. 
-   * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning false value  
+   * @return processor processing all elements.
+   * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning {@code false} value.
    */
   @NotNull
   public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
