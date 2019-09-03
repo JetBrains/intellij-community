@@ -420,12 +420,14 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
         }
       }, false, this);
 
-    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
         for (StartupActivity activity : backgroundPostStartupActivities) {
+          ProgressManager.checkCanceled();
           activity.runActivity(myProject);
         }
-      }), 5, TimeUnit.SECONDS);
+      });
+    }, 5, TimeUnit.SECONDS);
   }
 
   @Override
