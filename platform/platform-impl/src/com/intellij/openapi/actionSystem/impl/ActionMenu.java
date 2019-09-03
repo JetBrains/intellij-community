@@ -211,12 +211,11 @@ public final class ActionMenu extends JBMenu {
   }
 
   private class MenuListenerImpl implements MenuListener {
+    private SingleAlarm myClearItemsAlarm;
+
     @Override
     public void menuCanceled(MenuEvent e) {
-      if (!KEEP_MENU_HIERARCHY) {
-        clearItems();
-        addStubItem();
-      }
+      onMenuHidden();
     }
 
     @Override
@@ -225,9 +224,29 @@ public final class ActionMenu extends JBMenu {
         Disposer.dispose(myDisposable);
         myDisposable = null;
       }
+      onMenuHidden();
+    }
+
+    private void onMenuHidden() {
       if (!KEEP_MENU_HIERARCHY) {
-        clearItems();
-        addStubItem();
+        final Runnable clearSelf = ()->{
+          clearItems();
+          addStubItem();
+          myClearItemsAlarm = null;
+        };
+        if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
+          // Menu items may contain mnemonic and they can affect key-event dispatching (when Alt pressed)
+          // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
+          // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+          // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
+          // Defer clearing to avoid this problem.
+          if (myClearItemsAlarm != null)
+            myClearItemsAlarm.cancel();
+          myClearItemsAlarm = new SingleAlarm(clearSelf, 100);
+          myClearItemsAlarm.request();
+        } else {
+          clearSelf.run();
+        }
       }
     }
 
@@ -240,6 +259,11 @@ public final class ActionMenu extends JBMenu {
       Disposer.register(myDisposable, helper);
       if (KEEP_MENU_HIERARCHY)
         clearItems();
+      else if (myClearItemsAlarm != null) {
+        myClearItemsAlarm.cancel();
+        myClearItemsAlarm = null;
+        clearItems();
+      }
       fillMenu();
     }
   }
