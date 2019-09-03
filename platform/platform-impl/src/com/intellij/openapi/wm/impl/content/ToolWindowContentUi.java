@@ -54,6 +54,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public static final String POPUP_PLACE = ActionPlaces.TOOLWINDOW_POPUP;
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
+  private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
   ContentManager myManager;
 
@@ -348,7 +349,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
-    if (c.getClientProperty(ui) != null) return;
+    if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) return;
 
     MouseAdapter mouseAdapter = new MouseAdapter() {
       final Ref<Point> myLastPoint = Ref.create();
@@ -479,7 +480,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     });
 
-    c.putClientProperty(ui, Boolean.TRUE);
+    c.putClientProperty(TOOLWINDOW_UI_INSTALLED, Boolean.TRUE);
   }
 
   private void initActionGroup(DefaultActionGroup group, final Content content) {
