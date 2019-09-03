@@ -39,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -51,11 +48,13 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
+import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
@@ -135,7 +134,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         TreePath path = getPathIfCheckBoxClicked(event.getPoint());
         if (path != null) {
           setSelectionPath(path);
-          toggleChanges(getSelectedUserObjects());
+          toggleChanges(getIncludableUserObjects(selected(ChangesTree.this)));
         }
         return false;
       }
@@ -157,7 +156,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     Rectangle checkBoxBounds = pathBounds.getBounds();
     checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
-    return checkBoxBounds.contains(p) ? path : null;
+    return checkBoxBounds.contains(p) && isIncludable(path) ? path : null;
   }
 
   protected void installEnterKeyHandler() {
@@ -324,13 +323,17 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myCheckBoxClickHandler.uninstall(this);
       myCheckBoxClickHandler = null;
     }
+    TreeCellRenderer renderer = getCellRenderer();
+    if (renderer instanceof ChangesTreeCellRenderer) {
+      ((ChangesTreeCellRenderer)renderer).updateLayout(isShowCheckboxes());
+    }
     repaint();
   }
 
   private void changeGrouping() {
     PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, ArrayUtilRt.toStringArray(getGroupingSupport().getGroupingKeys()));
 
-    List<Object> oldSelection = getSelectedUserObjects();
+    List<Object> oldSelection = selected(this).userObjects();
     rebuildTree();
     setSelectedChanges(oldSelection);
   }
@@ -459,22 +462,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
     return toSelect.equals(ChangesUtil.getAfterPath(change));
   }
-
-  @NotNull
-  private List<Object> getAllUserObjects() {
-    return VcsTreeModelData.all(this).userObjects();
-  }
-
-  @NotNull
-  private List<Object> getUserObjectsUnder(@NotNull ChangesBrowserNode<?> node) {
-    return VcsTreeModelData.children(node).userObjects();
-  }
-
-  @NotNull
-  private List<Object> getSelectedUserObjects() {
-    return VcsTreeModelData.selected(this).userObjects();
-  }
-
 
   @NotNull
   public ChangesBrowserNode<?> getRoot() {
@@ -608,7 +595,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object item : getUserObjectsUnder(node)) {
+    for (Object item : children(node).userObjects()) {
       State state = getInclusionModel().getInclusionState(item);
 
       if (state == State.SELECTED) {
@@ -628,8 +615,31 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return State.NOT_SELECTED;
   }
 
-  protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
+  protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
     return true;
+  }
+
+  protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    return true;
+  }
+
+  private boolean isIncludable(@NotNull TreePath path) {
+    Object lastComponent = path.getLastPathComponent();
+    if (!(lastComponent instanceof ChangesBrowserNode<?>)) return false;
+    return isIncludable((ChangesBrowserNode<?>)lastComponent);
+  }
+
+  private boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+    return isInclusionVisible(node) && isInclusionEnabled(node);
+  }
+
+  @NotNull
+  private List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
+    return treeModelData
+      .nodesStream()
+      .filter(node -> isIncludable(node))
+      .map(node -> node.getUserObject())
+      .collect(toList());
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
@@ -640,7 +650,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      List<Object> changes = !isSelectionEmpty() ? getSelectedUserObjects() : getAllUserObjects();
+      List<Object> changes = getIncludableUserObjects(!isSelectionEmpty() ? selected(ChangesTree.this) : all(ChangesTree.this));
       if (!changes.isEmpty()) toggleChanges(changes);
     }
   }

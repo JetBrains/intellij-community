@@ -600,8 +600,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
-      boolean enabled = super.isNodeEnabled(node);
+    protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
+      boolean enabled = super.isInclusionEnabled(node);
       Object value = node.getUserObject();
       if (value instanceof AbstractFilePatchInProgress.PatchChange) {
         enabled &= ((AbstractFilePatchInProgress.PatchChange)value).isValid();

@@ -3,7 +3,8 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate
-import java.awt.BorderLayout
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
 import javax.accessibility.AccessibleContext
@@ -13,14 +14,19 @@ import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
 private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) :
-  JPanel(BorderLayout()), TreeCellRenderer {
+  JPanel(MigLayout()), TreeCellRenderer {
 
   private val checkBox = ThreeStateCheckBox()
 
   init {
-    add(checkBox, BorderLayout.WEST)
-    add(textRenderer, BorderLayout.CENTER)
+    add(checkBox)
+    add(textRenderer)
     isOpaque = false
+  }
+
+  fun updateLayout(showCheckBoxes: Boolean) {
+    val defaultConstraints = LC().insetsAll("0").gridGap("0", "0")
+    (layout as MigLayout).layoutConstraints = defaultConstraints.hideMode(if (showCheckBoxes) 0 else 3)
   }
 
   override fun getTreeCellRendererComponent(
@@ -46,10 +52,10 @@ private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNo
       isOpaque = false
 
       val node = value as ChangesBrowserNode<*>
-      isVisible = tree.isShowCheckboxes
+      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(node) }
       if (isVisible) {
         state = tree.getNodeStatus(node)
-        isEnabled = tree.run { isEnabled && isNodeEnabled(node) }
+        isEnabled = tree.run { isEnabled && isInclusionEnabled(node) }
       }
     }
     revalidate()
