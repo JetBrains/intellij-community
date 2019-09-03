@@ -634,9 +634,10 @@ public final class EventLog {
       if (openProjects == null || openProjects.length == 0) {
         getApplicationService().myModel.addNotification(notification);
       }
-
-      for (Project p : openProjects) {
-        getProjectComponent(p).printNotification(notification);
+      else {
+        for (Project p : openProjects) {
+          getProjectComponent(p).printNotification(notification);
+        }
       }
     }
   }
