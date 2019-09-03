@@ -78,18 +78,18 @@ class CircletIdeaJobExecutionProvider(
         this.savedHandler = handler
     }
 
-    override fun onBeforeGraphStatusChanged(tx: AutomationStorageTransaction, graph: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
-        if (newStatus.isFinished()) {
+    override fun onBeforeGraphStatusChanged(tx: AutomationStorageTransaction, events: Iterable<GraphStatusChangedEvent>) {
+        if (events.single().newStatus.isFinished()) {
             notifyProcessTerminated(0)
         }
     }
 
-    override fun onBeforeJobStatusChanged(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
+    override fun onBeforeJobStatusChanged(tx: AutomationStorageTransaction, events: Iterable<JobStatusChangedEvent>) {
         //todo
     }
 
     private fun changeState(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
-        savedHandler(tx, job, newStatus)
+        savedHandler(tx, setOf(JobStatusUpdate(job, newStatus)))
     }
 
     private fun generateFinalState(imageName: String) : ExecutionStatus {

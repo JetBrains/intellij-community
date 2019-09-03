@@ -19,4 +19,13 @@ class CircletIdeaAGraphExecutionEntity(
 
     override val jobs: Sequence<AJobExecutionEntity<*>>
         get() = jobsList.asSequence()
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is CircletIdeaAGraphExecutionEntity) return false
+        return this.id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return this.id.hashCode()
+    }
 }

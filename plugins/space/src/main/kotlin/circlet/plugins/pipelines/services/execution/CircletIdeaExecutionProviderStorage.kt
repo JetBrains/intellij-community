@@ -107,7 +107,7 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
 
         private val hooks = mutableListOf<suspend () -> Unit>()
 
-        override fun afterTransaction(body: suspend () -> Unit) {
+        override fun afterTransaction(priority: CallbackPriority, body: suspend () -> Unit) {
             hooks.add(body)
         }
 
