@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
@@ -128,18 +127,21 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
           return ComparisonData.ERROR;
         }
 
-        if (FileUtilRt.isTooLarge(file1.getLength()) ||
-            FileUtilRt.isTooLarge(file2.getLength())) {
-          return new ComparisonData(ThreeState.UNSURE, "Files are too large to compare");
-        }
-
+        long length1 = file1.getLength();
+        long length2 = file2.getLength();
         try {
-          // we can't use getInputStream() here because we can't restore BOM marker
-          // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
-          // It can be made for files from VFS that implements FileSystemInterface though.
-          byte[] bytes1 = file1.contentsToByteArray();
-          byte[] bytes2 = file2.contentsToByteArray();
-          boolean contentsEquals = Arrays.equals(bytes1, bytes2);
+          boolean contentsEquals;
+          if (length1 > 0 && length2 > 0 && length1 != length2) {
+            // Can't trust 0 length, at it might be a lie (and loading empty content into memory shouldn't hurt much).
+            contentsEquals = false;
+          }
+          else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
+            return new ComparisonData(ThreeState.UNSURE, "Files are too large to compare");
+          }
+          else {
+            contentsEquals = DiffUtil.compareStreams(() -> DiffUtil.getFileInputStream(file1), () -> DiffUtil.getFileInputStream(file2));
+          }
+
           return new ComparisonData(ThreeState.fromBoolean(contentsEquals),
                                     contentsEquals ? DiffBundle.message("diff.contents.are.identical.message.text") : null);
         }

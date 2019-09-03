@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -68,6 +69,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -101,6 +104,7 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -889,6 +893,17 @@ public class DiffUtil {
         }
       }
     }
+  }
+
+  @NotNull
+  public static InputStream getFileInputStream(@NotNull VirtualFile file) throws IOException {
+    VirtualFileSystem fs = file.getFileSystem();
+    if (fs instanceof FileSystemInterface) {
+      return ((FileSystemInterface)fs).getInputStream(file);
+    }
+    // can't use VirtualFile.getInputStream here, as it will strip BOM
+    byte[] content = ReadAction.compute(() -> file.contentsToByteArray());
+    return new ByteArrayInputStream(content);
   }
 
   //
