@@ -53,8 +53,17 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       HashSet<FilePath> dirtyFiles = new HashSet<>();
       HashSet<FilePath> dirtyDirs = new HashSet<>();
       for (FilesAndDirs filesAndDirs : list) {
-        dirtyFiles.addAll(filesAndDirs.dirtyFiles);
-        dirtyDirs.addAll(filesAndDirs.dirtyDirs);
+        dirtyFiles.addAll(filesAndDirs.forcedNonRecursive);
+
+        for (FilePath path : filesAndDirs.regular) {
+          VirtualFile file = path.getVirtualFile();
+          if (file != null && file.isDirectory()) {
+            dirtyDirs.add(path);
+          }
+          else {
+            dirtyFiles.add(path);
+          }
+        }
       }
       if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
         dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
@@ -148,9 +157,9 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
           add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));   // the file is dirty recursively
-          addToFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file.getParent())); // directory is dirty alone. if parent is null - is checked in the method
+          addAsFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file.getParent())); // directory is dirty alone. if parent is null - is checked in the method
         } else {
-          addToFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));
+          addAsFiles(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(file));
         }
       }
     }
@@ -172,25 +181,25 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
    * not recursively, you should add it to files.
    */
   private static class FilesAndDirs {
-    @NotNull HashSet<FilePath> dirtyFiles = new HashSet<>();
-    @NotNull HashSet<FilePath> dirtyDirs = new HashSet<>();
+    @NotNull HashSet<FilePath> forcedNonRecursive = new HashSet<>();
+    @NotNull HashSet<FilePath> regular = new HashSet<>();
 
     private boolean isEmpty() {
-      return dirtyFiles.isEmpty() && dirtyDirs.isEmpty();
+      return forcedNonRecursive.isEmpty() && regular.isEmpty();
     }
   }
 
   private static void add(@NotNull ProjectLevelVcsManager vcsManager,
                           @NotNull FilesAndDirs filesAndDirs,
                           @NotNull FilePath filePath,
-                          boolean addToFiles) {
+                          boolean forceAddAsFiles) {
     if (vcsManager.getVcsFor(filePath) == null) return;
 
-    if (addToFiles || !filePath.isDirectory()) {
-      filesAndDirs.dirtyFiles.add(filePath);
+    if (forceAddAsFiles) {
+      filesAndDirs.forcedNonRecursive.add(filePath);
     }
     else {
-      filesAndDirs.dirtyDirs.add(filePath);
+      filesAndDirs.regular.add(filePath);
     }
   }
 
@@ -200,7 +209,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     add(vcsManager, filesAndDirs, filePath, false);
   }
 
-  private static void addToFiles(@NotNull ProjectLevelVcsManager vcsManager,
+  private static void addAsFiles(@NotNull ProjectLevelVcsManager vcsManager,
                                  @NotNull FilesAndDirs filesAndDirs,
                                  @NotNull FilePath filePath) {
     add(vcsManager, filesAndDirs, filePath, true);
