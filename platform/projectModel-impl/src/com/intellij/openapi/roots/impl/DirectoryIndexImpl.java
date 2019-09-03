@@ -39,6 +39,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
+  private final Object myRootIndexLock = new Object();
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
@@ -117,7 +118,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      myRootIndex = rootIndex = new RootIndex(myProject);
+      synchronized (myRootIndexLock) {
+        if (myRootIndex == null) {
+          myRootIndex = new RootIndex(myProject);
+        }
+        rootIndex = myRootIndex;
+      }
     }
     return rootIndex;
   }
