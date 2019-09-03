@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -245,7 +246,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public void addMessageFilter(Project project, Filter filter) {
     addHyperlinkFilter(line -> {
-      Filter.Result r = filter.applyFilter(line, line.length());
+      Filter.Result r;
+      try {
+        r = filter.applyFilter(line, line.length());
+      }
+      catch (ProcessCanceledException ignore) {
+        r = null;
+      }
+      catch (Throwable t) {
+        throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
+      }
       if (r != null) {
         return new LinkResult(ContainerUtil.map(r.getResultItems(),
                                                 item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
