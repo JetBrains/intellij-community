@@ -66,6 +66,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final Icon Highlighting = load("/actions/highlighting.svg");
+    /** 16x16 */ public static final Icon InSelection = load("/actions/inSelection.svg");
     /** 16x16 */ public static final Icon Install = load("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = load("/actions/intentionBulb.svg");
     /** 16x16 */ public static final Icon IntentionBulbGrey = load("/actions/intentionBulbGrey.svg");
