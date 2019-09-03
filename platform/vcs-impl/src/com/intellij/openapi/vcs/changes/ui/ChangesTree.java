@@ -641,9 +641,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      List<Object> changes = getSelectedUserObjects();
-      if (changes.isEmpty()) changes = getAllUserObjects();
-      toggleChanges(changes);
+      List<Object> changes = !isSelectionEmpty() ? getSelectedUserObjects() : getAllUserObjects();
+      if (!changes.isEmpty()) toggleChanges(changes);
     }
   }
 
