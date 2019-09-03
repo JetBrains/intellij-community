@@ -37,6 +37,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -44,10 +45,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
@@ -357,9 +361,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   private static void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+    DumbService dumbService = DumbService.getInstance(module.getProject());
     PsiJavaModule currentModule =
-      DumbService.getInstance(module.getProject())
-        .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, true));
+      dumbService.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, true));
     if (currentModule != null) {
       //add current module explicitly as it's not reachable from `idea.rt` auto modules
       ParametersList vmParametersList = javaParameters.getVMParametersList();
@@ -372,6 +376,63 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       modulePath.addAll(classPath.getPathList());
       classPath.clear();
     }
+    else {
+      splitDepsBetweenModuleAndClasspath(module, javaParameters);
+    }
+  }
+
+  /**
+   * Put dependencies reachable from module-info located in production sources on the module path
+   * leave all other dependencies on the class path as is
+   */
+  private static void splitDepsBetweenModuleAndClasspath(Module module, JavaParameters javaParameters) {
+    PsiJavaModule prodModule =
+      DumbService.getInstance(module.getProject())
+        .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, false));
+    if (prodModule == null) {
+      return;
+    }
+    CompilerModuleExtension compilerExt = CompilerModuleExtension.getInstance(module);
+    if (compilerExt == null) {
+      return;
+    }
+    PathsList modulePath = javaParameters.getModulePath();
+    PathsList classPath = javaParameters.getClassPath();
+
+    //put all transitive required modules on the module path
+    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllRequires(prodModule);
+    JarFileSystem instance = JarFileSystem.getInstance();
+    for (PsiJavaModule javaModule : allRequires) {
+      VirtualFile virtualFile = instance.getLocalVirtualFileFor(PsiImplUtil.getModuleVirtualFile(javaModule));
+      if (virtualFile != null) {
+        classPath.remove(virtualFile.getPath());
+        modulePath.add(virtualFile.getPath());
+      }
+    }
+
+    ParametersList vmParametersList = javaParameters.getVMParametersList();
+    //put production output on the module path
+    VirtualFile out = compilerExt.getCompilerOutputPath();
+    if (out != null) {
+      classPath.remove(out.getPath());
+      modulePath.add(out.getPath());
+    }
+
+    //ensure test output is merged to the production module
+    VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
+    if (testOutput != null) {
+      vmParametersList.add("--patch-module");
+      vmParametersList.add(prodModule.getName() + "=" + testOutput.getPath());
+    }
+
+    //ensure test dependencies which are missed from production module info are available in tests
+    //todo enumerate all test dependencies explicitly
+    vmParametersList.add("--add-reads");
+    vmParametersList.add(prodModule.getName() + "=ALL-UNNAMED");
+
+    //ensure production module is explicitly added as test starter doesn't depend on it explicitly
+    vmParametersList.add("--add-modules");
+    vmParametersList.add(prodModule.getName());
   }
 
   protected void createServerSocket(JavaParameters javaParameters) {
