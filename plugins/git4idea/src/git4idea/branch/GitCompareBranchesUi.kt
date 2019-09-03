@@ -86,6 +86,12 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
                                 parentDisposable: Disposable): VcsLogFilterUiEx {
       return MyFilterUi(logData, filterConsumer, properties, colorManager, filters, parentDisposable)
     }
+
+    override fun applyFiltersAndUpdateUi(filters: VcsLogFilterCollection) {
+      super.applyFiltersAndUpdateUi(filters)
+      val (start, end) = filters.get(VcsLogFilterCollection.RANGE_FILTER).getRange()
+      mainFrame.setExplanationHtml(getExplanationText(start, end));
+    }
   }
 
   private class MyFilterUi(data: VcsLogData, filterConsumer: Consumer<VcsLogFilterCollection>, properties: MainVcsLogUiProperties,
@@ -162,3 +168,6 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
   val (start, end) = getRange()
   return fromRange(end, start)
 }
+
+private fun getExplanationText(dontExist: String, existIn: String): String =
+  "<html>Commits that exist in <code><b>$existIn</b></code> but don't exist in <code><b>$dontExist</b></code></html>"
