@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.AppIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,4 +108,8 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract void hideDialog(JDialog dialog, Project project);
 
   public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
+
+  @Nullable
+  @ApiStatus.Internal
+  public abstract ProjectFrameHelper getFrameHelper(@Nullable Project project);
 }

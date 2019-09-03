@@ -22,9 +22,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -235,7 +234,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     // as result do it *before* update all toolbars, menu bars and popups
     getInstance().incrementModificationStamp();
 
-    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+    WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       ProjectFrameHelper frame = windowManager.getFrameHelper(project);
       if (frame != null) {
@@ -416,7 +415,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
         anAction.setDefaultIcon(false);
       }
     }
-    ProjectFrameHelper frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(null);
+    ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(null);
     if (frame != null) {
       frame.updateView();
     }

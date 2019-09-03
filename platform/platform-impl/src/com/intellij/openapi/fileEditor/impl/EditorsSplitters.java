@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
@@ -434,7 +435,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   protected IdeFrame getFrame(@NotNull Project project) {
-    ProjectFrameHelper frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(project);
+    ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;
   }

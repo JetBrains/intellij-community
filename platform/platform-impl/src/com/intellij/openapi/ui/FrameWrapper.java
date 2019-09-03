@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -379,13 +380,13 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     @Override
     public boolean isInFullScreen() {
-      throw new IllegalStateException();
+      return false;
     }
 
     @NotNull
     @Override
     public Promise<?> toggleFullScreen(boolean state) {
-      throw new IllegalStateException();
+      return Promises.resolvedPromise();
     }
 
     @Override

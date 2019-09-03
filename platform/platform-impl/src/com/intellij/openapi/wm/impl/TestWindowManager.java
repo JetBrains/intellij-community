@@ -61,6 +61,12 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
+  @Nullable
+  @Override
+  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
+    return null;
+  }
+
   @Override
   public Rectangle getScreenBounds(@NotNull Project project) {
     return null;
