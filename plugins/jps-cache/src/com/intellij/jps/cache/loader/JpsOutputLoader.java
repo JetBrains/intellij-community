@@ -1,7 +1,9 @@
 package com.intellij.jps.cache.loader;
 
-public interface JpsOutputLoader {
-  void load();
+import org.jetbrains.annotations.NotNull;
+
+interface JpsOutputLoader {
+  void load(@NotNull String commitId);
   void rollback();
   void apply();
 }

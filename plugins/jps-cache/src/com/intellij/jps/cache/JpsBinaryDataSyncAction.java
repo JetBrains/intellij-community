@@ -1,7 +1,6 @@
 package com.intellij.jps.cache;
 
 import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
-import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.hashing.ModuleHashingService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,13 +22,11 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class JpsBinaryDataSyncAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsBinaryDataSyncAction");
-  private final JpsServerClient myCacheServerClient = new ArtifactoryJpsServerClient();
 
   @Override
   public void actionPerformed(AnActionEvent actionEvent) {
@@ -65,7 +62,7 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
     });
   }
 
-  private void uploadSourceRootBinaryData(@NotNull File sourceRoot, @NotNull ModuleManager moduleManager, @NotNull String prefix,
+  private static void uploadSourceRootBinaryData(@NotNull File sourceRoot, @NotNull ModuleManager moduleManager, @NotNull String prefix,
                                           @NotNull Function<ModuleRootManager, String> sourceRootHashFunction) {
     File[] moduleFolders = sourceRoot.listFiles();
     assert moduleFolders != null;
@@ -80,7 +77,7 @@ public class JpsBinaryDataSyncAction extends DumbAwareAction {
       if (sourceRootsHash.isEmpty()) continue;
       File zipFile = new File(sourceRoot, sourceRootsHash);
       zipBinaryData(zipFile, moduleFolder);
-      myCacheServerClient.uploadBinaryData(zipFile, module.getName(), prefix);
+      ArtifactoryJpsServerClient.INSTANCE.uploadBinaryData(zipFile, module.getName(), prefix);
       FileUtil.delete(zipFile);
     }
   }

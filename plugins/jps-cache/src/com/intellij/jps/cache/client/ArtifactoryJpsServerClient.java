@@ -50,6 +50,9 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   private static final String REPOSITORY_NAME = "intellij-jps-compilation-caches";
   private static final String AUTH_HEADER_NAME = "X-JFrog-Art-Api";
   private static final String CONTENT_TYPE = "text/plain";
+  public static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
+
+  private ArtifactoryJpsServerClient() { }
 
   @NotNull
   @Override

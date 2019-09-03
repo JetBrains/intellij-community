@@ -23,18 +23,18 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class JpsCompilationOutputLoader implements JpsOutputLoader {
+class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
   private final JpsServerClient myClient;
   private final Project myProject;
 
-  public JpsCompilationOutputLoader(JpsServerClient client, Project project) {
+  JpsCompilationOutputLoader(JpsServerClient client, Project project) {
     myClient = client;
     myProject = project;
   }
 
   @Override
-  public void load() {
+  public void load(@NotNull String commitId) {
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
     if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
       LOG.warn("Compiler output setting not specified for the project ");

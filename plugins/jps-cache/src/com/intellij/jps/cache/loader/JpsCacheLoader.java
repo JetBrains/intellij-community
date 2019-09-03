@@ -2,17 +2,16 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
-import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 
-public class JpsCacheLoader implements JpsOutputLoader{
+class JpsCacheLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
   private static final int COMMITS_COUNT = 20;
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
@@ -20,21 +19,17 @@ public class JpsCacheLoader implements JpsOutputLoader{
   private final JpsServerClient myClient;
   private final Project myProject;
 
-  public JpsCacheLoader(BuildManager buildManager, JpsServerClient client, Project project) {
-    myBuildManager = buildManager;
+  JpsCacheLoader(JpsServerClient client, Project project) {
+    myBuildManager = BuildManager.getInstance();
     myClient = client;
     myProject = project;
   }
 
   @Override
-  public void load() {
-    Set<String> cacheKeys = myClient.getAllCacheKeys();
-    GitRepositoryUtil.getLatestCommitHashes(myProject, COMMITS_COUNT).stream().filter(cacheKeys::contains)
-      .findFirst().ifPresent(cacheId -> {
-      LOG.debug("Loading JPS caches for commit: " + cacheId);
-      File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
-      myClient.downloadCacheByIdAsynchronously(myProject, cacheId, targetDir, this::renameTmpCacheFolder);
-    });
+  public void load(@NotNull String commitId) {
+    LOG.debug("Loading JPS caches for commit: " + commitId);
+    File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
+    myClient.downloadCacheByIdAsynchronously(myProject, commitId, targetDir, this::renameTmpCacheFolder);
   }
 
   @Override
@@ -53,7 +48,7 @@ public class JpsCacheLoader implements JpsOutputLoader{
       LOG.warn("Couldn't download JPS portable caches");
       return;
     }
-    File currentDirForBuildCache = BuildManager.getInstance().getProjectSystemDirectory(myProject);
+    File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
     if (currentDirForBuildCache != null) {
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
