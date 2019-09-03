@@ -1424,7 +1424,9 @@ public class PluginManagerCore {
       // a quick fix for IDEA-221893, check modules and hope CORE plugin is the first
       String missingModule = null;
       for (PluginId id : descriptor.getDependentPluginIds()) {
-        if (isModuleDependency(id) && !ourModulesToContainingPlugins.containsKey(id.getIdString())) {
+        if (isModuleDependency(id) &&
+            !ourModulesToContainingPlugins.containsKey(id.getIdString()) &&
+            ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1) {
           missingModule = id.getIdString();
           break;
         }
