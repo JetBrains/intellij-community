@@ -1417,8 +1417,22 @@ public class PluginManagerCore {
         }
       }
     }
+    else if (isDisabled(idString)) {
+      reasonToNotLoad = PLUGIN_IS_DISABLED_REASON;
+    }
+    else if (checkModuleDependencies) {
+      // a quick fix for IDEA-221893, check modules and hope CORE plugin is the first
+      String missingModule = null;
+      for (PluginId id : descriptor.getDependentPluginIds()) {
+        if (isModuleDependency(id) && !ourModulesToContainingPlugins.containsKey(id.getIdString())) {
+          missingModule = id.getIdString();
+          break;
+        }
+      }
+      reasonToNotLoad = missingModule == null ? null : "Required module '" + missingModule + "' is not defined";
+    }
     else {
-      reasonToNotLoad = isDisabled(idString) ? PLUGIN_IS_DISABLED_REASON : null;
+      reasonToNotLoad = null;
     }
 
     if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
