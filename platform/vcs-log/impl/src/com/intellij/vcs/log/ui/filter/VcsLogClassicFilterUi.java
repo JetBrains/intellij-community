@@ -595,7 +595,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           }
         }
         else {
-          LOG.warn("Can not filter by file that does not exist " + path);
+          LOG.warn("Can not filter by root that does not exist " + path);
         }
       }
       if (selectedRoots.isEmpty()) return null;
