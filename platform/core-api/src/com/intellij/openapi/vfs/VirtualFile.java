@@ -40,6 +40,7 @@ import java.nio.charset.Charset;
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
+ * @see com.intellij.openapi.vfs.VfsUtil
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
