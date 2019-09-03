@@ -8,18 +8,15 @@
 ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <backgroundPostStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.jps.cache.JpsCachesProjectStateListener"/>
   </extensions>
 
   <actions>
-    <action id="com.intellij.jps.cache.JpsCacheSimpleAction" class="com.intellij.jps.cache.JpsCacheSimpleAction" text="Pull JPS Chache ">
-      <add-to-group group-id="BuildMenu" anchor="first"/>
+    <action id="com.intellij.jps.cache.JpsDownloadCachesAction" class="com.intellij.jps.cache.JpsDownloadCachesAction" text="Download JPS Caches">
+      <add-to-group anchor="first" group-id="BuildMenu"/>
     </action>
-    <action id="com.intellij.jps.cache.JpsBinaryDataSyncAction" class="com.intellij.jps.cache.JpsBinaryDataSyncAction" text="Sync JPS Binary Data">
-      <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsCacheSimpleAction" group-id="BuildMenu"/>
-    </action>
-    <action id="com.intellij.jps.cache.JpsModuleHashCalculator" class="com.intellij.jps.cache.JpsModuleHashCalculator" text="Calculate Module Hashe">
-      <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsBinaryDataSyncAction" group-id="BuildMenu"/>
+    <action id="com.intellij.jps.cache.JpsBinaryDataUploadAction" class="com.intellij.jps.cache.JpsBinaryDataUploadAction" text="Upload JPS Binary Data">
+      <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsDownloadCachesAction" group-id="BuildMenu"/>
     </action>
   </actions>
 

@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
-  private static final String LATEST_COMMIT_ID = "JPS_CACHE.LATEST_COMMIT_ID";
+  private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final int COMMITS_COUNT = 20;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
   private final JpsServerClient myServerClient;
@@ -40,7 +41,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   public void load(@NotNull String currentCommitId) {
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    if (previousCommitId != null && currentCommitId.equals(previousCommitId)) return;
+    if (previousCommitId != null && currentCommitId.equals(previousCommitId)) {
+      LOG.debug("The commit didn't change");
+      return;
+    }
     Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
     if (allCacheKeys.contains(currentCommitId)) {
       getLoaders(myProject).forEach(loader -> ApplicationManager.getApplication().executeOnPooledThread(() -> loader.load(currentCommitId)));
@@ -52,13 +56,20 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   private void load(Set<String> allCacheKeys) {
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    GitRepositoryUtil.getLatestCommitHashes(myProject, COMMITS_COUNT).stream().filter(allCacheKeys::contains)
-      .findFirst().ifPresent(commitId -> {
-      if (previousCommitId != null && commitId.equals(previousCommitId)) return;
-      LOG.debug("Loading JPS caches for commit: " + commitId);
+    Optional<String> stringOptional = GitRepositoryUtil.getLatestCommitHashes(myProject, COMMITS_COUNT).stream()
+                                                                                                       .filter(allCacheKeys::contains)
+                                                                                                       .findFirst();
+    if (stringOptional.isPresent()) {
+      String commitId = stringOptional.get();
+      if (previousCommitId != null && commitId.equals(previousCommitId)) {
+        LOG.debug("The system contains up to date caches");
+        return;
+      }
       getLoaders(myProject).forEach(loader -> ApplicationManager.getApplication().executeOnPooledThread(() -> loader.load(commitId)));
       PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
-    });
+    } else {
+      LOG.warn("Not found any caches for the latest commits in the brunch");
+    }
   }
 
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {

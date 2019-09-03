@@ -1,6 +1,6 @@
 package com.intellij.jps.cache.loader;
 
-import com.intellij.jps.cache.JpsCacheStartupActivity;
+import com.intellij.jps.cache.JpsCachesProjectStateListener;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +41,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       return;
     }
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
-    JpsCacheStartupActivity pluginComponent = myProject.getComponent(JpsCacheStartupActivity.class);
+    JpsCachesProjectStateListener pluginComponent = myProject.getComponent(JpsCachesProjectStateListener.class);
     PersistentCachingModuleHashingService moduleHashingService = pluginComponent.getModuleHashingService();
 
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
