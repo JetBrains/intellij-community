@@ -39,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -494,10 +492,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NotNull
   @ApiStatus.Internal
   public static Rectangle convertFromDeviceSpaceAndValidateFrameBounds(@NotNull Rectangle deviceFrameBounds) {
-    Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(deviceFrameBounds);
-    Rectangle bounds = frameBounds.getBounds();
-    ScreenUtil.fitToScreen(bounds);
-    return bounds;
+    return FrameBoundsConverter.convertFromDeviceSpace(deviceFrameBounds);
   }
 
   @Override
@@ -746,12 +741,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
       try {
         for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-          Rectangle devBounds = gd.getDefaultConfiguration().getBounds(); // in user space
-          scaleUp(devBounds, gd.getDefaultConfiguration()); // to device space
-          Rectangle2D.Float devBounds2D = new Rectangle2D.Float(devBounds.x, devBounds.y, devBounds.width, devBounds.height);
-          Point2D.Float center2d = new Point2D.Float(b.x + b.width / 2, b.y + b.height / 2);
-          if (devBounds2D.contains(center2d)) {
-            scaleDown(b, gd.getDefaultConfiguration());
+          GraphicsConfiguration gc = gd.getDefaultConfiguration();
+          Rectangle devBounds = gc.getBounds(); // in user space
+          scaleUp(devBounds, gc); // to device space
+          if (devBounds.contains(b.x + b.width / 2, b.y + b.height / 2)) {
+            scaleDown(b, gc);
+            // do not return bounds bigger than the corresponding screen rectangle
+            Rectangle screen = ScreenUtil.getScreenRectangle(gc);
+            if (b.x < screen.x) b.x = screen.x;
+            if (b.y < screen.y) b.y = screen.y;
+            if (b.width > screen.width) b.width = screen.width;
+            if (b.height > screen.height) b.height = screen.height;
             break;
           }
         }
