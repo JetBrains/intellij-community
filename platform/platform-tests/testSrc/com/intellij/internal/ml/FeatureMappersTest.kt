@@ -119,4 +119,17 @@ class FeatureMappersTest {
     assertEquals(0.0, mapper.asArrayValue("private"))
     assertEquals(0.0, mapper.asArrayValue("null"))
   }
+
+  @Test
+  fun `categorical mapper should recognize enum elements`() {
+    val mapper = simpleCategoricalFeature.createMapper("public")
+    assertEquals(1.0, mapper.asArrayValue(Access.public))
+    assertEquals(0.0, mapper.asArrayValue(Access.private))
+    assertEquals(0.0, mapper.asArrayValue(null))
+  }
+
+  @Suppress("EnumEntryName")
+  private enum class Access {
+    private, public
+  }
 }
