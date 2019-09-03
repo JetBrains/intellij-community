@@ -153,11 +153,21 @@ public class VFilePropertyChangeEvent extends VFileEvent {
 
   @NotNull
   public String getOldPath() {
+    return getOtherPath(myNewValue, myOldValue);
+  }
+
+  @NotNull
+  public String getNewPath() {
+    return getOtherPath(myOldValue, myNewValue);
+  }
+
+  @NotNull
+  private String getOtherPath(Object currentValue, Object otherValue) {
     String path = getPath();
-    if (VirtualFile.PROP_NAME.equals(myPropertyName) && myNewValue instanceof String && myOldValue instanceof String) {
-      String newName = (String)myNewValue;
-      int i = path.lastIndexOf(newName);
-      if (i != -1) path = new StringBuilder(path).replace(i, i + newName.length(), (String)myOldValue).toString();
+    if (VirtualFile.PROP_NAME.equals(myPropertyName) && currentValue instanceof String && otherValue instanceof String) {
+      String oldName = (String)currentValue;
+      int i = path.lastIndexOf(oldName);
+      if (i != -1) path = new StringBuilder(path).replace(i, i + oldName.length(), (String)otherValue).toString();
     }
     return path;
   }

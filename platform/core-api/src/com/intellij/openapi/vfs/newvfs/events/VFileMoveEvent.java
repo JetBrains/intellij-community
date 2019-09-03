@@ -105,4 +105,8 @@ public class VFileMoveEvent extends VFileEvent {
   public String getOldPath() {
     return myOldParent.getPath() + "/" + myFile.getName();
   }
+
+  public String getNewPath() {
+    return myNewParent.getPath() + "/" + myFile.getName();
+  }
 }
