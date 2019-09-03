@@ -11,13 +11,13 @@ import com.intellij.ui.navigation.History;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
@@ -176,7 +176,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   @NotNull
   @Override
-  public VcsLogFilterUi getFilterUi() {
+  public VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
   }
 

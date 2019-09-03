@@ -15,11 +15,11 @@
  */
 package com.intellij.vcs.log.history;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SearchTextField;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,27 +41,5 @@ public class FileHistoryFilterUi implements VcsLogFilterUi {
   @Override
   public VcsLogFilterCollection getFilters() {
     return FileHistoryFilterer.createFilters(myPath, myHash, myRoot, myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
-  }
-
-  @Override
-  public void setFilter(@Nullable VcsLogFilter filter) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public ActionGroup createActionGroup() {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public SearchTextField getTextFilterComponent() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
-    throw new UnsupportedOperationException();
   }
 }

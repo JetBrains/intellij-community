@@ -51,7 +51,7 @@ import static java.util.Collections.emptyList;
 /**
  *
  */
-public class VcsLogClassicFilterUi implements VcsLogFilterUi {
+public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
   private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
 

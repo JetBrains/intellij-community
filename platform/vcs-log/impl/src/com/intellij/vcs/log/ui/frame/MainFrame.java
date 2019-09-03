@@ -27,7 +27,6 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -39,6 +38,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
@@ -72,7 +72,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
-  @NotNull private final VcsLogFilterUi myFilterUi;
+  @NotNull private final VcsLogFilterUiEx myFilterUi;
 
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
@@ -175,7 +175,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   @NotNull
-  public VcsLogFilterUi getFilterUi() {
+  public VcsLogFilterUiEx getFilterUi() {
     return myFilterUi;
   }
 
