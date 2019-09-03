@@ -20,6 +20,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -32,9 +33,9 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -84,13 +85,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
 
   public MainFrame(@NotNull VcsLogData logData,
-                   @NotNull VcsLogUiImpl logUi,
+                   @NotNull AbstractVcsLogUi logUi,
+                  @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @Nullable VcsLogFilterCollection filters) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, filters);
+    myFilterUi = new VcsLogClassicFilterUi(logData, filterConsumer, myUiProperties, logUi.getColorManager(), filters, logUi);
 
     myGraphTable = new MyVcsLogGraphTable(logUi, logData);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
@@ -376,7 +378,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
     @NotNull private final Runnable myRefresh;
 
-    MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData) {
+    MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
       super(ui, logData, VisiblePack.EMPTY, ui::requestMore);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }

@@ -52,7 +52,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @Nullable VcsLogFilterCollection filters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, filters);
+    myMainFrame = new MainFrame(logData, this, filterCollection -> applyFiltersAndUpdateUi(filterCollection),
+                                uiProperties, filters);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -148,7 +149,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
-  public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
+  protected void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
     myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
     

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -29,7 +30,6 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -69,33 +69,35 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull private final TextFilterModel myTextFilterModel;
   @NotNull private final TextFilterField myFilterField;
 
-  public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
-                               @NotNull VcsLogData logData,
+  public VcsLogClassicFilterUi(@NotNull VcsLogData logData,
+                               @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
                                @NotNull MainVcsLogUiProperties uiProperties,
-                               @Nullable VcsLogFilterCollection filters) {
+                               @NotNull VcsLogColorManager colorManager,
+                               @Nullable VcsLogFilterCollection filters,
+                               @NotNull Disposable parentDisposable) {
     myLogData = logData;
     myUiProperties = uiProperties;
     myDataPack = VisiblePack.EMPTY;
-    myColorManager = ui.getColorManager();
+    myColorManager = colorManager;
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
     myUserFilterModel = new UserFilterModel(myUiProperties, filters);
     myDateFilterModel = new DateFilterModel(myUiProperties, filters);
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
-    myTextFilterModel = new TextFilterModel(myUiProperties, filters, ui);
+    myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
     myFilterField = new TextFilterField(myTextFilterModel);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
-        ui.applyFiltersAndUpdateUi(getFilters());
+        filterConsumer.consume(getFilters());
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      ui.applyFiltersAndUpdateUi(getFilters());
+      filterConsumer.consume(getFilters());
     });
   }
 
