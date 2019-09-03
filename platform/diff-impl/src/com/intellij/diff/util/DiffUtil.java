@@ -76,7 +76,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.ProjectFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -1567,7 +1567,7 @@ public class DiffUtil {
    * @return whether window was closed
    */
   private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
-    if (window instanceof ProjectFrame || (modalOnly && canBeHiddenBehind(window))) {
+    if (window instanceof IdeFrameImpl || (modalOnly && canBeHiddenBehind(window))) {
       return false;
     }
 

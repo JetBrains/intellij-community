@@ -103,13 +103,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     private void update(@NotNull ComponentEvent e) {
-      ProjectFrame frame = (ProjectFrame)e.getComponent();
+      IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
 
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
       JRootPane rootPane = frame.getRootPane();
       if (extendedState == Frame.NORMAL && rootPane != null) {
-        rootPane.putClientProperty(ProjectFrame.NORMAL_STATE_BOUNDS, bounds);
+        rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
 
       if (!(rootPane instanceof IdeRootPane)) {
@@ -437,7 +437,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final ProjectFrame getFrame(@Nullable Project project) {
+  public final IdeFrameImpl getFrame(@Nullable Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return getFrameHelper(project).getFrame();

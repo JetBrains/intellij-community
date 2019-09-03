@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.openapi.wm.impl.ProjectFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.AppIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   @Override
-  public abstract ProjectFrame getFrame(@Nullable Project project);
+  public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
   @Override
   public void requestUserAttention(@NotNull IdeFrame frame, boolean critical) {

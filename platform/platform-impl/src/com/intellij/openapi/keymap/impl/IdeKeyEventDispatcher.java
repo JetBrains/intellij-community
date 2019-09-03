@@ -37,7 +37,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.openapi.wm.impl.ProjectFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
@@ -255,7 +255,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   public static boolean isModalContext(@NotNull Component component) {
     Window window = UIUtil.getWindow(component);
 
-    if (window instanceof ProjectFrame) {
+    if (window instanceof IdeFrameImpl) {
       Component pane = ((JFrame)window).getGlassPane();
       if (pane instanceof IdeGlassPaneEx) {
         return ((IdeGlassPaneEx) pane).isInModalContext();

@@ -78,7 +78,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private volatile Image selfie;
 
-  private final ProjectFrame myFrame = new ProjectFrame();
+  private final IdeFrameImpl myFrame = new IdeFrameImpl();
 
   public ProjectFrameHelper() {
     super();
@@ -107,12 +107,12 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       return null;
     }
 
-    ProjectFrame projectFrame;
-    if (window instanceof ProjectFrame) {
-      projectFrame = (ProjectFrame)window;
+    IdeFrameImpl projectFrame;
+    if (window instanceof IdeFrameImpl) {
+      projectFrame = (IdeFrameImpl)window;
     }
     else {
-      projectFrame = (ProjectFrame)SwingUtilities.getAncestorOfClass(ProjectFrame.class, window);
+      projectFrame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, window);
       if (projectFrame == null) {
         return null;
       }
@@ -128,7 +128,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myRootPane = new IdeRootPane(myFrame, this);
     myFrameDecorator = IdeFrameDecorator.decorate(myFrame);
 
-    myFrame.setFrameHelper(new ProjectFrame.FrameHelper() {
+    myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
       @Override
       public String getAccessibleName() {
         StringBuilder builder = new StringBuilder();
@@ -257,19 +257,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return myFrame.getRootPane();
   }
 
-  @Nullable
-  public static Window getActiveFrame() {
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) return frame;
-    }
-    return null;
-  }
-
   public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
     int state = frameInfo.getExtendedState();
     boolean isMaximized = FrameInfoHelper.isMaximized(state);
     if (bounds != null && isMaximized && myFrame.getExtendedState() == Frame.NORMAL) {
-      myFrame.getRootPane().putClientProperty(ProjectFrame.NORMAL_STATE_BOUNDS, bounds);
+      myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
     }
 
     myFrame.setExtendedState(state);
@@ -531,7 +523,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   @NotNull
-  public ProjectFrame getFrame() {
+  public IdeFrameImpl getFrame() {
     return myFrame;
   }
 

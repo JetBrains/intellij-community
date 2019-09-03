@@ -95,7 +95,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private AWTEventListener awtFocusListener;
 
   private ToolWindowsPane myToolWindowsPane;
-  private ProjectFrame myFrame;
+  private IdeFrameImpl myFrame;
   private DesktopLayout myLayoutToRestoreLater;
   @NonNls private static final String EDITOR_ELEMENT = "editor";
   @NonNls private static final String ACTIVE_ATTR_VALUE = "active";

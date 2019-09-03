@@ -9,13 +9,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
 @ApiStatus.Internal
-public final class ProjectFrame extends JFrame {
+public final class IdeFrameImpl extends JFrame {
   static final String NORMAL_STATE_BOUNDS = "normalBounds";
 
   private FrameHelper myFrameHelper;
@@ -136,5 +137,13 @@ public final class ProjectFrame extends JFrame {
     public String getAccessibleName() {
       return myFrameHelper == null ? super.getAccessibleName() : myFrameHelper.getAccessibleName();
     }
+  }
+
+  @Nullable
+  public static Window getActiveFrame() {
+    for (Frame frame : Frame.getFrames()) {
+      if (frame.isActive()) return frame;
+    }
+    return null;
   }
 }

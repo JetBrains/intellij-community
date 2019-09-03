@@ -473,7 +473,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
-    if (WindowManagerImpl.getInstance().findVisibleFrame() !is ProjectFrame) {
+    if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) {
       return null
     }
 
@@ -530,11 +530,11 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
-    if (WindowManagerImpl.getInstance().findVisibleFrame() !is ProjectFrame) {
+    if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) {
       return null
     }
 
-    val ideFrame = WindowManager.getInstance().findVisibleFrame() as ProjectFrame
+    val ideFrame = WindowManager.getInstance().findVisibleFrame() as IdeFrameImpl
     val project = (ideFrame.rootPane as IdeRootPane).frameHelper.project ?: return null
     val toolWindowManager = ToolWindowManagerImpl.getInstance(project)
     val visibleToolWindows = toolWindowManager.toolWindowIds

@@ -22,7 +22,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public abstract class IdeFrameDecorator implements Disposable, ProjectFrame.FrameDecorator {
+public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.FrameDecorator {
   protected JFrame myFrame;
 
   protected IdeFrameDecorator(@NotNull JFrame frame) {
@@ -88,7 +88,7 @@ public abstract class IdeFrameDecorator implements Disposable, ProjectFrame.Fram
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
       if (state && extendedState == Frame.NORMAL) {
-        myFrame.getRootPane().putClientProperty(ProjectFrame.NORMAL_STATE_BOUNDS, bounds);
+        myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) {
@@ -106,7 +106,7 @@ public abstract class IdeFrameDecorator implements Disposable, ProjectFrame.Fram
           myFrame.setBounds(defaultBounds);
         }
         else {
-          Object o = myFrame.getRootPane().getClientProperty(ProjectFrame.NORMAL_STATE_BOUNDS);
+          Object o = myFrame.getRootPane().getClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS);
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
           }

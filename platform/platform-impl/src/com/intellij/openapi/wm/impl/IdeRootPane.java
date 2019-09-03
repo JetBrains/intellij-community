@@ -73,7 +73,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull ProjectFrame frame, @NotNull ProjectFrameHelper frameHelper) {
+  IdeRootPane(@NotNull IdeFrameImpl frame, @NotNull ProjectFrameHelper frameHelper) {
     myFrameHelper = frameHelper;
 
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -136,7 +136,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     createStatusBar(frame);
   }
 
-  private void updateScreenState(@NotNull ProjectFrame frame) {
+  private void updateScreenState(@NotNull IdeFrameImpl frame) {
     myFullScreen = frame.isInFullScreen();
 
     if (isDecoratedMenu()) {

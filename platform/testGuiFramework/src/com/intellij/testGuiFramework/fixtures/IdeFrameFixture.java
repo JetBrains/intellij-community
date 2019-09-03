@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.ProjectFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
@@ -75,7 +75,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, ProjectFrame> implements ContainerFixture<ProjectFrame> {
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> implements ContainerFixture<IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
   private MainToolbarFixture myToolbar;
@@ -89,9 +89,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, ProjectFr
                                      @Nullable final Path projectPath,
                                      @Nullable final String projectName,
                                      @NotNull final Timeout timeout) {
-    final GenericTypeMatcher<ProjectFrame> matcher = new GenericTypeMatcher<ProjectFrame>(ProjectFrame.class) {
+    final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
-      protected boolean isMatching(@NotNull ProjectFrame frame) {
+      protected boolean isMatching(@NotNull IdeFrameImpl frame) {
         Project project = (((IdeRootPane)frame.getRootPane())).getFrameHelper().getProject();
         if (projectPath == null && project != null) return true;
         if (project != null &&
@@ -110,7 +110,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, ProjectFr
         }
       }, timeout);
 
-      ProjectFrame ideFrame = robot.finder().find(matcher);
+      IdeFrameImpl ideFrame = robot.finder().find(matcher);
       return new IdeFrameFixture(robot, ideFrame, new File(((IdeRootPane)ideFrame.getRootPane()).getFrameHelper().getProject().getBasePath()));
     }
     catch (WaitTimedOutError timedOutError) {
@@ -122,7 +122,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, ProjectFr
     return find(robot, projectPath, projectName, Timeouts.INSTANCE.getDefaultTimeout());
   }
 
-  public IdeFrameFixture(@NotNull Robot robot, @NotNull ProjectFrame target, @NotNull File projectPath) {
+  public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
     super(IdeFrameFixture.class, robot, target);
     myFrameFixture = new FrameFixture(robot, target);
     myProjectPath = projectPath;
