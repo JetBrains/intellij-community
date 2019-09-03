@@ -388,6 +388,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       StatusBar ownerBar = myOwner != null ? myOwner.myStatusBar : null;
@@ -422,6 +423,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return myOwner.getNorthExtension(key);
     }
 
+    @Nullable
     @Override
     public BalloonLayout getBalloonLayout() {
       return null;
@@ -478,6 +480,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       return null;

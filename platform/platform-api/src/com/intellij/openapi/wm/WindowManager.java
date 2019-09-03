@@ -70,11 +70,10 @@ public abstract class WindowManager {
     return null;
   }
 
-  /**
-   * @return Frame, could be {@code null} in test environment.
-   */
+  @Nullable
   public abstract JFrame getFrame(@Nullable Project project);
 
+  @Nullable
   public abstract IdeFrame getIdeFrame(@Nullable Project project);
 
   /**

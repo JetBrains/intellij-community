@@ -27,6 +27,7 @@ public abstract class WindowManagerEx extends WindowManager {
     return (WindowManagerEx)WindowManager.getInstance();
   }
 
+  @Nullable
   @Override
   public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
@@ -57,6 +58,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract Window getMostRecentFocusedWindow();
 
+  @Nullable
   public abstract IdeFrame findFrameFor(@Nullable Project project);
 
   @NotNull

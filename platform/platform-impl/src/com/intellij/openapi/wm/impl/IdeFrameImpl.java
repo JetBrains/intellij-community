@@ -3,7 +3,13 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -14,12 +20,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.util.Objects;
 
 @ApiStatus.Internal
-public final class IdeFrameImpl extends JFrame {
+public final class IdeFrameImpl extends JFrame implements IdeFrame {
+  public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
+
   static final String NORMAL_STATE_BOUNDS = "normalBounds";
 
+  @Nullable
   private FrameHelper myFrameHelper;
+  @Nullable
   private FrameDecorator myFrameDecorator;
 
   interface FrameHelper {
@@ -30,6 +42,14 @@ public final class IdeFrameImpl extends JFrame {
     void setTitle(String title);
 
     void releaseFrame();
+
+    void updateView();
+
+    @Nullable
+    Project getProject();
+
+    @NotNull
+    IdeFrame getHelper();
   }
 
   interface FrameDecorator {
@@ -129,7 +149,9 @@ public final class IdeFrameImpl extends JFrame {
   }
 
   public void releaseFrame() {
-    myFrameHelper.releaseFrame();
+    if (myFrameHelper != null) {
+      myFrameHelper.releaseFrame();
+    }
   }
 
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {
@@ -145,5 +167,68 @@ public final class IdeFrameImpl extends JFrame {
       if (frame.isActive()) return frame;
     }
     return null;
+  }
+
+  /**
+   * @deprecated Use {@link ProjectFrameHelper#updateView()} instead.
+   */
+  @Deprecated
+  public void updateView() {
+    if (myFrameHelper != null) {
+      myFrameHelper.updateView();
+    }
+  }
+
+  /**
+   * @deprecated Use {@link ProjectFrameHelper#updateView()} instead.
+   */
+  @Override
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  public Project getProject() {
+    return myFrameHelper == null ? null : myFrameHelper.getProject();
+  }
+
+  // deprecated stuff - as IdeFrame must be implemented (a lot of instanceof checks for JFrame)
+
+  @Nullable
+  @Override
+  public StatusBar getStatusBar() {
+    return myFrameHelper == null ? null : myFrameHelper.getHelper().getStatusBar();
+  }
+
+  @Override
+  public Rectangle suggestChildFrameBounds() {
+    return Objects.requireNonNull(myFrameHelper).getHelper().suggestChildFrameBounds();
+  }
+
+  @Override
+  public void setFrameTitle(String title) {
+    if (myFrameHelper != null) {
+      myFrameHelper.getHelper().setFrameTitle(title);
+    }
+  }
+
+  @Override
+  public void setFileTitle(String fileTitle, File ioFile) {
+    if (myFrameHelper != null) {
+      myFrameHelper.getHelper().setFileTitle(fileTitle, ioFile);
+    }
+  }
+
+  @Override
+  public IdeRootPaneNorthExtension getNorthExtension(String key) {
+    return myFrameHelper == null ? null : myFrameHelper.getHelper().getNorthExtension(key);
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return getRootPane();
+  }
+
+  @Nullable
+  @Override
+  public BalloonLayout getBalloonLayout() {
+    return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
   }
 }

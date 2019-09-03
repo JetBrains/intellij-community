@@ -389,13 +389,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     assert false : "Cannot find status bar for " + c;
-
     return null;
   }
 
   @Override
-  public IdeFrame findFrameFor(@Nullable final Project project) {
-    IdeFrame frame = null;
+  public IdeFrame findFrameFor(@Nullable Project project) {
+    IdeFrame frame;
     if (project != null) {
       frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrameHelper(project);
       if (frame == null) {
@@ -403,67 +402,78 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
     }
     else {
-      Container eachParent = getMostRecentFocusedWindow();
-      while(eachParent != null) {
-        if (eachParent instanceof IdeFrame) {
-          frame = (IdeFrame)eachParent;
-          break;
-        }
-        eachParent = eachParent.getParent();
-      }
-
+      frame = ProjectFrameHelper.getFrameHelper(getMostRecentFocusedWindow());
       if (frame == null) {
         frame = tryToFindTheOnlyFrame();
       }
     }
-
     return frame;
   }
 
+  @Nullable
   private static IdeFrame tryToFindTheOnlyFrame() {
-    IdeFrame candidate = null;
-    final Frame[] all = Frame.getFrames();
-    for (Frame each : all) {
-      if (each instanceof IdeFrame) {
+    IdeFrameImpl candidate = null;
+    for (Frame each : Frame.getFrames()) {
+      if (each instanceof IdeFrameImpl) {
         if (candidate == null) {
-          candidate = (IdeFrame)each;
-        } else {
+          candidate = (IdeFrameImpl)each;
+        }
+        else {
           candidate = null;
           break;
         }
       }
     }
-    return candidate;
+    return candidate == null ? null : ((IdeRootPane)candidate.getRootPane()).getFrameHelper();
   }
 
   @Override
   public final IdeFrameImpl getFrame(@Nullable Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
-    return getFrameHelper(project).getFrame();
+    ProjectFrameHelper helper = getFrameHelper(project);
+    return helper == null ? null : helper.getFrame();
   }
 
+  @Nullable
   public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return myProjectToFrame.get(project);
   }
 
   @Override
-  public IdeFrame getIdeFrame(@Nullable final Project project) {
+  @Nullable
+  public IdeFrame getIdeFrame(@Nullable Project project) {
     if (project != null) {
       return getFrameHelper(project);
     }
-    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    final Component parent = UIUtil.findUltimateParent(window);
-    if (parent instanceof IdeFrame) return (IdeFrame)parent;
 
-    final Frame[] frames = Frame.getFrames();
-    for (Frame each : frames) {
-      if (each instanceof IdeFrame) {
-        return (IdeFrame)each;
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    IdeFrame result = getIdeFrame(UIUtil.findUltimateParent(window));
+    if (result != null) {
+      return result;
+    }
+
+    for (Frame each : Frame.getFrames()) {
+      result = getIdeFrame(each);
+      if (result != null) {
+        return result;
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static IdeFrame getIdeFrame(@NotNull Component component) {
+    if (component instanceof IdeFrameImpl) {
+      return ((IdeRootPane)((IdeFrameImpl)component).getContentPane()).getFrameHelper();
+    }
+    else if (component instanceof IdeFrame) {
+      return (IdeFrame)component;
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -553,7 +563,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       frame.getFrame().setVisible(true);
 
       if (FrameInfoHelper.isFullScreenSupportedInCurrentOs() &&
-          ((frameInfo != null && frameInfo.getFullScreen()) || ProjectFrameHelper.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
+          ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
         frame.toggleFullScreen(true);
       }
     }

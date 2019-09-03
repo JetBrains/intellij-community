@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,8 +60,6 @@ import java.util.Set;
  */
 public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
-
-  public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
 
@@ -143,6 +140,23 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       @Override
       public void dispose() {
         ProjectFrameHelper.this.dispose();
+      }
+
+      @Override
+      public void updateView() {
+        ProjectFrameHelper.this.updateView();
+      }
+
+      @Nullable
+      @Override
+      public Project getProject() {
+        return myProject;
+      }
+
+      @NotNull
+      @Override
+      public IdeFrame getHelper() {
+        return ProjectFrameHelper.this;
       }
 
       @Override
@@ -286,6 +300,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     });
   }
 
+  @Nullable
   @Override
   public IdeStatusBarImpl getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
@@ -453,7 +468,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
     addWidget(statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
-    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
+    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
       StatusBarWidget widget = widgetProvider.getWidget(project);
       if (widget == null) {
         continue;
@@ -542,6 +557,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return b;
   }
 
+  @Nullable
   @Override
   public final BalloonLayout getBalloonLayout() {
     return myBalloonLayout;

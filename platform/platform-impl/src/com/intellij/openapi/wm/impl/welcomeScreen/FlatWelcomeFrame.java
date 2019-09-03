@@ -183,6 +183,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 
+  @Nullable
   @Override
   public StatusBar getStatusBar() {
     return null;
@@ -852,6 +853,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return arrow;
   }
 
+  @Nullable
   @Override
   public BalloonLayout getBalloonLayout() {
     return myBalloonLayout;

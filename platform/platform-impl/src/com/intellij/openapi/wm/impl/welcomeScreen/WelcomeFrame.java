@@ -200,12 +200,14 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }, ModalityState.NON_MODAL);
   }
 
+  @Nullable
   @Override
   public StatusBar getStatusBar() {
     Container pane = getContentPane();
     return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 
+  @Nullable
   @Override
   public BalloonLayout getBalloonLayout() {
     return myBalloonLayout;

@@ -128,3 +128,4 @@ com.jetbrains.edu 2.7-2019.2-2140
 com.intellij.flex.uiDesigner 183.3795.13
 "Node.js Remote Interpreter" 192.6262.9
 project_manager 1.0
+com.mabdurrahman.intellij.customtitle 0.0.3 0.0.2 0.0.1

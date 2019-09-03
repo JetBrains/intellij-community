@@ -83,6 +83,7 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
+  @Nullable
   @Override
   public final IdeFrameImpl getFrame(final Project project) {
     return null;

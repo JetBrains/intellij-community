@@ -32,7 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +165,7 @@ public class NewProjectUtil {
           if (lastFocusedFrame instanceof IdeFrameEx) {
             boolean fullScreen = ((IdeFrameEx)lastFocusedFrame).isInFullScreen();
             if (fullScreen) {
-              newProject.putUserData(ProjectFrameHelper.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
+              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
             }
           }
         }
