@@ -214,7 +214,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public boolean commitAllDocumentsUnderProgress(@NotNull String progressText, boolean canBeCancelled) {
+  public boolean commitAllDocumentsUnderProgress() {
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
@@ -227,8 +227,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         ProgressManager.checkCanceled();
       }
     };
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable,
-                                                                             progressText, canBeCancelled, myProject);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable, "Processing Documents",
+                                                                             true, myProject);
   }
 
   private void assertEverythingCommitted() {

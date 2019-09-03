@@ -49,7 +49,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public boolean commitAllDocumentsUnderProgress(@NotNull String progressText, boolean canBeCancelled) {
+  public boolean commitAllDocumentsUnderProgress() {
     return true;
   }
 
