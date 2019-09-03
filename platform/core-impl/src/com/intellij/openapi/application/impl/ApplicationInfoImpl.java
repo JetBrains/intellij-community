@@ -613,15 +613,22 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
-    if (ourShadowInstance == null) {
-      //noinspection SynchronizeOnThis
-      synchronized (ApplicationInfoImpl.class) {
+    ApplicationInfoImpl result = ourShadowInstance;
+    if (result != null) {
+      return result;
+    }
+
+    //noinspection SynchronizeOnThis
+    synchronized (ApplicationInfoImpl.class) {
+      result = ourShadowInstance;
+      if (result == null) {
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("load app info");
-        ourShadowInstance = new ApplicationInfoImpl();
+        result = new ApplicationInfoImpl();
+        ourShadowInstance = result;
         activity.end();
       }
     }
-    return ourShadowInstance;
+    return result;
   }
 
   /**
