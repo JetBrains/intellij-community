@@ -56,8 +56,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
   private static final Logger LOG = Logger.getInstance(VcsLogClassicFilterUi.class);
 
-  @NotNull private final VcsLogUiImpl myUi;
-
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogColorManager myColorManager;
@@ -75,11 +73,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
                                @NotNull VcsLogData logData,
                                @NotNull MainVcsLogUiProperties uiProperties,
                                @Nullable VcsLogFilterCollection filters) {
-    myUi = ui;
     myLogData = logData;
     myUiProperties = uiProperties;
     myDataPack = VisiblePack.EMPTY;
-    myColorManager = myUi.getColorManager();
+    myColorManager = ui.getColorManager();
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myLogData.getStorage(), myLogData.getRoots(), myUiProperties, filters);
@@ -93,12 +90,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
-        myUi.applyFiltersAndUpdateUi(getFilters());
+        ui.applyFiltersAndUpdateUi(getFilters());
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      myUi.applyFiltersAndUpdateUi(getFilters());
+      ui.applyFiltersAndUpdateUi(getFilters());
     });
   }
 
