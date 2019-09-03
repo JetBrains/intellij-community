@@ -1,21 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +29,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 public class HeavyAwareExecutor implements Disposable {
   @NotNull private final Project myProject;
+  @NotNull private final ListeningExecutorService myExecutorService;
   @NotNull private final ExecutingHeavyOrPowerSaveListener myListener;
   private final int myLongActivityDurationMs;
 
@@ -47,6 +44,7 @@ public class HeavyAwareExecutor implements Disposable {
     myProject = project;
     myLongActivityDurationMs = longActivityDurationMs;
     myListener = new ExecutingHeavyOrPowerSaveListener(project, delayMs, this);
+    myExecutorService = MoreExecutors.listeningDecorator(AppExecutorUtil.getAppExecutorService());
 
     Disposer.register(parent, this);
   }
@@ -60,42 +58,29 @@ public class HeavyAwareExecutor implements Disposable {
    * @param task      task to execute
    * @param indicator progress indicator for executing the task
    */
-  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task, @NotNull String title,
+  public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task,
                                                 @NotNull ProgressIndicator indicator) {
     return Futures.transformAsync(
       myListener.addTask(() -> {
+        ListenableFuture<?> future = runAsync(task, indicator);
+
         Disposable disposable = Disposer.newDisposable();
-        ListenableFuture<?> future = runAsync(myProject, task, title, indicator, () -> Disposer.dispose(disposable));
+        future.addListener(() -> Disposer.dispose(disposable), directExecutor());
 
         new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
         return future;
       }), input -> input, directExecutor());
   }
 
-  @Override
-  public void dispose() {
+  @NotNull
+  private ListenableFuture<?> runAsync(@NotNull Consumer<? super ProgressIndicator> task,
+                                       @NotNull ProgressIndicator indicator) {
+    Runnable taskWithProgress = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> task.consume(indicator), indicator);
+    return myExecutorService.submit(taskWithProgress);
   }
 
-  @NotNull
-  private static ListenableFuture<?> runAsync(@NotNull Project project,
-                                              @NotNull Consumer<? super ProgressIndicator> task,
-                                              @NotNull String title,
-                                              @NotNull ProgressIndicator indicator,
-                                              @NotNull Runnable continuation) {
-    SettableFuture<?> future = SettableFuture.create();
-    Task.Backgroundable wrapper = new Task.Backgroundable(project, title, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          task.consume(indicator);
-        }
-        finally {
-          future.set(null);
-        }
-      }
-    };
-    ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(wrapper, indicator, continuation);
-    return future;
+  @Override
+  public void dispose() {
   }
 
   /**
@@ -185,7 +170,8 @@ public class HeavyAwareExecutor implements Disposable {
     }
 
     @NotNull
-    private static <T> Runnable wrap(@NotNull Computable<? extends ListenableFuture<T>> task, @NotNull SettableFuture<? super ListenableFuture<T>> future) {
+    private static <T> Runnable wrap(@NotNull Computable<? extends ListenableFuture<T>> task,
+                                     @NotNull SettableFuture<? super ListenableFuture<T>> future) {
       return () -> {
         try {
           future.set(task.compute());

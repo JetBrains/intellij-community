@@ -420,7 +420,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           resetPriority(previousPriority);
         }
       };
-      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, "Indexing Commit Data", indicator);
+      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
       return new SingleTaskImpl(future, indicator);
     }
 
