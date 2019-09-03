@@ -3,6 +3,9 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * Signals the requested operation has failed.
+ */
 public class IncorrectOperationException extends RuntimeException {
   public IncorrectOperationException() {
     super();
