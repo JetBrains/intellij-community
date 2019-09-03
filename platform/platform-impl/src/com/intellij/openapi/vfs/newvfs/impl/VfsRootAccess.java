@@ -140,12 +140,11 @@ public class VfsRootAccess {
         assert location != null : project;
         allowed.add(FileUtil.toSystemIndependentName(location));
       }
-
-      allowed.addAll(ourAdditionalRoots);
     }
     catch (Error ignored) {
       // sometimes library.getRoots() may crash if called from inside library modification
     }
+    allowed.addAll(ourAdditionalRoots);
 
     return allowed;
   }
