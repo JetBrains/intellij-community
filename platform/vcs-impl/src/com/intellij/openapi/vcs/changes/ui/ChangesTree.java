@@ -28,8 +28,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
@@ -38,12 +36,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -105,7 +104,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
-    setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
+    setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     showCheckboxesChanged();
@@ -603,85 +602,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getSelectionModel().setSelectionMode(mode);
   }
 
-  private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    private final ChangesBrowserNodeRenderer myTextRenderer;
-    private final ThreeStateCheckBox myCheckBox;
-
-
-    MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
-      super(new BorderLayout());
-      myCheckBox = new ThreeStateCheckBox();
-      myTextRenderer = textRenderer;
-
-      add(myCheckBox, BorderLayout.WEST);
-      add(myTextRenderer, BorderLayout.CENTER);
-      setOpaque(false);
-    }
-
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-
-      setBackground(null);
-
-      myTextRenderer.setOpaque(false);
-      myTextRenderer.setTransparentIconBackground(true);
-      myTextRenderer.setToolTipText(null);
-      myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-      myCheckBox.setBackground(null);
-      myCheckBox.setOpaque(false);
-      myCheckBox.setVisible(myShowCheckboxes);
-      if (myCheckBox.isVisible()) {
-        State state = getNodeStatus((ChangesBrowserNode)value);
-        myCheckBox.setState(state);
-
-        myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
-      }
-      revalidate();
-
-      return this;
-    }
-
-    @Override
-    public String getToolTipText() {
-      return myTextRenderer.getToolTipText();
-    }
-
-    @Override
-    public AccessibleContext getAccessibleContext() {
-      if (accessibleContext == null) {
-        return accessibleContext = new AccessibleContextDelegate(myCheckBox.getAccessibleContext()) {
-          @Override
-          protected Container getDelegateParent() {
-            return getParent();
-          }
-
-          @Override
-          public String getAccessibleName() {
-            myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
-            return myCheckBox.getAccessibleContext().getAccessibleName();
-          }
-
-          @Override
-          public AccessibleRole getAccessibleRole() {
-            // Because of a problem with NVDA we have to make this a LABEL,
-            // or otherwise NVDA will read out the entire tree path, causing confusion.
-            return AccessibleRole.LABEL;
-          }
-        };
-      }
-      return accessibleContext;
-    }
-  }
-
   @NotNull
-  private State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+  State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
