@@ -132,16 +132,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     ClickListener handler = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (myShowCheckboxes && isEnabled()) {
-          int row = getRowForLocation(event.getX(), event.getY());
-          if (row >= 0) {
-            final Rectangle baseRect = getRowBounds(row);
-            baseRect.setSize(myCheckboxWidth, baseRect.height);
-            if (baseRect.contains(event.getPoint())) {
-              setSelectionRow(row);
-              toggleChanges(getSelectedUserObjects());
-            }
-          }
+        TreePath path = getPathIfCheckBoxClicked(event.getPoint());
+        if (path != null) {
+          setSelectionPath(path);
+          toggleChanges(getSelectedUserObjects());
         }
         return false;
       }
@@ -149,6 +143,21 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     handler.installOn(this);
 
     return handler;
+  }
+
+  @Nullable
+  private TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
+    if (!myShowCheckboxes || !isEnabled()) return null;
+
+    TreePath path = getPathForLocation(p.x, p.y);
+    if (path == null) return null;
+
+    Rectangle pathBounds = getPathBounds(path);
+    if (pathBounds == null) return null;
+
+    Rectangle checkBoxBounds = pathBounds.getBounds();
+    checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
+    return checkBoxBounds.contains(p) ? path : null;
   }
 
   protected void installEnterKeyHandler() {
@@ -188,15 +197,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                              ? getClosestPathForLocation(e.getX(), e.getY())
                              : getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
-
-        final int row = getRowForLocation(e.getPoint().x, e.getPoint().y);
-        if (row >= 0) {
-          if (myShowCheckboxes) {
-            final Rectangle baseRect = getRowBounds(row);
-            baseRect.setSize(myCheckboxWidth, baseRect.height);
-            if (baseRect.contains(e.getPoint())) return false;
-          }
-        }
+        if (getPathIfCheckBoxClicked(e.getPoint()) != null) return false;
 
         myDoubleClickHandler.run();
         return true;
