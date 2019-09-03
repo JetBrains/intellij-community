@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFile;
 
 import java.util.Map;
@@ -30,8 +29,8 @@ class TempManager extends TransactionalManager {
     private long myStartModCount;
     private long myImplModCount;
 
-    TempManager(FileAssociationsManagerImpl impl, Project project, VirtualFilePointerManager filePointerManager) {
-        myTmp = new FileAssociationsManagerImpl(project, filePointerManager);
+    TempManager(FileAssociationsManagerImpl impl, Project project) {
+        myTmp = new FileAssociationsManagerImpl(project);
         myTmp.markAsTempCopy();
         myTmp.copyFrom(impl);
 

@@ -789,7 +789,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   class RecordingVfsListener extends IndexedFilesListener {
     RecordingVfsListener() {
-      super(ManagingFS.getInstance())
+      super()
     }
 
     @Override

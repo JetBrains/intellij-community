@@ -14,6 +14,8 @@
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
                         serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="true"/>
+    <vfs.asyncListener implementation="com.intellij.util.indexing.FileBasedIndexImpl$ChangedFilesCollector"/>
+
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"

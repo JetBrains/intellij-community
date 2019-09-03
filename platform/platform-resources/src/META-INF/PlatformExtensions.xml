@@ -22,6 +22,10 @@
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
+                        serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
+    <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
