@@ -41,7 +41,7 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
 
     if (deniedItems.getIfPresent(attributes) != null) {
       LOG.warn("User denied access to $attributes")
-      return null
+      return ACCESS_TO_KEY_CHAIN_DENIED
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
