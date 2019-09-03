@@ -684,9 +684,9 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
     @NotNull private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull private final Map<VirtualFile, SourceFolder> sourceFolders = new HashMap<>();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSet();
     @NotNull private final Set<VirtualFile> excludedFromProject = new HashSet<>();
     @NotNull private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
     @NotNull private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
