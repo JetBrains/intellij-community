@@ -69,6 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -885,11 +886,24 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return scheduleImportAndResolve(false);
   }
 
+  public void terminateImport(int exitCode) {
+    getSyncConsole().terminated(exitCode);
+    AsyncPromise<List<Module>> toCheck = myRunningImportPromise;
+    if (toCheck != null) {
+      try {
+        toCheck.cancel();
+      }
+      catch (CancellationException ignore) {
+      }
+    }
+    myRunningImportPromise = null;
+  }
+
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
     Promise<List<Module>> toCheck = myRunningImportPromise;
-   /* if(toCheck != null){
+    if (toCheck != null) {
       return toCheck;
-    }*/
+    }
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
