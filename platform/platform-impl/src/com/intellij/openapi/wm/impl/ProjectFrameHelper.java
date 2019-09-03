@@ -126,6 +126,12 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myFrameDecorator = IdeFrameDecorator.decorate(myFrame);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
+      @Nullable
+      @Override
+      public Object getData(@NotNull String dataId) {
+        return ProjectFrameHelper.this.getData(dataId);
+      }
+
       @Override
       public String getAccessibleName() {
         StringBuilder builder = new StringBuilder();

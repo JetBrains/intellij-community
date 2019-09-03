@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -22,7 +23,7 @@ import java.awt.*;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public final class IdeFrameImpl extends JFrame implements IdeFrame {
+public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -32,7 +33,13 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame {
   @Nullable
   private FrameDecorator myFrameDecorator;
 
-  interface FrameHelper {
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    return myFrameHelper == null ? null : myFrameHelper.getData(dataId);
+  }
+
+  interface FrameHelper extends DataProvider {
     String getAccessibleName();
 
     void dispose();
