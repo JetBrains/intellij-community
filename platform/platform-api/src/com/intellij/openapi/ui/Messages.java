@@ -391,6 +391,7 @@ public class Messages {
    * Shows confirmation dialog with specified confirmation options. In MacSheet the {@param message} is shown in the title field, and title is not shown at all.
    * @return {@link #YES} if user pressed button with {@param yesText} or {@link #NO} if user pressed button with {@param noText}.
    */
+  @YesNoResult
   public static int showConfirmationDialog(@NotNull JComponent parent,
                                            @NotNull String message,
                                            @NotNull String title,
