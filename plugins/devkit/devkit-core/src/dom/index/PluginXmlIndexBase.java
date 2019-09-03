@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -46,11 +45,6 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
   @Nullable
   private static IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
-    CharSequence text = content.getContentAsText();
-    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
-      return null;
-    }
-
     PsiFile file = content.getPsiFile();
     if (!(file instanceof XmlFile)) return null;
 
