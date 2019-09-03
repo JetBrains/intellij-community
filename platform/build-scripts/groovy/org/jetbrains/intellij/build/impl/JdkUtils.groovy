@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
@@ -10,6 +11,8 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
+
+import static com.intellij.util.io.URLUtil.*
 
 /**
  * @author nik
@@ -66,13 +69,20 @@ class JdkUtils {
     return javaHome
   }
 
+  /**
+   * Code is copied from com.intellij.openapi.projectRoots.impl.JavaSdkImpl#findClasses(java.io.File, boolean)
+   */
   static List<String> readModulesFromReleaseFile(File jbrBaseDir) {
     File releaseFile = new File(jbrBaseDir, "release")
     new FileInputStream(releaseFile).withReader { stream ->
       Properties p = new Properties()
       p.load(stream)
-      String modules = p.getProperty("MODULES")
-      return StringUtil.split(StringUtil.unquoteString(modules), " ")
+      String jbrBaseUrl = JRT_PROTOCOL + SCHEME_SEPARATOR +
+                          FileUtil.toSystemIndependentName(jbrBaseDir.absolutePath) +
+                          JAR_SEPARATOR
+      return StringUtil
+        .split(StringUtil.unquoteString(p.getProperty("MODULES")), " ")
+        .collect { jbrBaseUrl + it }
     }
   }
 }
