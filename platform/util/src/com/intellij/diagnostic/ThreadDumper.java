@@ -63,10 +63,10 @@ public class ThreadDumper {
   public static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean, boolean sort) {
     ThreadInfo[] threads;
     try {
-      threads = sort(threadMXBean.dumpAllThreads(false, false));
+      threads = threadMXBean.dumpAllThreads(false, false);
     }
     catch (Exception ignored) {
-      threads = sort(threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE));
+      threads = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE);
     }
     if (sort) {
       sort(threads);
