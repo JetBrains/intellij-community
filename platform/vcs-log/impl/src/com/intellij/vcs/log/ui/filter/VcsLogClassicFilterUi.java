@@ -62,11 +62,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @NotNull private VcsLogDataPack myDataPack;
 
-  @NotNull private final BranchFilterModel myBranchFilterModel;
-  @NotNull private final FilterModel.SingleFilterModel<VcsLogUserFilter> myUserFilterModel;
-  @NotNull private final FilterModel<VcsLogDateFilter> myDateFilterModel;
-  @NotNull private final FileFilterModel myStructureFilterModel;
-  @NotNull private final TextFilterModel myTextFilterModel;
+  @NotNull protected final BranchFilterModel myBranchFilterModel;
+  @NotNull protected final FilterModel.SingleFilterModel<VcsLogUserFilter> myUserFilterModel;
+  @NotNull protected final FilterModel<VcsLogDateFilter> myDateFilterModel;
+  @NotNull protected final FileFilterModel myStructureFilterModel;
+  @NotNull protected final TextFilterModel myTextFilterModel;
   @NotNull private final TextFilterField myFilterField;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogData logData,
@@ -116,11 +116,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull
   public ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new FilterActionComponent(() -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi()));
-    actionGroup.add(new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi()));
-    actionGroup.add(new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi()));
-    actionGroup.add(new FilterActionComponent(
-      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi()));
+    actionGroup.add(createBranchComponent());
+    actionGroup.add(createUserComponent());
+    actionGroup.add(createDateComponent());
+    actionGroup.add(createStructureFilterComponent());
     return actionGroup;
   }
 
@@ -156,11 +155,32 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
   }
 
-  private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
+  @NotNull
+  protected FilterActionComponent createBranchComponent() {
+    return new FilterActionComponent(() -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
+  }
+
+  @NotNull
+  protected FilterActionComponent createUserComponent() {
+    return new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
+  }
+
+  @NotNull
+  protected FilterActionComponent createDateComponent() {
+    return new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi());
+  }
+
+  @NotNull
+  protected FilterActionComponent createStructureFilterComponent() {
+    return new FilterActionComponent(
+      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
+  }
+
+  protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
 
     @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    FilterActionComponent(@NotNull Computable<? extends JComponent> componentCreator) {
+    public FilterActionComponent(@NotNull Computable<? extends JComponent> componentCreator) {
       myComponentCreator = componentCreator;
     }
 
@@ -197,7 +217,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     @Override
-    void setFilter(@Nullable BranchFilters filters) {
+    public void setFilter(@Nullable BranchFilters filters) {
       triggerFilterSet(filters, BranchFilters::getBranchFilter, myFilter, BRANCH_FILTER.getName());
       triggerFilterSet(filters, BranchFilters::getRevisionFilter, myFilter, REVISION_FILTER.getName());
       triggerFilterSet(filters, BranchFilters::getRangeFilter, myFilter, RANGE_FILTER.getName());
@@ -358,6 +378,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       setFilter(new BranchFilters(branchFilter, null, null));
     }
 
+    public void setRangeFilter(@NotNull VcsLogRangeFilter rangeFilter) {
+      setFilter(new BranchFilters(null, null, rangeFilter));
+    }
+
     @NotNull
     static List<String> getFilterPresentation(@NotNull BranchFilters filters) {
       List<String> branchFilterValues = filters.getBranchFilter() == null ? emptyList() : getBranchFilterValues(filters.getBranchFilter());
@@ -390,28 +414,28 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     @Nullable
-    public VcsLogFilter getBranchFilter() {
+    public VcsLogBranchFilter getBranchFilter() {
       BranchFilters filter = getFilter();
       if (filter == null) return null;
       return filter.getBranchFilter();
     }
 
     @Nullable
-    public VcsLogFilter getRevisionFilter() {
+    public VcsLogRevisionFilter getRevisionFilter() {
       BranchFilters filter = getFilter();
       if (filter == null) return null;
       return filter.getRevisionFilter();
     }
 
     @Nullable
-    public VcsLogFilter getRangeFilter() {
+    public VcsLogRangeFilter getRangeFilter() {
       BranchFilters filter = getFilter();
       if (filter == null) return null;
       return filter.getRangeFilter();
     }
   }
 
-  private static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
+  protected static class TextFilterModel extends FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter> {
     @Nullable private String myText;
 
     TextFilterModel(@NotNull MainVcsLogUiProperties properties,
@@ -496,7 +520,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     @Override
-    void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
+    public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
       super.setFilter(filter);
       myText = null;
     }
@@ -565,6 +589,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @Override
     @NotNull
     protected List<String> getFilter2Values(@NotNull VcsLogRootFilter filter) {
+      return getRootFilterValues(filter);
+    }
+
+    @NotNull
+    public static List<String> getRootFilterValues(@NotNull VcsLogRootFilter filter) {
       return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
     }
 
@@ -607,7 +636,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     @Nullable
-    protected VcsLogStructureFilter getStructureFilter() {
+    public VcsLogStructureFilter getStructureFilter() {
       return getFilter1();
     }
 

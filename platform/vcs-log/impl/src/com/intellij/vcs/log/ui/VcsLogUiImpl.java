@@ -2,12 +2,14 @@
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -17,6 +19,7 @@ import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -49,11 +52,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher,
-                      @Nullable VcsLogFilterCollection filters) {
+                      @Nullable VcsLogFilterCollection initialFilters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, filterCollection -> applyFiltersAndUpdateUi(filterCollection),
-                                uiProperties, filters);
+    myMainFrame = new MainFrame(logData, this, uiProperties,
+                                createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this));
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -63,6 +66,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties.addChangeListener(myPropertiesListener);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
+  }
+
+  @NotNull
+  protected VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,
+                                            @Nullable VcsLogFilterCollection filters,
+                                            @NotNull Disposable parentDisposable) {
+    return new VcsLogClassicFilterUi(myLogData, filterConsumer, myUiProperties, myColorManager, filters, parentDisposable);
   }
 
   @Override
@@ -152,7 +162,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   protected void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
     myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
-    
+
     JComponent toolbar = myMainFrame.getToolbar();
     toolbar.revalidate();
     toolbar.repaint();
@@ -173,7 +183,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   public Component getMainComponent() {
     return myMainFrame.getMainComponent();
   }
-  
+
   @NotNull
   @Override
   public VcsLogFilterUiEx getFilterUi() {

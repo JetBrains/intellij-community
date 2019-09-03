@@ -20,14 +20,12 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -38,7 +36,6 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -86,13 +83,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
-                  @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
                    @NotNull MainVcsLogUiProperties uiProperties,
-                   @Nullable VcsLogFilterCollection filters) {
+                   @NotNull VcsLogFilterUiEx filterUi) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(logData, filterConsumer, myUiProperties, logUi.getColorManager(), filters, logUi);
+    myFilterUi = filterUi;
 
     myGraphTable = new MyVcsLogGraphTable(logUi, logData);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
