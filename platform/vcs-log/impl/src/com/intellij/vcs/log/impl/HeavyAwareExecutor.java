@@ -71,7 +71,7 @@ public class HeavyAwareExecutor implements Disposable {
   @NotNull
   private ListenableFuture<?> runAsync(@NotNull Consumer<? super ProgressIndicator> task,
                                        @NotNull ProgressIndicator indicator) {
-    Runnable taskWithProgress = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> task.consume(indicator), indicator);
+    Runnable taskWithProgress = () -> ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator);
     return myExecutorService.submit(taskWithProgress);
   }
 
