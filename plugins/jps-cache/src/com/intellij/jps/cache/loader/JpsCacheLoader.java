@@ -63,7 +63,7 @@ class JpsCacheLoader implements JpsOutputLoader {
       FileUtil.delete(currentDirForBuildCache);
       try {
         FileUtil.rename(tmpCacheFolder, currentDirForBuildCache);
-        LOG.warn("Cache downloads DONE");
+        LOG.debug("Jps cache downloads finished");
       }
       catch (IOException e) {
         LOG.warn("Couldn't replace existing caches by downloaded portable", e);

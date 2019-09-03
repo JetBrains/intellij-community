@@ -55,7 +55,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   public void load(@NotNull String currentCommitId) {
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     if (previousCommitId != null && currentCommitId.equals(previousCommitId)) {
-      LOG.debug("The commit didn't change");
+      LOG.debug("Caches already for commit: " + currentCommitId);
       return;
     }
     Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
