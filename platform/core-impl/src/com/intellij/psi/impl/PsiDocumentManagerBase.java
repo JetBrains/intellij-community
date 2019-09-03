@@ -213,6 +213,24 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assertEverythingCommitted();
   }
 
+  @Override
+  public boolean commitAllDocumentsUnderProgress(@NotNull String progressText, boolean canBeCancelled) {
+    final int semaphoreTimeoutInMs = 50;
+    final Runnable commitAllDocumentsRunnable = () -> {
+      Semaphore semaphore = new Semaphore(1);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+          semaphore.up();
+        });
+      });
+      while (!semaphore.waitFor(semaphoreTimeoutInMs)) {
+        ProgressManager.checkCanceled();
+      }
+    };
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable,
+                                                                             progressText, canBeCancelled, myProject);
+  }
+
   private void assertEverythingCommitted() {
     LOG.assertTrue(!hasUncommitedDocuments(), myUncommittedDocuments);
   }

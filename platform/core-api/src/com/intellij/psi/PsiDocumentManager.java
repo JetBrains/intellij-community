@@ -81,6 +81,15 @@ public abstract class PsiDocumentManager {
   public abstract void commitAllDocuments();
 
   /**
+   * Commits all modified but not committed documents under modal dialog (see {@link PsiDocumentManager#commitAllDocuments()}
+   *
+   * @param progressText   text that will be shown in modal dialog
+   * @param canBeCancelled true if task can be cancelled
+   * @return
+   */
+  public abstract boolean commitAllDocumentsUnderProgress(@NotNull String progressText, boolean canBeCancelled);
+
+  /**
    * If the document is committed, runs action synchronously, otherwise schedules to execute it right after it has been committed.
    */
   public abstract void performForCommittedDocument(@NotNull Document document, @NotNull Runnable action);
