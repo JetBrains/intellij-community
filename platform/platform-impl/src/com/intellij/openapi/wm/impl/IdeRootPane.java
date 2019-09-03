@@ -46,7 +46,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class IdeRootPane extends JRootPane implements UISettingsListener, Disposable {
-  private final IdeFrameImpl myFrameHelper;
+  private final ProjectFrameHelper myFrameHelper;
 
   /**
    * Toolbar and status bar.
@@ -73,7 +73,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull ProjectFrame frame, @NotNull IdeFrameImpl frameHelper) {
+  IdeRootPane(@NotNull ProjectFrame frame, @NotNull ProjectFrameHelper frameHelper) {
     myFrameHelper = frameHelper;
 
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -128,11 +128,11 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   @NotNull
-  public IdeFrameImpl getFrameHelper() {
+  public ProjectFrameHelper getFrameHelper() {
     return myFrameHelper;
   }
 
-  public void init(@NotNull IdeFrameImpl frame) {
+  public void init(@NotNull ProjectFrameHelper frame) {
     createStatusBar(frame);
   }
 

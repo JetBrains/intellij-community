@@ -23,7 +23,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.util.messages.MessageBusConnection;
@@ -144,7 +144,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   }
 
   private static boolean isEmpty(@Nullable Window window) {
-    IdeFrameImpl frameHelper = IdeFrameImpl.getFrameHelper(window);
+    ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
     if (frameHelper != null) {
       BalloonLayout layout = frameHelper.getBalloonLayout();
       if (layout instanceof BalloonLayoutImpl) {

@@ -25,7 +25,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
@@ -520,14 +520,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  private fun takeASelfie(frameHelper: IdeFrameImpl, workspaceId: String) {
+  private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
     val frame = frameHelper.frame
     val width = frame.width
     val height = frame.height
     val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)
     UISettings.setupAntialiasing(image.graphics)
     frame.paint(image.graphics)
-    val selfieFile = IdeFrameImpl.getSelfieLocation(workspaceId)
+    val selfieFile = ProjectFrameHelper.getSelfieLocation(workspaceId)
     Files.createDirectories(selfieFile.parent)
 
     // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)

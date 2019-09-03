@@ -43,7 +43,7 @@ internal open class ProjectFrameAllocator {
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectFile: Path) : ProjectFrameAllocator() {
   // volatile not required because created in run (before executing run task)
-  private var ideFrame: IdeFrameImpl? = null
+  private var ideFrame: ProjectFrameHelper? = null
   private var isNewFrame = false
 
   override fun run(task: Runnable): Boolean {
@@ -68,7 +68,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   }
 
   @CalledInAwt
-  private fun initNewFrame(frame: IdeFrameImpl) {
+  private fun initNewFrame(frame: ProjectFrameHelper) {
     if (options.frame?.bounds == null) {
       val recentProjectManager = RecentProjectsManager.getInstance()
       if (recentProjectManager is RecentProjectsManagerBase) {
@@ -108,7 +108,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     frame.init()
   }
 
-  private fun createFrame(): IdeFrameImpl {
+  private fun createFrame(): ProjectFrameHelper {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     @Suppress("UsePropertyAccessSyntax")
     val freeRootFrame = windowManager.getAndRemoveRootFrame()
@@ -162,7 +162,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   }
 }
 
-private fun restoreFrameState(frame: IdeFrameImpl, frameInfo: FrameInfo) {
+private fun restoreFrameState(frame: ProjectFrameHelper, frameInfo: FrameInfo) {
   val deviceBounds = frameInfo.bounds
   val bounds = if (deviceBounds == null) null else WindowManagerImpl.convertFromDeviceSpaceAndValidateFrameBounds(deviceBounds)
   frame.setExtendedState(frameInfo, bounds)

@@ -17,7 +17,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -193,7 +193,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     ApplicationManager.getApplication().invokeLater(() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
-      IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
+      ProjectFrameHelper[] frames = windowManager.getAllProjectFrames();
       if (frames.length == 0) {
         showNow();
       }

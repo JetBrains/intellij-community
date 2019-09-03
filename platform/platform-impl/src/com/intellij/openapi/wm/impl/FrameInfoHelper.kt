@@ -37,7 +37,7 @@ class FrameInfoHelper {
     this.info = info
   }
 
-  fun updateFrameInfo(frame: IdeFrameImpl) {
+  fun updateFrameInfo(frame: ProjectFrameHelper) {
     info = updateFrameInfo(frame, null, info)
   }
 
@@ -50,7 +50,7 @@ class FrameInfoHelper {
     return updateAndGetModificationCount(frame, lastNormalFrameBounds, windowManager)
   }
 
-  fun updateAndGetModificationCount(frame: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
+  fun updateAndGetModificationCount(frame: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl): Long {
     val newInfo = updateFrameInfo(frame, lastNormalFrameBounds, info)
     updateDefaultFrameInfoInDeviceSpace(windowManager, newInfo)
     info = newInfo
@@ -68,7 +68,7 @@ class FrameInfoHelper {
   }
 }
 
-private fun updateFrameInfo(frameHelper: IdeFrameImpl, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
+private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
   val frame = frameHelper.frame
   var extendedState = frame.extendedState
   if (SystemInfo.isMacOSLion) {

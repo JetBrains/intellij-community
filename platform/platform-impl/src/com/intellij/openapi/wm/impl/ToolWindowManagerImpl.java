@@ -1753,7 +1753,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
-    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).getFrame().isActive()) {
+    if (frame instanceof ProjectFrameHelper && ((ProjectFrameHelper)frame).getFrame().isActive()) {
       FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
       EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
       return splitters != null ? splitters : fem.getSplitters();

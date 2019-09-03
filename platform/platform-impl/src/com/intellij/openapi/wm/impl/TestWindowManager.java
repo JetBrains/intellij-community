@@ -74,8 +74,8 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   @NotNull
-  public IdeFrameImpl[] getAllProjectFrames() {
-    return new IdeFrameImpl[0];
+  public ProjectFrameHelper[] getAllProjectFrames() {
+    return new ProjectFrameHelper[0];
   }
 
   @Override
@@ -90,8 +90,8 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   @NotNull
-  public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    IdeFrameImpl frame = new IdeFrameImpl();
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    ProjectFrameHelper frame = new ProjectFrameHelper();
     frame.preInit(null);
     frame.init();
     return frame;

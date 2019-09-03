@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,7 @@ final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    IdeFrameImpl frame = getFrame();
+    ProjectFrameHelper frame = getFrame();
     if (frame != null) {
       StatusBarEx statusBar = frame.getStatusBar();
       if (statusBar != null) {
@@ -38,7 +38,7 @@ final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    IdeFrameImpl frame = getFrame();
+    ProjectFrameHelper frame = getFrame();
     if (frame != null) {
       StatusBarEx statusBar = frame.getStatusBar();
       if (statusBar != null) {
@@ -48,7 +48,7 @@ final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  private static IdeFrameImpl getFrame() {
-    return IdeFrameImpl.getFrameHelper(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
+  private static ProjectFrameHelper getFrame() {
+    return ProjectFrameHelper.getFrameHelper(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
   }
 }

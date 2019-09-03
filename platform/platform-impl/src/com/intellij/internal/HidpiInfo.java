@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MethodInvocator;
@@ -49,7 +49,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-    Window activeFrame = IdeFrameImpl.getActiveFrame();
+    Window activeFrame = ProjectFrameHelper.getActiveFrame();
     if (activeFrame == null) return;
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 

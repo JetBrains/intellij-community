@@ -73,7 +73,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // null keys must be supported
   // null key - root frame
-  private final Map<Project, IdeFrameImpl> myProjectToFrame = new HashMap<>();
+  private final Map<Project, ProjectFrameHelper> myProjectToFrame = new HashMap<>();
 
   private final Map<Project, Set<JDialog>> myDialogsToDispose = new THashMap<>();
 
@@ -83,7 +83,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     @Override
     public void windowActivated(WindowEvent e) {
       Window activeWindow = e.getWindow();
-      IdeFrameImpl frameHelper = IdeFrameImpl.getFrameHelper(activeWindow);
+      ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(activeWindow);
       Project project = frameHelper == null ? null : frameHelper.getProject();
       if (project != null) {
         proceedDialogDisposalQueue(project);
@@ -116,7 +116,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         return;
       }
 
-      IdeFrameImpl frameHelper = ((IdeRootPane)rootPane).getFrameHelper();
+      ProjectFrameHelper frameHelper = ((IdeRootPane)rootPane).getFrameHelper();
       Project project = frameHelper.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
@@ -159,14 +159,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   @NotNull
-  public IdeFrameImpl[] getAllProjectFrames() {
-    final Collection<IdeFrameImpl> ideFrames = myProjectToFrame.values();
-    return ideFrames.toArray(new IdeFrameImpl[0]);
+  public ProjectFrameHelper[] getAllProjectFrames() {
+    final Collection<ProjectFrameHelper> ideFrames = myProjectToFrame.values();
+    return ideFrames.toArray(new ProjectFrameHelper[0]);
   }
 
   @Override
   public JFrame findVisibleFrame() {
-    IdeFrameImpl[] frames = getAllProjectFrames();
+    ProjectFrameHelper[] frames = getAllProjectFrames();
     return frames.length > 0 ? frames[0].getFrame() : (JFrame)WelcomeFrame.getInstance();
   }
 
@@ -372,7 +372,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public StatusBar getStatusBar(@NotNull Project project) {
-    IdeFrameImpl frame = getFrameHelper(project);
+    ProjectFrameHelper frame = getFrameHelper(project);
     return frame == null ? null : frame.getStatusBar();
   }
 
@@ -437,13 +437,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final JFrame getFrame(@Nullable Project project) {
+  public final ProjectFrame getFrame(@Nullable Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return getFrameHelper(project).getFrame();
   }
 
-  public IdeFrameImpl getFrameHelper(@Nullable Project project) {
+  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return myProjectToFrame.get(project);
   }
 
@@ -468,11 +468,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Nullable
   @ApiStatus.Internal
-  public IdeFrameImpl getAndRemoveRootFrame() {
+  public ProjectFrameHelper getAndRemoveRootFrame() {
     return myProjectToFrame.remove(null);
   }
 
-  public void assignFrame(@NotNull IdeFrameImpl frame, @NotNull Project project) {
+  public void assignFrame(@NotNull ProjectFrameHelper frame, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
     frame.setProject(project);
@@ -485,13 +485,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   /**
    * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
    *
-   * {@link IdeFrameImpl#init()} must be called explicitly.
+   * {@link ProjectFrameHelper#init()} must be called explicitly.
    */
   @NotNull
   @ApiStatus.Internal
-  public IdeFrameImpl createFrame() {
+  public ProjectFrameHelper createFrame() {
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
-    return new IdeFrameImpl();
+    return new ProjectFrameHelper();
   }
 
   @NotNull
@@ -502,8 +502,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   @NotNull
-  public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    IdeFrameImpl frame = getFrameHelper(project);
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
       return frame;
@@ -513,7 +513,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new IdeFrameImpl();
+      frame = new ProjectFrameHelper();
       frame.preInit(null);
       frame.init();
 
@@ -553,7 +553,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       frame.getFrame().setVisible(true);
 
       if (FrameInfoHelper.isFullScreenSupportedInCurrentOs() &&
-          ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
+          ((frameInfo != null && frameInfo.getFullScreen()) || ProjectFrameHelper.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
         frame.toggleFullScreen(true);
       }
     }
@@ -580,7 +580,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     myDialogsToDispose.computeIfAbsent(project, k -> new THashSet<>()).add(dialog);
   }
 
-  public final void releaseFrame(@NotNull IdeFrameImpl frameHelper) {
+  public final void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frameHelper);
 
     JFrame frame = frameHelper.getFrame();
@@ -609,7 +609,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final IdeFrameImpl rootFrame = getAndRemoveRootFrame();
+      final ProjectFrameHelper rootFrame = getAndRemoveRootFrame();
       if (rootFrame != null) {
         // disposing last frame if quitting
         rootFrame.getFrame().dispose();

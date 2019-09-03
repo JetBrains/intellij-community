@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.ProjectFrame;
 import com.intellij.ui.AppIcon;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   @NotNull
-  public abstract IdeFrameImpl allocateFrame(@NotNull Project project);
+  public abstract ProjectFrameHelper allocateFrame(@NotNull Project project);
 
   /**
    * @return focus owner of the specified window.

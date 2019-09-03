@@ -59,7 +59,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
@@ -80,7 +80,7 @@ public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor
 
   private final ProjectFrame myFrame = new ProjectFrame();
 
-  public IdeFrameImpl() {
+  public ProjectFrameHelper() {
     super();
 
     SplashManager.hideBeforeShow(myFrame);
@@ -102,7 +102,7 @@ public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Nullable
-  public static IdeFrameImpl getFrameHelper(@Nullable Window window) {
+  public static ProjectFrameHelper getFrameHelper(@Nullable Window window) {
     if (window == null) {
       return null;
     }
@@ -142,7 +142,7 @@ public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor
 
       @Override
       public void dispose() {
-        IdeFrameImpl.this.dispose();
+        ProjectFrameHelper.this.dispose();
       }
 
       @Override
@@ -161,7 +161,7 @@ public final class IdeFrameImpl implements IdeFrameEx, AccessibleContextAccessor
       public void releaseFrame() {
         // remove ToolWindowsPane
         myRootPane.setToolWindowsPane(null);
-        ((WindowManagerImpl)WindowManager.getInstance()).releaseFrame(IdeFrameImpl.this);
+        ((WindowManagerImpl)WindowManager.getInstance()).releaseFrame(ProjectFrameHelper.this);
       }
     }, myFrameDecorator);
 

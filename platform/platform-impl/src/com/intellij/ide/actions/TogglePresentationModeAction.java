@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @NotNull
   private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
-    IdeFrameImpl frame = IdeFrameImpl.getFrameHelper(IdeFrameImpl.getActiveFrame());
+    ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(ProjectFrameHelper.getActiveFrame());
     if (frame == null) {
       return Promises.resolvedPromise();
     }

@@ -426,7 +426,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   protected IdeFrame getFrame(@NotNull Project project) {
-    IdeFrameImpl frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(project);
+    ProjectFrameHelper frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;
   }

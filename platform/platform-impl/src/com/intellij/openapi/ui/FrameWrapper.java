@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
@@ -428,7 +428,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     private void updateTitle() {
-      IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
+      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile);
     }
 
     @Override

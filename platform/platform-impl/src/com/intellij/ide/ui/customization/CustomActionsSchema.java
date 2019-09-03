@@ -23,7 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,13 +237,13 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
     WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      IdeFrameImpl frame = windowManager.getFrameHelper(project);
+      ProjectFrameHelper frame = windowManager.getFrameHelper(project);
       if (frame != null) {
         frame.updateView();
       }
     }
 
-    IdeFrameImpl frame = windowManager.getFrameHelper(null);
+    ProjectFrameHelper frame = windowManager.getFrameHelper(null);
     if (frame != null) {
       frame.updateView();
     }
@@ -416,7 +416,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
         anAction.setDefaultIcon(false);
       }
     }
-    IdeFrameImpl frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(null);
+    ProjectFrameHelper frame = ((WindowManagerImpl)WindowManager.getInstance()).getFrameHelper(null);
     if (frame != null) {
       frame.updateView();
     }

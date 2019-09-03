@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -89,7 +89,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected static boolean isToolwindowVisible(@NotNull JComponent splitters, @NotNull String toolwindowId) {
-    IdeFrameImpl frame = IdeFrameImpl.getFrameHelper(SwingUtilities.getWindowAncestor(splitters));
+    ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(splitters));
     if (frame != null) {
       Project project = frame.getProject();
       if (project != null) {

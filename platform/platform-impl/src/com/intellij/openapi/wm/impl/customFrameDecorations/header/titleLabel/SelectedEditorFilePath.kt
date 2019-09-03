@@ -18,17 +18,14 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.Alarm
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -231,7 +228,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
     productVersion.longText = ApplicationInfo.getInstance().fullVersion ?: ""
 
-    superUserSuffix.longText = IdeFrameImpl.getSuperUserSuffix() ?: ""
+    superUserSuffix.longText = ProjectFrameHelper.getSuperUserSuffix() ?: ""
 
 
     project?.let {
