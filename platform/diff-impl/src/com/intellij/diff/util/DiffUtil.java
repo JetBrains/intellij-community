@@ -121,8 +121,9 @@ public class DiffUtil {
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
-
+  public static class Lazy {
+    public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
+  }
 
   @NotNull
   private static List<Image> loadDiffFrameImages() {

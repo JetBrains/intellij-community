@@ -62,7 +62,7 @@ public abstract class MergeWindow {
       .setOnShowCallback(() -> initProcessor(myProcessor))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
       .build();
-    myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
+    myWrapper.setImages(DiffUtil.Lazy.DIFF_FRAME_ICONS);
     Disposer.register(myWrapper, myProcessor);
 
     Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();
