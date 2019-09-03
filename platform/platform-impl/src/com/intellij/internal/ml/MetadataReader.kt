@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.completion.feature.impl
+package com.intellij.internal.ml
 
 class MetadataReader(private val featuresDirectory: String) {
 
@@ -7,7 +7,7 @@ class MetadataReader(private val featuresDirectory: String) {
   fun floatFeatures(): String = resourceContent("float.json")
   fun categoricalFeatures(): String = resourceContent("categorical.json")
   fun allKnown(): String = resourceContent("all_features.json")
-  fun featuresOrder(): Map<String, Int> = resourceContent("features_order.txt").lineToNumber()
+  fun featureOrderDirect(): List<String> = resourceContent("features_order.txt").lines()
 
   fun extractVersion(): String? {
     val resource = MetadataReader::class.java.classLoader.getResource("$featuresDirectory/binary.json")
@@ -17,18 +17,9 @@ class MetadataReader(private val featuresDirectory: String) {
   }
 
   private fun resourceContent(fileName: String): String {
-    val fileStream = MetadataReader::class.java.classLoader.getResourceAsStream("$featuresDirectory/$fileName")
+    val resource = "$featuresDirectory/$fileName"
+    val fileStream = MetadataReader::class.java.classLoader.getResourceAsStream(resource)
+    if (fileStream == null) throw InconsistentMetadataException("Metadata file not found: $resource")
     return fileStream.bufferedReader().readText()
-  }
-
-  private fun String.lineToNumber(): Map<String, Int> {
-    var index = 0
-    val map = mutableMapOf<String, Int>()
-    split("\n").forEach {
-      val featureName = it.trim()
-      map[featureName] = index++
-    }
-
-    return map
   }
 }
