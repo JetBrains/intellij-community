@@ -310,7 +310,7 @@ public class JdkUtil {
 
         @Override
         public String getRemoteValue() {
-          return "@" + argFileUpload.getLocalValue();
+          return "@" + argFileUpload.getRemoteValue();
         }
       });
 
