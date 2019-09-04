@@ -702,6 +702,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return "Library: name:" + myName + "; roots:" + myRoots.values();
   }
 
+  @Override
   @Nullable("will return non-null value only for module level libraries")
   public Module getModule() {
     return myRootModel == null ? null : myRootModel.getModule();
