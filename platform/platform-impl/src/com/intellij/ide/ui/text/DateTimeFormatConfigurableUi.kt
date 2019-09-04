@@ -51,8 +51,8 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
       override fun isCellEditable(row: Int, column: Int): Boolean = column != 0
 
       override fun getColumnName(column: Int): String? = when (column) {
-        0 -> "Name"
-        else -> "Formatter"
+        0 -> "Area"
+        else -> "Date Time Pattern"
       }
 
       override fun getValueAt(row: Int, column: Int): Any? = when (column) {
