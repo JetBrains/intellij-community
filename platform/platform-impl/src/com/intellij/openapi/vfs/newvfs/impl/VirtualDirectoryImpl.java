@@ -106,7 +106,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
     if (!isValid()) {
-      throw new InvalidVirtualFileAccessException(this);
+      return handleInvalidDirectory();
     }
 
     VirtualFileSystemEntry found = doFindChildInArray(name, caseSensitive);
@@ -168,6 +168,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     return child;
+  }
+
+  private VirtualFileSystemEntry handleInvalidDirectory() {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // We can be inside refreshAndFindFileByPath, which must be called outside read action, and
+      // throwing an exception doesn't seem a good idea when the callers can't do anything about it
+      return null;
+    }
+    throw new InvalidVirtualFileAccessException(this);
   }
 
   // removes forward/back slashes from start/end and return trimmed name or null if there are slashes in the middle or it's empty
