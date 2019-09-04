@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.Comparator
 
-class StartUpPerformanceReporter : StartupActivity, DumbAware {
+class StartUpPerformanceReporter : StartupActivity.Backgroundable {
   private val activationCount = AtomicInteger()
   // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
   private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()

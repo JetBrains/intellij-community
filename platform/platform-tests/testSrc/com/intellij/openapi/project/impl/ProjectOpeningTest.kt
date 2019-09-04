@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -136,7 +135,7 @@ class ProjectOpeningTest {
   }
 }
 
-private class MyStartupActivity : StartupActivity, DumbAware {
+private class MyStartupActivity : StartupActivity.Backgroundable {
   val passed = AtomicBoolean()
 
   override fun runActivity(project: Project) {

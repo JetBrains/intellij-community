@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Key;
@@ -21,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity, DumbAware {
+public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity.Backgroundable {
   private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
   @Override

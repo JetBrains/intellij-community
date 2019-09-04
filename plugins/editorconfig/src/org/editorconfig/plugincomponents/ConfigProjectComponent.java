@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
@@ -23,7 +22,7 @@ import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfigProjectComponent implements StartupActivity, DumbAware {
+public class ConfigProjectComponent implements StartupActivity.Backgroundable {
   @Override
   public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;

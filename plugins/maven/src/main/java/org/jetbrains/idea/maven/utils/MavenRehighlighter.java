@@ -21,7 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
@@ -49,7 +48,7 @@ public class MavenRehighlighter {
     queue.setPassThrough(false);
   }
 
-  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity, DumbAware {
+  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity.Backgroundable {
     @Override
     public void runActivity(@NotNull final Project project) {
       MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);

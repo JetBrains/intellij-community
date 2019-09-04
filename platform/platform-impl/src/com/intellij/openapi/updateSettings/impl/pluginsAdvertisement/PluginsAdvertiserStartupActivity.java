@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -27,7 +26,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 
-final class PluginsAdvertiserStartupActivity implements StartupActivity, DumbAware {
+final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgroundable {
   @Override
   public void runActivity(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();

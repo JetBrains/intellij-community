@@ -4,12 +4,11 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
-final class OpenFilesActivity implements StartupActivity, DumbAware {
+final class OpenFilesActivity implements StartupActivity.Backgroundable {
   @Override
   public void runActivity(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
@@ -27,7 +26,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware {
+public class CheckRequiredPluginsActivity implements StartupActivity.Backgroundable {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
   @Override

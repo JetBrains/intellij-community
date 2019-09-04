@@ -2,13 +2,14 @@
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Runs an activity on project open.</p>
  *
- * <p>If the activity implements {@link com.intellij.openapi.project.DumbAware} interface, it will be started in a pooled thread
+ * <p>If the activity implements {@link DumbAware} interface, e.g. {@link Backgroundable}, it will be started in a pooled thread
  * under 'Loading Project' dialog, otherwise it will be started in the dispatch thread after the initialization.</p>
  *
  * @author Dmitry Avdeev
@@ -29,4 +30,6 @@ public interface StartupActivity {
   ExtensionPointName<StartupActivity> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
 
   void runActivity(@NotNull Project project);
+  
+  interface Backgroundable extends StartupActivity, DumbAware {}
 }

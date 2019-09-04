@@ -2,7 +2,6 @@
 package com.intellij.platform;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -23,7 +22,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author yole
  */
-final class PlatformVcsDetector implements StartupActivity, DumbAware {
+final class PlatformVcsDetector implements StartupActivity.Backgroundable {
   @Override
   public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
