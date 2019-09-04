@@ -34,7 +34,7 @@ public class CyclicDependenciesHandler {
   private final Project myProject;
   private final AnalysisScope myScope;
 
-  public CyclicDependenciesHandler(@NotNull Project project, AnalysisScope scope) {
+  public CyclicDependenciesHandler(@NotNull Project project, @NotNull AnalysisScope scope) {
     myProject = project;
     myScope = scope;
   }

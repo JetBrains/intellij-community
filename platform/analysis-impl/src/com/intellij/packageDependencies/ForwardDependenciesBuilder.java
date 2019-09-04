@@ -38,11 +38,14 @@ import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
-  private int myTransitive = 0;
-  private @Nullable GlobalSearchScope myTargetScope;
+  private final int myTransitive;
+  @Nullable
+  private final GlobalSearchScope myTargetScope;
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
+    myTransitive = 0;
+    myTargetScope = null;
   }
 
   /**
@@ -51,11 +54,13 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable GlobalSearchScope targetScope) {
     super(project, scope);
     myTargetScope = targetScope;
+    myTransitive = 0;
   }
 
-  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final int transitive) {
+  public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope, final int transitive) {
     super(project, scope);
     myTransitive = transitive;
+    myTargetScope = null;
   }
 
   @Override
@@ -80,8 +85,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitFile(final PsiFile file) {
-          visit(file, fileIndex, psiManager, 0);
+        @Override
+        public void visitFile(final PsiFile file) {
+          visit(file, fileIndex, psiManager);
         }
       });
     }
@@ -90,8 +96,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     }
   }
 
-  private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, int depth) {
-
+  private void visit(@NotNull PsiFile file, @NotNull ProjectFileIndex fileIndex, @NotNull PsiManager psiManager) {
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
 
@@ -113,8 +118,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
     final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrary(virtualFile);
     final Set<PsiFile> collectedDeps = new HashSet<>();
-    final HashSet<PsiFile> processed = new HashSet<>();
     collectedDeps.add(file);
+    int depth = 0;
+    Set<PsiFile> processed = new HashSet<>();
     do {
       if (depth++ > getTransitiveBorder()) return;
       for (PsiFile psiFile : new HashSet<>(collectedDeps)) {
@@ -129,9 +135,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             processed.add(psiFile);
           }
         }
-        final Set<PsiFile> found = new HashSet<>();
         if (!processed.contains(psiFile)) {
           processed.add(psiFile);
+          Set<PsiFile> found = new HashSet<>();
           analyzeFileDependencies(psiFile, new DependencyProcessor() {
             @Override
             public void process(PsiElement place, PsiElement dependency) {
@@ -150,11 +156,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
               }
             }
           });
-          Set<PsiFile> deps = getDependencies().get(file);
-          if (deps == null) {
-            deps = new HashSet<>();
-            getDependencies().put(file, deps);
-          }
+          Set<PsiFile> deps = getDependencies().computeIfAbsent(file, __ -> new HashSet<>());
           deps.addAll(found);
 
           getDirectDependencies().put(psiFile, new HashSet<>(found));
@@ -170,6 +172,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     while (isTransitive() && !collectedDeps.isEmpty());
   }
 
+  @NotNull
   @Override
   public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return myDirectDependencies;
