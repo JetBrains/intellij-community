@@ -16,6 +16,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -23,7 +24,7 @@ import java.util.Set;
 @State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
 public class DateTimeFormatManager implements PersistentStateComponent<Element> {
   private boolean myPrettyFormattingAllowed = true;
-  private HashMap<String, DateFormatPattern> myPatterns = new HashMap<>();
+  private HashMap<String, String> myPatterns = new HashMap<>();
   @Nullable
   @Override
   public Element getState() {
@@ -41,12 +42,12 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
 
   @Nullable
   public DateFormat getDateFormat(@NotNull String formatterID) {
-    DateFormatPattern pattern = myPatterns.get(formatterID);
+    String pattern = myPatterns.get(formatterID);
     if (pattern == null) {
       for (DateTimeFormatterBean formatterBean : DateTimeFormatterBean.EP_NAME.getExtensions()) {
         if (formatterBean.id.equals(formatterID)) {
           if (!StringUtil.isEmpty(formatterBean.format)) {
-            pattern = new DateFormatPattern(formatterBean.format);
+            pattern = formatterBean.format;
           }
         }
       }
@@ -54,7 +55,7 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
 
     if (pattern != null) {
       try {
-        return new SimpleDateFormat(pattern.myFormat);
+        return new SimpleDateFormat(pattern);
       }
       catch (IllegalArgumentException e) {
         e.printStackTrace();
@@ -64,18 +65,21 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
   }
 
   public Set<String> getIds() {
-    return myPatterns.keySet();
+    return DateTimeFormatterBean.EP_NAME.getExtensionList().stream().map(bean -> bean.id).collect(Collectors.toSet());
   }
 
   @Nullable
   public String getDateFormatPattern(String formatterID) {
-    DateFormatPattern pattern = myPatterns.get(formatterID);
-    return pattern == null ? null : pattern.myFormat;
+    return myPatterns.get(formatterID);
   }
 
   public void setDateFormatPattern(String formatterID, @Nullable String pattern) {
     //assert myPatterns.containsKey(formatterID) : "Unknown formatterID: " + formatterID
-    myPatterns.put(formatterID, StringUtil.isEmpty(pattern) ? null : new DateFormatPattern(pattern));
+    if (StringUtil.isEmpty(pattern)) {
+      myPatterns.remove(formatterID);
+    } else {
+      myPatterns.put(formatterID, pattern);
+    }
   }
 
   public boolean isPrettyFormattingAllowed() {
@@ -86,11 +90,11 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
     return ServiceManager.getService(DateTimeFormatManager.class);
   }
 
-  private static class DateFormatPattern {
-    private final String myFormat;
+  public HashMap<String, String> getPatterns() {
+    return myPatterns;
+  }
 
-    private DateFormatPattern(String format) {
-      myFormat = format;
-    }
+  public void setPatterns(HashMap<String, String> patterns) {
+    myPatterns = patterns;
   }
 }
