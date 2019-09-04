@@ -54,6 +54,7 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
+import java.awt.GraphicsEnvironment
 import java.beans.PropertyChangeListener
 import java.io.File
 import java.io.IOException
@@ -273,6 +274,12 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
     EventQueue.invokeLater {
       executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
     }
+    initAppActivity.runChild("load system fonts") {
+      // editor and other UI components need the list of system fonts to implement font fallback
+      // this list is pre-loaded here, in parallel to other activities, to speed up project opening
+      // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
+      loadSystemFonts()
+    }
   }
 
   val plugins = try {
@@ -287,6 +294,8 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
 
   pluginDescriptorsFuture.complete(plugins)
 }
+
+private fun loadSystemFonts() = GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
