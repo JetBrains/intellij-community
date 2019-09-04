@@ -79,7 +79,7 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
       return true
     }
 
-    for (id in settings.ids) {
+    for (id in formatterIds) {
       val newValue = patterns[id]
       val oldValue = settings.getDateFormatPattern(id)
       if (!((StringUtil.isEmpty(newValue) && StringUtil.isEmpty(oldValue)) || StringUtil.equals(newValue, oldValue))) {
