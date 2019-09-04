@@ -214,6 +214,11 @@ public class ExternalJavacManager extends ProcessAdapter {
       synchronized (myRunningProcesses) {
         for (Map.Entry<UUID, ExternalJavacProcessHandler> entry : myRunningProcesses.entrySet()) {
           final ExternalJavacProcessHandler process = entry.getValue();
+          if (!process.isKeepProcessAlive()) {
+            //we shouldn't try to reuse process which will stop after finishing the current compilation
+            continue;
+          }
+
           final Integer hash = PROCESS_HASH.get(process);
           if (hash != null && hash == processHash) {
             LOG.debug("findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
