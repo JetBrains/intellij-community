@@ -235,6 +235,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           url = VirtualFileManager.constructUrl(protocol, path + (fileSystem instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : ""));
         }
       }
+      if (file == null && StringUtil.isEmptyOrSpaces(path)) {
+        // somebody tries to create pointer to root which is pointless but damages our fake root node.
+        return getOrCreateIdentity(url, VirtualFileManager.getInstance().findFileByUrl(url), recursive, parentDisposable);
+      }
     }
     // else url has come from VirtualFile.getPath() and is good enough
     return getOrCreate(file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
@@ -257,6 +261,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
             super.dispose();
             myUrlToIdentity.remove(url);
           }
+        }
+
+        @Override
+        public String toString() {
+          return "identity: url='"+url+"'; file="+found;
         }
       };
       myUrlToIdentity.put(url, pointer);
