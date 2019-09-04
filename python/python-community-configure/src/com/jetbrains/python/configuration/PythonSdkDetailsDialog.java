@@ -50,11 +50,10 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.configuration.PythonSdkDetailsDialog");
-
-  private boolean mySdkListChanged = false;
 
   @NotNull
   private final Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
@@ -97,12 +96,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModule = module;
     mySelectedSdkCallback = selectedSdkCallback;
 
-    mySdkModelListener = new SdkModel.Listener() {
-      @Override
-      public void sdkChanged(@NotNull Sdk sdk, String previousName) {
-        refreshSdkList();
-      }
-    };
+    mySdkModelListener = new MySdkModelListener();
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
     myProjectSdksModel.addListener(mySdkModelListener);
@@ -190,8 +184,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     if (projectSdk != null) {
       projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
     }
-    return getSelectedSdk() != projectSdk || mySdkListChanged ||
-           myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty();
+    return getSelectedSdk() != projectSdk || myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty();
   }
 
   protected void updateOkButton() {
@@ -213,7 +206,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
     myModificators.clear();
     myModifiedModificators.clear();
-    mySdkListChanged = false;
     final Sdk sdk = getSelectedSdk();
     mySelectedSdkCallback.consume(sdk);
     if (sdk != null) {
@@ -238,7 +230,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     final List<Sdk> pythonSdks = myHideOtherProjectVirtualenvs ? notAssociatedWithOtherProjects : allPythonSdks;
     mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
-    mySdkListChanged = false;
     if (projectSdk != null) {
       projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
       mySdkList.clearSelection();
@@ -257,30 +248,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void addSdk() {
-    PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myProjectSdksModel.getSdks()), sdk -> addCreatedSdk(sdk, true));
+    PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myProjectSdksModel.getSdks()), new SdkAddedCallback());
   }
 
-  private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
-    if (sdk != null) {
-      boolean isVirtualEnv = PythonSdkUtil.isVirtualEnv(sdk);
-      if (isVirtualEnv && !newVirtualEnv) {
-        AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myMainPanel);
-        dialog.show();
-        if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
-          return;
-        }
-        SdkModificator modificator = myModificators.get(sdk);
-        setSdkAssociated(modificator, !dialog.makeAvailableToAll());
-        myModifiedModificators.add(modificator);
-      }
-      final Sdk oldSdk = myProjectSdksModel.findSdk(sdk);
-      if (oldSdk == null) {
-        myProjectSdksModel.addSdk(sdk);
-      }
-      refreshSdkList();
-      mySdkList.setSelectedValue(myProjectSdksModel.findSdk(sdk.getName()), true);
-      mySdkListChanged = true;
-    }
+  private void setSelectedSdk(@Nullable Sdk selectedSdk) {
+    mySdkList.setSelectedValue(selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName()), true);
   }
 
   private void editSdk() {
@@ -384,7 +356,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         myModificators.remove(selectedSdk);
       }
       refreshSdkList();
-      mySdkListChanged = true;
       final Sdk currentSdk = getSdk();
       if (currentSdk != null) {
         mySdkList.setSelectedValue(currentSdk, true);
@@ -558,6 +529,29 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
       }
       super.apply(sdkModificator);
+    }
+  }
+
+  private class MySdkModelListener implements SdkModel.Listener {
+
+    @Override
+    public void sdkAdded(@NotNull Sdk sdk) {
+      refreshSdkList();
+    }
+
+    @Override
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
+      refreshSdkList();
+    }
+  }
+
+  private class SdkAddedCallback implements Consumer<Sdk> {
+    @Override
+    public void accept(@Nullable Sdk sdk) {
+      if (sdk != null && myProjectSdksModel.findSdk(sdk.getName()) == null) {
+        myProjectSdksModel.addSdk(sdk);
+        setSelectedSdk(sdk);
+      }
     }
   }
 }
