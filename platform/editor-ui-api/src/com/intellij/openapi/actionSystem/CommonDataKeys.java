@@ -24,16 +24,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 /**
- * Common data keys.
- *
- * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * Common data keys used as parameter for {@link AnActionEvent#getData(DataKey)} in {@link AnAction#update(AnActionEvent)}/{@link AnAction#actionPerformed(AnActionEvent)} implementations.
+ * <p/>
+ * See also {@link com.intellij.openapi.actionSystem.PlatformDataKeys} and {@link com.intellij.openapi.actionSystem.LangDataKeys}.
  */
 public class CommonDataKeys {
 
   public static final DataKey<Project> PROJECT = DataKey.create("project");
 
   /**
-   * Returns editor instance.
+   * Returns currently focused editor instance.
    *
    * @see #HOST_EDITOR
    * @see #EDITOR_EVEN_IF_INACTIVE
