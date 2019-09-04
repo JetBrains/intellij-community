@@ -32,7 +32,7 @@ import java.io.IOException;
  * PyPI cache updater
  * User : catherine
  */
-public class PyPackagesUpdater implements StartupActivity {
+public class PyPackagesUpdater implements StartupActivity.Background {
   private static final Logger LOG = Logger.getInstance(PyPackagesUpdater.class);
   private static final long EXPIRATION_TIMEOUT = DateFormatUtil.DAY;
 

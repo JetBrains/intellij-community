@@ -12,7 +12,7 @@ import git4idea.repo.GitRepositoryManager
 
 const val GC_AUTO = "gc.auto"
 
-class GitSetupProjectConfig: StartupActivity {
+class GitSetupProjectConfig: StartupActivity.Background {
   override fun runActivity(project: Project) {
     ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
       if (ApplicationManager.getApplication().isDispatchThread) {

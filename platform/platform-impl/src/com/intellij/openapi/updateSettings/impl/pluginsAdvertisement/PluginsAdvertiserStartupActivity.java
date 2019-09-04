@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 
-final class PluginsAdvertiserStartupActivity implements StartupActivity.DumbAware {
+final class PluginsAdvertiserStartupActivity implements StartupActivity.Background {
   @Override
   public void runActivity(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();

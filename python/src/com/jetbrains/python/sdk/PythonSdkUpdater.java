@@ -63,7 +63,7 @@ import java.util.concurrent.Future;
  * @author vlan
  * @author yole
  */
-public class PythonSdkUpdater implements StartupActivity {
+public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
   private static final Object ourLock = new Object();

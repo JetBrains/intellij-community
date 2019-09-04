@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.UIUtil
 import java.nio.file.Path
 
-class WindowsDefenderCheckerActivity : StartupActivity {
+class WindowsDefenderCheckerActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode) return

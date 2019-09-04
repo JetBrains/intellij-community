@@ -410,12 +410,12 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   public void scheduleBackgroundPostStartupActivities() {
-    List<StartupActivity> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+    List<StartupActivity.Background> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
 
     Extensions.getRootArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
-      new ExtensionPointListener<StartupActivity>() {
+      new ExtensionPointListener<StartupActivity.Background>() {
         @Override
-        public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
           extension.runActivity(myProject);
         }
       }, false, this);

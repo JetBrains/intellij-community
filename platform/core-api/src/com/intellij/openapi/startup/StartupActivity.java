@@ -26,9 +26,10 @@ public interface StartupActivity {
    * immediately when this happens, so if you need to access other components, you're responsible for doing this in a
    * thread-safe way (e.g. by taking a read action to collect all the state you need).</p>
    */
-  ExtensionPointName<StartupActivity> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
+  ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
 
   void runActivity(@NotNull Project project);
   
   interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {}
+  interface Background extends StartupActivity {}
 }
