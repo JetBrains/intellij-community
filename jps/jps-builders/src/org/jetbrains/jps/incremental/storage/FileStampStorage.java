@@ -24,6 +24,7 @@ import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timesta
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
   private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final String HASH_FUNCTION = "MD5";
+  private static final byte CARRIAGE_RETURN_CODE = 13;
   private static final int HASH_FUNCTION_SIZE = 16;
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
@@ -120,8 +121,22 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   }
 
   private static byte[] getFileHash(@NotNull File file) throws IOException {
-    byte[] bytes = Files.readAllBytes(file.toPath());
+    byte[] bytes = readAllBytesWithoutCarriageReturnChar(file);
     return getMessageDigest().digest(bytes);
+  }
+
+  @NotNull
+  private static byte[] readAllBytesWithoutCarriageReturnChar(@NotNull File file) throws IOException {
+    byte[] fileBytes = Files.readAllBytes(file.toPath());
+    byte[] result = new byte[fileBytes.length];
+    int copiedBytes = 0;
+    for (byte fileByte : fileBytes) {
+      if (fileByte != CARRIAGE_RETURN_CODE) {
+        result[copiedBytes] = fileByte;
+        copiedBytes++;
+      }
+    }
+    return copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result;
   }
 
   @NotNull
