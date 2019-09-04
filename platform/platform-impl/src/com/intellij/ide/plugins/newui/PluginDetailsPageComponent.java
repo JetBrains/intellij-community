@@ -67,6 +67,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private JEditorPane myDescriptionComponent;
+  private ChangeNotesPanel myChangeNotesPanel;
   private OneLineProgressIndicator myIndicator;
 
   public IdeaPluginDescriptor myPlugin;
@@ -287,19 +288,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myHomePage = new LinkPanel(bottomPanel, true, null, null);
     bottomPanel.add(new JLabel());
 
-    myDescriptionComponent = new JEditorPane();
-    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
-    StyleSheet sheet = kit.getStyleSheet();
-    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
-    myDescriptionComponent.setEditable(false);
-    myDescriptionComponent.setOpaque(false);
-    myDescriptionComponent.setBorder(null);
-    myDescriptionComponent.setContentType("text/html");
-    myDescriptionComponent.setEditorKit(kit);
-    myDescriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-
-    bottomPanel.add(myDescriptionComponent, JBUIScale.scale(700), -1);
+    Object constraints = JBUIScale.scale(700);
+    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(), constraints);
+    myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints);
 
     JLabel separator = new JLabel();
     separator.setBorder(JBUI.Borders.emptyTop(20));
@@ -308,6 +299,25 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myMarketplace) {
       bottomPanel.add(mySize = new JLabel());
     }
+  }
+
+  @NotNull
+  public static JEditorPane createDescriptionComponent() {
+    JEditorPane editorPane = new JEditorPane();
+
+    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
+    StyleSheet sheet = kit.getStyleSheet();
+    sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
+    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
+
+    editorPane.setEditable(false);
+    editorPane.setOpaque(false);
+    editorPane.setBorder(null);
+    editorPane.setContentType("text/html");
+    editorPane.setEditorKit(kit);
+    editorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+
+    return editorPane;
   }
 
   public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
@@ -442,6 +452,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     myDescriptionComponent.setVisible(description != null);
+
+    myChangeNotesPanel.show(getChangeNotes());
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress();
@@ -615,5 +627,17 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private String getDescription() {
     String description = myPlugin.getDescription();
     return StringUtil.isEmptyOrSpaces(description) ? null : description;
+  }
+
+  @Nullable
+  private String getChangeNotes() {
+    if (myUpdateDescriptor != null) {
+      String notes = myUpdateDescriptor.getChangeNotes();
+      if (!StringUtil.isEmptyOrSpaces(notes)) {
+        return notes;
+      }
+    }
+    String notes = myPlugin.getChangeNotes();
+    return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 }
