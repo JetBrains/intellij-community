@@ -49,7 +49,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @State(name = "ActionMacroManager", storages = @Storage("macros.xml"))
-public class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
+public final class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
@@ -108,9 +108,9 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     registerActions();
   }
 
-  @Nullable
-   @Override
-   public Element getState() {
+  @NotNull
+  @Override
+  public Element getState() {
     Element element = new Element("state");
     for (ActionMacro macro : myMacros) {
       Element macroElement = new Element(ELEMENT_MACRO);

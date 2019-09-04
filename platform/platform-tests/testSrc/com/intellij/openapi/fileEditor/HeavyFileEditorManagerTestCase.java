@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -24,9 +23,9 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
   public void setUp() throws Exception {
     super.setUp();
 
-    FileEditorManagerImpl manager = new FileEditorManagerImpl(getProject());
-    ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).setFileEditorManager(manager);
-    ServiceContainerUtil.registerComponentInstance(getProject(), FileEditorManager.class, manager, getTestRootDisposable());
+    Project project = getProject();
+    FileEditorManagerImpl manager = new FileEditorManagerImpl(project);
+    ServiceContainerUtil.registerComponentInstance(project, FileEditorManager.class, manager, getTestRootDisposable());
   }
 
   @Override

@@ -33,7 +33,7 @@ public final class ServiceManager {
   }
 
   /**
-   * Creates lazy caching key to store project-level service instance from {@link #getService(Project, Class)}.
+   * Creates lazy caching key to store project-level service instance from {@link Project#getService(Class)}.
    *
    * @param serviceClass Service class to create key for.
    * @param <T>          Service class type.

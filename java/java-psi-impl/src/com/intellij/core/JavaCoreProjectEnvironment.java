@@ -36,14 +36,14 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   public JavaCoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     super(parentDisposable, applicationEnvironment);
 
-    myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
+    myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myProject));
     myProject.registerService(JavaPsiImplementationHelper.class, createJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
+    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myProject));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
-    myProject.registerService(ControlFlowFactory.class, new ControlFlowFactory(myPsiManager));
+    myProject.registerService(ControlFlowFactory.class, new ControlFlowFactory(myProject));
 
     myPackageIndex = createCorePackageIndex();
     myProject.registerService(PackageIndex.class, myPackageIndex);

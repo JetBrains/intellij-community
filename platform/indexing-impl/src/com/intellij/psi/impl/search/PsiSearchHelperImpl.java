@@ -78,8 +78,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return scope;
   }
 
-  public PsiSearchHelperImpl(@NotNull PsiManagerEx manager) {
-    myManager = manager;
+  public PsiSearchHelperImpl(@NotNull Project project) {
+    myManager = PsiManagerEx.getInstanceEx(project);
+    myDumbService = DumbService.getInstance(myManager.getProject());
+  }
+
+  /**
+   * @deprecated Use {@link #PsiSearchHelperImpl(Project)}
+   */
+  @Deprecated
+  public PsiSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
+    myManager = psiManager;
     myDumbService = DumbService.getInstance(myManager.getProject());
   }
 

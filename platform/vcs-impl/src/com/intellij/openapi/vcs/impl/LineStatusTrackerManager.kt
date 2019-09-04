@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -58,7 +57,7 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Future
 
-class LineStatusTrackerManager(private val project: Project, @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex) : LineStatusTrackerManagerI, Disposable {
+class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
   private var isDisposed = false
 

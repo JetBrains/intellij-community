@@ -9,7 +9,6 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.util.messages.MessageBus
 import org.junit.Test
 
@@ -19,7 +18,7 @@ class ConstructorInjectionTest {
   @Test
   fun `interface extension`() {
     val componentManager = TestComponentManager()
-    val area = componentManager.extensionArea as ExtensionsAreaImpl
+    val area = componentManager.extensionArea
     val point = area.registerPoint("bar", Bar::class.java, pluginDescriptor)
     @Suppress("DEPRECATION")
     point.registerExtension(BarImpl())

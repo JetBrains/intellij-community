@@ -19,7 +19,7 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject(), FileEditorManagerEx.getInstanceEx(getProject()));
+    myHistory = new IdeDocumentHistoryImpl(getProject());
   }
 
   @Override

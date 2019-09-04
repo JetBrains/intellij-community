@@ -16,10 +16,13 @@ import java.util.List;
  * @author peter
  */
 public class NonClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
-
   @Override
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, Project project) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    if (project.isDefault()) {
+      return null;
+    }
+
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (index.isInLibraryClasses(file) || index.isInContent(file)) {
       return null;
     }

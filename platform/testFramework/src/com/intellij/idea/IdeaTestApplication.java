@@ -100,7 +100,7 @@ public final class IdeaTestApplication implements Disposable {
         app.registerComponents(it);
         return it;
       }), app)
-        .thenCompose(it -> ApplicationLoader.preloadServices(app, it))
+        .thenCompose(it -> app.preloadServices(it))
         .get(20, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {

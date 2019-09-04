@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -19,12 +19,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
+public final class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
-  public PsiTodoSearchHelperImpl(PsiManagerEx manager) {
-    myManager = manager;
+  public PsiTodoSearchHelperImpl(@NotNull Project project) {
+    myManager = PsiManagerEx.getInstanceEx(project);
+  }
+
+  /**
+   * @deprecated Use {@link #PsiTodoSearchHelperImpl(Project)}
+   */
+  @Deprecated
+  public PsiTodoSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
+    myManager = psiManager;
   }
 
   @Override

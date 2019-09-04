@@ -53,17 +53,16 @@ public class CoreProjectEnvironment {
     myProject.registerService(ResolveCache.class, new ResolveCache(myProject));
 
     myPsiManager = new PsiManagerImpl(myProject);
-    registerProjectComponent(PsiManager.class, myPsiManager);
+    myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
-    registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
-                                                                                  myMessageBus,
-                                                                                  new MockDocumentCommitProcessor()));
+    myProject.registerService(DocumentCommitProcessor.class, new MockDocumentCommitProcessor());
+    myProject.registerService(PsiDocumentManager.class, new CorePsiDocumentManager(myProject));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
-    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
+    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myProject));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
     myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);

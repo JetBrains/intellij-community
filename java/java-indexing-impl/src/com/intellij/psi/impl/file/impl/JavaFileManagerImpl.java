@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ProjectTopics;
@@ -38,17 +38,15 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author dmitry lomov
  */
-public class JavaFileManagerImpl implements JavaFileManager, Disposable {
+public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
 
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes;
   private boolean myDisposed;
-  private final PackageIndex myPackageIndex;
 
   public JavaFileManagerImpl(Project project) {
     myManager = PsiManagerEx.getInstanceEx(project);
-    myPackageIndex = PackageIndex.getInstance(myManager.getProject());
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull final ModuleRootEvent event) {
@@ -65,7 +63,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   @Override
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, true);
+    Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, true);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }

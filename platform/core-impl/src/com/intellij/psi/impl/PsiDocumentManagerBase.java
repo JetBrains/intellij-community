@@ -36,7 +36,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -51,7 +50,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   protected final Project myProject;
   private final PsiManager myPsiManager;
-  private final DocumentCommitProcessor myDocumentCommitProcessor;
+  protected final DocumentCommitProcessor myDocumentCommitProcessor;
   final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, UncommittedInfo> myUncommittedInfos = ContainerUtil.newConcurrentMap();
   boolean myStopTrackingDocuments;
@@ -63,18 +62,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  protected PsiDocumentManagerBase(@NotNull final Project project,
-                                   @NotNull PsiManager psiManager,
-                                   @NotNull MessageBus bus,
-                                   @NotNull DocumentCommitProcessor documentCommitProcessor) {
+  protected PsiDocumentManagerBase(@NotNull Project project) {
     myProject = project;
-    myPsiManager = psiManager;
-    myDocumentCommitProcessor = documentCommitProcessor;
-    mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
+    myPsiManager = PsiManager.getInstance(project);
+    myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
+    mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
 
-    bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC,
-                                (document, file) -> myUncommittedDocuments.remove(document));
+    project.getMessageBus().connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
+      myUncommittedDocuments.remove(document);
+    });
   }
 
   @Override

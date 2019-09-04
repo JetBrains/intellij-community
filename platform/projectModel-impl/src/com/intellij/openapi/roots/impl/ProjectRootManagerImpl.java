@@ -114,7 +114,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   @NotNull
   public ProjectFileIndex getFileIndex() {
-    return ProjectFileIndex.SERVICE.getInstance(myProject);
+    return ProjectFileIndex.getInstance(myProject);
   }
 
   @Override

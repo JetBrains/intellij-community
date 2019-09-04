@@ -102,8 +102,8 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
     this(null);
   }
 
-  public UndoManagerImpl(@Nullable ProjectEx project) {
-    myProject = project;
+  public UndoManagerImpl(@Nullable Project project) {
+    myProject = (ProjectEx)project;
     myMerger = new CommandMerger(this);
 
     if (myProject != null && myProject.isDefault()) {

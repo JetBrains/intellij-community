@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.cherrypick;
 
 import com.google.common.collect.Lists;
@@ -28,13 +28,11 @@ import java.util.*;
 public class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
-  @NotNull private final ProjectLevelVcsManager myProjectLevelVcsManager;
   @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
   @NotNull private final BackgroundTaskQueue myTaskQueue;
 
-  public VcsCherryPickManager(@NotNull Project project, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
+  public VcsCherryPickManager(@NotNull Project project) {
     myProject = project;
-    myProjectLevelVcsManager = projectLevelVcsManager;
     myTaskQueue = new BackgroundTaskQueue(project, "Cherry-picking");
   }
 
@@ -53,7 +51,7 @@ public class VcsCherryPickManager {
 
   @Nullable
   private VcsCherryPicker getCherryPickerForCommit(@NotNull VcsFullCommitDetails commitDetails) {
-    AbstractVcs vcs = myProjectLevelVcsManager.getVcsFor(commitDetails.getRoot());
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(commitDetails.getRoot());
     if (vcs == null) return null;
     VcsKey key = vcs.getKeyInstanceMethod();
     return getCherryPickerFor(key);

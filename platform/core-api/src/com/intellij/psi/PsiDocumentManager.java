@@ -32,7 +32,7 @@ public abstract class PsiDocumentManager {
    * @return the document manager instance.
    */
   public static PsiDocumentManager getInstance(@NotNull Project project) {
-    return project.getComponent(PsiDocumentManager.class);
+    return project.getService(PsiDocumentManager.class);
   }
 
   /**

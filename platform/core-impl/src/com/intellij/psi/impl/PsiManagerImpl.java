@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
@@ -14,6 +13,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class PsiManagerImpl extends PsiManagerEx {
+public final class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final FileIndexFacade myFileIndex;
+  private final NotNullLazyValue<? extends FileIndexFacade> myFileIndex;
   private final PsiModificationTracker myModificationTracker;
 
   private final FileManagerImpl myFileManager;
@@ -60,7 +60,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     PsiBuilderFactory.getInstance();
 
     myProject = project;
-    myFileIndex = FileIndexFacade.getInstance(project);
+    myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
     myModificationTracker = PsiModificationTracker.SERVICE.getInstance(project);
 
     myFileManager = new FileManagerImpl(this, myFileIndex);
@@ -107,7 +107,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
     if (file != null && file.isPhysical() && virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) return true;
 
-    return virtualFile != null && myFileIndex.isInContent(virtualFile);
+    return virtualFile != null && myFileIndex.getValue().isInContent(virtualFile);
   }
 
   @Override
@@ -153,8 +153,8 @@ public class PsiManagerImpl extends PsiManagerEx {
     return myFileManager.findFile(file);
   }
 
+  @NotNull
   @Override
-  @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -755,9 +755,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       super(project);
       myVirtualFile = virtualFile;
       myDisplayName = displayName;
-      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
-      myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
-      mySearchOutsideContent = project.isDefault() || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
+      FileIndexFacade facade = project.isDefault() ? null : FileIndexFacade.getInstance(project);
+      myModule = virtualFile == null || facade == null ? null : facade.getModuleForFile(virtualFile);
+      mySearchOutsideContent = facade == null || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
     }
 
     @Override

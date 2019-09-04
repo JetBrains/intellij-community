@@ -108,11 +108,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
       return editorFactory.createDocument(charSequence);
     }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
-    appContainer.registerComponentInstance(PsiDocumentManager.class, new MockPsiDocumentManager());
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
+    myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));

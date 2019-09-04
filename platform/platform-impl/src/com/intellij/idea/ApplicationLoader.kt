@@ -125,13 +125,14 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
   }
 
   // preload services only after icon activation
-  val future = registerRegistryAndInitStoreFuture.thenCompose {
-    val preloadServiceActivity = StartUpMeasurer.start("preload services")
-    preloadServices(app, it)
-      .thenRun(Runnable {
-        preloadServiceActivity.end()
-      })
-  }
+  val future = registerRegistryAndInitStoreFuture
+    .thenCompose {
+      val preloadServiceActivity = StartUpMeasurer.start("preload services")
+      app.preloadServices(it)
+        .thenRun(Runnable {
+          preloadServiceActivity.end()
+        })
+    }
 
   if (!headless) {
     if (SystemInfo.isMac) {
@@ -204,7 +205,7 @@ private fun preloadIcons() {
 }
 
 @ApiStatus.Internal
-fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
   return registerFuture
     .thenCompose { plugins ->
       val future = CompletableFuture.runAsync(Runnable {
@@ -217,7 +218,10 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
       initConfigurationStore(app, null)
 
       future
-        .thenApply { plugins }
+        .thenApply {
+          @Suppress("UNCHECKED_CAST")
+          plugins as List<IdeaPluginDescriptorImpl>
+        }
     }
 }
 
@@ -521,22 +525,6 @@ private fun processProgramArguments(args: Array<String>): List<String> {
     arguments.add(arg)
   }
   return arguments
-}
-
-@ApiStatus.Internal
-fun preloadServices(app: ApplicationImpl, plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
-  val futures = mutableListOf<CompletableFuture<Void>>()
-  val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
-  for (plugin in plugins) {
-    for (service in (plugin as IdeaPluginDescriptorImpl).app.services) {
-      if (service.preload) {
-        futures.add(CompletableFuture.runAsync(Runnable { app.precreateService(service.getInterface()) }, executor))
-      }
-    }
-  }
-
-  executor.shutdown()
-  return CompletableFuture.allOf(*futures.toTypedArray())
 }
 
 private fun CompletableFuture<*>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {

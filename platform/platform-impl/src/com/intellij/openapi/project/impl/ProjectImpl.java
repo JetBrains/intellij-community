@@ -39,12 +39,14 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -240,7 +242,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
+
+    // before components
+    if (!isDefault()) {
+      Activity activity = StartUpMeasurer.start("preload project services");
+      try {
+        preloadServices(PluginManagerCore.getLoadedPlugins()).get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        ExceptionUtil.rethrow(e);
+      }
+      activity.end();
+    }
+
     createComponents(indicator);
+
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);
     }

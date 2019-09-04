@@ -8,8 +8,10 @@ import org.picocontainer.PicoInitializationException
 import org.picocontainer.PicoIntrospectionException
 import org.picocontainer.defaults.AmbiguousComponentResolutionException
 import org.picocontainer.defaults.TooManySatisfiableConstructorsException
+import java.io.File
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
+import java.nio.file.Path
 
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): T {
   val result = getGreediestSatisfiableConstructor(aClass, requestorKey, componentManager, parameterResolver)
@@ -45,7 +47,9 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
     val parameterTypes = constructor.parameterTypes
 
     for (expectedType in parameterTypes) {
-      if (expectedType.isPrimitive || expectedType.isEnum || expectedType.isArray || Collection::class.java.isAssignableFrom(expectedType)) {
+      if (expectedType.isPrimitive || expectedType.isEnum || expectedType.isArray ||
+          Collection::class.java.isAssignableFrom(expectedType) ||
+          expectedType === File::class.java || expectedType === Path::class.java) {
         continue@loop
       }
 
@@ -98,7 +102,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
       return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
     }
     !unsatisfiableDependencyTypes.isNullOrEmpty() -> {
-      throw PicoIntrospectionException("$requestorKey has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
+      throw PicoIntrospectionException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
                                        "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
     }
     else -> {
@@ -154,6 +158,23 @@ internal abstract class ConstructorParameterResolver {
     val byKey = container.getComponentAdapter(expectedType)
     if (byKey != null && excludeKey != byKey.componentKey) {
       return byKey
+    }
+
+    // see UndoManagerImpl / RunManager / JavaModuleExternalPathsImpl for example
+    val expectedClassName = expectedType.name
+
+    if (container.parent == null) {
+      if (expectedClassName == "com.intellij.openapi.project.Project") {
+        return null
+      }
+    }
+    else {
+      if (expectedClassName == "com.intellij.configurationStore.StreamProvider" ||
+          expectedClassName == "com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl" ||
+          expectedClassName == "com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl" ||
+          expectedClassName == "com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl") {
+        return null
+      }
     }
 
     val found = container.getComponentAdaptersOfType(expectedType)

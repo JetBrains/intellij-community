@@ -88,7 +88,11 @@
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
-                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl"/>
+                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.psi.PsiManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="true"/>
 
     <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
                     serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>

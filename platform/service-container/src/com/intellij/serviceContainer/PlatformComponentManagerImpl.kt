@@ -21,17 +21,20 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
@@ -104,12 +107,49 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     plugins as List<IdeaPluginDescriptorImpl>
     val activityNamePrefix = activityNamePrefix()
     val parallelActivity = if (activityNamePrefix == null) null else ParallelActivity.PREPARE_APP_INIT
+
+    val app = getApplication()
+    val headless = app == null || app.isHeadlessEnvironment
+    var componentConfigCount = 0
+    var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
+    val isHeadlessMode = app?.isHeadlessEnvironment == true
+    val isUnitTestMode = app?.isUnitTestMode == true
+
     parallelActivity.run("${activityNamePrefix}service and ep registration") {
       // register services before registering extensions because plugins can access services in their
       // extensions which can be invoked right away if the plugin is loaded dynamically
       for (plugin in plugins) {
         val containerDescriptor = getContainerDescriptor(plugin)
         registerServices(containerDescriptor.services, plugin)
+
+        for (descriptor in containerDescriptor.components) {
+          if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
+            continue
+          }
+
+          try {
+            registerComponent(descriptor, plugin)
+            componentConfigCount++
+          }
+          catch (e: Throwable) {
+            handleInitComponentError(e, null, plugin.pluginId)
+          }
+        }
+
+        val listeners = getContainerDescriptor(plugin).listeners
+        if (listeners.isNotEmpty()) {
+          if (map == null) {
+            map = ContainerUtil.newConcurrentMap()
+          }
+
+          for (listener in listeners) {
+            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
+              continue
+            }
+
+            map!!.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
+          }
+        }
 
         containerDescriptor.extensionPoints?.let {
           extensionArea.registerExtensionPoints(plugin, it, this)
@@ -121,47 +161,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       val notifyListeners = LoadingPhase.isStartupComplete()
       for (descriptor in plugins) {
         descriptor.registerExtensions(extensionArea, this, notifyListeners)
-      }
-    }
-
-    val app = getApplication()
-    val headless = app == null || app.isHeadlessEnvironment
-
-    var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
-    val isHeadlessMode = app?.isHeadlessEnvironment == true
-    val isUnitTestMode = app?.isUnitTestMode == true
-
-    var componentConfigCount = 0
-    for (plugin in plugins) {
-      val containerDescriptor = getContainerDescriptor(plugin)
-
-      for (config in containerDescriptor.components) {
-        if (!config.prepareClasses(headless) || !isComponentSuitable(config)) {
-          continue
-        }
-
-        try {
-          registerComponent(config, plugin)
-          componentConfigCount++
-        }
-        catch (e: Throwable) {
-          handleInitComponentError(e, null, plugin.pluginId)
-        }
-      }
-
-      val listeners = containerDescriptor.listeners
-      if (listeners.isNotEmpty()) {
-        if (map == null) {
-          map = ContainerUtil.newConcurrentMap()
-        }
-
-        for (listener in listeners) {
-          if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
-            continue
-          }
-
-          map.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
-        }
       }
     }
 
@@ -178,7 +177,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     // ensure that messageBus is created, regardless of lazy listeners map state
     val messageBus = messageBus as MessageBusImpl
     if (map != null) {
-      messageBus.setLazyListeners(map)
+      messageBus.setLazyListeners(map!!)
     }
   }
 
@@ -217,7 +216,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   @TestOnly
-  fun <T : Any> registerComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
+  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
     val adapter = myPicoContainer.getComponentAdapter(componentKey) as MyComponentAdapter
     return adapter.replaceInstance(componentImplementation, parentDisposable)
   }
@@ -529,7 +528,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId?): T {
     // constructorParameterResolver is very expensive, because pico container behaviour is to find greediest satisfiable constructor,
     // so, if class has constructors (Project) and (Project, Foo, Bar), then Foo and Bar unrelated classes will be searched for.
-    // To avoid this expensive nearly linear search of extension, first resolve without our logic, and in case of error try expensive.
+    // To avoid this expensive nearly linear search of extension, first resolve without our logic to resolve extensions, and in case of error try expensive.
     try {
       return instantiateUsingPicoContainer(aClass, key, this, constructorParameterResolver)
     }
@@ -539,11 +538,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     catch (e: ExtensionNotApplicableException) {
       throw e
     }
-    catch (e: IncorrectOperationException) {
-      throw e
-    }
     catch (e: Exception) {
-      if (lightServices == null) {
+      if (lightServices == null || e is IncorrectOperationException) {
         throw e
       }
       else {
@@ -557,7 +553,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val app = getApplication()
     @Suppress("SpellCheckingInspection")
     if (app != null && app.isUnitTestMode && pluginId?.idString != "org.jetbrains.kotlin" && pluginId?.idString != "Lombook Plugin") {
-      throw UnsupportedOperationException("In tests deprecated constructor injection for extension is disabled", e)
+      throw UnsupportedOperationException("In tests, extension classes are not resolved for constructor injection, to enforce removing such deprecated references.", e)
     }
   }
 
@@ -649,12 +645,27 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   @Internal
-  fun precreateService(serviceClass: String) {
-    (myPicoContainer.getServiceAdapter(serviceClass) as ServiceComponentAdapter?)?.getInstance<Any>(this)
-  }
-
-  @Internal
   open fun activityNamePrefix(): String? = null
+
+  @ApiStatus.Internal
+  fun preloadServices(plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
+    @Suppress("UNCHECKED_CAST")
+    plugins as List<IdeaPluginDescriptorImpl>
+
+    val futures = mutableListOf<CompletableFuture<Void>>()
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+    for (plugin in plugins) {
+      for (service in getContainerDescriptor(plugin).services) {
+        if (service.preload) {
+          futures.add(CompletableFuture.runAsync(Runnable {
+            (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+          }, executor))
+        }
+      }
+    }
+    executor.shutdown()
+    return CompletableFuture.allOf(*futures.toTypedArray())
+  }
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {
