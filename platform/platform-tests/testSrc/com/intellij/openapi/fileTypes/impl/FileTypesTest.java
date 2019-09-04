@@ -17,7 +17,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -294,6 +297,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
                           : null;
         log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
         return result;
+      }
+
+      @Override
+      public int getDesiredContentPrefixLength() {
+        return 48;
       }
 
       @Override
@@ -612,6 +620,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
 
       @Override
+      public int getDesiredContentPrefixLength() {
+        return 48;
+      }
+
+      @Override
       public int getVersion() {
         return 0;
       }
@@ -820,6 +833,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       @Override
       public Collection<? extends FileType> getDetectedFileTypes() {
         return Collections.singleton(ArchiveFileType.INSTANCE);
+      }
+
+      @Override
+      public int getDesiredContentPrefixLength() {
+        return "#!archive".length();
       }
 
       @Override

@@ -80,6 +80,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.StreamSupport;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
@@ -1001,9 +1002,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         int fileLength = (int)file.getLength();
 
+        int bufferLength = StreamSupport.stream(detectors.spliterator(), false)
+          .map(FileTypeDetector::getDesiredContentPrefixLength)
+          .max(Comparator.naturalOrder())
+          .orElse(FileUtilRt.getUserContentLoadLimit());
         byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
                         ? FileUtilRt.getThreadLocalBuffer()
-                        : new byte[Math.min(fileLength, FileUtilRt.getUserContentLoadLimit())];
+                        : new byte[Math.min(fileLength, bufferLength)];
 
         int n = readSafely(inputStream, buffer, 0, buffer.length);
         fileType = detect(file, buffer, n, detectors);

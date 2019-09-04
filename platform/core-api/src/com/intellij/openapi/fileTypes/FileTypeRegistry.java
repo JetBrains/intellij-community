@@ -126,6 +126,16 @@ public abstract class FileTypeRegistry {
       return null;
     }
 
+    /**
+     * Defines how much content is required for this detector to detect file type reliably. At least such amount of bytes
+     * will be passed to {@link #detect(VirtualFile, ByteSequence, CharSequence)} if present.
+     *
+     * @return number of first bytes to be given
+     */
+    default int getDesiredContentPrefixLength() {
+      return 1024;
+    }
+
     int getVersion();
   }
 }
