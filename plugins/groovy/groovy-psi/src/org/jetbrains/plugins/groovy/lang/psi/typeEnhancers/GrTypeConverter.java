@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author peter
@@ -21,10 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public abstract class GrTypeConverter {
 
   public static final ExtensionPointName<GrTypeConverter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.typeConverter");
-
-  protected static boolean isMethodCallConversion(GroovyPsiElement context) {
-    return PsiUtil.isInMethodCallContext(context);
-  }
 
   @Nullable
   protected static GrLiteral getLiteral(@NotNull GroovyPsiElement context) {
@@ -47,44 +42,24 @@ public abstract class GrTypeConverter {
     return expression instanceof GrLiteral ? (GrLiteral)expression : null;
   }
 
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
+  public boolean isApplicableTo(@NotNull Position position) {
+    return position == Position.ASSIGNMENT || position == Position.RETURN_VALUE;
   }
 
   /**
-   * @deprecated see {@link #isConvertibleEx(com.intellij.psi.PsiType, com.intellij.psi.PsiType, org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement, org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo)}
-   */
-  @Deprecated
-  @Nullable
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    return null;
-  }
-
-  /**
-   * Checks if {@code actualType} can be converted to {@code targetType}.
-   *
-   * @param targetType target type
-   * @param actualType actual type
-   * @param context    context
-   * @return {@link ConversionResult conversion result }
+   * Checks if {@code actualType} can be converted to {@code targetType} in given {@code position}.
    */
   @Nullable
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
-    //noinspection deprecation
-    final Boolean result = isConvertible(targetType, actualType, context);
-    return result == null ? null
-                          : result ? ConversionResult.OK
-                                   : ConversionResult.ERROR;
-  }
+  public abstract ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                 @NotNull PsiType actualType,
+                                                 @NotNull Position position,
+                                                 @NotNull GroovyPsiElement context);
 
-  public enum ApplicableTo {
+  public enum Position {
     EXPLICIT_CAST,
     ASSIGNMENT,
     METHOD_PARAMETER,
     GENERIC_PARAMETER,
-    RETURN_VALUE
+    RETURN_VALUE,
   }
 }

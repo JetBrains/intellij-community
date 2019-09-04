@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.typing.EmptyListLiteralType;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.resolvesTo;
-import static org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.ASSIGNMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
 
 /**
@@ -24,11 +24,11 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
 public class GrContainerTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
-    if (currentPosition == ASSIGNMENT && resolvesTo(targetType, JAVA_UTIL_SET) && actualType instanceof EmptyListLiteralType) {
+  public ConversionResult isConvertible(@NotNull PsiType targetType,
+                                        @NotNull PsiType actualType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
+    if (position == ASSIGNMENT && resolvesTo(targetType, JAVA_UTIL_SET) && actualType instanceof EmptyListLiteralType) {
       return ConversionResult.OK;
     }
     if (isCompileStatic(context)) {
@@ -57,8 +57,8 @@ public class GrContainerTypeConverter extends GrTypeConverter {
   }
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position != ApplicableTo.METHOD_PARAMETER;
+  public boolean isApplicableTo(@NotNull Position position) {
+    return position != Position.METHOD_PARAMETER;
   }
 
   @Nullable

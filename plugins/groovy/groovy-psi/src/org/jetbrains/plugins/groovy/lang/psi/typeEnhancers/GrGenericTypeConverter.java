@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -22,7 +22,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
 public class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+  public boolean isApplicableTo(@NotNull Position position) {
     switch (position) {
       case METHOD_PARAMETER:
       case GENERIC_PARAMETER:
@@ -36,10 +36,10 @@ public class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
   @Nullable
-  public ConversionResult isConvertibleEx(@NotNull PsiType ltype,
-                                          @NotNull PsiType rtype,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo position) {
+  public ConversionResult isConvertible(@NotNull PsiType ltype,
+                                        @NotNull PsiType rtype,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }

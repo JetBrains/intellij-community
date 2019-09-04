@@ -15,10 +15,10 @@ public class GrContainerConverter extends GrTypeConverter {
 
   @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType lType,
-                                          @NotNull PsiType rType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo position) {
+  public ConversionResult isConvertible(@NotNull PsiType lType,
+                                        @NotNull PsiType rType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     if (isCompileStatic(context)) return null;
     if (lType instanceof PsiArrayType) {
       PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
