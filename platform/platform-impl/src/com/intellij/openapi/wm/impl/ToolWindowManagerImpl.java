@@ -2334,7 +2334,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return info == null || info.isShowStripeButton();
   }
 
-  public static class InitToolWindowsActivity implements StartupActivity.Backgroundable {
+  public static class InitToolWindowsActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);

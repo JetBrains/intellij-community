@@ -31,7 +31,7 @@ import java.time.Month;
 /**
  * @author nik
  */
-public class MigrateToCloudToolsNotification implements StartupActivity.Backgroundable {
+public class MigrateToCloudToolsNotification implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);

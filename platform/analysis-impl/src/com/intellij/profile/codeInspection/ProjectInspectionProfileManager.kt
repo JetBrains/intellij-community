@@ -129,7 +129,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   }
 
   @Suppress("unused")
-  private class ProjectInspectionProfileStartUpActivity : StartupActivity.Backgroundable {
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
       val profileManager = getInstance(project)
       profileManager.initialLoadSchemesFuture

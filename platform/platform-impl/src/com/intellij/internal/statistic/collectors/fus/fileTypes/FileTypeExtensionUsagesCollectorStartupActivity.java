@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity.Backgroundable {
+public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity.DumbAware {
   private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
   @Override

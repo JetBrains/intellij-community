@@ -7,7 +7,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyCompilerLoader implements StartupActivity.Backgroundable {
+public class GroovyCompilerLoader implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {

@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class MvcProjectWithoutLibraryNotificator implements StartupActivity.Backgroundable {
+public class MvcProjectWithoutLibraryNotificator implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;

@@ -22,7 +22,7 @@ import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ConfigProjectComponent implements StartupActivity.Backgroundable {
+public class ConfigProjectComponent implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;

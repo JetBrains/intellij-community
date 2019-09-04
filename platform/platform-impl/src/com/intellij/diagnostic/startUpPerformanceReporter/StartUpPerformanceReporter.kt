@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.Comparator
 
-class StartUpPerformanceReporter : StartupActivity.Backgroundable {
+class StartUpPerformanceReporter : StartupActivity.DumbAware {
   private val activationCount = AtomicInteger()
   // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
   private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()

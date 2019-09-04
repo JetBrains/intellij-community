@@ -231,7 +231,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
   }
 
-  static final class Activity extends PreloadingActivity implements StartupActivity.Backgroundable {
+  static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
     Activity() {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw ExtensionNotApplicableException.INSTANCE;

@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 /**
  * @author gregsh
  */
-public class RepositoryLibrarySynchronizer implements StartupActivity.Backgroundable{
+public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     if (version == null) {

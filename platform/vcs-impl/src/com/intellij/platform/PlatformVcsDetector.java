@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author yole
  */
-final class PlatformVcsDetector implements StartupActivity.Backgroundable {
+final class PlatformVcsDetector implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {

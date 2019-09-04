@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
-final class OpenFilesActivity implements StartupActivity.Backgroundable {
+final class OpenFilesActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

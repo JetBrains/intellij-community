@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public final class TipOfTheDayStartupActivity implements StartupActivity.Backgroundable {
+public final class TipOfTheDayStartupActivity implements StartupActivity.DumbAware {
   private boolean myVeryFirstProjectOpening = true;
 
   @Override

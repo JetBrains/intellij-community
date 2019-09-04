@@ -48,7 +48,7 @@ public class MavenRehighlighter {
     queue.setPassThrough(false);
   }
 
-  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity.Backgroundable {
+  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull final Project project) {
       MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);

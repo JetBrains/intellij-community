@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class CheckRequiredPluginsActivity implements StartupActivity.Backgroundable {
+public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
   @Override

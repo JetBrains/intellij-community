@@ -64,7 +64,7 @@ public class GitConflictsToolWindowManager {
     }
   }
 
-  public static class Starter implements StartupActivity.Backgroundable {
+  public static class Starter implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       new GitConflictsToolWindowManager(project).init();

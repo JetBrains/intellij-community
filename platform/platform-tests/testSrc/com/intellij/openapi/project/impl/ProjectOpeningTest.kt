@@ -135,7 +135,7 @@ class ProjectOpeningTest {
   }
 }
 
-private class MyStartupActivity : StartupActivity.Backgroundable {
+private class MyStartupActivity : StartupActivity.DumbAware {
   val passed = AtomicBoolean()
 
   override fun runActivity(project: Project) {
