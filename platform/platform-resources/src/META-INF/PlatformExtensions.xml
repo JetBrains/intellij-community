@@ -762,5 +762,8 @@
     <preloadingActivity implementation="org.jetbrains.io.PowerSupplyKit" os="mac"/>
 
     <experimentalFeature id="copy.reference.popup" percentOfUsers="100"/>
+
+    <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
+                 description="Defines storing Run Anything context combobox directories number."/>
   </extensions>
 </idea-plugin>
