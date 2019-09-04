@@ -493,8 +493,8 @@
 
     <action id="Maven.RemoveManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
-            text="Remove Projects"
-            description="Remove selected Maven projects from the project tree"
+            text="Unlink Maven Projects"
+            description="Unlink selected Maven projects and their subprojects from the project tree"
             icon="AllIcons.General.Remove">
     </action>
 

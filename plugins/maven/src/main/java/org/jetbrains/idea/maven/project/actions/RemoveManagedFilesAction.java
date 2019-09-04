@@ -15,20 +15,38 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.idea.maven.utils.actions.MavenActionUtil.getProject;
 
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
@@ -41,21 +59,85 @@ public class RemoveManagedFilesAction extends MavenAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
 
-    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
-    if(projectsManager == null) return;
+    final Project project = getProject(context);
+    if (project == null) {
+      return;
+    }
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
     List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
     List<VirtualFile> removableFiles = new ArrayList<>();
+    List<String> filesToUnIgnore = new ArrayList<>();
+
+    List<Module> modulesToRemove = new ArrayList<>();
 
     for (VirtualFile pomXml : selectedFiles) {
       if (projectsManager.isManagedFile(pomXml)) {
+        MavenProject managedProject = projectsManager.findProject(pomXml);
+        if (managedProject == null) {
+          continue;
+        }
+        addModuleToRemoveList(projectsManager, modulesToRemove, managedProject);
+        projectsManager.getModules(managedProject).forEach(mp -> {
+          addModuleToRemoveList(projectsManager, modulesToRemove, mp);
+          filesToUnIgnore.add(mp.getFile().getPath());
+
+        });
         removableFiles.add(pomXml);
+        filesToUnIgnore.add(pomXml.getPath());
       }
       else {
         notifyUserIfNeeded(context, projectsManager, selectedFiles, pomXml);
       }
     }
+    List<String> names = ContainerUtil.map(modulesToRemove, m -> m.getName());
+   /* int returnCode =
+      Messages.showOkCancelDialog(ProjectBundle.message("maven.unlink.confirmation.prompt", names, names.size()), getActionTitle(names),
+                                  CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(),
+                                  Messages.getQuestionIcon());
+    if (returnCode != Messages.OK) {
+      return;
+    }*/
+
+    removeModules(ModuleManager.getInstance(project), projectsManager, modulesToRemove);
     projectsManager.removeManagedFiles(removableFiles);
+    projectsManager.removeIgnoredFilesPaths(filesToUnIgnore); // hack to remove deleted files from ignore list
+  }
+
+  private static String getActionTitle(List<String> names) {
+    return names.size() > 1 ? "Unlink Modules?" : "Unlink Module";
+  }
+
+  private static void addModuleToRemoveList(MavenProjectsManager manager, List<Module> modulesToRemove, MavenProject project) {
+    Module module = manager.findModule(project);
+    if (module == null) {
+      return;
+    }
+    modulesToRemove.add(module);
+  }
+
+  private static void removeModules(ModuleManager moduleManager, MavenProjectsManager mavenProjectsManager,  List<Module> modulesToRemove) {
+    WriteAction.run(() -> {
+      List<ModifiableRootModel> usingModels = new SmartList<>();
+
+      for (Module module : modulesToRemove) {
+
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+          if (entry instanceof ModuleOrderEntry) {
+            usingModels.add(moduleRootManager.getModifiableModel());
+            break;
+          }
+        }
+      }
+
+
+      final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
+      for (Module module : modulesToRemove) {
+        ModuleDeleteProvider.removeModule(module, usingModels, moduleModel);
+      }
+      ModifiableModelCommitter.multiCommit(usingModels, moduleModel);
+    });
   }
 
   private static void notifyUserIfNeeded(DataContext context,
@@ -86,6 +168,6 @@ public class RemoveManagedFilesAction extends MavenAction {
     );
 
     notification.setImportant(true);
-    notification.notify(MavenActionUtil.getProject(context));
+    notification.notify(getProject(context));
   }
 }
