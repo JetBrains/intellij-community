@@ -183,6 +183,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/dart-lang/vm_service_drivers/blob/master/LICENSE",
                        url: "https://github.com/dart-lang/vm_service_drivers"),
     new LibraryLicense(name: "data-binding", libraryName: "data-binding.jar", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "dbus-java", libraryName: "dbus-java", license: "LGPL", url: "https://mvnrepository.com/artifact/com.github.hypfvieh/dbus-java"),
     new LibraryLicense(name: "debugger-memory-agent", libraryName: "debugger-memory-agent", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/debugger-memory-agent",
                        licenseUrl: "https://github.com/JetBrains/debugger-memory-agent/blob/master/LICENSE"),
