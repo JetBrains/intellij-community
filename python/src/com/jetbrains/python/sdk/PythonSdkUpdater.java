@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingSet;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -57,7 +56,6 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -67,7 +65,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
-  public static final int INITIAL_ACTIVITY_DELAY = 3000;
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
@@ -78,23 +75,18 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   @Override
   public void runActivity(@NotNull final Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      return;
-    }
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      if (project.isDisposed()) {
-        return;
-      }
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          for (Sdk sdk : getPythonSdks(project)) {
-            update(sdk, null, project, null);
-          }
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) return;
+    if (project.isDisposed()) return;
+    
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Sdk sdk : getPythonSdks(project)) {
+          update(sdk, null, project, null);
         }
-      });
-    }, INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
+      }
+    });
   }
 
   /**

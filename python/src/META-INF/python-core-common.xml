@@ -593,8 +593,8 @@
     <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
 
-    <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
 
 
