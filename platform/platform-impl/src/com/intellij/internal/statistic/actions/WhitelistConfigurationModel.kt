@@ -47,12 +47,13 @@ class WhitelistConfigurationModel {
     updatePanel()
 
     panel = panel {
-      row("Recorder:") {
-        recorderComboBox()
+      row {
+        label("Recorder:")
+        recorderComboBox(growX)
       }
       row {
-        useCustomPathCheckBox()
-        pathField()
+        useCustomPathCheckBox(growX)
+        pathField(growX, growPolicy = GrowPolicy.MEDIUM_TEXT)
       }
     }
   }
@@ -124,11 +125,14 @@ class WhitelistConfigurationModel {
     }
 
     val currentPath: String
-      get() = if (useCustomPath) {
-        customPath!!
-      }
-      else {
-        defaultPath
+      get() {
+        val customWhitelistPath = customPath
+        return if (useCustomPath && customWhitelistPath != null) {
+          customWhitelistPath
+        }
+        else {
+          defaultPath
+        }
       }
   }
 
