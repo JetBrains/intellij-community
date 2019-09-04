@@ -20,7 +20,7 @@ public final class LifecycleUsageTriggerCollector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector");
   private static final String LIFECYCLE = "lifecycle";
 
-  private static final Throttle ourErrorsThrottle = new Throttle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
+  private static final EventsRateThrottle ourErrorsThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
 
   public static void onIdeStart() {
     final FeatureUsageData data = new FeatureUsageData().addData("eap", ApplicationManager.getApplication().isEAP());

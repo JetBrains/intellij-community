@@ -233,6 +233,9 @@ class FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * This method has been added to support stack trace logging and should NOT be used for regular events.
+   * */
   fun addData(key: String, value: List<String>): FeatureUsageData {
     return addDataInternal(key, value)
   }

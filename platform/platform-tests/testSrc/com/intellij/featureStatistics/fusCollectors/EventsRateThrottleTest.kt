@@ -5,11 +5,11 @@ import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ThrottleTest {
+class EventsRateThrottleTest {
 
   @Test
   fun `test tryPass`() {
-    val throttle = Throttle(3, 10)
+    val throttle = EventsRateThrottle(3, 10)
 
     assertTrue(throttle.tryPass(0))
     assertTrue(throttle.tryPass(2))
