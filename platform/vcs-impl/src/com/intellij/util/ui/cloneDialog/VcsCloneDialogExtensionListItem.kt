@@ -6,7 +6,6 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.GridBagLayout
@@ -23,7 +22,7 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
   private val additionalLinesPanel = JPanel(VerticalLayout(0, SwingConstants.LEFT))
 
   init {
-    border = JBEmptyBorder(VcsCloneDialogUiSpec.ExtensionsList.insets)
+    border = JBUI.Borders.empty(VcsCloneDialogUiSpec.ExtensionsList.topBottomInsets, VcsCloneDialogUiSpec.ExtensionsList.leftRightInsets)
     relayout()
   }
 

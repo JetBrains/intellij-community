@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 
 /**
@@ -11,7 +10,8 @@ object VcsCloneDialogUiSpec {
   object ExtensionsList {
     val iconSize = JBValue.UIInteger("VcsCloneDialog.iconSize", 22)
     const val iconTitleGap = 6
-    val insets = JBUI.insets(8, 10)
+    const val topBottomInsets = 8
+    const val leftRightInsets = 10
   }
 
   object Components {
