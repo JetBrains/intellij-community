@@ -157,6 +157,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       .map(ThreadInfo::getThreadState)
       .allMatch(Thread.State.RUNNABLE::equals);
     List<StackTraceElement[]> reasonStacks;
+    boolean nonEdt = false;
     if (allInEdt) {
       reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList();
     }
@@ -169,6 +170,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           // find probable cause thread
           ThreadInfo thread = getCauseThread(threadInfos);
           if (thread != null) {
+            nonEdt = true;
             causeThreadId = thread.getThreadId();
             reasonStacks.add(thread.getStackTrace());
           }
@@ -184,6 +186,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
     if (reasonStacks.isEmpty()) {
       reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
+      nonEdt = false;
     }
     CallTreeNode root = CallTreeNode.buildTree(reasonStacks, time);
     List<StackTraceElement> commonStack = root.findDominantCommonStack(reasonStacks.size() * time / 2);
@@ -212,6 +215,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                        "Sampling rate: " + dumpTask.myDumpInterval + "ms";
       if (sampled > 0) {
         message += "\nGC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+      }
+      if (nonEdt) {
+        message += "\n\nThe stack is from the thread that was blocking EDT";
       }
       return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
