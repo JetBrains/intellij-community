@@ -9,13 +9,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Encapsulates EDT-related checks and processing. The general idea is that intellij threading model is tightly bound with EDT
+ * <p>Encapsulates EDT-related checks and processing. The general idea is that IntelliJ threading model is tightly bound with EDT
  * (e.g. write access is allowed from EDT only and any task executed from EDT is implicitly granted read access). That makes
- * a huge bottleneck in non-intellij environments like upsource - every vcs revision there is represented as a separate ide project
- * object, hence, global shared write lock and single EDT become a problem.
- * <p/>
- * That's why it should be possible to change that model in non-intellij environment - that involves either custom read/write locks
- * processing or custom EDT processing as well. This interface covers EDT part.
+ * a huge bottleneck in non-IntelliJ environments like Upsource - every vcs revision there is represented as a separate ide project
+ * object, hence, global shared write lock and single EDT become a problem.</p>
+ *
+ * <p>That's why it should be possible to change that model in non-IntelliJ environment - that involves either custom read/write locks
+ * processing or custom EDT processing as well. This interface covers EDT part.</p>
  */
 public abstract class EdtInvocationManager {
   private static final AtomicReference<EdtInvocationManager> ourInstance = new AtomicReference<>();
@@ -38,7 +38,7 @@ public abstract class EdtInvocationManager {
     return result;
   }
 
-  @SuppressWarnings("unused") // Used in upsource
+  @SuppressWarnings("unused") // Used in Upsource
   public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
     ourInstance.set(edtInvocationManager);
   }
@@ -78,7 +78,7 @@ public abstract class EdtInvocationManager {
   }
 
   /**
-   * The default {@link EdtInvocationManager} implementation which works with the EDT via SwingUtilities.
+   * The default {@link EdtInvocationManager} implementation that uses {@link EventQueue}.
    */
   public static class SwingEdtInvocationManager extends EdtInvocationManager {
     @Override
@@ -88,7 +88,6 @@ public abstract class EdtInvocationManager {
 
     @Override
     public void invokeLater(@NotNull Runnable task) {
-      //noinspection SSBasedInspection
       EventQueue.invokeLater(task);
     }
 

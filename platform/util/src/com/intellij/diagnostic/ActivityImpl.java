@@ -79,7 +79,7 @@ public final class ActivityImpl implements Activity {
     return parallelActivity;
   }
 
-  // and how do we can sort correctly, when parent item equals to child (start and end) and also there is another child with start equals to end?
+  // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
   // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
   @Override
   @NotNull
@@ -124,7 +124,7 @@ public final class ActivityImpl implements Activity {
     if (description != null) {
       this.description = description;
     }
-    assert end == 0;
+    assert end == 0 : "not started or already ended";
     end = System.nanoTime();
     StartUpMeasurer.add(this);
   }

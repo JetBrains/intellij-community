@@ -24,6 +24,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -67,6 +68,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static com.intellij.diagnostic.LoadingPhase.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
@@ -87,15 +89,14 @@ public final class StartupUtil {
 
   private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> MainRunner.processException(e);
 
-  public static synchronized void addExternalInstanceListener(@Nullable SocketLock.CliRequestProcessor processor) {
-    // method called by app after startup
+  /* called by the app after startup */
+  public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
     if (ourSocketLock != null) {
-      ourSocketLock.setExternalInstanceListener(processor);
+      ourSocketLock.setCommandProcessor(processor);
     }
   }
 
-  @Nullable
-  public static synchronized BuiltInServer getServer() {
+  public static synchronized @Nullable BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
@@ -103,24 +104,23 @@ public final class StartupUtil {
     Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
   }
 
-  @FunctionalInterface
   public interface AppStarter {
-    // called in Idea Main thread
+    /* called from IDE init thread */
     void start(@NotNull Future<?> initUiTask);
 
-    // not called in EDT
+    /* called from IDE init thread */
     default void beforeImportConfigs() {}
 
-    // called in EDT
+    /* called from EDT */
     default void beforeStartupWizard() {}
 
-    // called in EDT
+    /* called from EDT */
     default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
 
-    // not called in EDT
+    /* called from IDE init thread */
     default void importFinished(@NotNull Path newConfigDir) {}
 
-    // called in EDT
+    /* called from EDT */
     default int customizeIdeWizardDialog(@NotNull List<AbstractCustomizeWizardStep> steps) {
       return -1;
     }
@@ -140,8 +140,7 @@ public final class StartupUtil {
     }
   }
 
-  static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
-    throws InvocationTargetException, InterruptedException, ExecutionException {
+  static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter) throws Exception {
     Activity fjp = StartUpMeasurer.start("setupForkJoinCommonPool");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     fjp.end();
@@ -150,23 +149,30 @@ public final class StartupUtil {
 
     Future<?> initUiTask = scheduleInitUi(args);
 
-    configureLogging();
+    configureLog4j();
 
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
     // this check must be performed before system directories are locked
-    boolean newConfigFolder = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
+    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
 
-    Logger log = lockDirsAndConfigureLogger(args);
+    Activity dirsAndLogs = StartUpMeasurer.start(Phases.CHECK_SYSTEM_DIR);
+    if (!checkSystemDirs()) {  // note: uses config directory!
+      System.exit(Main.DIR_CHECK_FAILED);
+    }
+    dirsAndLogs = dirsAndLogs.endAndStart(Phases.LOCK_SYSTEM_DIRS);
+    lockSystemDirs(args);
+    dirsAndLogs = dirsAndLogs.endAndStart("configure file logger");
+    Logger log = setupLogger();  // log initialization should happen only after locking the system directory
+    dirsAndLogs.end();
 
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
-    // no need to wait
-    executorService.submit(() -> {
+    executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("log essential info about ide");
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("log essential info about the IDE");
       logEssentialInfoAboutIde(log, appInfo);
       activity.end();
     });
@@ -180,24 +186,22 @@ public final class StartupUtil {
       activity.end();
     }));
 
-    if (!newConfigFolder) {
+    if (!configImportNeeded) {
       installPluginUpdates();
       runPreAppClass(log);
     }
 
-    // no need to wait
     executorService.execute(() -> loadSystemLibraries(log));
 
     Activity waitTaskActivity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-    for (Future<?> future : futures) {
-      future.get();
-    }
+    for (Future<?> future : futures) future.get();
     waitTaskActivity.end();
     futures.clear();
 
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.start(Phases.IMPORT_CONFIGS);
-      if (newConfigFolder) {
+
+      if (configImportNeeded) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
         runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
@@ -206,11 +210,11 @@ public final class StartupUtil {
 
       showUserAgreementAndConsentsIfNeeded(log, initUiTask);
 
-      if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
-        // exception handler is already set by ConfigImportHelper
-        // event queue and icons already initialized as part of old config import
+      if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
+        // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
         EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
       }
+
       activity.end();
     }
 
@@ -225,9 +229,10 @@ public final class StartupUtil {
   @NotNull
   private static Future<?> scheduleInitUi(@NotNull String[] args) {
     Activity initLafAsync = StartUpMeasurer.start("schedule LaF init");
+
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
-    // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
+    // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
       installExceptionHandler();
 
@@ -255,8 +260,8 @@ public final class StartupUtil {
 
           LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
-          // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
-           StartupUiUtil.configureHtmlKitStylesheet();
+          // may be expensive (~200 ms), so configure only after showing the splash
+          StartupUiUtil.configureHtmlKitStylesheet();
         });
       }
       catch (InterruptedException | InvocationTargetException e) {
@@ -284,85 +289,31 @@ public final class StartupUtil {
       }
 
       LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
-
     });
+
     initLafAsync.end();
     return future;
   }
 
-  @NotNull
-  private static Logger lockDirsAndConfigureLogger(@NotNull String[] args) {
-    Activity activity = StartUpMeasurer.start(Phases.CHECK_SYSTEM_DIR);
-    // note: uses config folder!
-    if (!checkSystemFolders()) {
-      System.exit(Main.DIR_CHECK_FAILED);
-    }
-
-    activity = activity.endAndStart(Phases.LOCK_SYSTEM_DIRS);
-
-    SocketLock.ActivateStatusAndResponse result = lockSystemFolders(args);
-    if (result.getActivateStatus() == SocketLock.ActivateStatus.ACTIVATED) {
-      final CliResult cliOutput = Objects.requireNonNull(result.getResponse(), "guaranteed by SocketLock.mapResponseToCliResult");
-      if (cliOutput.getMessage() != null) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println(cliOutput.getMessage());
-      }
-      System.exit(cliOutput.getReturnCode());
-    }
-    if (result.getActivateStatus() == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-      System.exit(Main.INSTANCE_CHECK_FAILED);
-    }
-
-    activity = activity.endAndStart("configure file logger");
-
-    // the log initialization should happen only after locking the system directory
-    Logger.setFactory(new LoggerFactory());
-    Logger log = Logger.getInstance(Main.class);
-
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-    ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-    });
-    activity.end();
-    return log;
-  }
-
-  private static void configureLogging() {
+  private static void configureLog4j() {
     Activity activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
-    try {
-      org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-      if (!root.getAllAppenders().hasMoreElements()) {
-        root.setLevel(Level.WARN);
-        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
-      }
-    }
-    catch (Throwable e) {
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
+    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+    if (!root.getAllAppenders().hasMoreElements()) {
+      root.setLevel(Level.WARN);
+      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
     }
     activity.end();
   }
 
-  /**
-   * Checks if the program can run under the JDK it was started with.
-   */
   private static boolean checkJdkVersion() {
     if ("true".equals(System.getProperty("idea.jre.check"))) {
       try {
-        // try to find a JDK class
-        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
+        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());  // trying to find a JDK class
       }
-      catch (ClassNotFoundException e) {
-        String message = "JDK classes seem to be not on " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
-                         "Please ensure you run the IDE on JDK rather than JRE.";
-        Main.showMessage("JDK Required", message, true);
-        return false;
-      }
-      catch (LinkageError e) {
-        String message = "Cannot load a JDK class: " + e.getMessage() + "\n" +
-                         "Please ensure you run the IDE on JDK rather than JRE.";
+      catch (ClassNotFoundException | LinkageError e) {
+        String message = "Cannot load a JDK class: " + e.getMessage() + "\nPlease ensure you run the IDE on JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;
       }
@@ -370,7 +321,7 @@ public final class StartupUtil {
 
     if ("true".equals(System.getProperty("idea.64bit.check"))) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-        String message = "32-bit JVM is not supported. Please use 64-bit version.";
+        String message = "32-bit JVM is not supported. Please use a 64-bit version.";
         Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
@@ -391,7 +342,7 @@ public final class StartupUtil {
     }
   }
 
-  private static synchronized boolean checkSystemFolders() {
+  private static synchronized boolean checkSystemDirs() {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
     if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
@@ -464,7 +415,7 @@ public final class StartupUtil {
                       ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
                         "Please use Finder to move it to another location."
                       : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                        "otherwise please re-install the IDE.";
+                        "otherwise, please re-install the IDE.";
       String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
                        "\n\n-----\nLocation: " + path + "\n" + e.getClass().getName() + ": " + e.getMessage();
       Main.showMessage(title, message, true);
@@ -478,25 +429,13 @@ public final class StartupUtil {
     }
   }
 
-  @NotNull
-  private static synchronized SocketLock.ActivateStatusAndResponse lockSystemFolders(@NotNull String[] args) {
-    if (ourSocketLock != null) {
-      throw new AssertionError();
-    }
-
+  private static synchronized void lockSystemDirs(String[] args) throws IOException {
+    if (ourSocketLock != null) throw new AssertionError();
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
-    SocketLock.ActivateStatusAndResponse status;
-    try {
-      status = ourSocketLock.lockAndTryActivate(args);
-    }
-    catch (Exception e) {
-      Main.showMessage("Cannot Lock System Folders", e);
-      return SocketLock.ActivateStatusAndResponse.emptyResponse(SocketLock.ActivateStatus.CANNOT_ACTIVATE);
-    }
-
-    switch (status.getActivateStatus()) {
-      case NO_INSTANCE:
+    Pair<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
+    switch (status.first) {
+      case NO_INSTANCE: {
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           //noinspection SynchronizeOnThis
           synchronized (StartupUtil.class) {
@@ -505,15 +444,33 @@ public final class StartupUtil {
           }
         });
         break;
-      case ACTIVATED:
+      }
+
+      case ACTIVATED: {
+        CliResult result = status.second;
+        String message = result.getMessage();
+        if (message == null) message = "Already running";
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Already running");
-        break;
-      case CANNOT_ACTIVATE:
+        System.out.println(message);
+        System.exit(result.getReturnCode());
+      }
+
+      case CANNOT_ACTIVATE: {
         String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
         Main.showMessage("Too Many Instances", message, true);
+        System.exit(Main.INSTANCE_CHECK_FAILED);
+      }
     }
-    return status;
+  }
+
+  private static Logger setupLogger() {
+    Logger.setFactory(new LoggerFactory());
+    Logger log = Logger.getInstance(Main.class);
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+    });
+    return log;
   }
 
   private static void fixProcessEnvironment(Logger log) {
@@ -526,7 +483,6 @@ public final class StartupUtil {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     String ideTempPath = PathManager.getTempPath();
 
@@ -647,7 +603,7 @@ public final class StartupUtil {
     //
     // At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
     //
-    // This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+    // This matters only if {@code swing.bufferPerWindow = true} and we don't invoke JComponent.getGraphics() directly.
     //
     // True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
     // frame buffer content without the usual repainting, even when the EDT is blocked.
@@ -699,8 +655,7 @@ public final class StartupUtil {
             IconLoader.activate();
             // we don't set AppUIUtil.updateForDarcula(false) because light is default
           }
-          catch (Exception ignore) {
-          }
+          catch (Exception ignore) { }
         });
       }
 

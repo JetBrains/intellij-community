@@ -26,11 +26,9 @@ public final class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  @SuppressWarnings("unused") // left for compatibility and reserved for future use
-  public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  @SuppressWarnings("unused") public static final int UNSUPPORTED_JAVA_VERSION = 10;  // left for compatibility/reserved for future use
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
-  // External cmdline and IDE activation
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
   public static final int ACTIVATE_LISTENER_NOT_INITIALIZED = 14;
   public static final int ACTIVATE_RESPONSE_TIMEOUT = 15;

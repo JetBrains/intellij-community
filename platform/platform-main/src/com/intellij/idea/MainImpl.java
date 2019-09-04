@@ -11,9 +11,7 @@ import java.util.concurrent.Future;
 public final class MainImpl {
   private MainImpl() { }
 
-  /**
-   * Called from PluginManager via reflection.
-   */
+  /** Called via reflection from {@code MainRunner#start}. */
   public static void start(@NotNull String[] args) throws Exception {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
 

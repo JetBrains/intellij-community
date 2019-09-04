@@ -20,10 +20,10 @@ import java.util.Map;
 public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
   public static final String FRAGMENT_PARAM_NAME = "__fragment";
+  public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
 
   private static String ourMainParameter = null;
   private static String ourCommand = null;
-  public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
   private static Map<String, String> ourParameters = Collections.emptyMap();
   private static boolean initialized = false;
 
@@ -110,5 +110,15 @@ public final class JetBrainsProtocolHandler {
   public static Map<String, String> getParameters() {
     init();
     return ourParameters;
+  }
+
+  public static boolean isShutdownCommand() {
+    return "shutdown".equals(getCommand());
+  }
+
+  @NotNull
+  public static String[] checkForJetBrainsProtocolCommand(@NotNull String[] args) {
+    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    return property != null ? new String[]{property} : args;
   }
 }
