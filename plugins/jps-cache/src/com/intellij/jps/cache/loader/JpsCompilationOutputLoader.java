@@ -90,10 +90,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       modulesWithRemovedOutDir.forEach(moduleName -> {
         affectedModulesMap.put(moduleName, allModulesMap.get(moduleName));
       });
-      LOG.warn("Compilation output affected for the following modules: " + affectedModulesMap.keySet() + " " + (System.currentTimeMillis() - start));
+      LOG.warn("Compilation output affected for the following " + affectedModulesMap.size() + " modules " + (System.currentTimeMillis() - start));
       return affectedModulesMap;
     }
-    LOG.warn("Compilation output doesn't exist, force to download all modules compilation " +  (System.currentTimeMillis() - start));
+    LOG.warn("Compilation output doesn't exist, force to download " + allModulesMap.size() +" modules " +  (System.currentTimeMillis() - start));
     return allModulesMap;
   }
 
@@ -124,7 +124,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     FileUtil.delete(currentModuleBuildDir);
     try {
       FileUtil.rename(tmpModuleFolder, currentModuleBuildDir);
-      LOG.warn("Done for module: " + moduleName);
+      LOG.debug("Module: " + moduleName + " was replaced successfully");
     }
     catch (IOException e) {
       LOG.warn("Couldn't replace existing caches by downloaded portable", e);

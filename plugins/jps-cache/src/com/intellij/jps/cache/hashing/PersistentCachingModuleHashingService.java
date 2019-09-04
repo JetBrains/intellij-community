@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -52,36 +51,41 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     else {
       LOG.debug("Initialization finished");
     }
-
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    for (VFileEvent e : events) {
-      VirtualFile virtualFile = e.getFile();
-      if (virtualFile == null) continue;
-
-      Module affectedModule = myProjectFileIndex.getModuleForFile(virtualFile);
-      if (affectedModule == null) continue;
-
-      final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
-      boolean isTest = moduleFileIndex.isInTestSourceContent(e.getFile());
-      if (isTest) {
-        try {
-          myTestHashes.remove(affectedModule.getName());
-        }
-        catch (IOException ex) {
-          LOG.warn(ex);
-        }
+    Set<Module> affectedProductionModules = new HashSet<>();
+    Set<Module> affectedTestModules = new HashSet<>();
+    events.stream().map(VFileEvent::getFile).filter(Objects::nonNull).forEach(vf -> {
+      Module affectedModule = myProjectFileIndex.getModuleForFile(vf);
+      if (affectedModule == null) return;
+      ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
+      if (moduleFileIndex.isInTestSourceContent(vf)) {
+        affectedTestModules.add(affectedModule);
+      } else {
+        affectedProductionModules.add(affectedModule);
       }
-      else {
-        try {
-          myProductionHashes.remove(affectedModule.getName());
-        }
-        catch (IOException ex) {
-          LOG.warn(ex);
-        }
+    });
+
+    for (Module affectedModule : affectedProductionModules) {
+      try {
+        LOG.debug("Changed production sources of module: " + affectedModule.getName());
+        myProductionHashes.remove(affectedModule.getName());
+      }
+      catch (IOException ex) {
+        LOG.warn("Couldn't remove affected module from collection", ex);
+      }
+    }
+
+    for (Module affectedModule : affectedTestModules) {
+      try {
+        LOG.debug("Changed test sources of module: " + affectedModule.getName());
+        myTestHashes.remove(affectedModule.getName());
+      }
+      catch (IOException ex) {
+        LOG.warn("Couldn't remove affected module from collection", ex);
       }
     }
   }
