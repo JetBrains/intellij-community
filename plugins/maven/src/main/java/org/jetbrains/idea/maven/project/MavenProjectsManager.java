@@ -44,7 +44,6 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -66,7 +65,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -117,7 +115,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
-  private volatile AsyncPromise<List<Module>> myRunningImportPromise;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenProjectsManager.class);
@@ -152,11 +149,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
-  }
-
-  @ApiStatus.Experimental
-  AsyncPromise<List<Module>> getRunningImportPromise() {
-    return myRunningImportPromise;
   }
 
   public ModificationTracker getModificationTracker() {
@@ -880,26 +872,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void terminateImport(int exitCode) {
     getSyncConsole().terminated(exitCode);
-    AsyncPromise<List<Module>> toCheck = myRunningImportPromise;
-    if (toCheck != null) {
-      try {
-        toCheck.cancel();
-      }
-      catch (CancellationException ignore) {
-      }
-    }
-    myRunningImportPromise = null;
   }
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-    Promise<List<Module>> toCheck = myRunningImportPromise;
-    if (toCheck != null) {
-      return toCheck;
-    }
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    myRunningImportPromise = promise;
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(console);
     });
@@ -929,7 +907,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   myPostProcessor.waitForCompletion();
                                 }
                                 console.finishImport();
-                                myRunningImportPromise = null;
                               });
   }
 
