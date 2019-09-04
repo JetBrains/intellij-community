@@ -7,16 +7,7 @@ _helpers_dir = os.path.dirname(_containing_dir)
 
 
 def _cleanup_sys_path():
-    target_roots = []
-    # filter out all roots that equal or under "helpers" directory itself
-    for root in sys.path:
-        try:
-            if not os.path.relpath(root, _helpers_dir).startswith(os.path.pardir):
-                continue
-        except ValueError:
-            pass
-        target_roots.append(root)
-    return target_roots
+    return [root for root in sys.path if os.path.normpath(root) not in (_containing_dir, _helpers_dir)]
 
 
 def _bootstrap_sys_path():
