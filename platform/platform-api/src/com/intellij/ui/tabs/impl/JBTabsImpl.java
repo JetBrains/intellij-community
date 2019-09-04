@@ -1712,7 +1712,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private boolean isNavigationVisible() {
-    return !myVisibleInfos.isEmpty();
+    return myVisibleInfos.size() > 1;
   }
 
   @Override
