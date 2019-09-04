@@ -23,11 +23,12 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
   private val formattersTable: JTable
   private lateinit var allowPrettyFormatting: JCheckBox
   private val patterns: MutableMap<String, String?>
-  private val formatters: Map<String, DateTimeFormatterBean>
   private val formatterIds: MutableList<String>
 
+  private val formatters: Map<String, DateTimeFormatterBean> =
+    DateTimeFormatterBean.EP_NAME.getExtensionList(null).map { it.id to it }.toMap()
+
   init {
-    formatters = DateTimeFormatterBean.EP_NAME.getExtensionList(null).map { it.id to it }.toMap()
     formatterIds = formatters.keys.toMutableList()
     formatterIds.sort()
     patterns = formatterIds.map { it to settings.getDateFormatPattern(it) }.toMap().toMutableMap()
@@ -35,14 +36,14 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
     ui = panel {
       row {
         allowPrettyFormatting = checkBox("Allow pretty formatting",
-                 { settings.isPrettyFormattingAllowed },
-                 { settings.isPrettyFormattingAllowed = it }).component
+                                         { settings.isPrettyFormattingAllowed },
+                                         { settings.isPrettyFormattingAllowed = it }).component
       }
       row {
-        cell(isFullWidth = true) {
-          scrollPane(formattersTable)
-        }
+        scrollPane(formattersTable)
       }
+      commentRow(
+        "<html>Use Date and Time patterns to change date format. Example, <b>yyyy.MM.dd G 'at' HH:mm:ss z</b> For more examples visit <a href='https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html'>the documentation page</a>.</html>")
     }
   }
 
@@ -69,9 +70,10 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
   override fun reset(settings: DateTimeFormatManager) {
     allowPrettyFormatting.isSelected = settings.isPrettyFormattingAllowed
 
-    settings.ids.forEach {
+    formatterIds.forEach {
       patterns[it] = settings.getDateFormatPattern(it)
     }
+    formattersTable.revalidate()
   }
 
   override fun isModified(settings: DateTimeFormatManager): Boolean {
