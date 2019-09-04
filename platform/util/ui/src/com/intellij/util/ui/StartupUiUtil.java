@@ -52,7 +52,7 @@ public class StartupUiUtil {
       // based on Xft.dpi value.
       try {
         String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class cls = Class.forName(name);
+        Class<?> cls = Class.forName(name);
         LookAndFeel laf = (LookAndFeel)cls.newInstance();
         // if gtk lib is available
         if (laf.isSupportedLookAndFeel()) {
@@ -73,10 +73,7 @@ public class StartupUiUtil {
 
     blockATKWrapper();
 
-    // separate activity to make clear that it is not our code takes time
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
-    Toolkit.getDefaultToolkit();
-    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }

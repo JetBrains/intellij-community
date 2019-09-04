@@ -74,7 +74,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 /**
  * @author yole
  */
-public class StartupUtil {
+public final class StartupUtil {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
@@ -235,27 +235,31 @@ public class StartupUtil {
 
       //noinspection SpellCheckingInspection
       System.setProperty("sun.awt.noerasebackground", "true");
+      if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+      }
 
       try {
         EventQueue.invokeAndWait(() -> {
           // see note about StartupUiUtil static init - it is required even if headless
           try {
             StartupUiUtil.initDefaultLaF();
-            if (!Main.isHeadless()) {
-              SplashManager.show(args);
-            }
-
-            LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
-
-            // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
-            StartupUiUtil.configureHtmlKitStylesheet();
           }
-          catch (Exception e) {
+          catch (ReflectiveOperationException | UnsupportedLookAndFeelException e) {
             throw new CompletionException(e);
           }
+
+          if (!Main.isHeadless()) {
+            SplashManager.show(args);
+          }
+
+          LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+
+          // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
+           StartupUiUtil.configureHtmlKitStylesheet();
         });
       }
-      catch (Exception e) {
+      catch (InterruptedException | InvocationTargetException e) {
         throw new CompletionException(e);
       }
 
@@ -274,10 +278,6 @@ public class StartupUtil {
             AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
             updateWindowIconActivity.end();
           });
-        }
-
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
         }
 
         AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
