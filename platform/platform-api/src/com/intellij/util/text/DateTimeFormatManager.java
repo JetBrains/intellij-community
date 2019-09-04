@@ -73,6 +73,11 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
     return pattern == null ? null : pattern.myFormat;
   }
 
+  public void setDateFormatPattern(String formatterID, @Nullable String pattern) {
+    //assert myPatterns.containsKey(formatterID) : "Unknown formatterID: " + formatterID
+    myPatterns.put(formatterID, StringUtil.isEmpty(pattern) ? null : new DateFormatPattern(pattern));
+  }
+
   public boolean isPrettyFormattingAllowed() {
     return myPrettyFormattingAllowed;
   }
