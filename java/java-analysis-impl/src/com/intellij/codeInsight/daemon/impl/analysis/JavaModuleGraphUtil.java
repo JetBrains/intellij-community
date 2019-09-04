@@ -112,8 +112,8 @@ public class JavaModuleGraphUtil {
     return getRequiresGraph(source).reads(source, destination);
   }
 
-  public static Set<PsiJavaModule> getAllRequires(PsiJavaModule source) {
-    return getRequiresGraph(source).getAllRequires(source);
+  public static Set<PsiJavaModule> getAllDependencies(PsiJavaModule source) {
+    return getRequiresGraph(source).getAllDependencies(source);
   }
 
   @Nullable
@@ -133,7 +133,7 @@ public class JavaModuleGraphUtil {
 
   /*
    * Looks for cycles between Java modules in the project sources.
-   * Library/JDK modules are excluded - in assumption there can't be any lib -> src dependencies.
+   * Library/JDK modules are excluded - in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
@@ -213,7 +213,7 @@ public class JavaModuleGraphUtil {
     return new RequiresGraph(graph, transitiveEdges);
   }
 
-  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<? super String> transitiveEdges) {
+  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> transitiveEdges) {
     if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       boolean explicitJavaBase = false;
@@ -272,15 +272,11 @@ public class JavaModuleGraphUtil {
       return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
-    private <T> T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+    private <T> T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
       return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, new HashSet<>(), processor) : null;
     }
 
-    private <T> T processExports(String name,
-                                 PsiJavaModule module,
-                                 int layer,
-                                 Set<? super PsiJavaModule> visited,
-                                 BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+    private <T> T processExports(String name, PsiJavaModule module, int layer, Set<PsiJavaModule> visited, BiFunction<String, PsiJavaModule, T> processor) {
       if (visited.add(module)) {
         if (layer == 1) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {
@@ -292,8 +288,7 @@ public class JavaModuleGraphUtil {
           }
         }
         if (layer < 2) {
-          Iterator<PsiJavaModule> iterator = myGraph.getIn(module);
-          while (iterator.hasNext()) {
+          for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
             PsiJavaModule dependency = iterator.next();
             if (layer == 0 || myTransitiveEdges.contains(key(dependency, module))) {
               T result = processExports(name, dependency, 1, visited, processor);
@@ -310,21 +305,20 @@ public class JavaModuleGraphUtil {
       return module.getName() + '/' + exporter.getName();
     }
 
-    public Set<PsiJavaModule> getAllRequires(PsiJavaModule module) {
-      HashSet<PsiJavaModule> requires = new HashSet<>();
-      new Object() {
-        void traverse(PsiJavaModule m) {
-          for (Iterator<PsiJavaModule> iterator = myGraph.getIn(m); iterator.hasNext();) {
-            final PsiJavaModule dep = iterator.next();
-            if (!requires.contains(dep)) {
-              requires.add(dep);
-              traverse(dep);
-            }
-          }
-        }
-      }.traverse(module);
-
+    public Set<PsiJavaModule> getAllDependencies(PsiJavaModule module) {
+      Set<PsiJavaModule> requires = new HashSet<>();
+      collectDependencies(module, requires);
       return requires;
+    }
+
+    private void collectDependencies(PsiJavaModule module, Set<PsiJavaModule> dependencies) {
+      for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
+        PsiJavaModule dependency = iterator.next();
+        if (!dependencies.contains(dependency)) {
+          dependencies.add(dependency);
+          collectDependencies(dependency, dependencies);
+        }
+      }
     }
   }
 
