@@ -9,8 +9,8 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -418,7 +418,7 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T
-) : CellBuilder<T>, CheckboxCellBuilder {
+) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
     return this
@@ -466,6 +466,13 @@ class CellBuilderImpl<T : JComponent> internal constructor(
 
   override fun actsAsLabel() {
     builder.updateComponentConstraints(component) { spanX = 1 }
+  }
+
+  override fun noGrowY() {
+    builder.updateComponentConstraints(component) {
+      growY(0.0f)
+      pushY(0.0f)
+    }
   }
 }
 

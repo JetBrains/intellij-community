@@ -120,6 +120,15 @@ fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   return this
 }
 
+internal interface ScrollPaneCellBuilder {
+  fun noGrowY()
+}
+
+fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
+  (this as ScrollPaneCellBuilder).noGrowY()
+  return this
+}
+
 fun <T : JTextField> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
   return withBinding(JTextField::getText, JTextField::setText, modelBinding)
 }
@@ -393,8 +402,8 @@ abstract class Cell : BaseBuilder {
     panel(*constraints)
   }
 
-  fun scrollPane(component: Component, vararg constraints: CCFlags) {
-    JBScrollPane(component)(*constraints)
+  fun scrollPane(component: Component, vararg constraints: CCFlags): CellBuilder<JScrollPane> {
+    return JBScrollPane(component)(*constraints)
   }
 
   abstract operator fun <T : JComponent> T.invoke(

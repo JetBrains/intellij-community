@@ -8,6 +8,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import javax.swing.JPanel
+import javax.swing.JTable
 
 /**
  * Set `test.update.snapshots=true` to automatically update snapshots if need.
@@ -80,6 +81,20 @@ abstract class UiDslTest {
   @Test
   fun `titled row`() {
     doTest { titledRow() }
+  }
+
+  @Test
+  fun scrollPaneNoGrow() {
+    doTest {
+      panel {
+        row {
+          scrollPane(JTable())
+        }
+        row {
+          scrollPane(JTable()).noGrowY()
+        }
+      }
+    }
   }
 
   protected abstract fun doTest(panelCreator: () -> JPanel)
