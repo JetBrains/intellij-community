@@ -106,7 +106,9 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
   }
 
   private fun shouldImportExternalAnnotations(project: Project) =
-    MavenProjectsManager.getInstance(project).importingSettings.isDownloadAnnotationsAutomatically
+    MavenProjectsManager.getInstance(project).run {
+      importingSettings.isDownloadAnnotationsAutomatically && !generalSettings.isWorkOffline
+    }
 
   companion object {
     val LOG = Logger.getInstance(ExternalAnnotationsImporter::class.java)
