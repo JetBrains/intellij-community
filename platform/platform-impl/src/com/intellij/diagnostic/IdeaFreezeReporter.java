@@ -50,146 +50,6 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       .filter(ThreadDumper::isEDT);
   }
 
-  @Nullable
-  private static List<StackTraceElement> findDominantCommonStack(CallTreeNode root, long threshold) {
-    // find dominant
-    CallTreeNode node = root.getMostHitChild();
-    if (node == null) {
-      return null;
-    }
-    while (!node.myChildren.isEmpty()) {
-      CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild != null && mostHitChild.myTime > threshold) {
-        node = mostHitChild;
-      }
-      else {
-        break;
-      }
-    }
-    // build stack
-    List<StackTraceElement> res = new ArrayList<>();
-    while (node != null && node.myStackTraceElement != null) {
-      res.add(node.myStackTraceElement);
-      node = node.myParent;
-    }
-    return res;
-  }
-
-  @NotNull
-  private static CallTreeNode buildTree(List<StackTraceElement[]> stacks, long time) {
-    CallTreeNode root = new CallTreeNode(null, null, 0, 0);
-    for (StackTraceElement[] stack : stacks) {
-      CallTreeNode node = root;
-      for (int i = stack.length - 1; i >= 0; i--) {
-        node = node.addCallee(stack[i], time);
-      }
-    }
-    return root;
-  }
-
-  private static final class CallTreeNode {
-    final StackTraceElement myStackTraceElement;
-    final CallTreeNode myParent;
-    final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
-    long myTime;
-    final int myDepth;
-
-    static final Comparator<CallTreeNode> TIME_COMPARATOR = Comparator.<CallTreeNode>comparingLong(n -> n.myTime).reversed();
-
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent, int depth, long time) {
-      myStackTraceElement = element;
-      myParent = parent;
-      myDepth = depth;
-      myTime = time;
-    }
-
-    CallTreeNode addCallee(StackTraceElement e, long time) {
-      for (CallTreeNode child : myChildren) {
-        if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
-          child.myTime += time;
-          return child;
-        }
-      }
-      CallTreeNode child = new CallTreeNode(e, this, myDepth + 1, time);
-      myChildren.add(child);
-      return child;
-    }
-
-    @Nullable
-    CallTreeNode getMostHitChild() {
-      CallTreeNode currentMax = null;
-      for (CallTreeNode child : myChildren) {
-        if (currentMax == null || child.myTime > currentMax.myTime) {
-          currentMax = child;
-        }
-      }
-      return currentMax;
-    }
-
-    @Override
-    public String toString() {
-      return myTime + " " + myStackTraceElement;
-    }
-
-    public void appendIndentedString(StringBuilder builder) {
-      StringUtil.repeatSymbol(builder, ' ', myDepth);
-      builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
-        .append(" ").append(myTime).append("ms").append("\n");
-    }
-  }
-
-  private static final class DumpTask {
-    private final int myDumpInterval;
-    private final int myMaxDumps;
-    private final ScheduledFuture<?> myFuture;
-    private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
-    private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-    private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
-    private final long myStartTime;
-    private long myCurrentTime;
-    private final long myGcStartTime;
-    private long myGcCurrentTime;
-
-    private DumpTask() {
-      myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
-      myMaxDumps = Registry.intValue("freeze.reporter.dump.duration.s") * 1000 / myDumpInterval;
-      myCurrentTime = myStartTime = System.currentTimeMillis();
-      myGcCurrentTime = myGcStartTime = currentGcTime();
-      ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
-      myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
-    }
-
-    void dumpThreads() {
-      myCurrentTime = System.currentTimeMillis();
-      myGcCurrentTime = currentGcTime();
-      ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
-      myThreadInfos.add(infos);
-      if (myThreadInfos.size() >= myMaxDumps) {
-        cancel();
-      }
-    }
-
-    private static long currentGcTime() {
-      return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
-    }
-
-    long getSampledTime() {
-      return myCurrentTime - myStartTime;
-    }
-
-    long getGcTime() {
-      return myGcCurrentTime - myGcStartTime;
-    }
-
-    boolean isValid(long dumpingDuration) {
-      return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
-    }
-
-    void cancel() {
-      myFuture.cancel(false);
-    }
-  }
-
   @Override
   public void uiFreezeStarted() {
     if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
@@ -314,10 +174,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           }
         }
         else {
-          long finalCauseThreadId = causeThreadId;
-          ThreadInfo causeThread = ContainerUtil.find(threadInfos, i -> i.getThreadId() == finalCauseThreadId);
-          if (causeThread != null) {
-            reasonStacks.add(causeThread.getStackTrace());
+          for (ThreadInfo info : threadInfos) {
+            if (info.getThreadId() == causeThreadId) {
+              reasonStacks.add(info.getStackTrace());
+            }
           }
         }
       }
@@ -325,21 +185,13 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     if (reasonStacks.isEmpty()) {
       reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
     }
-    CallTreeNode root = buildTree(reasonStacks, time);
-    List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() * time / 2);
+    CallTreeNode root = CallTreeNode.buildTree(reasonStacks, time);
+    List<StackTraceElement> commonStack = root.findDominantCommonStack(reasonStacks.size() * time / 2);
     if (ContainerUtil.isEmpty(commonStack)) {
       commonStack = myStacktraceCommonPart; // fallback to simple EDT common
     }
 
-    // dump tree
-    StringBuilder sb = new StringBuilder();
-    LinkedList<CallTreeNode> nodes = new LinkedList<>(root.myChildren);
-    while (!nodes.isEmpty()) {
-      CallTreeNode node = nodes.removeFirst();
-      node.appendIndentedString(sb);
-      nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
-    }
-    String text = sb.toString();
+    String text = root.dump();
     String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
     Attachment attachment = new Attachment(name, text);
     attachment.setIncluded(true);
@@ -364,5 +216,156 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
     return null;
+  }
+
+  private static final class CallTreeNode {
+    private final StackTraceElement myStackTraceElement;
+    private final CallTreeNode myParent;
+    private final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
+    private final int myDepth;
+    private long myTime;
+
+    static final Comparator<CallTreeNode> TIME_COMPARATOR = Comparator.<CallTreeNode>comparingLong(n -> n.myTime).reversed();
+
+    private CallTreeNode(StackTraceElement element, CallTreeNode parent, long time) {
+      myStackTraceElement = element;
+      myParent = parent;
+      myDepth = parent != null ? parent.myDepth + 1 : 0;
+      myTime = time;
+    }
+
+    @NotNull
+    public static CallTreeNode buildTree(List<StackTraceElement[]> stacks, long time) {
+      CallTreeNode root = new CallTreeNode(null, null, 0);
+      for (StackTraceElement[] stack : stacks) {
+        CallTreeNode node = root;
+        for (int i = stack.length - 1; i >= 0; i--) {
+          node = node.addCallee(stack[i], time);
+        }
+      }
+      return root;
+    }
+
+    CallTreeNode addCallee(StackTraceElement e, long time) {
+      for (CallTreeNode child : myChildren) {
+        if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
+          child.myTime += time;
+          return child;
+        }
+      }
+      CallTreeNode child = new CallTreeNode(e, this, time);
+      myChildren.add(child);
+      return child;
+    }
+
+    @Nullable
+    CallTreeNode getMostHitChild() {
+      CallTreeNode currentMax = null;
+      for (CallTreeNode child : myChildren) {
+        if (currentMax == null || child.myTime > currentMax.myTime) {
+          currentMax = child;
+        }
+      }
+      return currentMax;
+    }
+
+    @Override
+    public String toString() {
+      return myTime + " " + myStackTraceElement;
+    }
+
+    public void appendIndentedString(StringBuilder builder) {
+      StringUtil.repeatSymbol(builder, ' ', myDepth);
+      builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
+        .append(" ").append(myTime).append("ms").append("\n");
+    }
+
+    String dump() {
+      StringBuilder sb = new StringBuilder();
+      LinkedList<CallTreeNode> nodes = new LinkedList<>(myChildren);
+      while (!nodes.isEmpty()) {
+        CallTreeNode node = nodes.removeFirst();
+        node.appendIndentedString(sb);
+        nodes.addAll(0, ContainerUtil.sorted(node.myChildren, TIME_COMPARATOR));
+      }
+      return sb.toString();
+    }
+
+    @Nullable
+    private List<StackTraceElement> findDominantCommonStack(long threshold) {
+      // find dominant
+      CallTreeNode node = getMostHitChild();
+      if (node == null) {
+        return null;
+      }
+      while (!node.myChildren.isEmpty()) {
+        CallTreeNode mostHitChild = node.getMostHitChild();
+        if (mostHitChild != null && mostHitChild.myTime > threshold) {
+          node = mostHitChild;
+        }
+        else {
+          break;
+        }
+      }
+      // build stack
+      List<StackTraceElement> res = new ArrayList<>();
+      while (node != null && node.myStackTraceElement != null) {
+        res.add(node.myStackTraceElement);
+        node = node.myParent;
+      }
+      return res;
+    }
+  }
+
+  private static final class DumpTask {
+    private final int myDumpInterval;
+    private final int myMaxDumps;
+    private final ScheduledFuture<?> myFuture;
+    private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
+    private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
+    private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
+    private final long myStartTime;
+    private long myCurrentTime;
+    private final long myGcStartTime;
+    private long myGcCurrentTime;
+
+    private DumpTask() {
+      myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
+      myMaxDumps = Registry.intValue("freeze.reporter.dump.duration.s") * 1000 / myDumpInterval;
+      myCurrentTime = myStartTime = System.currentTimeMillis();
+      myGcCurrentTime = myGcStartTime = currentGcTime();
+      ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
+      myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
+    }
+
+    void dumpThreads() {
+      myCurrentTime = System.currentTimeMillis();
+      myGcCurrentTime = currentGcTime();
+      ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
+      myThreadInfos.add(infos);
+      if (myThreadInfos.size() >= myMaxDumps) {
+        cancel();
+      }
+    }
+
+    private static long currentGcTime() {
+      return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
+    }
+
+    long getSampledTime() {
+      return myCurrentTime - myStartTime;
+    }
+
+    long getGcTime() {
+      return myGcCurrentTime - myGcStartTime;
+    }
+
+    boolean isValid(long dumpingDuration) {
+      return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
+    }
+
+    void cancel() {
+      myFuture.cancel(false);
+    }
   }
 }
