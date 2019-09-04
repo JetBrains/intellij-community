@@ -85,10 +85,10 @@ public class PyCommandLineStateUtil {
     }
   }
 
-  private static void remapEnvPaths(@NotNull Map<String, String> env,
-                                    @NotNull PathMapper pathMapper,
-                                    @NotNull String interpreterPath,
-                                    @NotNull String envKey) {
+  public static void remapEnvPaths(@NotNull Map<String, String> env,
+                                   @NotNull PathMapper pathMapper,
+                                   @NotNull String interpreterPath,
+                                   @NotNull String envKey) {
     if (env.isEmpty()) return;
 
     String envPaths = env.get(envKey);
