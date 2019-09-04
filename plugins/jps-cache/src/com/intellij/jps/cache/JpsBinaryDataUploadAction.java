@@ -16,17 +16,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 public class JpsBinaryDataUploadAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsBinaryDataSyncAction");
+  private final ModuleHashingService myModuleHashingService;
+
+  public JpsBinaryDataUploadAction() throws IOException {
+    myModuleHashingService = new ModuleHashingService();
+  }
 
   @Override
   public void actionPerformed(AnActionEvent actionEvent) {
@@ -48,14 +50,14 @@ public class JpsBinaryDataUploadAction extends DumbAwareAction {
       if (!productionDir.exists()) {
         LOG.warn("Production folder skipped from sync, it doesn't exist");
       } else {
-        uploadSourceRootBinaryData(productionDir, moduleManager, CompilerModuleExtension.PRODUCTION, JpsBinaryDataUploadAction::calculateProductionSourceRootsHash);
+        uploadSourceRootBinaryData(productionDir, moduleManager, CompilerModuleExtension.PRODUCTION, this::calculateProductionSourceRootsHash);
       }
 
       File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
       if (!testDir.exists()) {
         LOG.warn("Test folder skipped from sync, it doesn't exist");
       } else {
-        uploadSourceRootBinaryData(testDir, moduleManager, CompilerModuleExtension.TEST, JpsBinaryDataUploadAction::calculateTestSourceRootsHash);
+        uploadSourceRootBinaryData(testDir, moduleManager, CompilerModuleExtension.TEST, this::calculateTestSourceRootsHash);
       }
 
       long finish = System.currentTimeMillis() - start;
@@ -83,13 +85,13 @@ public class JpsBinaryDataUploadAction extends DumbAwareAction {
     }
   }
 
-  private static String calculateProductionSourceRootsHash(ModuleRootManager moduleRootManager) {
-    return ModuleHashingService.hashDirectories(JpsCachesUtils.getProductionSourceRootFiles(moduleRootManager))
+  private String calculateProductionSourceRootsHash(ModuleRootManager moduleRootManager) {
+    return myModuleHashingService.hashDirectories(JpsCachesUtils.getProductionSourceRootFiles(moduleRootManager))
                                .map(hash -> DatatypeConverter.printHexBinary(hash).toLowerCase()).orElse("");
   }
 
-  private static String calculateTestSourceRootsHash(ModuleRootManager moduleRootManager) {
-    return ModuleHashingService.hashDirectories(JpsCachesUtils.getTestSourceRootFiles(moduleRootManager))
+  private String calculateTestSourceRootsHash(ModuleRootManager moduleRootManager) {
+    return myModuleHashingService.hashDirectories(JpsCachesUtils.getTestSourceRootFiles(moduleRootManager))
                                .map(hash -> DatatypeConverter.printHexBinary(hash).toLowerCase()).orElse("");
   }
 

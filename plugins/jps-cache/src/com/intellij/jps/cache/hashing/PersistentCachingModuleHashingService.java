@@ -27,12 +27,14 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
   private final PersistentHashMap<String, byte[]> myProductionHashes;
   private final PersistentHashMap<String, byte[]> myTestHashes;
   private final Map<String, Module> myModuleNameToModuleMap;
+  private final ModuleHashingService myModuleHashingService;
   private final ProjectFileIndex myProjectFileIndex;
   private final Project myProject;
 
   public PersistentCachingModuleHashingService(File baseDir, Project project) throws IOException {
     myProject = project;
     myModuleNameToModuleMap = JpsCachesUtils.createModuleNameToModuleMap(project);
+    myModuleHashingService = new ModuleHashingService();
     File testHashesFile = new File(baseDir, TEST_CACHE_FILE_NAME);
     File productionHashesFile = new File(baseDir, PRODUCTION_CACHE_FILE_NAME);
     boolean shouldComputeHashesForEntireProject = !testHashesFile.exists() || !productionHashesFile.exists();
@@ -177,7 +179,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     return result;
   }
 
-  private static Optional<byte[]> getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache,
+  private Optional<byte[]> getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache,
                                                                File[] sourceRoots) throws IOException {
     byte[] hashFromCache = hashCache.get(moduleName);
     if (hashFromCache != null) {
@@ -186,11 +188,11 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     return hashDirectoriesAndPersist(moduleName, sourceRoots, hashCache);
   }
 
-  private static Optional<byte[]> hashDirectoriesAndPersist(String name, File[] directories, PersistentHashMap<String, byte[]> hashCache) {
+  private Optional<byte[]> hashDirectoriesAndPersist(String name, File[] directories, PersistentHashMap<String, byte[]> hashCache) {
     if (directories == null || directories.length == 0) {
       return Optional.empty();
     }
-    return ModuleHashingService.hashDirectories(directories).map(hash -> {
+    return myModuleHashingService.hashDirectories(directories).map(hash -> {
       try {
         hashCache.put(name, hash);
       }
