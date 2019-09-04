@@ -10,18 +10,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.*
 
 class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
-
-  override fun isApplicable(mavenProject: MavenProject?): Boolean  {
-    return super.isApplicable(mavenProject) && Registry.`is`("external.system.import.resolve.annotations")
-  }
 
   override fun processChangedModulesOnly(): Boolean = false
 
@@ -68,7 +64,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
     val project = module.project
     val librariesMap = mutableMapOf<MavenArtifact, Library>()
 
-    if (!MavenProjectsManager.getInstance(project).importingSettings.isDownloadAnnotationsAutomatically) {
+    if (!shouldImportExternalAnnotations(project)) {
       return
     }
 
@@ -108,6 +104,10 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
       }
     }
   }
+
+  private fun shouldImportExternalAnnotations(project: Project) =
+    MavenProjectsManager.getInstance(project).importingSettings.isDownloadAnnotationsAutomatically
+
   companion object {
     val LOG = Logger.getInstance(ExternalAnnotationsImporter::class.java)
   }
