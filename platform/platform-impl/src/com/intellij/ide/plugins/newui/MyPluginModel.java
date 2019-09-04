@@ -178,13 +178,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       IdeaPluginDescriptor descriptor = getObjectAt(i);
       boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled != descriptor.isEnabled()) {
+        // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
+        IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true);
         if (!enabled) {
-          pluginDescriptorsToDisable.add(descriptor);
+          pluginDescriptorsToDisable.add(fullDescriptor);
         }
         else {
-          // For disabled plugins, we do not resolve XInclude references and potentially do not load other parts of plugin.xml.
-          // To check if a plugin can be loaded without restart, we need to read the complete descriptor.
-          pluginDescriptorsToEnable.add(PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true));
+          pluginDescriptorsToEnable.add(fullDescriptor);
         }
       }
       descriptor.setEnabled(enabled);
