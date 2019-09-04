@@ -592,6 +592,30 @@ public class ReflectionUtil {
     return type;
   }
 
+  @NotNull
+  public static <T,V> Field getTheOnlyVolatileInstanceFieldOfClass(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
+    Field[] declaredFields = ownerClass.getDeclaredFields();
+    Field found = null;
+    for (Field field : declaredFields) {
+      int modifiers = field.getModifiers();
+      if (BitUtil.isSet(modifiers, Modifier.STATIC) || !BitUtil.isSet(modifiers, Modifier.VOLATILE)) {
+        continue;
+      }
+      if (fieldType.isAssignableFrom(field.getType())) {
+        if (found == null) {
+          found = field;
+        }
+        else {
+          throw new IllegalArgumentException("Two fields of "+fieldType+" found in the "+ownerClass+": "+found + " and "+field);
+        }
+      }
+    }
+    if (found == null) {
+      throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
+    }
+    return found;
+  }
+
 
   private static class MySecurityManager extends SecurityManager {
     private static final MySecurityManager INSTANCE = new MySecurityManager();
