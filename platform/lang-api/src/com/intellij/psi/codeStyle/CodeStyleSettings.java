@@ -26,10 +26,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -475,11 +472,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 // endregion
 
 // region WRAPPING
-  /**
-   * @deprecated Use {@link #getRightMargin(Language)}/{@link #setRightMargin(Language, int)} and {@link #setDefaultRightMargin(int)}
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+
+  @ApiStatus.Internal
   @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
   /**
