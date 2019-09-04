@@ -53,7 +53,6 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     options.isSkipPackageStatements = false;
     options.isSkipImportStatements = false;
     FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindPackageUsages", createFeatureUsageData(options));
-    options.storeDefaults(myProject);
   }
 
   @Override

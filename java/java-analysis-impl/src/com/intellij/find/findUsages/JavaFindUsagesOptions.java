@@ -20,7 +20,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -28,7 +27,7 @@ import java.util.LinkedHashSet;
 /**
  * @author peter
  */
-public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
+public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
   public boolean isSkipImportStatements;
 
   public JavaFindUsagesOptions(@NotNull Project project) {
@@ -43,23 +42,21 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     isUsages = true;
   }
 
-  @ApiStatus.Internal
+  @Override
   public final void setDefaults(@NotNull Project project) {
     setDefaults(PropertiesComponent.getInstance(project), findPrefix());
   }
 
-  @ApiStatus.Internal
   protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
     isSearchForTextOccurrences = properties.getBoolean(prefix + "isSearchForTextOccurrences", true);
     isUsages = properties.getBoolean(prefix + "isUsages", true);
   }
 
-  @ApiStatus.Internal
+  @Override
   public final void storeDefaults(@NotNull Project project) {
     storeDefaults(PropertiesComponent.getInstance(project), findPrefix());
   }
 
-  @ApiStatus.Internal
   protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
     properties.setValue(prefix + "isUsages", isUsages, true);
     properties.setValue(prefix + "isSearchForTextOccurrences", isSearchForTextOccurrences, true);

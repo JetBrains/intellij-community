@@ -42,7 +42,6 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
     options.isReadAccess = true;
     options.isWriteAccess = true;
     FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindVariableUsages", createFeatureUsageData(options));
-    options.storeDefaults(myProject);
   }
 
   @Override

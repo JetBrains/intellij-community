@@ -78,7 +78,6 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
     FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindThrowUsages", createFeatureUsageData(options));
-    options.storeDefaults(myProject);
   }
 
   @Override
