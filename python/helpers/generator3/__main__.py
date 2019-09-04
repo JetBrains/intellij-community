@@ -2,16 +2,25 @@ import atexit
 import os
 import sys
 
-import generator3.core
-import generator3.extra
-from generator3.clr_tools import get_namespace_by_name
-from generator3.constants import Timer
-from generator3.core import version, process_one_with_results_reporting, \
-    GenerationStatus, process_all
-from generator3.util_methods import set_verbose, say, report, note, print_profile
-
 _containing_dir = os.path.dirname(os.path.abspath(__file__))
 _helpers_dir = os.path.dirname(_containing_dir)
+
+
+def _cleanup_sys_path():
+    target_roots = []
+    # filter out all roots that equal or under "helpers" directory itself
+    for root in sys.path:
+        try:
+            if not os.path.relpath(root, _helpers_dir).startswith(os.path.pardir):
+                continue
+        except ValueError:
+            pass
+        target_roots.append(root)
+    return target_roots
+
+
+def _bootstrap_sys_path():
+    sys.path.insert(0, _helpers_dir)
 
 
 def get_help_text():
@@ -46,6 +55,13 @@ def get_help_text():
 
 
 def main():
+    import generator3.core
+    import generator3.extra
+    from generator3.clr_tools import get_namespace_by_name
+    from generator3.constants import Timer
+    from generator3.core import version, process_one_with_results_reporting, GenerationStatus, process_all
+    from generator3.util_methods import set_verbose, say, report, note, print_profile
+
     try:
         # Get traces after segmentation faults
         import faulthandler
@@ -80,15 +96,7 @@ def main():
                 sys.path.append(p)  # we need this to make things in additional dirs importable
         note("Altered sys.path: %r", sys.path)
 
-    target_roots = []
-    # filter out all roots that equal or under "helpers" directory itself
-    for root in sys.path:
-        try:
-            if not os.path.relpath(root, _helpers_dir).startswith(os.path.pardir):
-                continue
-        except ValueError:
-            pass
-        target_roots.append(root)
+    target_roots = _cleanup_sys_path()
 
     if "-S" in opts:
         if len(args) > 0:
@@ -167,4 +175,5 @@ def main():
 
 
 if __name__ == "__main__":
+    _bootstrap_sys_path()
     main()
