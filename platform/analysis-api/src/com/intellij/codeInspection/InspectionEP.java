@@ -81,7 +81,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String bundle;
 
   /**
-   * Non-localized display name. Use {@link #key} for I18N.
+   * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
    */
   @Attribute("displayName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -106,14 +106,14 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String groupBundle;
 
   /**
-   * Non-localized group display name. Use {@link #groupKey} for I18N.
+   * Non-localized group display name used in UI (Settings|Editor|Inspections). Use {@link #groupKey} for I18N.
    */
   @Attribute("groupName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String groupDisplayName;
 
   /**
-   * Comma-delimited list of parent groups (excluding groupName), e.g. {@code "Java,Java language level migration aids"}.
+   * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
   @Attribute("groupPath")
   public String groupPath;
