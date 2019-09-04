@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
@@ -14,13 +15,16 @@ public class GrContainerConverter extends GrTypeConverter {
 
   @Nullable
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
+  public ConversionResult isConvertibleEx(@NotNull PsiType lType,
+                                          @NotNull PsiType rType,
+                                          @NotNull GroovyPsiElement context,
+                                          @NotNull ApplicableTo position) {
     if (isCompileStatic(context)) return null;
     if (lType instanceof PsiArrayType) {
       PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
       PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, context);
       if (rComponentType != null && TypesUtil.isAssignable(lComponentType, rComponentType, context)) {
-        return Boolean.TRUE;
+        return ConversionResult.OK;
       }
     }
 
