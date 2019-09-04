@@ -12,6 +12,10 @@ import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcess
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderPreDefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderPreDefinedInnerClassMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.SuperBuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -75,7 +79,12 @@ public class DelombokEverythingAction extends AbstractDelombokAction {
       findExtension(BuilderClassProcessor.class),
       findExtension(BuilderClassMethodProcessor.class),
       findExtension(BuilderMethodProcessor.class),
-      findExtension(BuilderProcessor.class));
+      findExtension(BuilderProcessor.class),
+
+      findExtension(SuperBuilderPreDefinedInnerClassFieldProcessor.class),
+      findExtension(SuperBuilderPreDefinedInnerClassMethodProcessor.class),
+      findExtension(SuperBuilderClassProcessor.class),
+      findExtension(SuperBuilderProcessor.class));
   }
 
 }
