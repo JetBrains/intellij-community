@@ -11,7 +11,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.exception.FrequentErrorLogger;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -166,7 +169,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private static String getDateSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" : DateFormatUtil.formatDateTime(data.getAuthorTime()), "");
+    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(data.getAuthorTime()), "");
   }
 
   @NotNull
