@@ -40,8 +40,6 @@ def list_sources(paths):
     # noinspection PyBroadException
     try:
         for path in paths:
-            if path == os.path.dirname(sys.argv[0]): continue
-
             path = os.path.normpath(path)
 
             if path.endswith('.egg') and os.path.isfile(path):
@@ -116,7 +114,6 @@ def add_to_zip(zip, paths):
     try:
         for path in paths:
             print("Walking root %s" % path)
-            if path == os.path.dirname(sys.argv[0]): continue
 
             path = os.path.normpath(path)
 
@@ -137,7 +134,7 @@ def add_to_zip(zip, paths):
         sys.exit(1)
 
 
-def zip_stdlib(zip_path):
+def zip_stdlib(roots, zip_path):
     if not os.path.exists(zip_path):
         os.makedirs(zip_path)
 
@@ -156,6 +153,6 @@ def zip_stdlib(zip_path):
         zip = zipfile.ZipFile(zip_filename, 'w')
 
     try:
-        add_to_zip(zip, sys.path)
+        add_to_zip(zip, roots)
     finally:
         zip.close()
