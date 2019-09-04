@@ -86,10 +86,12 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     val configDir = project.getProjectConfigDir()
     val externallyAddedFiles =
       events.asSequence()
-        .filter(VFileEvent::isFromRefresh)
-        .filter { it is VFileCreateEvent }
+        .filter {
+          it.isFromRefresh &&
+          it is VFileCreateEvent &&
+          isProjectConfigDirOrUnderIt(configDir, it.parent)
+        }
         .mapNotNull(VFileEvent::getFile)
-        .filterNot { isProjectConfigDirOrUnderIt(configDir, it) }
         .toSet()
 
     if (externallyAddedFiles.isEmpty()) return
