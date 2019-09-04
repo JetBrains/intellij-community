@@ -166,7 +166,6 @@ def collect_binaries(paths):
         return {}
     paths = sorted_no_case(paths)
     for path in paths:
-        if path == os.path.dirname(sys.argv[0]): continue
         for root, files in walk_python_path(path):
             cutpoint = path.rfind(SEP)
             if cutpoint > 0:
@@ -601,7 +600,7 @@ def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
     return result
 
 
-def process_all(sdk_skeletons_dir, name_pattern=None):
+def process_all(roots, sdk_skeletons_dir, name_pattern=None):
     if name_pattern is None:
         name_pattern = '*'
 
@@ -609,7 +608,7 @@ def process_all(sdk_skeletons_dir, name_pattern=None):
     progress("Updating skeletons of builtins for {}...".format(interpreter))
     process_builtin_modules(sdk_skeletons_dir, name_pattern)
     progress("Querying skeleton generator for {}...".format(interpreter))
-    binaries = collect_binaries(sys.path)
+    binaries = collect_binaries(roots)
     progress("Updating skeletons for {}...".format(interpreter))
     binaries = [b for b in binaries if fnmatch.fnmatchcase(b.qname, name_pattern)]
     binaries.sort(key=(lambda b: b.qname))

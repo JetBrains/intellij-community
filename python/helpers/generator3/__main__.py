@@ -10,6 +10,9 @@ from generator3.core import version, process_one_with_results_reporting, \
     GenerationStatus, process_all
 from generator3.util_methods import set_verbose, say, report, note, print_profile
 
+_containing_dir = os.path.dirname(os.path.abspath(__file__))
+_helpers_dir = os.path.dirname(_containing_dir)
+
 
 def get_help_text():
     return (
@@ -77,12 +80,22 @@ def main():
                 sys.path.append(p)  # we need this to make things in additional dirs importable
         note("Altered sys.path: %r", sys.path)
 
+    target_roots = []
+    # filter out all roots that equal or under "helpers" directory itself
+    for root in sys.path:
+        try:
+            if not os.path.relpath(root, _helpers_dir).startswith(os.path.pardir):
+                continue
+        except ValueError:
+            pass
+        target_roots.append(root)
+
     if "-S" in opts:
         if len(args) > 0:
             report("Expected no args with -S, got %d args", len(args))
             sys.exit(1)
         say(version())
-        generator3.extra.list_sources(sys.path)
+        generator3.extra.list_sources(target_roots)
         sys.exit(0)
 
     if "-z" in opts:
@@ -96,7 +109,7 @@ def main():
         if len(args) != 1:
             report("Expected 1 arg with -u, got %d args", len(args))
             sys.exit(1)
-        generator3.extra.zip_stdlib(args[0])
+        generator3.extra.zip_stdlib(target_roots, args[0])
         sys.exit(0)
 
     if "-V" in opts:
@@ -122,7 +135,7 @@ def main():
         report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
         sys.exit(1)
     elif not args:
-        process_all(subdir, name_pattern=opts.get('--name-pattern'))
+        process_all(target_roots, subdir, name_pattern=opts.get('--name-pattern'))
         sys.exit()
     else:
         name = args[0]
