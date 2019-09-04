@@ -67,7 +67,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     super.setRootPane(root);
   }
 
-  void setFrameHelper(@NotNull FrameHelper frameHelper, @NotNull FrameDecorator frameDecorator) {
+  void setFrameHelper(@NotNull FrameHelper frameHelper, @Nullable FrameDecorator frameDecorator) {
     myFrameHelper = frameHelper;
     myFrameDecorator = frameDecorator;
   }
