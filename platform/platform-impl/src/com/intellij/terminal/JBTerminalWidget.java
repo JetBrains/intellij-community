@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -39,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
@@ -92,20 +94,24 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     mySettingsProvider = settingsProvider;
-    myCompositeFilter = createCompositeFilter(project, console);
+    myCompositeFilter = new CompositeFilter(project);
     myCompositeFilter.setForceUseAllFilters(true);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(this, parent);
+
+    ReadAction
+      .nonBlocking(() -> calcCompositeFilter(project, console))
+      .expireWith(myDisposableWrapper)
+      .finishOnUiThread(ModalityState.any(), filters -> { filters.forEach(filter -> myCompositeFilter.addFilter(filter)); })
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   @NotNull
-  private static CompositeFilter createCompositeFilter(@NotNull Project project, @Nullable TerminalExecutionConsole console) {
-    List<Filter> filters = Collections.emptyList();
-    if (!project.isDefault()) {
-      filters = ConsoleViewUtil.computeConsoleFilters(project, console, GlobalSearchScope.allScope(project));
-    }
-    return new CompositeFilter(project, filters);
+  private static List<Filter> calcCompositeFilter(@NotNull Project project, @Nullable TerminalExecutionConsole console) {
+    return project.isDefault()
+           ? Collections.emptyList()
+           : ConsoleViewUtil.computeConsoleFilters(project, console, GlobalSearchScope.allScope(project));
   }
 
   @Nullable
