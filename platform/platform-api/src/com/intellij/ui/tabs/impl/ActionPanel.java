@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -83,6 +84,11 @@ public class ActionPanel extends NonOpaquePanel {
   @Override
   public Dimension getPreferredSize() {
     return myActionsIsVisible ? super.getPreferredSize() : new Dimension(0, 0);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? new Dimension(0, 0) : super.getPreferredSize();
   }
 
   public void toggleShowActions(final boolean show) {

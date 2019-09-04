@@ -192,13 +192,11 @@ public abstract class SingleRowLayout extends TabLayout {
     for (TabInfo eachInfo : data.toLayout) {
       final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
       if (layoutStopped) {
-        label.setActionPanelVisible(false);
         final Rectangle rec = getStrategy().getLayoutRect(data, 0, 0);
         myTabs.layout(label, rec);
         continue;
       }
 
-      label.setActionPanelVisible(true);
       final Dimension eachSize = label.getPreferredSize();
 
       int length = getStrategy().getLengthIncrement(eachSize);

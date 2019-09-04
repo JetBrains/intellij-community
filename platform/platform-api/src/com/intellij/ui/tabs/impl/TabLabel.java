@@ -18,6 +18,7 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -54,10 +55,10 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new BorderLayout());
+    setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
 
     myLabelPlaceholder.setOpaque(false);
-    add(myLabelPlaceholder, BorderLayout.CENTER);
+    add(myLabelPlaceholder, "pushx, ax center");
 
     setAlignmentToCenter(true);
 
@@ -393,9 +394,17 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
-    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    addActionPanel();
 
     myTabs.revalidateAndRepaint(false);
+  }
+
+  private void addActionPanel() {
+    boolean closeOnRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
+    add(myActionPanel);
+    if (!closeOnRight) {
+      setComponentZOrder(myActionPanel, 0);
+    }
   }
 
   private void removeOldActionPanel() {
@@ -548,7 +557,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         remove(myActionPanel);
       }
       else {
-        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+        addActionPanel();
       }
     }
   }
