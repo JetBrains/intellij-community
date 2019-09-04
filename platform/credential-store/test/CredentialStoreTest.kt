@@ -25,7 +25,9 @@ internal class CredentialStoreTest {
       return
     }
 
-    doTest(SecretCredentialStore("com.intellij.test"))
+    val store = SecretCredentialStore.create("com.intellij.test")
+    if (store == null) throw AssumptionViolatedException("No secret service")
+    doTest(store)
   }
 
   @Test
@@ -64,7 +66,8 @@ internal class CredentialStoreTest {
   @Test
   fun `linux - testEmptyAccountName`() {
     if (isLinuxSupported()) {
-      testEmptyAccountName(SecretCredentialStore("com.intellij.test"))
+      val store = SecretCredentialStore.create("com.intellij.test")
+      if (store != null) testEmptyAccountName(store)
     }
   }
 
@@ -98,7 +101,8 @@ internal class CredentialStoreTest {
   @Test
   fun `linux - memoryOnlyPassword`() {
     if (isLinuxSupported()) {
-      memoryOnlyPassword(SecretCredentialStore("com.intellij.test"))
+      val store = SecretCredentialStore.create("com.intellij.test")
+      if (store != null) memoryOnlyPassword(store)
     }
   }
 

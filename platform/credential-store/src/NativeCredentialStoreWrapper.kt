@@ -11,6 +11,7 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 import java.io.Closeable
@@ -127,16 +128,26 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   }
 }
 
-private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
+private class LinuxCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
-    SystemInfo.isLinux && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
-    else -> null
-  }
-}
-
-private class KWalletSecretCredentialStoreFactory : CredentialStoreFactory {
-  override fun create(): CredentialStore? = when {
-    SystemInfo.isLinux && JnaLoader.isLoaded() -> KWalletCredentialStore.create()?.let { NativeCredentialStoreWrapper(it) }
+    SystemInfo.isLinux -> {
+      val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
+      var res: CredentialStore? = if (preferWallet)
+        KWalletCredentialStore.create()
+      else
+        null
+      if (res == null && JnaLoader.isLoaded()) {
+        try {
+          res = SecretCredentialStore.create("com.intellij.credentialStore.Credential")
+        }
+        catch (e: UnsatisfiedLinkError) {
+          res = if (!preferWallet) KWalletCredentialStore.create() else null
+          if (res == null) notifyUnsatisfiedLinkError(e)
+        }
+      }
+      if (res == null && !preferWallet) res = KWalletCredentialStore.create()
+      res?.let { NativeCredentialStoreWrapper(it) }
+    }
     else -> null
   }
 }
