@@ -329,11 +329,18 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
   private static void copyAnnotationParameters(PsiAnnotation original, PsiAnnotation query, PsiAnnotation replacement) {
     final PsiAnnotationParameterList originalParameters = original.getParameterList();
-    final PsiAnnotationParameterList replacementParameters = replacement.getParameterList();
-    if (originalParameters.getTextLength() > 0
-        && query.getParameterList().getTextLength() == 0
-        && replacementParameters.getTextLength() == 0) {
-      replacementParameters.replace(originalParameters);
+    if (originalParameters.getTextLength() > 0) {
+      final PsiAnnotationParameterList replacementParameters = replacement.getParameterList();
+      if (query.getParameterList().getTextLength() == 0 && replacementParameters.getTextLength() == 0) {
+        replacementParameters.replace(originalParameters);
+        return;
+      }
+      final List<? extends PsiElement> unmatchedAttributes = original.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
+      if (unmatchedAttributes != null) {
+        for (PsiElement attribute : unmatchedAttributes) {
+          replacementParameters.add(attribute);
+        }
+      }
     }
   }
 
@@ -751,7 +758,16 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
     @Override
     public void visitClass(PsiClass aClass) {
-      handleNamedElement(aClass);
+      if (aClass instanceof PsiAnonymousClass) {
+        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+        final String name = anonymousClass.getBaseClassReference().getReferenceName();
+        if (!namedElements.containsKey(name)) {
+          namedElements.put(name, aClass);
+        }
+      }
+      else {
+        handleNamedElement(aClass);
+      }
     }
 
     private void handleNamedElement(final PsiNamedElement named) {

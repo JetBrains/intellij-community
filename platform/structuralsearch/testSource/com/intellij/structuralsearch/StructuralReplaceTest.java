@@ -2175,6 +2175,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "}";
     assertEquals(expected4, replace(in4, "@'_A('_p*=1)", "@$A$($p$=1, three=1)"));
 
+    final String expected4b = "class X {  @Anno(one=2,two=1) String s;}";
+    assertEquals(expected4b, replace(in4, "@'_A('_p:one =1)", "@$A$($p$=2)"));
+
     final String in5 = "@RunWith(SpringJUnit4ClassRunner.class)\n" +
                        "@ContextConfiguration(classes = {\n" +
                        "        ThisShellBeTwoClassesInContextHierarchyConfig.class,\n" +
