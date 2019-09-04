@@ -17,6 +17,8 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,4 +40,7 @@ public interface TemplateLanguageFileViewProvider extends FileViewProvider {
    */
   @NotNull
   Language getTemplateDataLanguage();
+
+  @ApiStatus.Experimental
+  default void setContentElementType(Language language, PsiFile file) { }
 }
