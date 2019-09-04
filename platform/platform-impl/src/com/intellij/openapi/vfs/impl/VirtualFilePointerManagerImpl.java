@@ -703,11 +703,12 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           return;
         }
       }
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (result) {
-        if (!result.myCounts.increment(pointer)) {
-          result.myCounts.put(pointer, 1);
-        }
+      result.increment(pointer);
+    }
+
+    synchronized void increment(@NotNull VirtualFilePointerImpl pointer) {
+      if (!myCounts.increment(pointer)) {
+        myCounts.put(pointer, 1);
       }
     }
 
@@ -717,11 +718,12 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       //noinspection SynchronizeOnThis
       synchronized (this) {
         myCounts.forEachEntry((pointer, disposeCount) -> {
-          int after = pointer.incrementUsageCount(-disposeCount + 1);
+          int after = pointer.incrementUsageCount(-(disposeCount - 1));
           LOG.assertTrue(after > 0, after);
           pointer.dispose();
           return true;
         });
+        myCounts.clear();
       }
     }
   }

@@ -41,8 +41,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @Override
   @NotNull
   public String getFileName() {
-    FilePointerPartNode node = myNode;
-    if (!checkDisposed(node)) return "";
+    FilePointerPartNode node = checkDisposed(myNode);
+    if (node == null) return "";
     Pair<VirtualFile, String> result = node.update();
     if (result == null) return "";
     VirtualFile file = result.first;
@@ -56,8 +56,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   @Override
   public VirtualFile getFile() {
-    FilePointerPartNode node = myNode;
-    if (!checkDisposed(node)) return null;
+    FilePointerPartNode node = checkDisposed(myNode);
+    if (node == null) return null;
     Pair<VirtualFile, String> result = node.update();
     return result == null ? null : result.first;
   }
@@ -79,19 +79,18 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @Override
   @NotNull
   public String getPresentableUrl() {
-    FilePointerPartNode node = myNode;
-    if (!checkDisposed(node)) return "";
+    FilePointerPartNode node = checkDisposed(myNode);
+    if (node == null) return "";
     Pair<VirtualFile, String> result = node.update();
     return result == null ? "" : PathUtil.toPresentableUrl(result.second);
   }
 
-  private boolean checkDisposed(FilePointerPartNode node) {
+  private FilePointerPartNode checkDisposed(FilePointerPartNode node) {
     if (node == null) {
       ProgressManager.checkCanceled();
       LOG.error("Already disposed: URL='" + this + "'");
-      return false;
     }
-    return true;
+    return node;
   }
 
 
@@ -110,8 +109,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
 
   public void dispose() {
-    FilePointerPartNode node = myNode;
-    checkDisposed(node);
+    FilePointerPartNode node = checkDisposed(myNode);
     if (node.incrementUsageCount(-1) == 0) {
       kill("URL when die: " + this);
       VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
@@ -122,7 +120,9 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
 
   int incrementUsageCount(int delta) {
-    return myNode.incrementUsageCount(delta);
+    FilePointerPartNode node = checkDisposed(myNode);
+    if (node == null) return 1;
+    return node.incrementUsageCount(delta);
   }
 
   @Override
