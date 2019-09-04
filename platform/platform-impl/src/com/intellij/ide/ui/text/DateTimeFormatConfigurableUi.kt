@@ -40,10 +40,9 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
                                          { settings.isPrettyFormattingAllowed = it }).component
       }
       row {
-        scrollPane(formattersTable)
+        scrollPane(formattersTable).noGrowY()
+        commentRow("<html>Use Date and Time patterns to change date format. Example, <b>yyyy.MM.dd G 'at' HH:mm:ss z</b> For more examples visit <a href='https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html'>the documentation page</a>.</html>")
       }
-      commentRow(
-        "<html>Use Date and Time patterns to change date format. Example, <b>yyyy.MM.dd G 'at' HH:mm:ss z</b> For more examples visit <a href='https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html'>the documentation page</a>.</html>")
     }
   }
 
