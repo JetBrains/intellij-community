@@ -62,7 +62,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   fun commentRow(text: String) {
-    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
+    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1))
   }
 }
 
