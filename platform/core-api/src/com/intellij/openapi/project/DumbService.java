@@ -25,13 +25,13 @@ import java.util.List;
 /**
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
  * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing {@link DumbAware} interface.<p></p>
- *
+ * <p>
  * "Dumb" mode starts and ends in a {@link com.intellij.openapi.application.WriteAction}, so if you're inside a {@link ReadAction}
  * on a background thread, it won't suddenly begin in the middle of your operation. But note that whenever you start
  * a top-level read action on a background thread, you should be prepared to anything being changed, including "dumb"
  * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use {@link #runReadActionInSmartMode} or
  * {@link com.intellij.openapi.application.NonBlockingReadAction#inSmartMode}.
- *
+ * <p>
  * More information about dumb mode could be found here: {@link IndexNotReadyException}
  *
  * @author peter
@@ -85,8 +85,6 @@ public abstract class DumbService {
    * </ul>
    * This may also happen immediately if these conditions are already met.<p/>
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
-   *
-   * @param runnable runnable to run
    */
   public abstract void runWhenSmart(@NotNull Runnable runnable);
 
@@ -160,6 +158,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
    * try again until the runnable can complete successfully.
+   *
    * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
   @Deprecated
@@ -253,37 +252,30 @@ public abstract class DumbService {
   /**
    * Replaces given component temporarily with "Not available until indices are built" label during dumb mode.
    *
-   * @param dumbUnawareContent Component to wrap.
-   * @param parentDisposable   Parent disposable.
    * @return Wrapped component.
    */
   public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
 
   /**
    * Disables given component temporarily during dumb mode.
-   *
-   * @param component  Component to disable.
-   * @param disposable Parent disposable.
    */
-  public void makeDumbAware(@NotNull final JComponent component, @NotNull Disposable disposable) {
-    component.setEnabled(!isDumb());
-    getProject().getMessageBus().connect(disposable).subscribe(DUMB_MODE, new DumbModeListener() {
+  public void makeDumbAware(@NotNull final JComponent componentToDisable, @NotNull Disposable parentDisposable) {
+    componentToDisable.setEnabled(!isDumb());
+    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        component.setEnabled(false);
+        componentToDisable.setEnabled(false);
       }
 
       @Override
       public void exitDumbMode() {
-        component.setEnabled(true);
+        componentToDisable.setEnabled(true);
       }
     });
   }
 
   /**
    * Show a notification when given action is not available during dumb mode.
-   *
-   * @param message Notification message.
    */
   public abstract void showDumbModeNotification(@NotNull String message);
 
@@ -366,9 +358,8 @@ public abstract class DumbService {
   public abstract boolean isAlternativeResolveEnabled();
 
   /**
-   * @deprecated Obsolete, does nothing, just executes the passed runnable.
-   *
    * @see #completeJustSubmittedTasks()
+   * @deprecated Obsolete, does nothing, just executes the passed runnable.
    */
   @SuppressWarnings({"unused"})
   @Deprecated
