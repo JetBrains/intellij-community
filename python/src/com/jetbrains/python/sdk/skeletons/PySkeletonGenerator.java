@@ -66,14 +66,14 @@ public class PySkeletonGenerator {
     mySkeletonsPath = skeletonPath;
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
-    Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
 
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
     if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
-      env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
+      myEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
     }
-    myEnv = env;
+    else {
+      myEnv = Collections.emptyMap();
+    }
   }
 
   public final Builder commandBuilder() {
@@ -176,7 +176,7 @@ public class PySkeletonGenerator {
 
     @NotNull
     public Map<String, String> getEnvironment() {
-      Map<String, String> env = ImmutableMap.of("PYTHONPATH", PythonHelpersLocator.getHelpersRoot().getPath());
+      Map<String, String> env = new HashMap<>();
       //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
       //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
       //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
