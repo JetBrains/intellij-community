@@ -39,6 +39,11 @@ import java.awt.*;
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 public abstract class IdeFocusManager implements FocusRequestor {
+
+  /**
+   * @deprecated Use {@code requestFocus} with {@code getInstance(Project project)} instead
+   */
+  @Deprecated
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     return requestFocus(c, false);
   }
@@ -137,8 +142,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * is the preferred way to finding the container window and unconditionally calling {@code window.toFront()}.
    */
   public abstract void toFront(JComponent c);
-
-  public abstract Project getProject();
 
   public static IdeFocusManager getInstance(@Nullable Project project) {
     Application app = ApplicationManager.getApplication();

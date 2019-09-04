@@ -18,12 +18,12 @@ import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +37,11 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
+/**
+ * Global focus manager implementation.
+ */
+@ApiStatus.Internal
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
 
@@ -110,13 +115,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
-      c.requestFocus();
-    }
-    else {
-      c.requestFocusInWindow();
-    }
-    return ActionCallback.DONE;
+    return getInstance(project).requestFocus(c, true);
   }
 
   @Override
@@ -302,11 +301,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  @Override
-  public Project getProject() {
-    return null;
-  }
-
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
@@ -393,12 +387,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
     Component toFocus = null;
-
-    Project project = getProject();
-
-    if (project != null) {
-      toFocus = WindowManagerEx.getInstanceEx().findFrameFor(project).getComponent();
-    } else if (myLastFocusedFrame != null) {
+    if (myLastFocusedFrame != null) {
       toFocus = myLastFocused.get(myLastFocusedFrame);
       if (toFocus == null || !toFocus.isShowing()) {
         toFocus = getFocusTargetFor(myLastFocusedFrame.getComponent());

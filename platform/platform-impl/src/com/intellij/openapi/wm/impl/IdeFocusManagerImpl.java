@@ -2,34 +2,68 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class IdeFocusManagerImpl extends IdeFocusManager {
+/**
+ * Per-project focus manager implementation
+ */
 
-  static class IdeProjectFocusManagerImpl extends IdeFocusManagerImpl {
-    private final Project myProject;
-    IdeProjectFocusManagerImpl(Project project) {
-      myProject = project;
-    }
-    public Project getProject() {
-      return myProject;
-    }
+@ApiStatus.Internal
+public final class IdeFocusManagerImpl extends IdeFocusManager {
+
+  private final Project myProject;
+
+  public IdeFocusManagerImpl(Project project) {
+    myProject = project;
   }
 
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return getGlobalInstance().requestFocus(c, forced);
+    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
+      c.requestFocus();
+    }
+    else {
+      c.requestFocusInWindow();
+    }
+    return ActionCallback.DONE;
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback requestDefaultFocus(boolean forced) {
+
+    IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(myProject);
+    JComponent toFocus = frame .getComponent();
+
+    if (toFocus == null) return ActionCallback.REJECTED;
+
+    JComponent focusTargetForFrame = getFocusTargetFor(frame.getComponent());
+
+    if (focusTargetForFrame == null ) return  ActionCallback.REJECTED;
+
+    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
+      focusTargetForFrame.requestFocus();
+    }
+    else {
+      focusTargetForFrame.requestFocusInWindow();
+    }
+
+    return ActionCallback.DONE;
   }
 
   @Override
@@ -101,10 +135,5 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void toFront(JComponent c) {
     getGlobalInstance().toFront(c);
-  }
-
-  @Override
-  public Project getProject() {
-    return null;
   }
 }
