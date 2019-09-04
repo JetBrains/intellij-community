@@ -154,7 +154,8 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
-  private String getTextBlockText() {
+  @Nullable
+  public String getTextBlockText() {
     String[] lines = getTextBlockLines();
     if (lines == null) return null;
 

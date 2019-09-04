@@ -1331,6 +1331,12 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockBackwardMigration"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.TextBlockBackwardMigrationInspection"
+                     bundle="messages.InspectionsBundle"
+                     key="inspection.text.block.backward.migration.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
