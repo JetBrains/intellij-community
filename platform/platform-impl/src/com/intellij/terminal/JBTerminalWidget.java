@@ -27,7 +27,9 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,6 +69,7 @@ import java.util.List;
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
 
   public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
+  private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final CompositeFilter myCompositeFilter;
@@ -107,7 +110,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   @Nullable
   private LinkResult runFilters(@NotNull Project project, @NotNull String line) {
-    Filter.Result r = ReadAction.compute(() -> myCompositeFilter.applyFilter(line, line.length()));
+    Filter.Result r = ReadAction.compute(() -> {
+      try {
+        return myCompositeFilter.applyFilter(line, line.length());
+      }
+      catch (ProcessCanceledException e) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping running filters on " + line, e);
+        }
+        return null;
+      }
+    });
     if (r != null) {
       return new LinkResult(ContainerUtil.mapNotNull(r.getResultItems(), item -> convertResultItem(project, item)));
     }
