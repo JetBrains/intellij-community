@@ -29,7 +29,7 @@ internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Dispos
 }
 
 // we use default collection, it seems no way to use custom
-internal class SecretCredentialStore(schemeName: String) : CredentialStore {
+internal class SecretCredentialStore private constructor(schemeName: String) : CredentialStore {
   private val serviceAttributeNamePointer by lazy { stringPointer("service".toByteArray()) }
   private val accountAttributeNamePointer by lazy { stringPointer("account".toByteArray()) }
 
@@ -37,9 +37,36 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
     // no need to load lazily - if store created, then it will be used
     // and for clients better to get error earlier, in creation place
     private val library = Native.load("secret-1", SecretLibrary::class.java)
+
+    fun create(schemeName: String): SecretCredentialStore? {
+      if (!pingService()) return null
+      return SecretCredentialStore(schemeName)
+    }
+
+    private fun pingService(): Boolean {
+      var attr: DisposableMemory? = null
+      var dummySchema: Pointer? = null
+      try {
+        attr = stringPointer("ij-dummy-attribute".toByteArray())
+        dummySchema = library.secret_schema_new("IJ.dummy.ping.schema", SECRET_SCHEMA_DONT_MATCH_NAME,
+                                                attr, SECRET_SCHEMA_ATTRIBUTE_STRING,
+                                                null)
+
+        val errorRef = arrayOf<GErrorStruct?>(null)
+        library.secret_password_lookup_sync(dummySchema, null, errorRef, attr, attr)
+        val error = errorRef[0]
+        if (error == null) return true
+        if (isNoSecretService(error)) return false
+      }
+      finally {
+        attr?.dispose()
+        dummySchema?.let { library.secret_schema_unref(it) }
+      }
+      return true
+    }
   }
 
-  private val scheme by lazy {
+  private val schema by lazy {
     library.secret_schema_new(schemeName, SECRET_SCHEMA_DONT_MATCH_NAME,
                               serviceAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
                               accountAttributeNamePointer, SECRET_SCHEMA_ATTRIBUTE_STRING,
@@ -52,13 +79,13 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
       checkError("secret_password_lookup_sync") { errorRef ->
         val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
         if (userName == null) {
-          library.secret_password_lookup_sync(scheme, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
+          library.secret_password_lookup_sync(schema, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
             // Secret Service doesn't allow to get attributes, so, we store joined data
             return@Supplier splitData(it)
           }
         }
         else {
-          library.secret_password_lookup_sync(scheme, null, errorRef,
+          library.secret_password_lookup_sync(schema, null, errorRef,
                                               serviceAttributeNamePointer, serviceNamePointer,
                                               accountAttributeNamePointer, stringPointer(userName.toByteArray()),
                                               null)?.let {
@@ -76,12 +103,12 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
     if (credentials.isEmpty()) {
       checkError("secret_password_store_sync") { errorRef ->
         if (accountName == null) {
-          library.secret_password_clear_sync(scheme, null, errorRef,
+          library.secret_password_clear_sync(schema, null, errorRef,
                                              serviceAttributeNamePointer, serviceNamePointer,
                                              null)
         }
         else {
-          library.secret_password_clear_sync(scheme, null, errorRef,
+          library.secret_password_clear_sync(schema, null, errorRef,
                                              serviceAttributeNamePointer, serviceNamePointer,
                                              accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
                                              null)
@@ -94,12 +121,12 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
     checkError("secret_password_store_sync") { errorRef ->
       try {
         if (accountName == null) {
-          library.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
+          library.secret_password_store_sync(schema, null, serviceNamePointer, passwordPointer, null, errorRef,
                                              serviceAttributeNamePointer, serviceNamePointer,
                                              null)
         }
         else {
-          library.secret_password_store_sync(scheme, null, serviceNamePointer, passwordPointer, null, errorRef,
+          library.secret_password_store_sync(schema, null, serviceNamePointer, passwordPointer, null, errorRef,
                                              serviceAttributeNamePointer, serviceNamePointer,
                                              accountAttributeNamePointer, stringPointer(accountName.toByteArray()),
                                              null)
@@ -117,7 +144,7 @@ private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorS
   val result = task(errorRef)
   val error = errorRef[0]
   if (error != null && error.code != 0) {
-    if (error.code == 32584 || error.code == 32618 || error.code == 32606 || error.code == 32642) {
+    if (isNoSecretService(error)) {
       LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
     }
     else {
@@ -127,10 +154,14 @@ private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorS
   return result
 }
 
+private fun isNoSecretService(error: GErrorStruct) =
+  error.code == 32584 || error.code == 32618 || error.code == 32606 || error.code == 32642
+
 // we use sync API to simplify - client will use postponed write
 @Suppress("FunctionName")
 private interface SecretLibrary : Library {
   fun secret_schema_new(name: String, flags: Int, vararg attributes: Any?): Pointer
+  fun secret_schema_unref(schema: Pointer)
 
   fun secret_password_store_sync(scheme: Pointer, collection: Pointer?, label: Pointer, password: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?)
 

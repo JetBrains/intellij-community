@@ -633,8 +633,9 @@
     <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>
 
     <credentialStore implementation="com.intellij.credentialStore.MacOsCredentialStoreFactory" os="mac"/>
-    <credentialStore implementation="com.intellij.credentialStore.KWalletSecretCredentialStoreFactory" os="linux"/>
-    <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
+    <credentialStore implementation="com.intellij.credentialStore.LinuxCredentialStoreFactory" os="linux"/>
+    <registryKey key="credentialStore.linux.prefer.kwallet" defaultValue="false" restartRequired="true"
+                 description="Use KWallet if KWallet &amp; SecretService are both available."/>
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
 
