@@ -2,6 +2,7 @@ package circlet.components
 
 import circlet.auth.*
 import circlet.common.oauth.*
+import circlet.permission.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.platform.workspaces.*
@@ -23,7 +24,10 @@ private val log = logger<CircletWorkspaceComponent>()
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
 class CircletWorkspaceComponent : ApplicationComponent, WorkspaceManagerHost(), LifetimedComponent by SimpleLifetimedComponent() {
 
-    private val ideaClientPersistenceConfiguration = PersistenceConfiguration()
+    private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
+        FeatureFlagsVmPersistenceKey,
+        PersistenceKey.Arena
+    )
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
     private val manager = mutableProperty<WorkspaceManager?>(null)
