@@ -22,7 +22,7 @@ import java.util.Set;
  */
 @State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
 public class DateTimeFormatManager implements PersistentStateComponent<Element> {
-  private boolean myAllowPrettyFormattingGlobally = true;
+  private boolean myPrettyFormattingAllowed = true;
   private HashMap<String, DateFormatPattern> myPatterns = new HashMap<>();
   @Nullable
   @Override
@@ -35,8 +35,8 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
     XmlSerializerUtil.copyBean(loaded, this);
   }
 
-  public void setAllowPrettyFormattingGlobally(boolean allowPrettyFormattingGlobally) {
-    myAllowPrettyFormattingGlobally = allowPrettyFormattingGlobally;
+  public void setPrettyFormattingAllowed(boolean prettyFormattingAllowed) {
+    myPrettyFormattingAllowed = prettyFormattingAllowed;
   }
 
   @Nullable
@@ -74,7 +74,7 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
   }
 
   public boolean isPrettyFormattingAllowed() {
-    return myAllowPrettyFormattingGlobally;
+    return myPrettyFormattingAllowed;
   }
 
   public static DateTimeFormatManager getInstance() {
