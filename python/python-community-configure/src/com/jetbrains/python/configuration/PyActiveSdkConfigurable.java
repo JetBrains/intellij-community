@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -35,14 +34,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 
@@ -68,9 +64,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   private final Module myModule;
-
-  @NotNull
-  private final MySdkModelListener mySdkModelListener;
 
   @NotNull
   private final PyConfigurableInterpreterList myInterpreterList;
@@ -114,10 +107,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     myMainPanel = buildPanel(project, mySdkCombo, detailsButton, myPackagesPanel, packagesNotificationPanel, customizer);
 
-    mySdkModelListener = new MySdkModelListener();
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
-    myProjectSdksModel.addListener(mySdkModelListener);
   }
 
   @NotNull
@@ -236,7 +227,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
-    return new PythonSdkDetailsDialog(myProject, myModule, this::setSelectedSdk);
+    return new PythonSdkDetailsDialog(myProject, myModule, this::updateSdkListAndSelect);
   }
 
   @Override
@@ -276,10 +267,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     setSdk(selectedSdk);
   }
 
-  private void setSelectedSdk(@Nullable final Sdk selectedSdk) {
-    mySdkCombo.getModel().setSelectedItem(selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName()));
-  }
-
   protected void setSdk(@Nullable Sdk item) {
     PySdkExtKt.setPythonSdk(myProject, item);
     if (myModule != null) {
@@ -289,26 +276,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void reset() {
-    updateSdkList(false);
-    final Sdk sdk = getSdk();
-    setSelectedSdk(sdk);
+    updateSdkListAndSelect(getSdk());
   }
 
-  private void updateSdkList(boolean preserveSelection) {
+  private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
     final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
-
-    Sdk selection = preserveSelection ? ObjectUtils.tryCast(mySdkCombo.getSelectedItem(), Sdk.class) : null;
-    if (!allPythonSdks.contains(selection)) {
-      selection = null;
-    }
 
     final List<Object> items = new ArrayList<>();
     items.add(null);
 
     final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkUtil::isInvalid);
-    if (selection != null && !StreamEx.of(moduleSdksByTypes.values()).flatCollection(Function.identity()).toList().contains(selection)) {
-      items.add(0, selection);
-    }
 
     final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
     for (int i = 0; i < renderedSdkTypes.length; i++) {
@@ -324,33 +301,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(SHOW_ALL);
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
+    final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
+    onSdkSelected();
   }
 
   @Override
   public void disposeUIResources() {
-    myProjectSdksModel.removeListener(mySdkModelListener);
     myInterpreterList.disposeModel();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
-    }
-  }
-
-  private class MySdkModelListener implements SdkModel.Listener {
-
-    @Override
-    public void sdkAdded(@NotNull Sdk sdk) {
-      updateSdkList(true);
-    }
-
-    @Override
-    public void beforeSdkRemove(@NotNull Sdk sdk) {
-      updateSdkList(true);
-    }
-
-    @Override
-    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
-      updateSdkList(true);
     }
   }
 
@@ -365,7 +325,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         catch (ConfigurationException e) {
           LOG.error(e);
         }
-        setSelectedSdk(sdk);
+        updateSdkListAndSelect(sdk);
       }
     }
   }

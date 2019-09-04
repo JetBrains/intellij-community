@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -96,6 +95,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModule = module;
     mySelectedSdkCallback = selectedSdkCallback;
 
+    // there is an assumption that dialog started with unmodified sdks model
+    // otherwise processing `Cancel` will be more complicated
+    // to correctly revert changes
     mySdkModelListener = new MySdkModelListener();
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
@@ -195,6 +197,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   protected void doOKAction() {
     apply();
     super.doOKAction();
+  }
+
+  @Override
+  public void doCancelAction() {
+    myModificators.clear();
+    myModifiedModificators.clear();
+    if (myProjectSdksModel.isModified()) {
+      myProjectSdksModel.reset(myProject);
+      mySelectedSdkCallback.consume(getSelectedSdk());
+    }
+    super.doCancelAction();
   }
 
   public void apply() {
@@ -344,10 +357,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void removeSdk() {
     final Sdk selectedSdk = getSelectedSdk();
     if (selectedSdk != null) {
-      final Sdk sdk = myProjectSdksModel.findSdk(selectedSdk);
-      SdkConfigurationUtil.removeSdk(sdk);
-
-      myProjectSdksModel.removeSdk(sdk);
       myProjectSdksModel.removeSdk(selectedSdk);
 
       if (myModificators.containsKey(selectedSdk)) {
