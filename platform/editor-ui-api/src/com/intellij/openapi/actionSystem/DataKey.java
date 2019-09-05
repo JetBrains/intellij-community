@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentMap;
  * Type-safe named key.
  * <p/>
  * Mainly used via {@link AnActionEvent#getData(DataKey)} calls and {@link DataProvider#getData(String)} implementations.
+ * <p/>
+ * Corresponding data for given {@code name} can be provided globally via {@link com.intellij.ide.impl.dataRules.GetDataRule} extension point.
  *
  * @param <T> Data type.
  * @see CommonDataKeys
