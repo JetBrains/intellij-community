@@ -24,7 +24,7 @@ public class IR {
 
     RemoteEnvironmentRequest createRequest();
 
-    RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request, ProgressIndicator indicator);
+    RemoteEnvironment prepareRemoteEnvironment(@NotNull RemoteEnvironmentRequest request, @NotNull ProgressIndicator indicator);
   }
 
   public interface RemoteEnvironment {
@@ -119,12 +119,12 @@ public class IR {
       return myMapper.apply(ContainerUtil.map(myValues, RemoteValue::getRemoteValue));
     }
   }
-  
+
   public static class MapValue<S, T> implements RemoteValue<T> {
-    @NotNull private final RemoteValue<S> myOriginalValue;
+    @NotNull private final RemoteValue<? extends S> myOriginalValue;
     @NotNull private final Function<S, T> myMapper;
 
-    public MapValue(@NotNull RemoteValue<S> originalValue, @NotNull Function<S, T> mapper) {
+    public MapValue(@NotNull RemoteValue<? extends S> originalValue, @NotNull Function<S, T> mapper) {
       myOriginalValue = originalValue;
       myMapper = mapper;
     }
@@ -229,11 +229,14 @@ public class IR {
     }
 
     @Override
-    public LocalRemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request, ProgressIndicator indicator) {
-      return new LocalRemoteEnvironment();
+    public LocalRemoteEnvironment prepareRemoteEnvironment(@NotNull RemoteEnvironmentRequest request,
+                                                           @NotNull ProgressIndicator indicator) {
+      return new LocalRemoteEnvironment(request);
     }
 
     public class LocalEnvironmentRequest implements RemoteEnvironmentRequest {
+      @NotNull
+      private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
 
       @Override
       public RemotePlatform getRemotePlatform() {
@@ -259,10 +262,21 @@ public class IR {
       public RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv) {
         return null;
       }
+
+      public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
+        myParentEnvironmentType = parentEnvironmentType;
+      }
     }
   }
 
   public static class LocalRemoteEnvironment implements RemoteEnvironment {
+    @NotNull
+    private final RemoteEnvironmentRequest myRequest;
+
+    public LocalRemoteEnvironment(@NotNull RemoteEnvironmentRequest request) {
+      myRequest = request;
+    }
+
     @Override
     public RemotePlatform getRemotePlatform() {
       return RemotePlatform.CURRENT;
@@ -276,6 +290,9 @@ public class IR {
     @NotNull
     public GeneralCommandLine createGeneralCommandLine(NewCommandLine commandLine) {
       GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
+      if (myRequest instanceof LocalRunner.LocalEnvironmentRequest) {
+        generalCommandLine.withParentEnvironmentType(((LocalRunner.LocalEnvironmentRequest)myRequest).myParentEnvironmentType);
+      }
       String workingDirectory = commandLine.getWorkingDirectory(this);
       if (workingDirectory != null) {
         generalCommandLine.withWorkDirectory(workingDirectory);

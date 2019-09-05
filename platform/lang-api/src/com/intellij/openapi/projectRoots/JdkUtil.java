@@ -173,9 +173,11 @@ public class JdkUtil {
   private static void setupCommandLine(@NotNull IR.NewCommandLine commandLine, @NotNull IR.RemoteEnvironmentRequest request, @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     commandLine.setWorkingDirectory(request.createUpload(javaParameters.getWorkingDirectory()));
     javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
-    
-    //todo[remoteServers]: pass environmentType
-    //commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
+
+    if (request instanceof IR.LocalRunner.LocalEnvironmentRequest) {
+      ParentEnvironmentType type = javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE;
+      ((IR.LocalRunner.LocalEnvironmentRequest)request).setParentEnvironmentType(type);
+    }
 
     ParametersList vmParameters = javaParameters.getVMParametersList();
     boolean dynamicClasspath = javaParameters.isDynamicClasspath();
@@ -234,6 +236,7 @@ public class JdkUtil {
       }
     }
   }
+
   private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     IR.NewCommandLine newCommandLine = new IR.NewCommandLine();
     IR.LocalRunner runner = new IR.LocalRunner();
