@@ -27,6 +27,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.containsAll
@@ -75,7 +76,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       // => schedule the log tab and return the data
       val (logUi, factory) = createLogTabInEdtAndWait(logManager)
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(logUi, factory))
+                              getViewCommitsAction(factory, factory.rangeFilter))
     }
     else {
       return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
@@ -164,10 +165,12 @@ class GitUpdateInfoAsLog(private val project: Project,
     return logUi.get()
   }
 
-  private fun getViewCommitsAction(logUi: VcsLogUiImpl, factory: MyLogUiFactory): Runnable {
+  private fun getViewCommitsAction(factory: MyLogUiFactory, rangeFilter: VcsLogRangeFilter): Runnable {
     return Runnable {
       projectLog.logManager?.let {
-        val found = VcsLogContentUtil.selectLogUi(project, logUi)
+        val found = VcsLogContentUtil.findAndSelectContent(project, AbstractVcsLogUi::class.java) { ui ->
+          isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
+        }
         if (!found) {
           createLogUiAndTab(it, factory, select = true)
         }
@@ -198,12 +201,19 @@ class GitUpdateInfoAsLog(private val project: Project,
     return logUi
   }
 
+  private val updateTabPrefix = "git-update-project-info-"
+
+  private fun isUpdateTabId(id: String): Boolean {
+    return id.startsWith(updateTabPrefix)
+  }
+
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
                                      val rangeFilter: VcsLogRangeFilter,
                                      val listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?)
     : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
+
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
-      val logId = "git-update-project-info-" + UUID.randomUUID()
+      val logId = updateTabPrefix + UUID.randomUUID()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
 
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
@@ -291,7 +301,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
           val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
-                                      getViewCommitsAction(logUi, factory))
+                                      getViewCommitsAction(factory, factory.rangeFilter))
           dataSupplier.complete(data)
         }
       }
