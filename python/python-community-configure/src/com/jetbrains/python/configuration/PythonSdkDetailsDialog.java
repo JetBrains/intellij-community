@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -52,7 +53,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.configuration.PythonSdkDetailsDialog");
+  private static final Logger LOG = Logger.getInstance(PythonSdkDetailsDialog.class);
 
   @NotNull
   private final Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
@@ -67,6 +68,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   @NotNull
   private final NullableConsumer<? super Sdk> mySelectedSdkCallback;
+
+  @NotNull
+  private final Consumer<Boolean> myCancelCallback;
 
   @NotNull
   private final SdkModel.Listener mySdkModelListener;
@@ -87,13 +91,15 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   public PythonSdkDetailsDialog(@NotNull Project project,
                                 @Nullable Module module,
-                                @NotNull NullableConsumer<? super Sdk> selectedSdkCallback) {
+                                @NotNull NullableConsumer<? super Sdk> selectedSdkCallback,
+                                @NotNull Consumer<Boolean> cancelCallback) {
     super(project);
     setTitle(PyBundle.message("sdk.details.dialog.title"));
 
     myProject = project;
     myModule = module;
     mySelectedSdkCallback = selectedSdkCallback;
+    myCancelCallback = cancelCallback;
 
     // there is an assumption that dialog started with unmodified sdks model
     // otherwise processing `Cancel` will be more complicated
@@ -203,10 +209,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   public void doCancelAction() {
     myModificators.clear();
     myModifiedModificators.clear();
-    if (myProjectSdksModel.isModified()) {
+    final boolean modified = myProjectSdksModel.isModified();
+    if (modified) {
       myProjectSdksModel.reset(myProject);
-      mySelectedSdkCallback.consume(getSelectedSdk());
     }
+    myCancelCallback.accept(modified);
     super.doCancelAction();
   }
 
@@ -219,6 +226,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
     myModificators.clear();
     myModifiedModificators.clear();
+    try {
+      myProjectSdksModel.apply();
+    }
+    catch (ConfigurationException e) {
+      LOG.error(e);
+    }
     final Sdk sdk = getSelectedSdk();
     mySelectedSdkCallback.consume(sdk);
     if (sdk != null) {

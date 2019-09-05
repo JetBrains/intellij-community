@@ -214,7 +214,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void onSdkSelected() {
-    final Sdk sdk = getSelectedSdk();
+    final Sdk sdk = getOriginalSelectedSdk();
     final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
     myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
@@ -227,7 +227,33 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
-    return new PythonSdkDetailsDialog(myProject, myModule, this::updateSdkListAndSelect);
+    return new PythonSdkDetailsDialog(
+      myProject,
+      myModule,
+      selectedSdk -> {
+        if (selectedSdk != null) {
+          updateSdkListAndSelect(selectedSdk);
+        }
+        else {
+          // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
+          final Sdk currentSelectedSdk = getEditableSelectedSdk();
+
+          if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
+            // nothing has been selected but previously selected sdk still exists, stay with it
+            updateSdkListAndSelect(currentSelectedSdk);
+          }
+          else {
+            // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
+            updateSdkListAndSelect(null);
+          }
+        }
+      },
+      reset -> {
+        // data is invalidated on `model` resetting so we need to reload sdks to not stuck with outdated ones
+        // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to resetting
+        if (reset) updateSdkListAndSelect(getEditableSelectedSdk());
+      }
+    );
   }
 
   @Override
@@ -237,16 +263,18 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(getSdk(), getSelectedSdk());
+    return !Comparing.equal(getSdk(), getOriginalSelectedSdk());
   }
 
-  /**
-   * returns real sdk or detected one
-   */
   @Nullable
-  private Sdk getSelectedSdk() {
-    final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
-    return selectedItem == null ? null : myProjectSdksModel.findSdk(selectedItem);
+  private Sdk getOriginalSelectedSdk() {
+    final Sdk editableSdk = getEditableSelectedSdk();
+    return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
+  }
+
+  @Nullable
+  private Sdk getEditableSelectedSdk() {
+    return (Sdk)mySdkCombo.getSelectedItem();
   }
 
   @Nullable
@@ -260,7 +288,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() {
-    final Sdk selectedSdk = getSelectedSdk();
+    final Sdk selectedSdk = getOriginalSelectedSdk();
     if (selectedSdk != null) {
       ((PythonSdkType)selectedSdk.getSdkType()).setupSdkPaths(selectedSdk);
     }
