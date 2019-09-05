@@ -247,6 +247,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));
 
+  public static final PsiElementPattern.Capture<PsiElement> TARGET_AFTER_QUALIFIER =
+    psiElement().afterLeaf(psiElement().withText(".").inside(PyTargetExpression.class));
+
   public static final FilterPattern FIRST_ON_LINE = new FilterPattern(new StartOfLineFilter());
 
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_AFTER_REF =
@@ -592,6 +595,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(IN_PARAM_LIST)
       .andNot(IN_FUNCTION_HEADER)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
+      .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL).andNot(TARGET_AFTER_QUALIFIER)
       ,
       new PyKeywordCompletionProvider(PyNames.NOT, PyNames.LAMBDA)
     );
@@ -607,6 +611,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_FUNCTION_HEADER)
       .andNot(IN_STRING_LITERAL)
+      .andNot(TARGET_AFTER_QUALIFIER)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
     extend(CompletionType.BASIC,
@@ -617,7 +622,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
              .andNot(IN_IMPORT_STMT)
              .andNot(IN_PARAM_LIST)
              .andNot(AFTER_QUALIFIER)
-             .andNot(IN_STRING_LITERAL),
+             .andNot(IN_STRING_LITERAL)
+             .andNot(TARGET_AFTER_QUALIFIER),
            new PyKeywordCompletionProvider(PyNames.ASYNC));
     extend(CompletionType.BASIC,
            psiElement()

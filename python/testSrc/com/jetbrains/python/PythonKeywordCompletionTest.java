@@ -236,6 +236,11 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     myFixture.checkResult("from ... import ");
   }
 
+  // PY-7018
+  public void testNoNotAndLambdaAfterTargetQualifier() {
+    assertDoesntContain(doTestByTestName(), "not", "lambda");
+  }
+
   // PY-13111
   public void testNoForAndYieldInCommentContext() {
     assertDoesntContain(doTestByTestName(), "for", "yield");
