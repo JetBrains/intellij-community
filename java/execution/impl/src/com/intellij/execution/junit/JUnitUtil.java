@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -155,7 +155,7 @@ public class JUnitUtil {
     return testCaseClass != null && aClass.isInheritor(testCaseClass, true);
   }
 
-  public static boolean isTestClass(final PsiClass psiClass) {
+  public static boolean isTestClass(@NotNull final PsiClass psiClass) {
     return isTestClass(psiClass, true, true);
   }
 
