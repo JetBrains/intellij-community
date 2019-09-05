@@ -84,22 +84,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         if (STATE.equals(child.getName())) {
           String key = child.getAttributeValue(KEY);
           if (key != null) {
-            Point location = null;
-            try {
-              location = new Point(
-                Integer.parseInt(child.getAttributeValue(X)),
-                Integer.parseInt(child.getAttributeValue(Y)));
-            }
-            catch (NumberFormatException ignored) {
-            }
-            Dimension size = null;
-            try {
-              size = new Dimension(
-                Integer.parseInt(child.getAttributeValue(WIDTH)),
-                Integer.parseInt(child.getAttributeValue(HEIGHT)));
-            }
-            catch (NumberFormatException ignored) {
-            }
+            Point location = getAttributePoint(child, X, Y);
+            Dimension size = getAttributeDimension(child, WIDTH, HEIGHT);
             if (location != null || size != null) {
               WindowState state = new WindowState();
               state.myLocation = location;
@@ -247,9 +233,6 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     }
   }
 
-  /*
-   * todo: old hidpi-unaware key; to be removed
-   */
   @NotNull
   private static String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
     StringBuilder sb = new StringBuilder(key);
@@ -376,5 +359,37 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @Nullable
   private static <T, R> R apply(@NotNull Function<T, R> function, @Nullable T value) {
     return value == null ? null : function.apply(value);
+  }
+
+  @Nullable
+  private static Point getAttributePoint(@NotNull Element element, @NotNull String xName, @NotNull String yName) {
+    String xValue = element.getAttributeValue(xName);
+    if (xValue == null) return null;
+    String yValue = element.getAttributeValue(yName);
+    if (yValue == null) return null;
+    try {
+      return new Point(Integer.parseInt(xValue), Integer.parseInt(yValue));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  private static Dimension getAttributeDimension(@NotNull Element element, @NotNull String widthName, @NotNull String heightName) {
+    String widthValue = element.getAttributeValue(widthName);
+    if (widthValue == null) return null;
+    String heightValue = element.getAttributeValue(heightName);
+    if (heightValue == null) return null;
+    try {
+      int width = Integer.parseInt(widthValue);
+      if (width <= 0) return null;
+      int height = Integer.parseInt(heightValue);
+      if (height <= 0) return null;
+      return new Dimension(width, height);
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
   }
 }
