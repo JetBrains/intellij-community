@@ -7,10 +7,10 @@ import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
+import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import runtime.async.*
-import runtime.reactive.*
 import java.io.*
 
 class CircletTaskRunner(val project: Project) {

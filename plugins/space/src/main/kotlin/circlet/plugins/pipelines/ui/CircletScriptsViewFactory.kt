@@ -20,9 +20,9 @@ import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
+import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.async.*
-import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.BoxLayout

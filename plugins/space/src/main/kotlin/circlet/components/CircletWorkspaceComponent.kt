@@ -11,6 +11,7 @@ import circlet.utils.*
 import circlet.workspaces.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
+import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import runtime.async.*

@@ -1,7 +1,7 @@
 package circlet.settings
 
 import circlet.workspaces.*
-import runtime.reactive.*
+import libraries.coroutines.extra.*
 
 sealed class CircletLoginState(val server: String) {
     class Disconnected(server: String, val error: String?) : CircletLoginState(server)

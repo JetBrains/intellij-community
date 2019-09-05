@@ -7,8 +7,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.xml.util.*
+import libraries.coroutines.extra.*
 import platform.common.*
-import runtime.reactive.*
 
 val application: Application
     get() = ApplicationManager.getApplication()

@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.*
 import com.intellij.openapi.project.*
+import libraries.coroutines.extra.*
 import runtime.reactive.*
 import java.util.*
 import javax.swing.tree.*

@@ -5,7 +5,7 @@ import com.intellij.ide.ui.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.util.ui.*
-import runtime.reactive.*
+import libraries.coroutines.extra.*
 import runtime.utils.*
 import java.awt.*
 import java.awt.event.*

@@ -11,6 +11,7 @@ import com.intellij.ui.components.panels.*
 import com.intellij.util.*
 import com.intellij.util.ui.*
 import icons.*
+import libraries.coroutines.extra.*
 import libraries.klogging.*
 import platform.common.*
 import runtime.*

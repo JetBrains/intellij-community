@@ -2,9 +2,9 @@ package circlet.utils
 
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.*
+import libraries.coroutines.extra.*
 import runtime.json.*
 import runtime.persistence.*
-import runtime.reactive.*
 
 object IdeaPasswordSafePersistence : Persistence {
     override suspend fun batchGetJson(keys: List<String>): List<Pair<String, JsonElement?>> {
