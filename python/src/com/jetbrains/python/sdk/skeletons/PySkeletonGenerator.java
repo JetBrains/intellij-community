@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -38,7 +39,6 @@ import java.util.*;
  */
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
-  protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
   // Some flavors need current folder to be passed as param. Here are they.
@@ -280,7 +280,7 @@ public class PySkeletonGenerator {
     runProcessWithLineOutputListener(builder.getWorkingDir(),
                                      builder.getCommandLine(),
                                      builder.getEnvironment(),
-                                     builder.getTimeout(MINUTE * 20),
+                                     builder.getTimeout(Time.MINUTE * 20),
                                      listener);
     return results;
   }
@@ -295,7 +295,7 @@ public class PySkeletonGenerator {
     return getProcessOutput(builder.getWorkingDir(),
                             ArrayUtil.toStringArray(builder.getCommandLine()),
                             builder.getEnvironment(),
-                            builder.getTimeout(MINUTE * 10));
+                            builder.getTimeout(Time.MINUTE * 10));
   }
 
   public void finishSkeletonsGeneration() {
