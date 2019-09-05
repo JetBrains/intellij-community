@@ -140,13 +140,6 @@ public class IR {
     }
   }
 
-  public static class StringFixedValue extends FixedValue<String> {
-
-    public StringFixedValue(@NotNull String string) {
-      super(string);
-    }
-  }
-
   public static class NewCommandLine {
     private RemoteValue<String> myExePath = RemoteValue.EMPTY_VALUE();
     private RemoteValue<String> myWorkingDirectory = RemoteValue.EMPTY_VALUE();
@@ -170,7 +163,7 @@ public class IR {
     }
 
     public void setExePath(@NotNull String exePath) {
-      myExePath = new StringFixedValue(exePath);
+      myExePath = new FixedValue<>(exePath);
     }
 
     public void setWorkingDirectory(@NotNull RemoteValue<String> workingDirectory) {
@@ -182,15 +175,15 @@ public class IR {
     }
 
     public void addParameter(@NotNull String parameter) {
-      myParameters.add(new StringFixedValue(parameter));
+      myParameters.add(new FixedValue<>(parameter));
     }
 
-    public void addEnvironmentVariable(String name, RemoteValue value) {
+    public void addEnvironmentVariable(String name, RemoteValue<String> value) {
       myEnvironment.put(name, value);
     }
 
     public void addEnvironmentVariable(String name, String value) {
-      myEnvironment.put(name, new StringFixedValue(value));
+      myEnvironment.put(name, new FixedValue<>(value));
     }
 
     //todo[remoteServers]: all `target`s are not used
@@ -249,7 +242,7 @@ public class IR {
 
       @Override
       public RemoteValue<String> createUpload(@NotNull String localPath) {
-        return new StringFixedValue(localPath);
+        return new FixedValue<>(localPath);
       }
 
       @Override
