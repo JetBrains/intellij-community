@@ -114,6 +114,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static ThreadInfo getCauseThread(ThreadInfo[] threadInfos) {
     ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
     if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
+      long id = edt.getLockOwnerId();
+      if (id != -1) {
+        for (ThreadInfo info : threadInfos) {
+          if (info.getThreadId() == id) {
+            return info;
+          }
+        }
+      }
       String lockName = edt.getLockName();
       if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
         for (ThreadInfo info : threadInfos) {
