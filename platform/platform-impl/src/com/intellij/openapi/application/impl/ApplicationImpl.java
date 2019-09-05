@@ -98,9 +98,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   public ApplicationImpl(boolean isInternal,
-                           boolean isUnitTestMode,
-                           boolean isHeadless,
-                           boolean isCommandLine) {
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine) {
     super(null);
 
     // reset back to null only when all components already disposed
@@ -113,7 +113,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
 
-    AWTExceptionHandler.register(); // do not crash AWT on exceptions
+    // do not crash AWT on exceptions
+    AWTExceptionHandler.register();
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
