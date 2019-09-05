@@ -50,7 +50,7 @@ intellij {
     version "IC-2019.1.2"
     pluginName "space-intellij-plugin"
     updateSinceUntilBuild false
-    sandboxDirectory "${project.projectDir}/.sandbox"
+    sandboxDirectory "${project.buildDir}/.sandbox"
     setPlugins("org.jetbrains.kotlin:$kotlinIdeaPluginVersion")
 }
 
