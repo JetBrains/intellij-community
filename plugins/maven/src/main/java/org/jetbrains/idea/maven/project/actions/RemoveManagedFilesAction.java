@@ -91,13 +91,13 @@ public class RemoveManagedFilesAction extends MavenAction {
       }
     }
     List<String> names = ContainerUtil.map(modulesToRemove, m -> m.getName());
-   /* int returnCode =
+    int returnCode =
       Messages.showOkCancelDialog(ProjectBundle.message("maven.unlink.confirmation.prompt", names, names.size()), getActionTitle(names),
                                   CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(),
                                   Messages.getQuestionIcon());
     if (returnCode != Messages.OK) {
       return;
-    }*/
+    }
 
     removeModules(ModuleManager.getInstance(project), projectsManager, modulesToRemove);
     projectsManager.removeManagedFiles(removableFiles);
