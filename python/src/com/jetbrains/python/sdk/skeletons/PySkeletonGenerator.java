@@ -54,7 +54,6 @@ public class PySkeletonGenerator {
   protected final Sdk mySdk;
   @Nullable private String myCurrentFolder;
   private String mySkeletonsPath;
-  @NotNull protected final Map<String, String> myEnv;
 
   private boolean myPrebuilt = false;
 
@@ -67,14 +66,6 @@ public class PySkeletonGenerator {
     mySkeletonsPath = skeletonPath;
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
-
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(pySdk);
-    if (currentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      myEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), currentFolder);
-    }
-    else {
-      myEnv = Collections.emptyMap();
-    }
   }
 
   public final Builder commandBuilder() {
@@ -183,11 +174,10 @@ public class PySkeletonGenerator {
     @NotNull
     public Map<String, String> getEnvironment() {
       Map<String, String> env = new HashMap<>();
-      //final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
-      //if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-      //  final Map<String, String> interpreterExtraEnv = ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder);
-      //  env = PySdkUtil.mergeEnvVariables(env, interpreterExtraEnv);
-      //}
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+        env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder));
+      }
       if (myExtraEnv != null) {
         env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
       }
@@ -346,12 +336,7 @@ public class PySkeletonGenerator {
 
   protected ProcessOutput getProcessOutput(String homePath, @NotNull String[] commandLine, Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
-    final Map<String, String> env = PySdkUtil.mergeEnvVariables(myEnv, extraEnv);
-    PythonEnvUtil.setPythonDontWriteBytecode(env);
-    if (myPrebuilt) {
-      env.put("IS_PREGENERATED_SKELETONS", "1");
-    }
-    return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
+    return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout);
   }
 
   public boolean deleteOrLog(@NotNull File item) {
