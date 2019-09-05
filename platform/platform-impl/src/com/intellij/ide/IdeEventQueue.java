@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.ui.AppUIUtil;
@@ -88,7 +87,7 @@ public final class IdeEventQueue extends EventQueue {
   public static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
-      if (!window.isVisible() || UIUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
+      if (!window.isVisible() || ComponentUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
         iter.remove();
       }
     }

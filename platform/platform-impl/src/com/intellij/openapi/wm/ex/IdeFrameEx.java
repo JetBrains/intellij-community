@@ -14,8 +14,6 @@ import java.io.File;
 public interface IdeFrameEx extends IdeFrame {
   void setFileTitle(String fileTitle, File ioFile);
 
-  boolean isInFullScreen();
-
   @NotNull
   Promise<?> toggleFullScreen(boolean state);
 

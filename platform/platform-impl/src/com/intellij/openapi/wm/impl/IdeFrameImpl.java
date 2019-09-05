@@ -135,6 +135,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     return (SystemInfo.isMac && isInFullScreen()) ? JBUI.emptyInsets() : super.getInsets();
   }
 
+  @Override
   public boolean isInFullScreen() {
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
   }

@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         shouldCloseAllPopup = true;
       }
 
-      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrameEx) {
-        IdeFrameEx ultimateParentWindowForEvent = (IdeFrameEx)ultimateParentForEventWindow;
+      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame) {
+        IdeFrame ultimateParentWindowForEvent = (IdeFrame)ultimateParentForEventWindow;
         if (ultimateParentWindowForEvent.isInFullScreen()
             && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
           shouldCloseAllPopup = true;

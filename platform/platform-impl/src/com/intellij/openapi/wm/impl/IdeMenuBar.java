@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -197,8 +196,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private void updateState() {
     if (myAnimator != null) {
       Window window = SwingUtilities.getWindowAncestor(this);
-      if (window instanceof IdeFrameEx) {
-        boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
+      if (window instanceof IdeFrame) {
+        boolean fullScreen = ((IdeFrame)window).isInFullScreen();
         if (fullScreen) {
           setState(State.COLLAPSING);
           restartAnimator();
@@ -602,9 +601,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     private MyExitFullScreenButton() {
       setFocusable(false);
       addActionListener(e -> {
-        Window window = SwingUtilities.getWindowAncestor(this);
-        if (window instanceof IdeFrameEx) {
-          ((IdeFrameEx)window).toggleFullScreen(false);
+        ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(this));
+        if (frameHelper != null) {
+          frameHelper.toggleFullScreen(false);
         }
       });
       addMouseListener(new MouseAdapter() {

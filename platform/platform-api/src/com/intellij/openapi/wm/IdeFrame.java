@@ -27,6 +27,10 @@ public interface IdeFrame {
   @Nullable
   BalloonLayout getBalloonLayout();
 
+  default boolean isInFullScreen() {
+    return false;
+  }
+
   interface Child extends IdeFrame {
   }
 }

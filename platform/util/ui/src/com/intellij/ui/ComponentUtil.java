@@ -10,6 +10,15 @@ import java.awt.*;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
+  public static boolean isMinimized(@Nullable Window window) {
+    if (!(window instanceof Frame)) {
+      return false;
+    }
+
+    Frame frame = (Frame)window;
+    return frame.getExtendedState() == Frame.ICONIFIED;
+  }
+
   @NotNull
   public static Component findUltimateParent(@NotNull Component c) {
     Component eachParent = c;

@@ -25,8 +25,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
@@ -601,9 +601,7 @@ public final class AppUIUtil {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 
-  public static boolean isInFullscreen (Window window) {
-    if (!(window instanceof IdeFrameEx)) return false;
-    IdeFrameEx ideFrameEx = (IdeFrameEx) window;
-    return ideFrameEx.isInFullScreen();
+  public static boolean isInFullscreen(@Nullable Window window) {
+    return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
   }
 }

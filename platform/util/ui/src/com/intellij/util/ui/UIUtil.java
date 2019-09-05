@@ -262,12 +262,6 @@ public final class UIUtil extends StartupUiUtil {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
   }
 
-  public static boolean isMinimized(Window window) {
-    if (!(window instanceof Frame)) return false;
-    Frame frame = (Frame)window;
-    return frame.getExtendedState() == Frame.ICONIFIED;
-  }
-
   @ApiStatus.Experimental
   public static class GrayFilter extends RGBImageFilter {
     private float brightness;
