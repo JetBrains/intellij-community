@@ -72,7 +72,7 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public boolean isDispatchThread() {
-    return true;
+    return SwingUtilities.isEventDispatchThread();
   }
 
   @Override
