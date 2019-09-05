@@ -79,6 +79,7 @@ public class ComplementaryFontsRegistry {
       if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND) {
         fillStyledFontMap();
       }
+      // This must match the corresponding call in com.intellij.idea.ApplicationLoader.loadSystemFonts for optimal performance
       String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
       for (final String fontName : families) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX) && !fontName.equals(ADOBE_BLANK)) {

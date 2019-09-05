@@ -54,6 +54,7 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
+import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.beans.PropertyChangeListener
 import java.io.File
@@ -282,7 +283,7 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
       // editor and other UI components need the list of system fonts to implement font fallback
       // this list is pre-loaded here, in parallel to other activities, to speed up project opening
       // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-      //loadSystemFonts()
+      loadSystemFonts()
     }
   }
 
@@ -299,7 +300,13 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
   pluginDescriptorsFuture.complete(plugins)
 }
 
-private fun loadSystemFonts() = GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+private fun loadSystemFonts() {
+  // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
+  Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+  // This caches available font family names (for the default locale) to make corresponding call
+  // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
+  GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+}
 
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
