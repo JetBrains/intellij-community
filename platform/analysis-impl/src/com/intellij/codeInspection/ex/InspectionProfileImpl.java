@@ -492,11 +492,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       @Override
       public void toolAdded(@NotNull InspectionToolWrapper inspectionTool) {
         addTool(project, inspectionTool, null);
+        getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
       }
 
       @Override
       public void toolRemoved(@NotNull InspectionToolWrapper inspectionTool) {
         removeTool(inspectionTool);
+        getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
       }
     }, project);
 
