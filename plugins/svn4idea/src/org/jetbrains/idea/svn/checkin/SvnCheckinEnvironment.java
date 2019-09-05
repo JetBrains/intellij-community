@@ -66,8 +66,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         String comment,
                         List<VcsException> exception,
                         final Set<String> feedback) {
-    //noinspection unchecked
-    MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
+    MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
     for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
       try {
