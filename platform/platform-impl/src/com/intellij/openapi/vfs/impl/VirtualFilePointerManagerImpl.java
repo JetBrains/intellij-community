@@ -727,6 +727,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       //noinspection SynchronizeOnThis
       synchronized (this) {
         myCounts.forEachEntry((pointer, disposeCount) -> {
+          boolean isDisposed = pointer.myNode == null;
+          if (isDisposed) {
+            pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
+          }
           int after = pointer.incrementUsageCount(-(disposeCount - 1));
           LOG.assertTrue(after > 0, after);
           pointer.dispose();
