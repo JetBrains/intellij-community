@@ -418,6 +418,8 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   private val row: MigLayoutRow,
   override val component: T
 ) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
+  private var applyIfEnabled = false
+
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
     return this
@@ -461,6 +463,16 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     component.isEnabled = predicate()
     predicate.addListener { component.isEnabled = it }
     return this
+  }
+
+  override fun applyIfEnabled(): CellBuilder<T> {
+    applyIfEnabled = true
+    return this
+  }
+
+  override fun shouldSaveOnApply(): Boolean {
+    if (applyIfEnabled && !component.isEnabled) return false
+    return true
   }
 
   override fun actsAsLabel() {

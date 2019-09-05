@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -90,14 +91,19 @@ interface CellBuilder<T : JComponent> {
   fun onReset(callback: () -> Unit): CellBuilder<T>
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
 
+  /**
+   * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
+   */
+  fun applyIfEnabled(): CellBuilder<T>
+
   fun <V> withBinding(
     componentGet: (T) -> V,
     componentSet: (T, V) -> Unit,
     modelBinding: PropertyBinding<V>
   ): CellBuilder<T> {
-    onApply { modelBinding.set(componentGet(component)) }
+    onApply { if (shouldSaveOnApply()) modelBinding.set(componentGet(component)) }
     onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { componentGet(component) != modelBinding.get() }
+    onIsModified { shouldSaveOnApply() && componentGet(component) != modelBinding.get() }
     return this
   }
 
@@ -108,6 +114,9 @@ interface CellBuilder<T : JComponent> {
     withValidationOnApply { if (callback(it)) ValidationInfo(message, it) else null }
     return this
   }
+
+  @ApiStatus.Internal
+  fun shouldSaveOnApply(): Boolean
 }
 
 fun <T : JTextComponent> CellBuilder<T>.validateTextOnInput(callback: (String) -> String?): CellBuilder<T> {

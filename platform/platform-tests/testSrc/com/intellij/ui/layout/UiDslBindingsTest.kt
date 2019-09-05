@@ -11,6 +11,7 @@ import javax.swing.JTextField
 class UiDslBindingsTest : BasePlatformTestCase() {
   private var booleanValue = false
   private var intValue = 0
+  private var stringValue = ""
 
   fun testRadioButtonWithBooleanBinding() {
     booleanValue = false
@@ -100,5 +101,22 @@ class UiDslBindingsTest : BasePlatformTestCase() {
     assertTrue(textField.isEnabled)
     radioButtons[0].isSelected = true
     assertFalse(textField.isEnabled)
+  }
+
+  fun testApplyIfEnabled() {
+    lateinit var textField: JTextField
+    stringValue = ""
+    val dialogPanel = panel {
+      row {
+        textField(::stringValue).applyIfEnabled().also { textField = it.component }
+      }
+    }
+    textField.text = "abc"
+    dialogPanel.apply()
+    assertEquals("abc", stringValue)
+    textField.isEnabled = false
+    textField.text = "def"
+    dialogPanel.apply()
+    assertEquals("abc", stringValue)
   }
 }
