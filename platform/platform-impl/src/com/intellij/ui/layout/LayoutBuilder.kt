@@ -40,9 +40,9 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
 
-  fun Cell.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+  fun Cell.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    return component()
+    return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
       .onIsModified { component.isSelected != (prop.get() == value) }
@@ -53,13 +53,13 @@ class CellBuilderWithButtonGroupProperty<T : Any>
 class RowBuilderWithButtonGroupProperty<T : Any>
     @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
-  fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+  fun Row.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     subRowsEnabled = component.isSelected
     component.addChangeListener {
       subRowsEnabled = component.isSelected
     }
-    return component()
+    return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
       .onIsModified { component.isSelected != (prop.get() == value) }
