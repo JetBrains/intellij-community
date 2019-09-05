@@ -227,13 +227,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return panelRow
   }
 
-  override fun boundedRow(bounds: Int, init: Row.() -> Unit): Row {
-    return panelRow(indent) {
-      init()
-      it.maximumSize = it.maximumSize.copy(width = bounds)
-    }
-  }
-
   private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
     var subRows = subRows
     if (subRows == null) {

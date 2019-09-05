@@ -4,7 +4,6 @@ package com.intellij.ui.layout
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -43,16 +42,6 @@ interface RowBuilder : BaseBuilder {
    * It allows to hide some information under the titled decorator
    */
   fun hideableRow(title: String, init: Row.() -> Unit): Row
-
-  /**
-   * Creates row with horizontal bounding
-   * it allows to limit width of child elements and rows
-   *
-   * @param bounds is the horizontal size to calculate the maximum width;
-   *  must be a positive value
-   */
-  @ApiStatus.Experimental
-  fun boundedRow(bounds: Int, init: Row.() -> Unit): Row
 
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
