@@ -80,7 +80,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   val args = processProgramArguments(rawArgs)
   StartupUtil.patchSystem(LOG)
   val headless = Main.isHeadless()
-  val app = initAppActivity.runChild("create app") {
+  val app = initAppActivity.runChild("create the app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine())
   }
 
@@ -100,7 +100,7 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   registerFuture.thenRunOrHandleError {
     val starter = findStarter(args.first()) ?: IdeStarter()
     if (Main.isHeadless() && !starter.isHeadless) {
-      Main.showMessage("Startup Error", "Application cannot start in headless mode", true)
+      Main.showMessage("Startup Error", "Application cannot start in a headless mode", true)
       exitProcess(Main.NO_GRAPHICS)
     }
 
@@ -109,7 +109,11 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
   }
 }
 
-private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppActivity: Activity, registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, args: List<String>) {
+private fun startApp(app: ApplicationImpl,
+                     starter: ApplicationStarter,
+                     initAppActivity: Activity,
+                     registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
+                     args: List<String>) {
   // this code is here for one simple reason - here we have application,
   // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
   // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
@@ -166,7 +170,7 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
   }
 
   future.thenRunOrHandleError {
-    // this invokeLater() call is needed not only because current thread maybe not EDT, but to place the app starting code on a freshly minted IdeEventQueue instance
+    // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
     val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
     EventQueue.invokeLater {
       placeOnEventQueueActivity.end()
@@ -178,6 +182,7 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
       initAppActivity.end()
 
       app.loadComponents(SplashManager.getProgressIndicator())
+
       if (!headless) {
         addActivateAndWindowsCliListeners(app)
       }
@@ -210,7 +215,8 @@ private fun preloadIcons() {
 }
 
 @ApiStatus.Internal
-fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
+fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
+                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
   return registerFuture
     .thenCompose { plugins ->
       val future = CompletableFuture.runAsync(Runnable {
@@ -219,7 +225,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
         }
       }, AppExecutorUtil.getAppExecutorService())
 
-      // yes, at this moment initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used.
+      // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
       initConfigurationStore(app, null)
 
       future
@@ -350,7 +356,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
 
   val initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+  // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
   app.stateStore.setPath(effectiveConfigPath)
   LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
   initStoreActivity.end()
@@ -574,11 +580,11 @@ private fun reportPluginError() {
     try {
       PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
     }
-    catch (ignore: IOException) {
-    }
+    catch (ignore: IOException) { }
 
     PluginManagerCore.ourPlugins2Enable = null
     PluginManagerCore.ourPlugins2Disable = null
   })
+
   PluginManagerCore.ourPluginError = null
 }
