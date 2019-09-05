@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
@@ -9,6 +10,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +41,16 @@ public class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
   public static final Pattern ARG_LINE_PATTERN = Pattern.compile("\\$\\{(.+?)}|@(.+?)@|@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
+  private static final Set<String> EXCLUDE_SUBTAG_NAMES =
+    ContainerUtil.immutableSet("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
+  // See org.apache.maven.artifact.resolver.filter.AbstractScopeArtifactFilter
+  private static final Map<String, List<String>> SCOPE_FILTER = ContainerUtil.<String, List<String>>immutableMapBuilder()
+    .put("compile", Arrays.asList("system", "provided", "compile"))
+    .put("runtime", Arrays.asList("compile", "runtime"))
+    .put("compile+runtime", Arrays.asList("system", "provided", "compile", "runtime"))
+    .put("runtime+system", Arrays.asList("system", "compile", "runtime"))
+    .put("test", Arrays.asList("system", "provided", "compile", "runtime", "test"))
+    .build();
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
@@ -74,12 +88,12 @@ public class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(config, "classpathDependencyExcludes", "classpathDependencyExclude");
+    List<String> excludes = getExcludedArtifacts(config);
     String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
 
     if (scopeExclude != null || !excludes.isEmpty()) {
       for (MavenArtifact dependency : mavenProject.getDependencies()) {
-        if (scopeExclude != null && scopeExclude.equals(dependency.getScope()) ||
+        if (SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
             excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
           File file = dependency.getFile();
           javaParameters.getClassPath().remove(file.getAbsolutePath());
@@ -157,6 +171,28 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         }
       }
     }
+  }
+
+  @NotNull
+  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+    Element excludesElement = config.getChild("classpathDependencyExcludes");
+    if (excludesElement == null) {
+      return Collections.emptyList();
+    }
+    String rawText = excludesElement.getTextTrim();
+    List<String> excludes = new ArrayList<>();
+    if (!rawText.isEmpty()) {
+      StreamEx.split(rawText, ',').map(String::trim).into(excludes);
+    }
+    for (Element child : excludesElement.getChildren()) {
+      if (EXCLUDE_SUBTAG_NAMES.contains(child.getName())) {
+        String excludeItem = child.getTextTrim();
+        if (!excludeItem.isEmpty()) {
+          StreamEx.split(excludeItem, ',').map(String::trim).into(excludes);
+        }
+      }
+    }
+    return excludes;
   }
 
   private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
