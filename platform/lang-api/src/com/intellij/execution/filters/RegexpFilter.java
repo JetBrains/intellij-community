@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,8 +123,14 @@ public class RegexpFilter implements Filter, DumbAware {
   @Override
   public Result applyFilter(@NotNull String line, int entireLength) {
     Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
-    if (!matcher.find()) {
-      return null;
+    try {
+      if (!matcher.find()) {
+        return null;
+      }
+    }
+    catch (ProcessCanceledException e) {
+      // PCE is caused by long execution. Produce no links in this case.
+      return null; 
     }
 
     String filePath = matcher.group(FILE_STR);
