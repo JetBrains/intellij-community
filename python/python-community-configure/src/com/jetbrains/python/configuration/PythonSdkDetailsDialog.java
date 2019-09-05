@@ -187,16 +187,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     return mySdkList;
   }
 
-  public boolean isModified() {
-    Sdk projectSdk = getSdk();
-    if (projectSdk != null) {
-      projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
-    }
-    return getSelectedSdk() != projectSdk || myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty();
-  }
-
-  protected void updateOkButton() {
-    super.setOKActionEnabled(isModified());
+  private void updateOkButton() {
+    super.setOKActionEnabled(myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty() || getOriginalSelectedSdk() != getSdk());
   }
 
   @Override
@@ -217,7 +209,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.doCancelAction();
   }
 
-  public void apply() {
+  private void apply() {
     for (SdkModificator modificator : myModifiedModificators) {
       /* This should always be true barring bug elsewhere, log error on else? */
       if (modificator.isWritable()) {
@@ -232,7 +224,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     catch (ConfigurationException e) {
       LOG.error(e);
     }
-    final Sdk sdk = getSelectedSdk();
+    final Sdk sdk = getOriginalSelectedSdk();
     mySelectedSdkCallback.consume(sdk);
     if (sdk != null) {
       PyPackageManagers.getInstance().clearCache(sdk);
@@ -241,7 +233,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   @Nullable
-  public Sdk getSelectedSdk() {
+  private Sdk getOriginalSelectedSdk() {
+    final Sdk editableSdk = getEditableSelectedSdk();
+    return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
+  }
+
+  @Nullable
+  private Sdk getEditableSelectedSdk() {
     return mySdkList.getSelectedValue();
   }
 
@@ -282,7 +280,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void editSdk() {
-    final Sdk currentSdk = getSelectedSdk();
+    final Sdk currentSdk = getEditableSelectedSdk();
     if (currentSdk != null) {
       if (currentSdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData) {
         editRemoteSdk(currentSdk);
@@ -368,7 +366,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void removeSdk() {
-    final Sdk selectedSdk = getSelectedSdk();
+    final Sdk selectedSdk = getEditableSelectedSdk();
     if (selectedSdk != null) {
       myProjectSdksModel.removeSdk(selectedSdk);
 
@@ -386,7 +384,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk() {
-    final Sdk currentSdk = getSelectedSdk();
+    final Sdk currentSdk = getEditableSelectedSdk();
     if (currentSdk != null) {
       myModifiedModificators.add(myModificators.get(currentSdk));
       reloadSdk(currentSdk);
@@ -428,12 +426,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return getSelectedSdk() != null;
+      return getEditableSelectedSdk() != null;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Sdk sdk = getSelectedSdk();
+      Sdk sdk = getEditableSelectedSdk();
       final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);
 
