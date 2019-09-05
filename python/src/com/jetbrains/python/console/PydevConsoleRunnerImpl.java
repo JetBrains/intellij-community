@@ -56,6 +56,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMappingSettings;
@@ -126,7 +127,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
-  private String myConsoleTitle = null;
+  /*
+   Console title used during initialization, it can be changed with Rename action
+   */
+  @Nullable private String myConsoleInitTitle = null;
   private PythonConsoleView myConsoleView;
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
@@ -160,7 +164,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public void setConsoleTitle(String consoleTitle) {
-    myConsoleTitle = consoleTitle;
+    myConsoleInitTitle = consoleTitle;
   }
 
   private List<AnAction> fillRunActionsToolbar(final DefaultActionGroup toolbarActions) {
@@ -366,6 +370,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return cmd;
   }
 
+  @NotNull
   private PythonConsoleView createConsoleView(@NotNull Sdk sdk) {
     PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, sdk, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
@@ -500,9 +505,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       // Init console view
       myConsoleView = createConsoleView(sdk);
-      if (myConsoleView != null) {
-        myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
-      }
+      myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
       myPydevConsoleCommunication.setConsoleView(myConsoleView);
       myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine(), sdk);
 
@@ -553,8 +556,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     runActionsToolbar.setTargetComponent(mainPanel);
     outputActionsToolbar.setTargetComponent(mainPanel);
 
-    if (myConsoleTitle == null) {
-      myConsoleTitle = new ConsoleTitleGen(myProject, myTitle) {
+    if (myConsoleInitTitle == null) {
+      myConsoleInitTitle = new ConsoleTitleGen(myProject, myTitle) {
         @NotNull
         @Override
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
@@ -571,7 +574,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(myConsoleView, myProcessHandler, mainPanel, myConsoleTitle, null);
+      new RunContentDescriptor(myConsoleView, myProcessHandler, mainPanel, myConsoleInitTitle, null);
     Disposer.register(myProject, contentDescriptor);
 
     contentDescriptor.setFocusComputable(() -> myConsoleView.getConsoleEditor().getContentComponent());
@@ -626,9 +629,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-
   protected AnAction createRerunAction() {
-    return new RestartAction(this);
+    return new RestartAction(this, myConsoleInitTitle);
   }
 
   private void enableConsoleExecuteAction() {
@@ -779,21 +781,38 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static class RestartAction extends AnAction {
     private final PydevConsoleRunnerImpl myConsoleRunner;
+    private final String myInitTitle;
 
-
-    private RestartAction(PydevConsoleRunnerImpl runner) {
+    private RestartAction(PydevConsoleRunnerImpl runner, String initTitle) {
       ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
+      myInitTitle = initTitle;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myConsoleRunner.rerun();
+      String displayName = myInitTitle;
+      final Project project = e.getProject();
+      if (project != null) {
+        final String name = getConsoleDisplayName(project);
+        if (!displayName.equals(name)) {
+          displayName = name;
+        }
+      }
+      myConsoleRunner.rerun(displayName);
     }
   }
 
-  private void rerun() {
+  @Nullable
+  private static String getConsoleDisplayName(@NotNull Project project) {
+    final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+    final Content content = toolWindow.getToolWindow().getContentManager().getSelectedContent();
+    if (content == null) return null;
+    return content.getDisplayName();
+  }
+
+  private void rerun(String displayName) {
     new Task.Backgroundable(myProject, "Restarting Console", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -807,7 +826,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           myProcessHandler.waitFor();
         }
 
-        GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(myConsoleTitle), ModalityState.defaultModalityState());
+        GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
       }
     }.queue();
   }

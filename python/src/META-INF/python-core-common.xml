@@ -768,6 +768,10 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>
 
+    <action id="PyConsoleRenameAction" class="com.jetbrains.python.console.actions.PyConsoleRenameAction" text="Rename Console">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+
     <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
     </action>
