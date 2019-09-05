@@ -11,6 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.java2d.HeadlessGraphicsEnvironment;
 
 import java.awt.*;
 import java.util.Map;
@@ -236,7 +237,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NotNull
   private static String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
     StringBuilder sb = new StringBuilder(key);
-    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (environment instanceof HeadlessGraphicsEnvironment) return ""; // todo[malenkov]: a temporary fix for tests
+    for (GraphicsDevice device : environment.getScreenDevices()) {
       Rectangle bounds = getScreenRectangle(device.getDefaultConfiguration());
       sb.append('/').append(bounds.x);
       sb.append('.').append(bounds.y);
