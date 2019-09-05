@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -70,7 +69,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       return null
     }
 
-    val logManager = VcsLogContentUtil.getOrCreateLog(project) ?: return null
+    VcsLogContentUtil.getOrCreateLog(project) ?: return null
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
@@ -80,7 +79,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                               getViewCommitsAction(rangeFilter))
     }
     else {
-      return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
+      return waitForLogRefreshAndCalculate(commitsAndFiles)
     }
   }
 
@@ -89,34 +88,21 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   @CalledInBackground
-  private fun waitForLogRefreshAndCalculate(logManager: VcsLogManager, commitsAndFiles: CommitsAndFiles): NotificationData {
+  private fun waitForLogRefreshAndCalculate(commitsAndFiles: CommitsAndFiles): NotificationData? {
     val dataSupplier = CompletableFuture<NotificationData>()
-
-    val listener = object : DataPackChangeListener {
-      override fun onDataPackChange(dataPack: DataPack) {
-        createLogTabAndCalculateIfRangesAreReachable(dataPack, logManager, commitsAndFiles, dataSupplier, this)
-      }
-    }
-
-    projectLog.dataManager?.addDataPackChangeListener(listener)
-
-    val pce = Ref.create<ProcessCanceledException>()
-    ApplicationManager.getApplication().invokeLater {
-      // the log may be refreshed before we subscribe to the listener
-      try {
+    runInEdt {
+      projectLog.logManager?.let { logManager ->
+        val listener = object : DataPackChangeListener {
+          override fun onDataPackChange(dataPack: DataPack) {
+            createLogTabAndCalculateIfRangesAreReachable(dataPack, logManager, commitsAndFiles, dataSupplier, this)
+          }
+        }
+        logManager.dataManager.addDataPackChangeListener(listener)
         createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
-      }
-      catch (e: ProcessCanceledException) {
-        pce.set(e)
-        dataSupplier.completeExceptionally(e)
-      }
+      } ?: dataSupplier.complete(null)
     }
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(dataSupplier)
-    if (!pce.isNull) {
-      LOG.warn("Failed to create a log tab.")
-      throw pce.get()
-    }
     return dataSupplier.get()
   }
 
