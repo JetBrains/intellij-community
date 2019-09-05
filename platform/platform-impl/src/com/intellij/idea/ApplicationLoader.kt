@@ -536,12 +536,12 @@ private fun CompletableFuture<*>.thenRunOrHandleError(handler: () -> Unit): Comp
 }
 
 private fun reportPluginError() {
-  if (PluginManagerCore.myPluginError == null) {
+  if (PluginManagerCore.ourPluginError == null) {
     return
   }
 
   val title = IdeBundle.message("title.plugin.error")
-  Notifications.Bus.notify(Notification(title, title, PluginManagerCore.myPluginError, NotificationType.ERROR) { notification, event ->
+  Notifications.Bus.notify(Notification(title, title, PluginManagerCore.ourPluginError, NotificationType.ERROR) { notification, event ->
     notification.expire()
 
     val description = event.description
@@ -552,11 +552,11 @@ private fun reportPluginError() {
     }
 
     val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
-    if (PluginManagerCore.myPlugins2Disable != null && PluginManagerCore.DISABLE == description) {
-      disabledPlugins.addAll(PluginManagerCore.myPlugins2Disable)
+    if (PluginManagerCore.ourPlugins2Disable != null && PluginManagerCore.DISABLE == description) {
+      disabledPlugins.addAll(PluginManagerCore.ourPlugins2Disable)
     }
-    else if (PluginManagerCore.myPlugins2Enable != null && PluginManagerCore.ENABLE == description) {
-      disabledPlugins.removeAll(PluginManagerCore.myPlugins2Enable)
+    else if (PluginManagerCore.ourPlugins2Enable != null && PluginManagerCore.ENABLE == description) {
+      disabledPlugins.removeAll(PluginManagerCore.ourPlugins2Enable)
       PluginManagerMain.notifyPluginsUpdated(null)
     }
 
@@ -566,8 +566,8 @@ private fun reportPluginError() {
     catch (ignore: IOException) {
     }
 
-    PluginManagerCore.myPlugins2Enable = null
-    PluginManagerCore.myPlugins2Disable = null
+    PluginManagerCore.ourPlugins2Enable = null
+    PluginManagerCore.ourPlugins2Disable = null
   })
-  PluginManagerCore.myPluginError = null
+  PluginManagerCore.ourPluginError = null
 }

@@ -22,10 +22,12 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -160,6 +162,13 @@ public class VcsLogUiUtil {
     return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
   }
 
+  public static void appendActionToEmptyText(@NotNull StatusText emptyText, @NotNull String text, @NotNull Runnable action) {
+    emptyText.appendSecondaryText(text, getLinkAttributes(), e -> action.run());
+  }
+
+  public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @NotNull StatusText emptyText) {
+    appendActionToEmptyText(emptyText, "Reset filters", () -> filterUi.setFilter(null));
+  }
   private static class VcsLogPlaceNavigator implements Place.Navigator {
     private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final AbstractVcsLogUi myUi;

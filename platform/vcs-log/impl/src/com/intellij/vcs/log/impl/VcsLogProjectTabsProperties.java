@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -19,13 +18,13 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   public static final String MAIN_LOG_ID = "MAIN";
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   @NotNull private final VcsLogApplicationSettings myAppSettings;
-  private State myState = new State();
+  @NotNull private State myState = new State();
 
   public VcsLogProjectTabsProperties(@NotNull VcsLogApplicationSettings appSettings) {
     myAppSettings = appSettings;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public State getState() {
     return myState;

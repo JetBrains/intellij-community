@@ -233,6 +233,7 @@
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
+    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

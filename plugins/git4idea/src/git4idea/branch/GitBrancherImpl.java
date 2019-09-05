@@ -129,11 +129,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
-    VcsLogContentUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
-      VcsLogRangeFilter range = VcsLogFilterObject.fromRange("HEAD", branchName);
-      VcsLogRootFilter roots = repositories.size() == 1 ? VcsLogFilterObject.fromRoot(selectedRepository.getRoot()) : null;
-      log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(range, roots));
-    });
+    new GitCompareBranchesUi(myProject, repositories, branchName).create();
   }
 
   @Override
