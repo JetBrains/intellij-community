@@ -182,7 +182,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       final PySkeletonGenerator.Builder builder = refresher.getGenerator()
         .commandBuilder()
         .extraSysPath(StringUtil.split(runResult.getStdout(), File.pathSeparator))
-        .extraArgs(Arrays.asList("--name-pattern", "gi.repository.*"));
+        .extraArgs("--name-pattern", "gi.repository.*");
 
       if (currentBinaryFilesPath != null) {
         builder.workingDir(currentBinaryFilesPath);

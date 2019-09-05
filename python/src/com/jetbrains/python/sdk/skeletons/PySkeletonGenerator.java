@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
+import java.util.*;
 
 /**
  * @author traff
@@ -111,6 +112,11 @@ public class PySkeletonGenerator {
     public Builder extraArgs(@NotNull List<String> args) {
       myExtraArgs = args;
       return this;
+    }
+
+    @NotNull
+    public Builder extraArgs(@NotNull String... args) {
+      return extraArgs(Arrays.asList(args));
     }
 
     @NotNull
