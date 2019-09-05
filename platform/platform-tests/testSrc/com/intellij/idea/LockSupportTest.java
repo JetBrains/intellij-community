@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.ide.CliResult;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.TimeoutUtil;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -74,15 +74,9 @@ public class LockSupportTest {
   }
 
   private static SocketLock.ActivationStatus tryActivate(SocketLock lock) throws Exception {
-    // on a same JVM, locking an already locked file results in `OverlappingFileLockException` instead of blocking
-    while (true) {
-      try {
-        return lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY).first;
-      }
-      catch (OverlappingFileLockException e) {
-        TimeoutUtil.sleep(10);
-      }
-    }
+    Pair<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY);
+    lock.getServer();
+    return result.first;
   }
 
   @Test(timeout = 30000)

@@ -171,6 +171,10 @@ private fun startApp(app: ApplicationImpl, starter: ApplicationStarter, initAppA
     EventQueue.invokeLater {
       placeOnEventQueueActivity.end()
       StartupUtil.installExceptionHandler()
+
+      initAppActivity.runChild("waiting for built-in server initialization") {
+        StartupUtil.getServer()  // throws an exception if initialization has failed
+      }
       initAppActivity.end()
 
       app.loadComponents(SplashManager.getProgressIndicator())

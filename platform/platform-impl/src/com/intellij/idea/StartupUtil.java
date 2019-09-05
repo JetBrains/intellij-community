@@ -429,7 +429,7 @@ public final class StartupUtil {
     }
   }
 
-  private static synchronized void lockSystemDirs(String[] args) throws IOException {
+  private static synchronized void lockSystemDirs(String[] args) throws Exception {
     if (ourSocketLock != null) throw new AssertionError();
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 

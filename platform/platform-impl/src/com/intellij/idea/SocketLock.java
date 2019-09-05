@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -44,8 +43,8 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -68,10 +67,8 @@ public final class SocketLock {
   private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef = new AtomicReference<>();
   private final String myConfigPath;
   private final String mySystemPath;
-  private final List<FileLock> myLockedFiles = new ArrayList<>(2);
-  private @Nullable Future<? extends Disposable> myBuiltinServerFuture;
-  private volatile String myToken;
-  private BuiltInServer myServer;
+  private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
+  private volatile Future<BuiltInServer> myBuiltinServerFuture;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
     myConfigPath = canonicalPath(configPath);
@@ -97,33 +94,46 @@ public final class SocketLock {
   public void dispose() {
     log("enter: dispose()");
 
-    Future<? extends Disposable> builtinServerFuture = myBuiltinServerFuture;
-    if (builtinServerFuture != null) {
-      try {
-        Disposable server = builtinServerFuture.get(5, TimeUnit.SECONDS);
+    BuiltInServer server = null;
+    try {
+      server = getServer();
+    }
+    catch (Exception ignored) { }
+
+    try {
+      if (myLockedFiles.isEmpty()) {
         lockPortFiles();
-        try {
-          Disposer.dispose(server);
-        }
-        finally {
-          myServer = null;
-        }
       }
-      catch (Exception e) {
-        log(e);
+      if (server != null) {
+        Disposer.dispose(server);
       }
       FileUtil.delete(new File(myConfigPath, PORT_FILE));
       FileUtil.delete(new File(mySystemPath, PORT_FILE));
       FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
       unlockPortFiles();
     }
+    catch (Exception e) {
+      log(e);
+    }
   }
 
   @Nullable BuiltInServer getServer() {
-    return myServer;
+    Future<BuiltInServer> future = myBuiltinServerFuture;
+    if (future != null) {
+      try {
+        return future.get();
+      }
+      catch (InterruptedException e) {
+        throw new IllegalStateException(e);
+      }
+      catch (ExecutionException e) {
+        throw new IllegalStateException(e.getCause());
+      }
+    }
+    return null;
   }
 
-  public @NotNull Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws IOException {
+  public @NotNull Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -149,11 +159,19 @@ public final class SocketLock {
     }
 
     myBuiltinServerFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("builtin server launch");
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("built-in server launch");
 
-      myToken = UUID.randomUUID().toString();
+      String token = UUID.randomUUID().toString();
+      String[] lockedPaths = {myConfigPath, mySystemPath};
+      Supplier<ChannelHandler> handlerSupplier = () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token);
+      BuiltInServer server = BuiltInServer.startNioOrOio(BuiltInServer.getRecommendedWorkerCount(), 6942, 50, false, handlerSupplier);
+
+      byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
+      Files.write(Paths.get(myConfigPath, PORT_FILE), portBytes);
+      Files.write(Paths.get(mySystemPath, PORT_FILE), portBytes);
+
       Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
-      Files.write(tokenFile, myToken.getBytes(StandardCharsets.UTF_8));
+      Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
       PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
       if (view != null) {
         try {
@@ -164,36 +182,14 @@ public final class SocketLock {
         }
       }
 
-      try {
-        String[] lockedPaths = {myConfigPath, mySystemPath};
-        Supplier<ChannelHandler> handlerSupplier = () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, myToken);
-        myServer = BuiltInServer.startNioOrOio(BuiltInServer.getRecommendedWorkerCount(), 6942, 50, false, handlerSupplier);
-        writePort(myServer.getPort());
-        unlockPortFiles();
-        return myServer;
-      }
-      catch (Exception e) {
-        log(e);
-        return null;
-      }
-      finally {
-        activity.end();
-      }
+      unlockPortFiles();
+
+      activity.end();
+      return server;
     });
 
     log("exit: lock(): succeed");
     return pair(ActivationStatus.NO_INSTANCE, null);
-  }
-
-  private void writePort(int port) {
-    byte[] data = Integer.toString(port).getBytes(StandardCharsets.UTF_8);
-    try {
-      FileUtil.writeToFile(new File(myConfigPath, PORT_FILE), data);
-      FileUtil.writeToFile(new File(mySystemPath, PORT_FILE), data);
-    }
-    catch (IOException e) {
-      log(e);
-    }
   }
 
   /**
@@ -213,25 +209,20 @@ public final class SocketLock {
     OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
     FileUtil.createDirectory(new File(myConfigPath));
     FileChannel cc = FileChannel.open(Paths.get(myConfigPath, PORT_LOCK_FILE), options);
-    FileLock cl = cc.lock();
-    myLockedFiles.add(cl);
-
+    myLockedFiles.add(cc);
+    myLockedFiles.add(cc.lock());
     FileUtil.createDirectory(new File(mySystemPath));
     FileChannel sc = FileChannel.open(Paths.get(mySystemPath, PORT_LOCK_FILE), options);
-    FileLock sl = sc.lock();
-    myLockedFiles.add(sl);
+    myLockedFiles.add(sc);
+    myLockedFiles.add(sc.lock());
   }
 
-  private synchronized void unlockPortFiles() {
+  private synchronized void unlockPortFiles() throws Exception {
     if (myLockedFiles.isEmpty()) {
       throw new IllegalStateException("File unlocking must not be called twice");
     }
-
-    for (FileLock lock : myLockedFiles) {
-      try {
-        lock.release();
-      }
-      catch (IOException ignore) { }
+    for (int i = myLockedFiles.size() - 1; i >= 0; i--) {
+      myLockedFiles.get(i).close();
     }
     myLockedFiles.clear();
   }
