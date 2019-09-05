@@ -75,7 +75,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1589,8 +1588,8 @@ public class DiffUtil {
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
         Project project = ((IdeFrame)window).getProject();
         IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
-        if (projectFrame instanceof IdeFrameEx) {
-          return !((IdeFrameEx)projectFrame).isInFullScreen();
+        if (projectFrame != null) {
+          return !projectFrame.isInFullScreen();
         }
       }
     }
