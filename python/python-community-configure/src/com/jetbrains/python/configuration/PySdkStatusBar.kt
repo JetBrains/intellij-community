@@ -131,6 +131,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
   private fun shortenNameInPopup(sdk: Sdk) = name(sdk).trimMiddle(100)
 
   private fun switchToSdk(sdk: Sdk) {
+    (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
     project.pythonSdk = sdk
     module.pythonSdk = sdk
   }
