@@ -98,6 +98,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     }
 
     private fun getNonAffectedLists(lists: List<LocalChangeList>, changes: Collection<Change>): List<LocalChangeList> {
+      if (changes.all { change -> change is ChangeListChange }) {
+        return lists.filter { changes.none { change -> (change as ChangeListChange).changeListId == it.id } }
+      }
       val changesSet = changes.toSet()
       return lists.filter { !intersects(changesSet, it.changes) }
     }
