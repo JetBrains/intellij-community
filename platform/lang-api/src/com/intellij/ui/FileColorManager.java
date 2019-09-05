@@ -1,4 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -35,12 +36,17 @@ public abstract class FileColorManager {
   public abstract Collection<String> getColorNames();
 
   @Nullable
+  public abstract Color getFileColor(@NotNull final PsiFile file);
+
+  @Nullable
   public abstract Color getFileColor(@NotNull final VirtualFile file);
 
   @Nullable
   public abstract Color getScopeColor(@NotNull String scopeName);
 
   public abstract boolean isShared(@NotNull final String scopeName);
+
+  public abstract boolean isColored(@NotNull String scopeName, final boolean shared);
 
   @Nullable
   public abstract Color getRendererBackground(VirtualFile file);
