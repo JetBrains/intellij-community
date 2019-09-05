@@ -304,6 +304,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
             myCollectedFields.add(commenterOption.name());
           }
           break;
+        case INDENT_SETTINGS:
+          for (IndentOption indentOption : IndentOption.values()) {
+            myCollectedFields.add(indentOption.name());
+          }
         default:
           // ignore
       }

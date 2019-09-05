@@ -114,16 +114,19 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private Set<String> getSupportedIndentOptions() {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
     if (provider == null) return Collections.emptySet();
-    Set<String> indentOptions = new HashSet<>();
-    IndentOptionsEditor editor = provider.getIndentOptionsEditor();
-    if (editor != null) {
-      indentOptions.add("TAB_SIZE");
-      indentOptions.add("USE_TAB_CHARACTER");
-      indentOptions.add("INDENT_SIZE");
-      if (editor instanceof SmartIndentOptionsEditor) {
-        indentOptions.add("CONTINUATION_INDENT_SIZE");
-        indentOptions.add("SMART_TABS");
-        indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");
+    Set<String> indentOptions =
+      new HashSet<>(provider.getSupportedFields(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS));
+    if (indentOptions.isEmpty()) {
+      IndentOptionsEditor editor = provider.getIndentOptionsEditor();
+      if (editor != null) {
+        indentOptions.add("TAB_SIZE");
+        indentOptions.add("USE_TAB_CHARACTER");
+        indentOptions.add("INDENT_SIZE");
+        if (editor instanceof SmartIndentOptionsEditor) {
+          indentOptions.add("CONTINUATION_INDENT_SIZE");
+          indentOptions.add("SMART_TABS");
+          indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");
+        }
       }
     }
     return indentOptions;
