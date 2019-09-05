@@ -73,9 +73,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
-      val logUiAndFactory = createLogTabInEdtAndWait(logManager)
+      val (logUi, factory) = createLogTabInEdtAndWait(logManager)
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(logUiAndFactory))
+                              getViewCommitsAction(logUi, factory))
     }
     else {
       return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
@@ -127,8 +127,8 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
-      createLogTab(logManager) { logUiAndFactory ->
-        MyVisiblePackChangeListener(logUiAndFactory, commitsAndFiles, dataSupplier)
+      createLogTab(logManager) { logUi: VcsLogUiImpl, factory: MyLogUiFactory ->
+        MyVisiblePackChangeListener(logUi, factory, commitsAndFiles, dataSupplier)
       }
     }
   }
@@ -146,8 +146,8 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): LogUiAndFactory {
-    val logUi = Ref.create<LogUiAndFactory>()
+  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): Pair<VcsLogUiImpl, MyLogUiFactory> {
+    val logUi = Ref.create<Pair<VcsLogUiImpl, MyLogUiFactory>>()
     val pce = Ref.create<ProcessCanceledException>()
     ApplicationManager.getApplication().invokeAndWait {
       try {
@@ -164,24 +164,26 @@ class GitUpdateInfoAsLog(private val project: Project,
     return logUi.get()
   }
 
-  private fun getViewCommitsAction(logUiAndFactory: LogUiAndFactory): Runnable {
+  private fun getViewCommitsAction(logUi: VcsLogUiImpl, factory: MyLogUiFactory): Runnable {
     return Runnable {
       projectLog.logManager?.let {
-        val found = VcsLogContentUtil.selectLogUi(project, logUiAndFactory.logUi)
+        val found = VcsLogContentUtil.selectLogUi(project, logUi)
         if (!found) {
-          createLogUiAndTab(it, logUiAndFactory.factory, select = true)
+          createLogUiAndTab(it, factory, select = true)
         }
       } ?: VcsLogContentUtil.showLogIsNotAvailableMessage(project)
     }
   }
 
-  private fun createLogTab(logManager: VcsLogManager, listenerGetter: ((LogUiAndFactory) -> VisiblePackChangeListener)?): LogUiAndFactory {
+  private fun createLogTab(logManager: VcsLogManager,
+                           listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?):
+    Pair<VcsLogUiImpl, MyLogUiFactory> {
     val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
       VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
     })
     val logUiFactory = MyLogUiFactory(logManager, rangeFilter, listenerGetter)
     val logUi = createLogUiAndTab(logManager, logUiFactory, select = false)
-    return LogUiAndFactory(logUi, logUiFactory)
+    return Pair(logUi, logUiFactory)
   }
 
   private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
@@ -198,7 +200,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
                                      val rangeFilter: VcsLogRangeFilter,
-                                     val listenerGetter: ((LogUiAndFactory) -> VisiblePackChangeListener)?)
+                                     val listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?)
     : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
       val logId = "git-update-project-info-" + UUID.randomUUID()
@@ -214,7 +216,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
       if (listenerGetter != null) {
-        refresher.addVisiblePackChangeListener(listenerGetter.invoke(LogUiAndFactory(logUi, this)))
+        refresher.addVisiblePackChangeListener(listenerGetter.invoke(logUi, this))
       }
 
       return logUi
@@ -277,25 +279,24 @@ class GitUpdateInfoAsLog(private val project: Project,
     return result
   }
 
-  private inner class MyVisiblePackChangeListener(val logUiAndFactory: LogUiAndFactory,
+  private inner class MyVisiblePackChangeListener(val logUi: VcsLogUiImpl,
+                                                  val factory: MyLogUiFactory,
                                                   val commitsAndFiles: CommitsAndFiles,
                                                   val dataSupplier: CompletableFuture<NotificationData>) : VisiblePackChangeListener {
 
     override fun onVisiblePackChange(visiblePack: VisiblePack) {
       runInEdt {
-        if (!dataSupplier.isDone && areFiltersEqual(visiblePack.filters, logUiAndFactory.logUi.filterUi.filters)) {
-          logUiAndFactory.logUi.refresher.removeVisiblePackChangeListener(this)
+        if (!dataSupplier.isDone && areFiltersEqual(visiblePack.filters, logUi.filterUi.filters)) {
+          logUi.refresher.removeVisiblePackChangeListener(this)
 
           val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
-                                      getViewCommitsAction(logUiAndFactory))
+                                      getViewCommitsAction(logUi, factory))
           dataSupplier.complete(data)
         }
       }
     }
   }
-
-  private data class LogUiAndFactory(val logUi: VcsLogUiImpl, val factory: MyLogUiFactory)
 }
 
 private fun areFiltersEqual(filters1: VcsLogFilterCollection, filters2: VcsLogFilterCollection): Boolean {
