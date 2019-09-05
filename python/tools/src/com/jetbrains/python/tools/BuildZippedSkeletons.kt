@@ -8,7 +8,6 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
-import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import java.io.File
@@ -42,7 +41,10 @@ fun main() {
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
-      refresher.regenerateSkeletons(SkeletonVersionChecker(PySkeletonHeader.PREGENERATED_VERSION))
+      refresher.generator
+        .commandBuilder()
+        .inPrebuildingMode()
+        .runGeneration(null)
 
       val artifactName = DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true)
       val dirPacked = File(skeletonsDir.parent, artifactName!!)
