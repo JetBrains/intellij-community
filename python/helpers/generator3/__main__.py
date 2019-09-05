@@ -123,7 +123,7 @@ def main():
         sys.exit(1)
     elif not args:
         process_all(target_roots, subdir, name_pattern=opts.get('--name-pattern'))
-        sys.exit()
+        sys.exit(0)
     else:
         name = args[0]
 
