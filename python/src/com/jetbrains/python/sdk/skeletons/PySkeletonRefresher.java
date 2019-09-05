@@ -26,9 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -102,12 +100,11 @@ public class PySkeletonRefresher {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
       final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
-        final List<String> errors = refresher.regenerateSkeletons(checker);
+        final List<String> errors = refresher.regenerateSkeletons();
         if (!errors.isEmpty()) {
           LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
           for (String moduleName : errors) {
@@ -156,7 +153,7 @@ public class PySkeletonRefresher {
   }
 
   @NotNull
-  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker checker) throws InvalidSdkException, ExecutionException {
+  public List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
     final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
@@ -165,10 +162,6 @@ public class PySkeletonRefresher {
       skeletonsDir.mkdirs();
     }
     final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
-
-    if (checker != null && checker.isPregenerated()) {
-      mySkeletonsGenerator.setPrebuilt(true);
-    }
 
     mySkeletonsGenerator.prepare();
 
@@ -202,7 +195,7 @@ public class PySkeletonRefresher {
       return null;
     });
     final boolean builtinsUpdated = ContainerUtil.exists(results,
-                                                         result -> result.getModuleOrigin().equals(SkeletonVersionChecker.BUILTIN_NAME));
+                                                         result -> result.getModuleOrigin().equals(PySkeletonGenerator.BUILTIN_NAME));
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
