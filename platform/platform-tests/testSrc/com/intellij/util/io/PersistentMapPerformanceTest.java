@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -31,6 +32,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  */
 @SkipSlowTestLocally
+@HardwareAgentRequired
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   interface MapConstructor<T, T2> {
     PersistentHashMap<T, T2> createMap(File file) throws IOException;
