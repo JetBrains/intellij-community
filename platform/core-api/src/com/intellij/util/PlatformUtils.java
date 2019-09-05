@@ -66,7 +66,7 @@ public final class PlatformUtils {
     return is(IDEA_CE_PREFIX);
   }
 
-  private static boolean isIdeaEducational() {
+  public static boolean isIdeaEducational() {
     return is(IDEA_EDU_PREFIX);
   }
 
