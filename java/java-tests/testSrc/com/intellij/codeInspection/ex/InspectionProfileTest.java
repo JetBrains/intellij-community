@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -786,7 +785,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final List<InspectionToolWrapper> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
-    Supplier<List<InspectionToolWrapper>> toolSupplier = () -> list;
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(list);
     InspectionProfileImpl profile = createProfile(toolSupplier);
 
     List<ScopeToolState> tools = profile.getAllTools();
@@ -835,7 +834,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return JDOMUtil.writeElement(profile.writeScheme());
   }
 
-  private static InspectionProfileImpl createProfile(@NotNull Supplier<List<InspectionToolWrapper>> toolSupplier) {
+  private static InspectionProfileImpl createProfile(@NotNull InspectionToolsSupplier toolSupplier) {
     InspectionProfileImpl base = new InspectionProfileImpl("Base", toolSupplier, (InspectionProfileImpl)null);
     return new InspectionProfileImpl("Foo", toolSupplier, base);
   }

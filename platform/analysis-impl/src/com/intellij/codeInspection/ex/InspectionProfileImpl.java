@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
@@ -49,7 +48,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls private static final String USED_LEVELS = "used_levels";
   @TestOnly
   public static boolean INIT_INSPECTIONS;
-  @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
+  @NotNull protected final InspectionToolsSupplier myToolSupplier;
   protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
@@ -63,7 +62,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager) {
     this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), null);
   }
@@ -73,13 +72,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @Nullable InspectionProfileImpl baseProfile) {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
   protected InspectionProfileImpl(@NotNull String profileName,
-                                  @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                                  @NotNull InspectionToolsSupplier toolSupplier,
                                   @NotNull BaseInspectionProfileManager profileManager,
                                   @Nullable InspectionProfileImpl baseProfile,
                                   @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
@@ -94,7 +93,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                               @NotNull InspectionToolsSupplier toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), dataHolder);
@@ -457,7 +456,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @NotNull
   protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
-    return myToolSupplier.get();
+    return myToolSupplier.createTools();
   }
 
   @Override
@@ -489,6 +488,17 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
     }
+    myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
+      @Override
+      public void toolAdded(@NotNull InspectionToolWrapper inspectionTool) {
+        addTool(project, inspectionTool, null);
+      }
+
+      @Override
+      public void toolRemoved(@NotNull InspectionToolWrapper inspectionTool) {
+        removeTool(inspectionTool);
+      }
+    }, project);
 
     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
       @NotNull
@@ -519,7 +529,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
-  public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Map<String, List<String>> dependencies) {
+  public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @Nullable Map<String, List<String>> dependencies) {
     final String shortName = toolWrapper.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
@@ -573,6 +583,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       LOG.error("Can't read settings for " + toolWrapper, e);
     }
     myTools.put(shortName, toolsList);
+  }
+
+  public ToolsImpl removeTool(@NotNull InspectionToolWrapper inspectionTool) {
+    return myTools.remove(inspectionTool.getShortName());
   }
 
   @Nullable
