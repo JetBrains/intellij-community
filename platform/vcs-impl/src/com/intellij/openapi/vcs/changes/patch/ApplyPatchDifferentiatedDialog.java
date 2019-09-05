@@ -42,7 +42,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Alarm;
@@ -102,7 +107,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private boolean myContainBasedChanges;
   private JLabel myPatchFileLabel;
   private PatchReader myReader;
-  private VirtualFileListener myListener;
   private final boolean myCanChangePatchFile;
   private String myHelpId = "reference.dialogs.vcs.patch.apply";
   private final boolean myShouldUpdateChangeListName;
@@ -240,13 +244,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.setVisible(myCanChangePatchFile);
 
     if (myCanChangePatchFile) {
-      myListener = new VirtualFileListener() {
+      BulkFileListener listener = new BulkFileListener() {
         @Override
-        public void contentsChanged(@NotNull VirtualFileEvent event) {
-          syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
+        public void after(@NotNull List<? extends VFileEvent> events) {
+          for (VFileEvent event : events) {
+            if (event instanceof VFileContentChangeEvent) {
+              syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
+            }
+          }
         }
       };
-      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
+      ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
+        .subscribe(VirtualFileManager.VFS_CHANGES, listener);
     }
     updateOkActions();
   }
