@@ -412,19 +412,26 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
     @Suppress("ObjectPropertyName")
     @Volatile
-    private var _instance: UISettings? = null
+    private var cachedInstance: UISettings? = null
 
     @JvmStatic
     val instance: UISettings
-      get() = instanceOrNull!!
+      get() {
+        var result = cachedInstance
+        if (result == null) {
+          LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
+          result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+          cachedInstance = result
+        }
+        return result
+      }
 
     @JvmStatic
     val instanceOrNull: UISettings?
       get() {
-        var result = _instance
+        val result = cachedInstance
         if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
-          result = ServiceManager.getService(UISettings::class.java)
-          _instance = result
+          return instance
         }
         return result
       }
@@ -545,7 +552,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
-    if (this === _instance) {
+    if (this === cachedInstance) {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
