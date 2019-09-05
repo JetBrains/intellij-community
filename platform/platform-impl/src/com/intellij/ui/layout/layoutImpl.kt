@@ -9,8 +9,8 @@ import javax.swing.JComponent
 
 @PublishedApi
 @JvmOverloads
-internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
-  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration(), isUseMagic = isUseMagic))
+internal fun createLayoutBuilder(isUseMagic: Boolean = true /* preserved for API compatibility */): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
 interface LayoutBuilderImpl {

@@ -13,10 +13,7 @@ import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
-internal class MigLayoutBuilder(
-  val spacing: SpacingConfiguration,
-  val isUseMagic: Boolean = true
-) : LayoutBuilderImpl {
+internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
     private var vRelatedGap = -1
@@ -188,7 +185,7 @@ internal class MigLayoutBuilder(
           }
           // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
           // so, we set for each row to make sure that constraints from previous row will be not applied
-          rowConstraints.align(if (isUseMagic) "baseline" else "top", rowIndex)
+          rowConstraints.align("baseline", rowIndex)
         }
 
         if (index >= row.rightIndex) {

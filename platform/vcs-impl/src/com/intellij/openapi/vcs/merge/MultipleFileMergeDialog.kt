@@ -134,7 +134,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel(LCFlags.disableMagic) {
+    return panel {
       row {
         descriptionLabel()
       }
