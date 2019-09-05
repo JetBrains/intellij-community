@@ -28,7 +28,7 @@ public class YamlMetaTypeProvider {
 
   private static final Logger LOG = Logger.getInstance(YamlMetaTypeProvider.class);
 
-  private static final Key<CachedValue<FieldAndRelation>> KEY = Key.create(YamlMetaTypeProvider.class.getName() + ":KEY");
+  private final Key<CachedValue<FieldAndRelation>> myKey;
 
   @NotNull
   private final ModelAccess myMetaModel;
@@ -37,6 +37,7 @@ public class YamlMetaTypeProvider {
 
   public YamlMetaTypeProvider(@NotNull final ModelAccess metaModel, @NotNull final ModificationTracker modificationTracker) {
     myMetaModel = metaModel;
+    myKey = Key.create(metaModel.getClass().getName() + ":KEY");
     myModificationTracker = modificationTracker;
   }
 
@@ -69,7 +70,7 @@ public class YamlMetaTypeProvider {
 
   @Nullable
   public MetaTypeProxy getValueMetaType(@NotNull YAMLValue typedValue) {
-    return CachedValuesManager.getCachedValue(typedValue, KEY, () -> {
+    return CachedValuesManager.getCachedValue(typedValue, myKey, () -> {
       debug(" >> computing type for : " + YamlDebugUtil.getDebugInfo(typedValue));
       FieldAndRelation computed = computeMetaType(typedValue);
       debug(" << finished for : " + YamlDebugUtil.getDebugInfo(typedValue) +
