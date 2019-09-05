@@ -117,7 +117,7 @@ class GitUpdateInfoAsLog(private val project: Project,
           return logUi
         }
       }
-      createLogUiAndTab(logManager, logUiFactory, select = false)
+      createLogUi(logManager, logUiFactory, select = false)
     }
   }
 
@@ -142,7 +142,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     val logManager = projectLog.logManager
     if (logManager != null) {
-      createLogUiAndTab(logManager, MyLogUiFactory(logManager, rangeFilter), select = true)
+      createLogUi(logManager, MyLogUiFactory(logManager, rangeFilter), select = true)
     }
     else if (select) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
@@ -159,7 +159,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     })
   }
 
-  private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
+  private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
     val logUi = logManager.createLogUi(logUiFactory, true)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
