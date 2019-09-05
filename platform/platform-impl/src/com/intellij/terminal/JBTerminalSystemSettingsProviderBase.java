@@ -50,6 +50,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  */
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider implements Disposable {
   protected final MyColorSchemeDelegate myColorScheme;
+  private JBTerminalSchemeColorPalette myColorPalette;
 
   public JBTerminalSystemSettingsProviderBase() {
     myColorScheme = createBoundColorSchemeDelegate();
@@ -68,6 +69,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myColorScheme.updateGlobalScheme(scheme);
         myColorScheme.setConsoleFontSize(consoleFontSize(myColorScheme));
+        myColorPalette = null;
         fireFontChanged();
       }
     });
@@ -100,9 +102,15 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return getKeyStrokesByActionId("Find");
   }
 
+  @NotNull
   @Override
   public ColorPalette getTerminalColorPalette() {
-    return new JBTerminalSchemeColorPalette(myColorScheme);
+    JBTerminalSchemeColorPalette colorPalette = myColorPalette;
+    if (colorPalette == null) {
+      colorPalette = new JBTerminalSchemeColorPalette(myColorScheme);
+      myColorPalette = colorPalette;
+    }
+    return colorPalette;
   }
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
