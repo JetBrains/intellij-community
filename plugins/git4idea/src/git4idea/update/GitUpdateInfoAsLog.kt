@@ -163,7 +163,8 @@ class GitUpdateInfoAsLog(private val project: Project,
     val logUi = logManager.createLogUi(logUiFactory, true)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
+                                   DateFormatUtil.formatDateTime(System.currentTimeMillis()),
                                    select, panel.getUi())
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
