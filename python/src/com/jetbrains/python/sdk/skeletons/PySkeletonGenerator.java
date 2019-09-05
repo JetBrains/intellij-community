@@ -37,19 +37,15 @@ import java.util.*;
  * @author traff
  */
 public class PySkeletonGenerator {
-  private static final Gson ourGson = new GsonBuilder().create();
-
-  // Some flavors need current folder to be passed as param. Here are they.
-  private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
-    new HashMap<>();
-
-  static {
-    ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
-  }
-
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3/__main__.py";
+
+  // Some flavors need current folder to be passed as param. Here are they.
+  private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
+    ImmutableMap.of(IronPythonSdkFlavor.class, "IRONPYTHONPATH");
+
+  private static final Gson ourGson = new GsonBuilder().create();
 
   protected final Sdk mySdk;
   @Nullable private String myCurrentFolder;
