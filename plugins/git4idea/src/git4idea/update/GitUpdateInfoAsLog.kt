@@ -73,7 +73,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
-      val (logUi, factory) = createLogTabInEdtAndWait(logManager)
+      val factory = createLogTabInEdtAndWait(logManager)
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
                               getViewCommitsAction(factory, factory.rangeFilter))
     }
@@ -135,12 +135,12 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): Pair<VcsLogUiImpl, MyLogUiFactory> {
-    val logUi = Ref.create<Pair<VcsLogUiImpl, MyLogUiFactory>>()
+  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): MyLogUiFactory {
+    val logFactory = Ref.create<MyLogUiFactory>()
     ApplicationManager.getApplication().invokeAndWait {
-      logUi.set(createLogTab(logManager, null))
+      logFactory.set(createLogTab(logManager, null))
     }
-    return logUi.get()
+    return logFactory.get()
   }
 
   private fun getViewCommitsAction(factory: MyLogUiFactory, rangeFilter: VcsLogRangeFilter): Runnable {
@@ -157,14 +157,13 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun createLogTab(logManager: VcsLogManager,
-                           listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?):
-    Pair<VcsLogUiImpl, MyLogUiFactory> {
+                           listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?): MyLogUiFactory {
     val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
       VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
     })
     val logUiFactory = MyLogUiFactory(logManager, rangeFilter, listenerGetter)
-    val logUi = createLogUiAndTab(logManager, logUiFactory, select = false)
-    return Pair(logUi, logUiFactory)
+    createLogUiAndTab(logManager, logUiFactory, select = false)
+    return logUiFactory
   }
 
   private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
