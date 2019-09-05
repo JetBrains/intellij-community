@@ -20,6 +20,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -202,6 +203,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (theme != null) {
           UIManager.LookAndFeelInfo[] newLafs = new UIManager.LookAndFeelInfo[myLaFs.length + 1];
           System.arraycopy(myLaFs, 0, newLafs, 0, myLaFs.length);
+          String editorScheme = theme.getEditorScheme();
+          if (editorScheme != null) {
+            ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager()
+              .loadBundledScheme(editorScheme, theme);
+          }
           UIThemeBasedLookAndFeelInfo newTheme = new UIThemeBasedLookAndFeelInfo(theme);
           newLafs[newLafs.length - 1] = newTheme;
           myLaFs = newLafs;
