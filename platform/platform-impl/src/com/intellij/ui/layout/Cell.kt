@@ -75,6 +75,10 @@ inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T
   return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
 }
 
+inline fun <reified T : Any> KMutableProperty0<T?>.toNullableBinding(defaultValue: T): PropertyBinding<T> {
+  return PropertyBinding({ get() ?: defaultValue }, { set(it) })
+}
+
 interface CellBuilder<T : JComponent> {
   val component: T
 
