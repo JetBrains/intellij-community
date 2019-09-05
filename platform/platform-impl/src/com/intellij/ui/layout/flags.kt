@@ -26,8 +26,6 @@ enum class LCFlags {
    */
   fill, fillX, fillY,
 
-  lcWrap,
-
   debug
 }
 

@@ -263,8 +263,6 @@ private fun LC.apply(flags: Array<out LCFlags>): LC {
       LCFlags.fillX -> isFillX = true
       LCFlags.fillY -> isFillY = true
 
-      LCFlags.lcWrap -> wrapAfter = 0
-
       LCFlags.debug -> debug()
     }
   }
