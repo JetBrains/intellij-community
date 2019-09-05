@@ -9,6 +9,7 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
@@ -54,22 +55,23 @@ open class GroovyInferenceSession(
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
     for ((expectedType, argument) in mapping.expectedTypes) {
       if (argument is ExpressionArgument) {
-        addConstraint(ExpressionConstraint(substitutor.substitute(contextSubstitutor.substitute(expectedType)), argument.expression))
+        val leftType = substitutor.substitute(contextSubstitutor.substitute(expectedType))
+        addConstraint(ExpressionConstraint(ExpectedType(leftType, METHOD_PARAMETER), argument.expression))
       }
       else {
         val type = argument.type
         if (type != null) {
-          addConstraint(TypeConstraint(substitutor.substitute(expectedType), type, context))
+          addConstraint(TypePositionConstraint(ExpectedType(substitutor.substitute(expectedType), METHOD_PARAMETER), type, context))
         }
       }
     }
   }
 
   open fun startNestedSession(params: Array<PsiTypeParameter>,
-                         siteSubstitutor: PsiSubstitutor,
-                         context: PsiElement,
-                         result: GroovyResolveResult,
-                         f: (GroovyInferenceSession) -> Unit) {
+                              siteSubstitutor: PsiSubstitutor,
+                              context: PsiElement,
+                              result: GroovyResolveResult,
+                              f: (GroovyInferenceSession) -> Unit) {
     val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, skipClosureBlock, expressionPredicates)
     nestedSession.propagateVariables(this)
     f(nestedSession)
@@ -80,7 +82,7 @@ open class GroovyInferenceSession(
     }
   }
 
-  fun checkPredicates(expression: GrExpression) : Boolean {
+  fun checkPredicates(expression: GrExpression): Boolean {
     return expressionPredicates.all { it.invoke(expression) }
   }
 }

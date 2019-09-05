@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -248,7 +248,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val initializer = variable.initializerGroovy ?: continue
       val initializerType = initializer.type ?: continue
       processRequiredParameters(initializerType, variable.type)
-      constraintsCollector.add(ExpressionConstraint(variable.declaredType, initializer))
+      val declaredType = variable.declaredType
+      val expectedType = if (declaredType == null) null else ExpectedType(declaredType, ASSIGNMENT)
+      constraintsCollector.add(ExpressionConstraint(expectedType, initializer))
     }
     super.visitVariableDeclaration(variableDeclaration)
   }
@@ -378,7 +380,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   private fun processExitExpression(expression: GrExpression) {
     val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
-    constraintsCollector.add(ExpressionConstraint(returnType, expression))
+    constraintsCollector.add(ExpressionConstraint(ExpectedType(returnType, RETURN_VALUE), expression))
     val typeParameter = expression.type.typeParameter() ?: return
     generateRequiredTypes(typeParameter, returnType, UPPER)
   }

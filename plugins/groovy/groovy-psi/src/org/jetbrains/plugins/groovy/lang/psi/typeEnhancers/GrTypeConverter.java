@@ -13,6 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GrConstraintFormula;
+
+import java.util.Collection;
 
 /**
  * @author peter
@@ -54,6 +57,13 @@ public abstract class GrTypeConverter {
                                                  @NotNull PsiType actualType,
                                                  @NotNull Position position,
                                                  @NotNull GroovyPsiElement context);
+
+  @Nullable
+  public Collection<GrConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
+                                                              @NotNull PsiType rightType,
+                                                              @NotNull Position position) {
+    return null;
+  }
 
   public enum Position {
     EXPLICIT_CAST,

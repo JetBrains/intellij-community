@@ -30,12 +30,14 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferClassAttribute
 import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -48,7 +50,8 @@ fun extractConstraintsFromClosureInvocations(closureParameter: ParameterizedClos
     for (index in nearestCall.expressionArguments.indices) {
       val argumentExpression = nearestCall.expressionArguments.getOrNull(index) ?: continue
       val innerParameterType = closureParameter.typeParameters.getOrNull(index)?.type()
-      collector.add(ExpressionConstraint(innerParameterType, argumentExpression))
+      val expectedType = if (innerParameterType == null) null else ExpectedType(innerParameterType, ASSIGNMENT)
+      collector.add(ExpressionConstraint(expectedType, argumentExpression))
     }
   }
   return collector

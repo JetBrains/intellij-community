@@ -22,11 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 
 class CommonDriver private constructor(private val targetParameters: Set<GrParameter>,
@@ -148,7 +146,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
   private fun collectOuterCallsInformation(): Pair<Collection<ConstraintFormula>, Set<GrParameter>> {
     val constraintCollector = mutableListOf<ConstraintFormula>()
     for (parameter in targetParameters) {
-      constraintCollector.add(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
+      constraintCollector.add(ExpressionConstraint(ExpectedType(parameter.type, ASSIGNMENT), parameter.initializerGroovy ?: continue))
     }
     val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
     val definitelySamParameters = mutableSetOf<GrParameter>()

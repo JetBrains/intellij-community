@@ -6,12 +6,10 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 class CollectingGroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
@@ -70,7 +68,8 @@ class CollectingGroovyInferenceSession(
       }
       val resultingParameter = substituteWithInferenceVariables(proxyMethodMapping[parameter?.name]?.type ?: expectedType)
       if (argument is ExpressionArgument) {
-        addConstraint(ExpressionConstraint(substitutor.substitute(contextSubstitutor.substitute(resultingParameter)), argument.expression))
+        val leftType = substitutor.substitute(contextSubstitutor.substitute(resultingParameter))
+        addConstraint(ExpressionConstraint(ExpectedType(leftType, METHOD_PARAMETER), argument.expression))
       }
       else {
         val type = argument.type
