@@ -174,7 +174,7 @@ public class PySkeletonRefresher {
 
     myGeneratorVersion = fromVersionString(mySkeletonsGenerator
                                              .commandBuilder()
-                                             .extraArgs(Collections.singletonList("-V"))
+                                             .extraArgs("-V")
                                              .runProcess()
                                              .getStdout()
                                              .trim());
