@@ -765,10 +765,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     if (eof()) return;
 
-    if (!myTokenTypeChecked) {
-      LOG.error("Probably a bug: eating token without its type checking");
-    }
-
     myTokenTypeChecked = false;
     myCurrentLexeme++;
     clearCachedTokenType();
