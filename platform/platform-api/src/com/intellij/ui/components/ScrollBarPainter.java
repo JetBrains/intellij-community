@@ -96,7 +96,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     Color color = function == null ? null : function.apply(key);
     if (color == null) color = key.getDefaultColor();
 
-    boolean useContrastScrollbars = UISettings.getInstance().getUseContrastScrollbars();
+    boolean useContrastScrollbars = UISettings.getShadowInstance().getUseContrastScrollbars();
     if (useContrastScrollbars) color = updateTransparency(color, key);
 
     return color;
