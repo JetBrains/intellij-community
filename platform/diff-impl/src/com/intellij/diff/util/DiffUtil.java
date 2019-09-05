@@ -405,19 +405,20 @@ public class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull JComponent label) {
+    Color commentFg = new JBColor(() -> {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
+      if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
+        return commentAttributes.getForegroundColor();
+      }
+      else {
+        return scheme.getDefaultForeground();
+      }
+    });
+    label.setForeground(commentFg);
+
     CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
-
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
-    if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
-      label.setForeground(commentAttributes.getForegroundColor());
-    }
-    else {
-      label.setForeground(scheme.getDefaultForeground());
-    }
-    label.setBackground(scheme.getDefaultBackground());
-    panel.setBackground(scheme.getDefaultBackground());
-
+    panel.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     return panel;
   }
 
