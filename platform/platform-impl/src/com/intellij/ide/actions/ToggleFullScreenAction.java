@@ -6,10 +6,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    IdeFrameEx frame = getFrame();
+    IdeFrameEx frame = getFrameHelper(e.getProject());
     if (frame != null) {
       frame.toggleFullScreen(!frame.isInFullScreen());
     }
@@ -33,7 +33,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
     Presentation p = e.getPresentation();
 
     IdeFrameEx frame = null;
-    boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && (frame = getFrame()) != null;
+    boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && (frame = getFrameHelper(e.getProject())) != null;
 
     if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
       p.setVisible(isApplicable);
@@ -46,8 +46,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static IdeFrameEx getFrame() {
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    return frame instanceof IdeFrameEx ? ((IdeFrameEx)frame) : null;
+  private static IdeFrameEx getFrameHelper(@Nullable Project project) {
+    return WindowManagerEx.getInstanceEx().findFrameHelper(project);
   }
 }

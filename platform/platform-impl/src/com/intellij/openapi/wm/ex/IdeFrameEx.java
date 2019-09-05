@@ -3,12 +3,14 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public interface IdeFrameEx extends IdeFrame {
   void setFileTitle(String fileTitle, File ioFile);
 

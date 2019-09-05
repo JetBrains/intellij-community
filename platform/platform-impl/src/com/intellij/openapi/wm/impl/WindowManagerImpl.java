@@ -443,6 +443,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Nullable
+  @Override
+  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+    if (project == null) {
+      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+      if (frame == null) {
+        return null;
+      }
+
+      project = frame.getProject();
+      if (project == null) {
+        return null;
+      }
+    }
+    return getFrameHelper(project);
+  }
+
+  @Nullable
   @ApiStatus.Internal
   public IdeRootPane getProjectFrameRootPane(@Nullable Project project) {
     ProjectFrameHelper helper = myProjectToFrame.get(project);

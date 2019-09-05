@@ -112,4 +112,11 @@ public abstract class WindowManagerEx extends WindowManager {
   @Nullable
   @ApiStatus.Internal
   public abstract ProjectFrameHelper getFrameHelper(@Nullable Project project);
+
+  /**
+   * Find frame for project or if project is null, for a last focused window.
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
 }

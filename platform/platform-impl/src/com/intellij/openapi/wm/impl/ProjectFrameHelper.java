@@ -590,19 +590,21 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
-    if (SystemInfo.isMac) {
-      try {
-        Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
-        modalBlockerField.setAccessible(true);
-        final Window modalBlocker = (Window)modalBlockerField.get(this);
-        if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
-          return true;
-        }
+    if (!SystemInfo.isMac) {
+      return false;
+    }
+
+    try {
+      Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
+      modalBlockerField.setAccessible(true);
+      Window modalBlocker = (Window)modalBlockerField.get(myFrame);
+      if (modalBlocker != null) {
+        ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
+        return true;
       }
-      catch (NoSuchFieldException | IllegalAccessException e) {
-        LOG.error(e);
-      }
+    }
+    catch (NoSuchFieldException | IllegalAccessException e) {
+      LOG.error(e);
     }
     return false;
   }
