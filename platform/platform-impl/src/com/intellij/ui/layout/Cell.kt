@@ -231,13 +231,13 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
 
-  fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
     return component(comment = comment)
   }
 
-  fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
   }

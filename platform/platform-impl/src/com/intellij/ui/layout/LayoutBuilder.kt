@@ -55,10 +55,7 @@ class RowBuilderWithButtonGroupProperty<T : Any>
 
   fun Row.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    subRowsEnabled = component.isSelected
-    component.addChangeListener {
-      subRowsEnabled = component.isSelected
-    }
+    attachSubRowsEnabled(component)
     return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
@@ -68,4 +65,11 @@ class RowBuilderWithButtonGroupProperty<T : Any>
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
+}
+
+fun Row.attachSubRowsEnabled(component: JBRadioButton) {
+  subRowsEnabled = component.isSelected
+  component.addChangeListener {
+    subRowsEnabled = component.isSelected
+  }
 }

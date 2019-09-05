@@ -10,6 +10,7 @@ import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -18,6 +19,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KMutableProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -400,6 +402,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = createChildRow(label = null, noGrid = true)
     row.addComponent(component, lazyOf(cc))
     return row
+  }
+
+  override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
+    return super.radioButton(text, comment).also { attachSubRowsEnabled(it.component) }
+  }
+
+  override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
+    return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
 }
 
