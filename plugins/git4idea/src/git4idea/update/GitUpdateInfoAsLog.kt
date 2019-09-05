@@ -74,9 +74,10 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
-      val factory = createLogTabInEdtAndWait(logManager)
+      val rangeFilter = createRangeFilter()
+      runInEdt { projectLog.logManager?.let { createLogTab(it, rangeFilter, null) } }
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(factory.rangeFilter))
+                              getViewCommitsAction(rangeFilter))
     }
     else {
       return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
@@ -128,7 +129,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
-      createLogTab(logManager) { logUi: VcsLogUiImpl, factory: MyLogUiFactory ->
+      createLogTab(logManager, createRangeFilter()) { logUi: VcsLogUiImpl, factory: MyLogUiFactory ->
         MyVisiblePackChangeListener(logUi, factory, commitsAndFiles, dataSupplier)
       }
     }
@@ -147,24 +148,6 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): MyLogUiFactory {
-    val logFactory = Ref.create<MyLogUiFactory>()
-    val pce = Ref.create<ProcessCanceledException>()
-    ApplicationManager.getApplication().invokeAndWait {
-      try {
-        logFactory.set(createLogTab(logManager, null))
-      }
-      catch (e: ProcessCanceledException) {
-        pce.set(e)
-      }
-    }
-    if (!pce.isNull) {
-      LOG.warn("Failed to create a log tab.")
-      throw pce.get()
-    }
-    return logFactory.get()
-  }
-
   private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
     return Runnable {
       projectLog.logManager?.let {
@@ -179,13 +162,17 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun createLogTab(logManager: VcsLogManager,
+                           rangeFilter: VcsLogRangeFilter,
                            listenerGetter: ((VcsLogUiImpl, MyLogUiFactory) -> VisiblePackChangeListener)?): MyLogUiFactory {
-    val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
-      VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
-    })
     val logUiFactory = MyLogUiFactory(logManager, rangeFilter, listenerGetter)
     createLogUiAndTab(logManager, logUiFactory, select = false)
     return logUiFactory
+  }
+
+  private fun createRangeFilter(): VcsLogRangeFilter {
+    return VcsLogFilterObject.fromRange(ranges.values.map {
+      VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
+    })
   }
 
   private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
