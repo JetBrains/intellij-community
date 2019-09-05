@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +27,8 @@ public abstract class SearchScope {
   /**
    * Do not override this method because it would disable hash code caching.
    * To provide your own hash code please override {@link #calcHashCode()} instead.
-   *
-   * @deprecated This is not the <s>droid</s> method that you should override, please override {@link #calcHashCode()} instead.
    */
-  @Deprecated // to discourage overriding
+  @ApiStatus.NonExtendable
   @Override
   public int hashCode() {
     int hashCode = myHashCode;
