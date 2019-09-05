@@ -182,7 +182,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
                           @Nullable VirtualFile file,
                           boolean addToFiles) {
     if (file == null) return;
-    if (!vcsManager.isFileInContent(file)) return;
+    if (vcsManager.getVcsFor(file) == null) return;
 
     boolean isDirectory = file.isDirectory();
     FilePath path = VcsUtil.getFilePath(file.getPath(), isDirectory);

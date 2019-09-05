@@ -124,7 +124,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
     return myVcsManager.getVcsFor(file) == myVcs &&
-           myVcsManager.isFileInContent(file) &&
            !myVcsIgnoreManager.isPotentiallyIgnoredFile(file);
   }
 
