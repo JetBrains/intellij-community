@@ -63,24 +63,19 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   @CalledInBackground
   fun calculateDataAndCreateLogTab(): NotificationData? {
-    val commitsAndFiles = calculateDataFromGit()
-
-    if (commitsAndFiles == null) {
-      return null
-    }
-
+    val commitsAndFiles = calculateDataFromGit() ?: return null
     VcsLogContentUtil.getOrCreateLog(project) ?: return null
-    if (!isPathFilterSet()) {
-      // if no path filters is set, we don't need the log to show the notification
-      // => schedule the log tab and return the data
-      val rangeFilter = createRangeFilter()
-      runInEdt { projectLog.logManager?.let { createLogUiAndTab(it, MyLogUiFactory(it, rangeFilter), select = false) } }
-      return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(rangeFilter))
-    }
-    else {
+
+    if (isPathFilterSet()) {
       return waitForLogRefreshAndCalculate(commitsAndFiles)
     }
+
+    // if no path filters is set, we don't need the log to show the notification
+    // => schedule the log tab and return the data
+    val rangeFilter = createRangeFilter()
+    runInEdt { projectLog.logManager?.let { createLogUiAndTab(it, MyLogUiFactory(it, rangeFilter), select = false) } }
+    return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
+                            getViewCommitsAction(rangeFilter))
   }
 
   private fun isPathFilterSet(): Boolean {
