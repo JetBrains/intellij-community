@@ -162,7 +162,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     architectures.each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-      new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
+      new File(winDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
     }
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
