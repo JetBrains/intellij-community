@@ -19,7 +19,7 @@ def version():
 # TODO move to property of Generator3 as soon as tests finished
 @cached
 def required_gen_version_file_path():
-    return os.environ.get(ENV_REQUIRED_GEN_VERSION_FILE, os.path.join(_helpers_dir, 'required_gen_version'))
+    return os.environ.get(ENV_REQUIRED_GEN_VERSION_FILE, os.path.join(_parent_dir, 'required_gen_version'))
 
 
 @cached
@@ -32,7 +32,7 @@ def is_pregeneration_mode():
     return ENV_PREGENERATION_MODE_FLAG in os.environ
 
 
-_helpers_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_dir=None):
