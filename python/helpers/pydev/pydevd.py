@@ -96,6 +96,8 @@ if SUPPORT_PLUGINS:
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
 
+original_excepthook = sys.__excepthook__
+
 try:
     'dummy'.encode('utf-8') # Added because otherwise Jython 2.2.1 wasn't finding the encoding (if it wasn't loaded in the main thread).
 except:
@@ -546,21 +548,10 @@ class PyDB(object):
         return pydevd_utils.is_ignored_by_filter(filename)
 
     def is_exception_trace_in_project_scope(self, trace):
-        if trace is None:
-            return False
-        elif self.in_project_scope(trace.tb_frame.f_code.co_filename):
-            return True
-        else:
-            while trace is not None:
-                if not self.in_project_scope(trace.tb_frame.f_code.co_filename):
-                    return False
-                trace = trace.tb_next
-            return True
+        return pydevd_utils.is_exception_trace_in_project_scope(trace)
 
     def is_top_level_trace_in_project_scope(self, trace):
-        if trace is not None and trace.tb_next is not None:
-            return self.is_exception_trace_in_project_scope(trace) and not self.is_exception_trace_in_project_scope(trace.tb_next)
-        return self.is_exception_trace_in_project_scope(trace)
+        return pydevd_utils.is_top_level_trace_in_project_scope(trace)
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():
@@ -1190,12 +1181,9 @@ class PyDB(object):
         thread_id = get_thread_id(thread)
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
         exctype, value, tb = arg
-        while tb:
-            if self.is_top_level_trace_in_project_scope(tb):
-                break
-            tb = tb.tb_next
-        sys.__excepthook__(exctype, value, tb)
-        sys.excepthook = lambda type, value, traceback: None  # Avoid printing the exception for the second time.
+        tb = pydevd_utils.get_top_level_trace_in_project_scope(tb)
+        original_excepthook(exctype, value, tb)
+        disable_excepthook()  # Avoid printing the exception for the second time.
         try:
             try:
                 add_exception_to_frame(frame, arg)
@@ -1491,6 +1479,10 @@ def dump_threads(stream=None):
     Helper to dump thread info (default is printing to stderr).
     '''
     pydevd_utils.dump_threads(stream)
+
+
+def disable_excepthook():
+    sys.excepthook = lambda exctype, value, tb: None
 
 
 def usage(doExit=0):
@@ -1893,6 +1885,48 @@ def patch_stdin(debugger):
     orig_stdin = sys.stdin
     sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
 
+
+def handle_keyboard_interrupt():
+    debugger = get_global_debugger()
+
+    if not debugger:
+        return
+
+    debugger.disable_tracing()
+    _, value, tb = sys.exc_info()
+
+    while tb:
+        filename = tb.tb_frame.f_code.co_filename
+        if debugger.in_project_scope(filename) and '_pydevd' not in filename:
+            break
+        tb = tb.tb_next
+    if tb:
+        limit = 1
+        tb_next = tb.tb_next
+
+        # When stopping the suspended debugger, traceback can contain two stack traces with the same frame.
+        if tb_next and tb_next.tb_frame is tb.tb_frame:
+            tb_next = None
+
+        while tb_next:
+            filename = tb_next.tb_frame.f_code.co_filename
+            if get_file_type(os.path.basename(filename)) or '_pydevd' in filename:
+                break
+            limit += 1
+            if tb_next.tb_next and tb_next.tb_next.tb_frame is not tb_next.tb_frame:
+                tb_next = tb_next.tb_next
+            else:
+                break
+        try:
+            value = value.with_traceback(tb)
+        except AttributeError:
+            value.__traceback__ = tb
+        value.__cause__ = None
+        traceback.print_exception(type(value), value, tb, limit=limit)
+
+    disable_excepthook()
+
+
 # Dispatch on_debugger_modules_loaded here, after all primary debugger modules are loaded
 from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
 from _pydevd_bundle import pydevd_extension_utils
@@ -2063,8 +2097,11 @@ def main():
 
         global connected
         connected = True  # Mark that we're connected when started from inside ide.
-
-        globals = debugger.run(setup['file'], None, None, is_module)
+        try:
+            globals = debugger.run(setup['file'], None, None, is_module)
+        except KeyboardInterrupt as e:
+            handle_keyboard_interrupt()
+            raise
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)

@@ -2386,4 +2386,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testNoDebuggerRelatedStacktraceOnDebuggerStop() {
+    runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        disposeDebugProcess();
+        waitForOutput("Process finished with exit code 1");
+        assertTrue("Output should contain KeyboardInterrupt as the exit reason when debugger is stopped",
+                   output().contains("KeyboardInterrupt"));
+        assertFalse("Output shouldn't contain debugger related stacktrace when debugger is stopped",
+                    output().contains("pydevd.py\", line "));
+      }
+    });
+  }
 }
