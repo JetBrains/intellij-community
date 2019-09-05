@@ -169,6 +169,22 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      // show dialog with name text field and 2 checkboxes under: checkout and 'overwrite' (initially disabled)
+      // use name^0 - NOT set tracking (the same as using hashes but faster);
+      /* no name conflicts - ok */
+
+      /* name exists -> enable overwrite checkbox +  yellow warning with a tooltip
+
+          // if checkout ON, overwrite OFF -> checkout existing and create in other repos; -> git checkout -b ref
+          // if checkout OFF, overwrite OFF -> create in other repos; -> git branch name
+          // if checkout ON, overwrite ON ->
+                check commits under progress-> commits exist -> FAIL in ALL repos;
+                                               no commits -> OVERWRITE, checkout, create
+
+          // if checkout OFF, overwrite ON -> commits exist -> FAIL in ALL repos;
+                                              no commits -> OVERWRITE (git checkout -B name startPoint), create (git branch -f name startPoint)
+       */
+
       GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch", null);
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
@@ -530,6 +546,26 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        //set tracking -> use references!
+
+        /* no name conflists -> checkout silently */
+
+        /* if branch exists in repos and track the same remote branch
+
+          //check commits git log remote_hash..localBranchName
+              // no commits ->  reset existing branch silently to remote
+              // commits exist -> show dialog with 2 radio buttons: reset OR checkout&rebase existing branches,
+              notes: ok cancel buttons, no default button, default focused on radio button
+        */
+
+        /* if branch exists in repos and track another remote branch
+
+          show dialog with 2 radio buttons: enter new unique!!!! name  field (ok disabled otherwise) OR  overwrite existing branches ( reset & change tracking)
+        */
+
+
+        ////modal progress and question dialog here
+
         final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
                                                      guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
