@@ -2,7 +2,10 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -91,17 +94,19 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
   fun createPopup(context: DataContext): ListPopup? {
     val group = DefaultActionGroup()
 
-    val moduleSdksByTypes = groupModuleSdksByTypes(PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks(project), module) {
+    val interpreterList = PyConfigurableInterpreterList.getInstance(project)
+    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project), module) {
       PythonSdkUtil.isInvalid(it) ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
       !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
     }
 
+    val model = interpreterList.model
     PyRenderedSdkType.values().forEachIndexed { index, type ->
       if (type in moduleSdksByTypes) {
         if (index != 0) group.addSeparator()
-        group.addAll(moduleSdksByTypes.getValue(type).map { SwitchToSdkAction(it) })
+        group.addAll(moduleSdksByTypes.getValue(type).mapNotNull { model.findSdk(it) }.map { SwitchToSdkAction(it) })
       }
     }
 
@@ -109,7 +114,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     group.add(InterpreterSettingsAction())
     group.add(AddInterpreterAction())
 
-    val currentSdkName = PythonSdkUtil.findPythonSdk(module)?.name
+    val currentSdk = module.pythonSdk
     return JBPopupFactory.getInstance().createActionGroupPopup(
       "Project Interpreter",
       group,
@@ -118,7 +123,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       false,
       null,
       -1,
-      Condition { it is SwitchToSdkAction && it.sdk.name == currentSdkName },
+      Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
       null
     ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
