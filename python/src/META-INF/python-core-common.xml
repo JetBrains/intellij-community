@@ -218,6 +218,16 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAbsoluteToRelativeImportIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyRelativeToAbsoluteImportIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToggleAliasIntention</className>
       <category>Python</category>
     </intentionAction>
