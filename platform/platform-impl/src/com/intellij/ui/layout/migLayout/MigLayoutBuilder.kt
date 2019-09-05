@@ -62,7 +62,7 @@ internal class MigLayoutBuilder(
   override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
 
-  override val topButtonGroup: ButtonGroup?
+  val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
 
   internal var hideableRowNestingLevel = 0

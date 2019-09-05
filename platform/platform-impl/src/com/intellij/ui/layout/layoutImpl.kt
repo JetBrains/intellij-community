@@ -15,7 +15,6 @@ internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
 
 interface LayoutBuilderImpl {
   val rootRow: Row
-  val topButtonGroup: ButtonGroup?
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
