@@ -76,7 +76,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       // => schedule the log tab and return the data
       val factory = createLogTabInEdtAndWait(logManager)
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(factory, factory.rangeFilter))
+                              getViewCommitsAction(factory.rangeFilter))
     }
     else {
       return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
@@ -165,14 +165,14 @@ class GitUpdateInfoAsLog(private val project: Project,
     return logFactory.get()
   }
 
-  private fun getViewCommitsAction(factory: MyLogUiFactory, rangeFilter: VcsLogRangeFilter): Runnable {
+  private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
     return Runnable {
       projectLog.logManager?.let {
         val found = VcsLogContentUtil.findAndSelectContent(project, AbstractVcsLogUi::class.java) { ui ->
           isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
         }
         if (!found) {
-          createLogUiAndTab(it, factory, select = true)
+          createLogUiAndTab(it, MyLogUiFactory(it, rangeFilter, null), select = true)
         }
       } ?: VcsLogContentUtil.showLogIsNotAvailableMessage(project)
     }
@@ -300,7 +300,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
           val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
-                                      getViewCommitsAction(factory, factory.rangeFilter))
+                                      getViewCommitsAction(factory.rangeFilter))
           dataSupplier.complete(data)
         }
       }
