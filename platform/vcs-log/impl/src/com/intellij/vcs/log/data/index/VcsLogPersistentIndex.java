@@ -569,21 +569,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
           checkRunningTooLong(indicator);
         });
-
-        displayProgress(indicator);
       });
     }
 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
-      displayProgress(indicator);
-
       myIndexers.get(myRoot).readAllFullDetails(myRoot, myPathsEncoder, details -> {
         storeDetail(details);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
         checkRunningTooLong(indicator);
-        displayProgress(indicator);
       });
     }
 
@@ -598,10 +593,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                                            (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
         indicator.cancel();
       }
-    }
-
-    public void displayProgress(@NotNull ProgressIndicator indicator) {
-      indicator.setFraction(((double)myNewIndexedCommits.get() + myOldCommits.get()) / myCommits.size());
     }
 
     @Override
