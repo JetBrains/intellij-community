@@ -22,8 +22,8 @@ public abstract class PersistentFindUsagesOptions extends FindUsagesOptions {
     super(searchScope);
   }
 
-  abstract void setDefaults(@NotNull Project project);
+  public abstract void setDefaults(@NotNull Project project);
 
-  abstract void storeDefaults(@NotNull Project project);
+  public abstract void storeDefaults(@NotNull Project project);
 
 }
