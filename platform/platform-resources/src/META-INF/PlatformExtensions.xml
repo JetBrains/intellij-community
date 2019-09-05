@@ -313,7 +313,8 @@
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
-    <projectService serviceImplementation="com.intellij.ui.tabs.FileColorProjectLevelConfigurationManager"/>
+    <projectService serviceImplementation="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
+    <projectService serviceImplementation="com.intellij.ui.tabs.PerUserFileColorModelStorageManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
