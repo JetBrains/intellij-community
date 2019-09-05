@@ -585,8 +585,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myTools.put(shortName, toolsList);
   }
 
-  public ToolsImpl removeTool(@NotNull InspectionToolWrapper inspectionTool) {
-    return myTools.remove(inspectionTool.getShortName());
+  public void removeTool(@NotNull InspectionToolWrapper inspectionTool) {
+    String shortName = inspectionTool.getShortName();
+    myTools.remove(shortName);
+    HighlightDisplayKey.unregister(shortName);
   }
 
   @Nullable
