@@ -56,26 +56,30 @@ interface RowBuilder : BaseBuilder {
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    CellBuilderWithButtonGroupProperty(prop.toBinding()).init()
-  }
+  buttonGroup(prop.toBinding(), init)
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
-    CellBuilderWithButtonGroupProperty(PropertyBinding(getter, setter)).init()
+    CellBuilderWithButtonGroupProperty(binding).init()
   }
 }
 
 inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    RowBuilderWithButtonGroupProperty(this, prop.toBinding()).init()
-  }
+  buttonGroup(prop.toBinding(), init)
 }
 
 inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> RowBuilder.buttonGroup(binding: PropertyBinding<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
-    RowBuilderWithButtonGroupProperty(this, PropertyBinding(getter, setter)).init()
+    RowBuilderWithButtonGroupProperty(this, binding).init()
   }
 }
 
