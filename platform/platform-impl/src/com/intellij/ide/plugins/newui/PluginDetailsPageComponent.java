@@ -290,7 +290,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     Object constraints = JBUIScale.scale(700);
     bottomPanel.add(myDescriptionComponent = createDescriptionComponent(), constraints);
-    myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints);
+    myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints, myDescriptionComponent);
 
     JLabel separator = new JLabel();
     separator.setBorder(JBUI.Borders.emptyTop(20));
@@ -333,7 +333,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myPlugin = component.myPlugin;
-      myUpdateDescriptor = ((ListPluginComponent)component).myUpdateDescriptor;
+      myUpdateDescriptor = component.myUpdateDescriptor;
       showPlugin();
       select(0, true);
     }
