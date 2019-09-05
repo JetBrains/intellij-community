@@ -100,14 +100,14 @@ public class PluginManagerCore {
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
 
   @SuppressWarnings("StaticNonFinalField") @ApiStatus.Internal
-  public static String myPluginError;
+  public static String ourPluginError;
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static List<String> myPlugins2Disable;
+  public static List<String> ourPlugins2Disable;
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static LinkedHashSet<String> myPlugins2Enable;
+  public static LinkedHashSet<String> ourPlugins2Enable;
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
@@ -658,11 +658,11 @@ public class PluginManagerCore {
       String errorMessage = IdeBundle.message("error.problems.found.loading.plugins") + StringUtil.join(errors, "<p/>");
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isHeadlessEnvironment() && !isUnitTestMode) {
-        if (myPluginError == null) {
-          myPluginError = errorMessage;
+        if (ourPluginError == null) {
+          ourPluginError = errorMessage;
         }
         else {
-          myPluginError += "\n" + errorMessage;
+          ourPluginError += "\n" + errorMessage;
         }
       }
       else {
@@ -1133,8 +1133,8 @@ public class PluginManagerCore {
       });
     }
     if (!disabledPluginIds.isEmpty()) {
-      myPlugins2Disable = disabledPluginIds;
-      myPlugins2Enable = faultyDescriptors;
+      ourPlugins2Disable = disabledPluginIds;
+      ourPlugins2Enable = faultyDescriptors;
       String error = "<br><a href=\"" + DISABLE + "\">Disable ";
       if (disabledPluginIds.size() == 1) {
         PluginId pluginId2Disable = PluginId.getId(disabledPluginIds.iterator().next());
@@ -1280,7 +1280,12 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  public static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors() {
+    return loadDescriptors(new ArrayList<>());
+  }
+
+  @NotNull
+  private static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
