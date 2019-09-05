@@ -158,7 +158,6 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     if (options.sendFrameBack) {
       ideFrame?.frame?.isAutoRequestFocus = true
     }
-
   }
 }
 

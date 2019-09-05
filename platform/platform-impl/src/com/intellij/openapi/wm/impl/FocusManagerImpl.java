@@ -23,7 +23,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +36,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
-/**
- * Global focus manager implementation.
- */
-@ApiStatus.Internal
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
 
@@ -115,7 +109,13 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    return getInstance(project).requestFocus(c, true);
+    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
+      c.requestFocus();
+    }
+    else {
+      c.requestFocusInWindow();
+    }
+    return ActionCallback.DONE;
   }
 
   @Override

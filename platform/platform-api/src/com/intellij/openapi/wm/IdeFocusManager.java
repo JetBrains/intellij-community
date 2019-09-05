@@ -39,11 +39,6 @@ import java.awt.*;
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 public abstract class IdeFocusManager implements FocusRequestor {
-
-  /**
-   * @deprecated Use {@code requestFocus} with {@code getInstance(Project project)} instead
-   */
-  @Deprecated
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     return requestFocus(c, false);
   }
