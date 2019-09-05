@@ -10,7 +10,6 @@ import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -204,27 +203,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     addComponent(titleComponent, lazyOf(cc))
   }
 
-  private fun panelRow(indent: Int, init: MigLayoutRow.(JPanel) -> Unit): Row {
-    val panel = DialogPanel(layout = null)
-    val spacing = createIntelliJSpacingConfiguration()
-    val layoutBuilder = MigLayoutBuilder(spacing, builder.isUseMagic, indent)
-    builder.setTo(layoutBuilder)
-    layoutBuilder.rootRow.createChildRow().init(panel)
-    layoutBuilder.build(panel, arrayOf())
-    layoutBuilder.setTo(builder)
-    val childRow = createChildRow(indent = 0)
-    with(childRow) { panel(growX) }
-    return childRow
-  }
-
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
     val titledSeparator = HideableTitledSeparator(title)
     val separatorRow = createChildRow()
     separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
-    val panelRow = panelRow(indent + spacing.indentLevel) { init() }
-    titledSeparator.row = panelRow
-    titledSeparator.collapse()
-    return panelRow
+    builder.hideableRowNestingLevel++
+    try {
+      val panelRow = createChildRow(indent + spacing.indentLevel).apply(init)
+      titledSeparator.row = panelRow
+      titledSeparator.collapse()
+      return panelRow
+    }
+    finally {
+      builder.hideableRowNestingLevel--
+    }
   }
 
   private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
@@ -315,6 +307,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
+    }
+
+    if (builder.hideableRowNestingLevel > 0) {
+      cc.value.hideMode = 0
     }
 
     // if this row is not labeled and:
