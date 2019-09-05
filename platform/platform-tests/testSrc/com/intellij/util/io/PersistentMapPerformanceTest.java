@@ -125,7 +125,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       }
       map.close();
       final boolean isSmall = stringsCount < 1000000;
-      assertTrue(isSmall || map.makesSenseToCompact());
+      assertTrue(map.makesSenseToCompact());
       long started = System.currentTimeMillis();
 
       map = constructor.createMap(file);
@@ -135,7 +135,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       else {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
       }
-      assertTrue(!map.makesSenseToCompact());
+      assertFalse(map.makesSenseToCompact());
       LOG.debug(String.valueOf(System.currentTimeMillis() - started));
       for (int i = 0; i < stringsCount; ++i) {
         if (i >= 2 * stringsCount / 3) {
@@ -206,7 +206,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         }
         catch (IOException e) {
           e.printStackTrace();
-          assertTrue(false);
+          fail();
           return false;
         }
         return true;
@@ -224,11 +224,11 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
       result = checkMap.forEachEntry((a, b) -> {
         try {
-          assertTrue(b == mapFinal2.get(a));
+          assertEquals(b, (int)mapFinal2.get(a));
         }
         catch (IOException e) {
           e.printStackTrace();
-          assertTrue(false);
+          fail();
           return false;
         }
         return true;
