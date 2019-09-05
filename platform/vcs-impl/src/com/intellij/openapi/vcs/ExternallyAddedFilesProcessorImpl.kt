@@ -89,7 +89,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
         .filter {
           it.isFromRefresh &&
           it is VFileCreateEvent &&
-          isProjectConfigDirOrUnderIt(configDir, it.parent)
+          !isProjectConfigDirOrUnderIt(configDir, it.parent)
         }
         .mapNotNull(VFileEvent::getFile)
         .toSet()
