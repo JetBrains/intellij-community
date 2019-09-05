@@ -73,7 +73,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
       val rangeFilter = createRangeFilter()
-      runInEdt { projectLog.logManager?.let { createLogUiAndTab(it, MyLogUiFactory(it, rangeFilter), select = false) } }
+      runInEdt { findOrCreateLogUi(rangeFilter, false) }
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
                               getViewCommitsAction(rangeFilter))
     }
@@ -138,17 +138,23 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
-    return Runnable {
-      projectLog.logManager?.let {
-        val found = VcsLogContentUtil.findAndSelectContent(project, AbstractVcsLogUi::class.java) { ui ->
-          isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
-        }
-        if (!found) {
-          createLogUiAndTab(it, MyLogUiFactory(it, rangeFilter), select = true)
-        }
-      } ?: VcsLogContentUtil.showLogIsNotAvailableMessage(project)
+  private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean) {
+    val found = VcsLogContentUtil.findAndSelectContent(project, AbstractVcsLogUi::class.java) { ui ->
+      isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
+    if (found) return
+
+    val logManager = projectLog.logManager
+    if (logManager != null) {
+      createLogUiAndTab(logManager, MyLogUiFactory(logManager, rangeFilter), select = true)
+    }
+    else if (select) {
+      VcsLogContentUtil.showLogIsNotAvailableMessage(project)
+    }
+  }
+
+  private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
+    return Runnable { findOrCreateLogUi(rangeFilter, true) }
   }
 
   private fun createRangeFilter(): VcsLogRangeFilter {
