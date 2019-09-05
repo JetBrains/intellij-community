@@ -222,6 +222,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       updateEditorScheme = true;
     }
 
+    update |= settings.getUseContrastScrollBars() != myComponent.myUseContrastScrollBarsCheckBox.isSelected();
+    settings.setUseContrastScrollBars(myComponent.myUseContrastScrollBarsCheckBox.isSelected());
+
     update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
 
@@ -365,6 +368,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       : null);
 
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
+    myComponent.myUseContrastScrollBarsCheckBox.setSelected(settings.getUseContrastScrollBars());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -419,6 +423,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
     isModified |= myComponent.isSupportScreenReadersModified();
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
+    isModified |= myComponent.myUseContrastScrollBarsCheckBox.isSelected() != settings.getUseContrastScrollBars();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
     isModified |= myComponent.myShowTreeIndentGuides.isSelected() != settings.getShowTreeIndentGuides();
@@ -500,6 +505,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
     private JBCheckBox myDarkWindowHeaders;
+    private JBCheckBox myUseContrastScrollBarsCheckBox;
 
     MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());

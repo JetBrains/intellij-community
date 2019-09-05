@@ -75,6 +75,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.colorBlindness = value
     }
 
+  var useContrastScrollbars: Boolean
+    get() = state.useContrastScrollBars
+    set(value) {
+      state.useContrastScrollBars = value
+    }
+
   var hideToolStripes: Boolean
     get() = state.hideToolStripes
     set(value) {

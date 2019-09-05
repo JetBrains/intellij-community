@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
@@ -12,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -59,6 +64,17 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
+  private static final List<ColorKey> CONTRAST_ELEMENTS_KEYS = Arrays.asList(
+    THUMB_OPAQUE_FOREGROUND,
+    THUMB_OPAQUE_BACKGROUND,
+    THUMB_OPAQUE_HOVERED_FOREGROUND,
+    THUMB_OPAQUE_HOVERED_BACKGROUND,
+    THUMB_FOREGROUND,
+    THUMB_BACKGROUND,
+    THUMB_HOVERED_FOREGROUND,
+    THUMB_HOVERED_BACKGROUND
+  );
+
   ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
       @Override
@@ -78,7 +94,20 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
     Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
     Color color = function == null ? null : function.apply(key);
-    return color != null ? color : key.getDefaultColor();
+    if (color == null) color = key.getDefaultColor();
+
+    boolean useContrastScrollbars = UISettings.getInstance().getUseContrastScrollbars();
+    if (useContrastScrollbars) color = updateTransparency(color, key);
+
+    return color;
+  }
+
+  private static Color updateTransparency(Color color, ColorKey key) {
+    if (!CONTRAST_ELEMENTS_KEYS.contains(key)) return color;
+
+    int alpha = Registry.intValue("contrast.scrollbars.alpha.level");
+    alpha = Integer.max(Integer.min(alpha, 255), 100);
+    return ColorUtil.toAlpha(color, alpha);
   }
 
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey key) {
