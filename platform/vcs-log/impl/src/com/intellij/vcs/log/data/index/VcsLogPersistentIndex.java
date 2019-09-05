@@ -52,7 +52,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   private static final int VERSION = 14;
-  private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
+  public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
@@ -397,7 +397,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull
     @Override
     protected SingleTask startNewBackgroundTask() {
-      ProgressIndicator indicator = myProgress.createProgressIndicator(false, INDEXING);
+      ProgressIndicator indicator = myProgress.createProgressIndicator(true, INDEXING);
       Consumer<ProgressIndicator> task = progressIndicator -> {
         int previousPriority = setMinimumPriority();
         try {

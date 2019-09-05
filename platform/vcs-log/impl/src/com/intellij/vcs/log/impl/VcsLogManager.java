@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -50,6 +51,7 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @Nullable private VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
+  @NotNull private final VcsLogStatusBarProgress myStatusBarProgress;
   private boolean myDisposed;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
@@ -72,6 +74,7 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+    myStatusBarProgress = new VcsLogStatusBarProgress(myProject, myLogData.getProgress());
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
@@ -173,6 +176,7 @@ public class VcsLogManager implements Disposable {
     myDisposed = true;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
+    Disposer.dispose(myStatusBarProgress);
   }
 
   /**
