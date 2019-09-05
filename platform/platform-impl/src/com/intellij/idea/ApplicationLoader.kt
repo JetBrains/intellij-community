@@ -282,7 +282,7 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
       // editor and other UI components need the list of system fonts to implement font fallback
       // this list is pre-loaded here, in parallel to other activities, to speed up project opening
       // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-      loadSystemFonts()
+      //loadSystemFonts()
     }
   }
 
