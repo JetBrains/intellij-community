@@ -10,7 +10,6 @@ import com.intellij.openapi.project.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
-import runtime.async.*
 import java.io.*
 
 class CircletTaskRunner(val project: Project) {

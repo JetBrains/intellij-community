@@ -6,7 +6,6 @@ import circlet.pipelines.engine.api.storage.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
-import runtime.reactive.*
 
 data class DummyContainer(val lifetimeSource: LifetimeSource)
 
@@ -101,7 +100,7 @@ class CircletIdeaJobExecutionProvider(
     }
 
     private fun launch(body: suspend () -> Unit) {
-        runtime.async.launch(lifetime, Ui) {
+        launch(lifetime, Ui) {
             body()
         }
     }

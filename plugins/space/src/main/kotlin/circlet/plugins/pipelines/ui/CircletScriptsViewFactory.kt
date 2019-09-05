@@ -22,7 +22,6 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
-import runtime.async.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.BoxLayout
