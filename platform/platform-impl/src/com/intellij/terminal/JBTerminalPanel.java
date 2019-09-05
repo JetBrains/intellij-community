@@ -301,7 +301,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences(), null);
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
   @Override
@@ -327,7 +327,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= MIN_FONT_SIZE) {
-        mySettingsProvider.getColorScheme().setConsoleFontSize(newFontSize);
+        mySettingsProvider.getColorsScheme().setConsoleFontSize(newFontSize);
         mySettingsProvider.fireFontChanged();
       }
       return;
