@@ -37,6 +37,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
+  protected WindowStateServiceImpl(@Nullable Project project) {
+    super(project);
+  }
+
   abstract Point getDefaultLocationFor(@NotNull String key);
 
   abstract Dimension getDefaultSizeFor(@NotNull String key);

@@ -13,6 +13,10 @@ import java.awt.*;
  */
 @State(name = "WindowStateApplicationService", storages = @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED))
 final class WindowStateApplicationService extends WindowStateServiceImpl {
+  WindowStateApplicationService() {
+    super(null);
+  }
+
   @Override
   Point getDefaultLocationFor(@NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
