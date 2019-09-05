@@ -38,7 +38,6 @@ def get_help_text():
         ' -p -- run CLR profiler ' '\n'
         ' -s path_list -- add paths to sys.path before run; path_list lists directories' '\n'
         '    separated by path separator char, e.g. "c:\\foo;d:\\bar;c:\\with space"' '\n'
-        ' -i -- read module_name, file_name and list of imported CLR assemblies from stdin line-by-line' '\n'
         ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
         ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>\n'
         '--name-pattern pattern -- shell-like glob pattern restricting generation only to binaries with matching qualified names\n'
@@ -119,18 +118,7 @@ def main():
 
     timer = Timer()
     # determine names
-    if '-i' in opts:
-        if args:
-            report("No names should be specified with -i")
-            sys.exit(1)
-        name = sys.stdin.readline().strip()
-
-        mod_file_name = sys.stdin.readline().strip()
-        if not mod_file_name:
-            mod_file_name = None
-
-        refs = sys.stdin.readline().strip()
-    elif len(args) > 2:
+    if len(args) > 2:
         report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
         sys.exit(1)
     elif not args:
