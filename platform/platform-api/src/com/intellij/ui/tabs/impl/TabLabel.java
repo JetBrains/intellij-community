@@ -11,6 +11,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
@@ -58,7 +59,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
 
     myLabelPlaceholder.setOpaque(false);
-    add(myLabelPlaceholder, "pushx, ax center");
+    addLabelPlaceholder();
 
     setAlignmentToCenter(true);
 
@@ -148,6 +149,12 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         }
       });
     }
+  }
+
+  private void addLabelPlaceholder() {
+    JBTabsPosition position = myTabs.getTabsPosition();
+    String labelAlignment = position.isSide() ? "ax left" : "ax center";
+    add(myLabelPlaceholder, "pushx, " + labelAlignment);
   }
 
   @Override
@@ -547,11 +554,12 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         myActionPanel.update();
       }
 
-      updateActionLabelPosition();
+      handleUISettingsChange();
     }
   }
 
-  void updateActionLabelPosition() {
+  void handleUISettingsChange() {
+    addLabelPlaceholder();
     if (myActionPanel != null) {
       if (!myActionPanel.isVisible()) {
         remove(myActionPanel);

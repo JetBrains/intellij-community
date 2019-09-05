@@ -367,14 +367,18 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-      entry.getKey().revalidate();
-      entry.getValue().updateActionLabelPosition();
-    }
+    updateTabLabelLayout();
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
     if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
+    }
+  }
+
+  private void updateTabLabelLayout() {
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      entry.getKey().revalidate();
+      entry.getValue().handleUISettingsChange();
     }
   }
 
@@ -1744,7 +1748,7 @@ public class JBTabsImpl extends JComponent
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
       }
     }
-    if (getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right) {
+    if (getTabsPosition().isSide()) {
       if (mySplitter.getSideTabsLimit() > 0) {
         max.myLabel.width = Math.min(max.myLabel.width, mySplitter.getSideTabsLimit());
       }
@@ -2566,11 +2570,12 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setTabsPosition(final JBTabsPosition position) {
     myPosition = position;
     OnePixelDivider divider = mySplitter.getDivider();
-    if ((position == JBTabsPosition.left || position == JBTabsPosition.right) && divider.getParent() == null) {
+    if (position.isSide() && divider.getParent() == null) {
       add(divider);
     } else if (divider.getParent() == this){
       remove(divider);
     }
+    updateTabLabelLayout();
     relayout(true, false);
     return this;
   }

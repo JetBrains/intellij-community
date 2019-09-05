@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +229,7 @@ public abstract class SingleRowLayout extends TabLayout {
   protected void calculateRequiredLength(SingleRowPassInfo data) {
     for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getRequiredLength(eachInfo);
-      if (myTabs.getTabsPosition() == JBTabsPosition.left || myTabs.getTabsPosition() == JBTabsPosition.right) {
+      if (myTabs.getTabsPosition().isSide()) {
         data.requiredLength -= 1;
       }
       data.toLayout.add(eachInfo);
