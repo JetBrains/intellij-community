@@ -616,6 +616,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     myDialogsToDispose.computeIfAbsent(project, k -> new THashSet<>()).add(dialog);
   }
 
+  @Override
   public final void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frameHelper);
 

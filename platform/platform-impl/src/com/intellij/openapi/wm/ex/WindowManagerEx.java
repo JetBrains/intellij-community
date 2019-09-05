@@ -6,8 +6,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.AppIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -119,4 +119,7 @@ public abstract class WindowManagerEx extends WindowManager {
   @Nullable
   @ApiStatus.Internal
   public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
+
+  @ApiStatus.Internal
+  public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
 }

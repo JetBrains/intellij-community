@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
@@ -181,7 +182,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       public void releaseFrame() {
         // remove ToolWindowsPane
         myRootPane.setToolWindowsPane(null);
-        ((WindowManagerImpl)WindowManager.getInstance()).releaseFrame(ProjectFrameHelper.this);
+        WindowManagerEx.getInstanceEx().releaseFrame(ProjectFrameHelper.this);
       }
     }, myFrameDecorator);
 

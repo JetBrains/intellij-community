@@ -339,4 +339,9 @@ public final class TestWindowManager extends WindowManagerEx {
       return () -> { };
     }
   }
+
+  @Override
+  public void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
+    frameHelper.getFrame().dispose();
+  }
 }
