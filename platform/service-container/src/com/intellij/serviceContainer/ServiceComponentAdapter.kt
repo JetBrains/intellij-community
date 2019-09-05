@@ -21,9 +21,6 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        componentManager: PlatformComponentManagerImpl,
                                        implementationClass: Class<*>? = null,
                                        initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass), AssignableToComponentAdapter {
-  override val createIfContainerDisposed: Boolean
-    get() = true
-
   override val implementationClassName: String
     get() = descriptor.implementation!!
 

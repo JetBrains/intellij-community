@@ -34,9 +34,6 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
   protected abstract val implementationClassName: String
 
-  protected open val createIfContainerDisposed: Boolean
-    get() = false
-
   @Synchronized
   fun isImplementationClassResolved() = implementationClass != null
 
@@ -70,8 +67,12 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     var instance = initializedInstance as T?
-    if (instance != null || !createIfNeeded || (!createIfContainerDisposed && componentManager.isDisposed)) {
+    if (instance != null || !createIfNeeded) {
       return instance
+    }
+
+    if (componentManager.isContainerDisposed()) {
+      throw PluginException("Cannot create ${toString()} because service container is already disposed (container=${componentManager}", pluginId)
     }
 
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()

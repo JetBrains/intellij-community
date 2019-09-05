@@ -666,6 +666,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     executor.shutdown()
     return CompletableFuture.allOf(*futures.toTypedArray())
   }
+
+  internal fun isContainerDisposed() = super.isDisposed()
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {
