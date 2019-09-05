@@ -49,7 +49,7 @@ private val LOG = logger<GitUpdateInfoAsLog>()
 class GitUpdateInfoAsLog(private val project: Project,
                          private val ranges: Map<GitRepository, HashRange>) {
 
-  private val log: VcsProjectLog = VcsProjectLog.getInstance(project)
+  private val projectLog: VcsProjectLog = VcsProjectLog.getInstance(project)
 
   private var notificationShown: Boolean = false // accessed only from EDT
 
@@ -95,7 +95,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       }
     }
 
-    log.dataManager?.addDataPackChangeListener(listener)
+    projectLog.dataManager?.addDataPackChangeListener(listener)
 
     ApplicationManager.getApplication().invokeLater {
       // the log may be refreshed before we subscribe to the listener
@@ -112,9 +112,9 @@ class GitUpdateInfoAsLog(private val project: Project,
                                                            commitsAndFiles: CommitsAndFiles,
                                                            dataSupplier: CompletableFuture<NotificationData>,
                                                            listener: DataPackChangeListener) {
-    if (!notificationShown && areRangesInDataPack(log, dataPack)) {
+    if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
-      log.dataManager?.removeDataPackChangeListener(listener)
+      projectLog.dataManager?.removeDataPackChangeListener(listener)
       createLogTab(logManager) { logUiAndFactory ->
         MyVisiblePackChangeListener(logUiAndFactory, commitsAndFiles, dataSupplier)
       }
@@ -144,7 +144,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun getViewCommitsAction(logUiAndFactory: LogUiAndFactory): Runnable {
     return Runnable {
-      log.logManager?.let {
+      projectLog.logManager?.let {
         val found = VcsLogContentUtil.selectLogUi(project, logUiAndFactory.logUi)
         if (!found) {
           createLogUiAndTab(it, logUiAndFactory.factory, select = true)
