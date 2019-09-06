@@ -53,7 +53,7 @@ class WhitelistConfigurationModel {
       }
       row {
         useCustomPathCheckBox(growX)
-        pathField(growX, growPolicy = GrowPolicy.MEDIUM_TEXT)
+        pathField(growX)
       }
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.WhitelistPathSettings
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
@@ -54,7 +55,10 @@ class ConfigureWhitelistAction : DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     super.update(event)
-    event.presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
+    val presentation = event.presentation
+    presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
+    presentation.icon = AllIcons.General.Settings
+    presentation.text = "Configure Whitelist"
   }
 }
 
