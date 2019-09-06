@@ -548,10 +548,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   @NotNull
   public Module[] getModules() {
-    if (myModuleModel.myIsWritable) {
+    ModuleModelImpl model = myModuleModel;
+    if (model.myIsWritable) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    return myModuleModel.getModules();
+    return model.getModules();
   }
 
   private volatile Module[] myCachedSortedModules;
@@ -609,7 +610,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     graph = myModuleModel.moduleGraph(includeTests);
     if (includeTests) {
       myCachedModuleTestGraph = graph;
-    } else {
+    }
+    else {
       myCachedModuleProductionGraph = graph;
     }
 
@@ -933,8 +935,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (!myIsWritable) {
         return false;
       }
-      return !myModules.equals(myManager.myModuleModel.myModules)
-             || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath)
+      ModuleModelImpl model = myManager.myModuleModel;
+      return !myModules.equals(model.myModules)
+             || !Comparing.equal(model.myModuleGroupPath, myModuleGroupPath)
              || !myModuleToNewName.isEmpty();
     }
 
