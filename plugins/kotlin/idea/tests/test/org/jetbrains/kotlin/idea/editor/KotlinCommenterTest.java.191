@@ -51,7 +51,7 @@ public class KotlinCommenterTest extends LightCodeInsightTestCase {
     private void doLineCommentTest() throws Exception {
         configure();
 
-        CodeStyleSettings codeStyleSettings = FormatSettingsUtil.getSettings(getProject());
+        CodeStyleSettings codeStyleSettings = FormatSettingsUtil.getSettings();
         try {
             String text = myFile.getText();
 

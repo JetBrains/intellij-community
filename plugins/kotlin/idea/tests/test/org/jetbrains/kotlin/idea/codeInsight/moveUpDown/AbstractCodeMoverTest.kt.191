@@ -91,14 +91,12 @@ abstract class AbstractCodeMoverTest : LightCodeInsightTestCase() {
     }
 
     private fun invokeAndCheck(fileText: String, path: String, action: EditorAction, isApplicableExpected: Boolean) {
-        val editor = LightPlatformCodeInsightTestCase.getEditor()
-        val project = editor.project!!
-
-        val codeStyleSettings = FormatSettingsUtil.getSettings(project)
+        val codeStyleSettings = FormatSettingsUtil.getSettings()
         val configurator = FormatSettingsUtil.createConfigurator(fileText, codeStyleSettings)
         configurator.configureSettings()
 
         try {
+            val editor = LightPlatformCodeInsightTestCase.getEditor()
             val dataContext = LightPlatformCodeInsightTestCase.getCurrentEditorDataContext()
 
             val before = editor.document.text

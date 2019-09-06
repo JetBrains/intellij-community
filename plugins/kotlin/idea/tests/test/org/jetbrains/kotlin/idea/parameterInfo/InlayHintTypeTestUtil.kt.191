@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.HintInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
+import com.intellij.codeInsight.hints.isOwnsInlayInEditor
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -33,7 +34,7 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
     val element = file.findElementAt(offset) ?: return null
     val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
 
-    val isHintOwnedByElement: (PsiElement) -> Boolean = { e -> provider.getHintInfo(e)?.isOwnedByPsiElement(e, editor) ?: false }
+    val isHintOwnedByElement: (PsiElement) -> Boolean = { e -> provider.getHintInfo(e) != null && e.isOwnsInlayInEditor(editor) }
     val method = PsiTreeUtil.findFirstParent(element, isHintOwnedByElement) ?: return null
 
     return provider.getHintInfo(method)

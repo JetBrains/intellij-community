@@ -1,19 +1,16 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JvmPsiConversionHelper
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -28,8 +25,12 @@ import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 
 internal class ChangeMethodParameters(
@@ -60,76 +61,28 @@ internal class ChangeMethodParameters(
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && request.isValid
 
-    private sealed class ParameterModification {
-        data class Keep(val ktParameter: KtParameter) : ParameterModification()
-        data class Remove(val ktParameter: KtParameter) : ParameterModification()
-        data class Add(
-            val name: String,
-            val ktType: KotlinType,
-            val expectedAnnotations: Collection<AnnotationRequest>,
-            val beforeAnchor: KtParameter?
-        ) : ParameterModification()
-    }
+    private data class ParameterModification(
+        val name: String,
+        val ktType: KotlinType
+    )
 
-    private tailrec fun getParametersModifications(
+    private fun getParametersModifications(
         target: KtNamedFunction,
-        currentParameters: List<KtParameter>,
-        expectedParameters: List<ExpectedParameter>,
-        index: Int = 0,
-        collected: List<ParameterModification> = ArrayList(expectedParameters.size)
+        expectedParameters: List<ExpectedParameter>
     ): List<ParameterModification> {
-
-        val expectedHead = expectedParameters.firstOrNull() ?: return collected + currentParameters.map { ParameterModification.Remove(it) }
-
-        if (expectedHead is ChangeParametersRequest.ExistingParameterWrapper) {
-            val expectedExistingParameter = expectedHead.existingKtParameter
-            if (expectedExistingParameter == null) {
-                LOG.error("can't find the kotlinOrigin for parameter ${expectedHead.existingParameter} at index $index")
-                return collected
-            }
-
-            val existingInTail = currentParameters.indexOf(expectedExistingParameter)
-            if (existingInTail == -1) {
-                throw IllegalArgumentException("can't find existing for parameter ${expectedHead.existingParameter} at index $index")
-            }
-
-            return getParametersModifications(
-                target,
-                currentParameters.subList(existingInTail + 1, currentParameters.size),
-                expectedParameters.subList(1, expectedParameters.size),
-                index,
-                collected
-                        + currentParameters.subList(0, existingInTail).map { ParameterModification.Remove(it) }
-                        + ParameterModification.Keep(expectedExistingParameter)
-            )
-        }
-
         val helper = JvmPsiConversionHelper.getInstance(target.project)
 
-        val theType = expectedHead.expectedTypes.firstOrNull()?.theType ?: return emptyList()
-        val kotlinType = helper.convertType(theType).resolveToKotlinType(target.getResolutionFacade()) ?: return emptyList()
+        return expectedParameters.mapIndexed { index, expectedParameter ->
+            val theType = expectedParameter.expectedTypes.firstOrNull()?.theType
+            val kotlinType = theType
+                ?.let { helper.convertType(it).resolveToKotlinType(target.getResolutionFacade()) }
+                ?: ErrorUtils.createErrorType("unknown type")
 
-        return getParametersModifications(
-            target,
-            currentParameters,
-            expectedParameters.subList(1, expectedParameters.size),
-            index + 1,
-            collected + ParameterModification.Add(
-                expectedHead.semanticNames.firstOrNull() ?: "param$index",
-                kotlinType,
-                expectedHead.expectedAnnotations,
-                currentParameters.firstOrNull { anchor ->
-                    expectedParameters.any {
-                        it is ChangeParametersRequest.ExistingParameterWrapper && it.existingKtParameter == anchor
-                    }
-                })
-        )
-
+            ParameterModification(
+                expectedParameter.semanticNames.firstOrNull() ?: "param$index", kotlinType
+            )
+        }
     }
-
-    private val ChangeParametersRequest.ExistingParameterWrapper.existingKtParameter
-        get() = (existingParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
-
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (!request.isValid) return
@@ -137,35 +90,16 @@ internal class ChangeMethodParameters(
         val target = element ?: return
         val functionDescriptor = target.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return
 
-        val parameterActions = getParametersModifications(target, target.valueParameters, request.expectedParameters)
+        target.valueParameterList!!.parameters.forEach { target.valueParameterList!!.removeParameter(it) }
+        val parameterActions = getParametersModifications(target, request.expectedParameters)
 
-        val parametersGenerated = parameterActions.filterIsInstance<ParameterModification.Add>().let {
+        val parametersGenerated = parameterActions.let {
             it zip generateParameterList(project, functionDescriptor, it).parameters
         }.toMap()
 
         for (action in parameterActions) {
-            when (action) {
-                is ParameterModification.Add -> {
-                    val parameter = parametersGenerated.getValue(action)
-                    for (expectedAnnotation in action.expectedAnnotations) {
-                        addAnnotationEntry(parameter, expectedAnnotation, null)
-                    }
-                    val anchor = action.beforeAnchor
-                    if (anchor != null) {
-                        target.valueParameterList!!.addParameterBefore(parameter, anchor)
-                    } else {
-                        target.valueParameterList!!.addParameter(parameter)
-                    }
-                }
-
-                is ParameterModification.Keep -> {
-                    // Do nothing
-                }
-
-                is ParameterModification.Remove -> {
-                    target.valueParameterList!!.removeParameter(action.ktParameter)
-                }
-            }
+            val parameter = parametersGenerated.getValue(action)
+            target.valueParameterList!!.addParameter(parameter)
         }
 
         ShortenReferences.DEFAULT.process(target.valueParameterList!!)
@@ -174,7 +108,7 @@ internal class ChangeMethodParameters(
     private fun generateParameterList(
         project: Project,
         functionDescriptor: FunctionDescriptor,
-        paramsToAdd: List<ParameterModification.Add>
+        paramsToAdd: List<ParameterModification>
     ): KtParameterList {
         val newFunctionDescriptor = SimpleFunctionDescriptorImpl.create(
             functionDescriptor.containingDeclaration,
@@ -225,7 +159,4 @@ internal class ChangeMethodParameters(
             ChangeMethodParameters(ktNamedFunction, request)
     }
 
-
 }
-
-private val LOG = Logger.getInstance(ChangeMethodParameters::class.java)
