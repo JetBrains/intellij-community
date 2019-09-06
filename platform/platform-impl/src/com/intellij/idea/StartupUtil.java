@@ -296,7 +296,7 @@ public final class StartupUtil {
   }
 
   private static void configureLog4j() {
-    Activity activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
+    Activity activity = StartUpMeasurer.start("configure console logger");
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();

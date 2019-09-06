@@ -41,12 +41,16 @@ public enum ParallelActivity {
 
   @NotNull
   public Activity start(@NotNull String name, @NotNull StartUpMeasurer.Level level) {
-    return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, null);
+    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, null);
+    activity.setParallelActivity(this);
+    return activity;
   }
 
   @NotNull
   public Activity start(@NotNull String name, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
-    return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
+    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, pluginId);
+    activity.setParallelActivity(this);
+    return activity;
   }
 
   public long record(long start, @Nullable Class<?> clazz, @Nullable String pluginId) {
@@ -70,7 +74,8 @@ public enum ParallelActivity {
       return duration;
     }
 
-    ActivityImpl item = new ActivityImpl(clazz == null ? Integer.toString(counter.incrementAndGet()) : clazz.getName(), start, /* parent = */ null, level, this, pluginId);
+    ActivityImpl item = new ActivityImpl(clazz == null ? Integer.toString(counter.incrementAndGet()) : clazz.getName(), start, /* parent = */ null, level, pluginId);
+    item.setParallelActivity(this);
     item.setEnd(end);
     StartUpMeasurer.add(item);
     return duration;

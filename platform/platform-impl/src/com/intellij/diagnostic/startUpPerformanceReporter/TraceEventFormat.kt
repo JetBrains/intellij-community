@@ -4,6 +4,7 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ParallelActivity
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
@@ -25,7 +26,7 @@ internal class TraceEventFormat(private val timeOffset: Long, private val instan
     }
   }
 
-  fun write(events: List<ActivityImpl>, outputWriter: OutputStreamWriter) {
+  fun write(events: List<ActivityImpl>, activities: Map<String, List<ActivityImpl>>, outputWriter: OutputStreamWriter) {
     val writer = JsonFactory().createGenerator(outputWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
@@ -35,7 +36,13 @@ internal class TraceEventFormat(private val timeOffset: Long, private val instan
 
           for (event in events) {
             writer.obj {
-              writeTraceEvent(event, writer)
+              writeCompleteEvent(event, writer)
+            }
+          }
+
+          for (event in activities.get(ParallelActivity.PREPARE_APP_INIT.jsonName) ?: emptyList()) {
+            writer.obj {
+              writeCompleteEvent(event, writer)
             }
           }
         }
@@ -43,7 +50,7 @@ internal class TraceEventFormat(private val timeOffset: Long, private val instan
     }
   }
 
-  private fun writeTraceEvent(event: ActivityImpl, writer: JsonGenerator) {
+  private fun writeCompleteEvent(event: ActivityImpl, writer: JsonGenerator) {
     writeCommonFields(event, writer)
     writer.writeStringField("ph", "X")
     writer.writeNumberField("dur", TimeUnit.NANOSECONDS.toMicros(event.end - event.start))

@@ -28,7 +28,6 @@ public final class StartUpMeasurer {
     public static final String WAIT_TASKS = "wait tasks";
     public static final String IMPORT_CONFIGS = "import configs";
 
-    public static final String CONFIGURE_LOGGING = "configure logging";
     public static final String APP_STARTER = "appStarter";
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
@@ -171,7 +170,7 @@ public final class StartUpMeasurer {
 
     List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
 
-    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < entries.size(); i++) {
@@ -180,7 +179,7 @@ public final class StartUpMeasurer {
         startTime = start;
       }
 
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null, null);
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null);
       activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
       items.add(activity);
     }

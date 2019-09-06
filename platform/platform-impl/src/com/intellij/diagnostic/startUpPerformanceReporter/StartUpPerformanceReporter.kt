@@ -149,7 +149,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     if (!traceFilePath.isNullOrBlank()) {
       val traceEventFormat = TraceEventFormat(startTime, instantEvents)
       Paths.get(traceFilePath).outputStream().writer().use {
-        traceEventFormat.write(items, it)
+        traceEventFormat.write(items, activities, it)
       }
     }
   }

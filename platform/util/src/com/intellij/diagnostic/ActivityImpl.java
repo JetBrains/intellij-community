@@ -24,30 +24,30 @@ public final class ActivityImpl implements Activity {
   private final StartUpMeasurer.Level level;
 
   @Nullable
-  private final ParallelActivity parallelActivity;
+  private ParallelActivity parallelActivity;
   @Nullable
   private final String pluginId;
 
   ActivityImpl(@Nullable String name, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
-    this(name, System.nanoTime(), null, level, null, pluginId);
+    this(name, System.nanoTime(), null, level, pluginId);
   }
 
   @NotNull
   static ActivityImpl createParallelActivity(@NotNull ParallelActivity parallelActivity, @NotNull String name) {
-    return new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* level = */ null, parallelActivity, null);
+    ActivityImpl activity = new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* level = */ null, null);
+    activity.setParallelActivity(parallelActivity);
+    return activity;
   }
 
   ActivityImpl(@Nullable String name,
                long start,
                @Nullable ActivityImpl parent,
                @Nullable StartUpMeasurer.Level level,
-               @Nullable ParallelActivity parallelActivity,
                @Nullable String pluginId) {
     this.name = name;
     this.start = start;
     this.parent = parent;
     this.level = level;
-    this.parallelActivity = parallelActivity;
     this.pluginId = pluginId;
 
     Thread thread = Thread.currentThread();
@@ -79,12 +79,16 @@ public final class ActivityImpl implements Activity {
     return parallelActivity;
   }
 
+  void setParallelActivity(@Nullable ParallelActivity value) {
+    parallelActivity = value;
+  }
+
   // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
   // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, System.nanoTime(), this, null, null, pluginId);
+    return new ActivityImpl(name, System.nanoTime(), this, null, pluginId);
   }
 
   @NotNull
@@ -97,8 +101,8 @@ public final class ActivityImpl implements Activity {
     return description;
   }
 
-  void setDescription(String description) {
-    this.description = description;
+  void setDescription(String value) {
+    description = value;
   }
 
   @Nullable
@@ -125,7 +129,7 @@ public final class ActivityImpl implements Activity {
       this.description = description;
     }
     assert end == 0 : "not started or already ended";
-    end = System.nanoTime();
+    end = StartUpMeasurer.getCurrentTime();
     StartUpMeasurer.add(this);
   }
 
@@ -133,7 +137,9 @@ public final class ActivityImpl implements Activity {
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();
-    return new ActivityImpl(name, /* start = */end, parent, /* level = */null, parallelActivity, pluginId);
+    ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */null, pluginId);
+    activity.setParallelActivity(parallelActivity);
+    return activity;
   }
 
   @Override
