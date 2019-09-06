@@ -375,26 +375,20 @@ public class MessageBusImpl implements MessageBus {
 
   private void pumpMessages() {
     checkNotDisposed();
-    if (myParentBus != null) {
-      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
-      myParentBus.pumpMessages();
-    }
-    else {
-      final Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
-      if (map != null && !map.isEmpty()) {
-        List<MessageBusImpl> liveBuses = null;
-        for (MessageBusImpl bus : map.keySet()) {
-          if (ensureAlive(map, bus)) {
-            if (liveBuses == null) {
-              liveBuses = new SmartList<>();
-            }
-            liveBuses.add(bus);
+    Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
+    if (map != null && !map.isEmpty()) {
+      List<MessageBusImpl> liveBuses = null;
+      for (MessageBusImpl bus : map.keySet()) {
+        if (ensureAlive(map, bus)) {
+          if (liveBuses == null) {
+            liveBuses = new SmartList<>();
           }
+          liveBuses.add(bus);
         }
+      }
 
-        if (liveBuses != null) {
-          pumpWaitingBuses(liveBuses);
-        }
+      if (liveBuses != null) {
+        pumpWaitingBuses(liveBuses);
       }
     }
   }
