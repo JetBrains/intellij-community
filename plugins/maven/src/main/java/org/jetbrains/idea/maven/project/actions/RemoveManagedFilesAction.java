@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,13 +33,13 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -92,9 +93,11 @@ public class RemoveManagedFilesAction extends MavenAction {
     }
     List<String> names = ContainerUtil.map(modulesToRemove, m -> m.getName());
     int returnCode =
-      Messages.showOkCancelDialog(ProjectBundle.message("maven.unlink.confirmation.prompt", names, names.size()), getActionTitle(names),
-                                  CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(),
-                                  Messages.getQuestionIcon());
+      Messages
+        .showOkCancelDialog(ExternalSystemBundle.message("action.detach.external.confirmation.prompt", "Maven", names.size(), names),
+                            getActionTitle(names),
+                            CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(),
+                            Messages.getQuestionIcon());
     if (returnCode != Messages.OK) {
       return;
     }
@@ -105,7 +108,7 @@ public class RemoveManagedFilesAction extends MavenAction {
   }
 
   private static String getActionTitle(List<String> names) {
-    return names.size() > 1 ? "Unlink Modules?" : "Unlink Module";
+    return StringUtil.pluralize(ExternalSystemBundle.message("action.detach.external.project.text", "Maven"), names.size());
   }
 
   private static void addModuleToRemoveList(MavenProjectsManager manager, List<Module> modulesToRemove, MavenProject project) {
