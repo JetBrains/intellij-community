@@ -76,12 +76,10 @@ public class ComplementaryFontsRegistry {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       fontNames.add("Monospaced");
     } else {
-      // This forces loading of all system fonts, 'getAvailableFontFamilyNames' might not do it (see JBR-1825)
-      new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
-
       if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND) {
         fillStyledFontMap();
       }
+      // This must match the corresponding call in com.intellij.idea.ApplicationLoader.loadSystemFonts for optimal performance
       String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
       for (final String fontName : families) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX) && !fontName.equals(ADOBE_BLANK)) {
@@ -362,10 +360,6 @@ public class ComplementaryFontsRegistry {
       }
       return fallBackInfo.getFontInfo(size, useLigatures, context);
     }
-  }
-
-  public static void init() {
-    // initialization is done in static initializer blocks
   }
 
   private static class FontKey implements Cloneable {
