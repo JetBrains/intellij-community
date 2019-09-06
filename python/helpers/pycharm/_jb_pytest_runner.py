@@ -12,8 +12,6 @@ from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERI
 from teamcity import pytest_plugin
 
 if __name__ == '__main__':
-    real_prepare_config = config._prepareconfig
-
     path, targets, additional_args = parse_arguments()
     sys.argv += additional_args
     joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
@@ -34,12 +32,10 @@ if __name__ == '__main__':
 
     jb_doc_args("pytest", args)
     # We need to preparse numprocesses because user may set it using ini file
-    config_result = real_prepare_config(args, plugins_to_load)
+    config_result = config._prepareconfig(args, plugins_to_load)
 
     if getattr(config_result.option, "numprocesses", None):
         set_parallel_mode()
-
-    config._prepareconfig = lambda _, __: config_result
 
     start_protocol()
     pytest.main(args, plugins_to_load)
