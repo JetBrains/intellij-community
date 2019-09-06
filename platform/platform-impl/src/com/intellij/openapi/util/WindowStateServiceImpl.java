@@ -23,12 +23,9 @@ import java.util.function.Function;
 abstract class WindowStateServiceImpl extends WindowStateService implements PersistentStateComponent<Element> {
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
-  @NonNls private static final String X = "x";
-  @NonNls private static final String Y = "y";
-  @NonNls private static final String WIDTH = "width";
-  @NonNls private static final String HEIGHT = "height";
   @NonNls private static final String MAXIMIZED = "maximized";
   @NonNls private static final String FULL_SCREEN = "full-screen";
+  @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
@@ -55,18 +52,19 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
           WindowState state = entry.getValue();
           Element child = new Element(STATE);
           if (state.myLocation != null) {
-            child.setAttribute(X, Integer.toString(state.myLocation.x));
-            child.setAttribute(Y, Integer.toString(state.myLocation.y));
+            JDOMUtil.setLocation(child, state.myLocation);
           }
           if (state.mySize != null) {
-            child.setAttribute(WIDTH, Integer.toString(state.mySize.width));
-            child.setAttribute(HEIGHT, Integer.toString(state.mySize.height));
+            JDOMUtil.setSize(child, state.mySize);
           }
           if (state.myMaximized) {
             child.setAttribute(MAXIMIZED, Boolean.toString(true));
           }
           if (state.myFullScreen) {
             child.setAttribute(FULL_SCREEN, Boolean.toString(true));
+          }
+          if (state.myScreen != null) {
+            child.addContent(JDOMUtil.setBounds(new Element(SCREEN), state.myScreen));
           }
           child.setAttribute(KEY, key);
           element.addContent(child);
@@ -84,14 +82,15 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         if (STATE.equals(child.getName())) {
           String key = child.getAttributeValue(KEY);
           if (key != null) {
-            Point location = getAttributePoint(child, X, Y);
-            Dimension size = getAttributeDimension(child, WIDTH, HEIGHT);
+            Point location = JDOMUtil.getLocation(child);
+            Dimension size = JDOMUtil.getSize(child);
             if (location != null || size != null) {
               WindowState state = new WindowState();
               state.myLocation = location;
               state.mySize = size;
               state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
               state.myFullScreen = Boolean.parseBoolean(child.getAttributeValue(FULL_SCREEN));
+              state.myScreen = apply(JDOMUtil::getBounds, child.getChild(SCREEN));
               myStateMap.put(key, state);
             }
           }
@@ -362,37 +361,5 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @Nullable
   private static <T, R> R apply(@NotNull Function<T, R> function, @Nullable T value) {
     return value == null ? null : function.apply(value);
-  }
-
-  @Nullable
-  private static Point getAttributePoint(@NotNull Element element, @NotNull String xName, @NotNull String yName) {
-    String xValue = element.getAttributeValue(xName);
-    if (xValue == null) return null;
-    String yValue = element.getAttributeValue(yName);
-    if (yValue == null) return null;
-    try {
-      return new Point(Integer.parseInt(xValue), Integer.parseInt(yValue));
-    }
-    catch (NumberFormatException ignored) {
-      return null;
-    }
-  }
-
-  @Nullable
-  private static Dimension getAttributeDimension(@NotNull Element element, @NotNull String widthName, @NotNull String heightName) {
-    String widthValue = element.getAttributeValue(widthName);
-    if (widthValue == null) return null;
-    String heightValue = element.getAttributeValue(heightName);
-    if (heightValue == null) return null;
-    try {
-      int width = Integer.parseInt(widthValue);
-      if (width <= 0) return null;
-      int height = Integer.parseInt(heightValue);
-      if (height <= 0) return null;
-      return new Dimension(width, height);
-    }
-    catch (NumberFormatException ignored) {
-      return null;
-    }
   }
 }
