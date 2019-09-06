@@ -3,6 +3,9 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.util.PsiLiteralUtil.parseDigits
 import com.intellij.psi.util.PsiLiteralUtil.parseIntegerNoPrefix
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import java.math.BigDecimal
 
 fun parseInteger(text: String): Int? {
   try {
@@ -21,4 +24,14 @@ fun parseInteger(text: String): Int? {
   catch (e: NumberFormatException) {
     return null
   }
+}
+
+private val zeros = setOf(0, 0.toLong(), 0.toFloat(), 0.toDouble(), 0.toBigInteger())
+
+fun GrExpression?.isZero(): Boolean {
+  if (this !is GrLiteral) {
+    return false
+  }
+  val value = value
+  return value in zeros || value is BigDecimal && value.compareTo(BigDecimal.ZERO) == 0
 }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang
 
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt
 import org.jetbrains.plugins.groovy.util.BaseTest
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.junit.Assert
@@ -36,6 +37,25 @@ class LiteralTest extends GroovyLatestTest implements BaseTest {
     for (entry in data) {
       def literal = elementUnderCaret(entry.key, GrLiteral)
       Assert.assertEquals(entry.key, entry.value, literal.value)
+    }
+  }
+
+  @Test
+  void 'zero literals'() {
+    def data = [
+      '0',
+      '0b0', '0B0',
+      '00',
+      '0x0', '0X0',
+      '0i', '0I',
+      '0l', '0L',
+      '0g', '0G',
+      '0f', '0F',
+      '0d', '0D',
+      '0.0g', '0.0G',
+    ]
+    for (string in data) {
+      assert LiteralUtilKt.isZero(elementUnderCaret(string, GrLiteral))
     }
   }
 }
