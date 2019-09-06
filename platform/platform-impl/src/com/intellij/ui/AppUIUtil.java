@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
@@ -118,12 +115,12 @@ public final class AppUIUtil {
   }
 
   public static boolean isWindowIconAlreadyExternallySet() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -234,19 +231,18 @@ public final class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
+    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
     try {
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
       }
     }
-    catch (Exception ignore) { }
-    activity.end();
+    catch (Exception ignore) {
+    }
   }
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass

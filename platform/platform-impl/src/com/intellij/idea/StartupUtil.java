@@ -285,7 +285,9 @@ public final class StartupUtil {
           });
         }
 
+        Activity updateFrameClassActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
         AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
+        updateFrameClassActivity.end();
       }
 
       LoadingPhase.setCurrentPhase(LAF_INITIALIZED);

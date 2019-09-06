@@ -12,6 +12,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,8 @@ public final class Splash extends Window {
   private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
   private final Image myImage;
 
-  private final NotNullLazyValue<Font> myFont = createFont();
+  @Nullable
+  private NotNullLazyValue<Font> myFont;
 
   public Splash(@NotNull ApplicationInfoEx info) {
     super(null);
@@ -175,7 +177,12 @@ public final class Splash extends Window {
   }
 
   public void paintLicenseeInfo() {
-    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, myFont);
+    NotNullLazyValue<Font> font = myFont;
+    if (font == null) {
+      font = createFont();
+      myFont = font;
+    }
+    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, font);
   }
 
   public static boolean showLicenseeInfo(@NotNull Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
