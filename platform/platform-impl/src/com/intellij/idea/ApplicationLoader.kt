@@ -56,6 +56,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import java.awt.Font
 import java.awt.GraphicsEnvironment
+import java.awt.dnd.DragSource
 import java.beans.PropertyChangeListener
 import java.io.File
 import java.io.IOException
@@ -295,6 +296,10 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
       // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
       loadSystemFonts()
     }
+    initAppActivity.runChild("setup DnD") {
+      // this will pre-load cursors used by drag'n'drop AWT subsystem
+      setupDnD()
+    }
   }
 
   val plugins = try {
@@ -317,6 +322,8 @@ private fun loadSystemFonts() {
   // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 }
+
+private fun setupDnD() = DragSource.getDefaultDragSource()
 
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
