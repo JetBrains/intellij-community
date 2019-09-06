@@ -1346,8 +1346,11 @@ public class InferenceSession {
 
   public void addConstraint(ConstraintFormula constraint) {
     if (myConstraintsCopy.add(constraint)) {
-        myConstraints.add(constraint);
+      if (constraint instanceof ExpressionCompatibilityConstraint && ignoreLambdaConstraintTree(((ExpressionCompatibilityConstraint)constraint).getExpression())) {
+        LOG.error("Should have been stopped at lambda under overload guard");
       }
+      myConstraints.add(constraint);
+    }
   }
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints, Set<ConstraintFormula> ignoredConstraints) {
