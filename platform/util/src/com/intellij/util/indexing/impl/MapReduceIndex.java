@@ -42,7 +42,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@ApiStatus.Experimental
 public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapReduceIndex");
   @NotNull protected final IndexId<Key, Value> myIndexId;
