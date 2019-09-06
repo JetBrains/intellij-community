@@ -21,6 +21,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.SystemShortcuts
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -54,8 +55,6 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
-import java.awt.Font
-import java.awt.GraphicsEnvironment
 import java.beans.PropertyChangeListener
 import java.io.File
 import java.io.IOException
@@ -310,13 +309,7 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
   pluginDescriptorsFuture.complete(plugins)
 }
 
-private fun loadSystemFonts() {
-  // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
-  Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-  // This caches available font family names (for the default locale) to make corresponding call
-  // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
-  GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
-}
+private fun loadSystemFonts() = ComplementaryFontsRegistry.init()
 
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
