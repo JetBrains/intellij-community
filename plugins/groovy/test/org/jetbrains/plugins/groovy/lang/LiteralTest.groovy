@@ -16,8 +16,10 @@ class LiteralTest extends GroovyLatestTest implements BaseTest {
     def data = [
       '42'      : 42,
       '0b101010': 0b101010,
+      '0B101010': 0B101010,
       '052'     : 052,
       '0x2a'    : 0x2a,
+      '0X2a'    : 0X2a,
       '42i'     : 42i,
       '42I'     : 42I,
       '42l'     : 42l,

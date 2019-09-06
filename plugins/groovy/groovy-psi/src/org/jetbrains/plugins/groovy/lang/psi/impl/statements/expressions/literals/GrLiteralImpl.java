@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -69,7 +70,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
           if (lastChar == 'i' || lastChar == 'I') {
             text = text.substring(0, text.length() - 1);
           }
-          return PsiLiteralUtil.parseInteger(text);
+          return LiteralUtilKt.parseInteger(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_LONG) {
           return PsiLiteralUtil.parseLong(text);
