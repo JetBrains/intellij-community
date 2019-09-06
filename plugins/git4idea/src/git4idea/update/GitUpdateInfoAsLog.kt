@@ -173,16 +173,14 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private val updateTabPrefix = "git-update-project-info-"
-
-  private fun isUpdateTabId(id: String): Boolean {
-    return id.startsWith(updateTabPrefix)
-  }
+  private fun generateUpdateTabId() = updateTabPrefix + UUID.randomUUID()
+  private fun isUpdateTabId(id: String): Boolean = id.startsWith(updateTabPrefix)
 
   private open inner class MyLogUiFactory(val logManager: VcsLogManager, val rangeFilter: VcsLogRangeFilter)
     : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
 
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
-      val logId = updateTabPrefix + UUID.randomUUID()
+      val logId = generateUpdateTabId()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
 
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
