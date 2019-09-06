@@ -126,6 +126,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return NULL_VIRTUAL_FILE;
     }
 
+    return findInPersistence(name, ensureCanonicalName, delegate, caseSensitive);
+  }
+
+  @Nullable
+  private VirtualFileSystemEntry findInPersistence(@NotNull String name,
+                                                   boolean ensureCanonicalName,
+                                                   @NotNull NewVirtualFileSystem delegate,
+                                                   boolean caseSensitive) {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
