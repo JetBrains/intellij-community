@@ -364,43 +364,59 @@ public final class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
+  public static void doImport(@NotNull Path oldConfigDir,
+                              @NotNull Path newConfigDir,
+                              @Nullable Path oldIdeHome,
+                              @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
       return;
     }
 
+    Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
+    if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
+      oldPluginsDir = null;
+      if (oldIdeHome != null) {
+        oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
+      }
+      if (oldPluginsDir == null) {
+        oldPluginsDir = Paths.get(PathManager.getDefaultPluginPathFor(oldConfigDir.getFileName().toString()));
+      }
+    }
+    Path newPluginsDir = Paths.get(PathManager.getPluginsPath());
+
+    doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, log);
+  }
+
+  public static void doImport(@NotNull Path oldConfigDir,
+                              @NotNull Path newConfigDir,
+                              @Nullable Path oldIdeHome,
+                              Path oldPluginsPath,
+                              Path newPluginsPath,
+                              @NotNull Logger log) {
     try {
       if (Files.isRegularFile(oldConfigDir)) {
         new Decompressor.Zip(oldConfigDir.toFile()).extract(newConfigDir.toFile());
         return;
       }
 
-      // copy everything including plugins (the plugin manager will sort out incompatible ones)
+      // copy everything WITHOUT plugins. Plugins will be copies a bit later
       // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
-      FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir));
+      FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir, oldPluginsPath));
+
+      // Plugin migration
+      File[] pluginDirContent = newPluginsPath.toFile().listFiles(pathname -> !pathname.isHidden());
+      if (pluginDirContent == null || pluginDirContent.length == 0) {
+        // The plugins folder may already contain plugins in case if idea.plugins.path is set to some location
+        // It could happen if update is performed via the Toolbox
+        FileUtil.copyDir(oldPluginsPath.toFile(), newPluginsPath.toFile());
+      }
 
       if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
         setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
       }
 
-      // on macOS, plugins are normally not under the config directory
-      Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
-      if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
-        oldPluginsDir = null;
-        if (oldIdeHome != null) {
-          oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
-        }
-        if (oldPluginsDir == null) {
-          oldPluginsDir = Paths.get(PathManager.getDefaultPluginPathFor(oldConfigDir.getFileName().toString()));
-        }
-        if (Files.isDirectory(oldPluginsDir)) {
-          Path newPluginsDir = Paths.get(PathManager.getPluginsPath());
-          FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
-        }
-      }
-
       // apply stale plugin updates
-      if (Files.isDirectory(oldPluginsDir)) {
+      if (Files.isDirectory(oldPluginsPath)) {
         Path oldSystemDir = null;
         if (oldIdeHome != null) {
           oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
@@ -412,7 +428,7 @@ public final class ConfigImportHelper {
         Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
         if (Files.isRegularFile(script)) {
           File newPluginsDir = new File(PathManager.getPluginsPath());
-          StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsDir.toFile(), newPluginsDir);
+          StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsPath.toFile(), newPluginsDir);
         }
       }
 
@@ -474,10 +490,10 @@ public final class ConfigImportHelper {
     return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
-  private static boolean blockImport(@NotNull Path path, @NotNull Path oldConfig, @NotNull Path newConfig) {
+  private static boolean blockImport(@NotNull Path path, @NotNull Path oldConfig, @NotNull Path newConfig, @NotNull Path oldPluginsDir) {
     if (oldConfig.equals(path.getParent())) {
       String name = path.getFileName().toString();
-      return "user.web.token".equals(name) || name.startsWith("chrome-user-data") || Files.exists(newConfig.resolve(path.getFileName()));
+      return "user.web.token".equals(name) || name.startsWith("chrome-user-data") || Files.exists(newConfig.resolve(path.getFileName())) || path.startsWith(oldPluginsDir);
     }
     return false;
   }
