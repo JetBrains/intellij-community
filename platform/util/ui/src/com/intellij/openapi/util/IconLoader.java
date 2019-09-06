@@ -309,12 +309,13 @@ public final class IconLoader {
       }
       cachedIcon = ConcurrencyUtil.cacheOrGet(ourIconsCache, key, cachedIcon);
     }
-
-    ScaleContext scaleContext = ScaleContext.create();
-    if (!cachedIcon.getScaleContext().equals(scaleContext)) {
-      // honor scale context as the cache doesn't do that
-      cachedIcon = cachedIcon.copy();
-      cachedIcon.updateScaleContext(scaleContext);
+    else {
+      ScaleContext scaleContext = ScaleContext.create();
+      if (!cachedIcon.getScaleContext().equals(scaleContext)) {
+        // honor scale context as 'ourIconsCache' doesn't do that
+        cachedIcon = cachedIcon.copy();
+        cachedIcon.updateScaleContext(scaleContext);
+      }
     }
     return cachedIcon;
   }
