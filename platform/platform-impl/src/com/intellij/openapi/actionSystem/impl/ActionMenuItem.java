@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
@@ -199,7 +200,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private void updateIcon(AnAction action) {
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       action.update(myEvent);
-      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+      myToggled = Toggleable.isSelected(myEvent.getPresentation()) == ThreeState.YES;
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
       }

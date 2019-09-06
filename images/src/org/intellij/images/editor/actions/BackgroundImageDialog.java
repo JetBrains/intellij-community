@@ -271,7 +271,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setText(text);
-        e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, target.equals(myPreviewTarget));
+        Toggleable.setSelected(e.getPresentation(), target.equals(myPreviewTarget));
         super.update(e);
       }
 

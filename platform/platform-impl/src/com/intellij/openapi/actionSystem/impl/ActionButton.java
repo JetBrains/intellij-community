@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -113,8 +114,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   @Override
   public int getPopState() {
     if (myAction instanceof Toggleable) {
-      Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
-      boolean flag1 = selected != null && selected.booleanValue();
+      boolean flag1 = Toggleable.isSelected(myPresentation) == ThreeState.YES;
       return getPopState(flag1);
     }
     else {

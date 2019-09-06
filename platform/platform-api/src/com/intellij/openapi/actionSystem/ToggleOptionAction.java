@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import java.util.function.Function;
 
 public class ToggleOptionAction extends ToggleAction {
@@ -49,7 +49,7 @@ public class ToggleOptionAction extends ToggleAction {
     Presentation presentation = event.getPresentation();
     presentation.setEnabledAndVisible(supported);
     if (supported) {
-      presentation.putClientProperty(SELECTED_PROPERTY, option.isSelected());
+      Toggleable.setSelected(presentation, option.isSelected());
       presentation.setText(option.getName());
       presentation.setDescription(option.getDescription());
       if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);

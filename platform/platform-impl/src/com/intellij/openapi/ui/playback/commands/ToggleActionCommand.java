@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ThreeState;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -73,8 +74,8 @@ public class ToggleActionCommand extends AbstractCommand {
 
       ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
 
-      Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
-      if (state.booleanValue() != on) {
+      ThreeState state = Toggleable.isSelected(event.getPresentation());
+      if (state.toBoolean() != on) {
         ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
       }
       else {

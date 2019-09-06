@@ -4,9 +4,9 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
@@ -19,8 +19,6 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 public class ActionStepBuilder extends PresentationFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
-
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
@@ -151,7 +149,7 @@ public class ActionStepBuilder extends PresentationFactory {
         if (actionId != null && actionId.startsWith("QuickList.")) {
           icon =  null; // AllIcons.Actions.QuickList;
         }
-        else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
+        else if (action instanceof Toggleable && Toggleable.isSelected(presentation) == ThreeState.YES) {
           icon = LafIconLookup.getIcon("checkmark");
           selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
           disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
