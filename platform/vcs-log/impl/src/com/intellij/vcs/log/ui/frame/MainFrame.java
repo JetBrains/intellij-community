@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -127,12 +128,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground());
     myNotificationLabel.setVisible(false);
-    JPanel notificationBar = JBUI.Panels.simplePanel(myNotificationLabel);
-    notificationBar.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
+    myNotificationLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
+                                                     myNotificationLabel.getBorder()));
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(notificationBar, BorderLayout.CENTER);
+    toolbars.add(myNotificationLabel, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
