@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-public final class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
+public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   @NotNull
   private final Module myModule;
 
