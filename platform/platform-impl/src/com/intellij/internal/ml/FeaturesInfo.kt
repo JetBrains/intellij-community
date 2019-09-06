@@ -15,9 +15,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
     private const val DEFAULT: String = "default"
     private const val USE_UNDEFINED: String = "use_undefined"
 
-    fun buildFromResources(resourceDirectory: String): FeaturesInfo = buildInfo(MetadataReader(resourceDirectory))
-
-    private fun buildInfo(reader: MetadataReader): FeaturesInfo {
+    fun buildInfo(reader: ResourcesMetadataReader): FeaturesInfo {
       val knownFeatures = reader.allKnown().fromJson<List<String>>().toSet()
 
       val binaryFactors: List<BinaryFeature> = reader.binaryFeatures().fromJson<Map<String, Map<String, Any>>>()
