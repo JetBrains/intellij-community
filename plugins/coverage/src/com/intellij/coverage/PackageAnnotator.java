@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -585,6 +586,6 @@ public class PackageAnnotator {
     return SourceLineCounterUtil
       .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
                                   myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor 
-                                  ? description -> !isGeneratedDefaultConstructor(psiClass, description, myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors) : Condition.TRUE);
+                                  ? description -> !isGeneratedDefaultConstructor(psiClass, description, myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors) : Conditions.alwaysTrue());
   }
 }

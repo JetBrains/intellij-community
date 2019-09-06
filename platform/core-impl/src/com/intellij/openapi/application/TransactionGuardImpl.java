@@ -9,7 +9,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -271,7 +271,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private static void invokeLater(Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any(), Condition.FALSE);
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any(), Conditions.alwaysFalse());
   }
 
   @Override

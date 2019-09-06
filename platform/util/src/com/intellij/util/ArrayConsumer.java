@@ -18,6 +18,7 @@ package com.intellij.util;
 /**
  * @author peter
  */
+@FunctionalInterface
 public interface ArrayConsumer<T> extends Consumer<T[]>{
 
   @Override

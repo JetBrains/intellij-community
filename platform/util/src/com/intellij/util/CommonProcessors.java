@@ -189,18 +189,18 @@ public class CommonProcessors {
     };
   }
   
-  private static final Processor FALSE = (Processor<Object>)t -> false;
-  private static final Processor TRUE = (Processor<Object>)t -> true;
+  private static final Processor<Object> FALSE = __ -> false;
+  private static final Processor<Object> TRUE = __ -> true;
 
   @NotNull
   public static <T> Processor<T> alwaysFalse() {
     //noinspection unchecked
-    return FALSE;
+    return (Processor<T>)FALSE;
   }
 
   @NotNull
   public static <T> Processor<T> alwaysTrue() {
     //noinspection unchecked
-    return TRUE;
+    return (Processor<T>)TRUE;
   }
 }

@@ -4,14 +4,10 @@ package com.intellij.util;
 /**
  * @author gregsh
  */
+@FunctionalInterface
 public interface IntIntFunction {
 
-  IntIntFunction IDENTITY = new IntIntFunction() {
-    @Override
-    public int fun(int i) {
-      return i;
-    }
-  };
+  IntIntFunction IDENTITY = i -> i;
 
   int fun(int index);
 }

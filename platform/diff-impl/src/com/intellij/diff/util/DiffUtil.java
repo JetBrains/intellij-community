@@ -508,7 +508,7 @@ public class DiffUtil {
     List<DiffContent> contents = request.getContents();
     List<String> titles = request.getContentTitles();
 
-    if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+    if (!ContainerUtil.exists(titles, Conditions.notNull())) {
       return Collections.nCopies(titles.size(), null);
     }
 
@@ -534,7 +534,7 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<>(contents.size());
 
-    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Conditions.notNull())) {
       return Collections.nCopies(titles.size(), null);
     }
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
@@ -676,7 +676,7 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
-    if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
+    if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
     List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
       result.add(new SyncHeightComponent(components, i));

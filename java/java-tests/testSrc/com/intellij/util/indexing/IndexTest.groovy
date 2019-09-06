@@ -865,7 +865,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void "test requesting nonexisted index fails as expected"() {
     ID<?, ?> myId = ID.create("my.id")
     FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
-    FileBasedIndex.instance.processAllKeys(myId, Processor.TRUE, project)
+    FileBasedIndex.instance.processAllKeys(myId, CommonProcessors.alwaysTrue(), project)
   }
 
   void "test read-only index access"() {

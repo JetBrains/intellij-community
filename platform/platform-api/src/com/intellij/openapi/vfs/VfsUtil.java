@@ -6,7 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -471,7 +471,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.filter(files, Condition.NOT_NULL);
+    List<VirtualFile> list = ContainerUtil.filter(files, Conditions.notNull());
     if (list.isEmpty()) {
       return Collections.emptyList();
     }

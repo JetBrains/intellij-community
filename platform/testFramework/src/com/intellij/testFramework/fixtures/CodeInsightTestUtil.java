@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -41,7 +41,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
-import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -244,7 +244,7 @@ public class CodeInsightTestUtil {
     if (data.listUpdaterTask != null) {
       JBList<Object> list = new JBList<>();
       CollectionListModel<Object> model = new CollectionListModel<>(new ArrayList<>());
-      list.setModel(new NameFilteringListModel<>(model, Function.ID, Condition.FALSE, String::new));
+      list.setModel(new NameFilteringListModel<>(model, Functions.identity(), Conditions.alwaysFalse(), String::new));
       JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
       data.listUpdaterTask.init(popup, new JBListUpdater(list), new Ref<>());
 

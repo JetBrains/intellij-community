@@ -20,13 +20,11 @@ public class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
   @NotNull private final Function<? super T, ? extends M> myMapper;
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original) {
-    //noinspection unchecked
-    this(original, ContainerUtil.canonicalStrategy(), Function.ID);
+    this(original, ContainerUtil.canonicalStrategy(), Functions.identity());
   }
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy) {
-    //noinspection unchecked
-    this(original, hashingStrategy, Function.ID);
+    this(original, hashingStrategy, Functions.identity());
   }
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy, @NotNull Function<? super T, ? extends M> mapper) {

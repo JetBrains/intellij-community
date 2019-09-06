@@ -22,7 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -54,7 +54,7 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
     forceBuild |= checkResourcesRebuild;
     return JBIterable.of(createTargets(project, forceBuild, JavaResourceRootType.RESOURCE, CheckResourcesTarget.PRODUCTION),
                          createTargets(project, forceBuild, JavaResourceRootType.TEST_RESOURCE, CheckResourcesTarget.TESTS)).
-      filter(Condition.NOT_NULL).toList();
+      filter(Conditions.notNull()).toList();
   }
 
   @Nullable

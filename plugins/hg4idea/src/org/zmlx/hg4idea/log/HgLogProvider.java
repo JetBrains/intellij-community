@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
@@ -282,7 +283,7 @@ public final class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.readHashes(myProject, root, Consumer.EMPTY_CONSUMER, maxCount, filterParameters);
+    return HgHistoryUtil.readHashes(myProject, root, EmptyConsumer.getInstance(), maxCount, filterParameters);
   }
 
   @Nullable

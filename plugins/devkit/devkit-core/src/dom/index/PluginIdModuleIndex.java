@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -75,7 +75,7 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
       .map(PsiManager.getInstance(project)::findFile)
       .filter(XmlFile.class)
       .map(DescriptorUtil::getIdeaPlugin)
-      .filter(Condition.NOT_NULL)
+      .filter(Conditions.notNull())
       .toList();
   }
 }

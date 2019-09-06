@@ -21,18 +21,8 @@ package com.intellij.util;
  * @param <T> Input value type.
  * @see CommonProcessors
  */
+@FunctionalInterface
 public interface Processor<T> {
-
-  /**
-   * @see CommonProcessors#alwaysTrue()
-   */
-  Processor TRUE = o -> true;
-
-  /**
-   * @see CommonProcessors#alwaysFalse()
-   */
-  Processor FALSE = o -> false;
-
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    * @return {@code true} to continue processing or {@code false} to stop.

@@ -8,7 +8,7 @@ import com.intellij.util.Consumer
 class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
   override fun execute(project: Project, command: String): Boolean {
     if (command.startsWith("git log")) {
-      VcsLogContentUtil.openMainLogAndExecute(project, Consumer.EMPTY_CONSUMER)
+      VcsLogContentUtil.openMainLogAndExecute(project, com.intellij.util.EmptyConsumer.getInstance())
       return true
     }
     return false

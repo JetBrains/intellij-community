@@ -1079,7 +1079,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure = true)
   public static <T> List<T> filterIsInstance(@NotNull Collection<?> collection, @NotNull final Class<? extends T> aClass) {
     //noinspection unchecked
-    return filter((Collection)collection, Conditions.instanceOf(aClass));
+    return filter((Collection<T>)collection, Conditions.instanceOf(aClass));
   }
 
   @NotNull
@@ -1116,7 +1116,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> skipNulls(@NotNull Collection<? extends T> collection) {
-    return findAll(collection, Condition.NOT_NULL);
+    return findAll(collection, Conditions.notNull());
   }
 
   @NotNull

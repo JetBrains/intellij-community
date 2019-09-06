@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -28,7 +29,11 @@ import java.util.Collection;
 public interface Function<Param, Result> {
   Result fun(Param param);
 
-  Function ID = new Function.Mono() {
+  /**
+   * @deprecated Use {@link Functions#identity()} instead
+   */
+  @Deprecated
+  Function<?,?> ID = new Function.Mono<Object>() {
     public Object fun(Object o) {
       return o;
     }
@@ -39,10 +44,18 @@ public interface Function<Param, Result> {
     }
   };
 
-  Function NULL = NullableFunction.NULL;
+  /**
+   * @deprecated use {@link FunctionUtil#nullConstant()} instead
+   */
+  @Deprecated
+  Function<?,?> NULL = NullableFunction.NULL;
 
-  Function TO_STRING = new Function() {
-    public Object fun(Object o) {
+  /**
+   * @deprecated use {@link Functions#TO_STRING()} instead
+   */
+  @Deprecated
+  Function<?,String> TO_STRING = new Function<Object, String>() {
+    public String fun(Object o) {
       return String.valueOf(o);
     }
 
@@ -58,29 +71,25 @@ public interface Function<Param, Result> {
 
     private final Class<R> myResultClass;
 
-    public InstanceOf(Class<R> resultClass) {
+    public InstanceOf(@NotNull Class<R> resultClass) {
       myResultClass = resultClass;
     }
 
     @Nullable
     public R fun(P p) {
-      //noinspection unchecked
-      return p.getClass().isAssignableFrom(myResultClass) ? (R)p : null;
+      return myResultClass.isInstance(p) ? myResultClass.cast(p) : null;
     }
   }
 
-  final class First<P, R extends P> implements Function<P[], R> {
-    public R fun(P[] ps) {
-      //noinspection unchecked
-      return (R)ps[0];
+  final class First<P> implements Function<P[], P> {
+    public P fun(P[] ps) {
+      return ps[0];
     }
   }
 
-  final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
-    public R fun(Collection<P> ps) {
-      //noinspection unchecked
-      return (R)ps.iterator().next();
+  final class FirstInCollection<P> implements Function<Collection<P>, P> {
+    public P fun(Collection<P> ps) {
+      return ps.iterator().next();
     }
   }
-
 }

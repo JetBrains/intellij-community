@@ -16,12 +16,23 @@
 
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Gregory.Shrago
  */
 @FunctionalInterface
 public interface PairProcessor<S, T> {
-  PairProcessor TRUE = (o, o1) -> true;
-  PairProcessor FALSE = (o, o1) -> false;
   boolean process(S s, T t);
+
+
+  @NotNull
+  static <S,T> PairProcessor<S,T> alwaysFalse() {
+    return (__, __1) -> false;
+  }
+
+  @NotNull
+  static <S,T> PairProcessor<S,T> alwaysTrue() {
+    return (__, __1) -> true;
+  }
 }

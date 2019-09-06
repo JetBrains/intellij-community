@@ -117,7 +117,7 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    return invokeLater(runnable, modalityState, Conditions.FALSE);
+    return invokeLater(runnable, modalityState, Conditions.alwaysFalse());
   }
 
   @NotNull
@@ -167,7 +167,7 @@ public class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(runnable1, modalityState, Conditions.FALSE, null);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
