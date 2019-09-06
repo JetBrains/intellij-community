@@ -10,6 +10,9 @@
 
   <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
