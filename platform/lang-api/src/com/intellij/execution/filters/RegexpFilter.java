@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,9 @@ import java.util.regex.Pattern;
  * @version 1.0
  */
 public class RegexpFilter implements Filter, DumbAware {
+
+  private static final Logger LOG = Logger.getInstance(RegexpFilter.class);
+
   @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
   @NonNls public static final String LINE_MACROS = "$LINE$";
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
@@ -129,7 +133,9 @@ public class RegexpFilter implements Filter, DumbAware {
       }
     }
     catch (ProcessCanceledException e) {
-      // PCE is caused by long execution. Produce no links in this case.
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Too long matching '" + line + "' by '" + myPattern + "' in " + getClass().getName());
+      }
       return null; 
     }
 
