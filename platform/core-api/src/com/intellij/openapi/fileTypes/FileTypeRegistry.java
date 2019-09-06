@@ -3,6 +3,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,6 +14,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * A service for retrieving file types for files.
+ *
+ * <p><b>Performance notice.</b> There are different rules of file type matching for a file: matching by file name, by extension,
+ * by file content, by custom logic providers and so on. They are all executed by the general methods {@code getFileTypeByFile},
+ * thus implying that execution of
+ * such methods is as long as the sum of all possible matching checks in the worst case. That includes reading file contents to
+ * feed to all {@link FileTypeDetector} instances, checking {@link FileTypeIdentifiableByVirtualFile} and so on. Such actions
+ * may lead to considerable slowdowns if used on large {@code VirtualFile} collections, e.g. in
+ * {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} implementations.
+ *
+ * <p> If it is possible and correct to restrict file type matching by particular means (e.g. match only by file name),
+ * it is advised to do so, in order to improve the performance of the check, e.g. use
+ * <pre><code>
+ * FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())
+ * </code></pre>
+ * instead of
+ * <pre><code>
+ * file.getFileType()
+ * </code></pre>
+ *
+ * Also, if you are interested not in getting file type, but rather comparing file type with a known one, prefer using
+ * {@link #isFileOfType(VirtualFile, FileType)}, as it is faster than {@link #getFileTypeByFile(VirtualFile)} as well.
+ *
  * @author yole
  */
 public abstract class FileTypeRegistry {
