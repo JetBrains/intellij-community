@@ -2,7 +2,7 @@
 
 class TextBlockMigration {
 
-  String multiLine() {
+  String multipleLiterals() {
     return """<caret>
            public static void print(Object o) {
              System.out.println(o);

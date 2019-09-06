@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,14 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       String text = literalExpression.getTextBlockText();
       if (text == null) return;
       String replacement = convertToConcatenation(text);
-      PsiReplacementUtil.replaceExpression(literalExpression, replacement, new CommentTracker());
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      if (file == null) return;
+      CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
+      tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
+      CodeStyle.doWithTemporarySettings(project, tempSettings, () -> {
+        PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
+        CodeStyleManager.getInstance(literalExpression.getProject()).reformat(result);
+      });
     }
 
     @NotNull
@@ -65,70 +73,9 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
         String line = lines[i];
         boolean addNewLine = i != lines.length - 1;
         if (!addNewLine && line.isEmpty()) break;
-        joiner.add("\"" + escapeQuotes(line) + (addNewLine ? "\\n\"" : "\""));
+        joiner.add("\"" + PsiLiteralUtil.escapeQuotes(line) + (addNewLine ? "\\n\"" : "\""));
       }
       return joiner.toString();
-    }
-
-    @NotNull
-    private static String escapeQuotes(@NotNull String str) {
-      StringBuilder sb = new StringBuilder(str.length());
-      int nSlashes = 0;
-      int idx = 0;
-      while (idx < str.length()) {
-        char c = str.charAt(idx);
-        int nextIdx = parseBackSlash(str, idx);
-        if (nextIdx > 0) {
-          nSlashes++;
-        }
-        else {
-          if (c == '\"' && nSlashes % 2 == 0) {
-            sb.append('\\');
-          }
-          nSlashes = 0;
-          nextIdx = idx + 1;
-        }
-        sb.append(c);
-        idx = nextIdx;
-      }
-      return sb.toString();
-    }
-
-    private static int parseBackSlash(@NotNull String str, int idx) {
-      char c = str.charAt(idx);
-      if (c != '\\') return -1;
-      int nextIdx = parseHexBackSlash(str, idx);
-      if (nextIdx > 0) return nextIdx;
-      nextIdx = parseOctalBackSlash(str, idx);
-      return nextIdx > 0 ? nextIdx : idx + 1;
-    }
-
-    private static int parseHexBackSlash(@NotNull String str, int idx) {
-      int next = idx + 1;
-      if (next >= str.length() || str.charAt(next) != 'u') return -1;
-      while (str.charAt(next) == 'u') {
-        next++;
-      }
-      if (next + 3 >= str.length()) return -1;
-      try {
-        int code = Integer.parseInt(str.substring(next, next + 4), 16);
-        if (code == '\\') return next + 4;
-      }
-      catch (NumberFormatException ignored) {
-      }
-      return -1;
-    }
-
-    private static int parseOctalBackSlash(@NotNull String str, int idx) {
-      int next = idx + 1;
-      if (next + 2 >= str.length()) return -1;
-      try {
-        int code = Integer.parseInt(str.substring(next, next + 3), 8);
-        if (code == '\\') return next + 3;
-      }
-      catch (NumberFormatException ignored) {
-      }
-      return -1;
     }
   }
 }

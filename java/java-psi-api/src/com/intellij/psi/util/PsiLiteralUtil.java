@@ -186,4 +186,70 @@ public class PsiLiteralUtil {
       q -= 3;
     }
   }
+
+  /**
+   * Replaces all unescaped quotes with escaped ones.
+   * If text contains backslash escape sequence it's replaced with a regular backslash.
+   * The rest of the symbols are left unchanged.
+   */
+  @NotNull
+  public static String escapeQuotes(@NotNull String str) {
+    StringBuilder sb = new StringBuilder(str.length());
+    int nSlashes = 0;
+    int idx = 0;
+    while (idx < str.length()) {
+      char c = str.charAt(idx);
+      int nextIdx = parseBackSlash(str, idx);
+      if (nextIdx > 0) {
+        nSlashes++;
+      }
+      else {
+        if (c == '\"' && nSlashes % 2 == 0) {
+          sb.append('\\');
+        }
+        nSlashes = 0;
+        nextIdx = idx + 1;
+      }
+      sb.append(c);
+      idx = nextIdx;
+    }
+    return sb.toString();
+  }
+
+  private static int parseBackSlash(@NotNull String str, int idx) {
+    char c = str.charAt(idx);
+    if (c != '\\') return -1;
+    int nextIdx = parseHexBackSlash(str, idx);
+    if (nextIdx > 0) return nextIdx;
+    nextIdx = parseOctalBackSlash(str, idx);
+    return nextIdx > 0 ? nextIdx : idx + 1;
+  }
+
+  private static int parseHexBackSlash(@NotNull String str, int idx) {
+    int next = idx + 1;
+    if (next >= str.length() || str.charAt(next) != 'u') return -1;
+    while (str.charAt(next) == 'u') {
+      next++;
+    }
+    if (next + 3 >= str.length()) return -1;
+    try {
+      int code = Integer.parseInt(str.substring(next, next + 4), 16);
+      if (code == '\\') return next + 4;
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return -1;
+  }
+
+  private static int parseOctalBackSlash(@NotNull String str, int idx) {
+    int next = idx + 1;
+    if (next + 2 >= str.length()) return -1;
+    try {
+      int code = Integer.parseInt(str.substring(next, next + 3), 8);
+      if (code == '\\') return next + 3;
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return -1;
+  }
 }
