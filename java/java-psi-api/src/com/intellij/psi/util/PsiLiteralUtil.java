@@ -36,12 +36,20 @@ public class PsiLiteralUtil {
         final long value = parseDigits(text, 3, 32);
         return Integer.valueOf((int)value);
       }
-      final long l = Long.parseLong(text, 10);
-      if (text.equals(_2_IN_31)) return Integer.valueOf((int)l);
-      long converted = (int)l;
-      return l == converted ? Integer.valueOf((int)l) : null;
+      return parseIntegerNoPrefix(text);
     }
     catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static Integer parseIntegerNoPrefix(String text) {
+    final long l = Long.parseLong(text, 10);
+    if (text.equals(_2_IN_31) || l == (long)(int)l) {
+      return Integer.valueOf((int)l);
+    }
+    else {
       return null;
     }
   }
