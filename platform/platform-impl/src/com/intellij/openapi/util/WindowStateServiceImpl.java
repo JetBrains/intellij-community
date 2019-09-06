@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FrameState;
 import com.intellij.ui.ScreenUtil;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -25,6 +27,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String STATE = "state";
   @NonNls private static final String MAXIMIZED = "maximized";
   @NonNls private static final String FULL_SCREEN = "full-screen";
+  @NonNls private static final String TIMESTAMP = "timestamp";
   @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
@@ -67,6 +70,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
             child.addContent(JDOMUtil.setBounds(new Element(SCREEN), state.myScreen));
           }
           child.setAttribute(KEY, key);
+          child.setAttribute(TIMESTAMP, Long.toString(state.myTimeStamp));
           element.addContent(child);
         }
       }
@@ -79,22 +83,27 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       myStateMap.clear();
       for (Element child : element.getChildren()) {
-        if (STATE.equals(child.getName())) {
-          String key = child.getAttributeValue(KEY);
-          if (key != null) {
-            Point location = JDOMUtil.getLocation(child);
-            Dimension size = JDOMUtil.getSize(child);
-            if (location != null || size != null) {
-              WindowState state = new WindowState();
-              state.myLocation = location;
-              state.mySize = size;
-              state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
-              state.myFullScreen = Boolean.parseBoolean(child.getAttributeValue(FULL_SCREEN));
-              state.myScreen = apply(JDOMUtil::getBounds, child.getChild(SCREEN));
-              myStateMap.put(key, state);
-            }
-          }
-        }
+        if (!STATE.equals(child.getName())) continue; // ignore unexpected element
+
+        long current = System.currentTimeMillis();
+        long timestamp = StringUtilRt.parseLong(child.getAttributeValue(TIMESTAMP), current);
+        if (TimeUnit.DAYS.toMillis(100) <= (current - timestamp)) continue; // ignore old elements
+
+        String key = child.getAttributeValue(KEY);
+        if (StringUtilRt.isEmpty(key)) continue; // unexpected key
+
+        Point location = JDOMUtil.getLocation(child);
+        Dimension size = JDOMUtil.getSize(child);
+        if (location == null && size == null) continue; // unexpected value
+
+        WindowState state = new WindowState();
+        state.myLocation = location;
+        state.mySize = size;
+        state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
+        state.myFullScreen = Boolean.parseBoolean(child.getAttributeValue(FULL_SCREEN));
+        state.myScreen = apply(JDOMUtil::getBounds, child.getChild(SCREEN));
+        state.myTimeStamp = timestamp;
+        myStateMap.put(key, state);
       }
     }
   }
@@ -292,6 +301,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     private Dimension mySize;
     private boolean myMaximized;
     private boolean myFullScreen;
+    private long myTimeStamp;
 
     @SuppressWarnings("unchecked")
     <T> T get(@NotNull Class<T> type, @Nullable Rectangle screen) {
@@ -337,7 +347,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (fullScreenSet) {
         myFullScreen = fullScreen;
       }
-      return myLocation != null || mySize != null;
+      if (myLocation == null && mySize == null) return false;
+      // update timestamp of modified state
+      myTimeStamp = System.currentTimeMillis();
+      return true;
     }
   }
 
