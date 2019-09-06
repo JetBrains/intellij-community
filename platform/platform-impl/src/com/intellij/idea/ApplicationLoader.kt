@@ -323,7 +323,9 @@ private fun loadSystemFonts() {
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 }
 
-private fun setupDnD() = DragSource.getDefaultDragSource()
+private fun setupDnD() {
+  if (!GraphicsEnvironment.isHeadless()) DragSource.getDefaultDragSource()
+}
 
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
