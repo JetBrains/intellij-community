@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
+public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
