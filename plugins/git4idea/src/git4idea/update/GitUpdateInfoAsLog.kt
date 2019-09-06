@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
@@ -278,14 +279,12 @@ class GitUpdateInfoAsLog(private val project: Project,
                                                   val commitsAndFiles: CommitsAndFiles,
                                                   val dataSupplier: CompletableFuture<NotificationData>) : VisiblePackChangeListener {
 
-    private var visibleCommitCount: Int = -1
-
     override fun onVisiblePackChange(visiblePack: VisiblePack) {
       runInEdt {
-        if (visibleCommitCount < 0) { // make sure the code is executed only once in case of two asynchronous VisiblePack updates
+        if (areFiltersEqual(visiblePack.filters, logUiAndFactory.logUi.filterUi.filters)) {
           logUiAndFactory.logUi.refresher.removeVisiblePackChangeListener(this)
 
-          visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
+          val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
                                       getViewCommitsAction(logManager, logUiAndFactory))
           dataSupplier.complete(data)
@@ -295,4 +294,10 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private data class LogUiAndFactory(val logUi: VcsLogUiImpl, val factory: MyLogUiFactory)
+}
+
+private fun areFiltersEqual(filters1: VcsLogFilterCollection, filters2: VcsLogFilterCollection) : Boolean {
+  if (filters1 === filters2) return true
+  if (filters1.filters.size != filters2.filters.size) return false
+  return filters1.filters.all { it == filters2.get(it.key) }
 }
