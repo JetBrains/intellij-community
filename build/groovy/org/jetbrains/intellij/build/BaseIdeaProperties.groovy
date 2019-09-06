@@ -34,6 +34,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.tasks.core",
     "intellij.maven",
     "intellij.gradle",
+    "intellij.gradle.java",
     "intellij.gradle.java.maven",
     "intellij.vcs.git",
     "intellij.vcs.svn",
