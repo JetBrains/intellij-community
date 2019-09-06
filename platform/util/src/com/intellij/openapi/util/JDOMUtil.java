@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.awt.*;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,11 @@ import java.util.List;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class JDOMUtil {
+  private static final String X = "x";
+  private static final String Y = "y";
+  private static final String WIDTH = "width";
+  private static final String HEIGHT = "height";
+
   private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = attribute -> !StringUtil.isEmpty(attribute.getValue());
 
   private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
@@ -827,5 +833,124 @@ public class JDOMUtil {
       }
     }
     return result == null ? text : result.toString();
+  }
+
+
+  @Nullable
+  public static Point getLocation(@Nullable Element element) {
+    return element == null ? null : getLocation(element, X, Y);
+  }
+
+  @Nullable
+  public static Point getLocation(@NotNull Element element, @NotNull String x, @NotNull String y) {
+    String sX = element.getAttributeValue(x);
+    if (sX == null) return null;
+    String sY = element.getAttributeValue(y);
+    if (sY == null) return null;
+    try {
+      return new Point(Integer.parseInt(sX), Integer.parseInt(sY));
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+  }
+
+  @NotNull
+  public static Element setLocation(@NotNull Element element, @NotNull Point location) {
+    return setLocation(element, X, Y, location);
+  }
+
+  @NotNull
+  public static Element setLocation(@NotNull Element element, @NotNull String x, @NotNull String y, @NotNull Point location) {
+    return element
+      .setAttribute(x, Integer.toString(location.x))
+      .setAttribute(y, Integer.toString(location.y));
+  }
+
+
+  @Nullable
+  public static Dimension getSize(@Nullable Element element) {
+    return element == null ? null : getSize(element, WIDTH, HEIGHT);
+  }
+
+  @Nullable
+  public static Dimension getSize(@NotNull Element element, @NotNull String width, @NotNull String height) {
+    String sWidth = element.getAttributeValue(width);
+    if (sWidth == null) return null;
+    String sHeight = element.getAttributeValue(height);
+    if (sHeight == null) return null;
+    try {
+      int iWidth = Integer.parseInt(sWidth);
+      if (iWidth <= 0) return null;
+      int iHeight = Integer.parseInt(sHeight);
+      if (iHeight <= 0) return null;
+      return new Dimension(iWidth, iHeight);
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+  }
+
+  @NotNull
+  public static Element setSize(@NotNull Element element, @NotNull Dimension size) {
+    return setSize(element, WIDTH, HEIGHT, size);
+  }
+
+  @NotNull
+  public static Element setSize(@NotNull Element element, @NotNull String width, @NotNull String height, @NotNull Dimension size) {
+    return element
+      .setAttribute(width, Integer.toString(size.width))
+      .setAttribute(height, Integer.toString(size.height));
+  }
+
+
+  @Nullable
+  public static Rectangle getBounds(@Nullable Element element) {
+    return element == null ? null : getBounds(element, X, Y, WIDTH, HEIGHT);
+  }
+
+  @Nullable
+  public static Rectangle getBounds(@NotNull Element element,
+                                    @NotNull String x,
+                                    @NotNull String y,
+                                    @NotNull String width,
+                                    @NotNull String height) {
+    String sX = element.getAttributeValue(x);
+    if (sX == null) return null;
+    String sY = element.getAttributeValue(y);
+    if (sY == null) return null;
+    String sWidth = element.getAttributeValue(width);
+    if (sWidth == null) return null;
+    String sHeight = element.getAttributeValue(height);
+    if (sHeight == null) return null;
+    try {
+      int iWidth = Integer.parseInt(sWidth);
+      if (iWidth <= 0) return null;
+      int iHeight = Integer.parseInt(sHeight);
+      if (iHeight <= 0) return null;
+      return new Rectangle(Integer.parseInt(sX), Integer.parseInt(sY), iWidth, iHeight);
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
+  }
+
+  @NotNull
+  public static Element setBounds(@NotNull Element element, @NotNull Rectangle bounds) {
+    return setBounds(element, X, Y, WIDTH, HEIGHT, bounds);
+  }
+
+  @NotNull
+  public static Element setBounds(@NotNull Element element,
+                                  @NotNull String x,
+                                  @NotNull String y,
+                                  @NotNull String width,
+                                  @NotNull String height,
+                                  @NotNull Rectangle bounds) {
+    return element
+      .setAttribute(x, Integer.toString(bounds.x))
+      .setAttribute(y, Integer.toString(bounds.y))
+      .setAttribute(width, Integer.toString(bounds.width))
+      .setAttribute(height, Integer.toString(bounds.height));
   }
 }
