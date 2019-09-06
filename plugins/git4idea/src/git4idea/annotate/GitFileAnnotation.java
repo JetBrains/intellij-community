@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -65,7 +64,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      return JBDateFormat.getFormatter("vcs.annotate").formatPrettyDate(info.getAuthorDate());
+      return FileAnnotation.formatDate(info.getAuthorDate());
     }
   };
 

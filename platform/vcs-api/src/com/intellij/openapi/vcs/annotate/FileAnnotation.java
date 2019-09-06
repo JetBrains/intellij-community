@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -289,6 +290,11 @@ public abstract class FileAnnotation {
     Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException;
   }
 
+
+  @NotNull
+  public static String formatDate(@NotNull Date date) {
+    return JBDateFormat.getFormatter("vcs.annotate").formatPrettyDate(date);
+  }
 
   @Nullable
   private static CurrentFileRevisionProvider createDefaultCurrentFileRevisionProvider(@NotNull FileAnnotation annotation) {
