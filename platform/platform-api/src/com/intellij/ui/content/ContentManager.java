@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
@@ -20,43 +6,63 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * Obtain via {@link ContentFactory#createContentManager(ContentUI, boolean, com.intellij.openapi.project.Project)}.
+ *
+ * @see ContentsUtil
+ */
 public interface ContentManager extends Disposable, BusyObject {
+
   boolean canCloseContents();
 
   @NotNull
   JComponent getComponent();
 
   void addContent(@NotNull Content content);
-  void addContent(@NotNull Content content, final int order);
 
-  boolean removeContent(@NotNull Content content, final boolean dispose);
+  void addContent(@NotNull Content content, int order);
+
+  boolean removeContent(@NotNull Content content, boolean dispose);
+
+  /**
+   * @param forcedFocus unused
+   */
   @NotNull
-  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean requestFocus, boolean forcedFocus);
+  ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
+
   @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content);
+
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
+
   @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus);
+
+  /**
+   * @param forcedFocus unused
+   */
   void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
+  /**
+   * @param forcedFocus unused
+   */
   @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
   /**
-   *
-   * @param content to be selected
-   * @param requestFocus defines if content would request focus after selection
-   * @param forcedFocus isn't used anymore
-   * @param implicit if it's true and content cannot be focused (e.g. it's minimized at the moment) ActionCallback.REJECTED would be returned
-   * @return resulting ActionCallback for both selection and focus transfer (if need)
+   * @param requestFocus whether content will request focus after selection
+   * @param forcedFocus  unused
+   * @param implicit     if {@code true} and content cannot be focused (e.g. it's minimized at the moment) {@link ActionCallback#REJECTED} will be returned
+   * @return resulting ActionCallback for both selection and focus transfer (if needed)
    */
   @NotNull
   ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit);
@@ -69,8 +75,7 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   Content[] getSelectedContents();
 
-
-  void removeAllContents(final boolean dispose);
+  void removeAllContents(boolean dispose);
 
   int getContentCount();
 
@@ -96,14 +101,12 @@ public interface ContentManager extends Disposable, BusyObject {
 
   ActionCallback selectNextContent();
 
-  void addContentManagerListener(@NotNull ContentManagerListener l);
+  void addContentManagerListener(@NotNull ContentManagerListener listener);
 
-  void removeContentManagerListener(@NotNull ContentManagerListener l);
+  void removeContentManagerListener(@NotNull ContentManagerListener listener);
 
   /**
    * Returns the localized name of the "Close All but This" action.
-   *
-   * @return the action name.
    */
   @NotNull
   String getCloseAllButThisActionName();
@@ -115,12 +118,15 @@ public interface ContentManager extends Disposable, BusyObject {
   String getNextContentActionName();
 
   @NotNull
-  List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
+  List<AnAction> getAdditionalPopupActions(@NotNull Content content);
 
   void removeFromSelection(@NotNull Content content);
 
   boolean isSelected(@NotNull Content content);
 
+  /**
+   * @param forced unused
+   */
   @NotNull
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
