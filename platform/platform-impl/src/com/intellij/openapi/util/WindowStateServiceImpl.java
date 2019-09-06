@@ -11,7 +11,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.java2d.HeadlessGraphicsEnvironment;
 
 import java.awt.*;
 import java.util.Map;
@@ -183,6 +182,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       WindowState state = myStateMap.get(getAbsoluteKey(configuration, key));
@@ -198,6 +198,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       Dimension size, boolean sizeSet,
                       boolean maximized, boolean maximizedSet,
                       boolean fullScreen, boolean fullScreenSet) {
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return;
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
@@ -238,7 +239,6 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   private static String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
     StringBuilder sb = new StringBuilder(key);
     GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    if (environment instanceof HeadlessGraphicsEnvironment) return ""; // todo[malenkov]: a temporary fix for tests
     for (GraphicsDevice device : environment.getScreenDevices()) {
       Rectangle bounds = getScreenRectangle(device.getDefaultConfiguration());
       sb.append('/').append(bounds.x);
