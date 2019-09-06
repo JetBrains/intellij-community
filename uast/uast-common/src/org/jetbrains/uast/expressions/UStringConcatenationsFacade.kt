@@ -237,7 +237,8 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
 }
 
-private fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<TextRange> {
+@ApiStatus.Experimental
+fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<TextRange> {
   var lastMatch = 0
   return sequence {
     while (true) {
