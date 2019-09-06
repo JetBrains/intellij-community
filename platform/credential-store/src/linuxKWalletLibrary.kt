@@ -126,6 +126,6 @@ interface KWallet : DBusInterface {
   fun readPassword(walletId: Int, folder: String, key: String, appId: String): String?
   fun readPasswordList(walletId: Int, folder: String, key: String, appId: String): Map<String, Variant<String>>
   fun removeEntry(walletId: Int, folder: String, key: String, appId: String): Int
-  fun removeFolder(walletId: Int, folder: String, appId: String): Int
+  fun removeFolder(walletId: Int, folder: String, appId: String): Boolean
   fun writePassword(walletId: Int, folder: String, key: String, value: String, appId: String): Int
 }
