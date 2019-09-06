@@ -81,7 +81,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     }
 
     // clear superfluous items
-    while (mainContentPanel.componentCount > 2 * newRowsCount - 1) {
+    while (mainContentPanel.componentCount != 0 && mainContentPanel.componentCount > 2 * newRowsCount - 1) {
       mainContentPanel.remove(mainContentPanel.componentCount - 1)
     }
     while (commitDetailsList.size > newRowsCount) {
