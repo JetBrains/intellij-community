@@ -18,7 +18,7 @@ class IoTimings {
     for (int i = 0; i < WARM_UP_PROBES; i++) {
       singleIteration(i, true);
     }
-    long warmupMinutes = TimeUnit.MINUTES.toMillis(System.nanoTime() - start);
+    long warmupMinutes = TimeUnit.NANOSECONDS.toMinutes(System.nanoTime() - start);
     if (warmupMinutes > 1) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("Too long warmup: " + warmupMinutes + " minutes");
