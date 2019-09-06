@@ -205,7 +205,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
         }
 
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           Runnable action = extension.getActionOnClick();
           if (action != null) action.run();
         }
