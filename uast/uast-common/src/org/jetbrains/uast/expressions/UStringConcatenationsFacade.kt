@@ -2,6 +2,7 @@
 package org.jetbrains.uast.expressions
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
@@ -80,9 +81,19 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
 
   @ApiStatus.Experimental
   fun asPartiallyKnownString() = PartiallyKnownString(segments.map { segment ->
-    segment.value?.let { value -> StringEntry.Known(value, segment.uExpression) } ?: StringEntry.Unknown(segment.uExpression)
+    segment.value?.let { value ->
+      StringEntry.Known(value, segment.uExpression, getSegmentInnerTextRange(segment))
+    } ?: StringEntry.Unknown(segment.uExpression, getSegmentInnerTextRange(segment))
   })
 
+  private fun getSegmentInnerTextRange(segment: Segment): TextRange {
+    val sourcePsi = segment.uExpression.sourcePsi ?: throw IllegalStateException("no sourcePsi for $segment")
+    val sourcePsiTextRange = sourcePsi.textRange
+    val range = segment.range
+    if (range.startOffset >= sourcePsiTextRange.startOffset)
+      return range.shiftLeft(sourcePsiTextRange.startOffset)
+    return ElementManipulators.getValueTextRange(sourcePsi)
+  }
 
   companion object {
     @JvmStatic
@@ -100,9 +111,10 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
 @ApiStatus.Experimental
 sealed class StringEntry {
   abstract val uExpression: UExpression
+  abstract val range: TextRange
 
-  class Known(val value: String, override val uExpression: UExpression) : StringEntry()
-  class Unknown(override val uExpression: UExpression) : StringEntry()
+  class Known(val value: String, override val uExpression: UExpression, override val range: TextRange) : StringEntry()
+  class Unknown(override val uExpression: UExpression, override val range: TextRange) : StringEntry()
 }
 
 @ApiStatus.Experimental
@@ -131,7 +143,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   constructor(single: StringEntry) : this(listOf(single))
 
-  constructor(string: String, uExpression: UExpression) : this(StringEntry.Known(string, uExpression))
+  constructor(string: String, uExpression: UExpression, textRange: TextRange) : this(StringEntry.Known(string, uExpression, textRange))
 
   fun findIndexOfInKnown(pattern: String): Int {
     var accumulated = 0
@@ -162,12 +174,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(StringEntry.Known(leftPart, segment.uExpression))
+            left.add(StringEntry.Known(leftPart, segment.uExpression,  /* TODO: should also be splitted */ segment.range))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(StringEntry.Known(rightPart, segment.uExpression))
+                  add(StringEntry.Known(rightPart, segment.uExpression, /* TODO: should also be splitted */ segment.range))
                 addAll(segments.subList(i, segments.size))
               }
             )
@@ -194,17 +206,18 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         is StringEntry.Known -> {
           val value = head.value
 
-          val stringPaths = value.split(pattern)
+          val stringPaths = splitToTextRanges(value, pattern).toList()
           if (stringPaths.size == 1) {
             return collectPaths(result, pending.apply { add(head) }, tail)
           }
           else {
             return collectPaths(
               result.apply {
-                add(PartiallyKnownString(pending.apply { add(StringEntry.Known(stringPaths.first(), head.uExpression)) }))
-                addAll(stringPaths.subList(1, stringPaths.size - 1).map { PartiallyKnownString(it, head.uExpression) })
+                add(PartiallyKnownString(
+                  pending.apply { add(StringEntry.Known(stringPaths.first().substring(value), head.uExpression, stringPaths.first())) }))
+                addAll(stringPaths.subList(1, stringPaths.size - 1).map { PartiallyKnownString(it.substring(value), head.uExpression, it) })
               },
-              mutableListOf(StringEntry.Known(stringPaths.last(), head.uExpression)),
+              mutableListOf(StringEntry.Known(stringPaths.last().substring(value), head.uExpression, stringPaths.last())),
               tail
             )
           }
@@ -220,6 +233,22 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   companion object {
     val empty = PartiallyKnownString(emptyList())
+  }
+
+}
+
+private fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<TextRange> {
+  var lastMatch = 0
+  return sequence {
+    while (true) {
+      val start = charSequence.indexOf(pattern, lastMatch)
+      if (start == -1) {
+        yield(TextRange(lastMatch, charSequence.length))
+        return@sequence
+      }
+      yield(TextRange(lastMatch, start))
+      lastMatch = start + pattern.length
+    }
   }
 
 }
