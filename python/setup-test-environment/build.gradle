@@ -93,7 +93,7 @@ envs {
                "2.7.15",
                ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose", "untangle"]
                 + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle",
+               "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py35_django22_full",
