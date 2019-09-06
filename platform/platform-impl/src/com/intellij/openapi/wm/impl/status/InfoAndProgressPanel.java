@@ -120,6 +120,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
     }
   };
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private LinkLabel<Object> myMultiProcessLink;
 
   InfoAndProgressPanel() {
     setOpaque(false);
@@ -353,15 +354,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     final JPanel progressCountPanel = new JPanel(new BorderLayout(0, 0));
     progressCountPanel.setOpaque(false);
-    String processWord = myOriginals.size() == 1 ? " process" : " processes";
-    final LinkLabel<Object> label = new LinkLabel<>(myOriginals.size() + processWord + " running...", null,
-                                                    (aSource, aLinkData) -> triggerPopupShowing());
+    myMultiProcessLink = new LinkLabel<>(getMultiProgressLinkText(), null, (aSource, aLinkData) -> triggerPopupShowing());
 
-    if (SystemInfo.isMac) label.setFont(JBUI.Fonts.label(11));
+    if (SystemInfo.isMac) myMultiProcessLink.setFont(JBUI.Fonts.label(11));
 
-    label.setOpaque(false);
+    myMultiProcessLink.setOpaque(false);
 
-    final Wrapper labelComp = new Wrapper(label);
+    Wrapper labelComp = new Wrapper(myMultiProcessLink);
     labelComp.setOpaque(false);
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
@@ -375,6 +374,31 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     revalidate();
     repaint();
+  }
+
+  @NotNull
+  private String getMultiProgressLinkText() {
+    ProgressIndicatorEx latest = getLatestProgress();
+    String latestText = latest == null ? null : latest.getText();
+    if (StringUtil.isEmptyOrSpaces(latestText)) {
+      return myOriginals.size() + pluralizeProcess(myOriginals.size()) + " running...";
+    }
+    int others = myOriginals.size() - 1;
+    return latestText + " (" + others + " more " + pluralizeProcess(others) + ")";
+  }
+
+  private static String pluralizeProcess(int count) {
+    return count == 1 ? " process" : " processes";
+  }
+
+  private ProgressIndicatorEx getLatestProgress() {
+    return ContainerUtil.getLastItem(myOriginals);
+  }
+
+  @Override
+  public void removeAll() {
+    myMultiProcessLink = null;
+    super.removeAll();
   }
 
   private void buildInInlineIndicator(@NotNull MyInlineProgressIndicator inline) {
@@ -811,6 +835,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
       super.updateProgressNow();
       if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
+      if (myOriginal == getLatestProgress() && myMultiProcessLink != null) {
+        myMultiProcessLink.setText(getMultiProgressLinkText());
+      }
     }
   }
 
