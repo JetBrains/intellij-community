@@ -4,9 +4,9 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,34 +17,38 @@ class JpsCacheLoader implements JpsOutputLoader {
   private final BuildManager myBuildManager;
   private final JpsServerClient myClient;
   private final Project myProject;
+  private File myTmpCacheFolder;
 
-  JpsCacheLoader(JpsServerClient client, Project project) {
+  JpsCacheLoader(JpsServerClient client, @NotNull Project project) {
     myBuildManager = BuildManager.getInstance();
     myClient = client;
     myProject = project;
   }
 
   @Override
-  public void load(@NotNull String commitId) {
+  public LoaderStatus load(@NotNull String commitId) {
     LOG.debug("Loading JPS caches for commit: " + commitId);
+    myTmpCacheFolder = null;
+
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
-    myClient.downloadCacheByIdAsynchronously(myProject, commitId, targetDir, this::renameTmpCacheFolder);
+    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(myProject, commitId, targetDir);
+    myTmpCacheFolder = downloadResultPair.second;
+    if (!downloadResultPair.first) return LoaderStatus.FAILED;
+    return LoaderStatus.COMPLETE;
   }
 
   @Override
   public void rollback() {
-
+    if (myTmpCacheFolder != null && myTmpCacheFolder.exists()) {
+      FileUtil.delete(myTmpCacheFolder);
+      LOG.debug("JPS cache loader rolled back");
+    }
   }
 
   @Override
   public void apply() {
-
-  }
-
-  private void renameTmpCacheFolder(@Nullable File tmpCacheFolder) { //TODO:: Fix myProject may be null
-    if (tmpCacheFolder == null) {
-      //TODO:: Think about rollback
-      LOG.warn("Couldn't download JPS portable caches");
+    if (myTmpCacheFolder == null) {
+      LOG.warn("Nothing to apply, download results are empty");
       return;
     }
     File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
@@ -52,21 +56,21 @@ class JpsCacheLoader implements JpsOutputLoader {
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
         try {
-          File newTimestampFolder = new File(tmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
+          File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
           newTimestampFolder.mkdirs();
           FileUtil.copyDir(timestamps, newTimestampFolder);
         }
         catch (IOException e) {
-          LOG.warn("Couldn't copy timestamps from old JPS caches", e);
+          LOG.warn("Couldn't copy timestamps from old JPS cache", e);
         }
       }
       FileUtil.delete(currentDirForBuildCache);
       try {
-        FileUtil.rename(tmpCacheFolder, currentDirForBuildCache);
-        LOG.debug("Jps cache downloads finished");
+        FileUtil.rename(myTmpCacheFolder, currentDirForBuildCache);
+        LOG.debug("JPS cache downloads finished");
       }
       catch (IOException e) {
-        LOG.warn("Couldn't replace existing caches by downloaded portable", e);
+        LOG.warn("Couldn't replace JPS cache", e);
       }
     }
   }

@@ -1,18 +1,16 @@
 package com.intellij.jps.cache.loader;
 
-import com.intellij.jps.cache.JpsCachesProjectStateListener;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -28,6 +26,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   private final PersistentCachingModuleHashingService myHashingService;
   private final JpsServerClient myClient;
   private final Project myProject;
+  private Map<File, String> myTmpFolderToModuleName;
 
   JpsCompilationOutputLoader(JpsServerClient client, Project project, PersistentCachingModuleHashingService hashingService) {
     myClient = client;
@@ -36,40 +35,66 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   }
 
   @Override
-  public void load(@NotNull String commitId) {
+  public LoaderStatus load(@NotNull String commitId) {
+    myTmpFolderToModuleName = null;
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
     if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
       LOG.warn("Compiler output setting not specified for the project ");
-      return;
+      return LoaderStatus.FAILED;
     }
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
+
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
-    Map<String, byte[]> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
+    Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
                                                                        myHashingService::computeProductionHashesForProject);
     FileUtil.createDirectory(productionDir);
-    downloadAffectedModuleBinaryData(affectedProductionModules, productionDir, CompilerModuleExtension.PRODUCTION);
+    Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, CompilerModuleExtension.PRODUCTION,
+                                                                                            affectedProductionModules, productionDir);
+    myTmpFolderToModuleName = downloadResultsPair.second;
+    if (!downloadResultsPair.first) return LoaderStatus.FAILED;
 
     File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
-    Map<String, byte[]> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
+    Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
                                                                  myHashingService::computeTestHashesForProject);
     FileUtil.createDirectory(testDir);
-    downloadAffectedModuleBinaryData(affectedTestModules, testDir, CompilerModuleExtension.TEST);
+    downloadResultsPair = myClient.downloadCompiledModules(myProject, CompilerModuleExtension.TEST, affectedTestModules, testDir);
+    myTmpFolderToModuleName.putAll(downloadResultsPair.second);
+    if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+
+    return LoaderStatus.COMPLETE;
   }
 
   @Override
   public void rollback() {
-
+    if (myTmpFolderToModuleName == null) return;
+    myTmpFolderToModuleName.forEach((tmpFolder, __) -> {if (tmpFolder.isDirectory() && tmpFolder.exists()) FileUtil.delete(tmpFolder);});
+    LOG.debug("JPS cache loader rolled back");
   }
 
   @Override
   public void apply() {
+    if (myTmpFolderToModuleName == null) {
+      LOG.debug("Nothing to apply, download results are empty");
+      return;
+    }
 
+    myTmpFolderToModuleName.forEach((tmpModuleFolder, moduleName) -> {
+      File currentModuleBuildDir = new File(tmpModuleFolder.getParentFile(), moduleName);
+      FileUtil.delete(currentModuleBuildDir);
+      try {
+        FileUtil.rename(tmpModuleFolder, currentModuleBuildDir);
+        LOG.debug("Module: " + moduleName + " was replaced successfully");
+      }
+      catch (IOException e) {
+        LOG.warn("Couldn't replace compilation output for module: " + moduleName, e);
+      }
+    });
   }
 
-  private static Map<String, byte[]> getAffectedModules(@NotNull File outDir, @NotNull Supplier<Map<String, byte[]>> affectedModules,
-                                                        @NotNull Supplier<Map<String, byte[]>> allModules) {
+  private static Map<String, String> getAffectedModules(@NotNull File outDir, @NotNull Supplier<Map<String, String>> affectedModules,
+                                                        @NotNull Supplier<Map<String, String>> allModules) {
     long start = System.currentTimeMillis();
-    Map<String, byte[]> allModulesMap = allModules.get();
+    Map<String, String> allModulesMap = allModules.get();
     if (outDir.exists()) {
       File[] listFiles = outDir.listFiles();
       if (listFiles == null) return allModulesMap;
@@ -86,48 +111,14 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       oldModulesOutDir.removeAll(allModulesMap.keySet());
       oldModulesOutDir.stream().map(currentModulesFolderMap::get).forEach(FileUtil::delete);
 
-      Map<String, byte[]> affectedModulesMap = affectedModules.get();
+      Map<String, String> affectedModulesMap = affectedModules.get();
       modulesWithRemovedOutDir.forEach(moduleName -> {
         affectedModulesMap.put(moduleName, allModulesMap.get(moduleName));
       });
-      LOG.warn("Compilation output affected for the following " + affectedModulesMap.size() + " modules " + (System.currentTimeMillis() - start));
+      LOG.warn("Compilation output affected for the " + affectedModulesMap.size() + " modules. Computation took " + (System.currentTimeMillis() - start) + "ms");
       return affectedModulesMap;
     }
-    LOG.warn("Compilation output doesn't exist, force to download " + allModulesMap.size() +" modules " +  (System.currentTimeMillis() - start));
+    LOG.warn("Compilation output doesn't exist, force to download " + allModulesMap.size() +" modules. Computation took " +  (System.currentTimeMillis() - start) + "ms");
     return allModulesMap;
-  }
-
-  private void downloadAffectedModuleBinaryData(@NotNull Map<String, byte[]> affectedModules, @NotNull File targetDir, @NotNull String prefix) {
-    int[] i = new int[1];
-    affectedModules.forEach((moduleName, moduleHash) -> {
-      if (i[0] % 10 == 0) {
-        try {
-          Thread.sleep(1000);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-      String stringHash = DatatypeConverter.printHexBinary(moduleHash).toLowerCase();
-      myClient.downloadCompiledModuleByNameAndHash(myProject, moduleName, prefix, stringHash, targetDir, JpsCompilationOutputLoader::renameTmpModuleFolder);
-      i[0]++;
-    });
-  }
-
-  private static void renameTmpModuleFolder(@Nullable File tmpModuleFolder, String moduleName) {
-    if (tmpModuleFolder == null) {
-      //TODO:: Think about rollback
-      LOG.warn("Couldn't download JPS portable caches");
-      return;
-    }
-    File currentModuleBuildDir = new File(tmpModuleFolder.getParentFile(), moduleName);
-    FileUtil.delete(currentModuleBuildDir);
-    try {
-      FileUtil.rename(tmpModuleFolder, currentModuleBuildDir);
-      LOG.debug("Module: " + moduleName + " was replaced successfully");
-    }
-    catch (IOException e) {
-      LOG.warn("Couldn't replace existing caches by downloaded portable", e);
-    }
   }
 }

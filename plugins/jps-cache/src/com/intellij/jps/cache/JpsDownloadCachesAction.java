@@ -2,7 +2,6 @@ package com.intellij.jps.cache;
 
 import com.intellij.jps.cache.loader.JpsOutputLoaderManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
@@ -12,6 +11,6 @@ public class JpsDownloadCachesAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent actionEvent) {
     Project project = actionEvent.getProject();
     if (project == null) return;
-    ApplicationManager.getApplication().executeOnPooledThread(() -> JpsOutputLoaderManager.getInstance(project).load());
+    JpsOutputLoaderManager.getInstance(project).load();
   }
 }

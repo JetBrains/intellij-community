@@ -15,6 +15,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -66,7 +67,8 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
       ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
       if (moduleFileIndex.isInTestSourceContent(vf)) {
         affectedTestModules.add(affectedModule);
-      } else {
+      }
+      else {
         affectedProductionModules.add(affectedModule);
       }
     });
@@ -120,12 +122,12 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     });
   }
 
-  public Map<String, byte[]> computeProductionHashesForProject() {
-    Map<String, byte[]> result = new HashMap<>();
+  public Map<String, String> computeProductionHashesForProject() {
+    Map<String, String> result = new HashMap<>();
     try {
       Collection<String> keys = myProductionHashes.getAllKeysWithExistingMapping();
       for (String key : keys) {
-        result.put(key, myProductionHashes.get(key));
+        result.put(key, convertToStringRepr(myProductionHashes.get(key)));
       }
     }
     catch (IOException e) {
@@ -134,12 +136,12 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     return result;
   }
 
-  public Map<String, byte[]> computeTestHashesForProject() {
-    Map<String, byte[]> result = new HashMap<>();
+  public Map<String, String> computeTestHashesForProject() {
+    Map<String, String> result = new HashMap<>();
     try {
       Collection<String> keys = myTestHashes.getAllKeysWithExistingMapping();
       for (String key : keys) {
-        result.put(key, myTestHashes.get(key));
+        result.put(key, convertToStringRepr(myTestHashes.get(key)));
       }
     }
     catch (IOException e) {
@@ -148,16 +150,17 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     return result;
   }
 
-  public Map<String, byte[]> getAffectedTests() {
+  public Map<String, String> getAffectedTests() {
     return getAffected(myTestHashes, JpsCachesUtils::getTestSourceRootFiles);
   }
 
-  public Map<String, byte[]> getAffectedProduction() {
+  public Map<String, String> getAffectedProduction() {
     return getAffected(myProductionHashes, JpsCachesUtils::getProductionSourceRootFiles);
   }
 
-  private Map<String, byte[]> getAffected(PersistentHashMap<String, byte[]> hashCache, Function<ModuleRootManager, File[]> sourceRootFunction) {
-    Map<String, byte[]> result = new HashMap<>();
+  private Map<String, String> getAffected(PersistentHashMap<String, byte[]> hashCache,
+                                          Function<ModuleRootManager, File[]> sourceRootFunction) {
+    Map<String, String> result = new HashMap<>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
 
     Arrays.stream(modules).forEach(module -> {
@@ -169,7 +172,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
         }
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModuleNameToModuleMap.get(moduleName));
         File[] sourceRoots = sourceRootFunction.apply(moduleRootManager);
-        getFromCacheOrCalcAndPersist(moduleName, hashCache, sourceRoots).map(hash -> result.put(moduleName, hash));
+        getFromCacheOrCalcAndPersist(moduleName, hashCache, sourceRoots).map(hash -> result.put(moduleName, convertToStringRepr(hash)));
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -180,7 +183,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
   }
 
   private Optional<byte[]> getFromCacheOrCalcAndPersist(String moduleName, PersistentHashMap<String, byte[]> hashCache,
-                                                               File[] sourceRoots) throws IOException {
+                                                        File[] sourceRoots) throws IOException {
     byte[] hashFromCache = hashCache.get(moduleName);
     if (hashFromCache != null) {
       return Optional.of(hashFromCache);
@@ -201,5 +204,10 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
       }
       return hash;
     });
+  }
+
+  private static String convertToStringRepr(byte[] hash) {
+    //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+    return DatatypeConverter.printHexBinary(hash).toLowerCase();
   }
 }
