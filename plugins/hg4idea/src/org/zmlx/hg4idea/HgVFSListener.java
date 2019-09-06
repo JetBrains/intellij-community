@@ -223,7 +223,7 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void executeDelete() {
+  protected void processDelete() {
     final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
     final List<FilePath> filesToConfirmDeletion = new ArrayList<>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
