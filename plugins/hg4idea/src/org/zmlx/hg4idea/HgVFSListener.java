@@ -223,11 +223,10 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void processDelete() {
-    final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
-    final List<FilePath> filesToConfirmDeletion = new ArrayList<>(myDeletedFiles);
-    myDeletedWithoutConfirmFiles.clear();
-    myDeletedFiles.clear();
+  protected void executeDelete() {
+    AllDeletedFiles files = myProcessor.acquireAllDeletedFiles();
+    List<FilePath> filesToDelete = files.deletedWithoutConfirmFiles;
+    List<FilePath> filesToConfirmDeletion = files.deletedFiles;
 
     // skip files which are not under Mercurial
     skipNotUnderHg(filesToDelete);
