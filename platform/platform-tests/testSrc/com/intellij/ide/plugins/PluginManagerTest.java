@@ -15,12 +15,32 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.xmlb.JDOMXIncluder;
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class PluginManagerTest {
   @Test
@@ -103,6 +123,58 @@ public class PluginManagerTest {
     assertConvertsTo("145.100000", "145.*");
   }
 
+  @Test
+  public void testSimplePluginSort() throws Exception {
+    doPluginSortTest("simplePluginSort");
+  }
+
+  @Test
+  public void testUltimatePlugins() throws Exception {
+    doPluginSortTest("ultimatePlugins");
+    /*
+StringBuilder sb = new StringBuilder("<root>");
+for (IdeaPluginDescriptorImpl d : descriptors) {
+  sb.append("\n  <idea-plugin url=\"file://out/" + d.getPath().getName() + "/META-INF/plugin.xml\">");
+  sb.append("\n    <id>" + d.getPluginId() + "</id>");
+  sb.append("\n    <name>" + StringUtil.escapeXmlEntities(d.getName()) + "</name>");
+  for (String module : d.getModules()) {
+    sb.append("\n    <module value=\"" + module + "\"/>");
+  }
+  PluginId[] optIds = d.getOptionalDependentPluginIds();
+  Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();
+  for (PluginId depId : d.getDependentPluginIds()) {
+    if (ArrayUtil.indexOf(optIds, depId) == -1) {
+      sb.append("\n    <depends>" + depId + "</depends>");
+    }
+    else {
+      List<IdeaPluginDescriptorImpl> opt = optMap != null ? optMap.get(depId) : null;
+      if (opt == null || opt.isEmpty()) {
+        sb.append("\n    <depends optional=\"true\" config-file=\"???\">" + depId + "</depends>");
+      }
+      else {
+        for (IdeaPluginDescriptorImpl dd : opt) {
+          sb.append("\n    <depends optional=\"true\" config-file=\"" + dd.getPath().getName() + "\">" + depId + "</depends>");
+        }
+      }
+    }
+  }
+  sb.append("\n  </idea-plugin>");
+}
+sb.append("\n</root>");
+sb.toString()
+     */
+  }
+
+  private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
+    List<IdeaPluginDescriptorImpl> descriptors = loadDescriptors(testDataName + ".xml");
+    IdeaPluginDescriptorImpl[] sorted = PluginManagerCore.initializePlugins(
+      descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY), PluginManagerTest.class.getClassLoader(), null);
+    String actual = StringUtil.join(sorted, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
+                    "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
+    PluginManagerCore.ourPluginError = null;
+    UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
+  }
+
   private static void assertConvertsTo(String untilBuild, String result) {
     assertEquals(result, IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
   }
@@ -113,5 +185,26 @@ public class PluginManagerTest {
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
     assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild, null, null));
+  }
+
+  private static List<IdeaPluginDescriptorImpl> loadDescriptors(@NotNull String testDataName) throws IOException, JDOMException {
+    File file = new File(getTestDataPath(), testDataName);
+    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
+    LoadDescriptorsContext context = new LoadDescriptorsContext(false);
+    Element root = JDOMUtil.load(file, context.getXmlFactory());
+    for (Element element : root.getChildren("idea-plugin")) {
+      String url = element.getAttributeValue("url");
+      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(new File(url), false);
+      d.readExternal(element, new URL(url), JDOMXIncluder.DEFAULT_PATH_RESOLVER,
+                     context.getXmlFactory().stringInterner(), false);
+      result.add(d);
+    }
+    Collections.sort(result, (o1, o2) -> Comparing.compare(String.valueOf(o1.getPluginId()),
+                                                           String.valueOf(o2.getPluginId())));
+    return result;
+  }
+
+  private static String getTestDataPath() {
+    return PathManagerEx.getTestDataPath() + "/ide/plugins/sort";
   }
 }

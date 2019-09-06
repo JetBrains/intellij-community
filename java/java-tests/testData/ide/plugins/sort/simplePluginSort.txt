@@ -1,0 +1,26 @@
++ com.intellij
+  cycle2
+  cycle1
+  cycle3
+  cycle0
+  cycle4
+  cycle5
+  duplicate0
+  missing1
+  missing2
+  missing3
+  missing4
++ plugin3
++ plugin0
++ plugin1
++ plugin2
+
+"duplicate" id is declared by plugins "duplicate1.xml", "duplicate2.xml".
+"com.intellij.modules.duplicate" module is declared by plugins "duplicate", "duplicate", "duplicate0".
+No id is provided by "missing0.xml".
+Plugins "cycle0", "cycle1", "cycle2", "cycle3" form dependency cycle.
+Plugins "cycle4", "cycle5" form dependency cycle.
+Plugin "missing1" requires missing "com.intellij.modules.missing".
+Plugin "missing3" requires disabled "missing2".
+<br><a href="disable">Disable not loaded plugins</a>
+<a href="edit">Open plugin manager</a>
