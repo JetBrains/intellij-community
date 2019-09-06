@@ -22,10 +22,8 @@ import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
@@ -39,7 +37,8 @@ public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter
   private final SyntaxHighlighter highlighter;
 
   public SyntaxHighlighterOverEditorHighlighter(@NotNull SyntaxHighlighter _highlighter, @NotNull VirtualFile file, @NotNull Project project) {
-    if (FileTypeRegistry.getInstance().isFileOfType(file, PlainTextFileType.INSTANCE)) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
+    FileType type = file.getFileType();
+    if (type instanceof PlainTextLikeFileType && !(type instanceof AbstractFileType)) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
       highlighter = new PlainSyntaxHighlighter();
       lexer = highlighter.getHighlightingLexer();
     }
