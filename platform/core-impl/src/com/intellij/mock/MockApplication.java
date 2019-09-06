@@ -242,6 +242,12 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    try {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
