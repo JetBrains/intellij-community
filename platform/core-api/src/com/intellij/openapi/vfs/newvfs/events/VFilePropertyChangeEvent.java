@@ -153,22 +153,24 @@ public class VFilePropertyChangeEvent extends VFileEvent {
 
   @NotNull
   public String getOldPath() {
-    return getOtherPath(myNewValue, myOldValue);
+    return getPathWithFileName(myOldValue);
   }
 
   @NotNull
   public String getNewPath() {
-    return getOtherPath(myOldValue, myNewValue);
+    return getPathWithFileName(myNewValue);
   }
 
+  /** Replaces file name in {@code myFile} path with {@code fileName}, if an event is a rename event; leaves path as is otherwise */
   @NotNull
-  private String getOtherPath(Object currentValue, Object otherValue) {
-    if (VirtualFile.PROP_NAME.equals(myPropertyName) && currentValue instanceof String && otherValue instanceof String) {
+  private String getPathWithFileName(Object fileName) {
+    if (VirtualFile.PROP_NAME.equals(myPropertyName)) {
+      // fileName must be String, according to `checkPropertyValuesCorrect` implementation
       VirtualFile parent = myFile.getParent();
       if (parent == null) {
-        return ((String)otherValue);
+        return ((String)fileName);
       }
-      return parent.getPath() + "/" + otherValue;
+      return parent.getPath() + "/" + fileName;
     }
     return getPath();
   }
