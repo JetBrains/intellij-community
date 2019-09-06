@@ -55,8 +55,6 @@ public class PySkeletonGenerator {
   @Nullable private String myCurrentFolder;
   private String mySkeletonsPath;
 
-  private boolean myPrebuilt = false;
-
   /**
    * @param skeletonPath path where skeletons should be generated
    * @param pySdk SDK
@@ -79,6 +77,7 @@ public class PySkeletonGenerator {
     private List<String> myExtraArgs;
     private String myTargetModuleName;
     private String myTargetModulePath;
+    private boolean myPrebuilt = false;
     private int myTimeout;
 
     @NotNull
@@ -307,10 +306,6 @@ public class PySkeletonGenerator {
 
   public boolean exists(@NotNull final String name) {
     return new File(name).exists();
-  }
-
-  public void setPrebuilt(boolean prebuilt) {
-    myPrebuilt = prebuilt;
   }
 
   protected void runProcessWithLineOutputListener(@NotNull String homePath,
