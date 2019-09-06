@@ -10,8 +10,9 @@ fun showYesNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: Strin
   return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
 }
 
-fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?, yesText: String = Messages.OK_BUTTON, noText: String = Messages.NO_BUTTON, icon: Icon? = null): Boolean {
-  return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
+fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?,
+                   okText: String = Messages.OK_BUTTON, noText: String = Messages.NO_BUTTON, icon: Icon? = null): Boolean {
+  return Messages.showYesNoDialog(project, message, title, okText, noText, icon) == Messages.YES
 }
 
 @Messages.OkCancelResult
