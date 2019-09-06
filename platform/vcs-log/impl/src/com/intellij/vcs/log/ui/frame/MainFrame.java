@@ -129,7 +129,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground());
     myNotificationLabel.setVisible(false);
     myNotificationLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
-                                                     myNotificationLabel.getBorder()));
+                                                     notNull(myNotificationLabel.getBorder(), JBUI.Borders.empty())));
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
