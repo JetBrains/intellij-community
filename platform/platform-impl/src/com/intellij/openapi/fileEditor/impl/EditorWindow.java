@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -895,7 +894,7 @@ public class EditorWindow {
   }
 
   void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
-    FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(() -> {
+    getManager().getReady(this).doWhenDone(() -> {
       if (isDisposed()) return;
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
