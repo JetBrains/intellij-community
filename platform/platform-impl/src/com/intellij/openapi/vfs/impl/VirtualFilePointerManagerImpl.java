@@ -381,7 +381,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private synchronized void assertAllPointersDisposed() {
-    for (VirtualFilePointer pointer : dumpAllPointers()) {
+    List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
+    Collections.sort(leaked, Comparator.comparing(VirtualFilePointer::getUrl));
+    for (VirtualFilePointer pointer : leaked) {
       try {
         ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
       }
