@@ -1,0 +1,9 @@
+platform-serviceContainer.jar
+util.jar
+bootstrap.jar
+idea.jar
+platform-impl.jar
+platform-api.jar
+platform-util-ui.jar
+log4j.jar
+trove4j.jar

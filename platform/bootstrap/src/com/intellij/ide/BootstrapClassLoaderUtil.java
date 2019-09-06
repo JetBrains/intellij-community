@@ -7,18 +7,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.InputStreamReader;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,8 +45,8 @@ public class BootstrapClassLoaderUtil {
 
   @NotNull
   public static ClassLoader initClassLoader() throws MalformedURLException {
-    Collection<String> jarOrder = loadJarOrder();
-
+    List<String> jarOrder = loadJarOrder();
+    
     Collection<URL> classpath = new LinkedHashSet<>();
     addParentClasspath(classpath, false);
     addIDEALibraries(classpath, jarOrder);
@@ -174,35 +174,43 @@ public class BootstrapClassLoaderUtil {
     }
   }
 
-  private static void addIDEALibraries(Collection<? super URL> classpath, Collection<String> jarOrder) throws MalformedURLException {
+  private static void addIDEALibraries(@NotNull Collection<? super URL> classpath, 
+                                       @NotNull Collection<String> jarOrder) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
     URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
-    classpath.add(selfRootUrl);
-
     File libFolder = new File(PathManager.getLibPath());
-
     for (String jarName : jarOrder) {
+      if (StringUtil.isEmptyOrSpaces(jarName)) continue;
       File jarFile = new File(libFolder, jarName);
       if (jarFile.exists()) {
         classpath.add(jarFile.toURI().toURL());
       }
     }
 
+    classpath.add(selfRootUrl);
     addLibraries(classpath, libFolder, selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static Collection<String> loadJarOrder() {
+  @NotNull
+  private static List<String> loadJarOrder() {
     try {
       Path path = Paths.get(getSystemPath(), CLASSPATH_ORDER_FILE);
-      if (path.toFile().exists()) {
-        return new LinkedHashSet<>(Files.readAllLines(path));
+      boolean exists = Files.exists(path);
+      if (!exists) {
+        try (BufferedReader stream = new BufferedReader(
+          new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
+          return FileUtilRt.loadLines(stream); 
+        }
+      } else {
+        return Files.readAllLines(path);
       }
     }
-    catch (IOException ignored) {
+    catch (Exception ignored) {
+      //skip, we can load the app 
     }
     return Collections.emptyList();
   }
