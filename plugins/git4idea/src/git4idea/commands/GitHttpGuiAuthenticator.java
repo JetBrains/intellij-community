@@ -202,6 +202,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     return myProviderAndData != null && myProviderAndData.getProvider() instanceof CancelledProvider;
   }
 
+  @Override
+  public boolean wasRequested() {
+    return myProviderAndData != null;
+  }
+
   /**
    * Get the URL to be used as the authentication data identifier in the password safe and the settings.
    * git <=1.7.7 does not provide url so we have to pass it via handler

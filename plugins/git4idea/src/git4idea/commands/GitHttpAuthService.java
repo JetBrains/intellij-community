@@ -112,5 +112,10 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
     public boolean wasCancelled() {
       return false;
     }
+
+    @Override
+    public boolean wasRequested() {
+      return false;
+    }
   };
 }
