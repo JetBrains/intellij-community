@@ -11,14 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 class StartUseVcsDialog extends DialogWrapper {
   private final VcsDataWrapper myData;
@@ -53,14 +47,6 @@ class StartUseVcsDialog extends DialogWrapper {
     myVcsCombo = new VcsCombo(prepareComboData());
     mainPanel.add(myVcsCombo, gb);
 
-    myVcsCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        validateVcs();
-      }
-    });
-    validateVcs();
-
     JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text"));
     helpText.setUI(new MultiLineLabelUI());
     helpText.setForeground(UIUtil.getInactiveTextColor());
@@ -78,11 +64,6 @@ class StartUseVcsDialog extends DialogWrapper {
     return wrapper;
   }
 
-  private void validateVcs() {
-    String selectedVcs = notNull(myVcsCombo.getSelectedItem());
-    setOKActionEnabled(selectedVcs.length() > 0);
-  }
-
   @Override
   protected String getHelpId() {
     return "reference.version.control.enable.version.control.integration";
@@ -96,11 +77,13 @@ class StartUseVcsDialog extends DialogWrapper {
 
   @NotNull
   private String[] prepareComboData() {
-    Collection<String> displayNames = myData.getVcses().keySet();
-    List<String> keys = new ArrayList<>(displayNames.size() + 1);
-    keys.add("");
-    keys.addAll(displayNames);
-    Collections.sort(keys);
+    ArrayList<String> keys = new ArrayList<>(myData.getVcses().keySet());
+    Collections.sort(keys, (String o1, String o2) -> {
+      if (o1.equals(o2)) return 0;
+      if (o1.equals("Git")) return -1;
+      if (o2.equals("Git")) return 1;
+      return o1.compareTo(o2);
+    });
     return ArrayUtil.toStringArray(keys);
   }
 
