@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
@@ -106,7 +109,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
     val activityNamePrefix = activityNamePrefix()
-    val parallelActivity = if (activityNamePrefix == null) null else ParallelActivity.PREPARE_APP_INIT
 
     val app = getApplication()
     val headless = app == null || app.isHeadlessEnvironment
@@ -115,54 +117,56 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val isHeadlessMode = app?.isHeadlessEnvironment == true
     val isUnitTestMode = app?.isUnitTestMode == true
 
-    parallelActivity.run("${activityNamePrefix}service and ep registration") {
-      // register services before registering extensions because plugins can access services in their
-      // extensions which can be invoked right away if the plugin is loaded dynamically
-      for (plugin in plugins) {
-        val containerDescriptor = getContainerDescriptor(plugin)
-        registerServices(containerDescriptor.services, plugin)
+    var activity = if (activityNamePrefix == null) null else StartUpMeasurer.start("${activityNamePrefix}service and ep registration")
+    // register services before registering extensions because plugins can access services in their
+    // extensions which can be invoked right away if the plugin is loaded dynamically
+    for (plugin in plugins) {
+      val containerDescriptor = getContainerDescriptor(plugin)
+      registerServices(containerDescriptor.services, plugin)
 
-        for (descriptor in containerDescriptor.components) {
-          if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
+      for (descriptor in containerDescriptor.components) {
+        if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
+          continue
+        }
+
+        try {
+          registerComponent(descriptor, plugin)
+          componentConfigCount++
+        }
+        catch (e: Throwable) {
+          handleInitComponentError(e, null, plugin.pluginId)
+        }
+      }
+
+      val listeners = getContainerDescriptor(plugin).listeners
+      if (listeners.isNotEmpty()) {
+        if (map == null) {
+          map = ContainerUtil.newConcurrentMap()
+        }
+
+        for (listener in listeners) {
+          if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
             continue
           }
 
-          try {
-            registerComponent(descriptor, plugin)
-            componentConfigCount++
-          }
-          catch (e: Throwable) {
-            handleInitComponentError(e, null, plugin.pluginId)
-          }
+          map.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
         }
+      }
 
-        val listeners = getContainerDescriptor(plugin).listeners
-        if (listeners.isNotEmpty()) {
-          if (map == null) {
-            map = ContainerUtil.newConcurrentMap()
-          }
-
-          for (listener in listeners) {
-            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
-              continue
-            }
-
-            map!!.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
-          }
-        }
-
-        containerDescriptor.extensionPoints?.let {
-          extensionArea.registerExtensionPoints(plugin, it, this)
-        }
+      containerDescriptor.extensionPoints?.let {
+        extensionArea.registerExtensionPoints(plugin, it, this)
       }
     }
 
-    parallelActivity.run("${activityNamePrefix}extension registration") {
-      val notifyListeners = LoadingPhase.isStartupComplete()
-      for (descriptor in plugins) {
-        descriptor.registerExtensions(extensionArea, this, notifyListeners)
-      }
+    if (activity != null) {
+      activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
+
+    val notifyListeners = LoadingPhase.isStartupComplete()
+    for (descriptor in plugins) {
+      descriptor.registerExtensions(extensionArea, this, notifyListeners)
+    }
+    activity?.end()
 
     if (myComponentConfigCount <= 0) {
       myComponentConfigCount = componentConfigCount
@@ -177,7 +181,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     // ensure that messageBus is created, regardless of lazy listeners map state
     val messageBus = messageBus as MessageBusImpl
     if (map != null) {
-      messageBus.setLazyListeners(map!!)
+      messageBus.setLazyListeners(map)
     }
   }
 

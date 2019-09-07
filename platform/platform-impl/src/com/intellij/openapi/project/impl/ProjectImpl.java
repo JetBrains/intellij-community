@@ -23,10 +23,12 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -53,11 +55,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  /**
-   * @deprecated use {@link #getCreationTrace()}
-   */
-  @Deprecated
-  public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+  private static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
@@ -227,17 +226,36 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public void registerComponents() {
+  public final void registerComponents() {
     String activityNamePrefix = activityNamePrefix();
-    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
+    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     registerComponents(PluginManagerCore.getLoadedPlugins());
     if (activity != null) {
-      activity.end();
+      activity = activity.endAndStart("projectComponentRegistered");
     }
 
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
+      String id = pluginDescriptor.getPluginId().getIdString();
+      if (!(id.equals("com.intellij.treeProjectModel") ||
+            (ApplicationManager.getApplication().isUnitTestMode() && id.equals(PluginManagerCore.CORE_PLUGIN_ID)))) {
+        LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
+      }
+
+      try {
+        customizer.serviceContainerInitialized(this);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    });
+
+    if (activity != null) {
+      activity.end();
+    }
   }
 
   public void init(@Nullable ProgressIndicator indicator) {

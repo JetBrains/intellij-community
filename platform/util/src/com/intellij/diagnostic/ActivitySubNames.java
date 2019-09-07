@@ -4,8 +4,6 @@ package com.intellij.diagnostic;
 public final class ActivitySubNames {
   public static final String INITIALIZE_SPLASH = "splash initialization";
 
-  public static final String UPDATE_FRAME_CLASS = "update frame class";
-  public static final String UPDATE_WINDOW_ICON = "update window icon";
   public static final String INIT_DEFAULT_LAF = "init default LaF";
 
   public static final String SETUP_SYSTEM_LIBS = "setup system libs";

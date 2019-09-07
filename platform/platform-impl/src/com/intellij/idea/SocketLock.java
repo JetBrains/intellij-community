@@ -159,7 +159,7 @@ public final class SocketLock {
     }
 
     myBuiltinServerFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("built-in server launch");
+      Activity activity = ParallelActivity.APP_INIT.start("built-in server launch");
 
       String token = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * The number of submitted tasks is unrestricted.
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
-public class BoundedTaskExecutor extends AbstractExecutorService {
+public final class BoundedTaskExecutor extends AbstractExecutorService {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
 
   private volatile boolean myShutdown;
@@ -182,7 +183,11 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
         @Override
         public void run() {
           if (myChangeThreadName) {
-            ConcurrencyUtil.runUnderThreadName(myName, this::execute);
+            String name = myName;
+            if (StartUpMeasurer.isEnabled()) {
+              name += "[" + Thread.currentThread().getName() + "]";
+            }
+            ConcurrencyUtil.runUnderThreadName(name, this::execute);
           }
           else {
             execute();

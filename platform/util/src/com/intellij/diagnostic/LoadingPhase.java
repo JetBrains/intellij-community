@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 @ApiStatus.Internal
 public enum LoadingPhase {
   BOOTSTRAP("bootstrap"),
-  SPLASH("splash shown"),
   LAF_INITIALIZED("LaF is initialized"),
+  SPLASH("splash shown"),
   COMPONENT_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENT_LOADED("app component loaded"),

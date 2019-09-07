@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
@@ -20,18 +21,12 @@ import com.intellij.util.io.write
 import gnu.trove.THashMap
 import java.nio.ByteBuffer
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.Comparator
 
 class StartUpPerformanceReporter : StartupActivity.DumbAware {
-  private val activationCount = AtomicInteger()
-  // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
-  private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
-
-  private var startUpEnd = AtomicLong(-1)
+  private var startUpFinishedCounter = AtomicInteger()
 
   var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
     private set
@@ -57,34 +52,27 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
   }
 
   override fun runActivity(project: Project) {
-    val end = System.nanoTime()
-    val activationNumber = activationCount.getAndIncrement()
-    if (activationNumber == 0) {
-      LOG.assertTrue(startUpEnd.getAndSet(end) == -1L)
-    }
-    if (isLastEdtOptionTopHitProviderFinished.get()) {
-      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
-      ApplicationManager.getApplication().executeOnPooledThread {
-        logStats(end, activationNumber)
-      }
-    }
+    reportIfAnotherAlreadySet()
   }
 
   fun lastOptionTopHitProviderFinishedForProject() {
-    if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
-      return
-    }
+    reportIfAnotherAlreadySet()
+  }
 
-    val end = startUpEnd.get()
-    if (end != -1L) {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        logStats(end, 0)
+  private fun reportIfAnotherAlreadySet() {
+    val end = StartUpMeasurer.getCurrentTime()
+    // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
+    if (startUpFinishedCounter.incrementAndGet() == 2) {
+      startUpFinishedCounter.set(0)
+      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
+      AppExecutorUtil.getAppExecutorService().execute {
+        logStats(end)
       }
     }
   }
 
   @Synchronized
-  private fun logStats(end: Long, activationNumber: Int) {
+  private fun logStats(end: Long) {
     val items = mutableListOf<ActivityImpl>()
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
@@ -124,7 +112,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     this.pluginCostMap = pluginCostMap
 
     val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
-    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
+    val startTime = items.first().start
     for (item in items) {
       val pluginId = item.pluginId ?: continue
       StartUpMeasurer.doAddPluginCost(pluginId, item.parallelActivity?.name ?: "unknown", item.end - item.start, pluginCostMap)
@@ -147,7 +135,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
 
     val traceFilePath = System.getProperty("idea.log.perf.trace.file")
     if (!traceFilePath.isNullOrBlank()) {
-      val traceEventFormat = TraceEventFormat(startTime, instantEvents)
+      val traceEventFormat = TraceEventFormat(startTime, instantEvents, threadNameManager)
       Paths.get(traceFilePath).outputStream().writer().use {
         traceEventFormat.write(items, activities, it)
       }

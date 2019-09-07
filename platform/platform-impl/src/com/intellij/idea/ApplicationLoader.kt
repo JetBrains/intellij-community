@@ -85,12 +85,13 @@ private fun executeInitAppInEdt(rawArgs: Array<String>,
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine())
   }
 
-  val registerFuture = pluginDescriptorsFuture.thenApply {
-    initAppActivity.runChild("app component registration") {
-      app.registerComponents(it)
+  val registerFuture = pluginDescriptorsFuture
+    .thenApply {
+      initAppActivity.runChild("app component registration") {
+        app.registerComponents(it)
+      }
+      it
     }
-    it
-  }
 
   if (args.isEmpty()) {
     startApp(app, IdeStarter(), initAppActivity, registerFuture, args)
@@ -149,7 +150,7 @@ private fun startApp(app: ApplicationImpl,
       // ensure that TouchBarsManager is loaded before WelcomeFrame/project
       // do not wait completion - it is thread safe and not required for application start
       AppExecutorUtil.getAppExecutorService().execute {
-        ParallelActivity.PREPARE_APP_INIT.run("mac touchbar") {
+        ParallelActivity.APP_INIT.run("mac touchbar") {
           Foundation.init()
           TouchBarsManager.isTouchBarAvailable()
         }
@@ -201,7 +202,7 @@ private fun startApp(app: ApplicationImpl,
 
     // execute in parallel to loading components - this functionality should be used only by plugin functionality,
     // that used after start-up
-    ParallelActivity.PREPARE_APP_INIT.run("init system properties") {
+    ParallelActivity.APP_INIT.run("init system properties") {
       SystemPropertyBean.initSystemProperties()
     }
   }
@@ -221,7 +222,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
   return registerFuture
     .thenCompose { plugins ->
       val future = CompletableFuture.runAsync(Runnable {
-        ParallelActivity.PREPARE_APP_INIT.run("add registry keys") {
+        ParallelActivity.APP_INIT.run("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
         }
       }, AppExecutorUtil.getAppExecutorService())
@@ -290,15 +291,21 @@ fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
     EventQueue.invokeLater {
       executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
     }
-    initAppActivity.runChild("load system fonts") {
-      // editor and other UI components need the list of system fonts to implement font fallback
-      // this list is pre-loaded here, in parallel to other activities, to speed up project opening
-      // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-      loadSystemFonts()
-    }
-    initAppActivity.runChild("setup DnD") {
-      // this will pre-load cursors used by drag'n'drop AWT subsystem
-      setupDnD()
+
+    if (!Main.isHeadless()) {
+      ParallelActivity.APP_INIT.run("load system fonts") {
+        // editor and other UI components need the list of system fonts to implement font fallback
+        // this list is pre-loaded here, in parallel to other activities, to speed up project opening
+        // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
+        loadSystemFonts()
+      }
+
+      // pre-load cursors used by drag'n'drop AWT subsystem
+      invokeLaterWithAnyModality("setup DnD") {
+        if (!GraphicsEnvironment.isHeadless()) {
+          DragSource.getDefaultDragSource()
+        }
+      }
     }
   }
 
@@ -323,10 +330,6 @@ private fun loadSystemFonts() {
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 }
 
-private fun setupDnD() {
-  if (!GraphicsEnvironment.isHeadless()) DragSource.getDefaultDragSource()
-}
-
 fun findStarter(key: String): ApplicationStarter? {
   for (starter in ApplicationStarter.EP_NAME.iterable) {
     if (starter == null) {
@@ -349,7 +352,7 @@ fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
 }
 
 fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
-  val beforeApplicationLoadedActivity = StartUpMeasurer.start("beforeApplicationLoaded")
+  var activity = StartUpMeasurer.start("beforeApplicationLoaded")
   val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
@@ -363,12 +366,12 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
     }
   }
 
-  val initStoreActivity = beforeApplicationLoadedActivity.endAndStart("init app store")
+  activity = activity.endAndStart("init app store")
 
   // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
   app.stateStore.setPath(effectiveConfigPath)
   LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
-  initStoreActivity.end()
+  activity.end()
 }
 
 open class IdeStarter : ApplicationStarter {
@@ -496,28 +499,35 @@ open class IdeStarter : ApplicationStarter {
 
   private fun postOpenUiTasks(app: Application) {
     if (SystemInfo.isMac) {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        TouchBarsManager.onApplicationInitialized()
-        if (TouchBarsManager.isTouchBarAvailable()) {
-          CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
-        }
+      AppExecutorUtil.getAppExecutorService().execute {
+        ParallelActivity.APP_INIT.run("TouchBar") {
+          TouchBarsManager.onApplicationInitialized()
+          if (TouchBarsManager.isTouchBarAvailable()) {
+            CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
+          }
 
-        val keymap = KeymapManager.getInstance().activeKeymap
-        SystemShortcuts().checkConflictsAndNotify(keymap)
+          val keymap = KeymapManager.getInstance().activeKeymap
+          SystemShortcuts().checkConflictsAndNotify(keymap)
+        }
       }
     }
 
-    app.invokeLater {
-      val updateSystemDockActivity = StartUpMeasurer.start("system dock menu")
+    invokeLaterWithAnyModality("system dock menu") {
       SystemDock.updateMenu()
-      updateSystemDockActivity.end()
     }
-    app.invokeLater {
+    invokeLaterWithAnyModality("ScreenReader") {
       val generalSettings = GeneralSettings.getInstance()
-      generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app,
-                                                PropertyChangeListener { e -> ScreenReader.setActive(e.newValue as Boolean) })
+      generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
+        ScreenReader.setActive(e.newValue as Boolean)
+      })
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
+  }
+}
+
+private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
+  EventQueue.invokeLater {
+    ParallelActivity.APP_INIT.run(name, task)
   }
 }
 

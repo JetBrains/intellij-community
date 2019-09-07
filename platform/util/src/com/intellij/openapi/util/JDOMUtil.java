@@ -34,11 +34,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * @author mike
- */
 @SuppressWarnings("HardCodedStringLiteral")
-public class JDOMUtil {
+public final class JDOMUtil {
   private static final String X = "x";
   private static final String Y = "y";
   private static final String WIDTH = "width";

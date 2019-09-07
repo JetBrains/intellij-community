@@ -2,6 +2,8 @@
 package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
+import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.run
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -50,19 +52,19 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
       ideFrame = createFrame()
-      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        {
-          if (isNewFrame) {
-            ApplicationManager.getApplication().invokeLater {
-              ideFrame?.let { frame ->
-                runActivity("init frame") {
-                  initNewFrame(frame)
-                }
+      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously({
+        if (isNewFrame) {
+          ApplicationManager.getApplication().invokeLater {
+            ideFrame?.let { frame ->
+              ParallelActivity.APP_INIT.run("init frame") {
+                initNewFrame(frame)
               }
             }
           }
-          task.run()
-        }, "Loading Project...", true, null, ideFrame!!.component)
+        }
+
+        task.run()
+      }, "Loading Project...", true, null, ideFrame!!.component)
     }
     return completed
   }

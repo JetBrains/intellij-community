@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
-public class AppExecutorUtil {
+public final class AppExecutorUtil {
   /**
    * Returns application-wide instance of {@link ScheduledExecutorService} which is:
    * <ul>

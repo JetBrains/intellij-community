@@ -1535,7 +1535,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static IdeaPluginDescriptorImpl[] initializePlugins(@NotNull ClassLoader coreLoader) {
-    Activity loadPluginsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
+    Activity loadPluginsActivity = ParallelActivity.APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
 
     List<String> errors = new ArrayList<>();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);

@@ -63,7 +63,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -141,13 +141,15 @@ public final class StartupUtil {
   }
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter) throws Exception {
-    Activity fjp = StartUpMeasurer.start("setupForkJoinCommonPool");
+    Activity fjp = StartUpMeasurer.start("configure ForkJoin CommonPool");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     fjp.end();
 
     LoadingPhase.setStrictMode();
 
+    Activity scheduleLafInitActivity = StartUpMeasurer.start("schedule LaF init");
     Future<?> initUiTask = scheduleInitUi(args);
+    scheduleLafInitActivity.end();
 
     configureLog4j();
 
@@ -172,14 +174,14 @@ public final class StartupUtil {
 
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("log essential info about the IDE");
+      Activity activity = ParallelActivity.APP_INIT.start("log essential info about the IDE");
       logEssentialInfoAboutIde(log, appInfo);
       activity.end();
     });
 
     List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
+      Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
       setupSystemLibraries();
       activity = activity.endAndStart(ActivitySubNames.FIX_PROCESS_ENV);
       fixProcessEnvironment(log);
@@ -228,73 +230,81 @@ public final class StartupUtil {
 
   @NotNull
   private static Future<?> scheduleInitUi(@NotNull String[] args) {
-    Activity initLafAsync = StartUpMeasurer.start("schedule LaF init");
-
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      installExceptionHandler();
-
-      checkHiDPISettings();
-
-      //noinspection SpellCheckingInspection
-      System.setProperty("sun.awt.noerasebackground", "true");
-      if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-      }
-
+    ExecutorService executor = AppExecutorUtil.getAppExecutorService();
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    executor.execute(() -> {
       try {
-        EventQueue.invokeAndWait(() -> {
-          // see note about StartupUiUtil static init - it is required even if headless
+        checkHiDPISettings();
+
+        //noinspection SpellCheckingInspection
+        System.setProperty("sun.awt.noerasebackground", "true");
+        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+        }
+
+        EventQueue.invokeLater(() -> {
           try {
+            // it is required even if headless because some tests creates configurable, so, our LaF is expected
             StartupUiUtil.initDefaultLaF();
           }
-          catch (ReflectiveOperationException | UnsupportedLookAndFeelException e) {
-            throw new CompletionException(e);
+          catch (Throwable e) {
+            future.completeExceptionally(e);
+            return;
           }
 
-          if (!Main.isHeadless()) {
-            SplashManager.show(args);
+          future.complete(null);
+          LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
+
+          if (Main.isHeadless()) {
+            LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+            return;
           }
+
+          // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
+          Activity activity = ParallelActivity.APP_INIT.start("init system font data");
+          JBUIScale.getSystemFontData();
+
+          activity = activity.endAndStart("init JBUIScale");
+          JBUIScale.scale(1f);
+
+          activity = activity.endAndStart("prepare splash");
+          SplashManager.show(args);
+          activity.end();
 
           LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
-          // may be expensive (~200 ms), so configure only after showing the splash
-          StartupUiUtil.configureHtmlKitStylesheet();
+          // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
+          EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());
         });
       }
-      catch (InterruptedException | InvocationTargetException e) {
-        throw new CompletionException(e);
+      catch (Throwable e) {
+        future.completeExceptionally(e);
       }
-
-      // UIUtil.initDefaultLaF must be called before this call
-      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-      JBUIScale.getSystemFontData();
-      activity.end();
-
-      if (!Main.isHeadless()) {
-        // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
-        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
-          // no need to wait - doesn't affect other functionality
-          AppExecutorUtil.getAppExecutorService().execute(() -> {
-            Activity updateWindowIconActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-            // most of the time consumed to load SVG - so, can be done in parallel
-            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-            updateWindowIconActivity.end();
-          });
-        }
-
-        Activity updateFrameClassActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
-        AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
-        updateFrameClassActivity.end();
-      }
-
-      LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
     });
 
-    initLafAsync.end();
+    if (!Main.isHeadless()) {
+      // do not wait, approach like AtomicNotNullLazyValue is used under the hood
+      future.thenRunAsync(() -> {
+        updateFrameClassAndWindowIcon();
+      }, executor);
+    }
     return future;
+  }
+
+  private static void updateFrameClassAndWindowIcon() {
+    Activity activity = ParallelActivity.APP_INIT.start("update frame class");
+    AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
+
+    activity = activity.endAndStart("update window icon");
+    // updateWindowIcon should be after UIUtil.initSystemFontData because uses computed system font data for scale context
+    if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+      // most of the time consumed to load SVG - so, can be done in parallel
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+    }
+    activity.end();
   }
 
   private static void configureLog4j() {
@@ -508,7 +518,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemLibraries(Logger log) {
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
+    Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
 
     JnaLoader.load(log);
 

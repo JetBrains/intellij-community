@@ -15,7 +15,9 @@ import java.util.concurrent.TimeUnit
 // dur - duration
 // pid - process id
 // tid - thread id
-internal class TraceEventFormat(private val timeOffset: Long, private val instantEvents: List<ActivityImpl>) {
+internal class TraceEventFormat(private val timeOffset: Long,
+                                private val instantEvents: List<ActivityImpl>,
+                                private val threadNameManager: ThreadNameManager) {
   fun writeInstantEvents(writer: JsonGenerator) {
     for (event in instantEvents) {
       writer.obj {
@@ -40,7 +42,7 @@ internal class TraceEventFormat(private val timeOffset: Long, private val instan
             }
           }
 
-          for (event in activities.get(ParallelActivity.PREPARE_APP_INIT.jsonName) ?: emptyList()) {
+          for (event in activities.get(ParallelActivity.APP_INIT.jsonName) ?: emptyList()) {
             writer.obj {
               writeCompleteEvent(event, writer)
             }
@@ -65,6 +67,6 @@ internal class TraceEventFormat(private val timeOffset: Long, private val instan
     writer.writeStringField("name", event.name)
     writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
     writer.writeNumberField("pid", 1)
-    writer.writeNumberField("tid", event.threadId)
+    writer.writeStringField("tid", threadNameManager.getThreadName(event))
   }
 }

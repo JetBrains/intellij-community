@@ -47,7 +47,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writeIcons(writer)
 
         writer.array("traceEvents") {
-          TraceEventFormat(timeOffset, instantEvents).writeInstantEvents(writer)
+          TraceEventFormat(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
         }
 
         var totalDuration = 0L
@@ -67,8 +67,9 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
               writeItemTimeInfo(item, duration, timeOffset, writer)
             }
           }
-          totalDuration += writeUnknown(writer, items.last().end, end, timeOffset)
         }
+
+        totalDuration += end - items.last().end
 
         writeParallelActivities(timeOffset, writer)
 
@@ -101,7 +102,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         computeOwnTime(list, ownDurations)
       }
 
-      val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+      val measureThreshold = if (name == ParallelActivity.APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
     }
   }
@@ -163,22 +164,6 @@ private fun activityNameToJsonFieldName(name: String): String {
     name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
     else -> name.substring(0) + 's'
   }
-}
-
-private fun writeUnknown(writer: JsonGenerator, start: Long, end: Long, offset: Long): Long {
-  val duration = end - start
-  val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
-  if (durationInMs <= 1) {
-    return 0
-  }
-
-  writer.obj {
-    writer.writeStringField("name", "unknown")
-    writer.writeNumberField("duration", durationInMs)
-    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(start - offset))
-    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(end - offset))
-  }
-  return duration
 }
 
 private fun writeIcons(writer: JsonGenerator) {

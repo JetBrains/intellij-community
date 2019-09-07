@@ -72,7 +72,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("PersistentFS#FSRecords.connect");
+    Activity activity = ParallelActivity.APP_INIT.start("connect FSRecords");
     FSRecords.connect();
     activity.end();
   }

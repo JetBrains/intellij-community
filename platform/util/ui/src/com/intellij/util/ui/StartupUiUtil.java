@@ -73,7 +73,7 @@ public class StartupUiUtil {
 
     blockATKWrapper();
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
+    Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
@@ -83,7 +83,7 @@ public class StartupUiUtil {
       return;
     }
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("configure html kit");
+    Activity activity = ParallelActivity.APP_INIT.start("configure html kit");
 
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();

@@ -622,7 +622,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     synchronized (ApplicationInfoImpl.class) {
       result = ourShadowInstance;
       if (result == null) {
-        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("load app info");
+        Activity activity = ParallelActivity.APP_INIT.start("load app info");
         result = new ApplicationInfoImpl();
         ourShadowInstance = result;
         activity.end();

@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +36,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
-/**
- * @author Konstantin Bulenkov
- */
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
-  private static final Logger LOG = Logger.getInstance(OptionsTopHitProvider.class);
-
   // project level here means not that EP itself in project area, but that extensions applicable for project only
   @VisibleForTesting
   public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
@@ -167,7 +162,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
    * Marker interface for option provider containing only descriptors which are backed by toggle actions.
    * E.g. UiSettings.SHOW_STATUS_BAR is backed by View > Status Bar action.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated
   // for search everywhere only
   public interface CoveredByToggleActions {
@@ -246,7 +241,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
         cacheAll(null, project);
         StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter.class).lastOptionTopHitProviderFinishedForProject();
       });
@@ -254,7 +249,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       String name = project == null ? "application" : "project";
-      com.intellij.diagnostic.Activity activity = ParallelActivity.PREPARE_APP_INIT.start("cache options in " + name);
+      com.intellij.diagnostic.Activity activity = ParallelActivity.APP_INIT.start("cache options in " + name);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider) {
           if (project != null && provider instanceof ApplicationLevelProvider) return;

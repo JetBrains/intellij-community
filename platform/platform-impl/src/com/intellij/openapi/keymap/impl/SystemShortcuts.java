@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class SystemShortcuts {
+public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
   private static final @NotNull String ourNotificationGroupId = "System shortcuts conflicts";
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
@@ -45,13 +45,15 @@ public class SystemShortcuts {
   private @NotNull final MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
 
   private @Nullable Keymap myKeymap;
-  private @NotNull Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
+
+  @NotNull
+  private final Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
 
   public SystemShortcuts() {
     readSystem();
   }
 
-  public static class ConflictItem {
+  public static final class ConflictItem {
     final @NotNull String mySysActionDesc;
     final @NotNull KeyStroke mySysKeyStroke;
     final @NotNull String[] myActionIds;
