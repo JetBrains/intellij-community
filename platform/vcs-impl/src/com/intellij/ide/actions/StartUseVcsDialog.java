@@ -5,7 +5,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,12 +18,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 class StartUseVcsDialog extends DialogWrapper {
   private final VcsDataWrapper myData;
   private VcsCombo myVcsCombo;
   private String mySelected;
 
-  StartUseVcsDialog(final VcsDataWrapper data) {
+  StartUseVcsDialog(@NotNull VcsDataWrapper data) {
     super(data.getProject(), true);
     myData = data;
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
@@ -36,29 +40,28 @@ class StartUseVcsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JLabel selectText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text"));
+    JLabel selectText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text"));
     selectText.setUI(new MultiLineLabelUI());
 
-    final JPanel mainPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.BASELINE, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
-
+    JPanel mainPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.BASELINE, GridBagConstraints.NONE, JBUI.insets(5),
+                                                   0, 0);
     mainPanel.add(selectText, gb);
 
-    ++ gb.gridx;
+    ++gb.gridx;
 
     myVcsCombo = new VcsCombo(prepareComboData());
     mainPanel.add(myVcsCombo, gb);
 
     myVcsCombo.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(ActionEvent e) {
         validateVcs();
       }
     });
     validateVcs();
 
-    final JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text"));
+    JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text"));
     helpText.setUI(new MultiLineLabelUI());
     helpText.setForeground(UIUtil.getInactiveTextColor());
 
@@ -68,14 +71,15 @@ class StartUseVcsDialog extends DialogWrapper {
     gb.gridwidth = 2;
     mainPanel.add(helpText, gb);
 
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(mainPanel, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                  new Insets(0,0,0,0), 0,0));
+    JPanel wrapper = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                    JBUI.emptyInsets(), 0, 0);
+    wrapper.add(mainPanel, gbc);
     return wrapper;
   }
 
   private void validateVcs() {
-    final String selectedVcs = myVcsCombo.getSelectedItem();
+    String selectedVcs = notNull(myVcsCombo.getSelectedItem());
     setOKActionEnabled(selectedVcs.length() > 0);
   }
 
@@ -90,21 +94,23 @@ class StartUseVcsDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private Object[] prepareComboData() {
-    final Collection<String> displayNames = myData.getVcses().keySet();
-    final List<String> keys = new ArrayList<>(displayNames.size() + 1);
+  @NotNull
+  private String[] prepareComboData() {
+    Collection<String> displayNames = myData.getVcses().keySet();
+    List<String> keys = new ArrayList<>(displayNames.size() + 1);
     keys.add("");
     keys.addAll(displayNames);
     Collections.sort(keys);
-    return ArrayUtil.toObjectArray(keys);
+    return ArrayUtil.toStringArray(keys);
   }
 
+  @NotNull
   String getVcs() {
     return myData.getVcses().get(mySelected);
   }
 
-  private static class VcsCombo extends JComboBox {
-    private VcsCombo(final Object[] items) {
+  private static class VcsCombo extends JComboBox<String> {
+    private VcsCombo(@NotNull String[] items) {
       super(items);
       setSelectedIndex(0);
       setEditable(false);
@@ -115,5 +121,4 @@ class StartUseVcsDialog extends DialogWrapper {
       return (String) super.getSelectedItem();
     }
   }
-
 }
