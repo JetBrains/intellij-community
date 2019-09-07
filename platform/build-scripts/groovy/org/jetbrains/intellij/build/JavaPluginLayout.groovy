@@ -32,6 +32,7 @@ class JavaPluginLayout {
         "intellij.java.indexing",
         "intellij.java.psi",
         "intellij.java",
+        "intellij.jsp.base",  // Android Studio: b/140644526
         "intellij.jsp",
         "intellij.platform.uast"
       ].each {
