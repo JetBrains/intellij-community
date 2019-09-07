@@ -208,6 +208,11 @@ class Operators {
     doTest "a.asType(UnknownClass)"
   }
 
+  void 'test asType with context'() {
+    fixture.addClass 'package com.foo; class Node {}'
+    doTest 'import com.foo.Node\n\na.asType(Node)', 'import com.foo.Node\n\na as Node'
+  }
+
   void testComplex() {
     doTest "a.eq<caret>uals(b * c) == 1", "a == b * c == 1"
 

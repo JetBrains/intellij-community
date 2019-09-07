@@ -454,8 +454,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrParenthesizedExpression createParenthesizedExpr(@NotNull GrExpression expression) {
-    return ((GrParenthesizedExpression) createExpressionFromText("(" + expression.getText() + ")"));
+  public GrParenthesizedExpression createParenthesizedExpr(@NotNull GrExpression expression, @Nullable PsiElement context) {
+    return ((GrParenthesizedExpression)createExpressionFromText("(" + expression.getText() + ")", context));
   }
 
   @NotNull
