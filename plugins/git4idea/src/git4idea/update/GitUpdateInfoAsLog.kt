@@ -282,7 +282,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     override fun onVisiblePackChange(visiblePack: VisiblePack) {
       runInEdt {
-        if (areFiltersEqual(visiblePack.filters, logUiAndFactory.logUi.filterUi.filters)) {
+        if (!dataSupplier.isDone && areFiltersEqual(visiblePack.filters, logUiAndFactory.logUi.filterUi.filters)) {
           logUiAndFactory.logUi.refresher.removeVisiblePackChangeListener(this)
 
           val visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
