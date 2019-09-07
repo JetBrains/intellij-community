@@ -198,6 +198,10 @@ class GitRemoteTest : GitPlatformTest() {
       return false
     }
 
+    override fun wasRequested(): Boolean {
+      return wasPasswordAsked() || wasUsernameAsked()
+    }
+
     internal fun wasPasswordAsked(): Boolean {
       return passwordAsked
     }
