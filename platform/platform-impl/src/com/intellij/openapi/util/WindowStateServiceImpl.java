@@ -212,14 +212,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
 
       WindowState state = put(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
-      if (state != null) {
-        // update a screen to adjust stored state
-        state.myScreen = location == null
-                         ? getScreenRectangle(configuration)
-                         : size == null
-                           ? ScreenUtil.getScreenRectangle(location)
-                           : ScreenUtil.getScreenRectangle(location.x + size.width / 2, location.y + size.height / 2);
-      }
+      if (state != null) state.updateScreenRectangle(configuration); // update a screen to adjust stored state
     }
   }
 
@@ -246,16 +239,15 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NotNull
   private static String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
     StringBuilder sb = new StringBuilder(key);
-    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    for (GraphicsDevice device : environment.getScreenDevices()) {
-      Rectangle bounds = getScreenRectangle(device.getDefaultConfiguration());
+    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+      Rectangle bounds = ScreenUtil.getScreenRectangle(device.getDefaultConfiguration());
       sb.append('/').append(bounds.x);
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
       sb.append('.').append(bounds.height);
     }
     if (configuration != null) {
-      Rectangle bounds = getScreenRectangle(configuration);
+      Rectangle bounds = ScreenUtil.getScreenRectangle(configuration);
       sb.append('@').append(bounds.x);
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
@@ -305,22 +297,19 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
     @SuppressWarnings("unchecked")
     <T> T get(@NotNull Class<T> type, @Nullable Rectangle screen) {
-      // copy a current location only if it is needed
-      Point location = type == Dimension.class ? null : apply(Point::new, myLocation);
-      if (location == null && (type == Rectangle.class || type == Point.class)) return null;
-      // copy a current size only if it is needed
-      Dimension size = type == Point.class ? null : apply(Dimension::new, mySize);
-      if (size == null && (type == Rectangle.class || type == Dimension.class)) return null;
+      Point location = apply(Point::new, myLocation);
+      Dimension size = apply(Dimension::new, mySize);
       // convert location and size according to the given screen
       if (myScreen != null && screen != null && !screen.isEmpty()) {
         double w = myScreen.getWidth() / screen.getWidth();
         double h = myScreen.getHeight() / screen.getHeight();
         if (location != null) location.setLocation(screen.x + (location.x - myScreen.x) / w, screen.y + (location.y - myScreen.y) / h);
         if (size != null) size.setSize(size.width / w, size.height / h);
+        if (!isVisible(location, size)) return null; // adjusted state is not visible
       }
       if (type == Point.class) return (T)location;
       if (type == Dimension.class) return (T)size;
-      if (type == Rectangle.class) return (T)new Rectangle(location, size);
+      if (type == Rectangle.class) return location == null || size == null ? null : (T)new Rectangle(location, size);
       if (type != WindowState.class) throw new IllegalArgumentException();
       // copy a current state
       WindowState state = new WindowState();
@@ -351,6 +340,14 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       // update timestamp of modified state
       myTimeStamp = System.currentTimeMillis();
       return true;
+    }
+
+    void updateScreenRectangle(@Nullable GraphicsConfiguration configuration) {
+      myScreen = myLocation == null
+                 ? getScreenRectangle(configuration)
+                 : mySize == null
+                   ? ScreenUtil.getScreenRectangle(myLocation)
+                   : ScreenUtil.getScreenRectangle(myLocation.x + mySize.width / 2, myLocation.y + mySize.height / 2);
     }
   }
 
