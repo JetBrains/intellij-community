@@ -297,7 +297,7 @@ class GitUpdateInfoAsLog(private val project: Project,
   private data class LogUiAndFactory(val logUi: VcsLogUiImpl, val factory: MyLogUiFactory)
 }
 
-private fun areFiltersEqual(filters1: VcsLogFilterCollection, filters2: VcsLogFilterCollection) : Boolean {
+private fun areFiltersEqual(filters1: VcsLogFilterCollection, filters2: VcsLogFilterCollection): Boolean {
   if (filters1 === filters2) return true
   if (filters1.filters.size != filters2.filters.size) return false
   return filters1.filters.all { it == filters2.get(it.key) }
