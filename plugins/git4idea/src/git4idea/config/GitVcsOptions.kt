@@ -28,6 +28,8 @@ class GitVcsOptions : BaseState() {
 
   @com.intellij.configurationStore.Property(description = "gc.auto")
   var gcAuto by string()
+  @com.intellij.configurationStore.Property(description = "core.longpaths")
+  var coreLongpaths by string()
 
   @get:OptionTag("PUSH_AUTO_UPDATE")
   var isPushAutoUpdate by property(false)
