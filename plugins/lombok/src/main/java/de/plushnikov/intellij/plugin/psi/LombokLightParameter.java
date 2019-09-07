@@ -71,7 +71,13 @@ public class LombokLightParameter extends LightParameter {
 
     LombokLightParameter that = (LombokLightParameter) o;
 
-    return getType().isValid() == that.getType().isValid() && getType().equals(that.getType());
+    final PsiType thisType = getType();
+    final PsiType thatType = that.getType();
+    if (thisType.isValid() != thatType.isValid()) {
+      return false;
+    }
+
+    return thisType.getCanonicalText().equals(thatType.getCanonicalText());
   }
 
   @Override

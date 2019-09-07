@@ -22,6 +22,10 @@ public class LombokLightParameterListBuilder extends LightParameterListBuilder {
 
     LombokLightParameterListBuilder that = (LombokLightParameterListBuilder) o;
 
+    if (getParametersCount() != that.getParametersCount()) {
+      return false;
+    }
+
     return Arrays.equals(getParameters(), that.getParameters());
   }
 
