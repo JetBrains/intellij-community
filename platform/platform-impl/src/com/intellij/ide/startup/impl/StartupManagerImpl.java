@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -409,21 +408,29 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     activity.end();
   }
 
-  public void scheduleBackgroundPostStartupActivities() {
-    List<StartupActivity.Background> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
-
-    Extensions.getRootArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
-      new ExtensionPointListener<StartupActivity.Background>() {
-        @Override
-        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.runActivity(myProject);
-        }
-      }, false, this);
-
+  public final void scheduleBackgroundPostStartupActivities() {
     myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      if (ReadAction.compute(() -> myProject.isDisposed())) {
+        return;
+      }
+
+      List<StartupActivity.Background> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+      ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
+        new ExtensionPointListener<StartupActivity.Background>() {
+          @Override
+          public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
+            extension.runActivity(myProject);
+          }
+        }, false, this);
+
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
         for (StartupActivity activity : backgroundPostStartupActivities) {
           ProgressManager.checkCanceled();
+
+          if (ReadAction.compute(() -> myProject.isDisposed())) {
+            return;
+          }
+
           activity.runActivity(myProject);
         }
       });
