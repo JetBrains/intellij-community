@@ -45,7 +45,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_TAG_NAMES);
     }
-    else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+    else if (LABELS_LEFT_ALIGNED.equals(property)) {
       return (T)Boolean.valueOf(myState.LABELS_LEFT_ALIGNED);
     }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
