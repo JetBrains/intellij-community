@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.vcsUtil.VcsUtil;
@@ -274,6 +275,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
       }
     });
+    getRepositoryBrowser().getStatusText()
+      .clear()
+      .appendText(SvnBundle.message("repository.browser.no.locations.added.info"))
+      .appendSecondaryText(SvnBundle.message("repository.browser.add.location.action.description"), SimpleTextAttributes.LINK_ATTRIBUTES,
+                           e -> addLocation(myRepositoryBrowser));
     return panel;
   }
 
@@ -384,24 +390,29 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
-        e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action"));
-        e.getPresentation().setText(SvnBundle.message("repository.browser.add.location.action"));
+        e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action.description"));
+        e.getPresentation().setText(SvnBundle.message("repository.browser.add.location.action.text"));
         e.getPresentation().setIcon(IconUtil.getAddIcon());
       }
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
-      final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy());
-      dialog.show();
-      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        Url url = dialog.getSelected();
-        if (url != null) {
-          settings.addTypedUrl(url.toDecodedString());
-          settings.addCheckoutURL(url.toDecodedString());
-          myBrowserComponent.addURL(url);
-        }
+      addLocation(myBrowserComponent);
+    }
+  }
+
+  private static void addLocation(@NotNull RepositoryBrowserComponent browserComponent) {
+    final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
+    final AddRepositoryLocationDialog dialog =
+      new AddRepositoryLocationDialog(browserComponent.getProject(), settings.getTypedUrlsListCopy());
+    dialog.show();
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      Url url = dialog.getSelected();
+      if (url != null) {
+        settings.addTypedUrl(url.toDecodedString());
+        settings.addCheckoutURL(url.toDecodedString());
+        browserComponent.addURL(url);
       }
     }
   }
