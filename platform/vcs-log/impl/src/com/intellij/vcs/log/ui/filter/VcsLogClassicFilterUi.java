@@ -385,7 +385,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull
     static List<String> getFilterPresentation(@NotNull BranchFilters filters) {
       List<String> branchFilterValues = filters.getBranchFilter() == null ? emptyList() : getBranchFilterValues(filters.getBranchFilter());
-      List<String> revisionFilterValues = filters.getRevisionFilter() == null ? emptyList() : getRevisionFilter2Presentation(filters.getRevisionFilter());
+      List<String> revisionFilterValues = filters.getRevisionFilter() == null ? emptyList() :
+                                          getRevisionFilter2Presentation(filters.getRevisionFilter());
       List<String> rangeFilterValues = filters.getRangeFilter() == null ? emptyList() : getRangeFilterValues(filters.getRangeFilter());
       return ContainerUtil.concat(branchFilterValues, revisionFilterValues, rangeFilterValues);
     }

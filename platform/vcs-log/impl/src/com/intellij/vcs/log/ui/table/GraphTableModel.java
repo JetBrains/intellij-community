@@ -169,7 +169,8 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private static String getDateSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(data.getAuthorTime()), "");
+    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" :
+                                       JBDateFormat.getFormatter("vcs.log").formatDateTime(data.getAuthorTime()), "");
   }
 
   @NotNull

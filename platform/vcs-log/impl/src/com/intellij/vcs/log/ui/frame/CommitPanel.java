@@ -43,7 +43,8 @@ public class CommitPanel extends CommitDetailsPanel {
     VirtualFile root = commit.getRoot();
     if (myColorManager.hasMultiplePaths()) {
       setRoot(new RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, myColorManager)));
-    } else {
+    }
+    else {
       setRoot(null);
     }
   }

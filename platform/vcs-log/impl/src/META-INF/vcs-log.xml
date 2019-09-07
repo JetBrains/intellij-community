@@ -131,7 +131,8 @@
     <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction" id="Vcs.Log.CompareRevisions"
             text="Compare Versions" description="Compare selected versions"
             icon="AllIcons.Actions.Diff"/>
-    <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing" icon="AllIcons.Process.ProgressResumeSmall"
+    <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
+            icon="AllIcons.Process.ProgressResumeSmall"
             text="Resume Indexing" description="Indexing was paused as it took longer than expected. Resume."/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"

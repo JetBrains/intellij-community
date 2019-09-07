@@ -180,7 +180,7 @@ public class HeavyAwareExecutor implements Disposable {
         HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
           if (!HeavyProcessLatch.INSTANCE.isRunning() && !PowerSaveMode.isEnabled()) {
             Disposer.dispose(this);
-            
+
             Computable<ListenableFuture<?>> task = myTask.getAndSet(null);
             if (task != null) {
               runTask(task);

@@ -39,7 +39,8 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
     synchronized (myLock) {
       if (state.DIFF_RENAME_LIMIT_ONE) {
         myState = new State(state);
-      } else {
+      }
+      else {
         myState = new State();
         myState.DIFF_RENAME_LIMIT_ONE = true;
       }

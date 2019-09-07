@@ -169,6 +169,7 @@ public class VcsLogUiUtil {
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @NotNull StatusText emptyText) {
     appendActionToEmptyText(emptyText, "Reset filters", () -> filterUi.setFilter(null));
   }
+
   private static class VcsLogPlaceNavigator implements Place.Navigator {
     private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final AbstractVcsLogUi myUi;

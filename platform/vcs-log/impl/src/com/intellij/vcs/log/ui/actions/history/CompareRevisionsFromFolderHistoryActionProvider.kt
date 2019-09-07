@@ -80,7 +80,8 @@ class CompareRevisionsFromFolderHistoryActionProvider : AnActionExtensionProvide
       val changes = FileHistoryUtil.collectRelevantChanges(detail,
                                                            Condition { change -> FileHistoryUtil.affectsDirectory(change, filePath) })
       VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name, changes.toMutableList())
-    }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) }, null)
+    }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message,
+                                                            MessageType.ERROR) }, null)
   }
 
   companion object {

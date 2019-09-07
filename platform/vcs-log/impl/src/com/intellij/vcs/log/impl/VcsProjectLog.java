@@ -56,7 +56,7 @@ public class VcsProjectLog implements Disposable {
   public VcsProjectLog(@NotNull Project project) {
     myProject = project;
     myMessageBus = myProject.getMessageBus();
-    
+
     VcsLogProjectTabsProperties uiProperties = ServiceManager.getService(myProject, VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
@@ -66,7 +66,7 @@ public class VcsProjectLog implements Disposable {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject != project) return;
-        
+
         myDisposeStarted = true;
         Disposer.dispose(myMessageBusConnections);
         disposeLog(false);

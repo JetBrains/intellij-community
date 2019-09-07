@@ -321,6 +321,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       IdeFocusManager.getInstance(project).requestFocus(myFilterUi.getTextFilterComponent(), true);
     }
   }
+
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
     @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
@@ -402,13 +403,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
-          if (visiblePack.getFilters().isEmpty()) {
-            appendActionToEmptyText("Refresh", myRefresh);
-          }
-          else {
+        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
+        if (visiblePack.getFilters().isEmpty()) {
+          appendActionToEmptyText("Refresh", myRefresh);
+        }
+        else {
           VcsLogUiUtil.appendResetFiltersActionToEmptyText(myFilterUi, getEmptyText());
-          }
+        }
       }
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
@@ -429,6 +430,5 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         statusText.setText(CHANGES_LOG_TEXT);
       }
     }
-
   }
 }
