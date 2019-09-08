@@ -8,9 +8,11 @@ import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import lombok.experimental.Tolerate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -255,6 +257,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     final Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(baseClassBuilder).stream()
+      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, Tolerate.class))
       .map(PsiMethod::getName).collect(Collectors.toSet());
 
     // create builder methods
