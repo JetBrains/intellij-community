@@ -22,9 +22,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.platform.ProjectFrameAllocatorKt;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
@@ -504,7 +503,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Nullable
   @ApiStatus.Internal
-  public ProjectFrameHelper getAndRemoveRootFrame() {
+  public ProjectFrameHelper removeAndGetRootFrame() {
     return myProjectToFrame.remove(null);
   }
 
@@ -518,24 +517,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.getFrame().addComponentListener(myFrameStateListener);
   }
 
-  /**
-   * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
-   *
-   * {@link ProjectFrameHelper#init()} must be called explicitly.
-   */
-  @NotNull
-  @ApiStatus.Internal
-  public ProjectFrameHelper createFrame() {
-    LOG.assertTrue(!myProjectToFrame.containsKey(null));
-    return new ProjectFrameHelper();
-  }
-
-  @NotNull
-  @ApiStatus.Internal
-  public static Rectangle convertFromDeviceSpaceAndValidateFrameBounds(@NotNull Rectangle deviceFrameBounds) {
-    return FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceFrameBounds);
-  }
-
   @Override
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
@@ -545,11 +526,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       return frame;
     }
 
-    frame = getAndRemoveRootFrame();
+    frame = removeAndGetRootFrame();
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new ProjectFrameHelper();
+      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame());
       frame.preInit(null);
       frame.init();
 
@@ -574,7 +555,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
         Rectangle bounds = frameInfo.getBounds();
         if (bounds != null) {
-          frame.getFrame().setBounds(convertFromDeviceSpaceAndValidateFrameBounds(bounds));
+          frame.getFrame().setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds));
         }
       }
     }
@@ -646,7 +627,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final ProjectFrameHelper rootFrame = getAndRemoveRootFrame();
+      final ProjectFrameHelper rootFrame = removeAndGetRootFrame();
       if (rootFrame != null) {
         // disposing last frame if quitting
         rootFrame.getFrame().dispose();
@@ -765,92 +746,5 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   static boolean isPerPixelTransparencySupported() {
     GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
     return device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT);
-  }
-
-  /**
-   * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
-   * See {@link JreHiDpiUtil#isJreHiDPIEnabled()}
-   */
-  static class FrameBoundsConverter {
-    /**
-     * @param bounds the bounds in the device space
-     * @return the bounds in the user space
-     */
-    @NotNull
-    static Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
-      Rectangle b = bounds.getBounds();
-      int centerX = b.x + b.width / 2;
-      int centerY = b.y + b.height / 2;
-      boolean scaleNeeded = shouldConvert();
-      try {
-        for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-          GraphicsConfiguration gc = gd.getDefaultConfiguration();
-          Rectangle devBounds = gc.getBounds(); // in user space
-          if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
-          if (devBounds.contains(centerX, centerY)) {
-            if (scaleNeeded) scaleDown(b, gc); // to user space if needed
-            // do not return bounds bigger than the corresponding screen rectangle
-            Rectangle screen = ScreenUtil.getScreenRectangle(gc);
-            if (b.x < screen.x) b.x = screen.x;
-            if (b.y < screen.y) b.y = screen.y;
-            if (b.width > screen.width) b.width = screen.width;
-            if (b.height > screen.height) b.height = screen.height;
-            break;
-          }
-        }
-      }
-      catch (HeadlessException ignore) {
-      }
-      return b;
-    }
-
-    /**
-     * @param gc the graphics config
-     * @param bounds the bounds in the user space
-     * @return the bounds in the device space
-     */
-    public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
-      Rectangle b = bounds.getBounds();
-      if (!shouldConvert()) return b;
-
-      try {
-        scaleUp(b, gc);
-      }
-      catch (HeadlessException ignore) {
-      }
-      return b;
-    }
-
-    private static boolean shouldConvert() {
-      if (SystemInfo.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
-          SystemInfo.isMac)     // JRE-managed HiDPI mode is permanent
-      {
-        return false;
-      }
-      // device space equals user space
-      return JreHiDpiUtil.isJreHiDPIEnabled();
-    }
-
-    private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
-    }
-
-    private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      float scale = JBUIScale.sysScale(gc);
-      assert scale != 0;
-      scale(bounds, gc.getBounds(), 1 / scale);
-    }
-
-    private static void scale(@NotNull Rectangle bounds, @NotNull Rectangle deviceBounds, float scale) {
-      // On Windows, JB SDK transforms the screen bounds to the user space as follows:
-      // [x, y, width, height] -> [x, y, width / scale, height / scale]
-      // xy are not transformed in order to avoid overlapping of the screen bounds in multi-dpi env.
-
-      // scale the delta b/w xy and deviceBounds.xy
-      int x = (int)Math.floor(deviceBounds.x + (bounds.x - deviceBounds.x) * scale);
-      int y = (int)Math.floor(deviceBounds.y + (bounds.y - deviceBounds.y) * scale);
-
-      bounds.setBounds(x, y, (int)Math.ceil(bounds.width * scale), (int)Math.ceil(bounds.height * scale));
-    }
   }
 }

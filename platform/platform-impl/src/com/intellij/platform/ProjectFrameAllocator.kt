@@ -8,6 +8,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
@@ -17,8 +18,12 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
+import java.awt.Dimension
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
@@ -111,16 +116,14 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   }
 
   private fun createFrame(): ProjectFrameHelper {
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    @Suppress("UsePropertyAccessSyntax")
-    val freeRootFrame = windowManager.getAndRemoveRootFrame()
+    val freeRootFrame = (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()
     if (freeRootFrame != null) {
       return freeRootFrame
     }
 
     runActivity("create a frame") {
       isNewFrame = true
-      val frame = windowManager.createFrame()
+      val frame = ProjectFrameHelper(SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl? ?: createNewProjectFrame())
       if (options.sendFrameBack) {
         frame.frame.isAutoRequestFocus = false
       }
@@ -165,7 +168,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
 private fun restoreFrameState(frame: ProjectFrameHelper, frameInfo: FrameInfo) {
   val deviceBounds = frameInfo.bounds
-  val bounds = if (deviceBounds == null) null else WindowManagerImpl.convertFromDeviceSpaceAndValidateFrameBounds(deviceBounds)
+  val bounds = if (deviceBounds == null) null else FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
   frame.setExtendedState(frameInfo, bounds)
   if (bounds != null) {
     frame.frame.bounds = bounds
@@ -174,4 +177,24 @@ private fun restoreFrameState(frame: ProjectFrameHelper, frameInfo: FrameInfo) {
   if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
     frame.toggleFullScreen(true)
   }
+}
+
+@ApiStatus.Internal
+fun createNewProjectFrame(): IdeFrameImpl {
+  val frame = IdeFrameImpl()
+  SplashManager.hideBeforeShow(frame)
+
+  val size = ScreenUtil.getMainScreenBounds().size
+  size.width = Math.min(1400, size.width - 20)
+  size.height = Math.min(1000, size.height - 40)
+  frame.size = size
+  frame.setLocationRelativeTo(null)
+
+  if (UIUtil.SUPPRESS_FOCUS_STEALING &&
+      Registry.`is`("suppress.focus.stealing.auto.request.focus") &&
+      !ApplicationManager.getApplication().isActive) {
+    frame.isAutoRequestFocus = false
+  }
+  frame.minimumSize = Dimension(340, frame.minimumSize.height)
+  return frame
 }

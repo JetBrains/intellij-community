@@ -461,26 +461,18 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     fun setupAntialiasing(g: Graphics) {
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+      g as Graphics2D
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        // We cannot use services while Application has not been loaded yet
-        // So let's apply the default hints.
+      if (LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete && ApplicationManager.getApplication() == null) {
+        // cannot use services while Application has not been loaded yet, so let's apply the default hints
         GraphicsUtil.applyRenderingHints(g)
         return
       }
 
-      val uiSettings = ServiceManager.getService(UISettings::class.java)
-      if (uiSettings != null) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
-      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-      setupFractionalMetrics(g2d)
+      setupFractionalMetrics(g)
     }
 
     /**

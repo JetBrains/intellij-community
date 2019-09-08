@@ -39,6 +39,7 @@ import java.awt.*;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
@@ -72,7 +73,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull IdeFrameImpl frame, @NotNull ProjectFrameHelper frameHelper) {
+  IdeRootPane(@NotNull JFrame frame, @NotNull ProjectFrameHelper frameHelper) {
     myFrameHelper = frameHelper;
 
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -110,8 +111,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
       }
 
-      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, __ -> updateScreenState(frame));
-      updateScreenState(frame);
+      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, __ -> updateScreenState(frameHelper));
+      updateScreenState(frameHelper);
     }
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
@@ -135,8 +136,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     createStatusBar(frame);
   }
 
-  private void updateScreenState(@NotNull IdeFrameImpl frame) {
-    myFullScreen = frame.isInFullScreen();
+  private void updateScreenState(@NotNull ProjectFrameHelper helper) {
+    myFullScreen = helper.isInFullScreen();
 
     if (isDecoratedMenu()) {
       JMenuBar bar = getJMenuBar();
@@ -252,11 +253,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private static JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final ActionToolbar toolBar = actionManager.createActionToolbar(
-      ActionPlaces.MAIN_TOOLBAR,
-      group,
-      true
-    );
+    ActionToolbar toolBar = actionManager.createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
@@ -383,12 +380,12 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         rd = parent.getSize();
       }
 
-      Dimension cftp;
+      Dimension dimension;
       if (myCustomFrameTitlePane != null && myCustomFrameTitlePane.isVisible()) {
-        cftp = myCustomFrameTitlePane.getPreferredSize();
+        dimension = myCustomFrameTitlePane.getPreferredSize();
       }
       else {
-        cftp = JBUI.emptySize();
+        dimension = JBUI.emptySize();
       }
 
       Dimension mbd;
@@ -398,8 +395,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
       else {
         mbd = JBUI.emptySize();
       }
-      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + cftp.width,
-                           rd.height + mbd.height + i.top + i.bottom + cftp.height);
+      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + dimension.width,
+                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
     }
 
     @Override
@@ -413,12 +410,12 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         rd = parent.getSize();
       }
 
-      Dimension cftp;
+      Dimension dimension;
       if (isDecoratedMenu() && myCustomFrameTitlePane != null && myCustomFrameTitlePane.isVisible()) {
-        cftp = myCustomFrameTitlePane.getPreferredSize();
+        dimension = myCustomFrameTitlePane.getPreferredSize();
       }
       else {
-        cftp = JBUI.emptySize();
+        dimension = JBUI.emptySize();
       }
 
       Dimension mbd;
@@ -428,8 +425,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
       else {
         mbd = JBUI.emptySize();
       }
-      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + cftp.width,
-                           rd.height + mbd.height + i.top + i.bottom + cftp.height);
+      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + dimension.width,
+                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
     }
 
     @Override
@@ -443,12 +440,12 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         mbd = JBUI.emptySize();
       }
 
-      Dimension cftp;
+      Dimension dimension;
       if (isDecoratedMenu() && myCustomFrameTitlePane != null && myCustomFrameTitlePane.isVisible()) {
-        cftp = myCustomFrameTitlePane.getPreferredSize();
+        dimension = myCustomFrameTitlePane.getPreferredSize();
       }
       else {
-        cftp = JBUI.emptySize();
+        dimension = JBUI.emptySize();
       }
 
       Dimension rd;
@@ -459,8 +456,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         rd = new Dimension(Integer.MAX_VALUE,
                            Integer.MAX_VALUE - i.top - i.bottom - mbd.height - 1);
       }
-      return new Dimension(Math.min(rd.width, mbd.width) + i.left + i.right + cftp.width,
-                           rd.height + mbd.height + i.top + i.bottom + cftp.height);
+      return new Dimension(Math.min(rd.width, mbd.width) + i.left + i.right + dimension.width,
+                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
     }
 
     @Override

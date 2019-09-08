@@ -4,8 +4,8 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.FrameBoundsConverter.convertToDeviceSpace
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
-import com.intellij.openapi.wm.impl.WindowManagerImpl.FrameBoundsConverter.convertToDeviceSpace
 import com.intellij.ui.ScreenUtil
 import sun.awt.AWTAccessor
 import java.awt.Frame

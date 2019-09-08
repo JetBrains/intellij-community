@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.idea.SplashManager;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -51,7 +50,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
 
@@ -76,26 +74,10 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private volatile Image selfie;
 
-  private final IdeFrameImpl myFrame = new IdeFrameImpl();
+  private final IdeFrameImpl myFrame;
 
-  public ProjectFrameHelper() {
-    super();
-
-    SplashManager.hideBeforeShow(myFrame);
-
-    Dimension size = ScreenUtil.getMainScreenBounds().getSize();
-    size.width = Math.min(1400, size.width - 20);
-    size.height = Math.min(1000, size.height - 40);
-    myFrame.setSize(size);
-    myFrame.setLocationRelativeTo(null);
-    myFrame.setMinimumSize(new Dimension(340, myFrame.getMinimumSize().height));
-
-    if (UIUtil.SUPPRESS_FOCUS_STEALING &&
-        Registry.is("suppress.focus.stealing.auto.request.focus") &&
-        !ApplicationManager.getApplication().isActive()) {
-      myFrame.setAutoRequestFocus(false);
-    }
-
+  public ProjectFrameHelper(@NotNull IdeFrameImpl frame) {
+    myFrame = frame;
     setupCloseAction();
   }
 
@@ -188,6 +170,10 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     myFrame.setRootPane(myRootPane);
+    if (myFrame.isVisible()) {
+      // otherwise not painted if frame already visible
+      myRootPane.invalidate();
+    }
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
@@ -553,11 +539,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   @NotNull
   IdeRootPane getRootPane() {
     return myRootPane;
-  }
-
-  @NotNull
-  public static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
-    return PathManagerEx.getAppSystemDir().resolve("project-selfies").resolve(projectWorkspaceId + ".png");
   }
 
   @Override

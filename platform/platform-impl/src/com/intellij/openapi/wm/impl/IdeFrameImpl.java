@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,13 +103,18 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (LoadingPhase.LAF_INITIALIZED.isComplete()) {
+    if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
       UISettings.setupAntialiasing(g);
     }
     else {
       Graphics2D g2d = (Graphics2D)g;
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.doGetLcdContrastValueForSplash(false));
-      GraphicsUtil.applyRenderingHints(g);
+      //g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.doGetLcdContrastValueForSplash(false));
+      GraphicsUtil.applyRenderingHints(g2d);
+
+
+      g2d.setColor(getBackground());
+      g2d.fillRect(0, 0, getWidth(), getHeight());
+      return;
     }
 
     //Image selfie = this.selfie;

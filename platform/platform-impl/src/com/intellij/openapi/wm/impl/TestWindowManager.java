@@ -104,7 +104,8 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    ProjectFrameHelper frame = new ProjectFrameHelper();
+    // no need to setup min / pref size for a test window
+    ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl());
     frame.preInit(null);
     frame.init();
     return frame;

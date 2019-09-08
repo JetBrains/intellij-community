@@ -8,12 +8,11 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -25,12 +24,14 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
@@ -38,7 +39,9 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.intellij.util.io.isDirectory
+import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
@@ -46,6 +49,7 @@ import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.image.BufferedImage
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
@@ -54,6 +58,7 @@ import javax.imageio.ImageIO
 import javax.imageio.ImageTypeSpecifier
 import javax.imageio.stream.MemoryCacheImageOutputStream
 import javax.swing.Icon
+import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -395,7 +400,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     override fun projectClosing(project: Project) {
       val path = manager.getProjectPath(project) ?: return
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl)
+        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false)
       }
       manager.nameCache.put(path, project.name)
     }
@@ -493,7 +498,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl) {
+  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
     val frame = windowManager.getFrameHelper(project) ?: return
     val workspaceId = project.stateStore.projectWorkspaceId
 
@@ -501,7 +506,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
-      val info = state.additionalInfo[path]
+      val info = state.additionalInfo.get(path)
       if (info != null) {
         if (info.frame !== frameInfo) {
           info.frame = frameInfo
@@ -510,14 +515,51 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
     }
 
-    if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
-      try {
+    logger<RecentProjectsManager>().runAndLogException {
+      if (writLastProjectInfo && Registry.`is`("ide.project.frame.as.splash")) {
+        writeInfoFile(frameInfo, frame.frame, getLastProjectFrameInfoFile())
+      }
+
+      if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
         takeASelfie(frame, workspaceId)
       }
-      catch (e: Exception) {
-        logger<RecentProjectsManager>().warn(e)
-      }
     }
+  }
+
+  private fun writeInfoFile(frameInfo: FrameInfo?, frame: JFrame, infoFile: Path) {
+    val bounds = frameInfo?.bounds
+    if (bounds == null) {
+      Files.deleteIfExists(infoFile)
+      return
+    }
+
+    /* frame-info.tcl:
+big_endian
+int16 "Version"
+int32 "x"
+int32 "y"
+int32 "width"
+int32 "height"
+uint32 -hex "backgroundColor"
+uint8 "isFullscreen"
+int32 "extendedState"
+     */
+
+    val buffer = ByteBuffer.allocate(2 + 6 * 4 + 1)
+    // version
+    buffer.putShort(0)
+    buffer.putInt(bounds.x)
+    buffer.putInt(bounds.y)
+    buffer.putInt(bounds.width)
+    buffer.putInt(bounds.height)
+
+    buffer.putInt(frame.background.rgb)
+
+    buffer.put((if (frameInfo.fullScreen) 1 else 0).toByte())
+    buffer.putInt(frameInfo.extendedState)
+
+    buffer.flip()
+    infoFile.write(buffer)
   }
 
   private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
@@ -527,12 +569,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)
     UISettings.setupAntialiasing(image.graphics)
     frame.paint(image.graphics)
-    val selfieFile = ProjectFrameHelper.getSelfieLocation(workspaceId)
-    Files.createDirectories(selfieFile.parent)
-
+    val selfieFile = ProjectSelfieUtil.getSelfieLocation(workspaceId)
     // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
     //long start = System.currentTimeMillis();
-    Files.newOutputStream(selfieFile).use { stream ->
+    selfieFile.outputStream().use { stream ->
       MemoryCacheImageOutputStream(stream).use { out ->
         val writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next()
         try {
@@ -569,8 +609,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       val manager = instanceEx
-      for (project in ProjectManager.getInstance().openProjects) {
-        manager.updateProjectInfo(project, windowManager)
+      val openProjects = serviceIfCreated<ProjectManager>()?.openProjects ?: return
+      // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
+      if (openProjects.isEmpty() || !Registry.`is`("ide.project.frame.as.splash")) {
+        Files.deleteIfExists(getLastProjectFrameInfoFile())
+      }
+      else {
+        for ((index, project) in openProjects.withIndex()) {
+          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
+        }
       }
     }
 
@@ -606,3 +653,5 @@ private fun readProjectName(path: String): String {
   }
   return file.fileName.toString()
 }
+
+private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
