@@ -94,7 +94,7 @@ public class BuilderHandler {
       final String builderMethodName = getBuilderMethodName(psiAnnotation);
       result = validateBuilderIdentifier(builderClassName, project, problemBuilder) &&
         validateBuilderIdentifier(buildMethodName, project, problemBuilder) &&
-        validateBuilderIdentifier(builderMethodName, project, problemBuilder) &&
+        (builderMethodName.isEmpty() || validateBuilderIdentifier(builderMethodName, project, problemBuilder)) &&
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       if (result) {
         final Collection<BuilderInfo> builderInfos = createBuilderInfos(psiClass, null).collect(Collectors.toList());
@@ -129,7 +129,7 @@ public class BuilderHandler {
       final String builderMethodName = getBuilderMethodName(psiAnnotation);
       result = validateBuilderIdentifier(builderClassName, project, problemBuilder) &&
         validateBuilderIdentifier(buildMethodName, project, problemBuilder) &&
-        validateBuilderIdentifier(builderMethodName, project, problemBuilder) &&
+        (builderMethodName.isEmpty() || validateBuilderIdentifier(builderMethodName, project, problemBuilder)) &&
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       if (result) {
         final Stream<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiMethod);

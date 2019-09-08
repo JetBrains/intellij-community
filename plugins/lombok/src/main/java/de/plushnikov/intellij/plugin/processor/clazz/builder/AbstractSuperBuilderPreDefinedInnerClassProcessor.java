@@ -44,14 +44,16 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     final Optional<PsiClass> parentClass = getSupportedParentClass(psiClass);
     final Optional<PsiAnnotation> psiAnnotation = parentClass.map(this::getSupportedAnnotation);
-    return psiAnnotation.map(parentAnnotation -> processAnnotation(parentClass.get(), parentAnnotation, psiClass))
-      .orElse(Collections.emptyList());
+    if (psiAnnotation.isPresent()) {
+      return processAnnotation(parentClass.get(), psiAnnotation.get(), psiClass);
+    }
+    return Collections.emptyList();
   }
 
   private Optional<PsiClass> getSupportedParentClass(PsiClass psiClass) {
     final PsiElement parentElement = psiClass.getParent();
     if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
-      return Optional.of(psiClass);
+      return Optional.of((PsiClass) parentElement);
     }
     return Optional.empty();
   }
