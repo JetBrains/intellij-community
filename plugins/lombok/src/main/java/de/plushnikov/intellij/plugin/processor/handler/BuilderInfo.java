@@ -78,7 +78,7 @@ public class BuilderInfo {
     result.deprecated = isDeprecated(psiField);
     result.fieldInBuilderType = psiField.getType();
     result.fieldInitializer = psiField.getInitializer();
-    result.hasBuilderDefaultAnnotation = null == PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION);
+    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, BUILDER_DEFAULT_ANNOTATION);
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
     result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
@@ -139,7 +139,7 @@ public class BuilderInfo {
 
       // skip initialized final fields unless annotated with @Builder.Default
       final boolean isInitializedFinalField = null != fieldInitializer && modifierList.hasModifierProperty(PsiModifier.FINAL);
-      if (isInitializedFinalField && hasBuilderDefaultAnnotation) {
+      if (isInitializedFinalField && !hasBuilderDefaultAnnotation) {
         result = false;
       }
     }
@@ -205,6 +205,10 @@ public class BuilderInfo {
 
   public boolean hasSingularAnnotation() {
     return null != singularAnnotation;
+  }
+
+  public boolean hasBuilderDefaultAnnotation() {
+    return hasBuilderDefaultAnnotation;
   }
 
   public boolean hasObtainViaAnnotation() {

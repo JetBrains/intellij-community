@@ -29,7 +29,7 @@ public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
     final String lombokLibPath = PathUtil.toSystemIndependentName(new File(TEST_DATA_INSPECTION_DIRECTORY, "lib").getAbsolutePath());
     final Disposable projectDisposable = myFixture.getProjectDisposable();
     VfsRootAccess.allowRootAccess(projectDisposable, lombokLibPath);
-    PsiTestUtil.addLibrary(projectDisposable, getModule(), "Lombok Library", lombokLibPath, "lombok.jar");
+    PsiTestUtil.addLibrary(projectDisposable, getModule(), "Lombok Library", lombokLibPath, "lombok-1.18.8.jar");
 
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
   }

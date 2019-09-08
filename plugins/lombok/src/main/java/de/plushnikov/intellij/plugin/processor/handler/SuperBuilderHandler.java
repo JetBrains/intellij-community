@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
@@ -30,6 +31,29 @@ public class SuperBuilderHandler extends BuilderHandler {
 
   public SuperBuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
     super(toStringProcessor, noArgsConstructorProcessor);
+  }
+
+  @Override
+  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+    final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+
+    if (existingInnerBuilderClass.isPresent()) {
+
+      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemBuilder)) {
+        return false;
+      }
+
+      final Optional<PsiClass> isStaticAndAbstract = existingInnerBuilderClass
+        .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.STATIC))
+        .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
+
+      if (!isStaticAndAbstract.isPresent()) {
+        problemBuilder.addError("Existing Builder must be an abstract static inner class.");
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-<error descr="@Builder.Default and @Singular cannot be mixed.">@lombok.Builder</error>
+<error descr="@Builder.Default and @Singular cannot be mixed.">@lombok.experimental.SuperBuilder</error>
 public class BuilderDefaultsWarnings {
 	long x = System.currentTimeMillis();
 	final int y = 5;
@@ -9,7 +9,7 @@ public class BuilderDefaultsWarnings {
 class NoBuilderButHasDefaults {
 	@lombok.Builder.Default private final long z = 5;
 
-	@lombok.Builder
-	public NoBuilderButHasDefaults() {
+  @lombok.experimental.SuperBuilder
+	static class SomeOtherClass {
 	}
 }

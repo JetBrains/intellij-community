@@ -16,7 +16,15 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
@@ -78,17 +86,36 @@ public class BuilderHandler {
   }
 
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
-    boolean result = validateAnnotationOnRightType(psiClass, problemBuilder);
+    boolean result = validateAnnotationOnRightType(psiClass, psiAnnotation, problemBuilder);
     if (result) {
+      final Project project = psiAnnotation.getProject();
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
-      result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
+      final String buildMethodName = getBuildMethodName(psiAnnotation);
+      final String builderMethodName = getBuilderMethodName(psiAnnotation);
+      result = validateBuilderIdentifier(builderClassName, project, problemBuilder) &&
+        validateBuilderIdentifier(buildMethodName, project, problemBuilder) &&
+        validateBuilderIdentifier(builderMethodName, project, problemBuilder) &&
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       if (result) {
         final Collection<BuilderInfo> builderInfos = createBuilderInfos(psiClass, null).collect(Collectors.toList());
-        result = validateSingular(builderInfos, problemBuilder) && validateObtainViaAnnotations(builderInfos.stream(), problemBuilder);
+        result = validateSingular(builderInfos, problemBuilder) &&
+          validateBuilderDefault(builderInfos, problemBuilder) &&
+          validateObtainViaAnnotations(builderInfos.stream(), problemBuilder);
       }
     }
     return result;
+  }
+
+  private boolean validateBuilderDefault(@NotNull Collection<BuilderInfo> builderInfos, @NotNull ProblemBuilder problemBuilder) {
+    final Optional<BuilderInfo> anyBuilderDefaultAndSingulars = builderInfos.stream()
+      .filter(BuilderInfo::hasBuilderDefaultAnnotation)
+      .filter(BuilderInfo::hasSingularAnnotation).findAny();
+    anyBuilderDefaultAndSingulars.ifPresent(builderInfo -> {
+        problemBuilder.addError("@Builder.Default and @Singular cannot be mixed.");
+      }
+    );
+
+    return !anyBuilderDefaultAndSingulars.isPresent();
   }
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
@@ -96,7 +123,13 @@ public class BuilderHandler {
     boolean result = null != psiClass;
     if (result) {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
-      result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
+
+      final Project project = psiAnnotation.getProject();
+      final String buildMethodName = getBuildMethodName(psiAnnotation);
+      final String builderMethodName = getBuilderMethodName(psiAnnotation);
+      result = validateBuilderIdentifier(builderClassName, project, problemBuilder) &&
+        validateBuilderIdentifier(buildMethodName, project, problemBuilder) &&
+        validateBuilderIdentifier(builderMethodName, project, problemBuilder) &&
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       if (result) {
         final Stream<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiMethod);
@@ -126,7 +159,7 @@ public class BuilderHandler {
     return result.get();
   }
 
-  private boolean validateBuilderClassName(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
+  private boolean validateBuilderIdentifier(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
       builder.addError("%s is not a valid identifier", builderClassName);
@@ -135,22 +168,23 @@ public class BuilderHandler {
     return true;
   }
 
-  private boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
     final Optional<PsiClass> optionalPsiClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 
-    if (optionalPsiClass.isPresent()) {
-      if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(optionalPsiClass.get(), INVALID_ON_BUILDERS)) {
-        builder.addError("Lombok annotations are not allowed on builder class.");
-        return false;
-      }
-    }
+    return optionalPsiClass.map(builderClass -> validateInvalidAnnotationsOnBuilderClass(builderClass, problemBuilder)).orElse(true);
+  }
 
+  boolean validateInvalidAnnotationsOnBuilderClass(@NotNull PsiClass builderClass, @NotNull ProblemBuilder problemBuilder) {
+    if (PsiAnnotationSearchUtil.checkAnnotationsSimpleNameExistsIn(builderClass, INVALID_ON_BUILDERS)) {
+      problemBuilder.addError("Lombok annotations are not allowed on builder class.");
+      return false;
+    }
     return true;
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(String.format("@%s can be used on classes only", Builder.class.getName()));
+      builder.addError(String.format("@%s can be used on classes only", psiAnnotation.getQualifiedName()));
       return false;
     }
     return true;
