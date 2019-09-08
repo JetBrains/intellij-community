@@ -133,6 +133,9 @@
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
 
+    <processor implementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
+    <!--    <processor implementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
+
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor"/>
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor"/>
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
