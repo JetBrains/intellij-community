@@ -55,7 +55,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  private static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+  public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
 
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
