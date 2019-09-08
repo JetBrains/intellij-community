@@ -130,12 +130,15 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   private static void applyRenderingHints(@NotNull Graphics graphics) {
-    GraphicsUtil.applyRenderingHints(graphics);
-    if (graphics instanceof Graphics2D) {
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    if (!(graphics instanceof Graphics2D)) {
+      return;
     }
+
+    Graphics2D g2d = (Graphics2D)graphics;
+    GraphicsUtil.applyRenderingHints(g2d);
+    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
   }
 
   private static void drawCurrentColorRectangle(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {

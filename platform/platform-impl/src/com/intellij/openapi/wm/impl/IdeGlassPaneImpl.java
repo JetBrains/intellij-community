@@ -35,8 +35,7 @@ import java.awt.event.*;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
+  private static final Logger LOG = Logger.getInstance(IdeGlassPaneImpl.class);
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
   private final DisposableWrapperList<EventListener> myMouseListeners = new DisposableWrapperList<>();

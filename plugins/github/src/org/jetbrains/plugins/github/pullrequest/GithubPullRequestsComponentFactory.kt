@@ -12,7 +12,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
-import com.intellij.util.ui.JBSwingUtilities
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -28,6 +27,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
@@ -63,7 +63,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       installSelectionSaver(list)
       list.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          if (JBSwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(list, e.x, e.y)) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(list, e.x, e.y)) {
             openTimelineForSelection(list)
             e.consume()
           }

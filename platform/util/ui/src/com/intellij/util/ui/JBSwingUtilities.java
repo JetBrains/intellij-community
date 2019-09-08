@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -18,33 +17,19 @@ import java.util.List;
  *
  * Note: seems to be unnecessary in Java 8 and up.
  */
-public class JBSwingUtilities {
-
+public final class JBSwingUtilities {
   /**
-   * Replaces SwingUtilities#isLeftMouseButton() for consistency with other button-related methods
-   *
-   * @see SwingUtilities#isLeftMouseButton(MouseEvent)
+   * @deprecated Use {@link SwingUtilities#isLeftMouseButton}
    */
+  @Deprecated
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isLeftMouseButton(anEvent);
   }
 
   /**
-   * Replaces SwingUtilities#isMiddleMouseButton() due to the fact that BUTTON2_MASK == Event.ALT_MASK
-   *
-   * @see SwingUtilities#isMiddleMouseButton(MouseEvent)
-   * @see InputEvent#BUTTON2_MASK
+   * @deprecated Use {@link SwingUtilities#isRightMouseButton}
    */
-  public static boolean isMiddleMouseButton(MouseEvent anEvent) {
-    return SwingUtilities.isMiddleMouseButton(anEvent);
-  }
-
-  /**
-   * Replaces SwingUtilities#isRightMouseButton() due to the fact that BUTTON3_MASK == Event.META_MASK
-   *
-   * @see SwingUtilities#isRightMouseButton(MouseEvent)
-   * @see InputEvent#BUTTON3_MASK
-   */
+  @Deprecated
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isRightMouseButton(anEvent);
   }

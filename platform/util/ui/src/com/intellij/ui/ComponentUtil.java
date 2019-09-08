@@ -20,6 +20,16 @@ public final class ComponentUtil {
   }
 
   @NotNull
+  public static Window getActiveWindow() {
+    for (Window each : Window.getWindows()) {
+      if (each.isVisible() && each.isActive()) {
+        return each;
+      }
+    }
+    return JOptionPane.getRootFrame();
+  }
+
+  @NotNull
   public static Component findUltimateParent(@NotNull Component c) {
     Component eachParent = c;
     while (true) {

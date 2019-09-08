@@ -94,14 +94,6 @@ public final class UIUtil extends StartupUiUtil {
     return Logger.getInstance("#com.intellij.util.ui.UIUtil");
   }
 
-  /**
-   * @deprecated use {@link #decorateWindowHeader(JRootPane)}
-   */
-  @Deprecated
-  public static void decorateFrame(@NotNull JRootPane pane) {
-    decorateWindowHeader(pane);
-  }
-
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations", false) &&
@@ -110,64 +102,66 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
-    if(SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
-      JBInsets topWindowInset = JBUI.insetsTop(24);
-      rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
-      AbstractBorder customDecorationBorder = new AbstractBorder() {
-        @Override
-        public Insets getBorderInsets(Component c) {
-          return topWindowInset;
-        }
-
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-          Graphics2D graphics = (Graphics2D)g.create();
-          try {
-            Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
-            graphics.setColor(getPanelBackground());
-            graphics.fill(headerRectangle);
-            Color color = window.isActive()
-                          ? JBColor.black
-                          : JBColor.gray;
-            graphics.setColor(color);
-            int controlButtonsWidth = 70;
-            String windowTitle = getWindowTitle(window);
-            double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
-            if (widthToFit <= 0) {
-              drawCenteredString(graphics, headerRectangle, windowTitle);
-            } else {
-              FontMetrics fm = graphics.getFontMetrics();
-              Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
-              Rectangle bounds =
-                AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
-              drawCenteredString(graphics, bounds, windowTitle, false, true);
-            }
-          }
-          finally {
-            graphics.dispose();
-          }
-        }
-      };
-      rootPane.setBorder(customDecorationBorder);
-
-      WindowAdapter windowAdapter = new WindowAdapter() {
-        @Override
-        public void windowActivated(WindowEvent e) {
-          rootPane.repaint();
-        }
-
-        @Override
-        public void windowDeactivated(WindowEvent e) {
-          rootPane.repaint();
-        }
-      };
-      PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
-      window.addPropertyChangeListener("title", propertyChangeListener);
-      onDispose.consume(() -> {
-        window.removeWindowListener(windowAdapter);
-        window.removePropertyChangeListener("title", propertyChangeListener);
-      });
+    if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+      return;
     }
+
+    JBInsets topWindowInset = JBUI.insetsTop(24);
+    rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
+    AbstractBorder customDecorationBorder = new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return topWindowInset;
+      }
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Graphics2D graphics = (Graphics2D)g.create();
+        try {
+          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
+          graphics.setColor(getPanelBackground());
+          graphics.fill(headerRectangle);
+          Color color = window.isActive()
+                        ? JBColor.black
+                        : JBColor.gray;
+          graphics.setColor(color);
+          int controlButtonsWidth = 70;
+          String windowTitle = getWindowTitle(window);
+          double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
+          if (widthToFit <= 0) {
+            drawCenteredString(graphics, headerRectangle, windowTitle);
+          } else {
+            FontMetrics fm = graphics.getFontMetrics();
+            Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
+            Rectangle bounds =
+              AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
+            drawCenteredString(graphics, bounds, windowTitle, false, true);
+          }
+        }
+        finally {
+          graphics.dispose();
+        }
+      }
+    };
+    rootPane.setBorder(customDecorationBorder);
+
+    WindowAdapter windowAdapter = new WindowAdapter() {
+      @Override
+      public void windowActivated(WindowEvent e) {
+        rootPane.repaint();
+      }
+
+      @Override
+      public void windowDeactivated(WindowEvent e) {
+        rootPane.repaint();
+      }
+    };
+    PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
+    window.addPropertyChangeListener("title", propertyChangeListener);
+    onDispose.consume(() -> {
+      window.removeWindowListener(windowAdapter);
+      window.removePropertyChangeListener("title", propertyChangeListener);
+    });
   }
 
   private static String getWindowTitle(Window window) {
@@ -1765,7 +1759,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @Deprecated
   public static void applyRenderingHints(@NotNull Graphics g) {
-    GraphicsUtil.applyRenderingHints(g);
+    GraphicsUtil.applyRenderingHints((Graphics2D)g);
   }
 
   /**
@@ -3141,15 +3135,6 @@ public final class UIUtil extends StartupUiUtil {
     return null;
   }
 
-  @NotNull
-  public static Window getActiveWindow() {
-    Window[] windows = Window.getWindows();
-    for (Window each : windows) {
-      if (each.isVisible() && each.isActive()) return each;
-    }
-    return JOptionPane.getRootFrame();
-  }
-
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
     if (!SystemInfo.isMac) {
       window.setAutoRequestFocus(value);
@@ -3265,9 +3250,11 @@ public final class UIUtil extends StartupUiUtil {
     return null;
   }
 
-  public static void playSoundFromResource(@NotNull final String resourceName) {
-    final Class callerClass = ReflectionUtil.getGrandCallerClass();
-    if (callerClass == null) return;
+  public static void playSoundFromResource(@NotNull String resourceName) {
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) {
+      return;
+    }
     playSoundFromStream(() -> callerClass.getResourceAsStream(resourceName));
   }
 
