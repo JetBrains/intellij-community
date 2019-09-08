@@ -534,12 +534,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixOptionButton(uiDefaults);
 
+    fixMacOSDarkThemeDecorations();
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
     myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
+  }
+
+  private void fixMacOSDarkThemeDecorations() {
+     if (!SystemInfo.isMacOSMojave) return;
+
+    if (myCurrentLaf == myDefaultDarkTheme
+        || (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark())) {
+      //todo[fokin]: apply dark decorators and dark file choosers if macOS Dark theme is enabled
+    }
   }
 
   @NotNull
