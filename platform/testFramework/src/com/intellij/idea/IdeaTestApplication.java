@@ -97,10 +97,7 @@ public final class IdeaTestApplication implements Disposable {
     ApplicationImpl app = new ApplicationImpl(true, true, true, true);
     IconManager.activate();
     try {
-      ApplicationLoader.registerRegistryAndInitStore(loadedPluginFuture.thenApply(it -> {
-        app.registerComponents(it);
-        return it;
-      }), app)
+      ApplicationLoader.registerRegistryAndInitStore(ApplicationLoader.registerAppComponents(loadedPluginFuture, app), app)
         .thenCompose(it -> app.preloadServices(it))
         .get(20, TimeUnit.SECONDS);
     }

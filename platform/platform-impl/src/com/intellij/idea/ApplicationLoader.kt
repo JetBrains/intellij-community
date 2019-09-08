@@ -78,19 +78,13 @@ private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
-                                pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
+                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
   StartupUtil.patchSystem(LOG)
-  val app = initAppActivity.runChild("create the app") {
+  val app = ParallelActivity.APP_INIT.run("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
   }
 
-  val registerFuture = pluginDescriptorsFuture
-    .thenApply {
-      initAppActivity.runChild("app component registration") {
-        app.registerComponents(it)
-      }
-      it
-    }
+  val registerFuture = registerAppComponents(pluginDescriptorFuture, app)
 
   if (args.isEmpty()) {
     startApp(app, IdeStarter(), initAppActivity, registerFuture, args)
@@ -110,6 +104,17 @@ private fun executeInitAppInEdt(args: List<String>,
   }
 }
 
+@ApiStatus.Internal
+fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+  return pluginFuture
+    .thenApply {
+      runActivity("app component registration") {
+        app.registerComponents(it)
+      }
+      it
+    }
+}
+
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
                      initAppActivity: Activity,
@@ -123,7 +128,7 @@ private fun startApp(app: ApplicationImpl,
 
   val headless = app.isHeadlessEnvironment
   if (!headless) {
-    initAppActivity.runChild("icon loader activation") {
+    ParallelActivity.APP_INIT.run("icon loader activation") {
       // todo investigate why in test mode dummy icon manager is not suitable
       IconLoader.activate()
       IconLoader.setStrictGlobally(app.isInternal)
@@ -142,7 +147,7 @@ private fun startApp(app: ApplicationImpl,
 
   if (!headless) {
     if (SystemInfo.isMac) {
-      initAppActivity.runChild("mac app init") {
+      ParallelActivity.APP_INIT.run("mac app init") {
         MacOSApplicationProvider.initApplication()
       }
 

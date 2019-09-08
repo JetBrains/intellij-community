@@ -600,12 +600,12 @@ public final class StartupUtil {
       return false;
     }
 
-    Activity patchActivity = StartUpMeasurer.start("patch system");
+    Activity activity = ParallelActivity.APP_INIT.start("replace event queue");
     replaceSystemEventQueue(log);
     if (!Main.isHeadless()) {
       patchSystemForUi(log);
     }
-    patchActivity.end();
+    activity.end();
     return true;
   }
 
