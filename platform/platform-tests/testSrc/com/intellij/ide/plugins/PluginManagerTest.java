@@ -19,14 +19,9 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xmlb.JDOMXIncluder;
-import org.jdom.Content;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +29,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -166,6 +160,7 @@ sb.toString()
   }
 
   private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
+    PluginManagerCore.ourPluginError = null;
     List<IdeaPluginDescriptorImpl> descriptors = loadDescriptors(testDataName + ".xml");
     IdeaPluginDescriptorImpl[] sorted = PluginManagerCore.initializePlugins(
       descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY), PluginManagerTest.class.getClassLoader(), null);
