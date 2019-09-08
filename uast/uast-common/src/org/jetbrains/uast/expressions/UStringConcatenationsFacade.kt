@@ -115,6 +115,17 @@ sealed class StringEntry {
 
   class Known(val value: String, override val uExpression: UExpression, override val range: TextRange) : StringEntry()
   class Unknown(override val uExpression: UExpression, override val range: TextRange) : StringEntry()
+
+  val rangeAlignedToHost: TextRange?
+    get() {
+      val entry = this
+      val sourcePsi = entry.uExpression.sourcePsi ?: return null
+      if (sourcePsi is PsiLanguageInjectionHost) return entry.range
+      if (sourcePsi.parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
+        return entry.range.shiftRight(sourcePsi.startOffsetInParent - ElementManipulators.getValueTextRange(sourcePsi.parent).startOffset)
+      }
+      return null
+    }
 }
 
 @ApiStatus.Experimental
