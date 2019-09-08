@@ -5,7 +5,7 @@ import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public final class MainImpl {
@@ -17,7 +17,7 @@ public final class MainImpl {
 
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override
-      public void start(@NotNull Future<?> initUiTask) {
+      public void start(@NotNull CompletionStage<?> initUiTask) {
         ApplicationLoader.initApplication(args, initUiTask);
       }
 

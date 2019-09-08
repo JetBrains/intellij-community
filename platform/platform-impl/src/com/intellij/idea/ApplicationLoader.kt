@@ -63,6 +63,7 @@ import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
@@ -75,14 +76,12 @@ private val LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication")
 private var filesToLoad: List<File> = emptyList()
 private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
-private fun executeInitAppInEdt(rawArgs: Array<String>,
+private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
                                 pluginDescriptorsFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
-  val args = processProgramArguments(rawArgs)
   StartupUtil.patchSystem(LOG)
-  val headless = Main.isHeadless()
   val app = initAppActivity.runChild("create the app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless, Main.isCommandLine())
+    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
   }
 
   val registerFuture = pluginDescriptorsFuture
@@ -136,9 +135,9 @@ private fun startApp(app: ApplicationImpl,
     .thenCompose {
       val preloadServiceActivity = StartUpMeasurer.start("preload services")
       app.preloadServices(it)
-        .thenRun(Runnable {
+        .thenRun {
           preloadServiceActivity.end()
-        })
+        }
     }
 
   if (!headless) {
@@ -157,18 +156,14 @@ private fun startApp(app: ApplicationImpl,
       }
     }
 
-    // disabled due to https://youtrack.jetbrains.com/issue/JBR-1399
-    //initAppActivity.runChild("showLicenseeInfoOnSplash") {
-    //  SplashManager.showLicenseeInfoOnSplash(LOG)
-    //}
+    WeakFocusStackManager.getInstance()
 
-    preloadIcons()
-
-    initAppActivity.runChild("migLayout") {
+    invokeLaterWithAnyModality("migLayout") {
       //IDEA-170295
       PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
     }
-    WeakFocusStackManager.getInstance()
+
+    scheduleIconPreloading()
   }
 
   future.thenRunOrHandleError {
@@ -178,8 +173,9 @@ private fun startApp(app: ApplicationImpl,
       placeOnEventQueueActivity.end()
       StartupUtil.installExceptionHandler()
 
-      initAppActivity.runChild("waiting for built-in server initialization") {
-        StartupUtil.getServer()  // throws an exception if initialization has failed
+      initAppActivity.runChild("built-in server initialization") {
+        // throws an exception if initialization has failed
+        StartupUtil.getServer()
       }
       initAppActivity.end()
 
@@ -208,11 +204,13 @@ private fun startApp(app: ApplicationImpl,
   }
 }
 
-private fun preloadIcons() {
+private fun scheduleIconPreloading() {
   AppExecutorUtil.getAppExecutorService().execute {
-    AsyncProcessIcon("")
-    AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-    AnimatedIcon.FS()
+    ParallelActivity.APP_INIT.run("preload icons") {
+      AsyncProcessIcon("")
+      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+      AnimatedIcon.FS()
+    }
   }
 }
 
@@ -281,33 +279,33 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   }
 }
 
-fun initApplication(rawArgs: Array<String>, initUiTask: Future<*>?) {
+@JvmOverloads
+fun initApplication(rawArgs: Array<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
   val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
-  AppExecutorUtil.getAppExecutorService().execute {
-    initAppActivity.runChild("wait UI init") {
-      initUiTask?.get()
-    }
-    EventQueue.invokeLater {
-      executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture)
-    }
-
-    if (!Main.isHeadless()) {
-      ParallelActivity.APP_INIT.run("load system fonts") {
-        // editor and other UI components need the list of system fonts to implement font fallback
-        // this list is pre-loaded here, in parallel to other activities, to speed up project opening
-        // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-        loadSystemFonts()
+  initUiTask
+    .thenRunAsync(Runnable {
+      val args = processProgramArguments(rawArgs)
+      EventQueue.invokeLater {
+        executeInitAppInEdt(args, initAppActivity, pluginDescriptorsFuture)
       }
 
-      // pre-load cursors used by drag'n'drop AWT subsystem
-      invokeLaterWithAnyModality("setup DnD") {
-        if (!GraphicsEnvironment.isHeadless()) {
-          DragSource.getDefaultDragSource()
+      if (!Main.isHeadless()) {
+        ParallelActivity.APP_INIT.run("load system fonts") {
+          // editor and other UI components need the list of system fonts to implement font fallback
+          // this list is pre-loaded here, in parallel to other activities, to speed up project opening
+          // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
+          loadSystemFonts()
+        }
+
+        // pre-load cursors used by drag'n'drop AWT subsystem
+        invokeLaterWithAnyModality("setup DnD") {
+          if (!GraphicsEnvironment.isHeadless()) {
+            DragSource.getDefaultDragSource()
+          }
         }
       }
-    }
-  }
+    }, AppExecutorUtil.getAppExecutorService() /* must be not executed neither in idea main thread, nor in EDT */)
 
   val plugins = try {
     initAppActivity.runChild("plugin descriptors loading") {
@@ -500,7 +498,7 @@ open class IdeStarter : ApplicationStarter {
   private fun postOpenUiTasks(app: Application) {
     if (SystemInfo.isMac) {
       AppExecutorUtil.getAppExecutorService().execute {
-        ParallelActivity.APP_INIT.run("TouchBar") {
+        ParallelActivity.APP_INIT.run("mac touchbar on app init") {
           TouchBarsManager.onApplicationInitialized()
           if (TouchBarsManager.isTouchBarAvailable()) {
             CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")

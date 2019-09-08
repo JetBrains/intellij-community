@@ -6,6 +6,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
@@ -20,7 +21,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -43,6 +43,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -63,10 +64,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -106,7 +104,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    void start(@NotNull Future<?> initUiTask);
+    void start(@NotNull CompletionStage<?> initUiTask);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
@@ -148,7 +146,7 @@ public final class StartupUtil {
     LoadingPhase.setStrictMode();
 
     Activity scheduleLafInitActivity = StartUpMeasurer.start("schedule LaF init");
-    Future<?> initUiTask = scheduleInitUi(args);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args);
     scheduleLafInitActivity.end();
 
     configureLog4j();
@@ -229,7 +227,7 @@ public final class StartupUtil {
   }
 
   @NotNull
-  private static Future<?> scheduleInitUi(@NotNull String[] args) {
+  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -270,9 +268,11 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          activity = activity.endAndStart("prepare splash");
-          SplashManager.show(args);
-          activity.end();
+          Activity prepareSplashActivity = activity.endAndStart("prepare splash");
+          EventQueue.invokeLater(() -> {
+            SplashManager.show(args);
+            prepareSplashActivity.end();
+          });
 
           LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
@@ -601,12 +601,23 @@ public final class StartupUtil {
     }
 
     Activity patchActivity = StartUpMeasurer.start("patch system");
-    ApplicationImpl.patchSystem();
+    replaceSystemEventQueue(log);
     if (!Main.isHeadless()) {
       patchSystemForUi(log);
     }
     patchActivity.end();
     return true;
+  }
+
+  @ApiStatus.Internal
+  public static void replaceSystemEventQueue(@NotNull Logger log) {
+    log.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
+             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
+             "; factory: " + ForkJoinPool.commonPool().getFactory());
+
+    // replaces system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();
   }
 
   private static void patchSystemForUi(@NotNull Logger log) {
@@ -634,7 +645,7 @@ public final class StartupUtil {
     IconManager.activate();
   }
 
-  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull Future<?> initUiTask) {
+  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
     if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       return;
     }
@@ -650,7 +661,7 @@ public final class StartupUtil {
     AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
   }
 
-  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull Future<?> initUiTask) {
+  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {
     try {
       initUiTask.get();
 

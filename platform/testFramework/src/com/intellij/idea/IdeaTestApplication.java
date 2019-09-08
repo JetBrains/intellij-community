@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.ui.IconManager;
@@ -92,7 +93,7 @@ public final class IdeaTestApplication implements Disposable {
       return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
     }, AppExecutorUtil.getAppExecutorService());
 
-    ApplicationImpl.patchSystem();
+    StartupUtil.replaceSystemEventQueue(Logger.getInstance(IdeaTestApplication.class));
     ApplicationImpl app = new ApplicationImpl(true, true, true, true);
     IconManager.activate();
     try {

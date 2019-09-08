@@ -3,16 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,9 +35,6 @@ public final class Splash extends Window {
   private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
   private final Image myImage;
 
-  @Nullable
-  private NotNullLazyValue<Font> myFont;
-
   public Splash(@NotNull ApplicationInfoEx info) {
     super(null);
 
@@ -60,7 +54,9 @@ public final class Splash extends Window {
     setLocationInTheCenterOfScreen();
 
     initImages();
+  }
 
+  public void doShow() {
     setVisible(true);
     paint(getGraphics());
     toFront();
@@ -78,25 +74,6 @@ public final class Splash extends Window {
       throw new IllegalStateException("Cannot find image: " + path);
     }
     return result;
-  }
-
-  @NotNull
-  public static NotNullLazyValue<Font> createFont() {
-    return NotNullLazyValue.createValue(() -> {
-      Font font;
-      if (SystemInfo.isMacOSElCapitan) {
-        font = createFont(".SF NS Text");
-      }
-      else {
-        //noinspection SpellCheckingInspection
-        font = SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") : null;
-      }
-
-      if (font == null || StartupUiUtil.isDialogFont(font)) {
-        font = createFont(StartupUiUtil.ARIAL_FONT_NAME);
-      }
-      return font;
-    });
   }
 
   @Override
@@ -174,53 +151,6 @@ public final class Splash extends Window {
         progressSlide.isDrawn = true;
       }
     }
-  }
-
-  public void paintLicenseeInfo() {
-    NotNullLazyValue<Font> font = myFont;
-    if (font == null) {
-      font = createFont();
-      myFont = font;
-    }
-    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, font);
-  }
-
-  public static boolean showLicenseeInfo(@NotNull Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
-    if (!info.showLicenseeInfo()) {
-      return false;
-    }
-
-    LicensingFacade provider = LicensingFacade.getInstance();
-    if (provider == null) {
-      return true;
-    }
-
-    String licensedToMessage = provider.getLicensedToMessage();
-    List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-    if (licensedToMessage == null && licenseRestrictionsMessages.isEmpty()) {
-      return true;
-    }
-
-    GraphicsUtil.applyRenderingHints(g);
-    g.setFont(font.getValue());
-    g.setColor(info.getSplashTextColor());
-
-    int offsetX = Math.max(uiScale(15), uiScale(info.getLicenseOffsetX()));
-    int offsetYUnscaled = info.getLicenseOffsetY();
-
-    if (licensedToMessage != null) {
-      g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetYUnscaled));
-    }
-
-    if (!licenseRestrictionsMessages.isEmpty()) {
-      g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetYUnscaled - 16));
-    }
-    return true;
-  }
-
-  @NotNull
-  private static Font createFont(String name) {
-    return new Font(name, Font.PLAIN, uiScale(12));
   }
 
   private static int uiScale(int i) {

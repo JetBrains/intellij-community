@@ -6,7 +6,6 @@ import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
@@ -40,7 +39,11 @@ public final class SplashManager {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
-    SPLASH_WINDOW = new Splash(appInfo);
+    Splash splash = new Splash(appInfo);
+    EventQueue.invokeLater(() -> {
+      splash.doShow();
+      SPLASH_WINDOW = splash;
+    });
     activity.end();
   }
 
@@ -66,32 +69,6 @@ public final class SplashManager {
       if (value) {
         splash.paint(splash.getGraphics());
       }
-    }
-  }
-
-  public static void showLicenseeInfoOnSplash(@NotNull Logger log) {
-    Splash splash = SPLASH_WINDOW;
-    if (splash != null) {
-      splash.paintLicenseeInfo();
-      return;
-    }
-
-    SplashScreen javaSplash;
-    try {
-      javaSplash = SplashScreen.getSplashScreen();
-    }
-    catch (Throwable t) {
-      log.warn(t);
-      return;
-    }
-
-    if (javaSplash == null) {
-      return;
-    }
-
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    if (Splash.showLicenseeInfo(javaSplash.createGraphics(), 0, 0, javaSplash.getSize().height, appInfo, Splash.createFont())) {
-      javaSplash.update();
     }
   }
 
