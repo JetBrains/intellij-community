@@ -18,6 +18,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -35,7 +36,54 @@ import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionStri
 import java.util.*;
 
 /**
- * @author traff
+ * This class serves two purposes. First, it's a wrapper around "generator3" helper script
+ * that is used to generate stub ".py" definitions for binary modules. The wrapper helps to
+ * launch it using multitude of existing options (see {@link #commandBuilder()}), communicate
+ * with a running generator instance and interpret its results. Second, it's an extension
+ * necessary to customize generation steps for various interpreter flavors supported in PyCharm,
+ * first of all, remote ones (see {@link PyRemoteSkeletonGeneratorFactory} EP).
+ * <p>
+ * Conceptually there are two distinct modes for launching the generator:
+ * <ul>
+ * <li>In the main mode it actually produces stubs for binaries either explicitly specified or
+ * automatically discovered in {@code sys.path}. As generation goes it communicates with
+ * the IDE in JSON chunks containing progress indication, log messages and intermediate results, e.g.
+ * <p>{@code {"type": "progress", "text": "_hashlib", "fraction": 0.2, "minor": true}}</p>
+ * or
+ * <p>{"type": "generation_result", "module_origin": "/usr/lib/python2.7/lib-dynload/_hashlib.so", "module_name": "_hashlib", "generation_status": "GENERATED"}</p>
+ * <p>
+ * To fully support this mode with real-time progress indication all inheritors must support
+ * reading process' stdout/stderr interactively line by line by implementing
+ * {@link #runProcessWithLineOutputListener(String, List, Map, int, LineWiseProcessOutputListener)}.
+ * The provided {@link LineWiseProcessOutputListener} will handle all the service lines written to stdout.
+ * <p>
+ * Example of generator invocation in the main mode:
+ * <pre>
+ * {@code
+ * new PySkeletonGenerator(skeletonsPath, sdk, workingDir)
+ *     .commandBuilder()
+ *     // customize command line options and environment
+ *     .runGeneration(progressIndicator)
+ * }
+ * </pre>
+ * </li>
+ * <li>
+ * The second mode is intended for all the other commands supported by the script but not directly related to generation, e.g.
+ * listing source files found in {@code sys.path} and zipping them in an archive (which is used by some remote interpreters).
+ * These commands normally don't use any special service commands and don't have intermediate results, therefore one can
+ * simply run them as:
+ * <pre>
+ * {@code
+ * new PySkeletonGenerator(skeletonsPath, sdk, workingDir)
+ *     .commandBuilder()
+ *     // customize command line options and environment
+ *     .runProcess()
+ * }
+ * and manually interpret process' output and exit code as needed.
+ * </pre>
+ * </li>
+ *
+ * @see Builder
  */
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
@@ -55,8 +103,8 @@ public class PySkeletonGenerator {
   private String mySkeletonsPath;
 
   /**
-   * @param skeletonPath path where skeletons should be generated
-   * @param pySdk SDK
+   * @param skeletonPath  path where skeletons should be generated
+   * @param pySdk         SDK
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
@@ -69,6 +117,12 @@ public class PySkeletonGenerator {
     return new Builder();
   }
 
+
+  /**
+   * Builder object serving as a facade for the command-line interface of the generator,
+   * allowing to additionally customize how it's going to be launched and performing the
+   * default initialization before the run.
+   */
   public final class Builder {
     private Map<String, String> myExtraEnv;
     private List<String> myExtraSysPath;
