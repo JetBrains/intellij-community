@@ -63,9 +63,7 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.FlowLayout
-import java.awt.event.ActionListener
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.nio.file.Paths
 import javax.swing.Icon
 import javax.swing.JLabel
@@ -162,6 +160,16 @@ internal class GHCloneDialogExtensionComponent(
         updateSelectedUrl()
       }
     }
+
+    searchField.addKeyboardListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        e ?: return
+        if (e.keyCode == KeyEvent.VK_DOWN && repositoryList.itemsCount != 0) {
+          repositoryList.selectedIndex = 0
+          repositoryList.requestFocus()
+        }
+      }
+    })
 
     progressManager = object : ProgressVisibilityManager() {
       override fun setProgressVisible(visible: Boolean) = repositoryList.setPaintBusy(visible)
