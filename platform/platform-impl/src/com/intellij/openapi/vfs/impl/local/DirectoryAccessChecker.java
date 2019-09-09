@@ -28,23 +28,26 @@ import java.util.stream.StreamSupport;
 
 @ApiStatus.Experimental
 public class DirectoryAccessChecker {
-  private static final DirectoryStream.Filter<Path> ACCEPTING_FILTER = p -> true;
+  private static final FilterChain ACCEPTING_FILTER = p -> true;
 
   private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
   private static final Path HOME_ROOT = HOME_DIR.getParent();
 
   private DirectoryAccessChecker() {}
 
-  @NotNull
-  public static DirectoryStream.Filter<Path> create() {
-    return SystemInfo.isLinux ? new FilterChain().add(new NFS()).add(new CIFS()).create() :
-           ACCEPTING_FILTER;
+  private static class InstanceHolder {
+    private final static FilterChain chainInstance =
+      SystemInfo.isLinux ? new LinuxFilterChain().add(new NFS()).add(new CIFS()).refresh() : ACCEPTING_FILTER;
+  }
+
+  public static void refresh() {
+    InstanceHolder.chainInstance.refresh();
   }
 
   @NotNull
   public static Stream<Path> getCheckedStream(@NotNull Path root) {
     try {
-      DirectoryStream<Path> ds = Files.newDirectoryStream(root, create());
+      DirectoryStream<Path> ds = Files.newDirectoryStream(root, InstanceHolder.chainInstance);
       return StreamSupport.stream(ds.spliterator(), false).
         onClose(() -> {
           try {
@@ -63,25 +66,30 @@ public class DirectoryAccessChecker {
   /***********************************************************************************
    * Compound checker
    ***********************************************************************************/
-  private static class FilterChain {
+  interface FilterChain extends DirectoryStream.Filter<Path> {
+    default FilterChain refresh() {
+      return this;
+    }
+  }
+
+  private static class LinuxFilterChain implements FilterChain {
     private final List<FSFilter> checkers = new ArrayList<>();
     private Set<Path> notAccessiblePaths;
 
-    private FilterChain add(FSFilter checker) {
+    private LinuxFilterChain add(FSFilter checker) {
       checkers.add(checker);
       return this;
     }
 
-    private DirectoryStream.Filter<Path> create() {
+    @Override
+    public FilterChain refresh() {
       notAccessiblePaths = getMountedDirectories().
         stream().
         filter(p -> !p.isAccessible()).
         map(p -> p.getPath()).
         collect(Collectors.toSet());
 
-      return entry -> entry.startsWith(HOME_DIR) || // allow user home directory anyways
-               !(entry.getParent().equals(HOME_ROOT) && !entry.equals(HOME_DIR)) && // don't allow any other directory in the home root
-               !notAccessiblePaths.contains(entry); // Make sure all checkers allow access to the directory
+      return this;
     }
 
     private List<FSInfo> getMountedDirectories() {
@@ -97,6 +105,13 @@ public class DirectoryAccessChecker {
       catch (IOException ignored) {}
 
       return result;
+    }
+
+    @Override
+    public boolean accept(Path path) {
+      return path.startsWith(HOME_DIR) || // allow user home directory anyways
+             !(path.getParent().equals(HOME_ROOT) && !path.equals(HOME_DIR)) && // don't allow any other directory in the home root
+             !notAccessiblePaths.contains(path); // Make sure all checkers allow access to the directory
     }
   }
 

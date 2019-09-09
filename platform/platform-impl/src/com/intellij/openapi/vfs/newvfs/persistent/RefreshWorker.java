@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.impl.local.DirectoryAccessChecker;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -69,6 +70,8 @@ public class RefreshWorker {
   }
 
   public void scan() {
+    DirectoryAccessChecker.refresh();
+
     if (myLocalFileSystemRefreshWorker != null) {
       myLocalFileSystemRefreshWorker.scan();
       return;
