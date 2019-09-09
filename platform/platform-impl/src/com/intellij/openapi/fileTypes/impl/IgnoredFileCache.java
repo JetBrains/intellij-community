@@ -41,7 +41,7 @@ final class IgnoredFileCache {
 
       private void clearCacheForChangedFiles(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          if (event instanceof VFilePropertyChangeEvent) {
+          if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).isRename()) {
             VirtualFile file = event.getFile();
             if (file instanceof NewVirtualFile) {
               int id = ((NewVirtualFile)file).getId();
@@ -60,17 +60,25 @@ final class IgnoredFileCache {
   boolean isFileIgnored(@NotNull VirtualFile file) {
     boolean idable = myVfsEventNesting == 0 && file instanceof NewVirtualFile;
     if (!idable) {
-      return myIgnoredPatterns.isIgnored(file.getNameSequence());
+      return calcIgnored(file);
     }
     int id = ((NewVirtualFile)file).getId();
     if (myNonIgnoredIds.get(id)) {
       return false;
     }
 
-    boolean result = myIgnoredPatterns.isIgnored(file.getNameSequence());
+    return calcAndCache(file, id);
+  }
+
+  private boolean calcAndCache(VirtualFile file, int id) {
+    boolean result = calcIgnored(file);
     if (!result) {
       myNonIgnoredIds.set(id);
     }
     return result;
+  }
+
+  private boolean calcIgnored(VirtualFile file) {
+    return myIgnoredPatterns.isIgnored(file.getNameSequence());
   }
 }
