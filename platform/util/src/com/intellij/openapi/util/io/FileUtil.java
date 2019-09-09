@@ -8,7 +8,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -28,9 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
 /**
@@ -311,22 +309,14 @@ public class FileUtil extends FileUtilRt {
   public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
     List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
-      final File tempFile = renameToTempFileOrDelete(file);
+      File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
         tempFiles.add(tempFile);
       }
     }
-    if (!tempFiles.isEmpty()) {
-      return startDeletionThread(tempFiles.toArray(new File[0]));
-    }
-    return new FixedFuture<>(null);
-  }
-
-  @NotNull
-  private static Future<Void> startDeletionThread(@NotNull File... tempFiles) {
-    RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
-      final Thread currentThread = Thread.currentThread();
-      final int priority = currentThread.getPriority();
+    return tempFiles.isEmpty() ? CompletableFuture.completedFuture(null) : AppExecutorUtil.getAppExecutorService().submit(() -> {
+      Thread currentThread = Thread.currentThread();
+      int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
       try {
         for (File tempFile : tempFiles) {
@@ -336,10 +326,8 @@ public class FileUtil extends FileUtilRt {
       finally {
         currentThread.setPriority(priority);
       }
-    }, null);
-
-    AppExecutorUtil.getAppExecutorService().execute(deleteFilesTask);
-    return deleteFilesTask;
+      return null;
+    });
   }
 
   @Nullable
