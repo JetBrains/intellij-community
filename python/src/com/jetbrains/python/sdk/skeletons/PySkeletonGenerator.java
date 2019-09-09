@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -318,7 +317,7 @@ public class PySkeletonGenerator {
       .withWorkDirectory(homePath)
       .withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    handler.addProcessListener(new LineWiseProcessOutputListenerAdapter(listener));
+    handler.addProcessListener(new LineWiseProcessOutputListener.Adapter(listener));
     handler.runProcess(timeout);
   }
 
@@ -344,45 +343,6 @@ public class PySkeletonGenerator {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
-  }
-
-  public static class LineWiseProcessOutputListenerAdapter extends ProcessAdapter {
-    private final StringBuilder myStdoutLine = new StringBuilder();
-    private final StringBuilder myStderrLine = new StringBuilder();
-    private final LineWiseProcessOutputListener myListener;
-
-    public LineWiseProcessOutputListenerAdapter(@NotNull LineWiseProcessOutputListener listener) {
-      myListener = listener;
-    }
-
-    @Override
-    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-      final boolean isStdout = ProcessOutputType.isStdout(outputType);
-      final StringBuilder lineBuilder = isStdout ? myStdoutLine : myStderrLine;
-      for (String chunk : StringUtil.splitByLinesKeepSeparators(event.getText())) {
-        lineBuilder.append(chunk);
-        if (StringUtil.isLineBreak(lineBuilder.charAt(lineBuilder.length() - 1))) {
-          final String line = lineBuilder.toString();
-          if (isStdout) {
-            myListener.onStdoutLine(line);
-          }
-          else {
-            myListener.onStderrLine(line);
-          }
-          lineBuilder.setLength(0);
-        }
-      }
-    }
-
-    @Override
-    public void processTerminated(@NotNull ProcessEvent event) {
-      if (myStdoutLine.length() != 0) {
-        myListener.onStdoutLine(myStdoutLine.toString());
-      }
-      if (myStderrLine.length() != 0) {
-        myListener.onStderrLine(myStderrLine.toString());
-      }
-    }
   }
 
   public enum GenerationStatus {
@@ -418,12 +378,6 @@ public class PySkeletonGenerator {
     public boolean isBuiltin() {
       return myModuleOrigin.equals("(built-in)");
     }
-  }
-
-  public interface LineWiseProcessOutputListener {
-    void onStdoutLine(@NotNull String line);
-
-    default void onStderrLine(@NotNull String line) {}
   }
 
   /**
