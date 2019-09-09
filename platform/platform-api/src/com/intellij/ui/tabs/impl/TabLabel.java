@@ -19,7 +19,6 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -56,7 +55,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
+    setLayout(new FlowLayout(FlowLayout.CENTER, 0, 5));
 
     myLabelPlaceholder.setOpaque(false);
     addLabelPlaceholder();
