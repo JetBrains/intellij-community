@@ -92,10 +92,12 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test CamelCase text in action names"() {
     def options = [
-      new OptionDescription("CamelCase option 1", "CamelCase option 1", null),
-      new OptionDescription("CamelCase option 1", "non camel case option 1", null),
-      new TestBooleanOption("Boolean CamelCase option 1"),
-      new TestBooleanOption("Boolean non camel case option 2"),
+      new OptionDescription("CamelCase option", null, null),
+      new OptionDescription("non camel case option", null, null),
+      new OptionDescription("just another option", null, null),
+      new TestBooleanOption("Boolean CamelCase option"),
+      new TestBooleanOption("Boolean non camel case option"),
+      new TestBooleanOption("Just another boolean option"),
     ]
 
     OptionsTopHitProvider provider = new OptionsTopHitProvider() {
@@ -114,7 +116,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     def consumer = new CollectConsumer<Object>()
     provider.consumeTopHits("/testprovider CamelCase", consumer, project)
-    assert consumer.getResult() == options
+    assert consumer.getResult() == [options[0], options[1], options[3], options[4]]
   }
 
   private static class TestBooleanOption extends BooleanOptionDescription {
