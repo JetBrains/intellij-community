@@ -660,10 +660,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     }
-    GuiUtils.invokeLaterIfNeeded(() -> AntToolWindowFactory.updateAvailability(project),
-                                 ModalityState.defaultModalityState(),
-                                 project.getDisposed());
-
   }
 
   private AntWorkspaceConfiguration getAntWorkspaceConfiguration() {
