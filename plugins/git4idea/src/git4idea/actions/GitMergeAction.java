@@ -35,7 +35,6 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
-import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
@@ -69,15 +68,18 @@ abstract class GitMergeAction extends GitRepositoryAction {
     final String progressTitle;
     final Computable<GitLineHandler> handlerProvider;
     @NotNull private final List<String> selectedBranches;
+    final boolean commitAfterMerge;
 
     DialogState(@NotNull VirtualFile root,
                 @NotNull String title,
                 @NotNull Computable<GitLineHandler> provider,
-                @NotNull List<String> selectedBranches) {
+                @NotNull List<String> selectedBranches,
+                boolean commitAfterMerge) {
       selectedRoot = root;
       progressTitle = title;
       handlerProvider = provider;
       this.selectedBranches = selectedBranches;
+      this.commitAfterMerge = commitAfterMerge;
     }
   }
 
@@ -146,7 +148,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           if (beforeRevision != null) {
             GitRevisionNumber currentRev = new GitRevisionNumber(beforeRevision);
             handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector, repository, currentRev, beforeLabel,
-                         updatedRanges);
+                         updatedRanges, dialogState.commitAfterMerge);
           }
         }
         finally {
@@ -170,12 +172,21 @@ abstract class GitMergeAction extends GitRepositoryAction {
                             @NotNull GitRepository repository,
                             @NotNull GitRevisionNumber currentRev,
                             @NotNull Label beforeLabel,
-                            @Nullable GitUpdatedRanges updatedRanges) {
+                            @Nullable GitUpdatedRanges updatedRanges,
+                            boolean commitAfterMerge) {
     VirtualFile root = repository.getRoot();
 
     if (mergeConflictDetector.hasHappened()) {
-      new GitMergeCommittingConflictResolver(project, Git.getInstance(), new GitMerger(project), singletonList(root),
-                                             new GitConflictResolver.Params(project), true).merge();
+      GitMerger merger = new GitMerger(project);
+      new GitConflictResolver(project, singletonList(root), new GitConflictResolver.Params(project)) {
+        @Override
+        protected boolean proceedAfterAllMerged() throws VcsException {
+          if (commitAfterMerge) {
+            merger.mergeCommit(root);
+          }
+          return true;
+        }
+      }.merge();
     }
 
     if (result.success() || mergeConflictDetector.hasHappened()) {

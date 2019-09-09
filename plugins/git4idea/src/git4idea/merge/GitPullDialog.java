@@ -346,4 +346,8 @@ public class GitPullDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myBranchChooser.getComponent();
   }
+
+  public boolean isCommitAfterMerge() {
+    return !myNoCommitCheckBox.isSelected();
+  }
 }
