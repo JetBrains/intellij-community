@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
 object TooltipActionsLogger {
-  private const val GROUP = "tooltip.actions"
+  private const val GROUP = "tooltip.action.events"
 
   fun logExecute(project: Project?, inputEvent: InputEvent?) {
     val data = FeatureUsageData().addInputEvent(inputEvent, null)
