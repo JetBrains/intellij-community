@@ -429,7 +429,7 @@ public class ClassPath {
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
     int totalRequests = ourTotalRequests.incrementAndGet();
-    if (time > 10000000L) {
+    if (time > 3000000L) {
       System.out.println(time / 1000000 + " ms for " + msg);
     }
     if (totalRequests % 10000 == 0) {
