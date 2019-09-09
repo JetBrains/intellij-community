@@ -41,7 +41,10 @@ public interface Toggleable {
   @Contract(pure = true)
   static boolean isSelected(@NotNull Presentation presentation) {
     Object property = presentation.getClientProperty(SELECTED_PROPERTY);
-    return property instanceof Boolean && (Boolean)property;
+    if (property != null && !(property instanceof Boolean)) {
+      throw new IllegalStateException("Unexpected value for '" + SELECTED_PROPERTY + "': " + property + "; presentation=" + presentation);
+    }
+    return property != null && (Boolean)property;
   }
 
   /**
