@@ -74,7 +74,7 @@ public final class KeyboardGestureProcessor {
   }
 
   void executeAction() {
-    myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut(), myContext.isModal);
+    myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut());
     myDispatcher.processAction(myContext.keyToProcess, myActionProcessor);
   }
 
