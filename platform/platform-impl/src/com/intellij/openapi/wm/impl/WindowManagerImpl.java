@@ -2,8 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -132,18 +130,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   };
 
   public WindowManagerImpl() {
-    DataManager dataManager = DataManager.getInstance();
-    if (dataManager instanceof DataManagerImpl) {
-      ((DataManagerImpl)dataManager).setWindowManager(this);
-    }
-
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
       Disposer.register(application, this::disposeRootFrame);
     }
 
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
 
     if (UIUtil.hasLeakingAppleListeners()) {
       UIUtil.addAwtListener(event -> {

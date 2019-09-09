@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -22,10 +21,10 @@ import java.awt.*;
  */
 public abstract class DataManager {
   public static DataManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(DataManager.class);
+    return ApplicationManager.getApplication().getService(DataManager.class);
   }
 
-  @NonNls public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
+  public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the currently focused component

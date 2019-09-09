@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
@@ -41,16 +42,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class DataManagerImpl extends DataManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
-  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
-  private WindowManagerEx myWindowManager;
+  private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
+  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = ContainerUtil.newConcurrentMap();
 
   public DataManagerImpl() {
-    registerRules();
+    myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.CUT_PROVIDER.getName(), new CutProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
+    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
+    myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
   @Nullable
@@ -155,7 +160,6 @@ public class DataManagerImpl extends DataManager {
   @NotNull
   @Override
   public DataContext getDataContext(Component component) {
-    //noinspection deprecation
     return new MyDataContext(component);
   }
 
@@ -176,10 +180,6 @@ public class DataManagerImpl extends DataManager {
     else {
       return getDataContext(component);
     }
-  }
-
-  public void setWindowManager(WindowManagerEx windowManager) {
-    myWindowManager = windowManager;
   }
 
   @Override
@@ -204,11 +204,14 @@ public class DataManagerImpl extends DataManager {
   @NotNull
   public DataContext getDataContextTest(Component component) {
     DataContext dataContext = getDataContext(component);
-    if (myWindowManager == null) {
+
+    WindowManager windowManager = WindowManager.getInstance();
+    if (!(windowManager instanceof WindowManagerEx)) {
       return dataContext;
     }
+
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = myWindowManager.getFocusedComponent(project);
+    Component focusedComponent = ((WindowManagerEx)windowManager).getFocusedComponent(project);
     if (focusedComponent != null) {
       dataContext = getDataContext(focusedComponent);
     }
@@ -216,11 +219,14 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private Component getFocusedComponent() {
-    if (myWindowManager == null) {
+  private static Component getFocusedComponent() {
+    WindowManager windowManager = WindowManager.getInstance();
+    if (!(windowManager instanceof WindowManagerEx)) {
       return null;
     }
-    Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
+
+    WindowManagerEx windowManagerEx = (WindowManagerEx)windowManager;
+    Window activeWindow = windowManagerEx.getMostRecentFocusedWindow();
     if (activeWindow == null) {
       activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       if (activeWindow == null) {
@@ -238,7 +244,7 @@ public class DataManagerImpl extends DataManager {
       IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
       JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
       Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
-      boolean toolWindowIsNotFocused = myWindowManager.getFocusedComponent(activeWindow) == null;
+      boolean toolWindowIsNotFocused = windowManagerEx.getFocusedComponent(activeWindow) == null;
       if (toolWindowIsNotFocused && lastFocusedWindow != null) {
         activeWindow = lastFocusedWindow;
       }
@@ -248,7 +254,7 @@ public class DataManagerImpl extends DataManager {
     Window window = activeWindow;
     Component focusedComponent = null;
     while (window != null) {
-      focusedComponent = myWindowManager.getFocusedComponent(window);
+      focusedComponent = windowManagerEx.getFocusedComponent(window);
       if (focusedComponent != null) {
         break;
       }
@@ -259,16 +265,6 @@ public class DataManagerImpl extends DataManager {
     }
 
     return focusedComponent;
-  }
-
-  private void registerRules() {
-    myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.CUT_PROVIDER.getName(), new CutProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
   @Override
@@ -318,7 +314,7 @@ public class DataManagerImpl extends DataManager {
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final Reference<Component> myRef;
-    private Map<Key, Object> myUserData;
+    private Map<Key<?>, Object> myUserData;
     private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
 
     public MyDataContext(@Nullable Component component) {
@@ -401,8 +397,8 @@ public class DataManagerImpl extends DataManager {
     }
 
     @NotNull
-    private Map<Key, Object> getOrCreateMap() {
-      Map<Key, Object> userData = myUserData;
+    private Map<Key<?>, Object> getOrCreateMap() {
+      Map<Key<?>, Object> userData = myUserData;
       if (userData == null) {
         myUserData = userData = ContainerUtil.createWeakValueMap();
       }
