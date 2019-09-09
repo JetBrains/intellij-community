@@ -73,6 +73,11 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".runnables");
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean ourActionAwareTypeaheadEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
+  private static final boolean ourTypeAheadSearchEverywhereEnabled =
+    SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
+  private static final boolean ourSkipTypedEvent = SystemProperties.getBooleanProperty("skip.typed.event", true);
+  private static final boolean ourSkipMetaPressOnLinux = SystemProperties.getBooleanProperty("keymap.skip.meta.press.on.linux", false);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
@@ -423,7 +428,7 @@ public final class IdeEventQueue extends EventQueue {
         updateActivatedWindowSet();
       }
 
-      if (SystemProperties.getBooleanProperty("skip.typed.event", true) && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
+      if (ourSkipTypedEvent && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
         return;
       }
 
@@ -594,7 +599,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
-    if (!SystemProperties.getBooleanProperty("keymap.skip.meta.press.on.linux", false)) {
+    if (!ourSkipMetaPressOnLinux) {
       return false;
     }
 
@@ -667,23 +672,23 @@ public final class IdeEventQueue extends EventQueue {
 
   @NotNull
   private static AWTEvent mapEvent(@NotNull AWTEvent e) {
-    if (SystemInfo.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3) {
-      MouseEvent src = (MouseEvent)e;
-      if (src.getButton() < 6) {
-        // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-        e = new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
-                                src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
-                                0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
-      }
-      else {
-        // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
-        // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
-        //noinspection MagicConstant
-        e = new MouseEvent(src.getComponent(), src.getID(), src.getWhen(), src.getModifiers() | (1 << 8 + src.getButton()),
-                           src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
-      }
+    return SystemInfo.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3 ? mapXWindowMouseEvent((MouseEvent)e) : e;
+  }
+
+  @NotNull
+  private static AWTEvent mapXWindowMouseEvent(MouseEvent src) {
+    if (src.getButton() < 6) {
+      // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
+      return new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
+                              src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
+                              0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
     }
-    return e;
+
+    // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
+    // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
+    //noinspection MagicConstant
+    return new MouseEvent(src.getComponent(), src.getID(), src.getWhen(), src.getModifiers() | (1 << 8 + src.getButton()),
+                       src.getX(), src.getY(), 1, src.isPopupTrigger(), src.getButton() - 2);
   }
 
   /**
@@ -742,7 +747,9 @@ public final class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-    if (processAppActivationEvents(e)) return;
+    if (e instanceof WindowEvent) {
+      processAppActivationEvent((WindowEvent)e);
+    }
 
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
@@ -752,17 +759,15 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof WindowEvent || e instanceof FocusEvent) {
-      ActivityTracker.getInstance().inc();
-    }
-
     if (e instanceof MouseWheelEvent && processMouseWheelEvent((MouseWheelEvent)e)) {
       return;
     }
 
-    if (e instanceof KeyEvent || e instanceof MouseEvent) {
+    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
       ActivityTracker.getInstance().inc();
-      processIdleActivityListeners(e);
+      if (e instanceof InputEvent) {
+        processIdleActivityListeners(e);
+      }
     }
 
     // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
@@ -865,21 +870,31 @@ public final class IdeEventQueue extends EventQueue {
   private void dispatchMouseEvent(@NotNull AWTEvent e) {
     MouseEvent me = (MouseEvent)e;
     if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
-      // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
-      // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
-      // So we have to reset this WeakReference with synthetic event just before processing of actual event
-      super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+      resetGlobalMouseEventTarget(me);
     }
     if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
-      final MouseEvent toDispatch =
-        new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
-                       me.isPopupTrigger(), me.getButton());
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
+      redispatchLater(me);
     }
     if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
       defaultDispatchEvent(e);
     }
+  }
+
+  /**
+   * {@link java.awt.LightweightDispatcher#processMouseEvent} uses a recent 'active' component
+   * from inner WeakReference (see {@link LightweightDispatcher#mouseEventTarget}) even if the component has been already removed from component hierarchy.
+   * So we have to reset this WeakReference with synthetic event just before processing of the actual event
+   */
+  private void resetGlobalMouseEventTarget(MouseEvent me) {
+    super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+  }
+
+  private void redispatchLater(MouseEvent me) {
+    MouseEvent toDispatch =
+      new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
+                     me.isPopupTrigger(), me.getButton());
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
   }
 
   private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
@@ -891,16 +906,9 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static boolean processAppActivationEvents(@NotNull AWTEvent e) {
-    if (e instanceof WindowEvent) {
-      final WindowEvent we = (WindowEvent)e;
-
-      ApplicationActivationStateManager.updateState(we);
-
-      storeLastFocusedComponent(we);
-    }
-
-    return false;
+  private static void processAppActivationEvent(WindowEvent we) {
+    ApplicationActivationStateManager.updateState(we);
+    storeLastFocusedComponent(we);
   }
 
   private static void storeLastFocusedComponent(@NotNull WindowEvent we) {
@@ -937,11 +945,11 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static void fixStickyAlt(@NotNull AWTEvent e) {
-    if (!Registry.is("actionSystem.win.suppressAlt.new") &&
-        SystemInfo.isWinXpOrNewer &&
+    if (SystemInfo.isWinXpOrNewer &&
         !SystemInfo.isWinVistaOrNewer &&
         e instanceof KeyEvent &&
-        ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+        ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT &&
+        !Registry.is("actionSystem.win.suppressAlt.new")) {
       ((KeyEvent)e).consume();  // IDEA-17359
     }
   }
@@ -1073,6 +1081,10 @@ public final class IdeEventQueue extends EventQueue {
   public void maybeReady() {
     if (myReady.isEmpty() || !isReady()) return;
 
+    invokeReadyHandlers();
+  }
+
+  private void invokeReadyHandlers() {
     Runnable[] ready = myReady.toArray(new Runnable[0]);
     myReady.clear();
 
@@ -1322,10 +1334,9 @@ public final class IdeEventQueue extends EventQueue {
       NonUrgentExecutor.getInstance().execute(() -> myFrequentEventDetector.logMessage(message));
     }
 
-    boolean typeAheadEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
-      if (typeAheadEnabled && delayKeyEvents.get()) {
+      if (ourActionAwareTypeaheadEnabled && delayKeyEvents.get()) {
         myDelayedKeyEvents.offer((KeyEvent)event);
         if (TYPEAHEAD_LOG.isDebugEnabled()) {
           TYPEAHEAD_LOG.debug("Waiting for typeahead : " + event);
@@ -1338,8 +1349,7 @@ public final class IdeEventQueue extends EventQueue {
       focusEventsList.add(event);
     }
 
-    boolean typeAheadSearchEverywhereEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
-    if (typeAheadEnabled) {
+    if (ourActionAwareTypeaheadEnabled) {
       if (event.getID() == KeyEvent.KEY_PRESSED) {
         KeyEvent keyEvent = (KeyEvent)event;
         KeyStroke keyStrokeToFind = KeyStroke.getKeyStroke(keyEvent.getKeyCode(), keyEvent.getModifiers());
@@ -1357,7 +1367,7 @@ public final class IdeEventQueue extends EventQueue {
           lastTypeaheadTimestamp = System.currentTimeMillis();
         }
       }
-      else if (event.getID() == KeyEvent.KEY_RELEASED && typeAheadSearchEverywhereEnabled
+      else if (event.getID() == KeyEvent.KEY_RELEASED && ourTypeAheadSearchEverywhereEnabled
                && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
         KeyEvent keyEvent = (KeyEvent)event;
         // 1. check key code
@@ -1395,7 +1405,7 @@ public final class IdeEventQueue extends EventQueue {
         delayKeyEvents.set(false);
         flushDelayedKeyEvents();
         lastTypeaheadTimestamp = 0;
-        if (typeAheadSearchEverywhereEnabled) {
+        if (ourTypeAheadSearchEverywhereEnabled) {
           mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
         }
       }
@@ -1403,7 +1413,7 @@ public final class IdeEventQueue extends EventQueue {
 
     super.postEvent(event);
 
-    if (typeAheadSearchEverywhereEnabled &&
+    if (ourTypeAheadSearchEverywhereEnabled &&
         event instanceof KeyEvent &&
         (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED ||
          mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.DETECTED)) {
@@ -1414,10 +1424,10 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (typeAheadEnabled && doesFocusGoIntoPopup(event)) {
+    if (ourActionAwareTypeaheadEnabled && doesFocusGoIntoPopup(event)) {
       delayKeyEvents.set(false);
       postDelayedKeyEvents();
-      if (typeAheadSearchEverywhereEnabled) {
+      if (ourTypeAheadSearchEverywhereEnabled) {
         mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
       }
     }
