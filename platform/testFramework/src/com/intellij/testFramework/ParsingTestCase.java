@@ -157,7 +157,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLanguage = definition.getFileNodeType().getLanguage();
     myFileExt = extension;
     registerParserDefinition(definition);
-    myApp.getPicoContainer().registerComponentInstance(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+    myApp.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
   protected final <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
