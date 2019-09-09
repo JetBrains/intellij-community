@@ -471,7 +471,11 @@ public class NewMappings implements Disposable {
       filteredMappings.add(defaultMapping);
     }
 
-    MultiMap<String, VcsDirectoryMapping> groupedMappings = groupBy(oldMappings, mapping -> mapping.getVcs());
+    MultiMap<String, VcsDirectoryMapping> groupedMappings = new MultiMap<>();
+    for (VcsDirectoryMapping mapping : oldMappings) {
+      groupedMappings.putValue(mapping.getVcs(), mapping);
+    }
+
     for (Map.Entry<String, Collection<VcsDirectoryMapping>> entry : groupedMappings.entrySet()) {
       String vcsName = entry.getKey();
       Collection<VcsDirectoryMapping> mappings = entry.getValue();
