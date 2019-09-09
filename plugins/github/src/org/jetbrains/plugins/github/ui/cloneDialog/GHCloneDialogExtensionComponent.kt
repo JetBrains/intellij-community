@@ -165,7 +165,9 @@ internal class GHCloneDialogExtensionComponent(
       override fun keyPressed(e: KeyEvent?) {
         e ?: return
         if (e.keyCode == KeyEvent.VK_DOWN && repositoryList.itemsCount != 0) {
-          repositoryList.selectedIndex = 0
+          if (repositoryList.selectedIndex == -1) {
+            repositoryList.selectedIndex = 0
+          }
           repositoryList.requestFocus()
         }
       }
