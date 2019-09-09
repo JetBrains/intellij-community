@@ -75,10 +75,8 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     THUMB_HOVERED_BACKGROUND
   );
 
-  private static final int WIN_LIGHT_ALPHA = 160;
-  private static final int WIN_DARK_ALPHA = 180;
-  private static final int MAC_LIGHT_ALPHA = 120;
-  private static final int MAC_DARK_ALPHA = 255;
+  private static final int LIGHT_ALPHA = SystemInfo.isMac ? 120 : 160;
+  private static final int DARK_ALPHA = SystemInfo.isMac ? 255 : 180;
 
   ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
@@ -115,9 +113,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
       alpha = Integer.max(Integer.min(alpha, 255), 100);
     }
     else {
-      alpha = SystemInfo.isMac
-              ? UIUtil.isUnderDarcula() ? MAC_DARK_ALPHA : MAC_LIGHT_ALPHA
-              : UIUtil.isUnderDarcula() ? WIN_DARK_ALPHA : WIN_LIGHT_ALPHA;
+      alpha = UIUtil.isUnderDarcula() ? DARK_ALPHA : LIGHT_ALPHA;
     }
 
     return ColorUtil.toAlpha(color, alpha);
