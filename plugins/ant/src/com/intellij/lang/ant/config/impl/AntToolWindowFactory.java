@@ -3,7 +3,6 @@
  */
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,7 @@ public class AntToolWindowFactory implements ToolWindowFactory, DumbAware{
   }
 
   private static boolean shouldBeAvailableImpl(@NotNull Project project) {
-    return !AntConfigurationBase.getInstance(project).getBuildFileList().isEmpty();
+    return true;
   }
 
   public static void updateAvailability(@NotNull Project project) {
