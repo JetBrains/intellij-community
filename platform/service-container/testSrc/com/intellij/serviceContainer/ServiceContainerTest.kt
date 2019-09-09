@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 
 class ServiceContainerTest {
@@ -17,7 +18,10 @@ class ServiceContainerTest {
     componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
     componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
 
-    componentManager.getService(C1::class.java)
+    assertThatThrownBy {
+      componentManager.getService(C1::class.java)
+    }
+      .hasMessageContaining("Cyclic service initialization")
   }
 }
 
