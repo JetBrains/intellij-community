@@ -359,11 +359,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
-  open fun openProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
-    return openProject(Paths.get(projectPath), openProjectOptions)
-  }
-
-  fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+  // open for Rider
+  open fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
     val existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile)
     return when {
       existing != null -> existing
