@@ -78,7 +78,6 @@ public class Maven30AetherModelConverter extends MavenModelConverter {
       Artifact a = RepositoryUtils.toArtifact(each.getDependency().getArtifact());
       MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
 
-      Map<?, ?> data = each.getData();
       //String premanagedVersion = DependencyManagerUtils.getPremanagedVersion(each);
       //String premanagedScope = DependencyManagerUtils.getPremanagedScope(each);
 

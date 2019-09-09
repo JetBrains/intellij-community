@@ -50,12 +50,38 @@ public class MavenCompatibilityTest extends MavenImportingTestCase {
     });
   }
 
+  @Test
+  public void testInterpolateModel() throws Throwable {
+    doTest(() -> {
+
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<properties>\n" +
+                    "    <junitVersion>4.0</junitVersion>" +
+                    "  </properties>" +
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>junit</groupId>" +
+                    "    <artifactId>junit</artifactId>" +
+                    "    <version>${junitVersion}</version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+      assertModules("project");
+
+      assertModuleLibDep("project", "Maven: junit:junit:4.0");
+    });
+  }
+
   private void doTest(ThrowableRunnable<Throwable> throwableRunnable) throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
     Runnable runnable = () -> {
       try {
         TestLoggerFactory.onTestStarted();
+        assertEquals(myMavenVersion, MavenServerManager.getInstance().getCurrentMavenVersion());
         throwableRunnable.run();
         TestLoggerFactory.onTestFinished(true);
       }
