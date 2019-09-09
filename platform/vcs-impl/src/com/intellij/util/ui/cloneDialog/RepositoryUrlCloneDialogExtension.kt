@@ -73,11 +73,14 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         }
       }
 
-      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions.sortedArrayWith(CheckoutProvider.CheckoutProviderComparator())
+      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
+      providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
       for (checkoutProvider in providers) {
         vcsComponents[checkoutProvider] = checkoutProvider.buildVcsCloneComponent(project)
         comboBox.addItem(checkoutProvider)
       }
+      comboBox.selectedItem = selectedByDefaultProvider
     }
 
     override fun getView() = mainPanel
