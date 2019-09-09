@@ -1206,8 +1206,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @Deprecated
   public void registerFileType(@NotNull FileType fileType) {
-    //noinspection deprecation
     registerFileType(fileType, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 

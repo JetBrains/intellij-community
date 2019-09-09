@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +48,7 @@ public abstract class BaseDataReader {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   protected void start() {
+    DeprecatedMethodException.report("Use start(String) instead");
     start("");
   }
 

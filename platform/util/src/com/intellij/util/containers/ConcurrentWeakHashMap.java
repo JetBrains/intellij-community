@@ -16,8 +16,6 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.DeprecatedMethodException;
-import com.intellij.util.Function;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +26,8 @@ import java.lang.ref.WeakReference;
  * Concurrent weak key:K -> strong value:V map.
  * Null keys are allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakMap()} instead
  */
-@Deprecated
-public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
+final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
@@ -67,23 +63,6 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   protected KeyReference<K> createKeyReference(@NotNull K key,
                                                @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     return new WeakKey<>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
-  }
-
-  /**
-   * @deprecated use {@link ConcurrentFactoryMap#createWeakMap(Function)}
-   */
-  @Deprecated
-  public ConcurrentWeakHashMap(int initialCapacity) {
-    super(initialCapacity);
-    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
-  }
-
-  /**
-   * @deprecated use {@link ConcurrentFactoryMap#createWeakMap(Function)}
-   */
-  @Deprecated
-  public ConcurrentWeakHashMap() {
-    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
   }
 
   ConcurrentWeakHashMap(float loadFactor) {

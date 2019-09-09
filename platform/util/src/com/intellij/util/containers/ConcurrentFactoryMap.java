@@ -31,7 +31,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     DeprecatedMethodException.report("Use ConcurrentFactoryMap.create() instead");
   }
 
-  private ConcurrentFactoryMap(@SuppressWarnings("unused") boolean internalConstructor) {
+  private ConcurrentFactoryMap(@SuppressWarnings("unused") boolean goodConstructorHereHaveABiscuit) {
 
   }
 
@@ -183,29 +183,6 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
       @Override
       protected V create(T key) {
         return computeValue.fun(key);
-      }
-    };
-  }
-
-  /**
-   * @deprecated use {@link #create(Function, Supplier)} instead
-   */
-  @Deprecated
-  @NotNull
-  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull Function<? super K, ? extends V> computeValue,
-                                                     @NotNull Producer<? extends ConcurrentMap<K, V>> mapCreator) {
-    DeprecatedMethodException.report("Use ConcurrentFactoryMap.create() instead");
-    return new ConcurrentFactoryMap<K, V>(true) {
-      @Nullable
-      @Override
-      protected V create(K key) {
-        return computeValue.fun(key);
-      }
-
-      @NotNull
-      @Override
-      protected ConcurrentMap<K, V> createMap() {
-        return mapCreator.produce();
       }
     };
   }

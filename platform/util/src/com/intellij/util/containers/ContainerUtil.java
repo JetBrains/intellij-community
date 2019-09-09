@@ -2698,7 +2698,6 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
-    //noinspection deprecation
     return new ConcurrentWeakHashMap<>(0.75f);
   }
 
@@ -2717,14 +2716,12 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                  float loadFactor,
                                                                  int concurrencyLevel,
                                                                  @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    //noinspection deprecation
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    //noinspection deprecation
     return new ConcurrentWeakHashMap<>(hashingStrategy);
   }
 
@@ -2994,15 +2991,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakKeyWeakValueMap() {
-    //noinspection deprecation
-    return new WeakKeyWeakValueHashMap<>(true);
+    return new WeakKeyWeakValueHashMap<>();
   }
 
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    //noinspection deprecation
-    return new SoftKeySoftValueHashMap<>(true);
+    return new SoftKeySoftValueHashMap<>();
   }
 
   /**
