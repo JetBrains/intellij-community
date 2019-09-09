@@ -305,9 +305,7 @@ fun initApplication(rawArgs: Array<String>, initUiTask: CompletionStage<*> = Com
 
         // pre-load cursors used by drag'n'drop AWT subsystem
         invokeLaterWithAnyModality("setup DnD") {
-          if (!GraphicsEnvironment.isHeadless()) {
-            DragSource.getDefaultDragSource()
-          }
+          DragSource.getDefaultDragSource()
         }
       }
     }, AppExecutorUtil.getAppExecutorService() /* must be not executed neither in idea main thread, nor in EDT */)
