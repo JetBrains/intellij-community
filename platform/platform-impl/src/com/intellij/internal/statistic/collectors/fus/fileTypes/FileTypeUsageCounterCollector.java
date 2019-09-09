@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
@@ -31,7 +32,8 @@ public class FileTypeUsageCounterCollector {
   private static void trigger(@NotNull Project project,
                               @NotNull VirtualFile file,
                               @NotNull String event) {
-    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType());
+    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType()).
+      addData("file_path", EventLogConfiguration.INSTANCE.anonymize(file.getPath()));
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
