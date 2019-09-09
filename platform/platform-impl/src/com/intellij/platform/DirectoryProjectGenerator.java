@@ -23,6 +23,7 @@ public interface DirectoryProjectGenerator<T> {
   /**
    * @deprecated todo[vokin]: delete in 2016.3
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016.3")
   @Deprecated
   @Nullable
   default T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
