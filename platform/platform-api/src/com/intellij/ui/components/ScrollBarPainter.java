@@ -110,7 +110,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
 
     int alpha = Registry.intValue("contrast.scrollbars.alpha.level");
     if (alpha > 0) {
-      alpha = Integer.max(Integer.min(alpha, 255), 100);
+      alpha = Integer.min(alpha, 255);
     }
     else {
       alpha = UIUtil.isUnderDarcula() ? DARK_ALPHA : LIGHT_ALPHA;
