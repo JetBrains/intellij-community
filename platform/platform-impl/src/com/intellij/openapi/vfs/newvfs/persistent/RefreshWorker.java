@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
@@ -148,7 +149,11 @@ public class RefreshWorker {
     String[] persistedNames = snapshot.getFirst();
     VirtualFile[] children = snapshot.getSecond();
 
-    Collection<String> upToDateNames = fs.listStream(dir).filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
+    Collection<String> upToDateNames;
+    try (Stream<String> ss = fs.listStream(dir)) {
+      upToDateNames = ss.filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
+    }
+
     Set<String> newNames = newTroveSet(strategy, upToDateNames);
     if (dir.allChildrenLoaded() && children.length < upToDateNames.size()) {
       for (VirtualFile child : children) {
@@ -238,8 +243,12 @@ public class RefreshWorker {
     List<VirtualFile> cached = snapshot.getFirst();
     List<String> wanted = snapshot.getSecond();
 
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() || cached.isEmpty() ? null :
-      new OpenTHashSet<>(fs.listStream(dir).filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList()), strategy);
+    Collection<String> upToDateNames;
+    try (Stream<String> ss = fs.listStream(dir)) {
+      upToDateNames = ss.filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
+    }
+
+    OpenTHashSet<String> actualNames = fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(upToDateNames, strategy);
 
     if (LOG.isTraceEnabled()) LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
 

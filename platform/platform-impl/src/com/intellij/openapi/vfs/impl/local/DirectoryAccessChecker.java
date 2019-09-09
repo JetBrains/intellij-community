@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -41,8 +42,22 @@ public class DirectoryAccessChecker {
   }
 
   @NotNull
-  public static Stream<Path> getCheckedStream(@NotNull Path root) throws IOException {
-    return StreamSupport.stream(Files.newDirectoryStream(root, create()).spliterator(), false);
+  public static Stream<Path> getCheckedStream(@NotNull Path root) {
+    try {
+      DirectoryStream<Path> ds = Files.newDirectoryStream(root, create());
+      return StreamSupport.stream(ds.spliterator(), false).
+        onClose(() -> {
+          try {
+            ds.close();
+          }
+          catch (IOException ioex) {
+            throw new UncheckedIOException(ioex);
+          }
+        });
+    }
+    catch (IOException ignored) {
+      return Stream.empty();
+    }
   }
 
   /***********************************************************************************

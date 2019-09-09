@@ -27,7 +27,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
@@ -380,31 +379,26 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   @Override
   @NotNull
   public Stream<String> listStream(@NotNull VirtualFile file) {
-    try {
-      if (file.getParent() == null) {
-        Iterable<Path> roots = FileSystems.getDefault().getRootDirectories();
+    if (file.getParent() == null) {
+      Iterable<Path> roots = FileSystems.getDefault().getRootDirectories();
 
-        // return drive letter names for the 'fake' root on windows
-        if (SystemInfo.isWindows && file.getName().isEmpty()) {
-          return StreamSupport.stream(roots.spliterator(), false).
-            map(p -> StringUtil.trimTrailing(p.toString(), File.separatorChar));
-        }
-        else {
-          for (Path path : roots) {
-            if (path.getNameCount() == 0) {
-              return DirectoryAccessChecker.getCheckedStream(path).map(p -> p.getFileName().toString());
-            }
-            else
-              return Stream.empty();
+      // return drive letter names for the 'fake' root on windows
+      if (SystemInfo.isWindows && file.getName().isEmpty()) {
+        return StreamSupport.stream(roots.spliterator(), false).
+          map(p -> StringUtil.trimTrailing(p.toString(), File.separatorChar));
+      }
+      else {
+        for (Path path : roots) {
+          if (path.getNameCount() == 0) {
+            return DirectoryAccessChecker.getCheckedStream(path).map(p -> p.getFileName().toString());
           }
+          else
+            return Stream.empty();
         }
       }
+    }
 
-      return DirectoryAccessChecker.getCheckedStream(convertToPath(file)).map(p -> p.getFileName().toString());
-    }
-    catch (IOException ignored) {
-      return Stream.empty();
-    }
+    return DirectoryAccessChecker.getCheckedStream(convertToPath(file)).map(p -> p.getFileName().toString());
   }
 
   @Override

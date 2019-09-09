@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -110,6 +111,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
    */
   public boolean hasChildren(@NotNull VirtualFile file) {
-    return listStream(file).findAny().isPresent();
+    try(Stream<String> ss = listStream(file)) { // Make sure the stream gets closed
+      return ss.findAny().isPresent();
+    }
   }
 }
