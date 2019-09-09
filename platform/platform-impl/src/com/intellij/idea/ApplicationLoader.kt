@@ -280,7 +280,7 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
 
     val ref = AtomicReference<Future<CliResult>>()
     app.invokeAndWait({ ref.set(CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory).getSecond()) }, state)
-    CliResult.getOrWrapFailure(ref.get(), 1).returnCode
+    CliResult.unmap(ref.get(), 1).exitCode
   }
 }
 
@@ -385,7 +385,7 @@ open class IdeStarter : ApplicationStarter {
   override fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): Future<CliResult> {
     LOG.info("Request to open in $currentDirectory with parameters: ${args.joinToString(separator = ",")}")
     if (args.isEmpty()) {
-      return CliResult.ok()
+      return CliResult.OK_FUTURE
     }
 
     val filename = args[0]

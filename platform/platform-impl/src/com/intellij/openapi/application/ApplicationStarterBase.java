@@ -88,10 +88,10 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     try {
       Future<CliResult> commandFuture = processCommand(Arrays.asList(args), null);
       CliResult result = commandFuture.get();
-      if (result.getMessage() != null) {
-        System.out.println(result.getMessage());
+      if (result.message != null) {
+        System.out.println(result.message);
       }
-      exitCode = result.getReturnCode();
+      exitCode = result.exitCode;
     }
     catch (Exception e) {
       e.printStackTrace();

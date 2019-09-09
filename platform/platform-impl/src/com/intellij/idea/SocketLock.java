@@ -386,7 +386,7 @@ public final class SocketLock {
               else {
                 Function<List<String>, Future<CliResult>> listener = myCommandProcessorRef.get();
                 if (listener != null) {
-                  result = CliResult.getOrWrapFailure(listener.apply(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
+                  result = CliResult.unmap(listener.apply(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
                 }
                 else {
                   result = new CliResult(Main.ACTIVATE_LISTENER_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"));
@@ -394,7 +394,7 @@ public final class SocketLock {
               }
 
               List<String> response = new ArrayList<>();
-              ContainerUtil.addAllNotNull(response, OK_RESPONSE, String.valueOf(result.getReturnCode()), result.getMessage());
+              ContainerUtil.addAllNotNull(response, OK_RESPONSE, String.valueOf(result.exitCode), result.message);
               sendStringSequence(context, response);
             }
             context.close();

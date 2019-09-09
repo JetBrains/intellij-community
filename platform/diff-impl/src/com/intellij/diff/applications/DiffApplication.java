@@ -55,16 +55,15 @@ final class DiffApplication extends DiffApplicationBase {
 
     if (project != null) {
       CompletableFuture<CliResult> future = new CompletableFuture<>();
-      Runnable resultCallback = () -> future.complete(new CliResult(0, null));
-
-      DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.FRAME, null,
-                                                        wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
+      Runnable resultCallback = () -> future.complete(CliResult.OK);
+      DiffDialogHints dialogHints = new DiffDialogHints(
+        WindowWrapper.Mode.FRAME, null, wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
       DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
       return future;
     }
     else {
       DiffManagerEx.getInstance().showDiffBuiltin(null, chain, DiffDialogHints.MODAL);
-      return CliResult.ok();
+      return CliResult.OK_FUTURE;
     }
   }
 }

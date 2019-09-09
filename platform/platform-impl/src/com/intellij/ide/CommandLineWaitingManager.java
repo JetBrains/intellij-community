@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -88,12 +88,9 @@ public final class CommandLineWaitingManager {
 
   private void freeObject(@NotNull Object fileOrProject) {
     myDismissedObjects.remove(fileOrProject);
-    final CompletableFuture<CliResult> future = myFileOrProjectToCallback.remove(fileOrProject);
-    if (future == null) {
-      return;
-    }
-
-    future.complete(new CliResult(0, null));
+    CompletableFuture<CliResult> future = myFileOrProjectToCallback.remove(fileOrProject);
+    if (future == null) return;
+    future.complete(CliResult.OK);
   }
 
   public static class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> {

@@ -22,6 +22,6 @@ final class SaveStarter extends ApplicationStarterBase {
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     saveAll();
-    return CliResult.ok();
+    return CliResult.OK_FUTURE;
   }
 }

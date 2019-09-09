@@ -460,11 +460,11 @@ public final class StartupUtil {
 
       case ACTIVATED: {
         CliResult result = status.second;
-        String message = result.getMessage();
+        String message = result.message;
         if (message == null) message = "Already running";
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println(message);
-        System.exit(result.getReturnCode());
+        System.exit(result.exitCode);
       }
 
       case CANNOT_ACTIVATE: {
