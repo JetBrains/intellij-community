@@ -221,10 +221,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.myDumpInterval + "ms";
       if (sampled > 0) {
-        message += " ,GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
       }
       if (DebugAttachDetector.isDebugEnabled()) {
-        message += " ,debug agent: on";
+        message += ", debug agent: on";
       }
       if (nonEdt) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
