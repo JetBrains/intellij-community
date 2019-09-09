@@ -185,8 +185,6 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected void layoutLabels(final SingleRowPassInfo data) {
-    int totalLength = 0;
-    int positionStart = data.position;
     boolean layoutStopped = false;
     for (TabInfo eachInfo : data.toLayout) {
       final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
@@ -204,7 +202,6 @@ public abstract class SingleRowLayout extends TabLayout {
       data.position = getStrategy().getMaxPosition(label.getBounds());
       data.position += myTabs.getTabHGap();
 
-      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getTabHGap();
       if (!continueLayout) {
         layoutStopped = true;
       }
