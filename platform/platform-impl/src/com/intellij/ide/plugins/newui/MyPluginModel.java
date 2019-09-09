@@ -239,6 +239,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         return;
       }
 
+      myInstalledPluginComponents.add(component);
+
       List<ListPluginComponent> components = myInstalledPluginComponentMap.computeIfAbsent(component.myPlugin, __ -> new ArrayList<>());
       components.add(component);
     }

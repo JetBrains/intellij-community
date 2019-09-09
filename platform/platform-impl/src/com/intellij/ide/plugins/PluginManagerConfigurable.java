@@ -1020,11 +1020,11 @@ public class PluginManagerConfigurable
             for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
               IdeaPluginDescriptor descriptor = I.next();
               if (parser.attributes) {
-                if (parser.enabled && !myPluginModel.isEnabled(descriptor)) {
+                if (parser.enabled && (!myPluginModel.isEnabled(descriptor) || myPluginModel.hasErrors(descriptor))) {
                   I.remove();
                   continue;
                 }
-                if (parser.disabled && myPluginModel.isEnabled(descriptor)) {
+                if (parser.disabled && (myPluginModel.isEnabled(descriptor) || myPluginModel.hasErrors(descriptor))) {
                   I.remove();
                   continue;
                 }
@@ -1277,7 +1277,8 @@ public class PluginManagerConfigurable
 
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull String title) {
-    String action = IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String action =
+      IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
     return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
   }
