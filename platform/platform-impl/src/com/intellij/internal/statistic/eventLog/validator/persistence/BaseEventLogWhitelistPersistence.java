@@ -18,7 +18,7 @@ abstract public class BaseEventLogWhitelistPersistence {
   public abstract String getCachedWhitelist();
 
   @NotNull
-  public static File getDefaultWhitelistPath(@NotNull String recorderId, @NotNull String whitelistFileName) throws IOException {
+  public static File getDefaultWhitelistFile(@NotNull String recorderId, @NotNull String whitelistFileName) throws IOException {
     final Path configPath = Paths.get(PathManager.getConfigPath());
     final Path whitelistDir = configPath
       .resolve(FUS_WHITELIST_PATH)

@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence.getDefaultWhitelistPath
+import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence.getDefaultWhitelistFile
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.WHITE_LIST_DATA_FILE
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -49,11 +49,11 @@ class WhitelistConfigurationModel {
     panel = panel {
       row {
         label("Recorder:")
-        recorderComboBox(growX)
+        recorderComboBox(growX, pushX)
       }
       row {
-        useCustomPathCheckBox(growX)
-        pathField(growX)
+        useCustomPathCheckBox()
+        pathField(growX, pushX)
       }
     }
   }
@@ -112,7 +112,7 @@ class WhitelistConfigurationModel {
   }
 
   class WhitelistPathSettings(recorderId: String) {
-    private val defaultPath: String = getDefaultWhitelistPath(recorderId, WHITE_LIST_DATA_FILE).absolutePath
+    private val defaultPath: String = getDefaultWhitelistFile(recorderId, WHITE_LIST_DATA_FILE).absolutePath
     var customPath: String? = null
     var useCustomPath = false
 

@@ -23,28 +23,17 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   private final String myRecorderId;
   @NotNull
   private final EventLogExternalSettingsService mySettingsService;
-  @NotNull
-  private final EventLogWhitelistSettingsPersistence myWhitelistSettingsPersistence;
 
   public EventLogWhitelistPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
     mySettingsService = new EventLogExternalSettingsService(recorderId);
-    myWhitelistSettingsPersistence = EventLogWhitelistSettingsPersistence.getInstance();
   }
 
   @Override
   @Nullable
   public String getCachedWhitelist() {
     try {
-      WhitelistPathSettings settings = myWhitelistSettingsPersistence.getPathSettings(myRecorderId);
-      File file;
-      if (settings != null && settings.isUseCustomPath()) {
-        file = new File(settings.getCustomPath());
-      }
-      else {
-        file = getDefaultPath();
-        if (!file.exists()) initBuiltinWhiteList(file);
-      }
+      File file = getWhitelistFile();
       if (file.exists()) return FileUtil.loadFile(file);
     }
     catch (IOException e) {
@@ -53,8 +42,21 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     return null;
   }
 
+  @NotNull
+  private File getWhitelistFile() throws IOException {
+    WhitelistPathSettings settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId);
+    if (settings != null && settings.isUseCustomPath()) {
+      return new File(settings.getCustomPath());
+    }
+    else {
+      File file = getDefaultFile();
+      if (!file.exists()) initBuiltinWhiteList(file);
+      return file;
+    }
+  }
+
   public void updateWhiteListIfNeeded() {
-    WhitelistPathSettings settings = myWhitelistSettingsPersistence.getPathSettings(myRecorderId);
+    WhitelistPathSettings settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId);
     if (settings != null && settings.isUseCustomPath()) {
       return;
     }
@@ -80,9 +82,9 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
 
   private void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
     try {
-      final File file = getDefaultPath();
+      final File file = getDefaultFile();
       FileUtil.writeToFile(file, gsonWhiteListContent);
-      myWhitelistSettingsPersistence.setLastModified(myRecorderId, lastModified);
+      EventLogWhitelistSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -104,11 +106,11 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   private long getLastModified() {
-    return myWhitelistSettingsPersistence.getLastModified(myRecorderId);
+    return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 
   @NotNull
-  private File getDefaultPath() throws IOException {
-    return getDefaultWhitelistPath(myRecorderId, WHITE_LIST_DATA_FILE);
+  private File getDefaultFile() throws IOException {
+    return getDefaultWhitelistFile(myRecorderId, WHITE_LIST_DATA_FILE);
   }
 }

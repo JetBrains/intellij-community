@@ -121,6 +121,6 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   @NotNull
   public File getWhitelistFile() throws IOException {
-    return getDefaultWhitelistPath(myRecorderId, TEST_WHITE_LIST_DATA_FILE);
+    return getDefaultWhitelistFile(myRecorderId, TEST_WHITE_LIST_DATA_FILE);
   }
 }
