@@ -17,7 +17,6 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidatorEx;
 import git4idea.GitBranch;
-import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -89,18 +88,12 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
       if (inputString.equals(repository.getCurrentBranchName())) {
         conflictsWithCurrentName++;
       }
-      else {
-        GitBranchesCollection branchesCollection = repository.getBranches();
-        Collection<? extends GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
-        for (GitBranch branch : branches) {
-          if (branch.getName().equals(inputString)) {
-            myErrorText = "Branch name " + inputString + message;
-            if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
-              myErrorText += " in repository " + repository.getPresentableUrl();
-            }
-            return true;
-          }
+      else if (repository.getBranches().findBranchByName(inputString) != null) {
+        myErrorText = "Branch name " + inputString + message;
+        if (myRepositories.size() > 1 && !allReposHaveBranch(inputString, local)) {
+          myErrorText += " in repository " + repository.getPresentableUrl();
         }
+        return true;
       }
     }
     if (conflictsWithCurrentName == myRepositories.size()) {
@@ -113,10 +106,8 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
   private boolean allReposHaveBranch(String inputString, boolean local) {
     for (GitRepository repository : myRepositories) {
       GitBranchesCollection branchesCollection = repository.getBranches();
-      Collection<? extends GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
-      if (!GitBranchUtil.convertBranchesToNames(branches).contains(inputString)) {
-        return false;
-      }
+      GitBranch branch = local ? branchesCollection.findLocalBranch(inputString) : branchesCollection.findRemoteBranch(inputString);
+      if (branch == null) return false;
     }
     return true;
   }

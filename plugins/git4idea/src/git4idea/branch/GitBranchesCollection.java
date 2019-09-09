@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 /**
  * <p>
  * Storage for local, remote and current branches.
@@ -67,9 +69,13 @@ public final class GitBranchesCollection {
   }
 
   @Nullable
+  public GitRemoteBranch findRemoteBranch(@NotNull String name) {
+    return findByName(myRemoteBranches.keySet(), name);
+  }
+
+  @Nullable
   public GitBranch findBranchByName(@NotNull String name) {
-    GitLocalBranch branch = findLocalBranch(name);
-    return branch != null ? branch : findByName(myRemoteBranches.keySet(), name);
+    return chooseNotNull(findLocalBranch(name), findRemoteBranch(name));
   }
 
   @Nullable
