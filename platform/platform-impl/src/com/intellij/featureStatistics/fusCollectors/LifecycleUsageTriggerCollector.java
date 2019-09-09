@@ -13,6 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 
@@ -20,7 +22,8 @@ public final class LifecycleUsageTriggerCollector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector");
   private static final String LIFECYCLE = "lifecycle";
 
-  private static final EventsRateThrottle ourErrorsThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
+  private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
+  private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
 
   public static void onIdeStart() {
     final FeatureUsageData data = new FeatureUsageData().addData("eap", ApplicationManager.getApplication().isEAP());
@@ -90,10 +93,18 @@ public final class LifecycleUsageTriggerCollector {
         data.addData("memory_error_kind", StringUtil.toLowerCase(memoryErrorKind.name()));
       }
 
-      if (ourErrorsThrottle.tryPass(System.currentTimeMillis())) {
-        data.
-          addData("error_frames", description.getLastFrames(50)).
-          addData("error_size", description.getSize());
+      if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
+
+        List<String> frames = description.getLastFrames(50);
+        int framesHash = frames.hashCode();
+
+        data.addData("error_hash", framesHash);
+
+        if (ourErrorsIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
+          data.
+            addData("error_frames", frames).
+            addData("error_size", description.getSize());
+        }
       }
       else {
         data.addData("too_many_errors", true);
