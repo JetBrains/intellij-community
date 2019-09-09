@@ -192,7 +192,9 @@ abstract class GitMergeAction extends GitRepositoryAction {
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       repository.update();
-      if (updatedRanges != null && AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
+      if (updatedRanges != null &&
+          AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project))) &&
+          commitAfterMerge) {
         Map<GitRepository, HashRange> ranges = updatedRanges.calcCurrentPositions();
         GitUpdateInfoAsLog.NotificationData notificationData = new GitUpdateInfoAsLog(project, ranges).calculateDataAndCreateLogTab();
 
