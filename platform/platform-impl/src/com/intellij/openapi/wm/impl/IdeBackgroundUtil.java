@@ -399,34 +399,45 @@ public final class IdeBackgroundUtil {
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);
-      if ("editor".equals(type)) {
-        //noinspection CastConflictsWithInstanceof
-        Editor editor = c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
-                        c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
-        if (editor != null) {
-          if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
-          if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
-          Graphics2D gg = withEditorBackground(g, c);
-          if (gg instanceof MyGraphics) {
-            Color background1 = ((EditorEx)editor).getBackgroundColor();
-            Color background2 = ((EditorEx)editor).getGutterComponentEx().getBackground();
-            ((MyGraphics)gg).preserved = color -> color != background1 && color != background2;
-          }
-          return gg;
-        }
+
+      Editor editor = "editor".equals(type) ? obtainEditor(c) : null;
+      if (editor != null) {
+        if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+        if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
       }
+
       Graphics2D gg = withEditorBackground(g, c);
       if (gg instanceof MyGraphics) {
-        Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-        Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(true) :
-                           view instanceof JList ? UIUtil.getListSelectionBackground(true) :
-                           view instanceof JTable ? UIUtil.getTableSelectionBackground(true) : null;
-        Color selection2 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(false) :
-                           view instanceof JList ? UIUtil.getListSelectionBackground(false) :
-                           view instanceof JTable ? UIUtil.getTableSelectionBackground(false) : null;
-        ((MyGraphics)gg).preserved = color -> color == selection1 || color == selection2;
+        ((MyGraphics)gg).preserved =
+          editor != null ? getEditorPreserveColorCondition((EditorEx)editor) : getGeneralPreserveColorCondition(c);
       }
       return gg;
+    }
+
+    private static Editor obtainEditor(JComponent c) {
+      //noinspection CastConflictsWithInstanceof
+      return c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
+             c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) :
+             null;
+    }
+
+    @NotNull
+    private static Condition<Color> getEditorPreserveColorCondition(EditorEx editor) {
+      Color background1 = editor.getBackgroundColor();
+      Color background2 = editor.getGutterComponentEx().getBackground();
+      return color -> color != background1 && color != background2;
+    }
+
+    @NotNull
+    private static Condition<Color> getGeneralPreserveColorCondition(JComponent c) {
+      Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
+      Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(true) :
+                         view instanceof JList ? UIUtil.getListSelectionBackground(true) :
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(true) : null;
+      Color selection2 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(false) :
+                         view instanceof JList ? UIUtil.getListSelectionBackground(false) :
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(false) : null;
+      return color -> color == selection1 || color == selection2;
     }
   }
 }
