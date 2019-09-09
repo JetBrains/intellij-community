@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ThreeState;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -149,8 +148,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     }
 
     private boolean isToggleActionPushed() {
-      return selectedAction instanceof Toggleable &&
-             Toggleable.isSelected(myPresentation) == ThreeState.YES;
+      return selectedAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
     }
 
     @Override

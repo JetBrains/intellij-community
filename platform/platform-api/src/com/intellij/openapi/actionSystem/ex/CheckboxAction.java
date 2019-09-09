@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ThreeState;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +54,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
 
   protected void updateCustomComponent(JCheckBox checkBox, Presentation presentation) {
     updateCheckboxPresentation(checkBox, presentation);
-    checkBox.setSelected(Toggleable.isSelected(presentation) == ThreeState.YES);
+    checkBox.setSelected(Toggleable.isSelected(presentation));
   }
 
   static void updateCheckboxPresentation(JCheckBox checkBox, Presentation presentation) {

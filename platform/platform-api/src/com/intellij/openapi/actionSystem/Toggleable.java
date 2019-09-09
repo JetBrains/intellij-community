@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,19 +30,18 @@ public interface Toggleable {
    * Normally you should not use this directly.
    * Use {@link #isSelected(Presentation)} and {@link #setSelected(Presentation, boolean)} methods instead.
    */
+  @ApiStatus.Internal
   @NonNls String SELECTED_PROPERTY = "selected";
 
   /**
    * Checks whether given presentation is in the "selected" state
    * @param presentation presentation to check
-   * @return {@link ThreeState#YES} if "selected",
-   * {@link ThreeState#NO} if "not selected", {@link ThreeState#UNSURE} if the state wasn't set previously.
+   * @return true if "selected", false if "not selected" or the state wasn't set previously.
    */
-  @NotNull
   @Contract(pure = true)
-  static ThreeState isSelected(@NotNull Presentation presentation) {
+  static boolean isSelected(@NotNull Presentation presentation) {
     Object property = presentation.getClientProperty(SELECTED_PROPERTY);
-    return property instanceof Boolean ? ThreeState.fromBoolean((Boolean)property) : ThreeState.UNSURE;
+    return property instanceof Boolean && (Boolean)property;
   }
 
   /**

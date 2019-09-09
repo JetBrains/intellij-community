@@ -12,7 +12,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +138,7 @@ class TBItemAnActionButton extends TBItemButton {
 
     boolean isSelected = false;
     if (myAnAction instanceof Toggleable) {
-      isSelected = Toggleable.isSelected(presentation) == ThreeState.YES;
+      isSelected = Toggleable.isSelected(presentation);
       if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
