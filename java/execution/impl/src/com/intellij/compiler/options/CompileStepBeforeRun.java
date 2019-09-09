@@ -38,14 +38,14 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   /**
-   * @deprecated to be removed in IDEA 2017
+   * @deprecated to be removed in IDEA 2020.1
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
   /**
-   * @deprecated to be removed in IDEA 2017
+   * @deprecated to be removed in IDEA 2020.1
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
