@@ -895,13 +895,8 @@ public class EditorWindow {
 
   void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
     getManager().getReady(this).doWhenDone(() -> {
-      if (isDisposed()) return;
-      final EditorComposite selectedComposite = getSelectedEditor();
-      try {
+      if (!isDisposed()) {
         doTrimSize(limit, fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
-      }
-      finally {
-        setSelectedEditor(selectedComposite, false);
       }
     });
   }
