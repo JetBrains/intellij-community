@@ -335,26 +335,26 @@ public class DataManagerImpl extends DataManager {
     @Override
     public Object getData(@NotNull String dataId) {
       ProgressManager.checkCanceled();
+      boolean cacheable = ourSafeKeys.contains(dataId);
       if (ApplicationManager.getApplication().isDispatchThread()) {
         int currentEventCount = IdeEventQueue.getInstance().getEventCount();
         if (myEventCount != -1 && myEventCount != currentEventCount) {
           LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
                     currentEventCount);
-          return doGetData(dataId);
+          cacheable = false;
         }
       }
 
-      if (ourSafeKeys.contains(dataId)) {
-        Object answer = myCachedData.get(dataId);
-        if (answer == null) {
-          answer = doGetData(dataId);
-          myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
-        }
+      Object answer = cacheable ? myCachedData.get(dataId) : null;
+      if (answer != null) {
         return answer != NullResult.INSTANCE ? answer : null;
       }
-      else {
-        return doGetData(dataId);
+
+      answer = doGetData(dataId);
+      if (cacheable) {
+        myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
       }
+      return answer;
     }
 
     @Nullable
@@ -372,10 +372,11 @@ public class DataManagerImpl extends DataManager {
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
+      Object data = calcData(dataId, component);
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        return validateEditor((Editor)calcData(dataId, component));
+        return validateEditor((Editor)data);
       }
-      return calcData(dataId, component);
+      return data;
     }
 
     protected Object calcData(@NotNull String dataId, Component component) {
