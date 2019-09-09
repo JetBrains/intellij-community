@@ -203,7 +203,7 @@ internal class GHCloneDialogExtensionComponent(
     repositoriesPanel = panel {
       row {
         cell(isFullWidth = true) {
-          searchField(pushX, growX)
+          searchField.textEditor(pushX, growX)
           JSeparator(JSeparator.VERTICAL)(growY)
           accountsPanel()
         }
