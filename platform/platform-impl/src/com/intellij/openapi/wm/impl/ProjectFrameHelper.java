@@ -110,6 +110,9 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     updateTitle();
 
     myRootPane = new IdeRootPane(myFrame, this);
+    myFrame.setRootPane(myRootPane);
+    // NB!: the root pane must be set before decorator,
+    // which holds its own client properties in a root pane
     myFrameDecorator = IdeFrameDecorator.decorate(myFrame, myRootPane);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
@@ -173,7 +176,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     }, myFrameDecorator);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    myFrame.setRootPane(myRootPane);
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
