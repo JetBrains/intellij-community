@@ -35,7 +35,10 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.ModelInterpolator;
+import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
+import org.apache.maven.model.path.DefaultUrlNormalizer;
+import org.apache.maven.model.path.UrlNormalizer;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.plugin.LegacySupport;
@@ -569,16 +572,39 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
     myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
-    ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
-    myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
-    myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
-                             org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
+    ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
+
     ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
     myContainer.addComponent(modelValidator, ModelValidator.class.getName());
 
     DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
     defaultModelBuilder.setModelValidator(modelValidator);
     defaultModelBuilder.setModelInterpolator(modelInterpolator);
+  }
+
+  private ModelInterpolator createAndPutInterpolator(DefaultPlexusContainer container) {
+    if (VersionComparatorUtil.compare(getMavenVersion(), "3.6.2") >= 0) {
+      org.apache.maven.model.path.DefaultPathTranslator pathTranslator = new org.apache.maven.model.path.DefaultPathTranslator();
+      UrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
+      container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class.getName());
+      container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class, "ide");
+
+      container.addComponent(urlNormalizer, org.apache.maven.model.path.UrlNormalizer.class.getName());
+      container.addComponent(pathTranslator, org.apache.maven.model.path.UrlNormalizer.class, "ide");
+
+      StringSearchModelInterpolator interpolator = new CustomMaven3ModelInterpolator2();
+      interpolator.setPathTranslator(pathTranslator);
+      interpolator.setUrlNormalizer(urlNormalizer);
+      return interpolator;
+    }
+    else {
+
+      ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
+      myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
+      myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
+                               org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
+      return modelInterpolator;
+    }
   }
 
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {

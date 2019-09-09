@@ -114,6 +114,7 @@ public class MavenCompatibilityTest extends MavenImportingTestCase {
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
+      new String[]{"3.6.2"},
       new String[]{"3.6.1"},
       new String[]{"3.6.0"},
       new String[]{"3.5.4"},
