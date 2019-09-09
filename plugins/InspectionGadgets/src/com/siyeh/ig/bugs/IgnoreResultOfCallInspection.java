@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -63,6 +64,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException");
+  private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
+    .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   protected final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
@@ -186,25 +189,28 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     private void visitCalledExpression(PsiExpression call,
                                        PsiMethod method,
                                        @Nullable PsiElement errorContainer) {
+      if (shouldReport(call, method, errorContainer)) {
+        registerMethodCallOrRefError(call, method.getContainingClass());
+      }
+    }
+
+    private boolean shouldReport(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType)) return;
+      if (PsiType.VOID.equals(returnType)) return false;
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) return;
-      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return;
+      if (aClass == null) return false;
+      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
       if (PropertyUtil.isSimpleGetter(method)) {
-        registerMethodCallOrRefError(call, aClass);
-        return;
+        return !isIgnored(method, null);
       }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
-        registerMethodCallOrRefError(call, aClass);
-        return;
+        return !isIgnored(method, null);
       }
 
-      if (isKnownExceptionalSideEffectCaught(call)) return;
+      if (isKnownExceptionalSideEffectCaught(call)) return false;
 
       if (isPureMethod(method, call)) {
-        registerMethodCallOrRefError(call, aClass);
-        return;
+        return !isIgnored(method, null);
       }
 
       PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
@@ -212,16 +218,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         annotation = getAnnotationByShortNameCheckReturnValue(method);
       }
 
-      if (annotation != null) {
-        final PsiElement owner = (PsiElement)annotation.getOwner();
-        if (findAnnotationInTree(method, owner, Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue")) != null) {
-          return;
-        }
-      }
-      if (!myMethodMatcher.matches(method) && annotation == null) return;
-      if (isHardcodedException(call)) return;
+      if (!myMethodMatcher.matches(method) && annotation == null) return false;
+      if (isHardcodedException(call)) return false;
+      return !isIgnored(method, annotation);
+    }
 
-      registerMethodCallOrRefError(call, aClass);
+    private boolean isIgnored(@NotNull PsiMethod method, @Nullable PsiAnnotation annotation) {
+      final PsiElement owner = annotation == null ? null : (PsiElement)annotation.getOwner();
+      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS) != null;
     }
 
     private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
