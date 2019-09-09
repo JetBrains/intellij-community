@@ -135,10 +135,10 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Nullable
   @Override
   protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
-    int i = data.toLayout.size()-1;
-    while(i > 0) {
-      final TabInfo info = data.toLayout.get(i);
-      final TabLabel label = myTabs.myInfo2Label.get(info);
+    int i = data.toLayout.size() - 1;
+    while (i >= 0) {
+      TabInfo info = data.toLayout.get(i);
+      TabLabel label = myTabs.myInfo2Label.get(info);
       if (!label.getBounds().isEmpty()) {
         return label;
       }
