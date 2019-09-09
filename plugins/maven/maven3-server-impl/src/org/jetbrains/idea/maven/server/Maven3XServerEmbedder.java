@@ -590,7 +590,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class, "ide");
 
       container.addComponent(urlNormalizer, org.apache.maven.model.path.UrlNormalizer.class.getName());
-      container.addComponent(pathTranslator, org.apache.maven.model.path.UrlNormalizer.class, "ide");
+      container.addComponent(urlNormalizer, org.apache.maven.model.path.UrlNormalizer.class, "ide");
 
       StringSearchModelInterpolator interpolator = new CustomMaven3ModelInterpolator2();
       interpolator.setPathTranslator(pathTranslator);
