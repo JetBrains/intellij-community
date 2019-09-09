@@ -89,7 +89,7 @@ class CircletIdeaJobExecutionProvider(
     }
 
     private fun changeState(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
-        savedHandler(tx, setOf(JobStatusUpdate(job, newStatus)))
+        savedHandler(tx, setOf(JobExecutionStatusUpdate(job, newStatus)))
     }
 
     private fun generateFinalState(imageName: String) : ExecutionStatus {
