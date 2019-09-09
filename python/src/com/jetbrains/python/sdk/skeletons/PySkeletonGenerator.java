@@ -346,12 +346,12 @@ public class PySkeletonGenerator {
     skeletonsVFile.refresh(false, true);
   }
 
-  private static class LineWiseProcessOutputListenerAdapter extends ProcessAdapter {
+  public static class LineWiseProcessOutputListenerAdapter extends ProcessAdapter {
     private final StringBuilder myStdoutLine = new StringBuilder();
     private final StringBuilder myStderrLine = new StringBuilder();
     private final LineWiseProcessOutputListener myListener;
 
-    private LineWiseProcessOutputListenerAdapter(@NotNull LineWiseProcessOutputListener listener) {
+    public LineWiseProcessOutputListenerAdapter(@NotNull LineWiseProcessOutputListener listener) {
       myListener = listener;
     }
 
