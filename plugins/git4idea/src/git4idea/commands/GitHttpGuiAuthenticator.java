@@ -57,9 +57,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
   @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
-  @Nullable private ProviderAndData myProviderAndData = null;
-
-  private boolean myCredentialHelperShouldBeUsed = false;
+  @Nullable private volatile ProviderAndData myProviderAndData = null;
+  private volatile boolean myCredentialHelperShouldBeUsed = false;
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull Collection<String> urls,
