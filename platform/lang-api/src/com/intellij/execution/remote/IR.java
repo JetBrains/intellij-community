@@ -6,10 +6,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Function;
 
@@ -143,6 +146,9 @@ public class IR {
   public static class NewCommandLine {
     private RemoteValue<String> myExePath = RemoteValue.EMPTY_VALUE();
     private RemoteValue<String> myWorkingDirectory = RemoteValue.EMPTY_VALUE();
+    private RemoteValue<String> myInputFilePath = RemoteValue.EMPTY_VALUE();
+    private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+
     private final List<RemoteValue<String>> myParameters = new ArrayList<>();
     private final Map<String, RemoteValue<String>> myEnvironment = new HashMap<>();
 
@@ -155,7 +161,11 @@ public class IR {
         // todo[remoteServers]: handle this properly
         throw new RuntimeException("Cannot find command");
       }
-      return CommandLineUtil.toCommandLine(command, getParameters(target), target.getRemotePlatform().getPlatform());
+      return CommandLineUtil.toCommandLine(command, getParameters(), target.getRemotePlatform().getPlatform());
+    }
+
+    public void setCharset(@NotNull Charset charset) {
+      myCharset = charset;
     }
 
     public void setExePath(@NotNull RemoteValue<String> exePath) {
@@ -186,27 +196,40 @@ public class IR {
       myEnvironment.put(name, new FixedValue<>(value));
     }
 
-    //todo[remoteServers]: all `target`s are not used
-    public String getExePath(@NotNull RemoteEnvironment target) {
+    public void setInputFile(@NotNull RemoteValue<String> inputFilePath) {
+      myInputFilePath = inputFilePath;
+    }
+
+    public String getExePath() {
       return myExePath.getRemoteValue();
     }
 
     @Nullable
-    public String getWorkingDirectory(@NotNull RemoteEnvironment target) {
+    public String getWorkingDirectory() {
       return myWorkingDirectory.getRemoteValue();
     }
 
+    @Nullable
+    public String getInputFilePath() {
+      return myInputFilePath.getRemoteValue();
+    }
+
     @NotNull
-    public List<String> getParameters(@NotNull RemoteEnvironment target) {
+    public List<String> getParameters() {
       return ContainerUtil.mapNotNull(myParameters, RemoteValue::getRemoteValue);
     }
 
     @NotNull
-    public Map<String, String> getEnvironmentVariables(@NotNull RemoteEnvironment target) {
+    public Map<String, String> getEnvironmentVariables() {
       return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> {
         String value = e.getValue().getRemoteValue();
         return value != null ? Pair.create(e.getKey(), value) : null;
       });
+    }
+
+    @NotNull
+    public Charset getCharset() {
+      return myCharset;
     }
 
     public void addParameters(@NotNull List<String> parametersList) {
@@ -293,11 +316,16 @@ public class IR {
       if (myRequest instanceof LocalRunner.LocalEnvironmentRequest) {
         generalCommandLine.withParentEnvironmentType(((LocalRunner.LocalEnvironmentRequest)myRequest).myParentEnvironmentType);
       }
-      String workingDirectory = commandLine.getWorkingDirectory(this);
+      String inputFilePath = commandLine.getInputFilePath();
+      if (inputFilePath != null) {
+        generalCommandLine.withInput(new File(inputFilePath));
+      }
+      generalCommandLine.withCharset(commandLine.getCharset());
+      String workingDirectory = commandLine.getWorkingDirectory();
       if (workingDirectory != null) {
         generalCommandLine.withWorkDirectory(workingDirectory);
       }
-      generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables(this));
+      generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
       return generalCommandLine;
     }
   }

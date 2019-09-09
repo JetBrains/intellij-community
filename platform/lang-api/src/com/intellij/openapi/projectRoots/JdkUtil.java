@@ -503,20 +503,17 @@ public class JdkUtil {
   private static void appendEncoding(@NotNull SimpleJavaParameters javaParameters,
                                      @NotNull IR.NewCommandLine commandLine,
                                      @NotNull ParametersList parametersList) {
-    // for correct handling of process's input and output, values of file.encoding and charset of GeneralCommandLine should be in sync
+    // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
     String encoding = parametersList.getPropertyValue("file.encoding");
     if (encoding == null) {
       Charset charset = javaParameters.getCharset();
       if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
       commandLine.addParameter("-Dfile.encoding=" + charset.name());
-      //todo[remoteServers]: pass charset
-      //commandLine.withCharset(charset);
+      commandLine.setCharset(charset);
     }
     else {
       try {
-        Charset charset = Charset.forName(encoding);
-        //todo[remoteServers]: pass charset
-        //commandLine.withCharset(charset);
+        commandLine.setCharset(Charset.forName(encoding));
       }
       catch (UnsupportedCharsetException | IllegalCharsetNameException ignore) { }
     }

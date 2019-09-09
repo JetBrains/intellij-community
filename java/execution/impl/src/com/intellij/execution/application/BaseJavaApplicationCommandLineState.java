@@ -18,6 +18,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 /**
  * @author nik
  */
@@ -47,16 +49,19 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     IR.NewCommandLine newCommandLine = createNewCommandLine(request);
 
+    File inputFile = InputRedirectAware.getInputFile(myConfiguration);
+    if (inputFile != null) {
+      newCommandLine.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+    }
+
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    //todo[remoteServers]: support input file
-    //super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
     IR.RemoteEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
     Process process = remoteEnvironment.createProcess(newCommandLine, indicator);
 
     //todo[remoteServers]: invent the new method for building presentation string
     String commandRepresentation = StringUtil.join(newCommandLine.prepareCommandLine(remoteEnvironment), " ");
 
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation);
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation, newCommandLine.getCharset());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
