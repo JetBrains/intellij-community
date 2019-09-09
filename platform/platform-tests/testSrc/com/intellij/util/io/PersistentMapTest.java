@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -31,6 +32,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
+@HardwareAgentRequired
 public class PersistentMapTest extends PersistentMapTestBase {
   public void testRetainWriteOrderWhenCompactingBackward() throws IOException {
     clearMap(myFile, myMap);
