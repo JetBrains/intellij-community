@@ -171,42 +171,37 @@ private fun startApp(app: ApplicationImpl,
     scheduleIconPreloading()
   }
 
-  future.thenRunOrHandleError {
-    // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
-    val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
-    EventQueue.invokeLater {
-      placeOnEventQueueActivity.end()
-      StartupUtil.installExceptionHandler()
+  CompletableFuture.allOf(future, StartupUtil.getServerFuture())
+    .thenRunOrHandleError {
+      // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
+      val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
+      EventQueue.invokeLater {
+        placeOnEventQueueActivity.end()
+        StartupUtil.installExceptionHandler()
 
-      initAppActivity.runChild("built-in server initialization") {
-        // throws an exception if initialization has failed
-        StartupUtil.getServer()
-      }
-      initAppActivity.end()
+        app.loadComponents(SplashManager.getProgressIndicator())
 
-      app.loadComponents(SplashManager.getProgressIndicator())
+        if (!headless) {
+          addActivateAndWindowsCliListeners(app)
+        }
 
-      if (!headless) {
-        addActivateAndWindowsCliListeners(app)
-      }
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+          starter.main(ArrayUtilRt.toStringArray(args))
+        }
 
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        starter.main(ArrayUtilRt.toStringArray(args))
-      }
-
-      if (PluginManagerCore.isRunningFromSources()) {
-        AppExecutorUtil.getAppExecutorService().execute {
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+        if (PluginManagerCore.isRunningFromSources()) {
+          AppExecutorUtil.getAppExecutorService().execute {
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+          }
         }
       }
-    }
 
-    // execute in parallel to loading components - this functionality should be used only by plugin functionality,
-    // that used after start-up
-    ParallelActivity.APP_INIT.run("init system properties") {
-      SystemPropertyBean.initSystemProperties()
+      // execute in parallel to loading components - this functionality should be used only by plugin functionality,
+      // that used after start-up
+      ParallelActivity.APP_INIT.run("init system properties") {
+        SystemPropertyBean.initSystemProperties()
+      }
     }
-  }
 }
 
 private fun scheduleIconPreloading() {

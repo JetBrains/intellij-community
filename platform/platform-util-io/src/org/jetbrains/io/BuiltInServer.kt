@@ -56,7 +56,6 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       return start(multiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
 
-    @Throws(Exception::class)
     @JvmStatic
     fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)?): BuiltInServer {
       val threadFactory = BuiltInServerThreadFactory()

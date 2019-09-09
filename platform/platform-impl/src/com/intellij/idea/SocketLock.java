@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -43,6 +44,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,7 +70,7 @@ public final class SocketLock {
   private final String myConfigPath;
   private final String mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
-  private volatile Future<BuiltInServer> myBuiltinServerFuture;
+  private volatile CompletableFuture<BuiltInServer> myBuiltinServerFuture;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
     myConfigPath = canonicalPath(configPath);
@@ -117,7 +119,8 @@ public final class SocketLock {
     }
   }
 
-  @Nullable BuiltInServer getServer() {
+  @Nullable
+  BuiltInServer getServer() {
     Future<BuiltInServer> future = myBuiltinServerFuture;
     if (future != null) {
       try {
@@ -133,7 +136,13 @@ public final class SocketLock {
     return null;
   }
 
-  public @NotNull Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws Exception {
+  @Nullable
+  CompletableFuture<BuiltInServer> getServerFuture() {
+    return myBuiltinServerFuture;
+  }
+
+  @NotNull
+  public Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -158,35 +167,39 @@ public final class SocketLock {
       System.exit(0);
     }
 
-    myBuiltinServerFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
+    myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
       Activity activity = ParallelActivity.APP_INIT.start("built-in server launch");
 
       String token = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};
       Supplier<ChannelHandler> handlerSupplier = () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token);
       BuiltInServer server = BuiltInServer.startNioOrOio(BuiltInServer.getRecommendedWorkerCount(), 6942, 50, false, handlerSupplier);
+      try {
+        byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
+        Files.write(Paths.get(myConfigPath, PORT_FILE), portBytes);
+        Files.write(Paths.get(mySystemPath, PORT_FILE), portBytes);
 
-      byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
-      Files.write(Paths.get(myConfigPath, PORT_FILE), portBytes);
-      Files.write(Paths.get(mySystemPath, PORT_FILE), portBytes);
+        Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
+        Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
+        PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
+        if (view != null) {
+          try {
+            view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+          }
+          catch (IOException e) {
+            log(e);
+          }
+        }
 
-      Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
-      Files.write(tokenFile, token.getBytes(StandardCharsets.UTF_8));
-      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
-      if (view != null) {
-        try {
-          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-        }
-        catch (IOException e) {
-          log(e);
-        }
+        unlockPortFiles();
       }
-
-      unlockPortFiles();
+      catch (Exception e) {
+        ExceptionUtil.rethrow(e);
+      }
 
       activity.end();
       return server;
-    });
+    }, AppExecutorUtil.getAppExecutorService());
 
     log("exit: lock(): succeed");
     return pair(ActivationStatus.NO_INSTANCE, null);
