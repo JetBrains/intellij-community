@@ -25,7 +25,7 @@ import java.util.Objects;
 public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
-  static final String NORMAL_STATE_BOUNDS = "normalBounds";
+  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
 
   @Nullable
   private FrameHelper myFrameHelper;
@@ -66,7 +66,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     super.setRootPane(root);
   }
 
-  void setFrameHelper(@NotNull FrameHelper frameHelper, @Nullable FrameDecorator frameDecorator) {
+  void setFrameHelper(@Nullable FrameHelper frameHelper, @Nullable FrameDecorator frameDecorator) {
     myFrameHelper = frameHelper;
     myFrameDecorator = frameDecorator;
   }
@@ -95,7 +95,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public void setExtendedState(int state) {
-    if (getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
+    // do not load FrameInfoHelper class
+    if (LoadingPhase.COMPONENT_REGISTERED.isComplete() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
@@ -190,7 +191,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   /**
-   * @deprecated Use {@link ProjectFrameHelper#updateView()} instead.
+   * @deprecated Use {@link ProjectFrameHelper#getProject()} instead.
    */
   @Override
   @Deprecated

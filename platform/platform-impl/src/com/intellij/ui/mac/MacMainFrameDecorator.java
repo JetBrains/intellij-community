@@ -4,6 +4,7 @@ package com.intellij.ui.mac;
 import com.apple.eawt.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -19,7 +20,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -34,11 +34,12 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static com.intellij.ide.IdeEventQueue.updateActivatedWindowSet;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-public final class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
+public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
@@ -167,7 +168,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
   @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
-    public Boolean fun(Object o) {
+    public Boolean apply(Object o) {
       return UISettings.getInstance().getShowNavigationBar();
     }
   };
@@ -175,7 +176,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
   @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
-    public Boolean fun(Object o) {
+    public Boolean apply(Object o) {
       return UISettings.getInstance().getShowMainToolbar();
     }
   };
@@ -186,16 +187,28 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
   private boolean myInFullScreen;
 
-  public MacMainFrameDecorator(@NotNull JFrame frame, final boolean navBar) {
+  public MacMainFrameDecorator(@NotNull JFrame frame, boolean navBar, @NotNull Disposable parentDisposable) {
     super(frame);
 
     if (CURRENT_SETTER == null) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       CURRENT_SETTER = navBar ? NAVBAR_SETTER : TOOLBAR_SETTER;
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       CURRENT_GETTER = navBar ? NAVBAR_GETTER : TOOLBAR_GETTER;
-      SHOWN = CURRENT_GETTER.fun(null);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      SHOWN = CURRENT_GETTER.apply(null);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
+    //noinspection Convert2Lambda
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(final UISettings uiSettings) {
+        if (CURRENT_GETTER != null) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          SHOWN = CURRENT_GETTER.apply(null);
+        }
+      }
+    });
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -331,13 +344,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
     Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
                              originalWindowWillExitFullScreen, "v@::@");
-  }
-
-  @Override
-  public void uiSettingsChanged(final UISettings uiSettings) {
-    if (CURRENT_GETTER != null) {
-      SHOWN = CURRENT_GETTER.fun(null);
-    }
   }
 
   @Override

@@ -89,7 +89,7 @@ public class Patches {
 
   /**
    * XToolkit.getScreenInsets() may be very slow.
-   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
+   * See https://bugs.openjdk.java.net/browse/JDK-8170937.
    */
   public static boolean isJdkBugId8004103() {
     return SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();

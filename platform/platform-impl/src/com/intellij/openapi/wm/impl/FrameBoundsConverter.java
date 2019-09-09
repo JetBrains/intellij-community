@@ -26,24 +26,20 @@ public final class FrameBoundsConverter {
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
     boolean scaleNeeded = shouldConvert();
-    try {
-      for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-        GraphicsConfiguration gc = gd.getDefaultConfiguration();
-        Rectangle devBounds = gc.getBounds(); // in user space
-        if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
-        if (devBounds.contains(centerX, centerY)) {
-          if (scaleNeeded) scaleDown(b, gc); // to user space if needed
-          // do not return bounds bigger than the corresponding screen rectangle
-          Rectangle screen = ScreenUtil.getScreenRectangle(gc);
-          if (b.x < screen.x) b.x = screen.x;
-          if (b.y < screen.y) b.y = screen.y;
-          if (b.width > screen.width) b.width = screen.width;
-          if (b.height > screen.height) b.height = screen.height;
-          break;
-        }
+    for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+      GraphicsConfiguration gc = gd.getDefaultConfiguration();
+      Rectangle devBounds = gc.getBounds(); // in user space
+      if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
+      if (devBounds.contains(centerX, centerY)) {
+        if (scaleNeeded) scaleDown(b, gc); // to user space if needed
+        // do not return bounds bigger than the corresponding screen rectangle
+        Rectangle screen = ScreenUtil.getScreenRectangle(gc);
+        if (b.x < screen.x) b.x = screen.x;
+        if (b.y < screen.y) b.y = screen.y;
+        if (b.width > screen.width) b.width = screen.width;
+        if (b.height > screen.height) b.height = screen.height;
+        break;
       }
-    }
-    catch (HeadlessException ignore) {
     }
     return b;
   }

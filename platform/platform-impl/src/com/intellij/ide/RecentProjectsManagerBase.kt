@@ -192,7 +192,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun updateLastProjectPath() {
-    val openProjects: Array<Project?> = ProjectManager.getInstance().openProjects
+    val openProjects = ProjectManager.getInstance().openProjects
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -359,20 +359,24 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
-  open fun doOpenProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
-    return doOpenProject(Paths.get(projectPath), openProjectOptions)
+  open fun openProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
+    return openProject(Paths.get(projectPath), openProjectOptions)
   }
 
-  fun doOpenProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+  fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
     val existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile)
     return when {
       existing != null -> existing
-      ProjectUtil.isValidProjectPath(projectFile) -> PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null)
-      else -> // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
+      ProjectUtil.isValidProjectPath(projectFile) -> {
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null)
+      }
+      else -> {
+        // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
         // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
         // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
         // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
         ProjectUtil.openOrImport(projectFile, openProjectOptions)
+      }
     }
   }
 
@@ -456,7 +460,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       options.projectWorkspaceId = value.projectWorkspaceId
       options.showWelcomeScreen = false
       options.sendFrameBack = someProjectWasOpened
-      val project = doOpenProject(Paths.get(key), options)
+      val project = openProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
       }
@@ -516,8 +520,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
 
     logger<RecentProjectsManager>().runAndLogException {
-      if (writLastProjectInfo && Registry.`is`("ide.project.frame.as.splash")) {
-        writeInfoFile(frameInfo, frame.frame, getLastProjectFrameInfoFile())
+      if (writLastProjectInfo) {
+        writeInfoFile(frameInfo, frame.frame)
       }
 
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
@@ -526,7 +530,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  private fun writeInfoFile(frameInfo: FrameInfo?, frame: JFrame, infoFile: Path) {
+  private fun writeInfoFile(frameInfo: FrameInfo?, frame: JFrame) {
+    if (!Registry.`is`("ide.project.frame.as.splash")) {
+      return
+    }
+
+    val infoFile = getLastProjectFrameInfoFile()
     val bounds = frameInfo?.bounds
     if (bounds == null) {
       Files.deleteIfExists(infoFile)

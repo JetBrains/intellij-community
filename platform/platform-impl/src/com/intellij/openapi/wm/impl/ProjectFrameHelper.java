@@ -38,6 +38,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -70,15 +71,20 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
+
+  @Nullable
   private IdeFrameDecorator myFrameDecorator;
 
   private volatile Image selfie;
 
-  private final IdeFrameImpl myFrame;
+  private IdeFrameImpl myFrame;
 
-  public ProjectFrameHelper(@NotNull IdeFrameImpl frame) {
+  public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     myFrame = frame;
+    this.selfie = selfie;
     setupCloseAction();
+
+    preInit();
   }
 
   @Nullable
@@ -100,13 +106,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return ((IdeRootPane)projectFrame.getRootPane()).getFrameHelper();
   }
 
-  public void preInit(@Nullable Image selfie) {
-    this.selfie = selfie;
-
+  private void preInit() {
     updateTitle();
 
     myRootPane = new IdeRootPane(myFrame, this);
-    myFrameDecorator = IdeFrameDecorator.decorate(myFrame);
+    myFrameDecorator = IdeFrameDecorator.decorate(myFrame, myRootPane);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
       @Nullable
@@ -170,10 +174,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     myFrame.setRootPane(myRootPane);
-    if (myFrame.isVisible()) {
-      // otherwise not painted if frame already visible
-      myRootPane.invalidate();
-    }
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
@@ -262,17 +262,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   @Override
   public JComponent getComponent() {
     return myFrame.getRootPane();
-  }
-
-  public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
-    int state = frameInfo.getExtendedState();
-    boolean isMaximized = FrameInfoHelper.isMaximized(state);
-    if (bounds != null && isMaximized && myFrame.getExtendedState() == Frame.NORMAL) {
-      myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
-    }
-
-    myFrame.setExtendedState(state);
-    return isMaximized;
   }
 
   private void setupCloseAction() {
@@ -495,7 +484,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private void dispose() {
     if (SystemInfo.isMac && isInFullScreen()) {
-      ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
+      ((MacMainFrameDecorator)Objects.requireNonNull(myFrameDecorator)).toggleFullScreenNow();
     }
 
     if (isTemporaryDisposed()) {
@@ -519,12 +508,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       Disposer.dispose(myRootPane);
       myRootPane = null;
     }
-    if (myFrameDecorator != null) {
-      Disposer.dispose(myFrameDecorator);
-      myFrameDecorator = null;
-    }
 
     myFrame.doDispose();
+    myFrameDecorator = null;
+    myFrame.setFrameHelper(null, null);
+    myFrame = null;
   }
 
   private boolean isTemporaryDisposed() {
@@ -537,6 +525,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   @NotNull
+  @ApiStatus.Internal
   IdeRootPane getRootPane() {
     return myRootPane;
   }

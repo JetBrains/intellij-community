@@ -530,8 +530,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame());
-      frame.preInit(null);
+      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null);
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();

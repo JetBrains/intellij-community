@@ -219,7 +219,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
 
   @Override
   protected final Container createContentPane() {
-    myContentPane = new IdePanePanel(new BorderLayout());
+    myContentPane = new JBPanel<>(new BorderLayout());
+    myContentPane.setBackground(IdeBackgroundUtil.getIdeBackgroundColor());
     return myContentPane;
   }
 
@@ -309,17 +310,20 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   private void updateMainMenuVisibility() {
-    if (UISettings.getInstance().getPresentationMode()) return;
-    if (IdeFrameDecorator.isCustomDecorationActive()) return;
+    if (UISettings.getInstance().getPresentationMode() || IdeFrameDecorator.isCustomDecorationActive()) {
+      return;
+    }
+
     final boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
-    final boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && UISettings.getInstance().getShowMainMenu(); // don't show swing-menu when global (system) menu presented
+    // don't show swing-menu when global (system) menu presented
+    final boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && UISettings.getInstance().getShowMainMenu();
     if (visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
   }
 
   void installNorthComponents(final Project project) {
-    if(myCustomFrameTitlePane != null) {
+    if (myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.setProject(project);
     }
 
@@ -358,7 +362,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
       component.uiSettingsChanged(uiSettings);
     }
-    IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
+    IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, this);
     BalloonLayout layout = frame != null ? frame.getBalloonLayout() : null;
     if (layout instanceof BalloonLayoutImpl) ((BalloonLayoutImpl)layout).queueRelayout();
   }

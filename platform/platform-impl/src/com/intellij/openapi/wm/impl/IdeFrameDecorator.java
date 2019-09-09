@@ -22,8 +22,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.FrameDecorator {
-  protected JFrame myFrame;
+public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
+  protected final JFrame myFrame;
 
   protected IdeFrameDecorator(@NotNull JFrame frame) {
     myFrame = frame;
@@ -35,22 +35,17 @@ public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.Fram
   @NotNull
   public abstract Promise<?> toggleFullScreen(boolean state);
 
-  @Override
-  public void dispose() {
-    myFrame = null;
-  }
-
   @Nullable
-  public static IdeFrameDecorator decorate(@NotNull JFrame frame) {
+  public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     if (SystemInfo.isMac) {
-      return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode());
+      return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode(), parentDisposable);
     }
     else if (SystemInfo.isWindows) {
       return new WinMainFrameDecorator(frame);
     }
     else if (SystemInfo.isXWindow) {
       if (X11UiUtil.isFullScreenSupported()) {
-        return new EWMHFrameDecorator(frame);
+        return new EWMHFrameDecorator(frame, parentDisposable);
       }
     }
 
@@ -58,12 +53,10 @@ public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.Fram
   }
 
   protected void notifyFrameComponents(boolean state) {
-    if (myFrame != null) {
-      myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
-      JMenuBar menuBar = myFrame.getJMenuBar();
-      if (menuBar != null) {
-        menuBar.putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
-      }
+    myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+    JMenuBar menuBar = myFrame.getJMenuBar();
+    if (menuBar != null) {
+      menuBar.putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
     }
   }
 
@@ -81,10 +74,6 @@ public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.Fram
     @NotNull
     @Override
     public Promise<?> toggleFullScreen(boolean state) {
-      if (myFrame == null) {
-        return Promises.rejectedPromise();
-      }
-
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
       if (state && extendedState == Frame.NORMAL) {
@@ -127,8 +116,9 @@ public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.Fram
   private static class EWMHFrameDecorator extends IdeFrameDecorator {
     private Boolean myRequestedState = null;
 
-    private EWMHFrameDecorator(JFrame frame) {
+    private EWMHFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
       super(frame);
+
       frame.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
@@ -150,7 +140,7 @@ public abstract class IdeFrameDecorator implements Disposable, IdeFrameImpl.Fram
           }
         };
         frame.addWindowListener(deiconifyListener);
-        Disposer.register(this, new Disposable() {
+        Disposer.register(parentDisposable, new Disposable() {
           @Override
           public void dispose() {
             frame.removeWindowListener(deiconifyListener);

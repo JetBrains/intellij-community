@@ -96,22 +96,22 @@ public final class SplashManager {
     Rectangle savedBounds = new Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt());
     //noinspection UseJBColor
     Color backgroundColor = new Color(buffer.getInt(), /* hasAlpha = */ true);
-
     @SuppressWarnings("unused")
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
-    Rectangle effectiveBounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds);
+
     IdeFrameImpl frame = new IdeFrameImpl();
     frame.setAutoRequestFocus(false);
-    frame.setLocation(effectiveBounds.x, effectiveBounds.y);
-    frame.setSize(effectiveBounds.width, effectiveBounds.height);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+    frame.setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds));
+    frame.setExtendedState(extendedState);
+
     frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));
     frame.setBackground(backgroundColor);
     if (SystemInfoRt.isMac) {
       frame.setIconImage(null);
     }
-    frame.setExtendedState(extendedState);
     frame.setVisible(true);
     return frame;
   }
