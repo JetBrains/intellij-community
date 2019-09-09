@@ -267,11 +267,6 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  public final List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws ExecutionException, InvalidSdkException {
-    return commandBuilder().runGeneration(indicator);
-  }
-
-  @NotNull
   protected List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     final List<GenerationResult> results = new ArrayList<>();
@@ -339,11 +334,6 @@ public class PySkeletonGenerator {
                                      builder.getTimeout(Time.MINUTE * 20),
                                      listener);
     return results;
-  }
-
-  @NotNull
-  public final ProcessOutput runProcess() throws ExecutionException, InvalidSdkException {
-    return runProcess(commandBuilder());
   }
 
   @NotNull
