@@ -1,10 +1,6 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
     </component>
