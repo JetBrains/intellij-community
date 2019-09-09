@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,8 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.Object;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,20 +43,6 @@ public final class ElementPatternCondition<T> {
     myInitialCondition = original.getInitialCondition();
     myConditions = new SmartList<>(original.getConditions());
     myConditions.add(condition);
-  }
-
-  /**
-   * @deprecated To remove in IDEA 15. Use {@link ElementPattern#accepts(Object, ProcessingContext)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  public boolean accepts(@Nullable Object o, final ProcessingContext context) {
-    if (!myInitialCondition.accepts(o, context)) return false;
-    final int listSize = myConditions.size();
-    for (int i = 0; i < listSize; i++) {
-      if (!myConditions.get(i).accepts((T)o, context)) return false;
-    }
-    return true;
   }
 
   public final String toString() {
