@@ -340,6 +340,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     loadComponents(null);
+    callAppInitialized();
   }
 
   @ApiStatus.Internal
@@ -353,32 +354,33 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       else {
         ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
       }
-
-      executeOnPooledThread(() -> createLocatorFile());
-
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
-
-      Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
-        if (listener == null) {
-          break;
-        }
-
-        try {
-          listener.componentsInitialized();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-      activity.end();
     }
     finally {
       token.finish();
     }
+  }
+
+  public void callAppInitialized() {
+    createLocatorFile();
+
+    Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
+    for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
+      if (listener == null) {
+        break;
+      }
+
+      try {
+        listener.componentsInitialized();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+    activity.end();
   }
 
   @Override

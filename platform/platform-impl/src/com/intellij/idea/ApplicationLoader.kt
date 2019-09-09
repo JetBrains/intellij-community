@@ -66,6 +66,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.BiConsumer
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
@@ -140,9 +141,12 @@ private fun startApp(app: ApplicationImpl,
     .thenAccept {
       val preloadServiceActivity = ParallelActivity.APP_INIT.start("preload services")
       app.preloadServices(it)
-        .thenRun {
+        .whenComplete(BiConsumer { _, error ->
           preloadServiceActivity.end()
-        }
+          if (error != null) {
+            LOG.warn(error)
+          }
+        })
     }
 
   if (!headless) {
@@ -175,16 +179,25 @@ private fun startApp(app: ApplicationImpl,
     .thenRunOrHandleError {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
-      EventQueue.invokeLater {
+      EventQueue.invokeAndWait {
         placeOnEventQueueActivity.end()
-        StartupUtil.installExceptionHandler()
 
         app.loadComponents(SplashManager.getProgressIndicator())
+      }
 
-        if (!headless) {
-          addActivateAndWindowsCliListeners(app)
-        }
+      app.callAppInitialized()
 
+      // execute in parallel to loading components - this functionality should be used only by plugin functionality,
+      // that used after start-up
+      ParallelActivity.APP_INIT.run("init system properties") {
+        SystemPropertyBean.initSystemProperties()
+      }
+
+      if (!headless) {
+        addActivateAndWindowsCliListeners(app)
+      }
+
+      EventQueue.invokeLater {
         (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
           starter.main(ArrayUtilRt.toStringArray(args))
         }
@@ -194,12 +207,6 @@ private fun startApp(app: ApplicationImpl,
             AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
           }
         }
-      }
-
-      // execute in parallel to loading components - this functionality should be used only by plugin functionality,
-      // that used after start-up
-      ParallelActivity.APP_INIT.run("init system properties") {
-        SystemPropertyBean.initSystemProperties()
       }
     }
 }
