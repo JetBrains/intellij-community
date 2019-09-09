@@ -339,6 +339,7 @@ public final class SystemShortcuts {
     return result == null ? ourUnknownSysAction : result;
   }
 
+  private static final boolean DEBUG_SYSTEM_SHORTCUTS = Boolean.getBoolean("debug.system.shortcuts");
   private void readSystem() {
     myKeyStroke2SysShortcut.clear();
 
@@ -361,6 +362,7 @@ public final class SystemShortcuts {
       if (all == null || all.isEmpty())
         return;
 
+      String debugInfo = "";
       for (AWTKeyStroke shk: all) {
         if (shk.getModifiers() == 0) {
           //System.out.println("Skip system shortcut [without modifiers]: " + shk);
@@ -382,6 +384,13 @@ public final class SystemShortcuts {
           sysKS = KeyStroke.getKeyStroke(shk.getKeyCode(), shk.getModifiers());
 
         myKeyStroke2SysShortcut.put(sysKS, shk);
+
+        if (DEBUG_SYSTEM_SHORTCUTS) {
+          debugInfo += shk.toString() + ";\n";
+        }
+      }
+      if (DEBUG_SYSTEM_SHORTCUTS) {
+        Logger.getInstance(SystemShortcuts.class).info("system shortcuts:\n" + debugInfo);
       }
     } catch (Throwable e) {
       Logger.getInstance(SystemShortcuts.class).debug(e);
