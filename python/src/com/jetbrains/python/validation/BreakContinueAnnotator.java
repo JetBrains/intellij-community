@@ -18,7 +18,7 @@ package com.jetbrains.python.validation;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyContinueStatement;
 
-import static com.jetbrains.python.PyBundle.message;
+import static com.jetbrains.python.PyPsiBundle.message;
 
 /**
  * Annotates misplaced 'break' and 'continue'.

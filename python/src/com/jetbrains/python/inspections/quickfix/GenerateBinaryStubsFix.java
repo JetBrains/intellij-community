@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
@@ -256,6 +257,6 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @Nullable
   private static Sdk getPythonSdk(@NotNull final PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    return (module == null) ? null : PythonSdkType.findPythonSdk(module);
+    return (module == null) ? null : PythonSdkUtil.findPythonSdk(module);
   }
 }

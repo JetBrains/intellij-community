@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -19,6 +20,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +114,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
           initPyVFile.move(this, parentDirVFile);
         }
         else {
-          PyUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
+          PyRefactoringUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
         }
         pyPackage.getVirtualFile().delete(this);
       }

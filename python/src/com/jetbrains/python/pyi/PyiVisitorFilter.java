@@ -17,6 +17,7 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
 /**

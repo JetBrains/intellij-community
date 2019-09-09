@@ -33,11 +33,11 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,8 +82,8 @@ public class VFSTestFrameworkListener {
           if (existingFrameworks.isEmpty()) {
             continue;
           }
-          for (Sdk sdk : PythonSdkType.getAllSdks()) {
-            if (PySdkUtil.isRemote(sdk)) {
+          for (Sdk sdk : PythonSdkUtil.getAllSdks()) {
+            if (PythonSdkUtil.isRemote(sdk)) {
               continue;
             }
             for (VirtualFile virtualFile : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
@@ -152,7 +152,7 @@ public class VFSTestFrameworkListener {
       final List<PyPackage> packages = manager.getPackages();
       if (packages != null) {
         for (final String frameworkName : testFrameworkNames) {
-          result.put(frameworkName, PyPackageUtil.findPackage(packages, frameworkName) != null);
+          result.put(frameworkName, PyPsiPackageUtil.findPackage(packages, frameworkName) != null);
         }
       }
     }

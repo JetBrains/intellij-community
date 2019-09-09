@@ -13,8 +13,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -76,7 +76,7 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     if (problemFunction == null) return;
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
-    final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
+    final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(problemFunction, false);
 
     if (!prepareForWrite(file, usages)) return;
 

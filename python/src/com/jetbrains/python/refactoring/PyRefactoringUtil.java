@@ -1,24 +1,38 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
+import com.google.common.collect.Collections2;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
+import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
+import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiPredicate;
 
@@ -117,51 +131,6 @@ public class PyRefactoringUtil {
       return expression;
     }
     return null;
-  }
-
-  @NotNull
-  public static Collection<String> collectUsedNames(@Nullable final PsiElement scope) {
-    if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
-      return Collections.emptyList();
-    }
-    final Set<String> variables = new HashSet<String>() {
-      @Override
-      public boolean add(String s) {
-        return s != null && super.add(s);
-      }
-    };
-    scope.acceptChildren(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyTargetExpression(@NotNull final PyTargetExpression node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyNamedParameter(@NotNull final PyNamedParameter node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
-        if (!node.isQualified()) {
-          variables.add(node.getReferencedName());
-        }
-        else {
-          super.visitPyReferenceExpression(node);
-        }
-      }
-
-      @Override
-      public void visitPyFunction(@NotNull final PyFunction node) {
-        variables.add(node.getName());
-      }
-
-      @Override
-      public void visitPyClass(@NotNull final PyClass node) {
-        variables.add(node.getName());
-      }
-    });
-    return variables;
   }
 
   @Nullable
@@ -298,25 +267,6 @@ public class PyRefactoringUtil {
     return Comparing.strEqual(firstName, secondName) && firstParams.length == secondParams.length;
   }
 
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
-    final List<UsageInfo> usages = new ArrayList<>();
-    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
-    assert handler != null;
-    final List<PsiElement> elementsToProcess = new ArrayList<>();
-    Collections.addAll(elementsToProcess, handler.getPrimaryElements());
-    Collections.addAll(elementsToProcess, handler.getSecondaryElements());
-    for (PsiElement e : elementsToProcess) {
-      handler.processElementUsages(e, usageInfo -> {
-        if (!usageInfo.isNonCodeUsage) {
-          usages.add(usageInfo);
-        }
-        return true;
-      }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
-    }
-    return usages;
-  }
-
   /**
    * Selects the shortest unique name inside the scope of scopeAnchor generated using {@link NameSuggesterUtil#generateNamesByType(String)}.
    * If none of those names is suitable, unique names is made by appending number suffix.
@@ -389,5 +339,186 @@ public class PyRefactoringUtil {
 
   public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
+  }
+
+  /**
+   * Adds element to statement list to the correct place according to its dependencies.
+   *
+   * @param element       to insert
+   * @param statementList where element should be inserted
+   * @return inserted element
+   */
+  public static <T extends PyElement> T addElementToStatementList(@NotNull final T element,
+                                                                  @NotNull final PyStatementList statementList) {
+    PsiElement before = null;
+    PsiElement after = null;
+    for (final PyStatement statement : statementList.getStatements()) {
+      if (PyDependenciesComparator.depends(element, statement)) {
+        after = statement;
+      }
+      else if (PyDependenciesComparator.depends(statement, element)) {
+        before = statement;
+      }
+    }
+    final PsiElement result;
+    if (after != null) {
+
+      result = statementList.addAfter(element, after);
+    }
+    else if (before != null) {
+      result = statementList.addBefore(element, before);
+    }
+    else {
+      result = addElementToStatementList(element, statementList, true);
+    }
+    @SuppressWarnings("unchecked") // Inserted element can't have different type
+    final T resultCasted = (T)result;
+    return resultCasted;
+  }
+
+  /**
+   * Inserts specified element into the statement list either at the beginning or at its end. If new element is going to be
+   * inserted at the beginning, any preceding docstrings and/or calls to super methods will be skipped.
+   * Moreover if statement list previously didn't contain any statements, explicit new line and indentation will be inserted in
+   * front of it.
+   *
+   * @param element        element to insert
+   * @param statementList  statement list
+   * @param toTheBeginning whether to insert element at the beginning or at the end of the statement list
+   * @return actually inserted element as for {@link PsiElement#add(PsiElement)}
+   */
+  @NotNull
+  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
+                                                     @NotNull PyStatementList statementList,
+                                                     boolean toTheBeginning) {
+    final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
+    // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
+    if (prevElem != null && PyUtil.onSameLine(statementList, prevElem)) {
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+      final Document document = manager.getDocument(statementList.getContainingFile());
+      if (document != null) {
+        final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
+        // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
+        // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
+        final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
+        document.insertString(statementList.getTextRange().getStartOffset(), text);
+        manager.commitDocument(document);
+        statementList = container.getStatementList();
+      }
+    }
+    final PsiElement firstChild = statementList.getFirstChild();
+    if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
+      element = firstChild.replace(element);
+    }
+    else {
+      final PyStatement[] statements = statementList.getStatements();
+      if (toTheBeginning && statements.length > 0) {
+        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(statementList, PyDocStringOwner.class);
+        PyStatement anchor = statements[0];
+        if (docStringOwner != null && anchor instanceof PyExpressionStatement &&
+            ((PyExpressionStatement)anchor).getExpression() == docStringOwner.getDocStringExpression()) {
+          final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+          if (next == null) {
+            return statementList.addAfter(element, anchor);
+          }
+          anchor = next;
+        }
+        while (anchor instanceof PyExpressionStatement) {
+          final PyExpression expression = ((PyExpressionStatement)anchor).getExpression();
+          if (expression instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)expression).getCallee();
+            if ((PyUtil.isSuperCall((PyCallExpression)expression) || (callee != null && PyNames.INIT.equals(callee.getName())))) {
+              final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+              if (next == null) {
+                return statementList.addAfter(element, anchor);
+              }
+              anchor = next;
+              continue;
+            }
+          }
+          break;
+        }
+        element = statementList.addBefore(element, anchor);
+      }
+      else {
+        element = statementList.add(element);
+      }
+    }
+    return element;
+  }
+
+  @NotNull
+  public static PyFile getOrCreateFile(String path, Project project) {
+    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    final PsiFile psi;
+    if (vfile == null) {
+      final File file = new File(path);
+      try {
+        final VirtualFile baseDir = project.getBaseDir();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+        final Properties properties = fileTemplateManager.getDefaultProperties();
+        properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
+        final String content = (template != null) ? template.getText(properties) : null;
+        psi = PyExtractSuperclassHelper.placeFile(project,
+                                                  StringUtil.notNullize(
+                                                    file.getParent(),
+                                                    baseDir != null ? baseDir
+                                                      .getPath() : "."
+                                                  ),
+                                                  file.getName(),
+                                                  content
+        );
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
+      }
+    }
+    else {
+      psi = PsiManager.getInstance(project).findFile(vfile);
+    }
+    if (!(psi instanceof PyFile)) {
+      throw new IncorrectOperationException(PyBundle.message(
+        "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
+    }
+    return (PyFile)psi;
+  }
+
+  /**
+   * Filters out {@link PyMemberInfo}
+   * that should not be displayed in this refactoring (like object)
+   *
+   * @param pyMemberInfos collection to sort
+   * @return sorted collection
+   */
+  @NotNull
+  public static Collection<PyMemberInfo<PyElement>> filterOutObject(@NotNull final Collection<PyMemberInfo<PyElement>> pyMemberInfos) {
+    return Collections2.filter(pyMemberInfos, new ObjectPredicate(false));
+  }
+
+  /**
+   * Filters only PyClass object (new class)
+   */
+  public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
+    private final boolean myAllowObjects;
+
+    /**
+     * @param allowObjects allows only objects if true. Allows all but objects otherwise.
+     */
+    public ObjectPredicate(final boolean allowObjects) {
+      myAllowObjects = allowObjects;
+    }
+
+    @Override
+    public boolean applyNotNull(@NotNull final PyMemberInfo<PyElement> input) {
+      return myAllowObjects == isObject(input);
+    }
+
+    private static boolean isObject(@NotNull final PyMemberInfo<PyElement> classMemberInfo) {
+      final PyElement element = classMemberInfo.getMember();
+      return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
+    }
   }
 }

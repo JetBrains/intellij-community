@@ -21,11 +21,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.jetbrains.python.PyBundle.message;
+import static com.jetbrains.python.PyPsiBundle.message;
 
 /**
  * @author yole
@@ -145,7 +145,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       String targetName = node.getName();
       if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
-        if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkType.SKELETON_DIR_NAME + "/")){
+        if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkUtil.SKELETON_DIR_NAME + "/")){
           getHolder().createErrorAnnotation(node, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
         }
       }

@@ -70,7 +70,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
           PyElement[] elements = getSetCallArguments(node);
           if (elements.length != 0)
               registerProblem(node, PyBundle.message("INSP.NAME.set.function.to.literal"),
-                                               new ReplaceFunctionWithSetLiteralQuickFix());
+                              new ReplaceFunctionWithSetLiteralQuickFix());
         }
       }
     }

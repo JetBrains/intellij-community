@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class PyPackagesUpdater implements StartupActivity.Background {
   public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (!checkNeeded(project)) return;
-   
+
     try {
       PyPIPackageUtil.INSTANCE.updatePyPICache();
     }
@@ -51,7 +52,7 @@ public class PyPackagesUpdater implements StartupActivity.Background {
 
   private static boolean hasPython(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Sdk sdk = PythonSdkType.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
         return true;
       }

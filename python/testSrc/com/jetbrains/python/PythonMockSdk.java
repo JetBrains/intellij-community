@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,8 +66,8 @@ public class PythonMockSdk {
       }
     });
 
-    String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
-    roots.putValue(PythonSdkType.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
+    String mock_stubs_path = mock_path + PythonSdkUtil.SKELETON_DIR_NAME;
+    roots.putValue(PythonSdkUtil.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
 
     for (final VirtualFile root : additionalRoots) {
       roots.putValue(OrderRootType.CLASSES, root);

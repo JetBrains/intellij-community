@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public final class PythonImportUtils {
 
     // don't propose meaningless auto imports if no interpreter is configured
     final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-    if (module != null && PythonSdkType.findPythonSdk(module) == null) {
+    if (module != null && PythonSdkUtil.findPythonSdk(module) == null) {
       return null;
     }
 
@@ -181,7 +181,7 @@ public final class PythonImportUtils {
 
   private static boolean isAcceptableForImport(PyElement node, PsiFile existingImportFile, PsiFileSystemItem srcfile) {
     return srcfile != existingImportFile && srcfile != node.getContainingFile() &&
-           (ImportFromExistingAction.isRoot(srcfile) || PyNames.isIdentifier(FileUtilRt.getNameWithoutExtension(srcfile.getName()))) &&
+           (PyUtil.isRoot(srcfile) || PyNames.isIdentifier(FileUtilRt.getNameWithoutExtension(srcfile.getName()))) &&
            !isShadowedModule(srcfile);
   }
 
@@ -236,24 +236,13 @@ public final class PythonImportUtils {
     // Add modules
     FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportable(targetFile, item)) {
+      if (PyUtil.isImportable(targetFile, item)) {
         result.add(item);
       }
       return true;
     }, scope, project, null);
 
     return result;
-  }
-
-  /**
-   * Checks whether {@param file} representing Python module or package can be imported into {@param file}.
-   */
-  public static boolean isImportable(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
-    PsiDirectory parent = (PsiDirectory)file.getParent();
-    return parent != null && file != targetFile &&
-           (ImportFromExistingAction.isRoot(parent) ||
-            parent == targetFile.getParent() ||
-            PyUtil.isPackage(parent, false, null));
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {
@@ -274,15 +263,5 @@ public final class PythonImportUtils {
       return false;
     }
     return PsiTreeUtil.getParentOfType(ref_element, PyStringLiteralExpression.class, false, PyStatement.class) == null;
-  }
-
-  public static boolean hasImportsFrom(@NotNull PsiFile file, @NotNull QualifiedName qName) {
-    if (file instanceof PyFile) {
-      PyFile pyFile = (PyFile)file;
-      return StreamEx.of(pyFile.getFromImports()).map(PyFromImportStatement::getImportSourceQName)
-        .nonNull()
-        .anyMatch(qName::equals);
-    }
-    return false;
   }
 }

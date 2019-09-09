@@ -29,6 +29,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     List<Module> result = Lists.newArrayList();
     for (Module module : modules) {
-      if (PythonSdkType.findPythonSdk(module) != null) {
+      if (PythonSdkUtil.findPythonSdk(module) != null) {
         result.add(module);
       }
     }
@@ -177,7 +178,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
         }
       }
       else {
-        Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+        Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
         if (sdk == null) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_module_sdk"));
         }
@@ -189,7 +190,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public String getSdkHome() {
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
-      final Sdk projectJdk = PythonSdkType.findPythonSdk(getModule());
+      final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
       if (projectJdk != null) {
         sdkHome = projectJdk.getHomePath();
       }
@@ -201,7 +202,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
-      Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+      Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
@@ -214,10 +215,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Nullable
   public Sdk getSdk() {
     if (myUseModuleSdk) {
-      return PythonSdkType.findPythonSdk(getModule());
+      return PythonSdkUtil.findPythonSdk(getModule());
     }
     else {
-      return PythonSdkType.findSdkByPath(getSdkHome());
+      return PythonSdkUtil.findSdkByPath(getSdkHome());
     }
   }
 

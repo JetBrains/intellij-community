@@ -14,5 +14,15 @@ public final class PythonPsiApiIcons {
     return IconManager.getInstance().getIcon(path, PythonPsiApiIcons.class);
   }
 
+
+  public final static class Nodes {
+    /** 16x16 */ public static final Icon Cyan_dot = load("/icons/com/jetbrains/python/nodes/cyan-dot.svg");
+    /** 16x16 */ public static final Icon Lock = load("/icons/com/jetbrains/python/nodes/lock.svg");
+    /** 16x16 */ public static final Icon Red_inv_triangle = load("/icons/com/jetbrains/python/nodes/red-inv-triangle.svg");
+
+  }
+  /** 16x16 */ public static final Icon PropertyDeleter = load("/icons/com/jetbrains/python/propertyDeleter.svg");
+  /** 16x16 */ public static final Icon PropertyGetter = load("/icons/com/jetbrains/python/propertyGetter.svg");
+  /** 16x16 */ public static final Icon PropertySetter = load("/icons/com/jetbrains/python/propertySetter.svg");
   /** 16x16 */ public static final Icon PythonFile = load("/icons/com/jetbrains/python/pythonFile.svg");
 }

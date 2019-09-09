@@ -20,6 +20,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -29,6 +30,7 @@ import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -111,11 +113,11 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     // Check test runners available in the module SDK
     if (testRunner.isEmpty()) {
       //check if installed in sdk
-      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-          if (PyPackageUtil.findPackage(packages, framework) != null) {
+          if (PyPsiPackageUtil.findPackage(packages, framework) != null) {
             testRunner = PyTestFrameworkService.getSdkReadableNameByFramework(framework);
             break;
           }

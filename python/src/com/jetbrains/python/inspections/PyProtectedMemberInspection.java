@@ -122,7 +122,7 @@ public class PyProtectedMemberInspection extends PyInspection {
           if (resolvedClass != null) {
 
             final String qFixName = resolvedClass.getProperties().containsKey(newName) ?
-                              PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
+                                    PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
             quickFixes.add(new PyAddPropertyForFieldQuickFix(qFixName));
 
             final PyClassType classType = PyUtil.as(myTypeEvalContext.getType(resolvedClass), PyClassType.class);
@@ -160,7 +160,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
         final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
-        registerProblem(node, PyBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,  null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
+        registerProblem(node, PyBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
       }
     }
 

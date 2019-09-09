@@ -42,8 +42,9 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVersionString;
+import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -76,13 +77,6 @@ public class PySkeletonRefresher {
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
   private final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
   // we use the equals sign after filename so that we can freely include space in the filename
-
-  // Path (the first component) may contain spaces, this header spec is deprecated
-  private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
-
-  // Skeleton header spec v2
-  private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
-  private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
   private static int ourGeneratingCount = 0;
 
@@ -190,7 +184,7 @@ public class PySkeletonRefresher {
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
     final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-    if (PySdkUtil.isRemote(sdk) && remoteInterpreterManager != null) {
+    if (PythonSdkUtil.isRemote(sdk) && remoteInterpreterManager != null) {
       try {
         mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
       }
@@ -231,7 +225,7 @@ public class PySkeletonRefresher {
     final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
 
-    final VirtualFile remoteSourcesDir = PySdkUtil.findAnyRemoteLibrary(sdk);
+    final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
     final List<VirtualFile> paths = new ArrayList<>();
@@ -321,7 +315,7 @@ public class PySkeletonRefresher {
     final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
-    final SkeletonHeader oldHeader = readSkeletonHeader(builtinsFile);
+    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
     final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
 
     if (myPregeneratedSkeletons != null && oldOrNonExisting) {
@@ -358,7 +352,7 @@ public class PySkeletonRefresher {
       cleanUpSkeletons(skeletonsDir);
     }
 
-    if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {
+    if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
     }
 
@@ -366,7 +360,7 @@ public class PySkeletonRefresher {
   }
 
   private boolean updateSkeletonsForBuiltins(String readablePath, File builtinsFile) throws InvalidSdkException {
-    final SkeletonHeader newHeader = readSkeletonHeader(builtinsFile);
+    final PySkeletonHeader newHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
     final boolean mustUpdateBuiltins = myPregeneratedSkeletons == null &&
                                        (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion());
     if (mustUpdateBuiltins) {
@@ -409,65 +403,6 @@ public class PySkeletonRefresher {
     }
   }
 
-
-  @Nullable
-  public static SkeletonHeader readSkeletonHeader(@NotNull File file) {
-    try {
-      final LineNumberReader reader = new LineNumberReader(new FileReader(file));
-      try {
-        String line = null;
-        // Read 3 lines, skip first 2: encoding, module name
-        for (int i = 0; i < 3; i++) {
-          line = reader.readLine();
-          if (line == null) {
-            return null;
-          }
-        }
-        // Try the old whitespace-unsafe header format v1 first
-        final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
-        if (v1Matcher.matches()) {
-          return new SkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
-        }
-        final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
-        if (fromMatcher.matches()) {
-          final String binaryFile = fromMatcher.group(1);
-          line = reader.readLine();
-          if (line != null) {
-            final Matcher byMatcher = BY_LINE_V2.matcher(line);
-            if (byMatcher.matches()) {
-              final int version = fromVersionString(byMatcher.group(1));
-              return new SkeletonHeader(binaryFile, version);
-            }
-          }
-        }
-      }
-      finally {
-        reader.close();
-      }
-    }
-    catch (IOException ignored) {
-    }
-    return null;
-  }
-
-  public static class SkeletonHeader {
-    @NotNull private final String myFile;
-    private final int myVersion;
-
-    public SkeletonHeader(@NotNull String binaryFile, int version) {
-      myFile = binaryFile;
-      myVersion = version;
-    }
-
-    @NotNull
-    public String getBinaryFile() {
-      return myFile;
-    }
-
-    public int getVersion() {
-      return myVersion;
-    }
-  }
 
   private Map<String, Pair<Integer, Long>> loadBlacklist() {
     Map<String, Pair<Integer, Long>> ret = new HashMap<>();
@@ -587,13 +522,13 @@ public class PySkeletonRefresher {
         if (PythonSdkType.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
-        final SkeletonHeader header = readSkeletonHeader(item);
+        final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item);
         String binaryFile = null;
         boolean canLive = header != null;
         if (canLive) {
           binaryFile = header.getBinaryFile();
-          canLive = SkeletonVersionChecker.PREGENERATED.equals(binaryFile) ||
-                    SkeletonVersionChecker.BUILTIN_NAME.equals(binaryFile) ||
+          canLive = PySkeletonHeader.PREGENERATED.equals(binaryFile) ||
+                    PySkeletonHeader.BUILTIN_NAME.equals(binaryFile) ||
                     mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {
@@ -697,7 +632,7 @@ public class PySkeletonRefresher {
     final String moduleName = binaryItem.getModule();
 
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
-    final SkeletonHeader header = readSkeletonHeader(skeleton);
+    final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(skeleton);
     boolean mustRebuild = true; // guilty unless proven fresh enough
     if (header != null) {
       int requiredVersion = myVersionChecker.getRequiredVersion(moduleName);

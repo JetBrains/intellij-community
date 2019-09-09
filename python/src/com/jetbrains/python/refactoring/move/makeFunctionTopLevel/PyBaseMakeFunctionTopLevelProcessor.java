@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -90,7 +91,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   @NotNull
   @Override
   protected final UsageInfo[] findUsages() {
-    return PyRefactoringUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
+    return PyCodeFragmentUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -105,7 +106,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyUtil.getOrCreateFile(myDestinationPath, myProject);
+    final PyFile targetFile = PyRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
         PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));

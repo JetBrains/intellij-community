@@ -43,9 +43,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -288,7 +288,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
         if ((languageLevel1.isPy3K() && languageLevel2.isPython2()) ||
             (languageLevel1.isPython2()) && languageLevel2.isPy3K()) {
-          PyUtil.rehighlightOpenEditors(myProject);
+          PyUiUtil.rehighlightOpenEditors(myProject);
         }
       }
     }
@@ -320,7 +320,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     List<Object> items = new ArrayList<>();
     items.add(null);
 
-    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkType::isInvalid);
+    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkUtil::isInvalid);
     if (selection != null && !StreamEx.of(moduleSdksByTypes.values()).flatCollection(Function.identity()).toList().contains(selection)) {
       items.add(0, selection);
     }

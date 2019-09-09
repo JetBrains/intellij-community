@@ -91,7 +91,8 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     }
 
     private fun getFieldTypeForNamedTupleAsTarget(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-      val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType ?: return null
+      val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType
+                            ?: return null
       return qualifierNTType.fields[referenceExpression.name]?.type
     }
 
@@ -200,14 +201,15 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     private fun getNamedTupleTypeForTypingNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
       if (isTypingNamedTupleDirectInheritor(cls, context)) {
         val name = cls.name ?: return null
-        val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(cls))
+        val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(
+          PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(cls))
         val tupleClass = typingNT as? PyClass ?: return null
 
         return PyNamedTupleType(tupleClass,
-                                name,
-                                collectTypingNTInheritorFields(cls, context),
-                                PyNamedTupleType.DefinitionLevel.NEW_TYPE,
-                                true)
+                                                               name,
+                                                               collectTypingNTInheritorFields(cls, context),
+                                                               PyNamedTupleType.DefinitionLevel.NEW_TYPE,
+                                                               true)
       }
 
       return null
@@ -219,16 +221,17 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                                           definitionLevel: PyNamedTupleType.DefinitionLevel): PyNamedTupleType? {
       if (stub == null) return null
 
-      val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(referenceTarget))
+      val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(
+        PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(referenceTarget))
       val tupleClass = typingNT as? PyClass ?: return null
       val fields = stub.fields
 
       return PyNamedTupleType(tupleClass,
-                              stub.name,
-                              parseNamedTupleFields(referenceTarget, fields, context),
-                              definitionLevel,
-                              fields.values.any { it.isPresent },
-                              referenceTarget as? PyTargetExpression)
+                                                             stub.name,
+                                                             parseNamedTupleFields(referenceTarget, fields, context),
+                                                             definitionLevel,
+                                                             fields.values.any { it.isPresent },
+                                                             referenceTarget as? PyTargetExpression)
     }
 
     private fun getNamedTupleTypeFromAST(expression: PyTargetExpression,

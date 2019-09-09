@@ -37,13 +37,14 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
                                             @NotNull final File projectDirectory) throws PyNoProjectAllowedOnSdkException {
 
     // Check if project does not support remote creation at all
-    if (!myAllowRemoteProjectCreation && PySdkUtil.isRemote(sdk)) {
+    if (!myAllowRemoteProjectCreation && PythonSdkUtil.isRemote(sdk)) {
       throw new PyNoProjectAllowedOnSdkException(
         "Can't create project of this type on remote interpreter. Choose local interpreter.");
     }
@@ -356,7 +357,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
     final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
-    if (forceInstallFramework || PySdkUtil.isRemote(sdk)) {
+    if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
       //Modal is used because it is insane to create project when framework is not installed
       ProgressManager.getInstance().run(new Task.Modal(project, String.format("Ensuring %s is installed", frameworkName), false) {
         @Override
@@ -367,7 +368,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
             // First check if we need to do it
             indicator.setText(String.format("Checking if %s is installed...", frameworkName));
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            installed = PyPackageUtil.findPackage(packages, requirement) != null;
+            installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
           }
 
 

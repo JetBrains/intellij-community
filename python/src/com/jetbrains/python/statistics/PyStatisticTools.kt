@@ -11,6 +11,7 @@ import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
@@ -37,8 +38,8 @@ private val Sdk.interpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> "pipenv"
-    PythonSdkType.isConda(this) -> "condavenv"
-    PythonSdkType.isVirtualEnv(this) -> "virtualenv"
+    PythonSdkUtil.isConda(this) -> "condavenv"
+    PythonSdkUtil.isVirtualEnv(this) -> "virtualenv"
     else -> "regular"
   }
 

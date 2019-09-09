@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -120,7 +121,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
-      PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.function"), MessageType.ERROR);
+      PyUiUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.function"), MessageType.ERROR);
     }
   }
 

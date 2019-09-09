@@ -170,11 +170,11 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   @NotNull
   private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
-    final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false, null);
+    final PyFunction init = clazz.findMethodByName(PyNames.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
     }
-    final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(PyNames.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
     PyFunction setUp = builder.buildFunction();
     final PyStatementList statements = clazz.getStatementList();

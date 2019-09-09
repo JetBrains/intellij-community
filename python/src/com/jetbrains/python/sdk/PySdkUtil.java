@@ -7,20 +7,10 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.util.SystemProperties;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +30,7 @@ import java.util.Map;
  *
  * @author dcheryasov
  */
+//TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
 public class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");
 
@@ -183,69 +174,5 @@ public class PySdkUtil {
       }
     }
     return result;
-  }
-
-  public static boolean isRemote(@Nullable Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
-  }
-
-  public static String getUserSite() {
-    if (SystemInfo.isWindows) {
-      final String appdata = System.getenv("APPDATA");
-      return appdata + File.separator + "Python";
-    }
-    else {
-      final String userHome = SystemProperties.getUserHome();
-      return userHome + File.separator + ".local";
-    }
-  }
-
-  public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
-    final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        final Sdk sdk = PythonSdkType.findPythonSdk(element);
-        if (sdk != null) {
-          final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
-          if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  public static String getRemoteSourcesLocalPath(String sdkHome) {
-    String sep = File.separator;
-
-    String basePath = PathManager.getSystemPath();
-    return basePath +
-           File.separator +
-           PythonSdkType.REMOTE_SOURCES_DIR_NAME +
-           sep +
-           FileUtil.toSystemIndependentName(sdkHome).hashCode() +
-           sep;
-  }
-
-  @Nullable
-  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
-    return findLibraryDir(sdk, PythonSdkType.SKELETON_DIR_NAME, PythonSdkType.BUILTIN_ROOT_TYPE);
-  }
-
-  @Nullable
-  public static VirtualFile findAnyRemoteLibrary(@NotNull final Sdk sdk) {
-    return findLibraryDir(sdk, PythonSdkType.REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
-  }
-
-  private static VirtualFile findLibraryDir(Sdk sdk, String dirName, OrderRootType rootType) {
-    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(rootType);
-    for (VirtualFile virtualFile : virtualFiles) {
-      if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
-        return virtualFile;
-      }
-    }
-    return null;
   }
 }

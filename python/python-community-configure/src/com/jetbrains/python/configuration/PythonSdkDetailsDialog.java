@@ -247,7 +247,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
-      boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
+      boolean isVirtualEnv = PythonSdkUtil.isVirtualEnv(sdk);
       if (isVirtualEnv && !newVirtualEnv) {
         AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myMainPanel);
         dialog.show();
@@ -442,7 +442,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private PythonPathEditor createPathEditor(final Sdk sdk) {
-    if (PySdkUtil.isRemote(sdk)) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       return new PyRemotePathEditor(sdk);
     }
     else {
@@ -502,7 +502,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         String[] files = PythonRemoteInterpreterManager
           .getInstance().chooseRemoteFiles(project, (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData(), false);
 
-        final String sourcesLocalPath = PySdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
+        final String sourcesLocalPath = PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
 
         VirtualFile[] vFiles = new VirtualFile[files.length];
 

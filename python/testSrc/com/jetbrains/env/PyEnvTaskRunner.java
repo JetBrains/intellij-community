@@ -15,6 +15,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -95,7 +96,7 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = PythonSdkType.getPythonExecutable(root);
+        final String executable = PythonSdkUtil.getPythonExecutable(root);
         assert executable != null : "No executable in " + root;
 
         final Sdk sdk = getSdk(executable, testTask);

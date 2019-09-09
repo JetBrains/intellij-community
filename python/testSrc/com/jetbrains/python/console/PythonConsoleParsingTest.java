@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.mock.MockApplication;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -27,6 +29,8 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl());
+
     PythonDialectsTokenSetProvider.reset();
   }
 
