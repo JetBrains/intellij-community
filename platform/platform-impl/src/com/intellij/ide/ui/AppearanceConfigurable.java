@@ -116,7 +116,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
-    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     updateDarkWindowHeaderVisibility();
     myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
 
@@ -126,7 +125,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   private void updateDarkWindowHeaderVisibility() {
     Object item = myComponent.myLafComboBox.getSelectedItem();
     boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
-    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
   }
 
   @Override
@@ -233,12 +231,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     update |= settings.getShowTreeIndentGuides() != myComponent.myShowTreeIndentGuides.isSelected();
     settings.setShowTreeIndentGuides(myComponent.myShowTreeIndentGuides.isSelected());
-
-    if (isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"))) {
-      Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected());
-      update = true;
-      shouldUpdateUI = true;
-    }
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
@@ -350,7 +342,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
-    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
@@ -434,7 +425,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
-    isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;
@@ -504,7 +494,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
-    private JBCheckBox myDarkWindowHeaders;
     private JBCheckBox myUseContrastScrollBarsCheckBox;
 
     MyComponent() {

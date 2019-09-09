@@ -97,8 +97,7 @@ public final class UIUtil extends StartupUiUtil {
 
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance",
-                             Registry.is("ide.mac.allowDarkWindowDecorations", false) && StartupUiUtil.isUnderDarcula());
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
     }
   }
 
