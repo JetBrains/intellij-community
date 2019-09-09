@@ -2,13 +2,11 @@
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
 import org.junit.Test
 
@@ -44,13 +42,6 @@ private class Foo(@Suppress("UNUSED_PARAMETER") bar: BarImpl)
 private class BarService
 
 private class BarServiceClient(@Suppress("UNUSED_PARAMETER") bar: BarService)
-
-private class TestComponentManager : PlatformComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.appContainerDescriptor
-
-  override fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
-  }
-}
 
 private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
