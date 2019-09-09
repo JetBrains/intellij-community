@@ -63,22 +63,23 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       mainPanel.add(northPanel, BorderLayout.NORTH)
       mainPanel.add(centerPanel, BorderLayout.CENTER)
 
-      comboBox.addItemListener { e: ItemEvent ->
-        if (e.stateChange == ItemEvent.SELECTED) {
-          val provider = e.item as CheckoutProvider
-          centerPanel.setContent(vcsComponents[provider]?.getView())
-          centerPanel.revalidate()
-          centerPanel.repaint()
-          onComponentSelected()
-        }
-      }
-
       val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
       val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
       providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
       for (checkoutProvider in providers) {
-        vcsComponents[checkoutProvider] = checkoutProvider.buildVcsCloneComponent(project)
         comboBox.addItem(checkoutProvider)
+      }
+
+      comboBox.addItemListener { e: ItemEvent ->
+        if (e.stateChange == ItemEvent.SELECTED) {
+          val provider = e.item as CheckoutProvider
+          centerPanel.setContent(vcsComponents.getOrPut(provider, {
+            provider.buildVcsCloneComponent(project)
+          }).getView())
+          centerPanel.revalidate()
+          centerPanel.repaint()
+          onComponentSelected()
+        }
       }
       comboBox.selectedItem = selectedByDefaultProvider
     }
