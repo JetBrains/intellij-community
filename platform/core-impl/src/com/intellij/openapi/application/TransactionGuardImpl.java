@@ -361,7 +361,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Experimental
   public static void logTimeMillis(long startedAt, @NotNull Object processId) {
-    if (!SwingUtilities.isEventDispatchThread()) return; // do not measure a time of a background task
+    if (!ApplicationManager.getApplication().isDispatchThread()) return; // do not measure a time of a background task
     int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", 0);
     if (threshold <= 10) return; // do not measure a time if a threshold is too small
     long time = System.currentTimeMillis() - startedAt;
