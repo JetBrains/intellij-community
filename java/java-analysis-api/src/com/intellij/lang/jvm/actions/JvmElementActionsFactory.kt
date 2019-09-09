@@ -16,13 +16,7 @@ import com.intellij.lang.jvm.JvmModifiersOwner
  */
 abstract class JvmElementActionsFactory {
 
-  open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> =
-    createChangeModifierActions(target, MemberRequest.Modifier(request.modifier, request.shouldBePresent()))
-
-  // could be removed when Kotlin 1.3.40 is bundled (IDEA-209379)
-  @Deprecated(message = "use createChangeModifierActions(JvmModifiersOwner, ChangeModifierRequest)")
-  protected open fun createChangeModifierActions(target: JvmModifiersOwner,
-                                                 request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
+  open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> = emptyList()
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
