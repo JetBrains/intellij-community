@@ -1,20 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import org.junit.Test;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
-import static org.junit.Assert.fail;
+public class FileNameCacheTest extends HeavyPlatformTestCase {
 
-public class FileNameCacheTest {
-  @Test
   public void testAssertShortFileNameWithWindowsUNC() {
-    FileNameCache.assertShortFileName("//wsl$/Ubuntu", true);
+    final boolean isValidName = SystemInfo.isWindows;
+    checkFileName("//wsl$/Ubuntu", isValidName); // valid for Windows, invalid in other case
+    checkFileName("//wsl$//Ubuntu", false);
+  }
 
-    try {
-      FileNameCache.assertShortFileName("//wsl$//Ubuntu", true);
-      fail();
+  private static void checkFileName(@NotNull String name, boolean isValid) {
+    if (isValid) {
+      FileNameCache.storeName(name);
     }
-    catch (Exception expected) {
+    else {
+      try {
+        FileNameCache.storeName(name);
+        fail();
+      }
+      catch (Exception expected) {}
     }
   }
 }

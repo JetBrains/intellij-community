@@ -11,6 +11,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
@@ -30,10 +31,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -872,7 +870,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCleanupPathWithWindowsUNC() {
-    final String path = VirtualFilePointerManagerImpl.cleanupPath("\\\\wsl$\\Ubuntu", true);
-    assertEquals("//wsl$/Ubuntu", path);
+    Assume.assumeTrue(SystemInfo.isWindows);
+    final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
+    assertEquals("//wsl$/Ubuntu", path.getPresentableUrl());
   }
 }

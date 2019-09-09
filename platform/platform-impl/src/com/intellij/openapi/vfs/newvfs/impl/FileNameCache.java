@@ -44,16 +44,16 @@ public class FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
   public static int storeName(@NotNull String name) {
-    assertShortFileName(name, SystemInfo.isWindows);
+    assertShortFileName(name);
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
   }
 
-  static void assertShortFileName(@NotNull String name, boolean isWindows) {
+  private static void assertShortFileName(@NotNull String name) {
     if (name.length() <= 1) return;
     int start = 0;
-    if (isWindows && name.startsWith("//")) {  // Windows UNC: //Network/Ubuntu
+    if (SystemInfo.isWindows && name.startsWith("//")) {  // Windows UNC: //Network/Ubuntu
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }
