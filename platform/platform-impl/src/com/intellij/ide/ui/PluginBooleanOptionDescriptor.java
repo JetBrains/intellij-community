@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -130,28 +131,24 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
     Collection<PluginId> res = new HashSet<>();
     IdeaPluginDescriptor descriptor = maybeDescriptor.get();
-    PluginManagerCore.checkDependants(descriptor, id1 -> PluginManagerCore.getPlugin(id1), pluginId -> {
+    for (PluginId pluginId : PluginManagerCore.pluginIdTraverser().withRoot(descriptor.getPluginId())) {
       boolean enabled = optionalDescriptor(pluginId).map(IdeaPluginDescriptor::isEnabled).orElse(true);
       if (!enabled) {
         res.add(pluginId);
       }
-      return true;
-    });
+    }
     return res;
   }
 
   private static Collection<PluginId> getPluginsIdsToDisable(PluginId id) {
-    Collection<PluginId> res = new HashSet<>();
-    Arrays.stream(PluginManagerCore.getPlugins())
-          .filter(IdeaPluginDescriptor::isEnabled)
-          .forEach(descriptor -> PluginManagerCore.checkDependants(descriptor, id1 -> PluginManagerCore.getPlugin(id1), pluginId -> {
-            if (pluginId.equals(id)) {
-              res.add(descriptor.getPluginId());
-              return false;
-            }
-
-            return true;
-          }));
+    Collection<PluginId> res = new LinkedHashSet<>();
+    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (!plugin.isEnabled()) continue;
+      if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(id)) {
+        res.add(plugin.getPluginId());
+      }
+    }
     return res;
   }
 
