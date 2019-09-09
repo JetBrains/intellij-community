@@ -314,7 +314,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       indicator.setText("Loading components...");
     }
 
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
+    Activity activity = StartUpMeasurer.start("project before loaded callbacks");
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 

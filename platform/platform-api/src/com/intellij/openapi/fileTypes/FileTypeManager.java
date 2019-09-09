@@ -37,7 +37,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
     FileTypeManager instance = ourInstance;
     if (instance == null) {
       Application app = ApplicationManager.getApplication();
-      ourInstance = instance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
+      ourInstance = instance = app != null ? app.getService(FileTypeManager.class) : new MockFileTypeManager();
     }
     return instance;
   }

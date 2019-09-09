@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -41,14 +42,12 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -263,14 +262,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     // before components
     if (!isDefault()) {
-      Activity activity = StartUpMeasurer.start("preload project services");
-      try {
-        preloadServices(PluginManagerCore.getLoadedPlugins()).get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        ExceptionUtil.rethrow(e);
-      }
-      activity.end();
+      Activity activity = ParallelActivity.APP_INIT.start("preload project services");
+      preloadServices(PluginManagerCore.getLoadedPlugins())
+        .whenComplete((o, throwable) -> {
+          if (throwable != null) {
+            LOG.error(throwable);
+          }
+          activity.end();
+        });
     }
 
     createComponents(indicator);

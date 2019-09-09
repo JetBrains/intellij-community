@@ -136,9 +136,9 @@ private fun startApp(app: ApplicationImpl,
   }
 
   // preload services only after icon activation
-  val future = registerRegistryAndInitStoreFuture
-    .thenCompose {
-      val preloadServiceActivity = StartUpMeasurer.start("preload services")
+  registerRegistryAndInitStoreFuture
+    .thenAccept {
+      val preloadServiceActivity = ParallelActivity.APP_INIT.start("preload services")
       app.preloadServices(it)
         .thenRun {
           preloadServiceActivity.end()
@@ -171,7 +171,7 @@ private fun startApp(app: ApplicationImpl,
     scheduleIconPreloading()
   }
 
-  CompletableFuture.allOf(future, StartupUtil.getServerFuture())
+  CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenRunOrHandleError {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
