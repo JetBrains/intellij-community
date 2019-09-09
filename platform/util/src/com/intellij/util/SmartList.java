@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
-import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -187,40 +186,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   @NotNull
   @Override
   public Iterator<E> iterator() {
-    switch (mySize) {
-      case 0:
-        return EmptyIterator.getInstance();
-      case 1:
-        return new SingletonIterator();
-      default:
-        return super.iterator();
-    }
-  }
-
-  private class SingletonIterator extends SingletonIteratorBase<E> {
-    private final int myInitialModCount;
-
-    SingletonIterator() {
-      myInitialModCount = modCount;
-    }
-
-    @Override
-    protected E getElement() {
-      return asElement();
-    }
-
-    @Override
-    protected void checkCoModification() {
-      if (modCount != myInitialModCount) {
-        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
-      }
-    }
-
-    @Override
-    public void remove() {
-      checkCoModification();
-      clear();
-    }
+    return mySize == 0 ? EmptyIterator.getInstance() : super.iterator();
   }
 
   @Override
