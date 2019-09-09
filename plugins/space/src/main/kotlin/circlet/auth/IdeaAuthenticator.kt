@@ -23,7 +23,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
     val port = selectFreePort()
     val codeFlow = CodeFlowConfig(config, "http://localhost:$port/auth")
 
-    return suspendCancellableCoroutine { cnt ->
+    return suspendCoroutine { cnt ->
 
         val server = try {
             embeddedServer(Jetty, port, "localhost") {
