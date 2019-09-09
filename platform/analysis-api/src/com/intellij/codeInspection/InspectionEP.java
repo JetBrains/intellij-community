@@ -8,6 +8,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +26,8 @@ import java.util.ResourceBundle;
  * @see LocalInspectionEP
  */
 public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
+  private static final Logger LOG = Logger.getInstance(InspectionEP.class);
+
   /**
    * @see GlobalInspectionTool
    */
@@ -185,11 +188,10 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     return CommonBundle.message(resourceBundle, key);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");
-
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    InspectionProfileEntry entry = getInstance();
+    // must create a new instance for each invocation
+    InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
     entry.myNameProvider = this;
     return entry;
   }
