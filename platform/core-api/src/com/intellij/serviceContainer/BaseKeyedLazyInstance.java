@@ -24,11 +24,6 @@ public abstract class BaseKeyedLazyInstance<T> implements PluginAware {
 
   @NotNull
   public final T getInstance() {
-    return getInstance(ApplicationManager.getApplication());
-  }
-
-  @NotNull
-  protected final T getInstance(@NotNull ComponentManager componentManager) {
     T result = instance;
     if (result != null) {
       return result;
@@ -41,7 +36,7 @@ public abstract class BaseKeyedLazyInstance<T> implements PluginAware {
         return result;
       }
 
-      result = createInstance(componentManager);
+      result = createInstance(ApplicationManager.getApplication());
       instance = result;
     }
     return result;

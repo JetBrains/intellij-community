@@ -591,8 +591,20 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       inspectionTool.CLASS = false;
     });
     String mergedText = "<profile version=\"1.0\">\n" +
-                        "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "</profile>";
+                            "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                            "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                            "    <option name=\"FIELD\" value=\"true\" />\n" +
+                            "    <option name=\"METHOD\" value=\"true\" />\n" +
+                            "    <option name=\"CLASS\" value=\"false\" />\n" +
+                            "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                            "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                            "  </inspection_tool>\n" +
+                            "</profile>";
     assertEquals(mergedText, serialize(profile));
   }
 
