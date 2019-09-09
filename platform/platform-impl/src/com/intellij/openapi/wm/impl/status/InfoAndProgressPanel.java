@@ -318,6 +318,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void openProcessPopup(boolean requestFocus) {
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
+      myPopup.show(requestFocus);
       if (hasProgressIndicators()) {
         myShouldClosePopupAndOnProcessFinish = true;
         buildInProcessCount();
@@ -326,13 +327,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         myShouldClosePopupAndOnProcessFinish = false;
         restoreEmptyStatus();
       }
-      myPopup.show(requestFocus);
     }
   }
 
   void hideProcessPopup() {
     synchronized (myOriginals) {
       if (!myPopup.isShowing()) return;
+      myPopup.hide();
 
       if (myOriginals.size() == 1) {
         buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
@@ -343,8 +344,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       else {
         buildInProcessCount();
       }
-
-      myPopup.hide();
     }
   }
 
@@ -380,7 +379,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private String getMultiProgressLinkText() {
     ProgressIndicatorEx latest = getLatestProgress();
     String latestText = latest == null ? null : latest.getText();
-    if (StringUtil.isEmptyOrSpaces(latestText)) {
+    if (StringUtil.isEmptyOrSpaces(latestText) || myPopup.isShowing()) {
       return myOriginals.size() + pluralizeProcess(myOriginals.size()) + " running...";
     }
     int others = myOriginals.size() - 1;
