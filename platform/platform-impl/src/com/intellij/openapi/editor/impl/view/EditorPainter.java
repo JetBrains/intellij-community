@@ -122,6 +122,7 @@ public class EditorPainter implements TextDrawingCallback {
     private final int myDescent;
     private final Color myDefaultBackgroundColor;
     private final Color myBackgroundColor;
+    private final int myMarginColumns;
     private MarginPositions myMarginPositions;
 
     private Session(EditorView view, Graphics2D g) {
@@ -147,6 +148,7 @@ public class EditorPainter implements TextDrawingCallback {
       myDescent = myView.getDescent();
       myDefaultBackgroundColor = myEditor.getColorsScheme().getDefaultBackground();
       myBackgroundColor = myEditor.getBackgroundColor();
+      myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
     }
 
     private void paint() {
@@ -1237,7 +1239,6 @@ public class EditorPainter implements TextDrawingCallback {
       int prevEndOffset = -1;
       boolean firstFragment = true;
       int maxColumn = 0;
-      int marginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       int endLogicalLine = visLineIterator.getEndLogicalLine();
       boolean marginReached = false;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visLineIterator, null, true)) {
@@ -1302,8 +1303,8 @@ public class EditorPainter implements TextDrawingCallback {
               start = curEnd;
             }
             if (marginWidthConsumer != null && fragment.getEndLogicalLine() == endLogicalLine &&
-                fragment.getStartLogicalColumn() <= marginColumns && fragment.getEndLogicalColumn() > marginColumns) {
-              marginWidthConsumer.process(fragment.visualColumnToX(fragment.logicalToVisualColumn(marginColumns)));
+                fragment.getStartLogicalColumn() <= myMarginColumns && fragment.getEndLogicalColumn() > myMarginColumns) {
+              marginWidthConsumer.process(fragment.visualColumnToX(fragment.logicalToVisualColumn(myMarginColumns)));
               marginReached = true;
             }
           }
@@ -1338,10 +1339,10 @@ public class EditorPainter implements TextDrawingCallback {
       assert it.atEnd();
       painter.paintAfterLineEnd(it, maxColumn, x, y);
       if (marginWidthConsumer != null && !marginReached &&
-          (visualLine == myEditor.getCaretModel().getVisualPosition().line || x > marginColumns * myView.getPlainSpaceWidth())) {
+          (visualLine == myEditor.getCaretModel().getVisualPosition().line || x > myMarginColumns * myView.getPlainSpaceWidth())) {
         int endLogicalColumn = myView.offsetToLogicalPosition(visualLineEndOffset).column;
-        if (endLogicalColumn <= marginColumns) {
-          marginWidthConsumer.process(x + (marginColumns - endLogicalColumn) * myView.getPlainSpaceWidth());
+        if (endLogicalColumn <= myMarginColumns) {
+          marginWidthConsumer.process(x + (myMarginColumns - endLogicalColumn) * myView.getPlainSpaceWidth());
         }
       }
     }
