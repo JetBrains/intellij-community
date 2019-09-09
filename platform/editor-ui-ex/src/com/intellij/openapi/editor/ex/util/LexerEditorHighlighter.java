@@ -402,6 +402,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   final synchronized void resetText(@NotNull CharSequence text) {
+    myText = null;
     doSetText(text);
   }
 
