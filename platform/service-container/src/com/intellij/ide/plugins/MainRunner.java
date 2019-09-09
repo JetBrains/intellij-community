@@ -11,7 +11,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintWriter;
@@ -47,7 +46,7 @@ public final class MainRunner {
       try {
         Activity activity = startupStart.startChild(StartUpMeasurer.Phases.LOAD_MAIN_CLASS);
         Class<?> aClass = Class.forName(mainClass);
-        Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
+        Method method = aClass.getDeclaredMethod(methodName, String[].class);
         method.setAccessible(true);
         Object[] argsArray = {args};
         activity.end();
