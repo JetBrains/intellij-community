@@ -74,6 +74,8 @@ public class VfsData {
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
   private TIntHashSet myDyingIds = new TIntHashSet();
+
+  private boolean myHasChangedParents; // synchronized by read-write lock; clients outside read-action deserve to get outdated result
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   public VfsData() {
@@ -191,10 +193,12 @@ public class VfsData {
 
   @Nullable
   VirtualDirectoryImpl getChangedParent(int id) {
-    return myChangedParents.get(id);
+    return myHasChangedParents ? myChangedParents.get(id): null;
   }
 
   void changeParent(int id, VirtualDirectoryImpl parent) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myHasChangedParents = true;
     myChangedParents.put(id, parent);
   }
 
