@@ -132,8 +132,12 @@ public final class GitBranchWorker {
   }
 
   public void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    rebase(repositories, "HEAD", branchName);
+  }
+
+  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName) {
     updateInfo(repositories);
-    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(myVcs.getVersion(), branchName, null, "HEAD", false, false),
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(myVcs.getVersion(), branchName, null, upstream, false, false),
                           myUiHandler.getProgressIndicator());
   }
 
