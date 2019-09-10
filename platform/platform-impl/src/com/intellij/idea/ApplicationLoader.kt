@@ -18,9 +18,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.SystemShortcuts
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -49,6 +51,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.exists
+import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
 import net.miginfocom.layout.PlatformDefaults
@@ -72,7 +75,7 @@ import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
-private val LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication")
+private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 private var filesToLoad: List<File> = emptyList()
 private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
@@ -185,7 +188,9 @@ private fun startApp(app: ApplicationImpl,
         app.loadComponents(SplashManager.getProgressIndicator())
       }
 
-      app.callAppInitialized()
+      val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
+      callAppInitialized(app)
+      activity.end()
 
       // execute in parallel to loading components - this functionality should be used only by plugin functionality,
       // that used after start-up
@@ -196,6 +201,8 @@ private fun startApp(app: ApplicationImpl,
       if (!headless) {
         addActivateAndWindowsCliListeners(app)
       }
+
+      initAppActivity.end()
 
       EventQueue.invokeLater {
         (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
@@ -609,4 +616,32 @@ private fun reportPluginError() {
   })
 
   PluginManagerCore.ourPluginError = null
+}
+
+private fun createLocatorFile() {
+  ParallelActivity.APP_INIT.run("create locator file") {
+    val locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
+    try {
+      locatorFile.write(PathManager.getHomePath())
+    }
+    catch (e: IOException) {
+      LOG.warn("can't store a location in '$locatorFile'", e)
+    }
+  }
+}
+
+fun callAppInitialized(app: ApplicationImpl) {
+  AppExecutorUtil.getAppExecutorService().execute {
+    createLocatorFile()
+  }
+
+  for (listener in app.extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")) {
+    if (listener == null) {
+      break
+    }
+
+    LOG.runAndLogException {
+      listener.componentsInitialized()
+    }
+  }
 }

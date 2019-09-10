@@ -109,7 +109,7 @@ public final class IdeaTestApplication implements Disposable {
     }
 
     app.loadComponents(null);
-    app.callAppInitialized();
+    ApplicationLoader.callAppInitialized(app);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();

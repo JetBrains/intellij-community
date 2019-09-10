@@ -6,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -22,7 +21,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -50,17 +48,12 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -326,21 +319,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public final void load(@Nullable String configPath) {
-    registerComponents(PluginManagerCore.getLoadedPlugins());
-
+    List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
-
-    MutablePicoContainer picoContainer = getPicoContainer();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
-      for (ServiceDescriptor service : ((IdeaPluginDescriptorImpl)plugin).getApp().getServices()) {
-        if (service.preload) {
-          picoContainer.getComponentInstance(service.getInterface());
-        }
-      }
-    }
-
+    preloadServices(plugins);
     loadComponents(null);
-    callAppInitialized();
+    ApplicationLoader.callAppInitialized(this);
   }
 
   @ApiStatus.Internal
@@ -361,44 +345,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   }
 
-  public void callAppInitialized() {
-    createLocatorFile();
-
-    Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-    for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
-      if (listener == null) {
-        break;
-      }
-
-      try {
-        listener.componentsInitialized();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-    activity.end();
-  }
-
   @Override
   @Nullable
   protected ProgressIndicator getProgressIndicator() {
     // could be called before full initialization
     ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
     return progressManager == null ? null : progressManager.getProgressIndicator();
-  }
-
-  private static void createLocatorFile() {
-    Path locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
-    try {
-      Files.write(locatorFile, PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
-    }
-    catch (IOException e) {
-      LOG.warn("can't store a location in '" + locatorFile + "'", e);
-    }
   }
 
   @Override
