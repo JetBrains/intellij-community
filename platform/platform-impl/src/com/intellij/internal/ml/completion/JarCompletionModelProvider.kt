@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml.completion
 
-import com.intellij.internal.ml.DecisionFunction
-import com.intellij.internal.ml.FeaturesInfo
-import com.intellij.internal.ml.ModelMetadata
-import com.intellij.internal.ml.ResourcesMetadataReader
+import com.intellij.internal.ml.*
+import org.jetbrains.annotations.TestOnly
 
 abstract class JarCompletionModelProvider(private val displayName: String,
                                           private val resourceDirectory: String) : RankingModelProvider {
@@ -18,4 +16,25 @@ abstract class JarCompletionModelProvider(private val displayName: String,
   override fun getDisplayNameInSettings(): String = displayName
 
   protected abstract fun createModel(metadata: ModelMetadata): DecisionFunction
+
+  @TestOnly
+  fun assertModelMetadataConsistent() {
+    try {
+      val decisionFunction = model
+      decisionFunction.version()
+
+      val unknownRequiredFeatures = decisionFunction.getUnknownFeatures(decisionFunction.requiredFeatures)
+      assert(unknownRequiredFeatures.isEmpty()) { "All required features should be known, but $unknownRequiredFeatures unknown" }
+
+      val featuresOrder = decisionFunction.featuresOrder
+      val unknownUsedFeatures = decisionFunction.getUnknownFeatures(featuresOrder.map { it.featureName }.distinct())
+      assert(unknownUsedFeatures.isEmpty()) { "All used features should be known, but $unknownUsedFeatures unknown" }
+
+      val features = DoubleArray(featuresOrder.size)
+      decisionFunction.predict(features)
+    }
+    catch (e: InconsistentMetadataException) {
+      throw AssertionError("Model metadata inconsistent", e)
+    }
+  }
 }
