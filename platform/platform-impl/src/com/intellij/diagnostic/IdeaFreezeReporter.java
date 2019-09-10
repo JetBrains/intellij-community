@@ -19,21 +19,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
 
-  private volatile DumpTask myDumpTask;
+  private volatile SamplingTask myDumpTask;
   final List<ThreadDump> myCurrentDumps = new ArrayList<>();
   List<StackTraceElement> myStacktraceCommonPart = null;
 
@@ -52,11 +46,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   @Override
   public void uiFreezeStarted() {
-    if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
+    if (!DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
         myDumpTask.cancel();
       }
-      myDumpTask = new DumpTask();
+      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
+                                    Registry.intValue("freeze.reporter.dump.duration.s"));
     }
   }
 
@@ -82,27 +77,29 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return;
     }
     myDumpTask.cancel();
-    int lengthInSeconds = (int)(durationMs / 1000);
-    long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
-    if (lengthInSeconds > FREEZE_THRESHOLD &&
-        // check that we have at least half of the dumps required
-        (myDumpTask.isValid(dumpingDuration) ||
-         myCurrentDumps.size() >=
-         Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
-        !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
-      int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
-      int step = myCurrentDumps.size() / size;
-      Attachment[] attachments = new Attachment[size];
-      for (int i = 0; i < size; i++) {
-        Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
-        attachment.setIncluded(true);
-        attachments[i] = attachment;
-      }
-      IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
-      if (event != null) {
-        Throwable t = event.getThrowable();
-        if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
-          MessagePool.getInstance().addIdeFatalMessage(event);
+    if (Registry.is("freeze.reporter.enabled")) {
+      int lengthInSeconds = (int)(durationMs / 1000);
+      long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
+      if (lengthInSeconds > FREEZE_THRESHOLD &&
+          // check that we have at least half of the dumps required
+          (myDumpTask.isValid(dumpingDuration) ||
+           myCurrentDumps.size() >=
+           Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
+          !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+        int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
+        int step = myCurrentDumps.size() / size;
+        Attachment[] attachments = new Attachment[size];
+        for (int i = 0; i < size; i++) {
+          Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
+          attachment.setIncluded(true);
+          attachments[i] = attachment;
+        }
+        IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
+        if (event != null) {
+          Throwable t = event.getThrowable();
+          if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+            MessagePool.getInstance().addIdeFatalMessage(event);
+          }
         }
       }
     }
@@ -153,10 +150,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   @Nullable
   private IdeaLoggingEvent createEvent(int lengthInSeconds,
                                        Attachment[] attachments,
-                                       @NotNull DumpTask dumpTask,
+                                       @NotNull SamplingTask dumpTask,
                                        @Nullable File reportDir) {
-    List<ThreadInfo[]> infos = dumpTask.myThreadInfos;
-    long time = dumpTask.myDumpInterval;
+    List<ThreadInfo[]> infos = dumpTask.getThreadInfos();
+    long time = dumpTask.getDumpInterval();
     if (infos.isEmpty()) {
       infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
       time = PerformanceWatcher.getDumpInterval();
@@ -219,7 +216,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       long sampled = dumpTask.getSampledTime();
       long gcTime = dumpTask.getGcTime();
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                       "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.myDumpInterval + "ms";
+                       "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
       if (sampled > 0) {
         message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
       }
@@ -330,58 +327,6 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         node = node.myParent;
       }
       return res;
-    }
-  }
-
-  private static final class DumpTask {
-    private final int myDumpInterval;
-    private final int myMaxDumps;
-    private final ScheduledFuture<?> myFuture;
-    private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
-    private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-    private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
-    private final long myStartTime;
-    private long myCurrentTime;
-    private final long myGcStartTime;
-    private long myGcCurrentTime;
-
-    private DumpTask() {
-      myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
-      myMaxDumps = Registry.intValue("freeze.reporter.dump.duration.s") * 1000 / myDumpInterval;
-      myCurrentTime = myStartTime = System.currentTimeMillis();
-      myGcCurrentTime = myGcStartTime = currentGcTime();
-      ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
-      myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
-    }
-
-    void dumpThreads() {
-      myCurrentTime = System.currentTimeMillis();
-      myGcCurrentTime = currentGcTime();
-      ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
-      myThreadInfos.add(infos);
-      if (myThreadInfos.size() >= myMaxDumps) {
-        cancel();
-      }
-    }
-
-    private static long currentGcTime() {
-      return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
-    }
-
-    long getSampledTime() {
-      return myCurrentTime - myStartTime;
-    }
-
-    long getGcTime() {
-      return myGcCurrentTime - myGcStartTime;
-    }
-
-    boolean isValid(long dumpingDuration) {
-      return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
-    }
-
-    void cancel() {
-      myFuture.cancel(false);
     }
   }
 }
