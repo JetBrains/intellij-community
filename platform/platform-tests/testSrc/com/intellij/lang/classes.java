@@ -33,15 +33,6 @@ class MyTestLanguage extends Language {
   }
 }
 
-class MyTestLanguage2 extends Language {
-
-  public static final Language INSTANCE = new MyTestLanguage2();
-
-  private MyTestLanguage2() {
-    super(MyTestLanguage.INSTANCE, "L2");
-  }
-}
-
 class MyMetaLanguage extends MetaLanguage {
 
   public static final MetaLanguage INSTANCE = new MyMetaLanguage();
