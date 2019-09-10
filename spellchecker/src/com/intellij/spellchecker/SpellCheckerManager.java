@@ -71,9 +71,9 @@ public class SpellCheckerManager implements Disposable {
     return ServiceManager.getService(project, SpellCheckerManager.class);
   }
 
-  public SpellCheckerManager(Project project, SpellCheckerSettings settings) {
+  public SpellCheckerManager(Project project) {
     this.project = project;
-    this.settings = settings;
+    this.settings = SpellCheckerSettings.getInstance(project);
     fullConfigurationReload();
 
     Disposer.register(project, this);

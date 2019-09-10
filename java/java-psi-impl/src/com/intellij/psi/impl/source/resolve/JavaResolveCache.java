@@ -47,7 +47,7 @@ public class JavaResolveCache {
   private static final Object NULL = Key.create("NULL");
 
   public JavaResolveCache(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
+    project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         clearCaches(isPhysical);

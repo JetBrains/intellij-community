@@ -1,5 +1,4 @@
-
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +23,9 @@ public class MessageViewImpl implements MessageView {
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
 
-  public MessageViewImpl(final Project project, final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
+  public MessageViewImpl(@NotNull Project project) {
     final Runnable runnable = () -> {
-      myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
+      myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
       myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowMessages);
       new ContentManagerWatcher(myToolWindow, getContentManager());
       for (Runnable postponedRunnable : myPostponedRunnables) {
@@ -37,9 +37,8 @@ public class MessageViewImpl implements MessageView {
       runnable.run();
     }
     else {
-      startupManager.registerPostStartupActivity(runnable);
+      StartupManager.getInstance(project).registerPostStartupActivity(runnable);
     }
-
   }
 
   @Override

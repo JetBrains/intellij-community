@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -54,9 +52,9 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
   };
 
-  public JdkListConfigurable(final Project project, ProjectStructureConfigurable root) {
+  public JdkListConfigurable(@NotNull Project project) {
     super(project);
-    myJdksTreeModel = root.getProjectJdksModel();
+    myJdksTreeModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
     myJdksTreeModel.addListener(myListener);
   }
 
