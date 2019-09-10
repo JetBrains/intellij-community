@@ -45,7 +45,7 @@ public final class PerformanceWatcher implements Disposable {
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private ScheduledFuture<?> myThread;
-  private SamplingTask myDumpTask;
+  private volatile SamplingTask myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
 
@@ -261,8 +261,9 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private void stopDumping() {
-    if (myDumpTask != null) {
-      myDumpTask.stop();
+    SamplingTask task = myDumpTask;
+    if (task != null) {
+      task.stop();
     }
   }
 
@@ -295,9 +296,11 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   public void edtEventFinished() {
-    if (myCurrentEDTEventChecker != null) {
-      if (!myCurrentEDTEventChecker.cancel(false)) {
+    Future<?> currentChecker = myCurrentEDTEventChecker;
+    if (currentChecker != null) {
+      if (!currentChecker.cancel(false)) {
         long end = System.currentTimeMillis();
+        stopDumping(); // stop sampling as early as possible
         try {
           myExecutor.submit(() -> edtResponds(end)).get();
         }
