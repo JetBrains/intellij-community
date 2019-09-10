@@ -48,7 +48,6 @@ public interface IdeModelsProvider {
   @Nullable
   Module findIdeModule(@NotNull String ideModuleName);
 
-  @ApiStatus.Experimental
   @Nullable
   UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData);
 
