@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.ThreadInfo;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -44,7 +45,7 @@ public final class PerformanceWatcher implements Disposable {
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private ScheduledFuture<?> myThread;
-  private ScheduledFuture<?> myDumpTask;
+  private SamplingTask myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
 
@@ -238,7 +239,12 @@ public final class PerformanceWatcher implements Disposable {
     myFreezeStart = start;
     getPublisher().uiFreezeStarted();
     stopDumping();
-    myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, 0, getDumpInterval(), TimeUnit.MILLISECONDS);
+    myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
+      @Override
+      protected void dumpedThreads(ThreadInfo[] infos) {
+        dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
+      }
+    };
   }
 
   @NotNull
@@ -256,7 +262,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private void stopDumping() {
     if (myDumpTask != null) {
-      myDumpTask.cancel(false);
+      myDumpTask.cancel();
     }
   }
 
@@ -322,6 +328,11 @@ public final class PerformanceWatcher implements Disposable {
 
   @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
+    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos());
+  }
+
+  @Nullable
+  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -342,7 +353,7 @@ public final class PerformanceWatcher implements Disposable {
 
     checkMemoryUsage(file);
 
-    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(ManagementFactory.getThreadMXBean());
+    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(threadInfos);
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
       StackTraceElement[] edtStack = threadDump.getEDTStackTrace();

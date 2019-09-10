@@ -45,7 +45,11 @@ public class SamplingTask {
       if (myThreadInfos.size() >= myMaxDumps) {
         cancel();
       }
+      dumpedThreads(infos);
     }
+  }
+
+  protected void dumpedThreads(ThreadInfo[] infos) {
   }
 
   private static long currentGcTime() {
