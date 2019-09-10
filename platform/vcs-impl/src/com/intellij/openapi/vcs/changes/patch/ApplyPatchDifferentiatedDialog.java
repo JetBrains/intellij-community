@@ -89,7 +89,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @NotNull private final JBLoadingPanel myChangesTreeLoadingPanel;
-  @Nullable private final Collection<Change> myPreselectedChanges;
+  @Nullable private final Collection<? extends Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
 
   private JComponent myCenterPanel;
@@ -133,7 +133,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @Nullable final List<? extends TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList,
                                         @Nullable List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<Change> preselectedChanges,
+                                        @Nullable Collection<? extends Change> preselectedChanges,
                                         @Nullable String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {
     super(project, true);
