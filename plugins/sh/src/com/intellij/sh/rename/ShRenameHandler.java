@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ public class ShRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     return editor != null
+           && ShSupport.getInstance().isRenameEnabled()
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), dataContext)
            && dataContext.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
   }
