@@ -234,9 +234,9 @@ def update_frame_local_variables_and_save(frame, var_dict):
     for var_name in var_dict:
         if var_name not in frame.f_globals:
             frame.f_locals[var_name] = var_dict[var_name]
-        elif var_dict[var_name] != frame.f_globals[var_name]:
+        elif var_dict[var_name] is not frame.f_globals[var_name]:
             frame.f_locals[var_name] = var_dict[var_name]
-    for var_name in dict_keys(frame.f_locals):
+    for var_name in frame.f_locals:
         if var_name not in var_dict:
             frame.f_locals.pop(var_name)
     pydevd_save_locals.save_locals(frame)
