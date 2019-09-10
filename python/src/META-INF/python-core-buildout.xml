@@ -14,8 +14,8 @@
               fileNamesCaseInsensitive="buildout.cfg"
               implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgFileType"
               fieldName="INSTANCE"/>
-    <lang.syntaxHighlighterFactory language="BuildoutCfg"
-                                   implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
+    <lang.syntaxHighlighter language="BuildoutCfg"
+                            implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgSyntaxHighlighter"/>
 
     <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
                      key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
