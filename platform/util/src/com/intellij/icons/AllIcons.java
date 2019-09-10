@@ -2168,6 +2168,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ClassInitializer = load("/nodes/classInitializer.svg");
     /** 16x16 */ public static final Icon CompiledClassesFolder = load("/nodes/compiledClassesFolder.svg");
     /** 16x16 */ public static final Icon ConfigFolder = load("/nodes/configFolder.svg");
+    /** 16x16 */ public static final Icon Console = load("/nodes/console.svg");
     /** 16x16 */ public static final Icon Constant = load("/nodes/constant.svg");
     /** 16x16 */ public static final Icon Controller = load("/nodes/controller.svg");
     /** 16x16 */ public static final Icon CopyOfFolder = load("/nodes/copyOfFolder.svg");
