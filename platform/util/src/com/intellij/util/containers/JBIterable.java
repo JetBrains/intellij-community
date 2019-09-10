@@ -92,7 +92,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public static <E> JBIterable<E> from(@Nullable Iterable<? extends E> iterable) {
     if (iterable == null || iterable == EMPTY) return empty();
     if (iterable instanceof JBIterable) return (JBIterable<E>)iterable;
-    if (iterable instanceof Collection && ((Collection<E>)iterable).isEmpty()) return empty();
+    if (iterable instanceof Collection && ((Collection<?>)iterable).isEmpty()) return empty();
     return new Multi<>(iterable);
   }
 
