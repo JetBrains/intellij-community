@@ -42,7 +42,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
     for (PyDebugValue value : values) {
       if (!value.getName().startsWith(RemoteDebugger.TEMP_VAR_PREFIX)) {
         final PyDebugValue debugValue = extend(value);
-        myFrameVariables.add(debugValue.getName(), debugValue);
+        myFrameVariables.add(debugValue.getVisibleName(), debugValue);
       }
     }
   }

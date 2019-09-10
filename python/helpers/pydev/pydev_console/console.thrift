@@ -1,6 +1,10 @@
 namespace java com.jetbrains.python.console.protocol
 
 /**
+*  Script for Java classes generation: /community/python/thrift/console-compile.sh
+*/
+
+/**
  * `com.jetbrains.python.console.PydevConsoleCommunication`
  */
 
@@ -13,9 +17,10 @@ struct DebugValue {
   3: string qualifier,
   4: string value,
   5: bool isContainer,
-  6: bool isReturnedValue,
-  7: bool isIPythonHidden,
-  8: bool isErrorOnEval,
+  6: string shape,
+  7: bool isReturnedValue,
+  8: bool isIPythonHidden,
+  9: bool isErrorOnEval,
 }
 
 typedef list<DebugValue> GetFrameResponse

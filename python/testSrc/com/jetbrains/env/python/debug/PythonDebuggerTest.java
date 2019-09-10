@@ -33,7 +33,10 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.addExceptionBreakpoint;
 import static org.junit.Assert.*;
@@ -2127,6 +2130,43 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                    output().contains("KeyboardInterrupt"));
         assertFalse("Output shouldn't contain debugger related stacktrace when debugger is stopped",
                     output().contains("pydevd.py\", line "));
+      }
+    });
+  }
+
+  @Test
+  public void testCollectionsShapes() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_shapes.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 30);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        PyDebugValue var = findDebugValueByName(frameVariables, "list1");
+        assertEquals("120", var.getShape());
+        var = findDebugValueByName(frameVariables, "dict1");
+        assertEquals("2", var.getShape());
+        var = findDebugValueByName(frameVariables, "custom");
+        assertEquals("5", var.getShape());
+        var = findDebugValueByName(frameVariables, "df1");
+        assertEquals("(3, 6)", var.getShape());
+        var = findDebugValueByName(frameVariables, "n_array");
+        assertEquals("(3, 2)", var.getShape());
+        var = findDebugValueByName(frameVariables, "series");
+        assertEquals("(5,)", var.getShape());
+
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("pandas");
       }
     });
   }

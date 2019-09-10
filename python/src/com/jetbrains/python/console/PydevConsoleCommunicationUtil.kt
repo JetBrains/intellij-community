@@ -18,14 +18,14 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
     if (parent != null) {
       pyDebugValue.parent = parent
     }
-    list.add(pyDebugValue.name, pyDebugValue)
+    list.add(pyDebugValue.visibleName, pyDebugValue)
   }
   return list
 }
 
 fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor) =
   PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
-               value.isContainer, null, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
+               value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
                frameAccessor)
 
 fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor): ArrayChunk {

@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.*;
+
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
@@ -236,17 +238,42 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  /**
+   * Evaluate full name to access variable at runtime
+   * Used for evaluation values of "Returned values". They are saved in a separate dictionary on Python side, so the variable's name
+   * should be transformed.
+   *
+   * @return full variable name at runtime
+   */
   @NotNull
   public String getFullName() {
     return wrapWithPrefix(getName());
   }
 
+  /**
+   * Remove util information from variable name to hide it from user
+   *
+   * @return variable name without util information
+   */
+  @NotNull
+  public String getVisibleName() {
+    return removeId(myName);
+  }
+
+  /**
+   * Removes object id from variable name. Object id is saved inside dict keys to find object at runtime
+   *
+   * @param name variable name with or without object id ('a' (11259136))
+   * @return variable name without object id ('a')
+   */
   @NotNull
   private static String removeId(@NotNull String name) {
-    if (name.indexOf('(') != -1) {
-      name = name.substring(0, name.indexOf('(')).trim();
+    if (name.endsWith(")")) {
+      final int lastInd = name.lastIndexOf('(');
+      if (lastInd != -1) {
+        name = name.substring(0, lastInd).trim();
+      }
     }
-
     return name;
   }
 
@@ -260,7 +287,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static boolean isLen(@NotNull String name) {
-    return "__len__".equals(name);
+    return DUNDER_LEN.equals(name);
   }
 
   @NotNull
@@ -274,6 +301,34 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  private String getTypeString() {
+    if (myShape != null) {
+      return myType + ": " + myShape;
+    }
+    return myType;
+  }
+
+  private void setElementPresentation(@NotNull XValueNode node, @NotNull String value) {
+    if (myParent != null && "set".equals(myParent.getType())) {
+      // hide object id and '=' when showing set elements
+      node.setPresentation(getValueIcon(), new XRegularValuePresentation(value, getTypeString()) {
+        @NotNull
+        @Override
+        public String getSeparator() {
+          return myName.equals(DUNDER_LEN) ? " = " : "";
+        }
+
+        @Override
+        public boolean isShowName() {
+          return myName.equals(DUNDER_LEN);
+        }
+      }, myContainer);
+    }
+    else {
+      node.setPresentation(getValueIcon(), getTypeString(), value, myContainer);
+    }
+  }
+
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
@@ -281,7 +336,7 @@ public class PyDebugValue extends XNamedValue {
     if (value.length() >= MAX_VALUE) {
       value = value.substring(0, MAX_VALUE);
     }
-    node.setPresentation(getValueIcon(), myType, value, myContainer);
+    setElementPresentation(node, value);
   }
 
   public void updateNodeValueAfterLoading(@NotNull XValueNode node,
@@ -297,7 +352,7 @@ public class PyDebugValue extends XNamedValue {
       }, myContainer);
     }
     else {
-      node.setPresentation(getValueIcon(), myType, value, myContainer);
+      setElementPresentation(node, value);
     }
 
     if (isNumericContainer()) return; // do not update FullValueEvaluator not to break Array Viewer
@@ -406,10 +461,16 @@ public class PyDebugValue extends XNamedValue {
 
           if (isLargeCollection()) {
             values = processLargeCollection(values);
+          }
+          if (myFrameAccessor.isSimplifiedView()) {
+            extractChildrenToGroup(PROTECTED_ATTRS_NAME, AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
+                                   getPROTECTED_ATTRS_EXCLUDED());
+          }
+          else {
             node.addChildren(values, true);
+          }
+          if (isLargeCollection()) {
             updateOffset(node, values);
-          } else {
-            node.addChildren(values, true);
           }
 
           getAsyncValues(myFrameAccessor, values);

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.TestEnv;
@@ -8,6 +9,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.python.console.PyConsoleTask;
+import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,6 +21,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.findDebugValueByName;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -198,8 +202,40 @@ public class PythonConsoleTest extends PyEnvTestCase {
         do {
           if (pred.test(getConsoleView().getDebuggerTreeRootNode())) return;
           Thread.sleep(TIMEOUT / NUMBER_OF_ATTEMPTS);
-        } while (startedAt + TIMEOUT > System.currentTimeMillis());
+        }
+        while (startedAt + TIMEOUT > System.currentTimeMillis());
         Assert.fail(message);
+      }
+    });
+  }
+
+  @Test
+  public void testCollectionsShapes() {
+    runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void testing() throws Exception {
+        exec("from test_shapes import *");
+        waitForOutput("Executed");
+
+        final List<PyDebugValue> frameVariables = loadFrame();
+        PyDebugValue var = findDebugValueByName(frameVariables, "list1");
+        assertEquals("120", var.getShape());
+        var = findDebugValueByName(frameVariables, "dict1");
+        assertEquals("2", var.getShape());
+        var = findDebugValueByName(frameVariables, "custom");
+        assertEquals("5", var.getShape());
+        var = findDebugValueByName(frameVariables, "df1");
+        assertEquals("(3, 6)", var.getShape());
+        var = findDebugValueByName(frameVariables, "n_array");
+        assertEquals("(3, 2)", var.getShape());
+        var = findDebugValueByName(frameVariables, "series");
+        assertEquals("(5,)", var.getShape());
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("pandas");
       }
     });
   }

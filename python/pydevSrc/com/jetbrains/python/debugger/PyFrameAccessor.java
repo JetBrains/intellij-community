@@ -51,6 +51,10 @@ public interface PyFrameAccessor {
 
   default void setCurrentRootNode(@NotNull XCompositeNode node) {}
 
+  default boolean isSimplifiedView() {
+    return false;
+  }
+
   @Nullable
   default XCompositeNode getCurrentRootNode() {
     return null;
