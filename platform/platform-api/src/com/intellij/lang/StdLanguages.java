@@ -47,11 +47,6 @@ public class StdLanguages {
   public static Language XML = StdFileTypes.XML.getLanguage();
 
   /**
-   * The definition for the ANT language.
-   */
-  public static Language ANT;
-
-  /**
    * The definition for the HTML language.
    */
   public static Language HTML = StdFileTypes.HTML.getLanguage();
@@ -75,12 +70,6 @@ public class StdLanguages {
    * The definition for the Properties language.
    */
   public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
-
-  /**
-   * @deprecated use {@link com.intellij.psi.css.CssSupportLoader} instead
-   */
-  @Deprecated
-  public static Language CSS;
 
   private StdLanguages() { }
 }
