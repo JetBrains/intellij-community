@@ -6,8 +6,10 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -27,12 +29,26 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> myCacheKey;
 
-  public LanguageExtension(@NonNls final String epName) {
+  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName) {
+    this(epName.getName(), null);
+  }
+
+  public LanguageExtension(@NotNull @NonNls final String epName) {
     this(epName, null);
   }
 
-  public LanguageExtension(@NonNls final String epName, @Nullable final T defaultImplementation) {
+  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable final T defaultImplementation) {
+    this(epName.getName(), defaultImplementation, null);
+  }
+
+  public LanguageExtension(@NotNull @NonNls final String epName, @Nullable final T defaultImplementation) {
     this(epName, defaultImplementation, null);
+  }
+
+  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName,
+                           @Nullable T defaultImplementation,
+                           @Nullable Disposable parentDisposable) {
+    this(epName.getName(), defaultImplementation, parentDisposable);
   }
 
   public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation, @Nullable Disposable parentDisposable) {
@@ -54,7 +70,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @Override
-  protected void invalidateCacheForExtension(String key) {
+  public void invalidateCacheForExtension(String key) {
     super.invalidateCacheForExtension(key);
     final Language language = Language.findLanguageByID(key);
     if (language != null) {

@@ -38,8 +38,16 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();
 
+  public KeyedExtensionCollector(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
+    this(epName.getName(), null);
+  }
+
   public KeyedExtensionCollector(@NotNull String epName) {
     this(epName, null);
+  }
+
+  public KeyedExtensionCollector(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable Disposable parentDisposable) {
+    this(epName.getName(), parentDisposable);
   }
 
   public KeyedExtensionCollector(@NotNull String epName, @Nullable Disposable parentDisposable) {
