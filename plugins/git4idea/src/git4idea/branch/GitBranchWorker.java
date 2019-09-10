@@ -16,20 +16,28 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.CompareBranchesDialog;
+import com.intellij.dvcs.util.CommitCompareInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.history.GitHistoryUtils;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
+import git4idea.ui.branch.GitCompareBranchesHelper;
+import git4idea.util.GitLocalCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -142,10 +150,46 @@ public final class GitBranchWorker {
     new GitRenameBranchOperation(myProject, myGit, myUiHandler, currentName, newName, repositories).execute();
   }
 
+  void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories, @NotNull GitRepository selectedRepository) {
+    try {
+      CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
+      ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
+    }
+    catch (VcsException e) {
+      VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());
+    }
+  }
+
+  @NotNull
+  private CommitCompareInfo loadCommitsToCompare(@NotNull List<? extends GitRepository> repositories,
+                                                 @NotNull String branchName) throws VcsException {
+    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(myProject, branchName);
+    for (GitRepository repository: repositories) {
+      List<GitCommit> headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
+      List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
+      compareInfo.put(repository, headToBranch, branchToHead);
+
+      compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
+    }
+    return compareInfo;
+  }
+
   @NotNull
   public static Collection<Change> loadTotalDiff(@NotNull Repository repository, @NotNull String branchName) throws VcsException {
     // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
     return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
+  }
+
+  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
+                                    @NotNull GitRepository selectedRepository) {
+    if (compareInfo.isEmpty()) {
+      Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
+                                                        currentBranch, branchName), "No Changes Detected");
+    }
+    else {
+      new CompareBranchesDialog(new GitCompareBranchesHelper(myProject),
+                                branchName, currentBranch, compareInfo, selectedRepository, false).show();
+    }
   }
 
   private static void updateInfo(@NotNull Collection<? extends GitRepository> repositories) {
@@ -153,4 +197,5 @@ public final class GitBranchWorker {
       repository.update();
     }
   }
+
 }
