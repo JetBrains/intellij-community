@@ -2,6 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
+import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -36,7 +37,6 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static com.intellij.ide.IdeEventQueue.updateActivatedWindowSet;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
@@ -269,7 +269,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
               UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> Disposer.register(ideRootPane, () -> runnable.run()));
             }
             exitFullscreen();
-            updateActivatedWindowSet();
+            ActiveWindowsWatcher.addActiveWindow(frame);
             myFrame.validate();
           }
         });
