@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -48,6 +49,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @Deprecated
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
+    DeprecatedMethodException.report("Use OSProcessHandler(Process, String) instead");
   }
 
   /**
