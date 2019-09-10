@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.JavaCompletionTestCase;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
@@ -89,7 +89,7 @@ public class WordCompletionTest extends JavaCompletionTestCase {
       }
     };
     PsiReferenceRegistrarImpl registrar =
-      (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
+      (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(JavaLanguage.INSTANCE);
     try {
       registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class), softProvider);
       registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class), hardProvider);
