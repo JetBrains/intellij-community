@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModulePointerManager
@@ -56,7 +57,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     title = ProjectBundle.message("convert.module.groups.dialog.title")
     isModal = false
     setOKButtonText(ProjectBundle.message("convert.module.groups.button.text"))
-    editorArea = EditorTextFieldProvider.getInstance().getEditorField(StdLanguages.TEXT, project, listOf(EditorCustomization {
+    editorArea = EditorTextFieldProvider.getInstance().getEditorField(PlainTextLanguage.INSTANCE, project, listOf(EditorCustomization {
       it.settings.apply {
         isLineNumbersShown = false
         isLineMarkerAreaShown = false

@@ -22,6 +22,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -87,7 +88,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
       LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE); // pile of annotator classes loads
-      LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);
+      LanguageAnnotators.INSTANCE.allForLanguage(XMLLanguage.INSTANCE);
       ProblemHighlightFilter.EP_NAME.getExtensions();
       ImplicitUsageProvider.EP_NAME.getExtensionList();
       XmlSchemaProvider.EP_NAME.getExtensionList();

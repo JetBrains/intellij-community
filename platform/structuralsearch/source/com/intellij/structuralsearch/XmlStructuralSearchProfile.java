@@ -7,6 +7,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -112,7 +113,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   public LanguageFileType detectFileType(@NotNull PsiElement context) {
     final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
-    if (file.getLanguage() == StdLanguages.HTML || (file.getFileType() == StdFileTypes.JSP && contextLanguage == StdLanguages.HTML)) {
+    if (file.getLanguage() == HTMLLanguage.INSTANCE || (file.getFileType() == StdFileTypes.JSP && contextLanguage == HTMLLanguage.INSTANCE)) {
       return StdFileTypes.HTML;
     }
     return StdFileTypes.XML;

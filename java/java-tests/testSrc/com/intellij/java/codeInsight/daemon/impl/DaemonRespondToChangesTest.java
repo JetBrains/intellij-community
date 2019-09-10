@@ -42,6 +42,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -634,9 +635,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testChangeXmlIncludeLeadsToRehighlight() {
-    LanguageFilter[] extensions = ((CompositeLanguage)StdLanguages.XML).getLanguageExtensions();
+    LanguageFilter[] extensions = ((CompositeLanguage)XMLLanguage.INSTANCE).getLanguageExtensions();
     for (LanguageFilter extension : extensions) {
-      ((CompositeLanguage)StdLanguages.XML).unregisterLanguageExtension(extension);
+      ((CompositeLanguage)XMLLanguage.INSTANCE).unregisterLanguageExtension(extension);
     }
 
     final String location = getTestName(false) + ".xsd";
@@ -665,7 +666,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertFalse(errors.isEmpty());
 
     for (LanguageFilter extension : extensions) {
-      ((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(extension);
+      ((CompositeLanguage)XMLLanguage.INSTANCE).registerLanguageExtension(extension);
     }
   }
 

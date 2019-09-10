@@ -29,42 +29,56 @@ public class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.lang.java.JavaLanguage#INSTANCE} instead.
    */
-  @Deprecated public static Language JAVA = StdFileTypes.JAVA.getLanguage();
+  @Deprecated public static final Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
    * The definition for the DTD language.
+   *
+   * @deprecated use {@linkplain com.intellij.lang.dtd.DTDLanguage#INSTANCE} instead.
    */
-  public static Language DTD = StdFileTypes.DTD.getLanguage();
+  @Deprecated public static final Language DTD = StdFileTypes.DTD.getLanguage();
 
   /**
    * The definition for the JSP language.
+   *
+   * @deprecated use {@linkplain com.intellij.lang.jsp.NewJspLanguage#INSTANCE} instead.
    */
-  public static Language JSP = StdFileTypes.JSP.getLanguage();
+  @Deprecated public static final Language JSP = StdFileTypes.JSP.getLanguage();
 
   /**
    * The definition for the XML language.
+   *
+   * @deprecated use {@linkplain com.intellij.lang.xml.XMLLanguage#INSTANCE} instead.
    */
-  public static Language XML = StdFileTypes.XML.getLanguage();
+  @Deprecated public static final Language XML = StdFileTypes.XML.getLanguage();
 
   /**
    * The definition for the HTML language.
+   *
+   * @deprecated use {@linkplain com.intellij.lang.html.HTMLLanguage#INSTANCE} instead.
    */
-  public static Language HTML = StdFileTypes.HTML.getLanguage();
+  @Deprecated public static final Language HTML = StdFileTypes.HTML.getLanguage();
 
   /**
    * The definition for the XHTML language.
+   *
+   * @deprecated use {@linkplain com.intellij.lang.xhtml.XHTMLLanguage#INSTANCE} instead.
    */
-  public static Language XHTML = StdFileTypes.XHTML.getLanguage();
+  @Deprecated public static final Language XHTML = StdFileTypes.XHTML.getLanguage();
 
   /**
-   * The definition for the JSP language (JSP with XML syntax).
+   * The definition for the JSPX language (JSP with XML syntax).
+   *
+   * @deprecated use {@linkplain com.intellij.lang.jspx.JSPXLanguage#INSTANCE} instead.
    */
-  public static Language JSPX = StdFileTypes.JSPX.getLanguage();
+  @Deprecated public static final Language JSPX = StdFileTypes.JSPX.getLanguage();
 
   /**
-   * The definition for the Text language.
+   * The definition for the Text language
+   *
+   * @deprecated use {@linkplain com.intellij.openapi.fileTypes.PlainTextLanguage#INSTANCE} instead.
    */
-  public static Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
+  @Deprecated public static final Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
 
   private StdLanguages() { }
 }
