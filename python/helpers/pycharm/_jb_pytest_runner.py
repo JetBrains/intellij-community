@@ -3,7 +3,6 @@ import sys
 
 import pytest
 from _pytest.config import get_plugin_manager
-from _pytest import config
 
 from pkg_resources import iter_entry_points
 
@@ -31,11 +30,13 @@ if __name__ == '__main__':
         args += ["-s"]
 
     jb_doc_args("pytest", args)
-    # We need to preparse numprocesses because user may set it using ini file
-    config_result = config._prepareconfig(args, plugins_to_load)
 
-    if getattr(config_result.option, "numprocesses", None):
-        set_parallel_mode()
+    class Plugin:
+        @staticmethod
+        def pytest_configure(config):
+            if getattr(config.option, "numprocesses", None):
+                set_parallel_mode()
+            start_protocol()
 
-    start_protocol()
-    pytest.main(args, plugins_to_load)
+
+    pytest.main(args, plugins_to_load + [Plugin])
