@@ -2050,6 +2050,31 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testCodeEvaluationWithPandas() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_dataframe.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 30);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        consoleExec("x = 42");
+        resume();
+        waitForTerminate();
+        assertFalse(output().contains("ValueError: The truth value of a DataFrame is ambiguous."));
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("pandas");
+      }
+    });
+  }
+
+  @Test
   public void testStepIntoWithThreads() {
     runPythonTest(new PyDebuggerTask("/debug", "test_step_into_with_threads.py") {
       @Override
