@@ -48,6 +48,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
     myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
+    myQueue.setPassThrough(false); // do not update stripes immediately in tests
     UIUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
