@@ -15,6 +15,7 @@ import java.awt.*
 import java.net.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 
 val log = KLoggers.logger()
 
@@ -23,7 +24,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
     val port = selectFreePort()
     val codeFlow = CodeFlowConfig(config, "http://localhost:$port/auth")
 
-    return suspendCoroutine { cnt ->
+    return suspendCancellableCoroutine { cnt ->
 
         val server = try {
             embeddedServer(Jetty, port, "localhost") {
