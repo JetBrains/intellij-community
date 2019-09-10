@@ -119,10 +119,12 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     updateTitle();
 
     myRootPane = new IdeRootPane(this);
+    setRootPane(myRootPane);
+    // NB!: the root pane must be set before decorator,
+    // which holds its own client properties in a root pane
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
   }
 
