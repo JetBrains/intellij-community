@@ -20,16 +20,6 @@ import javax.swing.*;
 public interface DirectoryProjectGenerator<T> {
   ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
-  /**
-   * @deprecated todo[vokin]: delete in 2016.3
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016.3")
-  @Deprecated
-  @Nullable
-  default T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
   @Nullable
   default String getDescription() {
     return null;
