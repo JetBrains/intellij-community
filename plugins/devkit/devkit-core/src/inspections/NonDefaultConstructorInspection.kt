@@ -44,7 +44,8 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 
     val area: Area?
     val isService: Boolean
-    var isServiceAnnotation = false // hack, allow Project-level @Service
+    // hack, allow Project-level @Service
+    var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
     if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
       area = null
@@ -70,8 +71,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
-      val parameters = method.parameterList
-      if (isAllowedParameters(parameters, extensionPoint, isAppLevelExtensionPoint, isServiceAnnotation)) {
+      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, isServiceAnnotation)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -180,6 +180,16 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
+private val allowedServiceNames = setOf("Project", "Module", "MessageBus", "SchemeManagerFactory", "TypedActionHandler", "Dbms")
+private val allowedServiceQualifiedNames = setOf(
+  "com.intellij.openapi.project.Project",
+  "com.intellij.openapi.module.Module",
+  "com.intellij.util.messages.MessageBus",
+  "com.intellij.openapi.options.SchemeManagerFactory",
+  "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
+  "com.intellij.database.Dbms"
+)
+
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,
@@ -189,30 +199,34 @@ private fun isAllowedParameters(list: PsiParameterList,
   }
 
   // hardcoded for now, later will be generalized
-  if (!isServiceAnnotation) {
-    if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
-      // disallow any parameters
+  if (!isServiceAnnotation && extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
+    // disallow any parameters
+    return false
+  }
+
+  for (parameter in list.parameters) {
+    if (parameter.isVarArgs) {
+      return false
+    }
+
+    val type = parameter.type as? PsiClassType ?: return false
+    // before resolve, check unqualified name
+    val name = type.className
+    if (!allowedServiceNames.contains(name)) {
+      return false
+    }
+
+    val qualifiedName = (type.resolve() ?: return false).qualifiedName
+    if (!allowedServiceQualifiedNames.contains(qualifiedName)) {
+      return false
+    }
+
+    if (isAppLevelExtensionPoint && name == "Project") {
       return false
     }
   }
 
-  if (list.parametersCount != 1) {
-    return false
-  }
-
-  val first = list.parameters.first()
-  if (first.isVarArgs) {
-    return false
-  }
-
-  val type = first.type as? PsiClassType ?: return false
-  // before resolve, check unqualified name
-  if (!(type.className == "Project" || type.className == "Module")) {
-    return false
-  }
-
-  val qualifiedName = (type.resolve() ?: return false).qualifiedName
-  return qualifiedName == "com.intellij.openapi.project.Project" || qualifiedName == "com.intellij.openapi.module.Module"
+  return true
 }
 
 private val interfacesToCheck = THashSet(listOf(

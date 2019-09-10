@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -34,8 +35,8 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
-  DocumentReferenceManagerImpl() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+  DocumentReferenceManagerImpl(@NotNull MessageBus messageBus) {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
