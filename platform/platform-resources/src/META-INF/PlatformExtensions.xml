@@ -777,5 +777,9 @@
 
     <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
                  description="Defines storing Run Anything context combobox directories number."/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                        serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
+    <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
   </extensions>
 </idea-plugin>

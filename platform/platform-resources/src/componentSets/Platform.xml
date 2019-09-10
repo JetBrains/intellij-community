@@ -45,11 +45,6 @@
     <component>
       <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.intellij.configurationStore.StoreReloadManager</interface-class>
-      <implementation-class>com.intellij.configurationStore.StoreReloadManagerImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

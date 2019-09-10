@@ -34,6 +34,10 @@ import java.util.List;
 public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
+  // do not use extension point name to avoid map lookup on each event publishing
+  private static final ExtensionPoint<VirtualFileManagerListener>
+    MANAGER_LISTENER_EP = ApplicationManager.getApplication().getExtensionArea().getExtensionPoint("com.intellij.virtualFileManagerListener");
+
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
@@ -229,30 +233,38 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
 
   @Override
   public void fireBeforeRefreshStart(boolean asynchronous) {
-    if (myRefreshCount++ == 0) {
-      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        try {
-          listener.beforeRefreshStart(asynchronous);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    if (myRefreshCount++ != 0) {
+      return;
+    }
+
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      try {
+        listener.beforeRefreshStart(asynchronous);
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
+
+    MANAGER_LISTENER_EP.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous));
   }
 
   @Override
   public void fireAfterRefreshFinish(boolean asynchronous) {
-    if (--myRefreshCount == 0) {
-      for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        try {
-          listener.afterRefreshFinish(asynchronous);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    if (--myRefreshCount != 0) {
+      return;
+    }
+
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      try {
+        listener.afterRefreshFinish(asynchronous);
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
+
+    MANAGER_LISTENER_EP.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous));
   }
 
   @Override
