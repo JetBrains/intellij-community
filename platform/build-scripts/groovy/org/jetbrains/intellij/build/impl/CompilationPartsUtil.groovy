@@ -54,7 +54,7 @@ class CompilationPartsUtil {
       @Override
       protected void append(LoggingEvent event) {
         def level = event.getLevel()
-        String message = this.getLayout().format(event)
+        String message = getLayout().format(event)
         if (level.isGreaterOrEqual(Level.ERROR)) {
           def throwable = event.throwableInformation?.throwable
           if (throwable != null) {
