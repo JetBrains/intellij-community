@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMetaType {
   @NotNull
   private final String myTypeName;
@@ -83,7 +83,7 @@ public abstract class YamlMetaType {
     return getClass().getSimpleName() + ":" + myTypeName + "@" + Integer.toHexString(hashCode());
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class YamlInsertionMarkup {
     public static final String CRLF_MARKUP = "<crlf>";
     public static final String CARET_MARKUP = "<caret>";
@@ -175,7 +175,7 @@ public abstract class YamlMetaType {
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class ForcedCompletionPath {
     private static final Iteration OFF_PATH_ITERATION = new OffPathIteration();
     private static final Iteration NULL_ITERATION = new NullIteration();

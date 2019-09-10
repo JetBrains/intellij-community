@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlEnumType extends YamlScalarType {
   private String[] myLiterals = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private String[] myHiddenLiterals = ArrayUtilRt.EMPTY_STRING_ARRAY;

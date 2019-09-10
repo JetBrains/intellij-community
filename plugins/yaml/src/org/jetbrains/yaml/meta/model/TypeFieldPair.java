@@ -4,7 +4,7 @@ package org.jetbrains.yaml.meta.model;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class TypeFieldPair {
   @NotNull
   private final Field myField;

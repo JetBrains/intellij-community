@@ -23,7 +23,7 @@ import org.jetbrains.yaml.meta.model.ModelAccess;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.psi.*;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlMetaTypeProvider {
 
   private static final Logger LOG = Logger.getInstance(YamlMetaTypeProvider.class);

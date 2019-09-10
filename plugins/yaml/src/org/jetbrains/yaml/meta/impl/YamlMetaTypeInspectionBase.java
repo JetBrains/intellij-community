@@ -15,7 +15,7 @@ import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
 
   @Nullable

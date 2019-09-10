@@ -13,7 +13,7 @@ import org.jetbrains.yaml.psi.YAMLScalar;
 
 import java.util.*;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @SuppressWarnings("UnusedReturnValue")
 public class YamlMetaClass extends YamlMetaType {
   private final List<Field> myFeatures = new LinkedList<>();

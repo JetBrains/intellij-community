@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
  * Class for values of any scalar types (string, number, boolean), i.e. no type-specific validation is performed
  * @see YamlUnstructuredClass
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlAnyScalarType extends YamlScalarType {
   private static final YamlAnyScalarType SHARED_INSTANCE = new YamlAnyScalarType();
 
