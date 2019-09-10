@@ -219,7 +219,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
+    <projectService serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager" preload="true"/>
 
     <projectService serviceImplementation="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
 
