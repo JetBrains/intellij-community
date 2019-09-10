@@ -36,7 +36,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
-  private static volatile Predicate<Class<?>> TYPE_CHECKER;
+  private static volatile Predicate<? super Class<?>> TYPE_CHECKER;
 
   private final String myName;
   private final String myClassName;
@@ -56,7 +56,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // guarded by this
   @NotNull
   private List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
-  boolean myAdaptersIsSorted = true;
+  private boolean myAdaptersIsSorted = true;
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -81,15 +81,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @TestOnly
-  public static boolean setTestTypeChecker(@NotNull Predicate<Class<?>> typeChecker, @NotNull Disposable parentDisposable) {
+  public static boolean setTestTypeChecker(@NotNull Predicate<? super Class<?>> typeChecker, @NotNull Disposable parentDisposable) {
     if (TYPE_CHECKER != null) {
       return false;
     }
 
     TYPE_CHECKER = typeChecker;
-    Disposer.register(parentDisposable, () -> {
-      TYPE_CHECKER = null;
-    });
+    Disposer.register(parentDisposable, () -> TYPE_CHECKER = null);
 
     return true;
   }
@@ -219,7 +217,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   private synchronized void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
-      Predicate<Class<?>> checker = TYPE_CHECKER;
+      Predicate<? super Class<?>> checker = TYPE_CHECKER;
       if (checker != null && checker.test(extensionClass)) {
         return;
       }
@@ -532,7 +530,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    */
   @TestOnly
   @ApiStatus.Internal
-  public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable, boolean fireEvents) {
+  public synchronized void maskAll(@NotNull List<? extends T> list, @NotNull Disposable parentDisposable, boolean fireEvents) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       POINTS_IN_READONLY_MODE = ContainerUtil.newIdentityTroveSet();
@@ -544,7 +542,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     List<T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
     // any read access will use supplied list, any write access can lead to unpredictable results - asserted in clearCache
-    myExtensionsCache = list;
+    myExtensionsCache = (List<T>)list;
     myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
 
@@ -697,9 +695,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> {
-    return n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
-  };
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   @NotNull
   private static <T> ArrayFactory<ExtensionPointListener<T>> listenerArrayFactory() {
@@ -856,7 +852,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   /**
    * {@link #clearCache} is not called, use {@link ExtensionsAreaImpl#extensionsRegistered(ExtensionPointImpl[])} if needed.
    */
-  final synchronized void registerExtensions(@NotNull List<Element> extensionElements,
+  final synchronized void registerExtensions(@NotNull List<? extends Element> extensionElements,
                                              @NotNull PluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
                                              boolean notifyListeners) {
@@ -903,7 +899,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Nullable
-  public final T findExtension(@NotNull Class<T> aClass, boolean isRequired, boolean strictMatch) {
+  public final T findExtension(@NotNull Class<? extends T> aClass, boolean isRequired, boolean strictMatch) {
     List<? extends T> extensionsCache = myExtensionsCache;
     if (extensionsCache == null) {
       // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
@@ -965,7 +961,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  synchronized boolean isInReadOnlyMode() {
+  private synchronized boolean isInReadOnlyMode() {
     return POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this);
   }
 
