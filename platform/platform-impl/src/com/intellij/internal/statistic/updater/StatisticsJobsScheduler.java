@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
@@ -39,7 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class StatisticsJobsScheduler implements ApplicationInitializedListener {
+final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 20;
 
@@ -50,6 +49,10 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
   private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
+  StatisticsJobsScheduler() {
+    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
+  }
+
   @Override
   public void componentsInitialized() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -59,7 +62,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
       Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
-          if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
+          if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
             final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
             ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             Disposer.dispose(disposable);
@@ -126,7 +129,6 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     });
   }
 
-
   private static void runLegacyDataCleanupService() {
     JobScheduler.getScheduler().schedule(() -> {
       FUStatisticsPersistence.clearLegacyStates();
@@ -137,10 +139,6 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       statisticsService::send, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, delayInMs, TimeUnit.MILLISECONDS
     );
-  }
-
-  public StatisticsJobsScheduler() {
-    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
   }
 
   private static boolean isEmpty(@Nullable Window window) {

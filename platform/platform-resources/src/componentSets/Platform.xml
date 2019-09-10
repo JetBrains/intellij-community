@@ -16,11 +16,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>
-      <implementation-class>com.intellij.notification.impl.NotificationsConfigurationImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader</implementation-class>
       <headless-implementation-class/>
     </component>
