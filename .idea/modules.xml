@@ -668,6 +668,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-rest/intellij.python.reStructuredText.iml" filepath="$PROJECT_DIR$/python/python-rest/intellij.python.reStructuredText.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-terminal/intellij.python.terminal.iml" filepath="$PROJECT_DIR$/python/python-terminal/intellij.python.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/tools/intellij.python.tools.iml" filepath="$PROJECT_DIR$/python/tools/intellij.python.tools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" filepath="$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/rest/intellij.reStructuredText.iml" filepath="$PROJECT_DIR$/python/rest/intellij.reStructuredText.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" filepath="$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" />
