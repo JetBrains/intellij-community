@@ -598,23 +598,31 @@ class RootIndex {
     for (VirtualFile each = file; each != null; each = each.getParent()) {
       int id = ((VirtualFileWithId)each).getId();
       if (!myNonInterestingIds.get(id)) {
-        DirectoryInfo info = myRootInfos.get(each);
-        if (info != null) {
-          return info;
-        }
-
-        if (ourFileTypes.isFileIgnored(each)) {
-          return NonProjectDirectoryInfo.IGNORED;
-        }
-        if (LOG.isDebugEnabled() && (id > 500_000_000 || id < 0)) {
-          LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
-        }
-
-        myNonInterestingIds.set(id);
+        DirectoryInfo info = handleInterestingId(id, each);
+        if (info != null) return info;
       }
     }
 
     return NonProjectDirectoryInfo.NOT_UNDER_PROJECT_ROOTS;
+  }
+
+  @Nullable
+  private DirectoryInfo handleInterestingId(int id, VirtualFile file) {
+    DirectoryInfo info = myRootInfos.get(file);
+    if (info != null) {
+      return info;
+    }
+
+    if (ourFileTypes.isFileIgnored(file)) {
+      return NonProjectDirectoryInfo.IGNORED;
+    }
+
+    if ((id > 500_000_000 || id < 0) && LOG.isDebugEnabled()) {
+      LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
+    }
+
+    myNonInterestingIds.set(id);
+    return null;
   }
 
   @NotNull
