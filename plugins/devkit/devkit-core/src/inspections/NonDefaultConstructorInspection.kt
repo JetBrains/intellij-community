@@ -221,7 +221,7 @@ private fun isAllowedParameters(list: PsiParameterList,
       return false
     }
 
-    if (isAppLevelExtensionPoint && name == "Project") {
+    if (isAppLevelExtensionPoint && !isServiceAnnotation && name == "Project") {
       return false
     }
   }
