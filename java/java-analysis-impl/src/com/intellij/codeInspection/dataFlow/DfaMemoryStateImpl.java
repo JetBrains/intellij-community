@@ -1069,6 +1069,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         ThreeState result = processGetClass((DfaVariableValue)dfaLeft, (PsiType)rightConstant.getValue(), isNegated);
         if (result != ThreeState.UNSURE) return result.toBoolean();
       }
+      if (dfaRight instanceof DfaVariableValue && !isNegated) {
+        if (!equalizeTypesOnGetClass((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) {
+          return false;
+        }
+      }
     }
 
     if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {
@@ -1096,6 +1101,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
     return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
+  }
+
+  private boolean equalizeTypesOnGetClass(DfaVariableValue dfaLeft, DfaVariableValue dfaRight) {
+    PsiModifierListOwner leftPsi = dfaLeft.getPsiVariable();
+    PsiModifierListOwner rightPsi = dfaRight.getPsiVariable();
+    if (leftPsi != rightPsi || !(leftPsi instanceof PsiMethod) || !PsiTypesUtil.isGetClass((PsiMethod)leftPsi)) return true;
+    DfaVariableValue leftQualifier = dfaLeft.getQualifier();
+    DfaVariableValue rightQualifier = dfaRight.getQualifier();
+    if (leftQualifier == null || rightQualifier == null || leftQualifier == rightQualifier) return true;
+    TypeConstraint leftType = getValueFact(leftQualifier, DfaFactType.TYPE_CONSTRAINT);
+    TypeConstraint rightType = getValueFact(rightQualifier, DfaFactType.TYPE_CONSTRAINT);
+    return applyFact(leftQualifier, DfaFactType.TYPE_CONSTRAINT, rightType) &&
+           applyFact(rightQualifier, DfaFactType.TYPE_CONSTRAINT, leftType);
   }
 
   @NotNull
