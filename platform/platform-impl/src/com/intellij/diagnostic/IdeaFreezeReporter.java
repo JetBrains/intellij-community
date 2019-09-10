@@ -48,7 +48,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   public void uiFreezeStarted() {
     if (!DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
-        myDumpTask.cancel();
+        myDumpTask.stop();
       }
       myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
                                     Registry.intValue("freeze.reporter.dump.duration.s"));
@@ -76,7 +76,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     if (myDumpTask == null) {
       return;
     }
-    myDumpTask.cancel();
+    myDumpTask.stop();
     if (Registry.is("freeze.reporter.enabled")) {
       int lengthInSeconds = (int)(durationMs / 1000);
       long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();

@@ -262,7 +262,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private void stopDumping() {
     if (myDumpTask != null) {
-      myDumpTask.cancel();
+      myDumpTask.stop();
     }
   }
 

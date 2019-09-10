@@ -43,7 +43,7 @@ public class SamplingTask {
     if (!myFuture.isCancelled()) {
       myThreadInfos.add(infos);
       if (myThreadInfos.size() >= myMaxDumps) {
-        cancel();
+        stop();
       }
       dumpedThreads(infos);
     }
@@ -76,7 +76,7 @@ public class SamplingTask {
     return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
   }
 
-  public void cancel() {
+  public void stop() {
     myFuture.cancel(false);
   }
 }
