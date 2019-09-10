@@ -42,7 +42,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       return getInstance();
     }
 
-    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    projectSettingsManager.initProjectSettings(project);
+    return projectSettingsManager;
   }
 
   /**
