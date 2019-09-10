@@ -23,7 +23,6 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -35,12 +34,12 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
+  private static final Logger LOG = Logger.getInstance(MacMainFrameDecorator.class);
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
 
@@ -77,32 +76,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
-
-  // Fullscreen listener delivers event too late,
-  // so we use method swizzling here
-  private final Callback windowWillEnterFullScreenCallBack = new Callback() {
-    public void callback(ID self,
-                         ID nsNotification)
-    {
-      invoke(self, "oldWindowWillEnterFullScreen:", nsNotification);
-      enterFullscreen();
-    }
-  };
-
   private void enterFullscreen() {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
-
-  private final Callback windowWillExitFullScreenCallBack = new Callback() {
-    public void callback(ID self,
-                         ID nsNotification)
-    {
-      invoke(self, "oldWindowWillExitFullScreen:", nsNotification);
-      exitFullscreen();
-    }
-  };
 
   private void exitFullscreen() {
     myInFullScreen = false;
@@ -114,7 +92,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   }
 
   private void storeFullScreenStateIfNeeded() {
-    // todo should we really check that frame has not null project as it was implented previously?
+    // todo should we really check that frame has not null project as it was implemented previously?
     myFrame.doLayout();
   }
 
@@ -126,6 +104,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   static {
     try {
       Class.forName("com.apple.eawt.FullScreenUtilities");
+      //noinspection JavaReflectionMemberAccess
       requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
       HAS_FULLSCREEN_UTILITIES = true;
     }
@@ -139,6 +118,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private static boolean SHOWN = false;
 
   private static final Callback SET_VISIBLE_CALLBACK = new Callback() {
+    @SuppressWarnings("unused")
     public void callback(ID caller, ID selector, ID value) {
       SHOWN = value.intValue() == 1;
       SwingUtilities.invokeLater(CURRENT_SETTER);
@@ -146,6 +126,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   };
 
   private static final Callback IS_VISIBLE = new Callback() {
+    @SuppressWarnings("unused")
     public boolean callback(ID caller) {
       return SHOWN;
     }
@@ -165,24 +146,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     settings.fireUISettingsChanged();
   };
 
-  @SuppressWarnings("Convert2Lambda")
-  public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
-    @Override
-    public Boolean apply(Object o) {
-      return UISettings.getInstance().getShowNavigationBar();
-    }
-  };
+  public static final Supplier<Boolean> NAV_BAR_GETTER = () -> UISettings.getInstance().getShowNavigationBar();
 
-  @SuppressWarnings("Convert2Lambda")
-  public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
-    @Override
-    public Boolean apply(Object o) {
-      return UISettings.getInstance().getShowMainToolbar();
-    }
-  };
+  public static final Supplier<Boolean> TOOLBAR_GETTER = () -> UISettings.getInstance().getShowMainToolbar();
 
   private static Runnable CURRENT_SETTER = null;
-  private static Function<Object, Boolean> CURRENT_GETTER = null;
+  private static Supplier<Boolean> CURRENT_GETTER = null;
   private static CustomProtocolHandler ourProtocolHandler = null;
 
   private boolean myInFullScreen;
@@ -194,9 +163,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       CURRENT_SETTER = navBar ? NAVBAR_SETTER : TOOLBAR_SETTER;
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CURRENT_GETTER = navBar ? NAVBAR_GETTER : TOOLBAR_GETTER;
+      CURRENT_GETTER = navBar ? NAV_BAR_GETTER : TOOLBAR_GETTER;
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      SHOWN = CURRENT_GETTER.apply(null);
+      SHOWN = CURRENT_GETTER.get();
     }
 
     //noinspection Convert2Lambda
@@ -205,7 +174,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       public void uiSettingsChanged(final UISettings uiSettings) {
         if (CURRENT_GETTER != null) {
           //noinspection AssignmentToStaticFieldFromInstanceMethod
-          SHOWN = CURRENT_GETTER.apply(null);
+          SHOWN = CURRENT_GETTER.get();
         }
       }
     });
@@ -216,7 +185,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
     try {
       if (SystemInfo.isMacOSLion) {
-        if (!FULL_SCREEN_AVAILABLE) return;
+        if (!FULL_SCREEN_AVAILABLE) {
+          return;
+        }
 
         FullScreenUtilities.setWindowCanFullScreen(frame, true);
         // Native fullscreen listener can be set only once
@@ -326,24 +297,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
       });
     }
-  }
-
-  private void replaceNativeFullscreenListenerCallback() {
-    ID awtWindow = Foundation.getObjcClass("AWTWindow");
-
-    Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowWillEnterFullScreen:");
-    ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
-                                                                          windowWillEnterFullScreenCallBack, "v@::@");
-
-    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillEnterFullScreen:"),
-                             originalWindowWillEnterFullScreen, "v@::@");
-
-    Pointer  windowWillExitFullScreenMethod = Foundation.createSelector("windowWillExitFullScreen:");
-    ID originalWindowWillExitFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillExitFullScreenMethod,
-                                                                         windowWillExitFullScreenCallBack, "v@::@");
-
-    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
-                             originalWindowWillExitFullScreen, "v@::@");
   }
 
   @Override
