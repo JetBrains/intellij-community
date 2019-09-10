@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void escapeSequence() {
-    String oneLineTextBlock = "\"this is one \"line\"\n text block\\\"\n";
+    String oneLineTextBlock = "\"this is one \"line\"\n text block\134\\\"\n";
   }
 
 }

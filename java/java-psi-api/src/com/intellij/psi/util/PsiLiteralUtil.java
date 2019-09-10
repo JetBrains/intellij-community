@@ -227,13 +227,11 @@ public class PsiLiteralUtil {
   private static int parseBackSlash(@NotNull String str, int idx) {
     char c = str.charAt(idx);
     if (c != '\\') return -1;
-    int nextIdx = parseHexBackSlash(str, idx);
-    if (nextIdx > 0) return nextIdx;
-    nextIdx = parseOctalBackSlash(str, idx);
+    int nextIdx = parseEscapedBackSlash(str, idx);
     return nextIdx > 0 ? nextIdx : idx + 1;
   }
 
-  private static int parseHexBackSlash(@NotNull String str, int idx) {
+  private static int parseEscapedBackSlash(@NotNull String str, int idx) {
     int next = idx + 1;
     if (next >= str.length() || str.charAt(next) != 'u') return -1;
     while (str.charAt(next) == 'u') {
@@ -243,18 +241,6 @@ public class PsiLiteralUtil {
     try {
       int code = Integer.parseInt(str.substring(next, next + 4), 16);
       if (code == '\\') return next + 4;
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return -1;
-  }
-
-  private static int parseOctalBackSlash(@NotNull String str, int idx) {
-    int next = idx + 1;
-    if (next + 2 >= str.length()) return -1;
-    try {
-      int code = Integer.parseInt(str.substring(next, next + 3), 8);
-      if (code == '\\') return next + 3;
     }
     catch (NumberFormatException ignored) {
     }
