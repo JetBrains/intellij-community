@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import java.util.*
+import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JPanel
 
@@ -66,10 +67,9 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
       val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
       providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
-      for (checkoutProvider in providers) {
-        comboBox.addItem(checkoutProvider)
+      comboBox.model = DefaultComboBoxModel(providers).apply {
+        selectedItem = null
       }
-
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
