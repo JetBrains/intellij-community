@@ -13,7 +13,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.xml.dom",
     "intellij.java.testFramework",
     "intellij.platform.testFramework.core",
-    "intellij.platform.uast.tests"
+    "intellij.platform.uast.tests",
+    "intellij.jsp.base"
   ]
   public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
     "intellij.xml.dom.impl",

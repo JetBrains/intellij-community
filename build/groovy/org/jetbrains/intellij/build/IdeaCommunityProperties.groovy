@@ -18,7 +18,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES + ["intellij.jsp.base"]
+    productLayout.productApiModules = JAVA_IDE_API_MODULES
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES + [
       "intellij.platform.duplicates.analysis",
       "intellij.platform.structuralSearch",
