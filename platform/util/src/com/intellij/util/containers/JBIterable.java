@@ -187,7 +187,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   private static final class Empty extends JBIterable<Object> {
     @Override
     public Iterator<Object> iterator() {
-      return EmptyIterator.getInstance();
+      return Collections.emptyIterator();
     }
   }
 

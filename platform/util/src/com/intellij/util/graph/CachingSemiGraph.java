@@ -43,6 +43,6 @@ public class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
     final List<Node> inNodes = myIn.get(n);
     return inNodes != null
            ? inNodes.iterator()
-           : ContainerUtil.emptyIterator();
+           : Collections.emptyIterator();
   }
 }

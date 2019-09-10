@@ -183,7 +183,7 @@ public class MultiMap<K, V> implements Serializable {
 
             private final Iterator<Collection<V>> mapIterator = myMap.values().iterator();
 
-            private Iterator<V> itr = EmptyIterator.getInstance();
+            private Iterator<V> itr = Collections.emptyIterator();
 
             @Override
             public boolean hasNext() {

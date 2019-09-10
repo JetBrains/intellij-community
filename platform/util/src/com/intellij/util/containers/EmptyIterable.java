@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.Iterator;
 
 public class EmptyIterable<T> implements Iterable<T> {
@@ -25,8 +28,9 @@ public class EmptyIterable<T> implements Iterable<T> {
     return INSTANCE;
   }
 
+  @NotNull
   @Override
   public Iterator<T> iterator() {
-    return EmptyIterator.getInstance();
+    return Collections.emptyIterator();
   }
 }

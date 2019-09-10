@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -110,12 +109,12 @@ public class SmartListTest {
     assertThat(l.toString()).isEqualTo("[]");
 
     Iterator<Integer> iterator = l.iterator();
-    assertThat(iterator).isSameAs(EmptyIterator.getInstance());
+    assertThat(iterator).isSameAs(Collections.emptyIterator());
     assertThat(iterator.hasNext()).isFalse();
 
     l.add(-2);
     iterator = l.iterator();
-    assertThat(iterator).isNotSameAs(EmptyIterator.getInstance());
+    assertThat(iterator).isNotSameAs(Collections.emptyIterator());
     assertThat(iterator.hasNext()).isTrue();
     assertThat(iterator.next()).isEqualTo(-2);
     assertThat(iterator.hasNext()).isFalse();

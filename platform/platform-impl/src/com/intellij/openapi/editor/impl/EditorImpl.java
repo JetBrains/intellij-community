@@ -490,7 +490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (component != null && component.getParent() == null) {
           return Collections.singleton(component).iterator();
         }
-        return ContainerUtil.emptyIterator();
+        return Collections.emptyIterator();
       });
 
     myHeaderPanel = new MyHeaderPanel();

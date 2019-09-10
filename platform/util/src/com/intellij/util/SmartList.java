@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -196,7 +195,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   @NotNull
   @Override
   public Iterator<E> iterator() {
-    return mySize == 0 ? EmptyIterator.getInstance() : super.iterator();
+    return mySize == 0 ? Collections.emptyIterator() : super.iterator();
   }
 
   @Override

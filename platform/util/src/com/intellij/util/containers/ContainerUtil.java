@@ -873,10 +873,14 @@ public class ContainerUtil extends ContainerUtilRt {
     return hashMap;
   }
 
+  /**
+   * @deprecated Use {@link Collections#emptyIterator()} instead
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T> Iterator<T> emptyIterator() {
-    return EmptyIterator.getInstance();
+    return Collections.emptyIterator();
   }
 
   @NotNull
@@ -1201,7 +1205,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Iterator<T> iterate(@NotNull T[] array) {
-    return array.length == 0 ? EmptyIterator.getInstance() : Arrays.asList(array).iterator();
+    return array.length == 0 ? Collections.emptyIterator() : Arrays.asList(array).iterator();
   }
 
   @NotNull

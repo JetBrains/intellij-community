@@ -2,7 +2,6 @@
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +67,6 @@ public class GraphGenerator<Node> implements Graph<Node> {
   @Override
   public Iterator<Node> getOut(Node n) {
     List<Node> outNodes = myOuts.get(n);
-    return outNodes != null ? outNodes.iterator() : ContainerUtil.emptyIterator();
+    return outNodes != null ? outNodes.iterator() : Collections.emptyIterator();
   }
 }
