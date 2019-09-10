@@ -182,10 +182,18 @@ private fun startApp(app: ApplicationImpl,
     .thenRunOrHandleError {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
-      EventQueue.invokeAndWait {
+
+      val task = {
         placeOnEventQueueActivity.end()
 
         app.loadComponents(SplashManager.getProgressIndicator())
+      }
+
+      if (EventQueue.isDispatchThread()) {
+        task()
+      }
+      else {
+        EventQueue.invokeAndWait(task)
       }
 
       val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
