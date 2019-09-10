@@ -54,10 +54,7 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.IOException;
@@ -615,9 +612,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @param path the path to open the project.
    * @return the project, or null if the user has cancelled opening the project.
    */
-  @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
+  @ApiStatus.Internal
+  public static Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
     Activity activity = StartUpMeasurer.start("project conversion");
     ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();

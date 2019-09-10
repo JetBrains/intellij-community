@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -95,14 +96,17 @@ public class ConversionServiceImpl extends ConversionService {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
-    final List<ConversionRunner> converters = getConversionRunners(context);
-    ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
-    dialog.show();
-    if (dialog.isConverted()) {
-      saveConversionResult(context);
-      return new ConversionResultImpl(converters);
-    }
-    return ConversionResultImpl.CONVERSION_CANCELED;
+    List<ConversionRunner> converters = getConversionRunners(context);
+    Ref<ConversionResult> ref = new Ref<>(ConversionResultImpl.CONVERSION_CANCELED);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
+      dialog.show();
+      if (dialog.isConverted()) {
+        saveConversionResult(context);
+        ref.set(new ConversionResultImpl(converters));
+      }
+    });
+    return ref.get();
   }
 
   private static List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {

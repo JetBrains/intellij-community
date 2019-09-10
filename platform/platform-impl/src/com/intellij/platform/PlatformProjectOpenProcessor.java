@@ -285,10 +285,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       project = projectManager.newProject(baseDir, projectName, options);
     }
     else {
-      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
-        processor.refreshProjectFiles(baseDir);
-      }
-      project = projectManager.convertAndLoadProject(baseDir);
+      project = ProjectManagerImpl.convertAndLoadProject(baseDir);
     }
 
     if (project == null) {
