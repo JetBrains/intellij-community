@@ -35,32 +35,41 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private static final String MAIN_PROJECT_CODE_STYLE_NAME = "Project";
   private static final String PROJECT_CODE_STYLE_CONFIG_FILE_NAME = "codeStyleConfig";
 
+  private final Project myProject;
+  private boolean myIsLoaded;
   private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
 
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true);
 
   public ProjectCodeStyleSettingsManager(Project project) {
+    myProject = project;
     setMainProjectCodeStyle(null);
-    initProjectSettings(project);
+  }
+
+  @Override
+  public void initializeComponent() {
+    initProjectSettings(myProject);
     //noinspection deprecation
     getCurrentSettings(); // cache default scheme
   }
 
   private void initProjectSettings(@NotNull Project project) {
-    LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
-    if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
-      loadState(legacySettingsManager.getState());
-      if (!project.isDefault() &&
-          !ApplicationManager.getApplication().isUnitTestMode() &&
-          !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        saveProjectAndNotify(project);
+    if (!myIsLoaded) {
+      LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+      if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
+        loadState(legacySettingsManager.getState());
+        if (!project.isDefault() &&
+            !ApplicationManager.getApplication().isUnitTestMode() &&
+            !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          saveProjectAndNotify(project);
+        }
+        LOG.info("Imported old project code style settings.");
       }
-      LOG.info("Imported old project code style settings.");
-    }
-    else {
-      initDefaults();
-      LOG.info("Initialized from default code style settings.");
+      else {
+        initDefaults();
+        LOG.info("Initialized from default code style settings.");
+      }
     }
   }
 
@@ -110,6 +119,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
         mySettingsMap.put(name, settings);
       }
     }
+    myIsLoaded = true;
   }
 
   private void updateFromOldProjectSettings() {
