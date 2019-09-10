@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.Value
 
 interface CallFrame {
   /**
@@ -39,6 +40,9 @@ interface CallFrame {
    * @return the name of the current function of this frame
    */
   val functionName: String?
+
+  val returnValue: Value?
+    get() = null
 
   /**
    * @return context for evaluating expressions in scope of this frame

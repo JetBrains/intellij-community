@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.openapi.util.Pair
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.Value
 import org.jetbrains.debugger.values.ValueManager
 
 /**
@@ -19,6 +21,10 @@ interface SuspendContext<out CALL_FRAME : CallFrame> {
     get() = null
 
   val topFrame: CALL_FRAME?
+
+  var methodReturnValue: Pair<String, Value>?
+    get() = null
+    set(v) {}
 
   /**
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
