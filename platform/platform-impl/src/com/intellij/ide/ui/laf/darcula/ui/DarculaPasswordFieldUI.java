@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -17,8 +16,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -67,13 +65,15 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {
     JBInsets.addTo(size, ((JTextComponent)c).getMargin());
-    size.height = Math.max(size.height, getMinimumHeight());
+    size.height = Math.max(size.height, getMinimumHeight(size.height));
     size.width = Math.max(size.width, MINIMUM_WIDTH.get());
     return size;
   }
 
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
+  protected int getMinimumHeight(int originHeight) {
+    JComponent component = getComponent();
+    Insets insets = component.getInsets();
+    return (isCompact(component) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + insets.top + insets.bottom;
   }
 
   @Override
@@ -103,7 +103,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.translate(r.x, r.y);
 
-        float bw = DarculaUIUtil.BW.getFloat();
+        float bw = BW.getFloat();
 
         if (component.isEnabled() && component.isEditable()) {
           g2.setColor(component.getBackground());
