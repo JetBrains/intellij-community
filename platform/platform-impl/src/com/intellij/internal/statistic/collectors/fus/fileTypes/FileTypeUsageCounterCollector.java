@@ -32,8 +32,7 @@ public class FileTypeUsageCounterCollector {
   private static void trigger(@NotNull Project project,
                               @NotNull VirtualFile file,
                               @NotNull String event) {
-    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType()).
-      addData("file_path", EventLogConfiguration.INSTANCE.anonymize(file.getPath()));
+    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType()).addAnonymizedPath(file.getPath());
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
