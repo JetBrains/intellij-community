@@ -50,7 +50,7 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module-library">
-      <library>
+      <library name="wadl-core">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
         </CLASSES>
