@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -21,47 +20,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.*;
 
 /**
  * @author Mike
  */
-public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
+public class CreateMethodFromUsageFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix");
-
-  private final SmartPsiElementPointer myMethodCall;
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  public CreateMethodFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
-    myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
-  }
-
-  @Override
-  protected boolean isAvailableImpl(int offset) {
-    final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !call.isValid()) return false;
-    PsiReferenceExpression ref = call.getMethodExpression();
-    String name = ref.getReferenceName();
-
-    if (name == null || !PsiNameHelper.getInstance(ref.getProject()).isIdentifier(name)) return false;
-    if (hasErrorsInArgumentList(call)) return false;
-    setText(getDisplayString(name));
-    return true;
-  }
-
-  protected String getDisplayString(String name) {
-    return QuickFixBundle.message("create.method.from.usage.text", name);
-  }
 
   public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
@@ -89,93 +60,14 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
                                                    //strictly inside arg list
                                                    argRange.getStartOffset() + 1,
                                                    argRange.getEndOffset() - 1,
-                                                   info -> !(info.getActualStartOffset() > argRange.getStartOffset() && info.getActualEndOffset() < argRange.getEndOffset()));
-  }
-
-  @Override
-  protected PsiElement getElement() {
-    final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !canModify(call)) return null;
-    return call;
-  }
-
-  @Override
-  @NotNull
-  protected List<PsiClass> getTargetClasses(PsiElement element) {
-    List<PsiClass> targets = super.getTargetClasses(element);
-    ArrayList<PsiClass> result = new ArrayList<>();
-    PsiMethodCallExpression call = getMethodCall();
-    if (call == null) return Collections.emptyList();
-    for (PsiClass target : targets) {
-      if (shouldCreateStaticMember(call.getMethodExpression(), target)){
-        if (target.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(target)) continue;
-        if (target.getContainingClass() != null && !target.hasModifierProperty(PsiModifier.STATIC)) continue;
-      }
-      if (!isMethodSignatureExists(call, target)) {
-        result.add(target);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  protected void invokeImpl(final PsiClass targetClass) {
-    if (targetClass == null) return;
-    PsiMethodCallExpression expression = getMethodCall();
-    if (expression == null) return;
-    PsiReferenceExpression ref = expression.getMethodExpression();
-
-    if (isValidElement(expression)) return;
-
-    PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiField.class, PsiClassInitializer.class);
-
-    String methodName = ref.getReferenceName();
-    LOG.assertTrue(methodName != null);
-
-    PsiMethod method = createMethod(targetClass, parentClass, enclosingContext, methodName);
-    if (method == null) {
-      return;
-    }
-
-    if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
-        PsiTreeUtil.isAncestor(targetClass, parentClass, true) && !ref.isQualified()) {
-      RefactoringChangeUtil.qualifyReference(ref, method, null);
-    }
-
-    PsiCodeBlock body = method.getBody();
-    assert body != null;
-    final boolean shouldBeAbstract = shouldBeAbstract(expression.getMethodExpression(), targetClass);
-    if (shouldBeAbstract) {
-      body.delete();
-      if (!targetClass.isInterface()) {
-        method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-      }
-    }
-
-    setupVisibility(parentClass, targetClass, method.getModifierList());
-
-    expression = getMethodCall();
-    LOG.assertTrue(expression.isValid());
-
-    if ((!targetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(targetClass)) && shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract) {
-      PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
-    }
-
-    final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
-
-    PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    doCreate(targetClass, method, shouldBeAbstract,
-             ContainerUtil.map2List(arguments, Pair.createFunction(null)),
-             getTargetSubstitutor(expression),
-             CreateFromUsageUtils.guessExpectedTypes(expression, expression.getParent() instanceof PsiStatement),
-             context);
+                                                   info -> !(info.getActualStartOffset() > argRange.getStartOffset() &&
+                                                             info.getActualEndOffset() < argRange.getEndOffset()));
   }
 
   public static PsiMethod createMethod(PsiClass targetClass,
-                                          PsiClass parentClass,
-                                          PsiMember enclosingContext,
-                                          String methodName) {
+                                       PsiClass parentClass,
+                                       PsiMember enclosingContext,
+                                       String methodName) {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     if (factory == null) {
       return null;
@@ -329,30 +221,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  protected boolean shouldBeAbstract(PsiReferenceExpression expression, PsiClass targetClass) {
-    return shouldBeAbstractImpl(expression, targetClass);
-  }
-
   private static boolean shouldBeAbstractImpl(PsiReferenceExpression expression, PsiClass targetClass) {
     return targetClass.isInterface() && (expression == null || !shouldCreateStaticMember(expression, targetClass));
-  }
-
-  @Override
-  protected boolean isValidElement(PsiElement element) {
-    PsiMethodCallExpression callExpression = (PsiMethodCallExpression) element;
-    PsiReferenceExpression referenceExpression = callExpression.getMethodExpression();
-
-    return CreateFromUsageUtils.isValidMethodReference(referenceExpression, callExpression);
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return QuickFixBundle.message("create.method.from.usage.family");
-  }
-
-  @Nullable
-  protected PsiMethodCallExpression getMethodCall() {
-    return (PsiMethodCallExpression)myMethodCall.getElement();
   }
 }
