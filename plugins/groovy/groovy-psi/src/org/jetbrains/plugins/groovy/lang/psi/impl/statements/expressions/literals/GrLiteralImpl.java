@@ -85,7 +85,13 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
           return new BigInteger(text.substring(0, text.length() - 1)); // g or G suffix
         }
         else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
-          return new BigDecimal(text.substring(0, text.length() - 1)); // g or G suffix
+          char lastChar = text.charAt(text.length() - 1);
+          if (lastChar == 'g' || lastChar == 'G') {
+            return new BigDecimal(text.substring(0, text.length() - 1));
+          }
+          else {
+            return new BigDecimal(text);
+          }
         }
       }
       catch (NumberFormatException ignored) {

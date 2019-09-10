@@ -31,6 +31,7 @@ class LiteralTest extends GroovyLatestTest implements BaseTest {
       '42F'     : 42F,
       '42d'     : 42d,
       '42D'     : 42D,
+      '42.42'   : 42.42,
       '42.0g'   : 42.0g,
       '42.0G'   : 42.0G,
     ]
