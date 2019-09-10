@@ -1,6 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.maddyhome.idea.copyright.psi;
+package com.intellij.copyright;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -10,6 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
+import com.maddyhome.idea.copyright.psi.UpdateCopyright;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
+import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

@@ -76,6 +76,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.copyright" />
   </component>
   <component name="copyright">
     <Base>

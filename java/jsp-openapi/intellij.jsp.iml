@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.jsp.base" exported="" />
+    <orderEntry type="module" module-name="intellij.copyright" />
   </component>
   <component name="copyright">
     <Base>
