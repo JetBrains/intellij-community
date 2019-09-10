@@ -35,8 +35,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -675,6 +674,7 @@ public final class IconLoader {
     public Icon getMenuBarIcon(boolean isDark) {
       boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
       ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
+      ctx.setScale(USR_SCALE.of(1));
       Image img = loadFromUrl(ctx, isDark);
       if (useMRI) {
         img = MultiResolutionImageProvider.convertFromJBImage(img);
