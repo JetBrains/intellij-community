@@ -42,7 +42,6 @@ public final class StartUpMeasurer {
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
     public static final String FRAME_INITIALIZATION = "frame initialization";
 
-    public static final String PROJECT_CONVERSION = "project conversion";
     public static final String PROJECT_INSTANTIATION = "project instantiation";
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";

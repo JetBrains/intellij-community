@@ -341,23 +341,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @Nullable
-  public Project loadProject(@NotNull String filePath) throws IOException {
-    return loadProject(Paths.get(filePath).toAbsolutePath(), null);
-  }
-
-  @Override
-  @Nullable
-  public Project loadProject(@NotNull Path file, @Nullable String projectName) throws IOException {
-    try {
-      ProjectImpl project = doCreateProject(projectName, file);
-      initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
-      return project;
-    }
-    catch (Throwable t) {
-      LOG.info(t);
-      throw new IOException(t);
-    }
+  @NotNull
+  public Project loadProject(@NotNull Path file, @Nullable String projectName) {
+    ProjectImpl project = doCreateProject(projectName, file);
+    initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+    return project;
   }
 
   @NotNull
@@ -630,7 +618,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
+    Activity activity = StartUpMeasurer.start("project conversion");
     ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
     if (conversionResult.openingIsCanceled()) {

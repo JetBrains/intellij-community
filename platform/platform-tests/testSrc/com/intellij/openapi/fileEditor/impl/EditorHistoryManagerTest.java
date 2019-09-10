@@ -71,9 +71,9 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
     }), getTestRootDisposable(), false);
   }
 
-  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) throws Exception {
+  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) {
     Project project = Files.exists(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
-                      ? myProjectManager.loadProject(projectDir.toString())
+                      ? myProjectManager.loadProject(projectDir)
                       : myProjectManager.createProject(null, projectDir.toString());
     try {
       assertThat(myProjectManager.openProject(project)).isTrue();

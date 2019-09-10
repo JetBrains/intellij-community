@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
 import java.io.File
+import java.nio.file.Paths
 
 class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private val BASE_PATH = "/vcs/directoryMappings/"
@@ -42,7 +43,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
     rootPath = projectRoot.path
 
-    myProject = ProjectManagerEx.getInstanceEx().loadProject("$rootPath/directoryMappings.ipr")
+    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
     ProjectManagerEx.getInstanceEx().openTestProject(myProject)
     UIUtil.dispatchAllInvocationEvents() // startup activities
 
