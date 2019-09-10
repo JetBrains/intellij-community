@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.VcsLogRangeFilter;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -31,8 +31,6 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -132,11 +130,21 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
-    VcsLogContentUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
-      VcsLogRangeFilter range = VcsLogFilterObject.fromRange("HEAD", branchName);
-      VcsLogRootFilter roots = repositories.size() == 1 ? VcsLogFilterObject.fromRoot(selectedRepository.getRoot()) : null;
-      log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(range, roots));
-    });
+    if (Registry.is("git.compare.branches.as.tab")) {
+      VcsLogContentUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
+        VcsLogRangeFilter range = VcsLogFilterObject.fromRange("HEAD", branchName);
+        VcsLogRootFilter roots = repositories.size() == 1 ? VcsLogFilterObject.fromRoot(selectedRepository.getRoot()) : null;
+        log.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection(range, roots));
+      });
+    }
+    else {
+      new CommonBackgroundTask(myProject, "Comparing with " + branchName, null) {
+        @Override
+        public void execute(@NotNull ProgressIndicator indicator) {
+          newWorker(indicator).compare(branchName, repositories, selectedRepository);
+        }
+      }.runInBackground();
+    }
   }
 
   @Override
