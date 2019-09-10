@@ -83,8 +83,8 @@ envs {
   }
 
 
-  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave", "pytest", "untangle"],
-               "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
+  createPython("django_latest", "3.6.8", ["django", "behave-django", "behave", "pytest", "untangle"],
+               "python3.6\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
    if (djangoTrunkOnly) {
      return
    }
@@ -96,8 +96,8 @@ envs {
                "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle",
                true)
 
-  createPython("py35_django22_full",
-               "3.5.4",
+  createPython("py36_django22_full",
+               "3.6.8",
                ["ipython==2.1", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django", "pytest-xdist", "untangle"],
                "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\n" +
                "xdist\nuntangle",
