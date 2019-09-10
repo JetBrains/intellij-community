@@ -7,12 +7,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Disables JSON schema download from schema store for particular files.
- * Not intended to be used except to suppress JSON schema for JSCS
+ * Disables applying schemastore.org JSON schema mappings for particular files.
  */
-@ApiStatus.Experimental
 public interface JsonSchemaCatalogExclusion {
-
   ExtensionPointName<JsonSchemaCatalogExclusion> EP_NAME = ExtensionPointName.create("com.intellij.json.catalog.exclusion");
 
   boolean isExcluded(@NotNull VirtualFile file);
