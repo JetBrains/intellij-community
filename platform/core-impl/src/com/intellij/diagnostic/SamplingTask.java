@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.util.registry.Registry;
-
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -43,11 +41,10 @@ public class SamplingTask {
     myGcCurrentTime = currentGcTime();
     ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
     if (!myFuture.isCancelled()) {
-
-    }
-    myThreadInfos.add(infos);
-    if (myThreadInfos.size() >= myMaxDumps) {
-      cancel();
+      myThreadInfos.add(infos);
+      if (myThreadInfos.size() >= myMaxDumps) {
+        cancel();
+      }
     }
   }
 
