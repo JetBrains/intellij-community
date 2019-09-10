@@ -99,6 +99,11 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
       config.displayName = name
     }
 
+    override fun disposeUIResources() {
+      super.disposeUIResources()
+      targetConfigurable.disposeUIResources()
+    }
+
     override fun getEditableObject() = config
 
     override fun createOptionsPanel(): JComponent = targetConfigurable.createComponent() ?: throw IllegalStateException()
