@@ -175,7 +175,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     });
 
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
       @Override
       public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         for (EditorComposite editor : myOpenedEditors) {

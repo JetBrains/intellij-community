@@ -80,7 +80,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    DEAD_CODE_EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+    DEAD_CODE_EP_NAME.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);

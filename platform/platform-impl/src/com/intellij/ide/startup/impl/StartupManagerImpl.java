@@ -193,7 +193,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
 
-    StartupActivity.POST_STARTUP_ACTIVITY.getPoint(null).addExtensionPointListener(
+    StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(
       new ExtensionPointListener<StartupActivity>() {
         @Override
         public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -415,7 +415,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       }
 
       List<StartupActivity.Background> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
-      ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
+      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
         new ExtensionPointListener<StartupActivity.Background>() {
           @Override
           public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {

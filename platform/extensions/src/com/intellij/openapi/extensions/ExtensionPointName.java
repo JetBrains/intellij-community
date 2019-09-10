@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -140,5 +141,9 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     ((ExtensionPointImpl<T>)getPoint(null)).processWithPluginDescriptor(consumer);
+  }
+
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable) {
+    getPoint(null).addExtensionPointListener(listener, invokeForLoadedExtensions, parentDisposable);
   }
 }

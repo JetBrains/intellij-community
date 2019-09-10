@@ -190,7 +190,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     updateUI();
 
-    UIThemeProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
+    UIThemeProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
       @Override
       public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         for (UIManager.LookAndFeelInfo feel : getInstalledLookAndFeels()) {

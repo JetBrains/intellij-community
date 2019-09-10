@@ -29,6 +29,7 @@ import java.util.List;
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   SyntaxHighlighterLanguageFactory() {
     super("com.intellij.lang.syntaxHighlighterFactory", new PlainSyntaxHighlighterFactory());
+
   }
 
   @NotNull
@@ -50,4 +51,5 @@ public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHi
     }
     return fromEP;
   }
+
 }
