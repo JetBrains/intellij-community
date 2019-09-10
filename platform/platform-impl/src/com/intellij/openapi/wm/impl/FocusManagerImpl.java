@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -58,17 +57,13 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private IdeFrame myLastFocusedFrame;
 
-  @SuppressWarnings("UnusedParameters")  // the dependencies are needed to ensure correct loading order
   public FocusManagerImpl() {
-    UiActivityMonitor.getInstance();
-
     myQueue = IdeEventQueue.getInstance();
 
     myFocusedComponentAlarm = new EdtAlarm();
     myForcedFocusRequestsAlarm = new EdtAlarm();
 
-    final AppListener myAppListener = new AppListener();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof FocusEvent) {
