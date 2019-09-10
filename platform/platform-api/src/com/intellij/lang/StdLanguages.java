@@ -66,10 +66,5 @@ public class StdLanguages {
    */
   public static Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
 
-  /**
-   * The definition for the Properties language.
-   */
-  public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
-
   private StdLanguages() { }
 }
