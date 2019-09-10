@@ -127,10 +127,8 @@ public class MavenProjectsManagerWatcher {
       @Override
       public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
         // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
-        if (myManager.isMavenizedModule(module)) {
-          MavenProject mavenProject = myManager.findProject(module);
-          if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-        }
+        MavenProject mavenProject = myManager.findProject(module);
+        if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
       }
     });
 
