@@ -176,14 +176,17 @@ class DistributionJARsBuilder {
         withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
       }
       withProjectLibrariesFromIncludedModules(buildContext)
-      removeVersionFromProjectLibraryJarNames("Trove4j")
-      removeVersionFromProjectLibraryJarNames("Log4J")
-      removeVersionFromProjectLibraryJarNames("jna")
-      removeVersionFromProjectLibraryJarNames("jetbrains-annotations-java5")
-      removeVersionFromProjectLibraryJarNames("JDOM")
+
+      for (def toRemoveVersion : getLibsToRemoveVersion()) {
+        removeVersionFromProjectLibraryJarNames(toRemoveVersion)
+      }
     }
   }
 
+  private static Set<String> getLibsToRemoveVersion() {
+    return ["Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM"].toSet()
+  }
+  
   private Set<String> getEnabledPluginModules() {
     buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
       collect { it.mainModule } as Set<String>
@@ -227,6 +230,7 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     prebuildSVG()
+    buildJarOrderFile()
     buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
@@ -245,6 +249,21 @@ class DistributionJARsBuilder {
     SVGPreBuilder.prebuildSVGIcons(buildContext, productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish)
   }
 
+  /**
+   * Creates jar file with module loading order.
+   * The file is used in {@link #addJarOrderFile(java.lang.Object)} for creating the "classpath-order.txt" file inside bootstrap module  
+   */
+  void buildJarOrderFile() {
+    buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
+      def directory = "$buildContext.paths.temp/jarOrder"
+      def targetFile = "$directory/modules-order.txt"
+      List<String> modulesToIndex = getModulesToCompile(buildContext)
+      buildContext.messages.progress("Generating jar loading order for ${modulesToIndex.size()} modules")
+      FileUtil.delete(new File(targetFile))
+      BuildTasksImpl.runApplicationStarter(buildContext, directory, modulesToIndex, ['jarOrder', targetFile])
+    })
+  }
+  
   /**
    * Build index which is used to search options in the Settings dialog.
    */
@@ -363,11 +382,73 @@ class DistributionJARsBuilder {
     "$buildContext.paths.temp/third-party-libraries.json"
   }
 
+  /**
+   * @see #buildJarOrderFile() 
+   */
+  private void addJarOrderFile(layoutBuilder) {
+    def jarOrderTempDirectoryPath = "$buildContext.paths.temp/jarOrder"
+    def modulesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/modules-order.txt"
+    def file = new File(modulesLoadingOrderFilePath)
+    if (file.exists()) {
+      def moduleToJar = new HashMap<String, String>()
+      def jarFileNames = new LinkedHashSet()
+
+      def libsWithoutPrefix = new HashSet()
+      for (def lib  : getLibsToRemoveVersion()) {
+        libsWithoutPrefix.add(lib.toLowerCase())
+      }
+
+      for (def entry : platform.moduleJars.entrySet()) {
+        def jarName = entry.key
+        def fixedJarName = getActualModuleJarPath(jarName, entry.value, platform.explicitlySetJarPaths)
+        entry.value.forEach({ el -> moduleToJar.put(el, fixedJarName) })
+      }
+      def lines = FileUtil.loadLines(file)
+
+      for (def line : lines) {
+        if (line.endsWith(".jar")) {
+          def prefixIndex = line.indexOf("-")
+          String libName = line
+          if (prefixIndex >= 0) {
+            libName = line.substring(0, prefixIndex)
+          }
+          if (libsWithoutPrefix.contains(libName)) {
+            jarFileNames.add(libName + ".jar")
+          }
+          else {
+            jarFileNames.add(line)
+          }
+        }
+        else {
+          def jar = moduleToJar.get(line)
+          if (jar != null) {
+            jarFileNames.add(jar)
+          }
+        }
+      }
+
+      if (!jarFileNames.isEmpty()) {
+        def bootstrap = "intellij.platform.bootstrap"
+        def newFile = new File(jarOrderTempDirectoryPath, bootstrap + "/com/intellij/ide/classpath-order.txt")
+        FileUtil.writeToFile(newFile, jarFileNames.join("\n"))
+        layoutBuilder.patchModuleOutput(bootstrap, "$jarOrderTempDirectoryPath/$bootstrap") 
+        
+        buildContext.messages.info("Created patch to apply jar order:" + newFile.path)
+      } else {
+        buildContext.messages.warning("Jar order file is empty")
+      }
+    }
+    else {
+      buildContext.messages.info("Failed to generate jar loading order file: $modulesLoadingOrderFilePath doesn't exist")
+    }
+  }
+  
   private void buildLib() {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
 
+    addJarOrderFile(layoutBuilder)
     addSearchableOptions(layoutBuilder)
     SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 

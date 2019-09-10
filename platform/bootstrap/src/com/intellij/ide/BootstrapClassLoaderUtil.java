@@ -198,15 +198,9 @@ public class BootstrapClassLoaderUtil {
   @NotNull
   private static List<String> loadJarOrder() {
     try {
-      Path path = Paths.get(getSystemPath(), CLASSPATH_ORDER_FILE);
-      boolean exists = Files.exists(path);
-      if (!exists) {
-        try (BufferedReader stream = new BufferedReader(
-          new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
-          return FileUtilRt.loadLines(stream); 
-        }
-      } else {
-        return Files.readAllLines(path);
+      try (BufferedReader stream = new BufferedReader(
+        new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
+        return FileUtilRt.loadLines(stream);
       }
     }
     catch (Exception ignored) {

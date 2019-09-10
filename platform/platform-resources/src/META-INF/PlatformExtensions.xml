@@ -11,6 +11,7 @@
     <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
+    <appStarter implementation="com.intellij.ide.plugins.JarOrderStarter"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="true"/>
 
@@ -750,7 +751,6 @@
       </components>
     </obsoleteStorage>
 
-    <postStartupActivity implementation="com.intellij.diagnostic.GenerateJarAccessLogActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="last"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.MemorySizeConfigurator"/>

@@ -351,6 +351,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+        distributionJARsBuilder.buildJarOrderFile()
         distributionJARsBuilder.buildSearchableOptions()
         distributionJARsBuilder.buildNonBundledPlugins()
       }
