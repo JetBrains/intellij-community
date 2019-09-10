@@ -559,7 +559,7 @@ int32 "extendedState"
     buffer.putInt(bounds.width)
     buffer.putInt(bounds.height)
 
-    buffer.putInt(frame.background.rgb)
+    buffer.putInt(frame.contentPane.background.rgb)
 
     buffer.put((if (frameInfo.fullScreen) 1 else 0).toByte())
     buffer.putInt(frameInfo.extendedState)

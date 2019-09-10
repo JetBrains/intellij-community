@@ -109,6 +109,7 @@ public final class SplashManager {
 
     frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));
     frame.setBackground(backgroundColor);
+    frame.getContentPane().setBackground(backgroundColor);
     if (SystemInfoRt.isMac) {
       frame.setIconImage(null);
     }
