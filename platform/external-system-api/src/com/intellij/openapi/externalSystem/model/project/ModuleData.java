@@ -38,7 +38,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String sdkName;
   @Nullable private String productionModuleId;
   @NotNull private String moduleName;
-  @NotNull private boolean isRoot;
 
   @Nullable
   @Property(allowedTypes = {LibraryData.class, ProjectId.class})
@@ -61,7 +60,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     artifacts = Collections.emptyList();
     this.moduleFileDirectoryPath = moduleFileDirectoryPath;
     this.moduleName = externalName;
-    this.isRoot = false;
   }
 
   protected ModuleData(@NotNull String id,
@@ -310,14 +308,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Override
   public String toString() {
     return getId();
-  }
-
-  public boolean isRoot() {
-    return isRoot;
-  }
-
-  public void setRoot(boolean root) {
-    isRoot = root;
   }
 
   private static void updatePath(Map<ExternalSystemSourceType, String> paths,
