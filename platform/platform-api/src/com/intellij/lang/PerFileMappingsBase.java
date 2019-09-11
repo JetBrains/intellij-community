@@ -129,7 +129,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   protected T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
     if (getProject() == null || file == null ||
         file.getFileSystem() instanceof NonPhysicalFileSystem ||
-        ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
+        !getProject().isDefault() && ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
       return mappings.get(null);
     }
     return null;
