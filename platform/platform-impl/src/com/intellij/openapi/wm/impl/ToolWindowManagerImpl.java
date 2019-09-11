@@ -227,6 +227,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .bind(myProject);
 
     Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
+    checkInvariants();
   }
 
   private static void focusDefaultElementInSelectedEditor() {
@@ -439,6 +440,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
         return result.iterator();
       });
+    checkInvariants();
   }
 
   private void initAll(List<? super FinalizableCommand> commandsList) {
@@ -723,6 +725,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
     info.setActive(false);
     appendApplyWindowInfoCmd(info, commandsList);
+    checkInvariants();
   }
 
   @NotNull
@@ -1003,6 +1006,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
+    checkInvariants();
   }
 
   @NotNull
@@ -1283,6 +1287,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     execute(commandList);
+    checkInvariants();
   }
 
   @Override
@@ -2341,6 +2346,36 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
             }
           }, false, project);
       }
+    }
+  }
+
+  private void checkInvariants() {
+    if (!ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isInternal()) {
+      return;
+    }
+    List<String> violations = new ArrayList<>();
+    for (WindowInfoImpl info : myLayout.getInfos()) {
+      String id = Objects.requireNonNull(info.getId());
+      if (info.isVisible()) {
+        if (info.isFloating()) {
+          if (myId2FloatingDecorator.get(id) == null) {
+            violations.add("Floating window has no decorator: " + id);
+          }
+        }
+        else if (info.isWindowed()) {
+          if (myId2WindowedDecorator.get(id) == null) {
+            violations.add("Windowed window has no decorator: " + id);
+          }
+        }
+        else {
+          if (myToolWindowsPane.getDecoratorById(id) == null) {
+            violations.add("Docked/split window has no decorator: " + id);
+          }
+        }
+      }
+    }
+    if (!violations.isEmpty()) {
+      LOG.error("Invariants failed: \n" + String.join("\n", violations));
     }
   }
 }

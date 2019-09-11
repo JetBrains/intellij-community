@@ -320,7 +320,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  private InternalDecorator getDecoratorById(final String id) {
+  InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
   }
 
