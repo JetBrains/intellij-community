@@ -109,7 +109,11 @@ public final class Splash extends Window {
 
     if (((progress - myProgress) > 0.01) || (progress > 0.99)) {
       myProgress = progress;
-      paintProgress(getGraphics());
+      Graphics graphics = getGraphics();
+      // not yet initialized
+      if (graphics != null) {
+        paintProgress(graphics);
+      }
     }
   }
 
