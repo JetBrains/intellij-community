@@ -964,4 +964,9 @@ public class PyFormatterTest extends PyTestCase {
   public void testSpacesAroundColonEqInAssignmentExpression() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
+
+  // PY-23475
+  public void testModuleLevelDunderWithImports() {
+    doTest();
+  }
 }

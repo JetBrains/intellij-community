@@ -187,7 +187,7 @@ public class AddImportHelper {
     PsiElement feeler = insertParent.getFirstChild();
     if (feeler == null) return null;
     // skip initial comments and whitespace and try to get just below the last import stmt
-    boolean skippedOverImports = false;
+    boolean skippedOverStatements = false;
     boolean skippedOverDoc = false;
     PsiElement seeker = feeler;
     final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
@@ -206,7 +206,7 @@ public class AddImportHelper {
         }
         seeker = feeler;
         feeler = feeler.getNextSibling();
-        skippedOverImports = true;
+        skippedOverStatements = true;
       }
       else if (PsiTreeUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
         seeker = feeler;
@@ -216,8 +216,13 @@ public class AddImportHelper {
         feeler = feeler.getNextSibling();
         seeker = feeler;
       }
+      else if (isAssignmentToModuleLevelDunderName(feeler)) {
+        feeler = feeler.getNextSibling();
+        seeker = feeler;
+        skippedOverStatements = true;
+      }
       // maybe we arrived at the doc comment stmt; skip over it, too
-      else if (!skippedOverImports && !skippedOverDoc && insertParent instanceof PyFile) {
+      else if (!skippedOverStatements && !skippedOverDoc && insertParent instanceof PyFile) {
         // this gives the literal; its parent is the expr seeker may have encountered
         final PsiElement docElem = DocStringUtil.findDocStringExpression((PyElement)insertParent);
         if (docElem != null && docElem.getParent() == feeler) {
@@ -570,6 +575,18 @@ public class AddImportHelper {
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);
     }
+  }
+
+  public static boolean isAssignmentToModuleLevelDunderName(@Nullable PsiElement element) {
+    if (element instanceof PyAssignmentStatement && PyUtil.isTopLevel(element)) {
+      PyAssignmentStatement statement = (PyAssignmentStatement)element;
+      PyExpression[] targets = statement.getTargets();
+      if (targets.length == 1) {
+        String name = targets[0].getName();
+        return name != null && PyUtil.isSpecialName(name);
+      }
+    }
+    return false;
   }
 
   private static void addFileSystemItemImport(@NotNull PsiFileSystemItem target, @NotNull PsiFile file, @NotNull PyElement element) {

@@ -15,6 +15,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -860,6 +861,11 @@ public class PyBlock implements ASTBlock {
             return getBlankLinesForOption(pySettings.BLANK_LINES_AFTER_LOCAL_IMPORTS);
           }
         }
+      }
+
+      if (psi2 instanceof PyImportStatementBase && AddImportHelper.isAssignmentToModuleLevelDunderName(psi1)) {
+        // blank line between module-level dunder name and import statement
+        return Spacing.createSpacing(0, 0, 2, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
 
       if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||

@@ -136,6 +136,26 @@ public class PyAddImportTest extends PyTestCase {
     );
   }
 
+  // PY-23475
+  public void testModuleLevelDunder() {
+    doAddFromImport("collections", "OrderedDict", BUILTIN);
+  }
+
+  // PY-23475
+  public void testModuleLevelDunderAndImportFromFuture() {
+    doAddFromImport("collections", "OrderedDict", BUILTIN);
+  }
+
+  // PY-23475
+  public void testModuleLevelDunderAndExistingImport(){
+    doAddFromImport("collections", "OrderedDict", BUILTIN);
+  }
+
+  // PY-23475
+  public void testModuleLevelDunderAndDocstring(){
+    doAddFromImport("collections", "OrderedDict", BUILTIN);
+  }
+
   private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {

@@ -354,6 +354,28 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-23475
+  public void testModuleLevelDunder() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-23475
+  public void testModuleLevelDunderWithImportFromFutureAbove() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-23475
+  public void testModuleLevelDunderWithImportFromFutureBelow() {
+    doTest();
+  }
+
+  // PY-23475
+  public void testImportFromFutureWithRegularImports() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

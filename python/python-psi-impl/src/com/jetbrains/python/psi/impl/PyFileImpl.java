@@ -31,6 +31,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -649,19 +650,37 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public List<PyImportStatementBase> getImportBlock() {
     final List<PyImportStatementBase> result = new ArrayList<>();
     final PsiElement firstChild = getFirstChild();
-    final PyImportStatementBase firstImport;
+    PsiElement currentStatement;
     if (firstChild instanceof PyImportStatementBase) {
-      firstImport = (PyImportStatementBase)firstChild;
+      currentStatement = firstChild;
     }
     else {
-      firstImport = PsiTreeUtil.getNextSiblingOfType(firstChild, PyImportStatementBase.class);
+      currentStatement = PsiTreeUtil.getNextSiblingOfType(firstChild, PyImportStatementBase.class);
     }
-    if (firstImport != null) {
-      result.add(firstImport);
-      PsiElement nextImport = PyPsiUtils.getNextNonCommentSibling(firstImport, true);
-      while (nextImport instanceof PyImportStatementBase) {
-        result.add((PyImportStatementBase)nextImport);
-        nextImport = PyPsiUtils.getNextNonCommentSibling(nextImport, true);
+    if (currentStatement != null) {
+      // skip imports from future before module level dunders
+      final List<PyImportStatementBase> fromFuture = new ArrayList<>();
+      while (currentStatement instanceof PyFromImportStatement && ((PyFromImportStatement)currentStatement).isFromFuture()) {
+        fromFuture.add((PyImportStatementBase)currentStatement);
+        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
+      }
+
+      // skip module level dunders
+      boolean hasModuleLevelDunders = false;
+      while (AddImportHelper.isAssignmentToModuleLevelDunderName(currentStatement)) {
+        hasModuleLevelDunders = true;
+        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
+      }
+
+      // if there is an import from future and a module level-dunder between it and other imports,
+      // this import is not considered a part of the import block to avoid problems with "Optimize imports" and foldings
+      if (!hasModuleLevelDunders) {
+        result.addAll(fromFuture);
+      }
+      // collect imports
+      while (currentStatement instanceof PyImportStatementBase) {
+        result.add((PyImportStatementBase)currentStatement);
+        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
       }
     }
     return result;
