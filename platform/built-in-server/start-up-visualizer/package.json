@@ -21,7 +21,7 @@
     "@types/semver": "^6.0.2",
     "@vue/cli-plugin-typescript": "^3.11.0",
     "@vue/cli-service": "^3.11.0",
-    "typescript": "^3.6.2",
+    "typescript": "^3.6.3",
     "vue-template-compiler": "^2.6.10",
     "vuex-module-decorators": "^0.10.1"
   },

@@ -55,20 +55,22 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
       }
 
-      override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
+      override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, requestorClass: Class<*>, expectedType: Class<*>): Any? {
         if (isLightService(expectedType)) {
           return componentManager.getLightService(componentManager.lightServices!!, expectedType, true)
         }
+        return super.resolveInstance(componentManager, requestorKey, requestorClass, expectedType)
+      }
 
-        val result = super.resolveInstance(componentManager, requestorKey, expectedType)
-        if (result == null && isExtensionSupported) {
+      override fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>): Any? {
+        if (isExtensionSupported) {
           val extension = componentManager.extensionArea.findExtensionByClass(expectedType)
           if (extension != null) {
-            LOG.warn("Do not use constructor injection to get extension instance (requestorKey=$requestorKey, extensionClass=${expectedType.name})")
+            LOG.warn("Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})")
           }
           return extension
         }
-        return result
+        return super.handleUnsatisfiedDependency(componentManager, requestorClass, expectedType)
       }
     }
 

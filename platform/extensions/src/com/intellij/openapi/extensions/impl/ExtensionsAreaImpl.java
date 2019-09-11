@@ -284,23 +284,20 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         continue;
       }
 
-      Class<?> extensionClass;
       try {
-        extensionClass = point.getExtensionClass();
+        Class<?> extensionClass = point.getExtensionClass();
+        if (!extensionClass.isAssignableFrom(aClass)) {
+          continue;
+        }
+
+        //noinspection unchecked
+        T extension = ((ExtensionPointImpl<T>)point).findExtension(aClass, false, true);
+        if (extension != null) {
+          return extension;
+        }
       }
       catch (Throwable e) {
         LOG.warn("error during findExtensionPointByClass", e);
-        continue;
-      }
-
-      if (!extensionClass.isAssignableFrom(aClass)) {
-        continue;
-      }
-
-      //noinspection unchecked
-      T extension = ((ExtensionPointImpl<T>)point).findExtension(aClass, false, true);
-      if (extension != null) {
-        return extension;
       }
     }
     return null;

@@ -14,13 +14,25 @@ import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): T {
-  val result = getGreediestSatisfiableConstructor(aClass, requestorKey, componentManager, parameterResolver)
+  val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
+
+  val parameterTypes: Array<Class<*>>
+  val constructor: Constructor<*>
+  if (sortedMatchingConstructors.size == 1) {
+    constructor = sortedMatchingConstructors.first()
+    parameterTypes = constructor.parameterTypes
+  }
+  else {
+    val result = getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, componentManager, parameterResolver)
+    constructor = result.first
+    parameterTypes = result.second
+  }
+
   try {
-    result.first.isAccessible = true
-    val parameterTypes = result.second
+    constructor.isAccessible = true
     @Suppress("UNCHECKED_CAST")
-    return result.first.newInstance(*Array(parameterTypes.size) {
-      parameterResolver.resolveInstance(componentManager, requestorKey, parameterTypes[it])
+    return constructor.newInstance(*Array(parameterTypes.size) {
+      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, parameterTypes[it])
     }) as T
   }
   catch (e: InvocationTargetException) {
@@ -28,10 +40,19 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: A
   }
 }
 
-private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): Pair<Constructor<*>, Array<Class<*>>> {
+private fun isNotApplicableClass(type: Class<*>): Boolean {
+  return type.isPrimitive || type.isEnum || type.isArray ||
+         Collection::class.java.isAssignableFrom(type) ||
+         type === File::class.java || type === Path::class.java
+}
+
+private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
+                                               sortedMatchingConstructors: Array<Constructor<*>>,
+                                               requestorKey: Any,
+                                               componentManager: PlatformComponentManagerImpl,
+                                               parameterResolver: ConstructorParameterResolver): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null
   var unsatisfiableDependencyTypes: MutableSet<Array<Class<*>>>? = null
-  val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
   var greediestConstructor: Constructor<*>? = null
   var greediestConstructorParameterTypes: Array<Class<*>>? = null
   var lastSatisfiableConstructorSize = -1
@@ -47,9 +68,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
     val parameterTypes = constructor.parameterTypes
 
     for (expectedType in parameterTypes) {
-      if (expectedType.isPrimitive || expectedType.isEnum || expectedType.isArray ||
-          Collection::class.java.isAssignableFrom(expectedType) ||
-          expectedType === File::class.java || expectedType === Path::class.java) {
+      if (isNotApplicableClass(expectedType)) {
         continue@loop
       }
 
@@ -106,11 +125,15 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>, requestorKey: A
                                        "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
     }
     else -> {
-      throw PicoInitializationException("The specified parameters not match any of the following constructors: " +
-                                        "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" +
-                                        "for $aClass")
+      throw createNoSatisfiableConstructorError(aClass)
     }
   }
+}
+
+private fun createNoSatisfiableConstructorError(aClass: Class<*>): RuntimeException {
+  return PicoInitializationException("The specified parameters not match any of the following constructors: " +
+                                     "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" +
+                                     "for $aClass")
 }
 
 private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
@@ -128,8 +151,12 @@ internal abstract class ConstructorParameterResolver {
     return resolveAdapter(componentManager, requestorKey, expectedType) != null
   }
 
-  open fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
-    val adapter = resolveAdapter(componentManager, requestorKey, expectedType) ?: return null
+  open fun resolveInstance(componentManager: PlatformComponentManagerImpl,
+                           requestorKey: Any,
+                           requestorClass: Class<*>,
+                           expectedType: Class<*>): Any? {
+    val adapter = resolveAdapter(componentManager, requestorKey, expectedType)
+                  ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType)
     return when (adapter) {
       is BaseComponentAdapter -> {
         // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
@@ -144,6 +171,10 @@ internal abstract class ConstructorParameterResolver {
         }
       }
     }
+  }
+
+  protected open fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>): Any? {
+    throw RuntimeException("${requestorClass.name} has unsatisfied dependency: ${expectedType.name}")
   }
 
   private fun resolveAdapter(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): ComponentAdapter? {
