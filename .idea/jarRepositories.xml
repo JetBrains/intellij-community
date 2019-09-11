@@ -2,6 +2,11 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="intellij-snapshot-modules" />
+      <option name="name" value="IntelliJ Snapshot Modules, see IJI-189" />
+      <option name="url" value="https://repo.labs.intellij.net/intellij-snapshot-modules" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Maven Central repository" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
