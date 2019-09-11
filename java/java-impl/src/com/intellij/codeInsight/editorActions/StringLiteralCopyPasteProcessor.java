@@ -246,7 +246,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
     for (int i = 0; i < lines.length; i++) {
-      buffer.append(PsiLiteralUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
+      String content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
+      content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
+                                                         i == lines.length - 1 && escapeEndQuote, true);
+      buffer.append(content);
       if (i < lines.length - 1) {
         buffer.append('\n');
       }

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,46 +152,173 @@ public class PsiLiteralUtil {
     return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL) && expression.getValue() == null;
   }
 
+  /**
+   * Converts given string to text block content.
+   * String is converted as a last string in a text block.
+   *
+   * @param s original text
+   * @see #escapeTextBlockCharacters(String, boolean, boolean, boolean)
+   */
   @NotNull
-  @Contract(pure = true)
   public static String escapeTextBlockCharacters(@NotNull String s) {
-    return escapeTextBlockCharacters(s, false, true);
+    return escapeTextBlockCharacters(s, false, true, true);
   }
 
+  /**
+   * Converts given string to text block content.
+   * <p>During conversion:</p>
+   * <li>All escaped quotes are unescaped.</li>
+   * <li>Every third quote is escaped. If escapeStartQuote / escapeEndQuote is set then start / end quote is also escaped.</li>
+   * <li>All spaces before \n are converted to \040 escape sequence.
+   * This is required since spaces in the end of the line are trimmed by default (see JEP 355).
+   * If escapeSpacesInTheEnd is set, then all spaces before the end of the line are converted even if new line in the end is missing. </li>
+   * <li> All new line escape sequences are interpreted. </li>
+   * <li>Rest of the content is processed as is.</li>
+   *
+   * @param s                    original text
+   * @param escapeStartQuote     true if first quote should be escaped (e.g. when copy-pasting into text block after two quotes)
+   * @param escapeEndQuote       true if last quote should be escaped (e.g. inserting text into text block before closing quotes)
+   * @param escapeSpacesInTheEnd true if spaces in the end of the line should be converted to \040 even if no new line in the end is present
+   */
   @NotNull
-  @Contract(pure = true)
-  public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote, boolean escapeEndQuote) {
+  public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote,
+                                                 boolean escapeEndQuote, boolean escapeSpacesInTheEnd) {
+    int i = 0;
     int length = s.length();
-    if (length == 0) return s;
     StringBuilder result = new StringBuilder(length);
-    int q = 0;
-    for (int i = 0; i < length; i++) {
-      char c = s.charAt(i);
-      if (c == '"') {
-        if (escapeStartQuote && i == 0) result.append('\\');
-        q++;
+    while (i < length) {
+      int nextIdx = parseQuotes(i, s, result, escapeStartQuote, escapeEndQuote);
+      if (nextIdx != -1) {
+        i = nextIdx;
+        continue;
       }
-      else {
-        appendQuotes(q, result);
-        if (c == '\\') result.append('\\');
-        result.append(c);
-        q = 0;
+      nextIdx = parseSpaces(i, s, result, escapeSpacesInTheEnd);
+      if (nextIdx != -1) {
+        i = nextIdx;
+        continue;
       }
-    }
-    appendQuotes(q, result);
-    if (escapeEndQuote && result.charAt(result.length() - 1) == '"') {
-      result.insert(result.length() - 1, '\\');
+      nextIdx = parseBackSlashes(i, s, result);
+      if (nextIdx != -1) {
+        i = nextIdx;
+        continue;
+      }
+      result.append(s.charAt(i));
+      i++;
     }
     return result.toString();
   }
 
-  private static void appendQuotes(int quotes, StringBuilder result) {
-    int q = quotes;
-    while (q > 0) {
-      if (quotes >= 3) result.append('\\');
-      result.append(StringUtil.repeat("\"", Math.min(q, 3)));
-      q -= 3;
+  private static int parseQuotes(int start, @NotNull String s, @NotNull StringBuilder result,
+                                 boolean escapeStartQuote, boolean escapeEndQuote) {
+    char c = s.charAt(start);
+    if (c != '"') return -1;
+    int nQuotes = 1;
+    int i = start;
+    while (true) {
+      int nextIdx = i + 1 >= s.length() ? -1 : parseBackSlash(s, i + 1);
+      if (nextIdx == -1) nextIdx = i + 1;
+      if (nextIdx >= s.length() || s.charAt(nextIdx) != '"') break;
+      nQuotes++;
+      i = nextIdx;
     }
+    for (int q = 0; q < nQuotes; q++) {
+      if (q == 0 && start == 0 && escapeStartQuote ||
+          q % 3 == 2 ||
+          q == nQuotes - 1 && i + 1 == s.length() && escapeEndQuote) {
+        result.append("\\\"");
+      }
+      else {
+        result.append('"');
+      }
+    }
+    return i + 1;
+  }
+
+  private static int parseSpaces(int start, @NotNull String s, @NotNull StringBuilder result, boolean escapeSpacesInTheEnd) {
+    char c = s.charAt(start);
+    if (c != ' ') return -1;
+    int i = start;
+    int nSpaces = 0;
+    while (i < s.length() && s.charAt(i) == ' ') {
+      nSpaces++;
+      i++;
+    }
+    if (i >= s.length() && escapeSpacesInTheEnd) {
+      result.append(StringUtil.repeat("\\040", nSpaces));
+      return i;
+    }
+    int nextIdx = i >= s.length() ? -1 : parseBackSlash(s, i);
+    if (nextIdx != -1 && nextIdx < s.length() && s.charAt(nextIdx) == 'n') {
+      result.append(StringUtil.repeat("\\040", nSpaces));
+      return i;
+    }
+    result.append(StringUtil.repeatSymbol(' ', nSpaces));
+    return i;
+  }
+
+  private static int parseBackSlashes(int start, @NotNull String s, @NotNull StringBuilder result) {
+    int i = parseBackSlash(s, start);
+    if (i == -1) return -1;
+    int prev = start;
+    int nextIdx;
+    int nSlashes = 1;
+    while (i < s.length()) {
+      nextIdx = parseBackSlash(s, i);
+      if (nextIdx != -1) {
+        result.append(s, prev, i);
+        prev = i;
+        i = nextIdx;
+        nSlashes++;
+      }
+      else {
+        break;
+      }
+    }
+    if (i >= s.length()) {
+      // line ends with a backslash
+      result.append(s, prev, s.length());
+    }
+    else if (nSlashes % 2 == 0) {
+      // symbol after slashes is not escaped
+      result.append(s, prev, i);
+    }
+    else {
+      // found something that is escaped with a backslash
+      char next = s.charAt(i);
+      if (next == 'n') {
+        result.append('\n');
+      }
+      else if (next == '"') {
+        return i;
+      }
+      else {
+        result.append(s, prev, i).append(next);
+      }
+      return i + 1;
+    }
+    return i;
+  }
+
+  /**
+   * Escapes backslashes in a text block (even if they're represented as an escape sequence).
+   */
+  @NotNull
+  public static String escapeBackSlashesInTextBlock(@NotNull String str) {
+    int i = 0;
+    int length = str.length();
+    StringBuilder result = new StringBuilder(length);
+    while (i < length) {
+      int nextIdx = parseBackSlash(str, i);
+      if (nextIdx != -1) {
+        result.append("\\\\");
+        i = nextIdx;
+      }
+      else {
+        result.append(str.charAt(i));
+        i++;
+      }
+    }
+    return result.toString();
   }
 
   /**
