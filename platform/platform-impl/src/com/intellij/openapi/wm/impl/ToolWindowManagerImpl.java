@@ -721,9 +721,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       LOG.debug("enter: deactivateToolWindowImpl(" + info.getId() + "," + shouldHide + ")");
     }
 
-    if (shouldHide && info.isVisible()) {
-      //noinspection ConstantConditions
-      applyInfo(info.getId(), info, commandsList);
+    if (shouldHide) {
+      appendRemoveDecoratorCommand(info, false, commandsList);
     }
     info.setActive(false);
     appendApplyWindowInfoCmd(info, commandsList);
@@ -1169,9 +1168,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     // Remove decorator and tool button from the screen
     List<FinalizableCommand> commandsList = new ArrayList<>();
-    if (info.isVisible()) {
-      applyInfo(id, info, commandsList);
-    }
+    appendRemoveDecoratorCommand(info, false, commandsList);
 
     // Save recent appearance of tool window
     myLayout.unregister(id);
@@ -1202,16 +1199,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     myId2InternalDecorator.remove(id);
   }
 
-  private void applyInfo(@NotNull String id, WindowInfoImpl info, List<? super FinalizableCommand> commandsList) {
+  private void appendRemoveDecoratorCommand(WindowInfoImpl info,
+                                            boolean dirtyMode,
+                                            @NotNull List<? super FinalizableCommand> commandsList) {
+    if (!info.isVisible()) return;
     info.setVisible(false);
     if (info.isFloating()) {
-      appendRemoveFloatingDecoratorCmd(info, commandsList);
+      commandsList.add(new RemoveFloatingDecoratorCmd(info));
     }
-    else  if (info.isWindowed()) {
-       appendRemoveWindowedDecoratorCmd(info, commandsList);
-     }
-    else { // floating and sliding windows
-      appendRemoveDecoratorCmd(id, false, commandsList);
+    else if (info.isWindowed()) {
+      commandsList.add(new RemoveWindowedDecoratorCmd(info));
+    }
+    else { // docked and sliding windows
+      appendRemoveDecoratorCmd(Objects.requireNonNull(info.getId()), dirtyMode, commandsList);
     }
   }
 
@@ -1635,16 +1635,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
     if (info.isVisible()) {
       final boolean dirtyMode = info.isDocked() || info.isSliding();
-      info.setVisible(false);
-      if (info.isFloating()) {
-        appendRemoveFloatingDecoratorCmd(info, commandsList);
-      }
-      else if (info.isWindowed()) {
-        appendRemoveWindowedDecoratorCmd(info, commandsList);
-      }
-      else { // docked and sliding windows
-        appendRemoveDecoratorCmd(id, dirtyMode, commandsList);
-      }
+      appendRemoveDecoratorCommand(info, dirtyMode, commandsList);
       info.setType(type);
       appendApplyWindowInfoCmd(info, commandsList);
       deactivateWindows(id, commandsList);
@@ -1678,14 +1669,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor));
-  }
-
-  private void appendRemoveFloatingDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
-    commandsList.add(new RemoveFloatingDecoratorCmd(info));
-  }
-
-  private void appendRemoveWindowedDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
-    commandsList.add(new RemoveWindowedDecoratorCmd(info));
   }
 
   /**

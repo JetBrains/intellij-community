@@ -286,9 +286,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
 
-    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
-
     if (info.isDocked()) {
+      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
       return sideInfo == null
              ? new RemoveDockedComponentCmd(info, dirtyMode, finishCallBack)
              : new RemoveSplitAndDockedComponentCmd(info, dirtyMode, finishCallBack);
