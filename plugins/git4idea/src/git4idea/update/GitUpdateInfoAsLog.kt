@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
@@ -139,14 +138,14 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean) {
-    val found = VcsLogContentUtil.findAndSelectContent(project, AbstractVcsLogUi::class.java) { ui ->
+    val logUi = VcsLogContentUtil.find(project, AbstractVcsLogUi::class.java, select) { ui ->
       isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
-    if (found) return
+    if (logUi != null) return
 
     val logManager = projectLog.logManager
     if (logManager != null) {
-      createLogUiAndTab(logManager, MyLogUiFactory(logManager, rangeFilter), select = true)
+      createLogUiAndTab(logManager, MyLogUiFactory(logManager, rangeFilter), select)
     }
     else if (select) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
