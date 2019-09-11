@@ -20,14 +20,12 @@ import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * {@link XAttachDebugger} allows to attach to process with specified {@link ProcessInfo}
  */
-@ApiStatus.Experimental
 public interface XAttachDebugger {
   @NotNull
   String getDebuggerDisplayName();

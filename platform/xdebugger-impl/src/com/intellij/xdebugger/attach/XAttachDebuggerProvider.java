@@ -15,15 +15,14 @@ import java.util.List;
 /**
  * This provider used to obtain debuggers, which can debug the process with specified {@link XAttachHost} and {@link ProcessInfo}
  */
-@ApiStatus.Experimental
 public interface XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachDebuggerProvider");
 
   /**
-   * will be removed in 2018.2, right after {@link XLocalAttachDebuggerProvider}
+   * will be removed in 2020.1, right after {@link XLocalAttachDebuggerProvider}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
     return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),

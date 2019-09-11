@@ -17,7 +17,6 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import java.util.List;
  * This interface describes the provider to enumerate different hosts/environments capable of attaching to with the debugger.
  * The examples are local machine environment (see {@link LocalAttachHost}) or SSH connection to a remote server.
  */
-@ApiStatus.Experimental
 public interface XAttachHostProvider<T extends XAttachHost> {
   ExtensionPointName<XAttachHostProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachHostProvider");
 

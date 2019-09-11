@@ -30,7 +30,6 @@ import java.util.Comparator;
  * @param <T> type of the child items (belonging to this group)
  * (applicable both for {@link XAttachHost} and {@link ProcessInfo} items)
  */
-@ApiStatus.Experimental
 public interface XAttachPresentationGroup<T> extends Comparator<T> {
   /**
    * Define order among neighboring groups (smaller at first)
@@ -41,11 +40,11 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   String getGroupName();
 
   /**
-   * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2018.2)
+   * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
@@ -59,11 +58,11 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   }
 
   /**
-   * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2018.2)
+   * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
@@ -87,7 +86,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   }
 
   /**
-   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
+   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2020.1)
    *
    * Specifies process order in your group
    *
@@ -95,7 +94,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    *                   and use it for comparison
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
     return compare(a, b);
   }

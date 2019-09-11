@@ -7,7 +7,6 @@ import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.xdebugger.attach.osHandlers.AttachOSHandler;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.io.InputStream;
  * This abstract class represent {@link XAttachHost} with extended functional, such as executing {@link GeneralCommandLine},
  * downloading files and getting OS of a host
  */
-@ApiStatus.Experimental
 public abstract class EnvironmentAwareHost implements XAttachHost {
 
   private AttachOSHandler myOsHandler = null;

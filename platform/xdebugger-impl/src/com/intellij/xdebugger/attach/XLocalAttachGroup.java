@@ -22,23 +22,22 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link XAttachProcessPresentationGroup} (will be removed in 2018.2)
+ * @deprecated Use {@link XAttachProcessPresentationGroup} (will be removed in 2020.1)
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @Deprecated
-@ApiStatus.Experimental
 public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
-   * @deprecated will be removed in 2018.2
+   * @deprecated will be removed in 2020.1
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated @NotNull
   XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 
   /**
-   * @deprecated use {@link #compare(ProcessInfo, ProcessInfo)} (will be removed in 2018.2)
+   * @deprecated use {@link #compare(ProcessInfo, ProcessInfo)} (will be removed in 2020.1)
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Override
   @Deprecated
   default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
