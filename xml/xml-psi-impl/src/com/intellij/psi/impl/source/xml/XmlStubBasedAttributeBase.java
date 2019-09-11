@@ -3,9 +3,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.xml.stub.XmlAttributeStub;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -20,19 +18,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public class XmlStubBasedAttributeImpl extends XmlStubBasedElement<XmlAttributeStub<?>>
-  implements XmlAttribute, HintedReferenceHost, StubBasedPsiElement<XmlAttributeStub<?>> {
+public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
+  extends XmlStubBasedElement<StubT>
+  implements XmlAttribute, HintedReferenceHost, StubBasedPsiElement<StubT> {
 
   //cannot be final because of clone implementation
   @Nullable
   private volatile XmlAttributeDelegateImpl myImpl;
 
-  public XmlStubBasedAttributeImpl(@NotNull XmlAttributeStub<?> stub,
-                                   @NotNull IStubElementType<XmlAttributeStub<?>, XmlAttribute> nodeType) {
+  public XmlStubBasedAttributeBase(@NotNull StubT stub,
+                                   @NotNull IStubElementType<? extends StubT, ? extends XmlAttribute> nodeType) {
     super(stub, nodeType);
   }
 
-  public XmlStubBasedAttributeImpl(@NotNull ASTNode node) {
+  public XmlStubBasedAttributeBase(@NotNull ASTNode node) {
     super(node);
   }
 

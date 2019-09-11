@@ -61,6 +61,7 @@ public class HtmlUtil {
 
   public static final String SCRIPT_TAG_NAME = "script";
   public static final String STYLE_TAG_NAME = "style";
+  public static final String TEMPLATE_TAG_NAME = "template";
 
   public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
   public static final String ID_ATTRIBUTE_NAME = "id";

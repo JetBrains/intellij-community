@@ -51,4 +51,9 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
     super.subtreeChanged();
     putUserData(DO_NOT_VALIDATE, null);
   }
+
+  @Override
+  public String toString() {
+    return "PsiElement" + "(" + getElementType() + ")";
+  }
 }
