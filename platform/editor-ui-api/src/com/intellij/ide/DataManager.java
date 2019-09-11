@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
@@ -17,7 +18,7 @@ import java.awt.*;
 /**
  * Provides access to {@link DataContext}.
  * <p/>
- * Use {@link AnActionEvent#getDataContext()} in {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
+ * Use {@link AnActionEvent#getData(DataKey)} in {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
  */
 public abstract class DataManager {
   public static DataManager getInstance() {
