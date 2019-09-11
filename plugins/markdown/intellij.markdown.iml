@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" scope="TEST" />
     <orderEntry type="module-library" exported="">
       <library name="intellij-markdown" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.33" />
@@ -40,7 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
