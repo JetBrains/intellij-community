@@ -81,7 +81,8 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    return CompletableFuture.supplyAsync(Supplier {
+    val start = System.currentTimeMillis()
+    val credentials = CompletableFuture.supplyAsync(Supplier {
       val userName = attributes.userName.nullize()
       checkError("secret_password_lookup_sync") { errorRef ->
         val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
@@ -102,6 +103,12 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       }
     }, AppExecutorUtil.getAppExecutorService())
       .get(30 /* on Linux first access to keychain can cause system unlock dialog, so, allow user to input data */, TimeUnit.SECONDS)
+    val end = System.currentTimeMillis()
+    if (credentials == null && end - start > 300) {
+      //todo: use complex API instead
+      return ACCESS_TO_KEY_CHAIN_DENIED
+    }
+    return credentials
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
