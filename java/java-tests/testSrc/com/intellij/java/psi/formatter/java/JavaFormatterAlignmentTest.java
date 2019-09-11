@@ -645,7 +645,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doTextTest(
       REFORMAT_WITH_CONTEXT,
       "public class Test {\n" +
-      "  \n" +
+      "\n" +
       "    public void fooooo(String foo,\n" +
       "                    String booo,\n" +
       "                    String kakadoo) {\n" +
