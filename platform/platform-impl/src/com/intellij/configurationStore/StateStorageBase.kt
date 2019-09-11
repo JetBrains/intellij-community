@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<StateStorageBase<*>>()
@@ -22,8 +23,12 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 
   fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, reload: Boolean = false, mergeInto: T? = null): T? {
-    return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive = true), stateClass, mergeInto)
+    return deserializeState(getSerializedState(reload, component, componentName), stateClass, mergeInto)
   }
+
+  @ApiStatus.Internal
+  fun getSerializedState(reload: Boolean, component: Any?, componentName: String): Element? =
+    getSerializedState(getStorageData(reload), component, componentName, archive = true)
 
   open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
     return com.intellij.configurationStore.deserializeState(serializedState, stateClass, mergeInto)
