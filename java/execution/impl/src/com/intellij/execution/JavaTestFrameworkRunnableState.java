@@ -39,6 +39,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -66,6 +67,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -393,23 +395,25 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     PathsList modulePath = javaParameters.getModulePath();
     PathsList classPath = javaParameters.getClassPath();
 
+    Consumer<VirtualFile> putOnModulePath = virtualFile -> {
+      classPath.remove(virtualFile.getPath());
+      modulePath.add(virtualFile.getPath());
+    };
+
     //put all transitive required modules on the module path
     Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
     JarFileSystem jarFS = JarFileSystem.getInstance();
-    for (PsiJavaModule javaModule : allRequires) {
-      VirtualFile virtualFile = jarFS.getLocalVirtualFileFor(PsiImplUtil.getModuleVirtualFile(javaModule));
-      if (virtualFile != null) {
-        classPath.remove(virtualFile.getPath());
-        modulePath.add(virtualFile.getPath());
-      }
-    }
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
+    allRequires.stream()
+      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
+      .filter(Objects::nonNull)
+      .forEach(putOnModulePath);
 
     ParametersList vmParametersList = javaParameters.getVMParametersList();
     //put production output on the module path
     VirtualFile out = compilerExt.getCompilerOutputPath();
     if (out != null) {
-      classPath.remove(out.getPath());
-      modulePath.add(out.getPath());
+      putOnModulePath.accept(out);
     }
     //ensure test output is merged to the production module
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
@@ -426,6 +430,20 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     //ensure production module is explicitly added as test starter in `idea-rt` doesn't depend on it
     vmParametersList.add("--add-modules");
     vmParametersList.add(prodModule.getName());
+  }
+
+  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
+                                               ProjectFileIndex fileIndex,
+                                               JarFileSystem jarFileSystem) {
+    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
+
+    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
+    if (moduleDependency == null) {
+      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
+    }
+
+    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
+    return moduleExtension != null ? moduleExtension.getCompilerOutputPath() : null;
   }
 
   protected void createServerSocket(JavaParameters javaParameters) {
