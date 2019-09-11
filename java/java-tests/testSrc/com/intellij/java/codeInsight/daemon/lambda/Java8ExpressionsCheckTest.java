@@ -67,6 +67,16 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     assertNotNull(getDataCall.getType());
   }
 
+  public void testRecursiveConflictResolution() {
+    configure();
+    PsiMethodCallExpression assertEquals =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertNotNull(assertEquals);
+
+    //ensure conflict check is not called recursively
+    assertNotNull(assertEquals.getMethodExpression().advancedResolve(true));
+  }
+
   public void testLambdaParameterTypeDetection() {
     configure();
     PsiReferenceExpression referenceExpression =
