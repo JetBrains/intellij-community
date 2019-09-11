@@ -4,5 +4,13 @@
       <interface-class>com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager</interface-class>
       <implementation-class>com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker</interface-class>
+      <implementation-class>com.intellij.openapi.externalSystem.autoimport.ProjectTracker</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware</interface-class>
+      <implementation-class>com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware</implementation-class>
+    </component>
   </project-components>
 </idea-plugin>
