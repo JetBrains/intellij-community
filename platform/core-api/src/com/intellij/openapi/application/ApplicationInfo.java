@@ -96,12 +96,9 @@ public abstract class ApplicationInfo {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
   }
 
-  /**
-   * @deprecated use {@link #getBuild()} instead (to remove in IDEA 16)
-   */
+  /** @deprecated use {@link #getBuild()} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  @SuppressWarnings("UnusedDeclaration")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getBuildNumber() {
     return getBuild().asString();
   }

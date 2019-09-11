@@ -206,13 +206,11 @@ public abstract class BaseOutputReader extends BaseDataReader {
   protected abstract void onTextAvailable(@NotNull String text);
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
     this(reader, Options.withPolicy(policy));
   }
-
   //</editor-fold>
 }
