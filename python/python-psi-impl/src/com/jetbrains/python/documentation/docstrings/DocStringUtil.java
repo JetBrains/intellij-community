@@ -12,9 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PythonDialogService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
@@ -23,8 +21,6 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class DocStringUtil {
   private DocStringUtil() {
@@ -304,45 +300,15 @@ public class DocStringUtil {
     return false;
   }
 
-  /**
-   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames#DOCFORMAT} attribute or
-   * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
-   * accordingly.
-   *
-   * @param anchor PSI element that will be used to locate containing file and project module
-   * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
-   */
-  public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement anchor) {
-    final Module module = getModuleForElement(anchor);
-    if (module == null) {
-      return false;
-    }
-
-    return ensureNotPlainDocstringFormatForFile(anchor.getContainingFile(), module);
-  }
-
   // Might return {@code null} in some rare cases when PSI element doesn't have an associated module.
   // For instance, an empty IDEA project with a Python scratch file.
   @Nullable
-  private static Module getModuleForElement(@NotNull PsiElement element) {
+  public static Module getModuleForElement(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       return module;
     }
 
     return ArrayUtil.getFirstElement(ModuleManager.getInstance(element.getProject()).getModules());
-  }
-
-  private static boolean ensureNotPlainDocstringFormatForFile(@NotNull PsiFile file, @NotNull Module module) {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
-    if (settings.isPlain(file)) {
-      final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
-      final int i = PythonDialogService.getInstance().showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtilRt.toStringArray(values), values.get(0), null);
-      if (i < 0) {
-        return false;
-      }
-      settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
-    }
-    return true;
   }
 }

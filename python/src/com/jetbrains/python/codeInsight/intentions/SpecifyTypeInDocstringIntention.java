@@ -14,7 +14,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -68,7 +67,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(pyFunction)) return;
 
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) return;
+    if (!PyGenerateDocstringIntention.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
     String type = PyNames.OBJECT;

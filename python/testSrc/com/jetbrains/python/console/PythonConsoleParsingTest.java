@@ -35,7 +35,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
 
-    if (PythonDialogService.getInstance() == null) {
+    if (PythonRuntimeService.getInstance() == null) {
       myServiceDisposable = new Disposable() {
         @Override
         public void dispose() {

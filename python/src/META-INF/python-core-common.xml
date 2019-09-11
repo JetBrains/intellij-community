@@ -48,8 +48,8 @@
                              implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <lang.unwrapDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.unwrap.PyUnwrapDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
-    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonExternalDocumentationProvider" order="before pythonDocumentationProvider"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
     <highlightRangeExtension implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
@@ -617,7 +617,6 @@
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService" serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl" overrides="true"/>
-    <applicationService serviceInterface="com.jetbrains.python.PythonDialogService" serviceImplementation="com.jetbrains.python.PythonDialogServiceImpl" overrides="true"/>
   </extensions>
 
   <extensionPoints>

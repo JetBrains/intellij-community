@@ -44,6 +44,8 @@
     <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonModulePathCache"/>
 
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider" id="pythonDocumentationProvider"/>
+
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
 
     <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
@@ -71,9 +73,6 @@
     <!-- Code-insight IDE bridge -->
     <applicationService
         serviceImplementation="com.jetbrains.python.PythonRuntimeService"/>
-
-    <applicationService
-        serviceImplementation="com.jetbrains.python.PythonDialogService"/>
   </extensions>
 
   <extensionPoints>
@@ -131,6 +130,8 @@
 
     <!-- Type from ancestors -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider"/>
+
+
 
 
   </extensions>
