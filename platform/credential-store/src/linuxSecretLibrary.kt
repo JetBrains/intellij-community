@@ -16,6 +16,7 @@ import java.util.function.Supplier
 // https://mail.gnome.org/archives/gnome-keyring-list/2015-November/msg00000.html
 private const val SECRET_SCHEMA_DONT_MATCH_NAME = 2
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
+private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
 
 // explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
 internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): DisposableMemory {
@@ -37,6 +38,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     // no need to load lazily - if store created, then it will be used
     // and for clients better to get error earlier, in creation place
     private val library = Native.load("secret-1", SecretLibrary::class.java)
+    private val DBUS_ERROR = library.g_dbus_error_quark()
 
     fun create(schemeName: String): SecretCredentialStore? {
       if (!pingService()) return null
@@ -52,9 +54,9 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
                                                 attr, SECRET_SCHEMA_ATTRIBUTE_STRING,
                                                 null)
 
-        val errorRef = arrayOf<GErrorStruct?>(null)
+        val errorRef = GErrorByRef()
         library.secret_password_lookup_sync(dummySchema, null, errorRef, attr, attr)
-        val error = errorRef[0]
+        val error = errorRef.getValue()
         if (error == null) return true
         if (isNoSecretService(error)) return false
       }
@@ -63,6 +65,11 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
         dummySchema?.let { library.secret_schema_unref(it) }
       }
       return true
+    }
+
+    private fun isNoSecretService(error: GError) = when(error.domain) {
+      DBUS_ERROR -> error.code == DBUS_ERROR_SERVICE_UNKNOWN
+      else -> false
     }
   }
 
@@ -137,25 +144,22 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       }
     }
   }
-}
 
-private inline fun <T> checkError(method: String, task: (errorRef: Array<GErrorStruct?>) -> T): T {
-  val errorRef = arrayOf<GErrorStruct?>(null)
-  val result = task(errorRef)
-  val error = errorRef[0]
-  if (error != null && error.code != 0) {
-    if (isNoSecretService(error)) {
-      LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
+  private inline fun <T> checkError(method: String, task: (errorRef: GErrorByRef) -> T): T {
+    val errorRef = GErrorByRef()
+    val result = task(errorRef)
+    val error = errorRef.getValue()
+    if (error != null && error.code != 0) {
+      if (isNoSecretService(error)) {
+        LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
+      }
+      else {
+        LOG.error("$method error code ${error.code}, error message ${error.message}")
+      }
     }
-    else {
-      LOG.error("$method error code ${error.code}, error message ${error.message}")
-    }
+    return result
   }
-  return result
 }
-
-private fun isNoSecretService(error: GErrorStruct) =
-  error.code == 32584 || error.code == 32618 || error.code == 32606 || error.code == 32642
 
 // we use sync API to simplify - client will use postponed write
 @Suppress("FunctionName")
@@ -163,17 +167,26 @@ private interface SecretLibrary : Library {
   fun secret_schema_new(name: String, flags: Int, vararg attributes: Any?): Pointer
   fun secret_schema_unref(schema: Pointer)
 
-  fun secret_password_store_sync(scheme: Pointer, collection: Pointer?, label: Pointer, password: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?)
+  fun secret_password_store_sync(scheme: Pointer, collection: Pointer?, label: Pointer, password: Pointer, cancellable: Pointer?, error: GErrorByRef?, vararg attributes: Pointer?)
 
-  fun secret_password_lookup_sync(scheme: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?): String?
+  fun secret_password_lookup_sync(scheme: Pointer, cancellable: Pointer?, error: GErrorByRef?, vararg attributes: Pointer?): String?
 
-  fun secret_password_clear_sync(scheme: Pointer, cancellable: Pointer?, error: Array<GErrorStruct?>, vararg attributes: Pointer?)
+  fun secret_password_clear_sync(scheme: Pointer, cancellable: Pointer?, error: GErrorByRef?, vararg attributes: Pointer?)
+
+  fun g_dbus_error_quark(): Int
 }
 
 @Suppress("unused")
 @Structure.FieldOrder("domain", "code", "message")
-internal class GErrorStruct : Structure() {
-  @JvmField var domain = 0
-  @JvmField var code = 0
+internal class GError(p: Pointer) : Structure(p) {
+  @JvmField var domain: Int? = null
+  @JvmField var code: Int? = null
   @JvmField var message: String? = null
+}
+
+internal class GErrorByRef : com.sun.jna.ptr.ByReference(Native.POINTER_SIZE) {
+  init {
+    pointer.setPointer(0, Pointer.NULL)
+  }
+  fun getValue(): GError? = pointer.getPointer(0)?.takeIf { it != Pointer.NULL }?.let { GError (it) }?.apply { read() }
 }
