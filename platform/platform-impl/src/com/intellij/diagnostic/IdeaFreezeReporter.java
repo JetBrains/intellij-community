@@ -121,20 +121,26 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       }
       String lockName = edt.getLockName();
       if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
+        ThreadInfo readLockNotRunnable = null;
         for (ThreadInfo info : threadInfos) {
-          if (isRunningWithReadLock(info)) {
-            return info;
+          if (isWithReadLock(info)) {
+            if (info.getThreadState() == Thread.State.RUNNABLE) {
+              return info;
+            }
+            if (readLockNotRunnable == null) {
+              readLockNotRunnable = info;
+            }
           }
+        }
+        if (readLockNotRunnable != null) {
+          return readLockNotRunnable;
         }
       }
     }
     return null;
   }
 
-  private static boolean isRunningWithReadLock(ThreadInfo thread) {
-    if (thread.getThreadState() != Thread.State.RUNNABLE) {
-      return false;
-    }
+  private static boolean isWithReadLock(ThreadInfo thread) {
     boolean read = false;
     for (StackTraceElement s : thread.getStackTrace()) {
       if ("runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) {
