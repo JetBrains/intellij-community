@@ -757,7 +757,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myDisplayName = displayName;
       FileIndexFacade facade = project.isDefault() ? null : FileIndexFacade.getInstance(project);
       myModule = virtualFile == null || facade == null ? null : facade.getModuleForFile(virtualFile);
-      mySearchOutsideContent = facade == null || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
+      mySearchOutsideContent = facade == null || virtualFile != null && myModule == null &&
+                                                 !facade.isInContent(virtualFile) && !facade.isInLibrarySource(virtualFile);
     }
 
     @Override
