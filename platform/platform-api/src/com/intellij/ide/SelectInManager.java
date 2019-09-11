@@ -29,7 +29,7 @@ public class SelectInManager  {
   }
 
   /**
-   * @deprecated "Select In" targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
+   * @deprecated targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
    */
   @Deprecated
   public void addTarget(SelectInTarget target) {
