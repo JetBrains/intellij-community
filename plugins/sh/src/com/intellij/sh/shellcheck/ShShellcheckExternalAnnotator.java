@@ -80,8 +80,6 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
           .withParameters(executionParams);
       long timestamp = file.getModificationStamp();
       OSProcessHandler handler = new OSProcessHandler(commandLine);
-      handler.startNotify();
-      writeFileContentToStdin(handler.getProcess(), fileContent, commandLine.getCharset());
       Ref<ShellcheckResponse> response = Ref.create();
       handler.addProcessListener(new CapturingProcessAdapter(){
         @Override
@@ -89,11 +87,11 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
           // The process ends up with code 1
           Type type = TypeToken.getParameterized(List.class, Result.class).getType();
           Collection<Result> results = new Gson().fromJson(getOutput().getStdout(), type);
-          if (results != null) {
-            response.set(new ShellcheckResponse(results, timestamp));
-          }
+          if (results != null) response.set(new ShellcheckResponse(results, timestamp));
         }
       });
+      handler.startNotify();
+      writeFileContentToStdin(handler.getProcess(), fileContent, commandLine.getCharset());
       if (!handler.waitFor(TIMEOUT_IN_MILLISECONDS)) {
         LOG.debug("Execution timeout, process will be forcibly terminated");
         handler.destroyProcess();
