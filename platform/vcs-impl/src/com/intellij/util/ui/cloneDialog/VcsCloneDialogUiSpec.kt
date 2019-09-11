@@ -15,6 +15,7 @@ object VcsCloneDialogUiSpec {
   }
 
   object Components {
+    const val innerHorizontalGap = 10
     const val avatarSize = 24
     const val popupMenuAvatarSize = 40
   }
