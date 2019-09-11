@@ -11,11 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Python package utility methods with no dependencies on the Python runtime.
+ *
+ * @see PyPackageUtil for other package utility methods, including run-time dependent parts.
+ */
 public class PyPsiPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPsiPackageUtil.class);
 

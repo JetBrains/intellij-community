@@ -60,6 +60,14 @@ import java.util.*;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
+/**
+ * Assorted utility methods for Python code insight.
+ *
+ * These methods don't depend on the Python runtime.
+ *
+ * @see PyPsiUtils for utilities used in Python PSI API
+ * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
+ */
 public class PyUtil {
 
   private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;

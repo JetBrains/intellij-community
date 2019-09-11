@@ -29,6 +29,7 @@ import java.util.Map;
  * Needs not to be instantiated and only holds static methods.
  *
  * @author dcheryasov
+ * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
  */
 //TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
 public class PySdkUtil {

@@ -25,8 +25,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.Contract;
@@ -42,6 +40,13 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+/**
+ * Utility methods for Python {@link Sdk} based on the project model and the file system.
+ *
+ * TODO: Extract SDK "flavor" specific methods into a "Python SDK provider" so that each SDK flavor can be defined independently
+ *
+ * @see PySdkUtil for run-time Python SDK utils
+ */
 public class PythonSdkUtil {
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
@@ -147,7 +152,7 @@ public class PythonSdkUtil {
 
 
   public static boolean isRemote(@Nullable String sdkPath) {
-    return PythonSdkUtil.isRemote(findSdkByPath(sdkPath));
+    return isRemote(findSdkByPath(sdkPath));
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
@@ -399,7 +404,7 @@ public class PythonSdkUtil {
 
   @Nullable
   public static Sdk findPythonSdk(@NotNull final PsiElement element) {
-    return PythonSdkUtil.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
+    return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
   @Nullable

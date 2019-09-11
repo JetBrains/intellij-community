@@ -19,6 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Assorted UI-related utility methods for Python.
+ *
+ * @see com.jetbrains.python.psi.PyUtil for Python code insight utilities.
+ */
 public class PyUiUtil {
   /**
    * Shows an information balloon in a reasonable place at the top right of the window.
