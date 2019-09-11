@@ -14,6 +14,8 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.ex.LocalRange
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -80,8 +82,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       return false
     }
 
-    @JvmStatic
-    fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? =
+    private fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? =
       lists.find { it.isDefault } ?: lists.find { it.changes.isEmpty() } ?: lists.firstOrNull()
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
@@ -94,6 +95,32 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       val chooser = ChangeListChooser(project, suggestedLists.ifEmpty { listOf(changeListManager.defaultChangeList) },
                                       defaultSelection, ActionsBundle.message("action.ChangesView.Move.text"), null)
       chooser.show()
+      return chooser.selectedList
+    }
+
+    @JvmStatic
+    fun askTargetChangelist(project: Project,
+                            selectedRanges: List<LocalRange>,
+                            tracker: PartialLocalLineStatusTracker): LocalChangeList? {
+      val selectedListIds = selectedRanges.map { range -> range.changelistId }.toSet()
+
+      val remainingTrackerListIds: Set<String> = tracker.getAffectedChangeListsIds().toSet() - selectedListIds
+
+      val clm = ChangeListManager.getInstance(project)
+      val allChangelists: List<LocalChangeList> = clm.changeListsCopy
+
+      val nonAffectedLists: List<LocalChangeList> = allChangelists.filter { list -> !selectedListIds.contains(list.id) }
+      val remainingTrackerLists: List<LocalChangeList> = allChangelists.filter { list -> remainingTrackerListIds.contains(list.id) }
+
+      val suggestedLists = nonAffectedLists.ifEmpty { listOf(clm.defaultChangeList) }
+
+      val preferedLists: List<LocalChangeList> = remainingTrackerLists.ifEmpty { nonAffectedLists }
+      val defaultSelection = guessPreferredList(preferedLists)
+
+      val chooser = ChangeListChooser(project, suggestedLists,
+                                      defaultSelection, ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"), null)
+      chooser.show()
+
       return chooser.selectedList
     }
   }
