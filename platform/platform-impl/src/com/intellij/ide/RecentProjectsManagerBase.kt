@@ -528,7 +528,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   private fun writeInfoFile(frameInfo: FrameInfo?, frame: JFrame) {
-    if (!Registry.`is`("ide.project.frame.as.splash")) {
+    if (!isUseProjectFrameAsSplash()) {
       return
     }
 
@@ -617,7 +617,7 @@ int32 "extendedState"
       val manager = instanceEx
       val openProjects = serviceIfCreated<ProjectManager>()?.openProjects ?: return
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
-      if (openProjects.isEmpty() || !Registry.`is`("ide.project.frame.as.splash")) {
+      if (openProjects.isEmpty() || !isUseProjectFrameAsSplash()) {
         Files.deleteIfExists(getLastProjectFrameInfoFile())
       }
       else {
@@ -634,6 +634,8 @@ int32 "extendedState"
     }
   }
 }
+
+private fun isUseProjectFrameAsSplash() = Registry.`is`("ide.project.frame.as.splash")
 
 private fun readProjectName(path: String): String {
   if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
