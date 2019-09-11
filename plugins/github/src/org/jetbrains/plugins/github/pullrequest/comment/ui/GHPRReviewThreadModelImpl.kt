@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.ui.CollectionListModel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
-class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
+class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel.Companion::convert)) {
 
   val id: String = thread.id
@@ -41,7 +41,7 @@ class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is GHPRReviewThreadModel) return false
+    if (other !is GHPRReviewThreadModelImpl) return false
 
     if (id != other.id) return false
 
