@@ -66,6 +66,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties.addChangeListener(myPropertiesListener);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
+
+    applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
   }
 
   @NotNull
