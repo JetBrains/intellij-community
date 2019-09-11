@@ -539,13 +539,9 @@ public class ExternalSystemApiUtil {
    * @param e exception to process
    * @return error message for the given exception
    */
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return stacktraceAsString(unwrapped);
-    }
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
       return reason;
