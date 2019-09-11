@@ -46,10 +46,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
@@ -1411,7 +1408,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                 @Override
                 public RelativePoint recalculateLocation(Balloon object) {
                   final Rectangle bounds = myToolWindowsPane.getBounds();
-                  final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+                  final Point target = StartupUiUtil.getCenterPoint(bounds, new Dimension(1, 1));
                   if (ToolWindowAnchor.TOP == anchor) {
                     target.y = 0;
                   }
@@ -1772,7 +1769,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Save frame's bounds
     // [tav] Where we load these bounds? Should we just remove this code? (because we load frame bounds in WindowManagerImpl.allocateFrame)
     // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
-    // However, I won't change thise code because I can't even test it.
+    // However, I won't change this code because I can't even test it.
     final Rectangle frameBounds = myFrame.getBounds();
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
@@ -2255,6 +2252,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
+  @Override
   public boolean fallbackToEditor() {
     return myActiveStack.isEmpty();
   }
