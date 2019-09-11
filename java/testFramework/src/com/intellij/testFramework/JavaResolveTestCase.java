@@ -27,7 +27,7 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ResolveTestCase extends JavaPsiTestCase {
+public abstract class JavaResolveTestCase extends JavaPsiTestCase {
   protected static final String MARKER = "<ref>";
 
   private Document myDocument;

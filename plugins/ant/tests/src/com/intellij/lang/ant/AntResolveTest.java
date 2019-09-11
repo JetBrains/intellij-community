@@ -12,13 +12,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AntResolveTest extends ResolveTestCase {
+public class AntResolveTest extends JavaResolveTestCase {
 
   public void testDefaultTarget() throws Exception {
     doTargetTest();

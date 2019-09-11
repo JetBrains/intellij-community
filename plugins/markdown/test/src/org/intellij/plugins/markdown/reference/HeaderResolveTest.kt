@@ -1,14 +1,14 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.openapi.paths.PsiDynaReference
-import com.intellij.testFramework.ResolveTestCase
+import com.intellij.testFramework.JavaResolveTestCase
 import com.intellij.util.containers.ContainerUtil
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
 
-class HeaderResolveTest : ResolveTestCase() {
+class HeaderResolveTest : JavaResolveTestCase() {
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/reference/linkDestination/headers/"
 
   private fun doTest() {

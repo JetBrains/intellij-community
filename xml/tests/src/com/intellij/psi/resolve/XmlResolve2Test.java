@@ -9,8 +9,8 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -18,7 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 
 @HeavyPlatformTestCase.WrapInCommand
-public class XmlResolve2Test extends ResolveTestCase {
+public class XmlResolve2Test extends JavaResolveTestCase {
   private static final String BASE_PATH = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/psi/resolve/namespace/";
 
   @NotNull
