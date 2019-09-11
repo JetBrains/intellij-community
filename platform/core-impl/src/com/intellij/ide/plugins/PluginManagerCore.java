@@ -1651,5 +1651,17 @@ public class PluginManagerCore {
       });
       this.idMap = idMap;
     }
+
+    protected PluginTraverser(@NotNull Meta<PluginId> meta,
+                              @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+      super(meta);
+      this.idMap = idMap;
+    }
+
+    @NotNull
+    @Override
+    protected JBTreeTraverser<PluginId> newInstance(@NotNull Meta<PluginId> meta) {
+      return new PluginTraverser(meta, idMap);
+    }
   }
 }
