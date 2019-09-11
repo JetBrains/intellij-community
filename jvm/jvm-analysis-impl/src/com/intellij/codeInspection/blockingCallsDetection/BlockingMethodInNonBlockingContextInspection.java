@@ -4,6 +4,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
 import com.intellij.codeInspection.AnalysisUastUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -151,8 +152,13 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
+
+      LocalQuickFix[] quickFixes = StreamEx.of(myBlockingMethodCheckers)
+        .flatArray(checker -> checker.getQuickFixesFor(element))
+        .toArray(LocalQuickFix.EMPTY_ARRAY);
       myHolder.registerProblem(elementToHighLight,
-                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"));
+                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"),
+                               quickFixes);
     }
   }
 
