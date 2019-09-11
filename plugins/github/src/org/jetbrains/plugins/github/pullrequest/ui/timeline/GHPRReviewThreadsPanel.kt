@@ -46,7 +46,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
 
   private fun createComponent(thread: GHPRReviewThreadModel): JComponent {
     return JBUI.Panels.simplePanel(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .addToBottom(GHPRReviewThreadCommentsPanel(avatarIconsProvider, thread))
+      .addToBottom(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
       .andTransparent()
   }
 }

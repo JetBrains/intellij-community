@@ -11,31 +11,36 @@ import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIconsProvider,
-                                    private val thread: GHPRReviewThreadModel)
+class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRReviewCommentModel>,
+                                    private val avatarIconsProvider: GHAvatarIconsProvider)
   : JPanel(VerticalFlowLayout(0, JBUI.scale(10))) {
 
-  private val collapseThreshold = 2
+  private val foldModel = SingleValueModel(true)
+  private val foldThreshold = 2
   private val unfoldButtonPanel = BorderLayoutPanel().apply {
     isOpaque = false
     border = JBUI.Borders.emptyLeft(30)
 
-    addToLeft(UnfoldButton(thread))
+    addToLeft(UnfoldButton(foldModel))
   }
 
   init {
+    if (commentsModel.size < 1) throw IllegalStateException("Thread cannot be empty")
     isOpaque = false
 
-    thread.addListDataListener(object : ListDataListener {
+    commentsModel.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
+        if (e.index0 == 0) throw IllegalStateException("Thread cannot be empty")
         for (i in e.index1 downTo e.index0) {
           remove(i + 1)
         }
@@ -46,7 +51,7 @@ class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIco
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(GHPRReviewCommentComponent(avatarIconsProvider, thread.getElementAt(i)), i + 1)
+          add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)), i + 1)
         }
         updateFolding()
         validate()
@@ -58,13 +63,13 @@ class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIco
         repaint()
       }
     })
-    thread.addFoldStateChangeListener { updateFolding() }
+    foldModel.addValueChangedListener { updateFolding() }
 
-    add(GHPRReviewCommentComponent(avatarIconsProvider, thread.items.first()))
+    add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(0)))
     add(unfoldButtonPanel)
 
-    for (i in 1 until thread.items.size) {
-      add(GHPRReviewCommentComponent(avatarIconsProvider, thread.getElementAt(i)))
+    for (i in 1 until commentsModel.size) {
+      add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)))
     }
     updateFolding()
 
@@ -72,7 +77,7 @@ class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIco
   }
 
   private fun updateFolding() {
-    val shouldFold = thread.fold && thread.size > collapseThreshold
+    val shouldFold = foldModel.value && commentsModel.size > foldThreshold
     unfoldButtonPanel.isVisible = shouldFold
     for (i in 2 until componentCount - 1) {
       getComponent(i).isVisible = !shouldFold
@@ -89,12 +94,12 @@ class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIco
   }
 
   companion object {
-    private class UnfoldButton(thread: GHPRReviewThreadModel) : JComponent() {
+    private class UnfoldButton(model: SingleValueModel<Boolean>) : JComponent() {
       init {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         object : ClickListener() {
           override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-            thread.fold = !thread.fold
+            model.value = !model.value
             return true
           }
         }.installOn(this)
