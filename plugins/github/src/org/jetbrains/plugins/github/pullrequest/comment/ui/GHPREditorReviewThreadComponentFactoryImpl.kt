@@ -25,7 +25,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
-    val panel = GHPRReviewThreadPanel(avatarIconsProvider, thread).apply {
+    val panel = GHPRReviewThreadCommentsPanel(avatarIconsProvider, thread).apply {
       border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP)
     }
     wrapper.setContent(panel)

@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadPanel
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -46,7 +46,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
 
   private fun createComponent(thread: GHPRReviewThreadModel): JComponent {
     return JBUI.Panels.simplePanel(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .addToBottom(GHPRReviewThreadPanel(avatarIconsProvider, thread))
+      .addToBottom(GHPRReviewThreadCommentsPanel(avatarIconsProvider, thread))
       .andTransparent()
   }
 }

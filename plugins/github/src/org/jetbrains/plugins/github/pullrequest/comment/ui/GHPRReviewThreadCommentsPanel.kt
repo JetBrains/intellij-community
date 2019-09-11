@@ -19,8 +19,8 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRReviewThreadPanel(private val avatarIconsProvider: GHAvatarIconsProvider,
-                            private val thread: GHPRReviewThreadModel)
+class GHPRReviewThreadCommentsPanel(private val avatarIconsProvider: GHAvatarIconsProvider,
+                                    private val thread: GHPRReviewThreadModel)
   : JPanel(VerticalFlowLayout(0, JBUI.scale(10))) {
 
   private val collapseThreshold = 2
