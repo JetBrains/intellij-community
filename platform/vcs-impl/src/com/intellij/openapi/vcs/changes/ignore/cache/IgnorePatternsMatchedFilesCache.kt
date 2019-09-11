@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil
@@ -104,7 +106,7 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
   private fun runSearchRequest(key: String, pattern: Pattern) =
     updateQueue.queue(object : Update(key) {
       override fun canEat(update: Update) = true
-      override fun run() = cache.put(key, doSearch(pattern))
+      override fun run() = runUnderDisposeAwareIndicator { cache.put(key, doSearch(pattern)) }
     })
 
   private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
@@ -114,6 +116,7 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
 
     val projectScope = GlobalSearchScope.projectScope(project)
     projectFileIndex.iterateContent { fileOrDir ->
+      ProgressManager.checkCanceled()
       val name = fileOrDir.name
       if (RegexUtil.matchAnyPart(parts, name)) {
         for (file in runReadAction { FilenameIndex.getVirtualFilesByName(project, name, projectScope) }) {
@@ -126,6 +129,9 @@ class IgnorePatternsMatchedFilesCache(private val project: Project,
     }
     return files
   }
+
+  private inline fun runUnderDisposeAwareIndicator(crossinline action: () -> Unit) =
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, Runnable { action() })
 
   companion object {
     @JvmStatic
