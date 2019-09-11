@@ -2219,16 +2219,6 @@ public final class UIUtil extends StartupUiUtil {
     return INACTIVE_HEADER_COLOR;
   }
 
-  /**
-   * @deprecated use {@link JBColor#border()}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static Color getBorderColor() {
-    return JBColor.border();
-  }
-
   @NotNull
   public static Font getTitledBorderFont() {
     return getLabelFont();
