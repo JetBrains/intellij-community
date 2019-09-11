@@ -154,7 +154,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       JBPopup prevLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
       actionPerformed(event);
       JBPopup curLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
-      if (curLast != null && curLast != prevLast) {
+      if (curLast != null && curLast != prevLast && !curLast.isDisposed()) {
         ((ActionManagerImpl)manager).addActionPopup(curLast);
         curLast.addListener(new JBPopupAdapter() {
           @Override
