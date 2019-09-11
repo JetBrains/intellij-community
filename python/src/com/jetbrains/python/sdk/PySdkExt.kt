@@ -49,14 +49,14 @@ import java.nio.file.Paths
  * @author vlan
  */
 
-fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context:UserDataHolder): List<Sdk> {
-  val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
+fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
+  val existing = existingSdks.filter { it.sdkType is PythonSdkUtil && it.isSystemWide }
   val detected = detectSystemWideSdks(module, existingSdks, context)
   return existing + detected
 }
 
 @JvmOverloads
-fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context:UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
+fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
   if (module != null && module.isDisposed) return emptyList()
   val existingPaths = existingSdks.map { it.homePath }.toSet()
   return PythonSdkFlavor.getApplicableFlavors(false)
@@ -69,10 +69,10 @@ fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context:UserD
     .toList()
 }
 
-fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>,  context:UserDataHolder): List<PyDetectedSdk> =
+fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
 
-fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context:UserDataHolder): List<PyDetectedSdk> =
+fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -82,8 +82,7 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
                             suggestedSdkName: String?): Sdk? {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
-    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?:
-    throw ExecutionException("Directory $homePath not found")
+    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException("Directory $homePath not found")
   }
   catch (e: ExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), baseSdk) ?: return null
@@ -149,14 +148,14 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 }
 
 var Module.pythonSdk: Sdk?
-  get() = PythonSdkType.findPythonSdk(this)
+  get() = PythonSdkUtil.findPythonSdk(this)
   set(value) = ModuleRootModificationUtil.setModuleSdk(this, value)
 
 var Project.pythonSdk: Sdk?
   get() {
     val sdk = ProjectRootManager.getInstance(this).projectSdk
     return when (sdk?.sdkType) {
-      is PythonSdkType -> sdk
+      is PythonSdkUtil -> sdk
       else -> null
     }
   }
@@ -175,7 +174,7 @@ val Module.basePath: String?
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
-  val venvRoot = PythonSdkType.getVirtualEnvRoot(sdkHome)?.path
+  val venvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome)?.path
   val condaRoot = CondaEnvSdkFlavor.getCondaEnvRoot(sdkHome)?.path
   val associatedName = when {
     venvRoot != null && (associatedPath == null || !FileUtil.isAncestor(associatedPath, venvRoot, true)) ->
@@ -192,14 +191,14 @@ val File.isNotEmptyDirectory: Boolean
   get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false
 
 val Sdk.isSystemWide: Boolean
-  get() = !PythonSdkType.isRemote(this) && !PythonSdkType.isVirtualEnv(
-    this) && !PythonSdkType.isCondaVirtualEnv(this)
+  get() = !PythonSdkUtil.isRemote(this) && !PythonSdkUtil.isVirtualEnv(
+    this) && !PythonSdkUtil.isCondaVirtualEnv(this)
 
 @Suppress("unused")
 private val Sdk.associatedPathFromDotProject: String?
   get() {
     val binaryPath = homePath ?: return null
-    val virtualEnvRoot = PythonSdkType.getVirtualEnvRoot(binaryPath) ?: return null
+    val virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(binaryPath) ?: return null
     val projectFile = File(virtualEnvRoot, ".project")
     return try {
       projectFile.readText().trim()
@@ -213,7 +212,7 @@ private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
 
 private val Sdk.sitePackagesDirectory: VirtualFile?
-  get() = PythonSdkType.getSitePackagesDirectory(this)
+  get() = PythonSdkUtil.getSitePackagesDirectory(this)
 
 private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val homePath = homePath ?: return false

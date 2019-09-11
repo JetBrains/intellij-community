@@ -35,8 +35,8 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +130,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {
     Set<LookupElement> items = new LinkedHashSet<>();
 
-    final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(parentScope);
+    final Collection<String> usedNames = PyUtil.collectUsedNames(parentScope);
     for (String name : usedNames) {
       if (name != null)
         items.add(LookupElementBuilder.create(name));

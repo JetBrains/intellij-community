@@ -36,11 +36,8 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.sdk.PreferredSdkComparator
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
-import com.jetbrains.python.sdk.detectVirtualEnvs
-import com.jetbrains.python.sdk.isAssociatedWithModule
 import icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
@@ -75,7 +72,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   override fun createCenterPanel(): JComponent {
     val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
+      .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks),
                                            createAnacondaPanel(project, module),

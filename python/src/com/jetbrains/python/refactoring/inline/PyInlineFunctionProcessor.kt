@@ -159,7 +159,7 @@ class PyInlineFunctionProcessor(project: Project,
       PsiTreeUtil.getParentOfType(functionCopy.docStringExpression, PyStatement::class.java)?.delete()
 
       val replacement = functionCopy.statementList
-      val namesInOuterScope = PyRefactoringUtil.collectUsedNames(refScopeOwner)
+      val namesInOuterScope = PyUtil.collectUsedNames(refScopeOwner)
       val builtinCache = PyBuiltinCache.getInstance(reference)
 
       val argumentReplacements = mutableMapOf<PyReferenceExpression, PyExpression>()

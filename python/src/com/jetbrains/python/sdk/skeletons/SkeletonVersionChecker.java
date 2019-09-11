@@ -18,14 +18,13 @@ package com.jetbrains.python.sdk.skeletons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonHelpersLocator;
-import org.jetbrains.annotations.NonNls;
+import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Parses required_gen_version file.
@@ -37,14 +36,6 @@ import java.util.regex.Pattern;
 public class SkeletonVersionChecker {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
 
-  final static Pattern ONE_LINE = Pattern.compile("^(?:(\\w+(?:\\.\\w+)*|\\(built-in\\)|\\(default\\))\\s+(\\d+\\.\\d+))?\\s*(?:#.*)?$");
-
-  public static final int PREGENERATED_VERSION = -1;
-
-  @NonNls static final String REQUIRED_VERSION_FNAME = "required_gen_version";
-  @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
-  @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-  @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
   private final TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)
   private Integer myBuiltinsVersion; // version of (built-it)
@@ -59,7 +50,7 @@ public class SkeletonVersionChecker {
   }
 
   public boolean isPregenerated() {
-    return myDefaultVersion == PREGENERATED_VERSION;
+    return myDefaultVersion == PySkeletonHeader.PREGENERATED_VERSION;
   }
 
   private static TreeMap<QualifiedName, Integer> createTreeMap() {
@@ -93,7 +84,7 @@ public class SkeletonVersionChecker {
 
   private void load() {
     // load the required versions file
-    File infile = PythonHelpersLocator.getHelperFile(REQUIRED_VERSION_FNAME);
+    File infile = PythonHelpersLocator.getHelperFile(PySkeletonHeader.REQUIRED_VERSION_FNAME);
     try {
       if (infile.canRead()) {
         Reader input = new FileReader(infile);
@@ -103,18 +94,18 @@ public class SkeletonVersionChecker {
           do {
             line = lines.readLine();
             if (line != null) {
-              Matcher matcher = ONE_LINE.matcher(line);
+              Matcher matcher = PySkeletonHeader.ONE_LINE.matcher(line);
               if (matcher.matches()) {
                 String package_name = matcher.group(1);
                 String ver = matcher.group(2);
                 if (package_name != null) {
-                  final int version = fromVersionString(ver);
-                  if (DEFAULT_NAME.equals(package_name)) {
-                    if (myDefaultVersion != PREGENERATED_VERSION) {
+                  final int version = PySkeletonHeader.fromVersionString(ver);
+                  if (PySkeletonHeader.DEFAULT_NAME.equals(package_name)) {
+                    if (myDefaultVersion != PySkeletonHeader.PREGENERATED_VERSION) {
                       myDefaultVersion = version;
                     }
                   }
-                  else if (BUILTIN_NAME.equals(package_name)) {
+                  else if (PySkeletonHeader.BUILTIN_NAME.equals(package_name)) {
                     myBuiltinsVersion = version;
                   }
                   else {
@@ -122,7 +113,7 @@ public class SkeletonVersionChecker {
                   }
                 } // else the whole line is a valid comment, and both catch groups are null
               }
-              else LOG.warn(REQUIRED_VERSION_FNAME + ":" + lines.getLineNumber() + " Incorrect line, ignored" );
+              else LOG.warn(PySkeletonHeader.REQUIRED_VERSION_FNAME + ":" + lines.getLineNumber() + " Incorrect line, ignored" );
             }
           } while (line != null);
           if (myBuiltinsVersion == null) {
@@ -156,24 +147,6 @@ public class SkeletonVersionChecker {
       // we could have started with no default and no builtins set, then default set by withDefaultVersionIfUnknown
     }
     return myBuiltinsVersion;
-  }
-
-  /**
-   * Transforms a string like "1.2" into an integer representing it.
-   * @param input
-   * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
-   */
-  public static int fromVersionString(final String input) {
-    int dot_pos = input.indexOf('.');
-    try {
-      if (dot_pos > 0) {
-        int major = Integer.parseInt(input.substring(0, dot_pos));
-        int minor = Integer.parseInt(input.substring(dot_pos+1));
-        return (major << 8) + minor;
-      }
-    }
-    catch (NumberFormatException ignore) { }
-    return 0;
   }
 
   public static String toVersionString(final int input) {

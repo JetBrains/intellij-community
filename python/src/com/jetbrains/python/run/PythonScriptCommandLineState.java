@@ -35,8 +35,8 @@ import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteSelectionAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,7 +159,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PySdkUtil.isRemote(getSdk());
+    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
   }
 
   @Override
@@ -266,7 +266,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     String scriptPath = myConfig.getScriptName();
     String workingDir = myConfig.getWorkingDirectory();
-    if (PySdkUtil.isRemote(sdk) && pathMapper != null) {
+    if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
       scriptPath = pathMapper.convertToRemote(scriptPath);
       workingDir = pathMapper.convertToRemote(workingDir);
     }

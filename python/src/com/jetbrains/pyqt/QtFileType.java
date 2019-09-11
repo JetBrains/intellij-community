@@ -15,7 +15,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       if (module == null) {
         return null;
       }
-      Sdk sdk = PythonSdkType.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk == null) {
         return null;
       }

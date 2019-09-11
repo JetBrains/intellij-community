@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
@@ -35,7 +36,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import one.util.streamex.StreamEx;
@@ -107,7 +108,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     private void checkPackagesHaveBeenInstalled(@NotNull PsiElement file, @Nullable Module module) {
       if (module != null && !isRunningPackagingTasks(module)) {
-        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
         if (sdk != null) {
           final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk, myIgnoredPackages);
           if (unsatisfied != null && !unsatisfied.isEmpty()) {
@@ -166,7 +167,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final List<String> possiblePyPIPackageNames = PyPIPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList());
+        final List<String> possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList());
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&
@@ -180,7 +181,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
         if (module == null) return;
 
-        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
         if (sdk == null) return;
 
         final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
@@ -340,7 +341,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static boolean checkAdminPermissionsAndConfigureInterpreter(@NotNull Project project,
                                                                       @NotNull ProblemDescriptor descriptor,
                                                                       @NotNull Sdk sdk) {
-    if (!PythonSdkType.isRemote(sdk) && PySdkExtKt.adminPermissionsNeeded(sdk)) {
+    if (!PythonSdkUtil.isRemote(sdk) && PySdkExtKt.adminPermissionsNeeded(sdk)) {
       final int answer = askToConfigureInterpreter(project, sdk);
       switch (answer) {
         case Messages.YES:
@@ -491,7 +492,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       myAsName = asName;
       myNode = SmartPointerManager.getInstance(node.getProject()).createSmartPsiElementPointer(node, node.getContainingFile());
       myModule = ModuleUtilCore.findModuleForPsiElement(node);
-      mySdk = PythonSdkType.findPythonSdk(myModule);
+      mySdk = PythonSdkUtil.findPythonSdk(myModule);
     }
 
     @Nls

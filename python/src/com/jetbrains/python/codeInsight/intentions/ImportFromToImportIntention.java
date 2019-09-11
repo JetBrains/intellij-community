@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -276,7 +277,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
       //myFromImportStatement.replace(new_import);
     }
     catch (IncorrectOperationException ignored) {
-      PyUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
+      PyUiUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
     }
   }
 }

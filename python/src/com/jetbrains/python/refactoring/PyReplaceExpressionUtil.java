@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -34,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.PyTokenTypes.*;
-import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 
 /**
  * @author Dennis.Ushakov
@@ -130,7 +131,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final PyArgumentList newStyleFormatValue = getNewStyleFormatValueExpression(oldExpression);
     final String newText = newExpression.getText();
 
-    final List<SubstitutionChunk> substitutions;
+    final List<PyStringFormatParser.SubstitutionChunk> substitutions;
     if (newStyleFormatValue != null) {
       substitutions = filterSubstitutions(parseNewStyleFormat(fullText));
     }

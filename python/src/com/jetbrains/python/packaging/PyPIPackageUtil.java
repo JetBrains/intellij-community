@@ -50,11 +50,6 @@ public class PyPIPackageUtil {
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
   public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
-  /**
-   * Contains mapping "importable top-level package" -> "package names on PyPI".
-   */
-  public static final ImmutableMap<String, List<String>> PACKAGES_TOPLEVEL = loadPackageAliases();
-
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
 
   /**
@@ -127,25 +122,6 @@ public class PyPIPackageUtil {
   @NotNull
   private static String getUserAgent() {
     return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
-  }
-
-  @NotNull
-  private static ImmutableMap<String, List<String>> loadPackageAliases() {
-    final ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    try {
-      Files
-        .lines(Paths.get(PythonHelpersLocator.getHelperPath("/tools/packages")))
-        .forEach(
-          line -> {
-            final List<String> split = StringUtil.split(line, " ");
-            builder.put(split.get(0), new SmartList<>(ContainerUtil.subList(split, 1)));
-          }
-        );
-    }
-    catch (IOException e) {
-      LOG.error("Cannot find \"packages\". " + e.getMessage());
-    }
-    return builder.build();
   }
 
   public static boolean isPyPIRepository(@Nullable String repository) {

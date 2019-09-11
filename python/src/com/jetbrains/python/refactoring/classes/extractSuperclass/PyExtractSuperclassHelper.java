@@ -23,6 +23,7 @@ import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
@@ -40,7 +41,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * Accepts only those members whose element is PyClass object (new classes)
    */
-  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyUtil.ObjectPredicate(true);
+  private static final Predicate<PyMemberInfo<PyElement>> ALLOW_OBJECT = new PyRefactoringUtil.ObjectPredicate(true);
 
   private PyExtractSuperclassHelper() {
   }

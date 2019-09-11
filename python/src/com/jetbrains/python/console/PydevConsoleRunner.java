@@ -32,15 +32,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
-import com.jetbrains.python.console.parsing.PythonConsoleData;
+import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,7 @@ public interface PydevConsoleRunner {
   static PyRemotePathMapper getPathMapper(@NotNull Project project,
                                           Sdk sdk,
                                           PyConsoleOptions.PyConsoleSettings consoleSettings) {
-    if (PySdkUtil.isRemote(sdk)) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
@@ -92,7 +91,7 @@ public interface PydevConsoleRunner {
     PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     String sdkHome = settings.getSdkHome();
     if (sdkHome != null) {
-      sdk = PythonSdkType.findSdkByPath(sdkHome);
+      sdk = PythonSdkUtil.findSdkByPath(sdkHome);
       if (settings.getModuleName() != null) {
         module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
       }
@@ -111,8 +110,8 @@ public interface PydevConsoleRunner {
         module = ModuleManager.getInstance(project).findModuleByName(settings.getModuleName());
       }
       if (module != null) {
-        if (PythonSdkType.findPythonSdk(module) != null) {
-          sdk = PythonSdkType.findPythonSdk(module);
+        if (PythonSdkUtil.findPythonSdk(module) != null) {
+          sdk = PythonSdkUtil.findPythonSdk(module);
         }
       }
     }
@@ -121,22 +120,22 @@ public interface PydevConsoleRunner {
         module = contextModule;
       }
       if (sdk == null) {
-        sdk = PythonSdkType.findPythonSdk(module);
+        sdk = PythonSdkUtil.findPythonSdk(module);
       }
     }
 
     if (sdk == null) {
       for (Module m : ModuleManager.getInstance(project).getModules()) {
-        if (PythonSdkType.findPythonSdk(m) != null) {
-          sdk = PythonSdkType.findPythonSdk(m);
+        if (PythonSdkUtil.findPythonSdk(m) != null) {
+          sdk = PythonSdkUtil.findPythonSdk(m);
           module = m;
           break;
         }
       }
     }
     if (sdk == null) {
-      if (PythonSdkType.getAllSdks().size() > 0) {
-        sdk = PythonSdkType.getAllSdks().get(0); //take any python sdk
+      if (PythonSdkUtil.getAllSdks().size() > 0) {
+        sdk = PythonSdkUtil.getAllSdks().get(0); //take any python sdk
       }
     }
     return Pair.create(sdk, module);
@@ -157,7 +156,7 @@ public interface PydevConsoleRunner {
   static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
     setCorrectStdOutEncoding(envs, project);
 
-    PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
+    PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
   }
 
@@ -218,13 +217,13 @@ public interface PydevConsoleRunner {
   }
 
   @Nullable
-  static ConsoleCommunication getConsoleCommunication(PsiElement element) {
+  static ConsoleCommunication getConsoleCommunication(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_COMMUNICATION_KEY) : null;
   }
 
   @Nullable
-  static Sdk getConsoleSdk(PsiElement element) {
+  static Sdk getConsoleSdk(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_SDK) : null;
   }

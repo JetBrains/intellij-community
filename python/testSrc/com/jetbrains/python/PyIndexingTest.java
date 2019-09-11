@@ -32,7 +32,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -83,7 +83,7 @@ public class PyIndexingTest extends PyTestCase {
     assertFalse(indexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
 
     final Module module = myFixture.getModule();
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
     final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(sdk);
 

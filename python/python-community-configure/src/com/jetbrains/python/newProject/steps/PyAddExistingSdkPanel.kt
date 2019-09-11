@@ -19,8 +19,8 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
-import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
 import java.awt.BorderLayout
@@ -60,7 +60,7 @@ class PyAddExistingSdkPanel(project: Project?,
   private val remotePathField = PyRemotePathField().apply {
     addActionListener {
       val currentSdk = sdk ?: return@addActionListener
-      if (!PySdkUtil.isRemote(currentSdk)) return@addActionListener
+      if (!PythonSdkUtil.isRemote(currentSdk)) return@addActionListener
       textField.text = currentSdk.chooseRemotePath(parent) ?: return@addActionListener
     }
   }
@@ -100,7 +100,7 @@ class PyAddExistingSdkPanel(project: Project?,
     val selectedSdk = sdk
     val message = when {
       selectedSdk == null -> "No Python interpreter selected"
-      PythonSdkType.isInvalid(selectedSdk) -> "Choose valid Python interpreter"
+      PythonSdkUtil.isInvalid(selectedSdk) -> "Choose valid Python interpreter"
       else -> return null
     }
     return ValidationInfo(message, sdkChooserCombo)

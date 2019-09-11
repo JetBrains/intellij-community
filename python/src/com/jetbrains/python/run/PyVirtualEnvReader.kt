@@ -7,6 +7,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
 
 /**
@@ -85,14 +86,14 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 }
 
 fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, String?>? {
-  if (PythonSdkType.isVirtualEnv(sdkPath)) {
+  if (PythonSdkUtil.isVirtualEnv(sdkPath)) {
     val shellName = if (shellPath != null) File(shellPath).name else null
     val activate = findActivateInPath(sdkPath!!, shellName)
 
     return if (activate != null && activate.exists()) {
         Pair(activate.absolutePath, null)
     } else null
-  } else if (PythonSdkType.isConda(sdkPath)) {
+  } else if (PythonSdkUtil.isConda(sdkPath)) {
     val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
 
     if (condaExecutable != null) {

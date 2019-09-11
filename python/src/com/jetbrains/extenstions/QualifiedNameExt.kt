@@ -36,6 +36,8 @@ import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkType
 
+//TODO: move to extensions
+
 interface ContextAnchor {
   val sdk: Sdk?
   val project: Project

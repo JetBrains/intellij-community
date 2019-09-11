@@ -29,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -86,7 +87,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()
-      .flatMap(e -> StreamEx.of(PyRefactoringUtil.findUsages(e, false))
+      .flatMap(e -> StreamEx.of(PyCodeFragmentUtil.findUsages(e, false))
         .map(info -> new MyUsageInfo(info, e)))
       .toArray(UsageInfo[]::new);
   }
@@ -98,7 +99,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyRefactoringUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {

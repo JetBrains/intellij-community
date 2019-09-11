@@ -317,7 +317,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
                         PyBundle.message("INSP.unused.locals.local.function.isnot.used",
-                        ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
+                                            ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyClass) {
         // Local class

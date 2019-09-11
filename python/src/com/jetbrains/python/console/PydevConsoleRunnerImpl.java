@@ -81,7 +81,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonTracebackFilter;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -375,7 +375,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @NotNull
   private CommandLineProcess createProcess(@NotNull Sdk sdk) throws ExecutionException {
-    if (PySdkUtil.isRemote(sdk)) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
@@ -470,7 +470,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine, @NotNull Sdk sdk) {
-    if (PySdkUtil.isRemote(sdk)) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();

@@ -34,8 +34,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
-import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
@@ -73,11 +73,11 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
           assertNotNull(virtualFile);
           assertTrue(virtualFile.isInLocalFileSystem());
           final String path = virtualFile.getPath();
-          final PySkeletonRefresher.SkeletonHeader header = PySkeletonRefresher.readSkeletonHeader(new File(path));
+          final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(new File(path));
           assertNotNull(header);
           final int version = header.getVersion();
           assertTrue("Header version must be > 0, currently it is " + version, version > 0);
-          assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
+          assertEquals(PySkeletonHeader.BUILTIN_NAME, header.getBinaryFile());
         });
 
         // Run inspections on a file that uses builtins
@@ -88,7 +88,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
           final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
 
-          final Sdk sdkFromModule = PythonSdkType.findPythonSdk(module);
+          final Sdk sdkFromModule = PythonSdkUtil.findPythonSdk(module);
           assertNotNull(sdkFromModule);
 
           final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());

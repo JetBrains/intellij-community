@@ -11,7 +11,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.*
+import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
@@ -525,7 +525,8 @@ class PyDataclassInspection : PyInspection() {
                 val default = call.getKeywordArgument("default")
                 val factory = call.getKeywordArgument("factory")
 
-                if (default != null && factory != null && !resolvesToOmittedDefault(default, PyDataclassParameters.Type.ATTRS)) {
+                if (default != null && factory != null && !resolvesToOmittedDefault(default,
+                                                                                    PyDataclassParameters.Type.ATTRS)) {
                   registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
                 }
               }

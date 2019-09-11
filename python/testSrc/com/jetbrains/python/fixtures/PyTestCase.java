@@ -61,7 +61,7 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -92,7 +92,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
-    final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
+    final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -169,7 +169,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
     WriteAction.run(() -> {
       final SdkModificator modificator = sdk.getSdkModificator();

@@ -35,5 +35,6 @@
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
+    <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
   </component>
 </module>

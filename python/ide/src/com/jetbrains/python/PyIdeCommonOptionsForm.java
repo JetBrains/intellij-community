@@ -29,8 +29,7 @@ import com.jetbrains.python.configuration.PyConfigureInterpretersLinkPanel;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +73,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myPythonSdks = new ArrayList<>(PythonSdkType.getAllSdks());
+    myPythonSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());
     myPythonSdks.add(0, null);
 
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(myPythonSdks, null));
@@ -242,7 +241,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
-    myInterpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkType.findSdkByPath(myPythonSdks, mySelectedSdkHome));
+    myInterpreterComboBox.setSelectedItem(useModuleSdk ? null : PythonSdkUtil.findSdkByPath(myPythonSdks, mySelectedSdkHome));
   }
 
   @Override
@@ -310,7 +309,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   private void updateRemoteInterpreterMode() {
-    setRemoteInterpreterMode(PySdkUtil.isRemote(getSdkSelected()));
+    setRemoteInterpreterMode(PythonSdkUtil.isRemote(getSdkSelected()));
     for (Consumer<Boolean> f : myRemoteInterpreterModeListeners) {
       f.accept(myInterpreterRemote);
     }
@@ -320,13 +319,13 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private Sdk getSdkSelected() {
     String sdkHome = getSdkHome();
     if (StringUtil.isEmptyOrSpaces(sdkHome)) {
-      final Sdk projectJdk = PythonSdkType.findPythonSdk(getModule());
+      final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
       if (projectJdk != null) {
         sdkHome = projectJdk.getHomePath();
       }
     }
 
-    return PythonSdkType.findSdkByPath(sdkHome);
+    return PythonSdkUtil.findSdkByPath(sdkHome);
   }
 
   @Override
