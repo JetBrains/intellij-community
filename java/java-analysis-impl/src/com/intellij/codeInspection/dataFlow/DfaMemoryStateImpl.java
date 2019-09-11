@@ -259,6 +259,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           DfaVariableValue target = replaceQualifier((DfaVariableValue)value, flushed, replacement);
           if (target != value) return target;
         }
+        if (value.getType() instanceof PsiPrimitiveType) {
+          return myFactory.getFactValue(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
+        }
         DfaNullability dfaNullability = isNotNull(value) ? DfaNullability.NOT_NULL : getValueFact(value, DfaFactType.NULLABILITY);
         if (dfaNullability == null) {
           dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
