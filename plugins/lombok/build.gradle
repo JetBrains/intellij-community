@@ -85,7 +85,7 @@ configurations {
 }
 
 dependencies {
-  lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.8', classifier: 'sources', ext: 'jar'
+  lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.10', classifier: 'sources', ext: 'jar'
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: 'org.mockito', name: 'mockito-core', version: '3.0.0'
