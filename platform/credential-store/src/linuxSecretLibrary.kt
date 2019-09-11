@@ -17,6 +17,7 @@ import java.util.function.Supplier
 private const val SECRET_SCHEMA_DONT_MATCH_NAME = 2
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
+private const val SECRET_ERROR_IS_LOCKED = 2
 
 // explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
 internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): DisposableMemory {
@@ -39,6 +40,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     // and for clients better to get error earlier, in creation place
     private val library = Native.load("secret-1", SecretLibrary::class.java)
     private val DBUS_ERROR = library.g_dbus_error_quark()
+    private val SECRET_ERROR = library.secret_error_get_quark()
 
     fun create(schemeName: String): SecretCredentialStore? {
       if (!pingService()) return null
@@ -156,9 +158,12 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     val errorRef = GErrorByRef()
     val result = task(errorRef)
     val error = errorRef.getValue()
-    if (error != null && error.code != 0) {
+    if (error != null) {
       if (isNoSecretService(error)) {
         LOG.warn("gnome-keyring not installed or kde doesn't support Secret Service API. $method error code ${error.code}, error message ${error.message}")
+      }
+      if (error.domain == SECRET_ERROR && error.code == SECRET_ERROR_IS_LOCKED) {
+        LOG.warn("Cancelled storage unlock: ${error.message}")
       }
       else {
         LOG.error("$method error code ${error.code}, error message ${error.message}")
@@ -181,6 +186,7 @@ private interface SecretLibrary : Library {
   fun secret_password_clear_sync(scheme: Pointer, cancellable: Pointer?, error: GErrorByRef?, vararg attributes: Pointer?)
 
   fun g_dbus_error_quark(): Int
+  fun secret_error_get_quark(): Int
 }
 
 @Suppress("unused")
