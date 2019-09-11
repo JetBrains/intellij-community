@@ -1369,22 +1369,22 @@ public class HighlightUtil extends HighlightUtilBase {
     return thrownTypes;
   }
 
-  @Nullable
+  @NotNull
   static List<HighlightInfo> checkExceptionThrownInTry(@NotNull final PsiParameter parameter,
                                                        @NotNull final Set<? extends PsiClassType> thrownTypes) {
     final PsiElement declarationScope = parameter.getDeclarationScope();
-    if (!(declarationScope instanceof PsiCatchSection)) return null;
+    if (!(declarationScope instanceof PsiCatchSection)) return Collections.emptyList();
 
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
       HighlightInfo info = checkSimpleCatchParameter(parameter, thrownTypes, (PsiClassType)caughtType);
-      return info == null ? null : Collections.singletonList(info);
+      return info == null ? Collections.emptyList() : Collections.singletonList(info);
     }
     if (caughtType instanceof PsiDisjunctionType) {
       return checkMultiCatchParameter(parameter, thrownTypes);
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -1434,17 +1434,17 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(@NotNull PsiParameter parameter,
                                                                   @NotNull Collection<? extends PsiClassType> thrownInTryStatement,
                                                                   @NotNull PsiFile containingFile) {
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiCatchSection)) return null;
+    if (!(scope instanceof PsiCatchSection)) return Collections.emptyList();
 
     final PsiCatchSection catchSection = (PsiCatchSection)scope;
     final PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
     final int idx = ArrayUtilRt.find(allCatchSections, catchSection);
-    if (idx <= 0) return null;
+    if (idx <= 0) return Collections.emptyList();
 
     final Collection<PsiClassType> thrownTypes = new java.util.HashSet<>(thrownInTryStatement);
     final PsiManager manager = containingFile.getManager();
@@ -1557,8 +1557,9 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @NotNull
   static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(PsiSwitchExpression switchExpression) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) return null;
+    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) return Collections.emptyList();
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();
     if (switchExpressionType != null) {
@@ -1947,10 +1948,10 @@ public class HighlightUtil extends HighlightUtilBase {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
   }
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkArrayInitializer(@NotNull PsiExpression initializer, @Nullable PsiType type) {
-    if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
-    if (!(type instanceof PsiArrayType)) return null;
+    if (!(initializer instanceof PsiArrayInitializerExpression)) return Collections.emptyList();
+    if (!(type instanceof PsiArrayType)) return Collections.emptyList();
 
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
     final PsiArrayInitializerExpression arrayInitializer = (PsiArrayInitializerExpression)initializer;
@@ -1958,8 +1959,8 @@ public class HighlightUtil extends HighlightUtilBase {
     boolean arrayTypeFixChecked = false;
     VariableArrayTypeFix fix = null;
 
-    final Collection<HighlightInfo> result = new ArrayList<>();
     final PsiExpression[] initializers = arrayInitializer.getInitializers();
+    final Collection<HighlightInfo> result = new ArrayList<>(initializers.length);
     for (PsiExpression expression : initializers) {
       final HighlightInfo info = checkArrayInitializerCompatibleTypes(expression, componentType);
       if (info != null) {
@@ -2040,10 +2041,10 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkSwitchLabelValues(@NotNull PsiSwitchBlock switchBlock) {
     PsiCodeBlock body = switchBlock.getBody();
-    if (body == null) return null;
+    if (body == null) return Collections.emptyList();
 
     PsiExpression selectorExpression = switchBlock.getExpression();
     PsiType selectorType = selectorExpression == null ? PsiType.INT : selectorExpression.getType();
@@ -2141,7 +2142,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return results;
   }
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock switchBody = switchExpression.getBody();
     if (switchBody != null) {
@@ -2168,7 +2169,7 @@ public class HighlightUtil extends HighlightUtilBase {
         return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message).create());
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   /**
@@ -2560,12 +2561,12 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkCatchTypeIsDisjoint(@NotNull final PsiParameter parameter) {
-    if (!(parameter.getType() instanceof PsiDisjunctionType)) return null;
+    if (!(parameter.getType() instanceof PsiDisjunctionType)) return Collections.emptyList();
 
-    final Collection<HighlightInfo> result = new ArrayList<>();
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
+    final Collection<HighlightInfo> result = new ArrayList<>(typeElements.size());
     for (int i = 0, size = typeElements.size(); i < size; i++) {
       final PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(typeElements.get(i).getType());
       if (class1 == null) continue;
@@ -2592,15 +2593,15 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkExceptionAlreadyCaught(@NotNull final PsiParameter parameter) {
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiCatchSection)) return null;
+    if (!(scope instanceof PsiCatchSection)) return Collections.emptyList();
 
     final PsiCatchSection catchSection = (PsiCatchSection)scope;
     final PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
     final int startFrom = ArrayUtilRt.find(allCatchSections, catchSection) - 1;
-    if (startFrom < 0) return null;
+    if (startFrom < 0) return Collections.emptyList();
 
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isInMultiCatch = typeElements.size() > 1;
@@ -2635,7 +2636,7 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
 
-    return result.isEmpty() ? null : result;
+    return result;
   }
 
   private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull final List<? extends PsiType> upperCatchTypes) {

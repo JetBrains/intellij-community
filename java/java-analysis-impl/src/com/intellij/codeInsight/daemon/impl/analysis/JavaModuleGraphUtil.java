@@ -17,6 +17,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -93,12 +94,12 @@ public class JavaModuleGraphUtil {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
       Result.create(findCycles(project), cacheDependency()));
-    return ContainerUtil.find(cycles, set -> set.contains(module));
+    return ObjectUtils.notNull(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
@@ -112,6 +113,7 @@ public class JavaModuleGraphUtil {
     return getRequiresGraph(source).reads(source, destination);
   }
 
+  @NotNull
   public static Set<PsiJavaModule> getAllDependencies(PsiJavaModule source) {
     return getRequiresGraph(source).getAllDependencies(source);
   }
@@ -136,6 +138,7 @@ public class JavaModuleGraphUtil {
    * Library/JDK modules are excluded - in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
+  @NotNull
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -305,6 +308,7 @@ public class JavaModuleGraphUtil {
       return module.getName() + '/' + exporter.getName();
     }
 
+    @NotNull
     public Set<PsiJavaModule> getAllDependencies(PsiJavaModule module) {
       Set<PsiJavaModule> requires = new HashSet<>();
       collectDependencies(module, requires);
