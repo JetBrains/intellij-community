@@ -10,6 +10,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,7 +118,9 @@ public final class Splash extends Window {
     }
   }
 
-  private void paintProgress(@NotNull Graphics g) {
+  private void paintProgress(@Nullable Graphics g) {
+    if (g == null) return;
+
     boolean hasSlides = !myProgressSlideImages.isEmpty();
     if (hasSlides) {
       paintSlides(g);
@@ -128,7 +131,7 @@ public final class Splash extends Window {
       return;
     }
 
-    final int progressWidth = (int)(myWidth * myProgress);
+    int progressWidth = (int)(myWidth * myProgress);
     int currentWidth = progressWidth - myProgressLastPosition;
     if (currentWidth == 0) {
       return;
@@ -138,9 +141,9 @@ public final class Splash extends Window {
     int y = hasSlides ? myHeight - myProgressHeight : myProgressY;
     g.fillRect(myProgressLastPosition, y, currentWidth, myProgressHeight);
     if (myProgressTail != null) {
-      float onePixel = JBUI_INIT_SCALE;
-      myProgressTail.paintIcon(this, g, (int)(currentWidth - (myProgressTail.getIconWidth() / onePixel / 2f * onePixel)),
-                               (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / onePixel / 2f * onePixel)); //I'll buy you a beer if you understand this line without playing with it
+      int tx = (int)(currentWidth - (myProgressTail.getIconWidth() / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE));
+      int ty = (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE);
+      myProgressTail.paintIcon(this, g, tx, ty);
     }
     myProgressLastPosition = progressWidth;
   }
@@ -148,9 +151,9 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
-        if(progressSlide.isDrawn)
+        if (progressSlide.isDrawn) {
           continue;
-
+        }
         StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
         progressSlide.isDrawn = true;
       }
