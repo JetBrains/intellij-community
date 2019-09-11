@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -113,8 +114,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiManager.class, myPsiManager);
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
@@ -451,6 +452,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensionPoint(myProject.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
 
     registerExtensionPoint(myApp.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
+    myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject));
   }
 }
