@@ -119,8 +119,7 @@ public class PluginInstaller {
       commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
-      commands
-        .add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
+      commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
       commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
 

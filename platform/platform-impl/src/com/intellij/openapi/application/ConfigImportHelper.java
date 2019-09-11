@@ -412,7 +412,7 @@ public final class ConfigImportHelper {
         Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
         if (Files.isRegularFile(script)) {
           File newPluginsDir = new File(PathManager.getPluginsPath());
-          StartupActionScriptManager.executeActionScript(script, oldPluginsDir, newPluginsDir);
+          StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsDir.toFile(), newPluginsDir);
         }
       }
 
