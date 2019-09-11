@@ -15,33 +15,14 @@
  */
 package org.jetbrains.idea.devkit.codeInsight
 
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
 @CompileStatic
-class PluginXmlAutoPopupTest extends JavaCodeInsightFixtureTestCase {
-  protected CompletionAutoPopupTester myTester;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myTester = new CompletionAutoPopupTester(myFixture);
-  }
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    myTester.runWithAutoPopupEnabled(runnable);
-  }
+class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
   void "test autopopup for class references"() {
     myFixture.addClass("public class FooFooFooFooFoo { }")

@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
@@ -12,7 +13,8 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 /**
  * @author peter
  */
-class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
+@CompileStatic
+class GroovyAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_1
 
