@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -166,11 +167,17 @@ public class WSLUtil {
   }
 
   /**
-   * @return list of UNC roots for known WSL distributions
+   * @return list of existing UNC roots for known WSL distributions
    */
   @ApiStatus.Experimental
   @NotNull
-  public static Collection<File> getUNCRoots() {
-    return isSystemCompatible() ? ContainerUtil.map(getAvailableDistributions(), WSLDistribution::getUNCRoot) : Collections.emptyList();
+  public static List<File> getExistingUNCRoots() {
+    if (!isSystemCompatible()) {
+      return Collections.emptyList();
+    }
+    return getAvailableDistributions().stream()
+      .map(WSLDistribution::getUNCRoot)
+      .filter(File::exists)
+      .collect(Collectors.toList());
   }
 }
