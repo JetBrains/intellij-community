@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.impl;
 
 import com.intellij.conversion.*;
@@ -25,6 +24,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ConversionServiceImpl extends ConversionService {
+public final class ConversionServiceImpl extends ConversionService {
   private static final Logger LOG = Logger.getInstance(ConversionServiceImpl.class);
 
   @NotNull
@@ -87,7 +87,7 @@ public class ConversionServiceImpl extends ConversionService {
   @NotNull
   @Override
   public ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException {
-    if (!Files.exists(projectPath) || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ConverterProvider.EP_NAME.hasAnyExtensions() || !Files.exists(projectPath) || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
@@ -159,7 +159,7 @@ public class ConversionServiceImpl extends ConversionService {
     return false;
   }
 
-  private static List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) {
+  private static List<ConversionRunner> getSortedConverters(@NotNull ConversionContextImpl context) {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
     final Map<String, Long> oldMap = conversionResult.myProjectFilesTimestamps;
     Map<String, Long> newMap = getProjectFilesMap(context);
@@ -190,8 +190,9 @@ public class ConversionServiceImpl extends ConversionService {
     return createConversionRunners(context, performedConversionIds);
   }
 
-  private static Map<String, Long> getProjectFilesMap(ConversionContextImpl context) {
-    final Map<String, Long> map = new HashMap<>();
+  @NotNull
+  private static Map<String, Long> getProjectFilesMap(@NotNull ConversionContextImpl context) {
+    Map<String, Long> map = new THashMap<>();
     for (File file : context.getAllProjectFiles()) {
       if (file.exists()) {
         map.put(file.getAbsolutePath(), file.lastModified());
@@ -230,7 +231,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   private static void saveConversionResult(ConversionContextImpl context) {
-    final CachedConversionResult conversionResult = new CachedConversionResult();
+    CachedConversionResult conversionResult = new CachedConversionResult();
     for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensions()) {
       conversionResult.myAppliedConverters.add(provider.getId());
     }
@@ -246,7 +247,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   @NotNull
-  private static CachedConversionResult loadCachedConversionResult(File projectFile) {
+  private static CachedConversionResult loadCachedConversionResult(@NotNull File projectFile) {
     try {
       final File infoFile = getConversionInfoFile(projectFile);
       if (!infoFile.exists()) {
