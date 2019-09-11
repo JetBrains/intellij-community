@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -8,9 +8,11 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -182,20 +184,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     });
 
     final JComponent editorComponent = getEditorComponent();
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
-    editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doOKAction();
-      }
-    });
-    editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");
-    editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cancelEditing();
-      }
-    });
+    DumbAwareAction.create(__ -> doOKAction()).registerCustomShortcutSet(CommonShortcuts.ENTER, editorComponent);
+    DumbAwareAction.create(__ -> cancelEditing()).registerCustomShortcutSet(CommonShortcuts.ESCAPE, editorComponent);
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
     SwingUtilities.invokeLater(() -> {
       if (!isShown()) return;
