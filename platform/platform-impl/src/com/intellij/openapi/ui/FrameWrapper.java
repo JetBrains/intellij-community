@@ -4,11 +4,9 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -41,7 +39,8 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
@@ -251,16 +250,13 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
     JRootPane rootPane = frame.getRootPane();
-    ActionListener closeAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (!PopupUtil.handleEscKeyEvent()) {
-          close();
-        }
+    AnAction closeAction = DumbAwareAction.create(__ -> {
+      if (!PopupUtil.handleEscKeyEvent()) {
+        close();
       }
-    };
-    rootPane.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow());
+    });
+    ShortcutSet ss = new CompositeShortcutSet(CommonShortcuts.ESCAPE, CommonShortcuts.getCloseActiveWindow());
+    closeAction.registerCustomShortcutSet(ss, rootPane);
   }
 
   public Window getFrame() {
