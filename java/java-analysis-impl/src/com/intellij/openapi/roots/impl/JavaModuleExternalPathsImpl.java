@@ -8,6 +8,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -30,6 +31,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     this(null);
   }
 
+  @NonInjectable
   private JavaModuleExternalPathsImpl(JavaModuleExternalPathsImpl source) {
     mySource = source;
     if (source != null) {

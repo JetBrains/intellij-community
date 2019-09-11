@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.cache
 
 import com.google.common.cache.CacheBuilder
@@ -34,8 +33,8 @@ import java.util.regex.Pattern
  * * after entries have been expired: entries becomes expired if no read/write operations happened with the corresponding key during some amount of time (10 minutes).
  * * after project dispose
  */
-class IgnorePatternsMatchedFilesCache(private val project: Project,
-                                      private val projectFileIndex: ProjectFileIndex) : Disposable {
+class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
+  private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val cache =
     CacheBuilder.newBuilder()

@@ -13,6 +13,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
@@ -34,15 +35,17 @@ import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 
-internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
+internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                                                                          "Passwords",
                                                                                                                                                          "reference.ide.settings.password.safe") {
+  private val settings = service<PasswordSafeSettings>()
+
   override fun getSettings() = settings
 
   override fun createUi() = PasswordSafeConfigurableUi(settings)
 }
 
-internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
+internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
   private lateinit var myPanel: DialogPanel
   private lateinit var usePgpKey: JCheckBox
   private lateinit var pgpKeyCombo: ComboBox<PgpKey>
@@ -82,11 +85,11 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
   }
 
   override fun apply(settings: PasswordSafeSettings) {
-    val pgpKeyChanged = getNewPgpKey()?.keyId != mySettings.state.pgpKeyId
-    val oldProviderType = mySettings.providerType
+    val pgpKeyChanged = getNewPgpKey()?.keyId != this.settings.state.pgpKeyId
+    val oldProviderType = this.settings.providerType
 
     myPanel.apply()
-    val providerType = mySettings.providerType
+    val providerType = this.settings.providerType
 
     // close if any, it is more reliable just close current store and later it will be recreated lazily with a new settings
     (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
@@ -186,7 +189,7 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
     myPanel = panel {
       row { label("Save passwords:") }
 
-      buttonGroup(mySettings::providerType) {
+      buttonGroup(settings::providerType) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
             radioButton("In native Keychain", ProviderType.KEYCHAIN)
@@ -218,14 +221,14 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
             cell {
               usePgpKey = checkBox(
                 usePgpKeyText(),
-                { !pgpListModel.isEmpty && mySettings.state.pgpKeyId != null },
-                { if (!it) mySettings.state.pgpKeyId = null }
+                { !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
+                { if (!it) settings.state.pgpKeyId = null }
               ).component
 
               pgpKeyCombo = comboBox<PgpKey>(
                 pgpListModel,
                 { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
-                { mySettings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
+                { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
                 growPolicy = GrowPolicy.MEDIUM_TEXT,
                 renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }
               )
@@ -248,7 +251,7 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
   }
 
   private fun getSelectedPgpKey(): PgpKey? {
-    val currentKeyId = mySettings.state.pgpKeyId ?: return null
+    val currentKeyId = settings.state.pgpKeyId ?: return null
     return (pgpListModel.items.firstOrNull { it.keyId == currentKeyId })
            ?: pgpListModel.items.firstOrNull()
   }

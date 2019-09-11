@@ -82,9 +82,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  private SvnFileUrlMappingImpl(@NotNull Project project) {
     myProject = project;
-    myRootsHelper = new MyRootsHelper(project, vcsManager);
+    myRootsHelper = new MyRootsHelper(project, ProjectLevelVcsManager.getInstance(project));
     myChecker = new SvnCompatibilityChecker(project);
   }
 

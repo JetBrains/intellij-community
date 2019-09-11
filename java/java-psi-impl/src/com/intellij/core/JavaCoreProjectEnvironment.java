@@ -38,7 +38,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
 
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myProject));
     myProject.registerService(JavaPsiImplementationHelper.class, createJavaPsiImplementationHelper());
-    myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
+    myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myProject));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myProject));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
@@ -57,7 +57,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   }
 
   protected void registerJavaPsiFacade() {
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
 

@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class PsiManagerImpl extends PsiManagerEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
+  private static final Logger LOG = Logger.getInstance(PsiManagerImpl.class);
 
   private final Project myProject;
   private final NotNullLazyValue<? extends FileIndexFacade> myFileIndex;
@@ -55,7 +55,7 @@ public final class PsiManagerImpl extends PsiManagerEx {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
     Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  public PsiManagerImpl(Project project) {
+  public PsiManagerImpl(@NotNull Project project) {
     // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
     PsiBuilderFactory.getInstance();
 

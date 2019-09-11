@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.pico.AssignableToComponentAdapter
 
-private val LOG = logger<ServiceComponentAdapter>()
+internal val LOG = logger<ServiceComponentAdapter>()
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        pluginDescriptor: PluginDescriptor,

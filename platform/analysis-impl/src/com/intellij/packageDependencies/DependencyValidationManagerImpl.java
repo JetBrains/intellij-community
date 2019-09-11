@@ -60,11 +60,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  public DependencyValidationManagerImpl(@NotNull Project project, @NotNull NamedScopeManager namedScopeManager) {
+  public DependencyValidationManagerImpl(@NotNull Project project) {
     super(project);
 
-    myNamedScopeManager = namedScopeManager;
-    namedScopeManager.addScopeListener(() -> reloadScopes(), project);
+    myNamedScopeManager = NamedScopeManager.getInstance(project);
+    myNamedScopeManager.addScopeListener(() -> reloadScopes(), project);
   }
 
   @Override

@@ -70,9 +70,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private final Project myProject;
   private final PsiManager myManager;
 
-  public GroovyPsiElementFactoryImpl(Project project, PsiManager manager) {
+  public GroovyPsiElementFactoryImpl(Project project) {
     myProject = project;
-    myManager = manager;
+    myManager = PsiManager.getInstance(project);
   }
 
   @Override

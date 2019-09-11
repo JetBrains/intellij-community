@@ -42,10 +42,10 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   private final Object myLock;
   @NotNull private final Runnable myDirtReporter;
 
-  public VcsDirtyScopeVfsListener(@NotNull Project project,
-                                  @NotNull ProjectLevelVcsManager vcsManager,
-                                  @NotNull VcsDirtyScopeManager dirtyScopeManager) {
-    myVcsManager = vcsManager;
+  public VcsDirtyScopeVfsListener(@NotNull Project project) {
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
 
     myLock = new Object();
     myQueue = new ArrayList<>();
@@ -70,6 +70,7 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
           }
         }
       }
+
       if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
         dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
       }

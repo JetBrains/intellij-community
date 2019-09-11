@@ -109,8 +109,7 @@
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
-                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"
-                  />
+                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>

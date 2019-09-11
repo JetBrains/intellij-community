@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.pico.DefaultPicoContainer
 import gnu.trove.THashSet
 import org.picocontainer.ComponentAdapter
@@ -32,7 +33,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: A
     constructor.isAccessible = true
     @Suppress("UNCHECKED_CAST")
     return constructor.newInstance(*Array(parameterTypes.size) {
-      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, parameterTypes[it])
+      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterTypes[it])
     }) as T
   }
   catch (e: InvocationTargetException) {
@@ -43,6 +44,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: A
 private fun isNotApplicableClass(type: Class<*>): Boolean {
   return type.isPrimitive || type.isEnum || type.isArray ||
          Collection::class.java.isAssignableFrom(type) ||
+         Map::class.java.isAssignableFrom(type) ||
          type === File::class.java || type === Path::class.java
 }
 
@@ -59,8 +61,12 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
   var unsatisfiedDependencyType: Class<*>? = null
 
   loop@ for (constructor in sortedMatchingConstructors) {
+    if (constructor.isSynthetic) {
+      continue
+    }
+
     if (sortedMatchingConstructors.size > 1 &&
-        (constructor.isAnnotationPresent(java.lang.Deprecated::class.java) || constructor.isAnnotationPresent(Deprecated::class.java))) {
+        (constructor.isAnnotationPresent(java.lang.Deprecated::class.java) || constructor.isAnnotationPresent(NonInjectable::class.java))) {
       continue
     }
 
@@ -73,7 +79,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       }
 
       // check whether this constructor is satisfiable
-      if (parameterResolver.isResolvable(componentManager, requestorKey, expectedType)) {
+      if (parameterResolver.isResolvable(componentManager, requestorKey, aClass, constructor, expectedType)) {
         continue
       }
 
@@ -147,15 +153,24 @@ private fun getSortedMatchingConstructors(componentImplementation: Class<*>): Ar
 }
 
 internal abstract class ConstructorParameterResolver {
-  open fun isResolvable(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Boolean {
-    return resolveAdapter(componentManager, requestorKey, expectedType) != null
+  open fun isResolvable(componentManager: PlatformComponentManagerImpl,
+                        requestorKey: Any,
+                        requestorClass: Class<*>,
+                        requestorConstructor: Constructor<*>,
+                        expectedType: Class<*>): Boolean {
+    return expectedType === ComponentManager::class.java || resolveAdapter(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType) != null
   }
 
   open fun resolveInstance(componentManager: PlatformComponentManagerImpl,
                            requestorKey: Any,
                            requestorClass: Class<*>,
+                           requestorConstructor: Constructor<*>,
                            expectedType: Class<*>): Any? {
-    val adapter = resolveAdapter(componentManager, requestorKey, expectedType)
+    if (expectedType === ComponentManager::class.java) {
+      return componentManager
+    }
+
+    val adapter = resolveAdapter(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType)
                   ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType)
     return when (adapter) {
       is BaseComponentAdapter -> {
@@ -177,39 +192,53 @@ internal abstract class ConstructorParameterResolver {
     throw RuntimeException("${requestorClass.name} has unsatisfied dependency: ${expectedType.name}")
   }
 
-  private fun resolveAdapter(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): ComponentAdapter? {
-    val result = getTargetAdapter(componentManager.picoContainer, expectedType, requestorKey) ?: return null
+  private fun resolveAdapter(componentManager: PlatformComponentManagerImpl,
+                             requestorKey: Any,
+                             requestorClass: Class<*>,
+                             requestorConstructor: Constructor<*>,
+                             expectedType: Class<*>): ComponentAdapter? {
+    val result = getTargetAdapter(componentManager.picoContainer, expectedType, requestorKey, requestorClass, requestorConstructor) ?: return null
     if (expectedType.isAssignableFrom(result.componentImplementation)) {
       return result
     }
     return null
   }
 
-  private fun getTargetAdapter(container: DefaultPicoContainer, expectedType: Class<*>, excludeKey: Any): ComponentAdapter? {
+  private fun getTargetAdapter(container: DefaultPicoContainer,
+                               expectedType: Class<*>,
+                               requestorKey: Any,
+                               requestorClass: Class<*>,
+                               requestorConstructor: Constructor<*>): ComponentAdapter? {
     val byKey = container.getComponentAdapter(expectedType)
-    if (byKey != null && excludeKey != byKey.componentKey) {
+    if (byKey != null && requestorKey != byKey.componentKey) {
       return byKey
     }
 
     // see UndoManagerImpl / RunManager / JavaModuleExternalPathsImpl for example
-    val expectedClassName = expectedType.name
+    val className = expectedType.name
 
     if (container.parent == null) {
-      if (expectedClassName == "com.intellij.openapi.project.Project") {
+      if (className == "com.intellij.openapi.project.Project" || badAppLevelClasses.contains(className)) {
         return null
       }
     }
     else {
-      if (expectedClassName == "com.intellij.configurationStore.StreamProvider" ||
-          expectedClassName == "com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl" ||
-          expectedClassName == "com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl" ||
-          expectedClassName == "com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl") {
+      if (className == "com.intellij.configurationStore.StreamProvider" ||
+          className == "com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl" ||
+          className == "com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl" ||
+          className == "com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl") {
         return null
       }
     }
 
+    if (isNotApplicableClass(expectedType)) {
+      return null;
+    }
+
+    LOG.error("getComponentAdapterOfType is used to get ${expectedType.name} (requestorClass=${requestorClass.name}, requestorConstructor=${requestorConstructor})." + "\n\nProbably constructor should be marked as NonInjectable.")
+
     val found = container.getComponentAdaptersOfType(expectedType)
-    found.removeIf { it.componentKey == excludeKey }
+    found.removeIf { it.componentKey == requestorKey }
     return when {
       found.size == 0 -> container.parent?.getComponentAdapterOfType(expectedType)
       found.size == 1 -> found[0]
@@ -217,3 +246,19 @@ internal abstract class ConstructorParameterResolver {
     }
   }
 }
+
+@Suppress("SpellCheckingInspection")
+private val badAppLevelClasses = setOf(
+  "de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor",
+  "de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor",
+  "de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor",
+  "de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor",
+  "de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor",
+  "de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor",
+  "com.intellij.serviceContainer.BarImpl"
+)

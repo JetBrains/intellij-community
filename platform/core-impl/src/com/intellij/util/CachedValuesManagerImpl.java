@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
@@ -7,17 +7,25 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.util.*;
+import com.intellij.serviceContainer.NonInjectable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class CachedValuesManagerImpl extends CachedValuesManager {
-
+public final class CachedValuesManagerImpl extends CachedValuesManager {
   private final Project myProject;
   private final CachedValuesFactory myFactory;
 
+  public CachedValuesManagerImpl(Project project) {
+    myProject = project;
+
+    CachedValuesFactory factory = project.getService(CachedValuesFactory.class);
+    myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
+  }
+
+  @NonInjectable
   public CachedValuesManagerImpl(Project project, CachedValuesFactory factory) {
     myProject = project;
     myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;

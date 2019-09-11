@@ -245,7 +245,6 @@
     <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
 
-
     <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                     serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl"/>
 

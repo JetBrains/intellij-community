@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -32,17 +33,15 @@ public class HgExecutableManager {
   @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
   @NonNls private static final String DEFAULT_UNIX_HG = "hg";
 
-  @NotNull private final HgGlobalSettings myGlobalSettings;
   @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
 
-  public HgExecutableManager(@NotNull HgGlobalSettings globalSettings) {
-    myGlobalSettings = globalSettings;
+  public HgExecutableManager() {
     myDetectedExecutable = AtomicNotNullLazyValue.createValue(HgExecutableManager::identifyDefaultHgExecutable);
   }
 
   @NotNull
   public String getHgExecutable() {
-    String path = myGlobalSettings.getHgExecutable();
+    String path = ApplicationManager.getApplication().getService(HgGlobalSettings.class).getHgExecutable();
     return path == null ? getDefaultExecutable() : path;
   }
 

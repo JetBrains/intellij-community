@@ -6,12 +6,14 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -238,17 +240,32 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   private Project myProject;
 
   public ConfigurableEP() {
-    this(ApplicationManager.getApplication().getPicoContainer(), null);
+    this(ApplicationManager.getApplication());
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public ConfigurableEP(@NotNull Project project) {
-    this(project.getPicoContainer(), project);
+  protected ConfigurableEP(@NotNull ComponentManager componentManager) {
+    myProject = componentManager instanceof Project ? (Project)componentManager : null;
+    myPicoContainer = componentManager.getPicoContainer();
   }
 
+  /**
+   * @deprecated Use {@link #ConfigurableEP(ComponentManager)}
+   */
+  @Deprecated
+  @NonInjectable
   protected ConfigurableEP(@NotNull PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
+  }
+
+  /**
+   * @deprecated Use {@link #ConfigurableEP(ComponentManager)}
+   */
+  @Deprecated
+  @NonInjectable
+  public ConfigurableEP(@NotNull Project project) {
+    myProject = project;
+    myPicoContainer = project.getPicoContainer();
   }
 
   @NotNull

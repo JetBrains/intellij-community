@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharSequenceSubSequence;
@@ -28,10 +29,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiFileFactoryImpl extends PsiFileFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiFileFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(PsiFileFactoryImpl.class);
   private final PsiManager myManager;
 
-  public PsiFileFactoryImpl(final PsiManager manager) {
+  public PsiFileFactoryImpl(@NotNull Project project) {
+    myManager = PsiManager.getInstance(project);
+  }
+
+  @NonInjectable
+  public PsiFileFactoryImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }
 

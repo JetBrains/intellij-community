@@ -14,7 +14,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -42,24 +41,30 @@ import java.util.concurrent.ConcurrentMap
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
-    private val LOG = logger<PlatformComponentManagerImpl>()
-
     private val constructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = false)
     private val heavyConstructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = true)
 
     private class PlatformConstructorParameterResolver(private val isExtensionSupported: Boolean) : ConstructorParameterResolver() {
-      override fun isResolvable(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Boolean {
-        if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, expectedType)) {
+      override fun isResolvable(componentManager: PlatformComponentManagerImpl,
+                                requestorKey: Any,
+                                requestorClass: Class<*>,
+                                requestorConstructor: Constructor<*>,
+                                expectedType: Class<*>): Boolean {
+        if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType)) {
           return true
         }
         return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
       }
 
-      override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, requestorClass: Class<*>, expectedType: Class<*>): Any? {
+      override fun resolveInstance(componentManager: PlatformComponentManagerImpl,
+                                   requestorKey: Any,
+                                   requestorClass: Class<*>,
+                                   requestorConstructor: Constructor<*>,
+                                   expectedType: Class<*>): Any? {
         if (isLightService(expectedType)) {
           return componentManager.getLightService(componentManager.lightServices!!, expectedType, true)
         }
-        return super.resolveInstance(componentManager, requestorKey, requestorClass, expectedType)
+        return super.resolveInstance(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType)
       }
 
       override fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>): Any? {
