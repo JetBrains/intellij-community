@@ -129,17 +129,21 @@ class IntellijModulesPublication {
   }
 
   private File mavenSettings() {
+    def server = ''
+    if (options.repositoryPassword != null && options.repositoryUser != null) {
+      server = '''<server>
+        <id>server-id</id>
+        <username>${options.repositoryUser}</username>
+        <password>${options.repositoryPassword}</password>
+      </server>'''
+    }
     File.createTempFile('settings', '.xml').with {
       it << """<settings xmlns="https://maven.apache.org/SETTINGS/1.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation="https://maven.apache.org/SETTINGS/1.0.0
                             https://maven.apache.org/xsd/settings-1.0.0.xsd">
                 <servers>
-                  <server>
-                    <id>server-id</id>
-                    <username>${options.repositoryUser}</username>
-                    <password>${options.repositoryPassword}</password>
-                  </server>
+                   $server
                 </servers>
                </settings>
       """.stripIndent()
