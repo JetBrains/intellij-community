@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -81,21 +82,23 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
       OSProcessHandler handler = new OSProcessHandler(commandLine);
       handler.startNotify();
       writeFileContentToStdin(handler.getProcess(), fileContent, commandLine.getCharset());
-      ShellcheckResponse[] responses = new ShellcheckResponse[1];
+      Ref<ShellcheckResponse> response = Ref.create();
       handler.addProcessListener(new CapturingProcessAdapter(){
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           // The process ends up with code 1
           Type type = TypeToken.getParameterized(List.class, Result.class).getType();
           Collection<Result> results = new Gson().fromJson(getOutput().getStdout(), type);
-          responses[0] = results != null ? new ShellcheckResponse(results, timestamp) : null;
+          if (results != null) {
+            response.set(new ShellcheckResponse(results, timestamp));
+          }
         }
       });
       if (!handler.waitFor(TIMEOUT_IN_MILLISECONDS)) {
         LOG.debug("Execution timeout, process will be forcibly terminated");
         handler.destroyProcess();
       }
-      return responses[0];
+      return response.get();
     }
     catch (ExecutionException e) {
       LOG.error(e);
