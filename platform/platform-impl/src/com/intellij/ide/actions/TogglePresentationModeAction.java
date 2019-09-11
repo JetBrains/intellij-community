@@ -71,7 +71,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     tweakUIDefaults(settings, inPresentation);
 
     Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
-    callback.onSuccess(o -> {
+    callback.onProcessed(o -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       restoreToolWindows(project, layoutStored, inPresentation);

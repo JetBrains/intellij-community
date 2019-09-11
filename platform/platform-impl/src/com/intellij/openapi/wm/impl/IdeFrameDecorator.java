@@ -32,8 +32,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   @Override
   public abstract boolean isInFullScreen();
 
+  /**
+   * Returns applied state or rejected promise if cannot be appled.
+   */
   @NotNull
-  public abstract Promise<?> toggleFullScreen(boolean state);
+  public abstract Promise<Boolean> toggleFullScreen(boolean state);
 
   @Nullable
   public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
@@ -73,7 +76,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     @NotNull
     @Override
-    public Promise<?> toggleFullScreen(boolean state) {
+    public Promise<Boolean> toggleFullScreen(boolean state) {
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
       if (state && extendedState == Frame.NORMAL) {
@@ -108,7 +111,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
         notifyFrameComponents(state);
       }
-      return Promises.resolvedPromise();
+      return Promises.resolvedPromise(state);
     }
   }
 
@@ -156,7 +159,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     @NotNull
     @Override
-    public Promise<?> toggleFullScreen(boolean state) {
+    public Promise<Boolean> toggleFullScreen(boolean state) {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
@@ -166,7 +169,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
           frameMenuBar.onToggleFullScreen(state);
         }
       }
-      return Promises.resolvedPromise();
+      return Promises.resolvedPromise(state);
     }
   }
 

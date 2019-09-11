@@ -306,22 +306,25 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @NotNull
   @Override
-  public Promise<?> toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) {
+  public Promise<Boolean> toggleFullScreen(boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null) {
       return Promises.rejectedPromise();
     }
+    if (myInFullScreen == state) {
+      return Promises.resolvedPromise(true);
+    }
 
-    AsyncPromise<?> promise = new AsyncPromise<>();
+    AsyncPromise<Boolean> promise = new AsyncPromise<>();
     myDispatcher.addListener(new FSAdapter() {
       @Override
       public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        promise.setResult(null);
+        promise.setResult(false);
         myDispatcher.removeListener(this);
       }
 
       @Override
       public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-        promise.setResult(null);
+        promise.setResult(true);
         myDispatcher.removeListener(this);
       }
     });
