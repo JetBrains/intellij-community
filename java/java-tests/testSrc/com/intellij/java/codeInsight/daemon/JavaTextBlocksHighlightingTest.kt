@@ -32,6 +32,8 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPasteNewline() = doTestPaste("\n\n")
 
+  fun testPasteMultilineText() = doTestPaste("<html>\n  <body>\n  </body>\n</html>")
+
   fun testBadEscape() = doTestPaste("\\");
 
   private fun doTestPaste(textToPaste: String) {

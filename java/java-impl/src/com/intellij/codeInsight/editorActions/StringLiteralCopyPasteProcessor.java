@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.google.common.base.Strings;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -124,7 +125,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     else if (isTextBlock(token)) {
       final String before = document.getText(new TextRange(selectionStart - 1, selectionStart));
       final String after = document.getText(new TextRange(selectionEnd, selectionEnd + 1));
-      return escapeTextBlock(text, "\"".equals(before), "\"".equals(after));
+      int caretOffset = editor.getCaretModel().getOffset();
+      int offset = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
+      return escapeTextBlock(text, offset, "\"".equals(before), "\"".equals(after));
     }
     return text;
   }
@@ -242,16 +245,17 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  protected String escapeTextBlock(@NotNull String text, boolean escapeStartQuote, boolean escapeEndQuote) {
+  protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
+    String indent = Strings.repeat(" ", offset);
     for (int i = 0; i < lines.length; i++) {
       String content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
       content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
                                                          i == lines.length - 1 && escapeEndQuote, true);
       buffer.append(content);
       if (i < lines.length - 1) {
-        buffer.append('\n');
+        buffer.append('\n').append(indent);
       }
     }
     return buffer.toString();
