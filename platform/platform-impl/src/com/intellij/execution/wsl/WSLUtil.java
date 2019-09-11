@@ -172,7 +172,7 @@ public class WSLUtil {
   @ApiStatus.Experimental
   @NotNull
   public static List<File> getExistingUNCRoots() {
-    if (!isSystemCompatible()) {
+    if (!isSystemCompatible() || !Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
       return Collections.emptyList();
     }
     return getAvailableDistributions().stream()

@@ -61,6 +61,15 @@
         Required for Windows 10 version prior 1803
       </description>
     </experimentalFeature>
+    <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
+      <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using P9 protocol (available since windows update
+        1903).
+      </description>
+    </experimentalFeature>
+    <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
+      <description>Show P9 roots (\\wsl$\...) of available WSL distributions in the file chooser (available since windows update 1903).
+      </description>
+    </experimentalFeature>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
