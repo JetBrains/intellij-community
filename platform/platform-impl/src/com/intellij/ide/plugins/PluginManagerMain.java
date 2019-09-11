@@ -60,13 +60,7 @@ public abstract class PluginManagerMain {
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
-    if (vendorString == null) return false;
-    for (String vendor : StringUtil.split(vendorString, ",")) {
-      if (vendor.trim().equals(JETBRAINS_VENDOR)) {
-        return true;
-      }
-    }
-    return false;
+    return JETBRAINS_VENDOR.equals(vendorString);
   }
 
   private static String getTextPrefix() {

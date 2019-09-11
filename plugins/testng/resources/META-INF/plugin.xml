@@ -3,8 +3,10 @@
     <name>TestNG</name>
     <description><![CDATA[
     Supports <a href="https://testng.org/doc/">TestNG</a>, a Java unit testing framework
+    <p></p>
+    <p>Originally developed by Theory In Practice.</p>
     ]]></description>
-    <vendor>Theory In Practice, JetBrains</vendor>
+    <vendor>JetBrains</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
