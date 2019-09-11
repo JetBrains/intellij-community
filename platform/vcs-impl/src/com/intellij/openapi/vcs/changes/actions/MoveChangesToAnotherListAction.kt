@@ -82,26 +82,18 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       return false
     }
 
-    private fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? =
-      lists.find { it.isDefault } ?: lists.find { it.changes.isEmpty() } ?: lists.firstOrNull()
+    private fun guessPreferredList(lists: Collection<LocalChangeList>): ChangeList? {
+      val comparator = compareBy<LocalChangeList> { if (it.isDefault) -1 else 0 }
+        .thenBy { if (it.changes.isEmpty()) -1 else 0 }
+        .then(ChangesUtil.CHANGELIST_COMPARATOR)
+      return lists.minWith(comparator)
+    }
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val allChangelists = changeListManager.changeListsCopy
+      val affectedLists = changes.asSequence().mapNotNull { changeListManager.getChangeList(it) }.toSet()
 
-      val affectedLists = changes.asSequence().mapNotNull { changeListManager.getChangeList(it) }
-      val currentList = affectedLists.distinct().singleOrNull()
-      val nonAffectedLists = allChangelists - listOfNotNull(currentList)
-
-      val preferedLists = nonAffectedLists
-
-      val suggestedLists = nonAffectedLists.ifEmpty { listOf(changeListManager.defaultChangeList) }
-      val defaultSelection = guessPreferredList(preferedLists)
-
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection,
-                                      ActionsBundle.message("action.ChangesView.Move.text"), null)
-      chooser.show()
-      return chooser.selectedList
+      return askTargetChangelist(project, affectedLists, emptySet(), ActionsBundle.message("action.ChangesView.Move.text"))
     }
 
     @JvmStatic
@@ -112,18 +104,30 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       val allChangelists = changeListManager.changeListsCopy
 
       val selectedListIds = selectedRanges.map { range -> range.changelistId }.toSet()
-      val affectedLists: List<LocalChangeList> = allChangelists.filter { list -> selectedListIds.contains(list.id) }
-      val nonAffectedLists = allChangelists - affectedLists
+      val affectedLists = allChangelists.filter { list -> selectedListIds.contains(list.id) }.toSet()
 
       val remainingTrackerListIds: Set<String> = tracker.getAffectedChangeListsIds().toSet() - selectedListIds
-      val remainingTrackerLists = allChangelists.filter { list -> remainingTrackerListIds.contains(list.id) }
-      val preferedLists = remainingTrackerLists.ifEmpty { nonAffectedLists }
+      val remainingTrackerLists = allChangelists.filter { list -> remainingTrackerListIds.contains(list.id) }.toSet()
+
+      return askTargetChangelist(project, affectedLists, remainingTrackerLists,
+                                 ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"))
+    }
+
+    private fun askTargetChangelist(project: Project,
+                                    affectedLists: Set<LocalChangeList>,
+                                    relatedLists: Set<LocalChangeList>,
+                                    title: String): LocalChangeList? {
+      val changeListManager = ChangeListManager.getInstance(project)
+      val allChangelists = changeListManager.changeListsCopy
+
+      val nonAffectedLists = if (affectedLists.size == 1) allChangelists - affectedLists else allChangelists
+
+      val preferedLists = relatedLists.ifEmpty { nonAffectedLists }
 
       val suggestedLists = nonAffectedLists.ifEmpty { listOf(changeListManager.defaultChangeList) }
       val defaultSelection = guessPreferredList(preferedLists)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection,
-                                      ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"), null)
+      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, title, null)
       chooser.show()
       return chooser.selectedList
     }
