@@ -2,7 +2,9 @@
 package com.jetbrains.python.console;
 
 import com.intellij.mock.MockApplication;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -21,6 +23,9 @@ import java.nio.charset.StandardCharsets;
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
+  private Disposable myServiceDisposable = null;
+
+
   public PythonConsoleParsingTest() {
     super("psi", "py", new PythonParserDefinition());
   }
@@ -29,7 +34,17 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl());
+
+    if (PythonDialogService.getInstance() == null) {
+      myServiceDisposable = new Disposable() {
+        @Override
+        public void dispose() {
+        }
+      };
+      ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl(), myServiceDisposable);
+    } else {
+      myServiceDisposable = null;
+    }
 
     PythonDialectsTokenSetProvider.reset();
   }
@@ -105,6 +120,21 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     originalFile.putUserData(LanguageLevel.KEY, myLanguageLevel);
     PyConsoleUtil.markIPython(originalFile);
     return createFile(virtualFile);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      if (myServiceDisposable != null) {
+        Disposer.dispose(myServiceDisposable);
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }
 
