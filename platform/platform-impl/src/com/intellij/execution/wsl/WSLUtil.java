@@ -127,6 +127,7 @@ public class WSLUtil {
    * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
    * Must be invoked just before execution, see RUBY-20358
    */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   @NotNull
   public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
