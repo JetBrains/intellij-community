@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
-import org.jetbrains.annotations.ApiStatus;
 
 @SuppressWarnings("SpellCheckingInspection")
 public interface JavaTokenType extends TokenType {
@@ -19,10 +18,6 @@ public interface JavaTokenType extends TokenType {
   IElementType CHARACTER_LITERAL = new IJavaElementType("CHARACTER_LITERAL");
   IElementType STRING_LITERAL = new IJavaElementType("STRING_LITERAL");
   IElementType TEXT_BLOCK_LITERAL = new IJavaElementType("TEXT_BLOCK_LITERAL");
-  /** @deprecated to be removed in IDEA 2019.3 */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  IElementType RAW_STRING_LITERAL = new IJavaElementType("RAW_STRING_LITERAL");
 
   IElementType TRUE_KEYWORD = new IKeywordElementType("TRUE_KEYWORD");
   IElementType FALSE_KEYWORD = new IKeywordElementType("FALSE_KEYWORD");
