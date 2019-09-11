@@ -46,8 +46,6 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public final class IdeRootPane extends JRootPane implements UISettingsListener, Disposable {
-  private final ProjectFrameHelper myFrameHelper;
-
   /**
    * Toolbar and status bar.
    */
@@ -73,9 +71,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull JFrame frame, @NotNull ProjectFrameHelper frameHelper) {
-    myFrameHelper = frameHelper;
-
+  IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper) {
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
@@ -127,16 +123,11 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     updateMainMenuVisibility();
   }
 
-  @NotNull
-  public ProjectFrameHelper getFrameHelper() {
-    return myFrameHelper;
-  }
-
   public void init(@NotNull ProjectFrameHelper frame) {
     createStatusBar(frame);
   }
 
-  private void updateScreenState(@NotNull ProjectFrameHelper helper) {
+  private void updateScreenState(@NotNull IdeFrame helper) {
     myFullScreen = helper.isInFullScreen();
 
     if (isDecoratedMenu()) {
@@ -161,7 +152,6 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
     super.setGlassPane(glass);
   }
-
 
   /**
    * Invoked when enclosed frame is being shown.
@@ -353,7 +343,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
@@ -362,9 +352,18 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
       component.uiSettingsChanged(uiSettings);
     }
-    IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, this);
-    BalloonLayout layout = frame != null ? frame.getBalloonLayout() : null;
-    if (layout instanceof BalloonLayoutImpl) ((BalloonLayoutImpl)layout).queueRelayout();
+
+    IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
+    if (frame == null) {
+      return;
+    }
+
+    frame.setBackground(UIUtil.getPanelBackground());
+
+    BalloonLayout layout = frame.getBalloonLayout();
+    if (layout instanceof BalloonLayoutImpl) {
+      ((BalloonLayoutImpl)layout).queueRelayout();
+    }
   }
 
   @Override

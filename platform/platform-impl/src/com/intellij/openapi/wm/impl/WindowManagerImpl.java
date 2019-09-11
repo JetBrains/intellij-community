@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.ProjectFrameAllocatorKt;
@@ -107,12 +108,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
 
-      if (!(rootPane instanceof IdeRootPane)) {
-        return;
-      }
-
-      ProjectFrameHelper frameHelper = ((IdeRootPane)rootPane).getFrameHelper();
-      Project project = frameHelper.getProject();
+      ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(frame);
+      Project project = frameHelper == null ? null : frameHelper.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
         // Cannot mark as dirty and compute later, because to convert user space info to device space,
@@ -158,6 +155,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     ProjectFrameHelper[] frames = getAllProjectFrames();
     return frames.length > 0 ? frames[0].getFrame() : (JFrame)WelcomeFrame.getInstance();
   }
+
+  @Override
+  @Nullable
+  public IdeFrameEx findFirstVisibleFrameHelper() {
+    ProjectFrameHelper[] frames = getAllProjectFrames();
+    return frames.length > 0 ? frames[0] : null;
+  }
+
 
   @Override
   public void addListener(final WindowManagerListener listener) {
@@ -413,7 +418,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         }
       }
     }
-    return candidate == null ? null : ((IdeRootPane)candidate.getRootPane()).getFrameHelper();
+    return candidate == null ? null : ProjectFrameHelper.getFrameHelper(candidate);
   }
 
   @Override
@@ -481,7 +486,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Nullable
   private static IdeFrame getIdeFrame(@NotNull Component component) {
     if (component instanceof IdeFrameImpl) {
-      return ((IdeRootPane)((IdeFrameImpl)component).getContentPane()).getFrameHelper();
+      return ProjectFrameHelper.getFrameHelper((IdeFrameImpl)component);
     }
     else if (component instanceof IdeFrame) {
       return (IdeFrame)component;

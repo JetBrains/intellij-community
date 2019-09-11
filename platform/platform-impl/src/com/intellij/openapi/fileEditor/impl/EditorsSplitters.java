@@ -27,11 +27,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -412,7 +417,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     Project project = myManager.getProject();
-    IdeFrame frame = getFrame(project);
+    IdeFrameEx frame = getFrame(project);
     if (frame != null) {
       String fileTitle = null;
       File ioFile = null;
@@ -423,18 +428,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 
-      IdeFrameEx frameEx;
-      if (frame instanceof IdeFrameEx) {
-        frameEx = (IdeFrameEx)frame;
-      }
-      else {
-        frameEx = ((IdeRootPane)((IdeFrameImpl)frame).getRootPane()).getFrameHelper();
-      }
-      frameEx.setFileTitle(fileTitle, ioFile);
+      frame.setFileTitle(fileTitle, ioFile);
     }
   }
 
-  protected IdeFrame getFrame(@NotNull Project project) {
+  protected IdeFrameEx getFrame(@NotNull Project project) {
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;

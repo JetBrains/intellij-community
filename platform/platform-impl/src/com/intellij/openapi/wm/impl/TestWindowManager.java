@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -343,5 +344,11 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
     frameHelper.getFrame().dispose();
+  }
+
+  @Nullable
+  @Override
+  public IdeFrameEx findFirstVisibleFrameHelper() {
+    return null;
   }
 }

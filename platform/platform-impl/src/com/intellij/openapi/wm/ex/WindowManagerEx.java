@@ -120,6 +120,13 @@ public abstract class WindowManagerEx extends WindowManager {
   @ApiStatus.Internal
   public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
 
+  /**
+   * GUI test only.
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public abstract IdeFrameEx findFirstVisibleFrameHelper();
+
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
 }

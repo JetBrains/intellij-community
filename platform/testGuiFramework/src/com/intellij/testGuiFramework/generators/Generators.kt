@@ -14,8 +14,9 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
@@ -473,16 +474,15 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
-    if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) {
-      return null
-    }
-
-    val project = (WindowManagerImpl.getInstance().findVisibleFrame().rootPane as IdeRootPane).frameHelper.project ?: return null
+    val project = WindowManagerEx.getInstanceEx().findFirstVisibleFrameHelper()?.project ?: return null
     val toolWindowManager = ToolWindowManagerImpl.getInstance(project)
     val visibleToolWindows = toolWindowManager.toolWindowIds
+      .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
       .filter { toolwindow -> toolwindow.isVisible }
-    return visibleToolWindows.filterIsInstance<ToolWindowImpl>().find { it.component.containsLocationOnScreen(pointOnScreen) }
+      .filterIsInstance<ToolWindowImpl>()
+    return visibleToolWindows
+      .find { it.component.containsLocationOnScreen(pointOnScreen) }
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
@@ -530,17 +530,15 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
-    if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) {
-      return null
-    }
-
-    val ideFrame = WindowManager.getInstance().findVisibleFrame() as IdeFrameImpl
-    val project = (ideFrame.rootPane as IdeRootPane).frameHelper.project ?: return null
+    val project = WindowManagerEx.getInstanceEx().findFirstVisibleFrameHelper()?.project ?: return null
     val toolWindowManager = ToolWindowManagerImpl.getInstance(project)
     val visibleToolWindows = toolWindowManager.toolWindowIds
+      .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
       .filter { toolwindow -> toolwindow.isVisible }
-    return visibleToolWindows.filterIsInstance<ToolWindowImpl>().find { it.component.containsLocationOnScreen(pointOnScreen) }
+      .filterIsInstance<ToolWindowImpl>()
+    return visibleToolWindows
+      .find { it.component.containsLocationOnScreen(pointOnScreen) }
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->

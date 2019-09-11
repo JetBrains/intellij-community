@@ -37,6 +37,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     return myFrameHelper == null ? null : myFrameHelper.getData(dataId);
   }
 
+  @Nullable
+  FrameHelper getFrameHelper() {
+    return myFrameHelper;
+  }
+
   interface FrameHelper extends DataProvider {
     String getAccessibleName();
 

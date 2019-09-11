@@ -26,8 +26,8 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
@@ -92,7 +92,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
-        Project project = (((IdeRootPane)frame.getRootPane())).getFrameHelper().getProject();
+        Project project = Objects.requireNonNull(ProjectFrameHelper.getFrameHelper(frame)).getProject();
         if (projectPath == null && project != null) return true;
         if (project != null &&
             PathManager.getAbsolutePath(projectPath.toString()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
@@ -111,7 +111,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       }, timeout);
 
       IdeFrameImpl ideFrame = robot.finder().find(matcher);
-      return new IdeFrameFixture(robot, ideFrame, new File(((IdeRootPane)ideFrame.getRootPane()).getFrameHelper().getProject().getBasePath()));
+      return new IdeFrameFixture(robot, ideFrame, new File(ProjectFrameHelper.getFrameHelper(ideFrame).getProject().getBasePath()));
     }
     catch (WaitTimedOutError timedOutError) {
       throw new ComponentLookupException("Unable to find IdeFrame in " + TimeoutsKt.toPrintable(timeout));
@@ -718,7 +718,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public Project getProject() {
-    Project project = ((IdeRootPane)target().getRootPane()).getFrameHelper().getProject();
+    Project project = Objects.requireNonNull(ProjectFrameHelper.getFrameHelper(target())).getProject();
     assertNotNull(project);
     return project;
   }

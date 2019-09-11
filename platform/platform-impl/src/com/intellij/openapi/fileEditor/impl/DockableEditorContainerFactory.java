@@ -6,6 +6,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
@@ -43,8 +46,9 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
       }
 
       @Override
-      protected IdeFrame getFrame(@NotNull Project project) {
-        return DockManager.getInstance(project).getIdeFrame(containerRef.get());
+      protected IdeFrameEx getFrame(@NotNull Project project) {
+        IdeFrame frame = DockManager.getInstance(project).getIdeFrame(containerRef.get());
+        return frame instanceof IdeFrameEx ? (IdeFrameEx)frame : ProjectFrameHelper.getFrameHelper(((IdeFrameImpl)frame));
       }
 
       @Override

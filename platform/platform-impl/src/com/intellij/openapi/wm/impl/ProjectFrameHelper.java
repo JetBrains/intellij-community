@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -103,7 +102,8 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
         return null;
       }
     }
-    return ((IdeRootPane)projectFrame.getRootPane()).getFrameHelper();
+    IdeFrameImpl.FrameHelper frameLightHelper = projectFrame.getFrameHelper();
+    return frameLightHelper == null ? null : (ProjectFrameHelper)frameLightHelper.getHelper();
   }
 
   private void preInit() {
@@ -185,10 +185,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myRootPane.init(this);
 
     MnemonicHelper.init(myFrame);
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> {
-      myFrame.setBackground(UIUtil.getPanelBackground());
-    });
 
     myFrame.setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
 
