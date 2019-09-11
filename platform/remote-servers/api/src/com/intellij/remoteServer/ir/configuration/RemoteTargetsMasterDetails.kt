@@ -83,7 +83,7 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
   private class TargetDetailsConfigurable(project: Project, private val config: RemoteTargetConfiguration)
     : NamedConfigurable<RemoteTargetConfiguration>(true, null) {
 
-    private val targetConfigurable: Configurable = config.getTargetType().createRunnerConfigurable(project, config)
+    private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config)
 
     override fun getBannerSlogan(): String = config.displayName
 

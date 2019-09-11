@@ -2,32 +2,13 @@
 package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.execution.ExecutionTarget
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
-import javax.swing.Icon
 
-abstract class RemoteTargetType<C : RemoteTargetConfiguration>(val id: String) {
-
-  abstract val displayName: String
-
-  abstract val icon: Icon
-
-  abstract fun createSerializer(config: C): PersistentStateComponent<*>
-
-  abstract fun createDefaultConfig(): C
-
-  abstract fun createRunnerConfigurable(project: Project, config: C): Configurable
+//TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
+abstract class RemoteTargetType<C : RemoteTargetConfiguration>(id: String) : BaseExtendableType<C>(id) {
 
   abstract fun createExecutionTarget(project: Project, config: C): ExecutionTarget?
-
-  open val helpTopic: String? = null
-
-  //TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
-
-  @Suppress("UNCHECKED_CAST")
-  internal fun castConfiguration(config: RemoteTargetConfiguration) = config as C
 
   companion object {
     val EXTENSION_NAME = ExtensionPointName.create<RemoteTargetType<*>>("com.intellij.ir.targetType")
