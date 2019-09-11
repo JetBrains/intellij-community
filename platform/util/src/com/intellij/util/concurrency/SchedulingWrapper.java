@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
-  @NotNull
-  protected static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper");
-  }
 
   private final AtomicBoolean shutdown = new AtomicBoolean();
   @NotNull final ExecutorService backendExecutorService;
@@ -70,9 +65,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
       return false;
     });
     delayQueue.removeAll(new HashSet<>(result));
-    if (getLogger().isTraceEnabled()) {
-      getLogger().trace("Shutdown. Drained tasks: "+result);
-    }
     //noinspection unchecked
     return (List)result;
   }
@@ -220,9 +212,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
      */
     @Override
     public void run() {
-      if (getLogger().isTraceEnabled()) {
-        getLogger().trace("Executing " + BoundedTaskExecutor.info(this));
-      }
       boolean periodic = isPeriodic();
       if (!periodic) {
         super.run();
@@ -302,9 +291,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
-    if (getLogger().isTraceEnabled()) {
-      getLogger().trace("Submit at delay " + t.getDelay(TimeUnit.MILLISECONDS) + "ms " + BoundedTaskExecutor.info(t));
-    }
     if (isShutdown()) {
       throw new RejectedExecutionException("Already shutdown");
     }

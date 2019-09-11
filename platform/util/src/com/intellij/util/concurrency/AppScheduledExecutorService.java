@@ -121,12 +121,9 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
 
+  @TestOnly
   void setBackendPoolCorePoolSize(int size) {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
-  }
-
-  int getBackendPoolCorePoolSize() {
-    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
@@ -135,22 +132,9 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    protected void beforeExecute(Thread t, Runnable r) {
-      Logger logger = getLogger();
-      if (logger.isTraceEnabled()) {
-        logger.trace("beforeExecute " + BoundedTaskExecutor.info(r) + " in " + t);
-      }
-    }
-
-    @Override
     protected void afterExecute(Runnable r, Throwable t) {
-      Logger logger = getLogger();
-      if (logger.isTraceEnabled()) {
-        logger.trace("afterExecute  " + BoundedTaskExecutor.info(r) + " in " + Thread.currentThread());
-      }
-
       if (t != null) {
-        logger.error("Worker exited due to exception", t);
+        Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper").error("Worker exited due to exception", t);
       }
     }
 
