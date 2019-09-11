@@ -197,6 +197,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getStatusBar();
   }
 
+  @NotNull
   @Override
   public Rectangle suggestChildFrameBounds() {
     return Objects.requireNonNull(myFrameHelper).getHelper().suggestChildFrameBounds();

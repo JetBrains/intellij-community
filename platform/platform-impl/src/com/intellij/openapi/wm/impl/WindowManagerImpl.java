@@ -52,8 +52,6 @@ import java.util.Set;
 public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
 
-  @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
-
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String FRAME_ELEMENT = "frame";
 

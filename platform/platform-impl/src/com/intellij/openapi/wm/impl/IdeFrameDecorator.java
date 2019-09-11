@@ -23,6 +23,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
+  static final String FULL_SCREEN = "ide.frame.full.screen";
+
   protected final JFrame myFrame;
 
   protected IdeFrameDecorator(@NotNull JFrame frame) {
@@ -33,7 +35,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public abstract boolean isInFullScreen();
 
   /**
-   * Returns applied state or rejected promise if cannot be appled.
+   * Returns applied state or rejected promise if cannot be applied.
    */
   @NotNull
   public abstract Promise<Boolean> toggleFullScreen(boolean state);
@@ -56,10 +58,10 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   protected void notifyFrameComponents(boolean state) {
-    myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+    myFrame.getRootPane().putClientProperty(FULL_SCREEN, state);
     JMenuBar menuBar = myFrame.getJMenuBar();
     if (menuBar != null) {
-      menuBar.putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      menuBar.putClientProperty(FULL_SCREEN, state);
     }
   }
 
@@ -71,7 +73,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     @Override
     public boolean isInFullScreen() {
-      return UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN);
+      return UIUtil.isWindowClientPropertyTrue(myFrame, FULL_SCREEN);
     }
 
     @NotNull

@@ -111,7 +111,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
       }
 
-      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, __ -> updateScreenState(frameHelper));
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN, __ -> updateScreenState(frameHelper));
       updateScreenState(frameHelper);
     }
 

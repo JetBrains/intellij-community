@@ -212,6 +212,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     return myBalloonLayout;
   }
 
+  @NotNull
   @Override
   public Rectangle suggestChildFrameBounds() {
     return getBounds();

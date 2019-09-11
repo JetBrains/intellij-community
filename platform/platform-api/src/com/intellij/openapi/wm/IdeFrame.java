@@ -4,6 +4,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.BalloonLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ public interface IdeFrame {
   @Nullable
   StatusBar getStatusBar();
 
+  @NotNull
   Rectangle suggestChildFrameBounds();
 
   @Nullable

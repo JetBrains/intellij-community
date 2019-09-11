@@ -23,9 +23,9 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
@@ -409,6 +409,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return ownerBar != null ? ownerBar : myParent != null ? myParent.getStatusBar() : null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();
@@ -507,6 +508,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();

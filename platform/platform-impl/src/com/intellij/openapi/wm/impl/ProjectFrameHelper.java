@@ -59,7 +59,7 @@ import java.util.Set;
  * @author Vladimir Kondratyev
  */
 public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
+  private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
 
   private static boolean ourUpdatingTitle;
 
@@ -272,7 +272,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myFrame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
-        if (isTemporaryDisposed() || LaterInvocator.isInModalContext()) {
+        if (isTemporaryDisposed(myFrame) || LaterInvocator.isInModalContext()) {
           return;
         }
 
@@ -489,7 +489,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       ((MacMainFrameDecorator)Objects.requireNonNull(myFrameDecorator)).toggleFullScreenNow();
     }
 
-    if (isTemporaryDisposed()) {
+    if (isTemporaryDisposed(myFrame)) {
       myFrame.doDispose();
       return;
     }
@@ -517,8 +517,9 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myFrame = null;
   }
 
-  private boolean isTemporaryDisposed() {
-    return myRootPane != null && myRootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
+  private static boolean isTemporaryDisposed(@Nullable JFrame frame) {
+    JRootPane rootPane = frame == null ? null : frame.getRootPane();
+    return rootPane != null && rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
   }
 
   @NotNull
@@ -532,6 +533,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return myRootPane;
   }
 
+  @NotNull
   @Override
   public Rectangle suggestChildFrameBounds() {
     Rectangle b = myFrame.getBounds();
