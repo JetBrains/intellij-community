@@ -22,24 +22,7 @@ public class PythonRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean characterNeedsEscaping(char c) {
-    if (c == '#') {
-      return isVerboseInjection();
-    }
     return c == ']' || c == '}' || c == '\"' || c == '\'';
-  }
-
-  private boolean isVerboseInjection() {
-    //TODO: there is no access to project here
-    //List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(this.getProject()).getInjectedPsiFiles(this);
-    //if (files != null) {
-    //  for (Pair<PsiElement, TextRange> file : files) {
-    //    Language language = file.getFirst().getLanguage();
-    //    if (language == PythonVerboseRegexpLanguage.INSTANCE) {
-    //      return true;
-    //    }
-    //  }
-    //}
-    return false;
   }
 
   @Override
