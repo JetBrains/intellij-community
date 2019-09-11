@@ -37,7 +37,7 @@ class JarOrderStarter : ApplicationStarter {
         val last = it.lastIndexOf('/')
         if (last >= 0) it.substring(last) else it
       }
-      .limit(25)
+      .limit(30)
       .toList()
       .joinToString("\n") { it.removePrefix("/") }
     if (result.isNotEmpty()) {
