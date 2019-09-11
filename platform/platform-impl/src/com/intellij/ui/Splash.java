@@ -52,11 +52,11 @@ public final class Splash extends Window {
     setAutoRequestFocus(false);
     setSize(size);
     setLocationInTheCenterOfScreen();
-
-    initImages();
   }
 
-  public void doShow() {
+  public void initAndShow() {
+    initImages();
+
     setVisible(true);
     paint(getGraphics());
     toFront();

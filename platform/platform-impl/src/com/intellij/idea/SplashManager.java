@@ -66,10 +66,13 @@ public final class SplashManager {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
-    Splash splash = new Splash(appInfo);
+    SPLASH_WINDOW = new Splash(appInfo);
     EventQueue.invokeLater(() -> {
-      splash.doShow();
-      SPLASH_WINDOW = splash;
+      Splash splash = SPLASH_WINDOW;
+      // can be cancelled if app was started very fast
+      if (splash != null) {
+        splash.initAndShow();
+      }
     });
     activity.end();
   }
