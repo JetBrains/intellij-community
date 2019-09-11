@@ -15,7 +15,7 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
 
 /**

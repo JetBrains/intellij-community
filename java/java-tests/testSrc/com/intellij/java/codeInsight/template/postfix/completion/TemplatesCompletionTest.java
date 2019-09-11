@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.template.postfix.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -12,6 +11,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

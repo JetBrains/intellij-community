@@ -1,15 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.InjectedLanguagePlaces
 import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
  */

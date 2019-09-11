@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
