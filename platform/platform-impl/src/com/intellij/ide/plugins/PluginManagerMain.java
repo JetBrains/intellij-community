@@ -108,13 +108,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
-    if (vendorString == null) return false;
-    for (String vendor : StringUtil.split(vendorString, ",")) {
-      if (vendor.trim().equals(JETBRAINS_VENDOR)) {
-        return true;
-      }
-    }
-    return false;
+    return JETBRAINS_VENDOR.equals(vendorString);
   }
 
   protected void init() {
