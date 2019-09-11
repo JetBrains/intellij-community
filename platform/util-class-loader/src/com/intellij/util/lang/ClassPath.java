@@ -40,8 +40,8 @@ public class ClassPath {
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
-  private final boolean myLogJarAccess;
-  private final LinkedHashSet<String> myJarAccessLog = new LinkedHashSet<String>();
+  @Nullable
+  private final LinkedHashSet<String> myJarAccessLog;
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -65,7 +65,7 @@ public class ClassPath {
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
     myURLsWithProtectionDomain = urlsWithProtectionDomain;
-    myLogJarAccess = logJarAccess;
+    myJarAccessLog = logJarAccess ? new LinkedHashSet<String>() : null;
     push(urls);
   }
 
@@ -113,7 +113,7 @@ public class ClassPath {
         }
         Resource resource = loader.getResource(s);
         if (resource != null) {
-          if (myLogJarAccess) {
+          if (myJarAccessLog != null) {
             myJarAccessLog.add(loader.getBaseURL().toString());
           }
           return resource;
@@ -178,7 +178,7 @@ public class ClassPath {
 
   @NotNull
   public Collection<String> getJarAccessLog() {
-    return myJarAccessLog;
+    return myJarAccessLog == null ? Collections.<String>emptySet() : myJarAccessLog;
   }
 
   private void initLoaders(@NotNull URL url, int index) throws IOException {
@@ -359,7 +359,7 @@ public class ClassPath {
       if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
       if (resource != null) {
-        if (classPath.myLogJarAccess) {
+        if (classPath.myJarAccessLog != null) {
           classPath.myJarAccessLog.add(loader.getBaseURL().toString());
         }
         if (ourResourceLoadingLogger != null) {
