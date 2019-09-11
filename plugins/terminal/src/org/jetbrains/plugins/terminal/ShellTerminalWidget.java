@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.base.Ascii;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
@@ -49,24 +51,40 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         myPromptUpdateNeeded = false;
       }
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-        fireShellCommandTyped(getTypedShellCommand());
+        handleShellCommandBeforeExecution(getTypedShellCommand(), e);
         myPromptUpdateNeeded = true;
         myEscapePressed = false;
       }
     });
   }
 
-  private void fireShellCommandTyped(@NotNull String command) {
+  private void handleShellCommandBeforeExecution(@NotNull String shellCommand, @NotNull KeyEvent enterEvent) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("typed shell command to execute: " + shellCommand);
+    }
+    if (executeShellCommandHandler(shellCommand)) {
+      enterEvent.consume(); // do not send <ENTER> to shell
+      TtyConnector connector = getTtyConnector();
+      byte[] array = new byte[shellCommand.length()];
+      Arrays.fill(array, Ascii.BS);
+      try {
+        connector.write(array);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot clear shell command " + shellCommand, e);
+      }
+    }
+  }
+
+  private boolean executeShellCommandHandler(@NotNull String command) {
     if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
       for (TerminalShellCommandHandler handler : TerminalShellCommandHandler.getEP().getExtensionList()) {
         if (handler.execute(myProject, command)) {
-          break;
+          return true;
         }
       }
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.info("shell command typed: " + command);
-    }
+    return false;
   }
 
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
