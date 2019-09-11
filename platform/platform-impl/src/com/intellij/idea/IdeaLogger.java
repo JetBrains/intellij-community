@@ -18,7 +18,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
 import org.apache.log4j.spi.ThrowableRendererSupport;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,16 +50,6 @@ public class IdeaLogger extends Log4jBasedLogger {
       }
       return lines;
     };
-  }
-
-  /**
-   * @deprecated returns {@code null} always
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
-  @Nullable
-  public static String getOurCompilationTimestamp() {
-    return null;
   }
 
   @NotNull
