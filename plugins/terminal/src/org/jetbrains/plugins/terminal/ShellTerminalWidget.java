@@ -18,6 +18,7 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private boolean executeShellCommandHandler(@NotNull String command) {
     if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
       for (TerminalShellCommandHandler handler : TerminalShellCommandHandler.getEP().getExtensionList()) {
-        if (handler.execute(myProject, command)) {
+        if (handler.execute(myProject, () -> TerminalWorkingDirectoryManager.getWorkingDirectory(this, null), command)) {
           return true;
         }
       }

@@ -277,6 +277,7 @@
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
+    <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
   </extensions>
 
   <extensionPoints>
