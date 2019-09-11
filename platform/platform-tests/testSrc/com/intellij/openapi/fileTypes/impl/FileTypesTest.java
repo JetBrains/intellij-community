@@ -869,6 +869,15 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
+  public void testDefaultIgnoredIsSorted() {
+    List<String> strings = StringUtil.split(FileTypeManagerImpl.DEFAULT_IGNORED, ";");
+    for (int i = 0; i < strings.size(); i++) {
+      String string = strings.get(i);
+      String prev = i==0?"":strings.get(i-1);
+      assertTrue("DEFAULT_IGNORED must be sorted, but got: '"+prev+"' >= '"+string+"'", prev.compareTo(string) < 0);
+    }
+  }
+
   @NotNull
   private static FileType createTestFileType() {
     return new FileType() {

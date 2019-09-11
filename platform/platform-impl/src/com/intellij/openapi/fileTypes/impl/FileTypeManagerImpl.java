@@ -97,16 +97,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  private static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
-
-  static {
-    List<String> strings = StringUtil.split(DEFAULT_IGNORED, ";");
-    for (int i = 0; i < strings.size(); i++) {
-      String string = strings.get(i);
-      String prev = i==0?"":strings.get(i-1);
-      assert prev.compareTo(string) < 0 : "DEFAULT_IGNORED must be sorted, but got: '"+prev+"' >= '"+string+"'";
-    }
-  }
+  static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<>();
