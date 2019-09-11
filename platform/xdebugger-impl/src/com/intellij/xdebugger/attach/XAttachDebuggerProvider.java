@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,11 +17,6 @@ import java.util.List;
 public interface XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachDebuggerProvider");
 
-  /**
-   * will be removed in 2020.1, right after {@link XLocalAttachDebuggerProvider}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
     return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),

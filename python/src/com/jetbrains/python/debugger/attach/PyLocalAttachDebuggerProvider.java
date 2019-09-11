@@ -26,9 +26,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
@@ -46,7 +46,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
   @NotNull
   @Override
-  public XLocalAttachGroup getAttachGroup() {
+  public XAttachProcessPresentationGroup getPresentationGroup() {
     return PyLocalAttachGroup.INSTANCE;
   }
 
