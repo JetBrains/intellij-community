@@ -103,16 +103,10 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
             return true
           }
         }.installOn(this)
-        updateSize()
       }
 
-      override fun updateUI() {
-        super.updateUI()
-        updateSize()
-      }
-
-      private fun updateSize() {
-        preferredSize = Dimension(JBUI.scale(30), UIUtil.getLabelFont().size)
+      override fun getPreferredSize(): Dimension {
+        return Dimension(JBUI.scale(30), UIUtil.getLabelFont().size)
       }
 
       override fun paintComponent(g: Graphics) {
