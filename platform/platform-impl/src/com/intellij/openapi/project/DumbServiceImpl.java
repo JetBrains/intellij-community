@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -527,6 +528,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myCurrentSuspender = suspender;
       suspendIfRequested(suspender);
 
+      IdeActivity activity = IdeActivity.started(myProject, "indexing");
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
       final Thread self = Thread.currentThread();
       try {
@@ -540,6 +542,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           if (pair == null) break;
 
           task = pair.first;
+          activity.stageStarted(task.getClass());
           ProgressIndicatorEx taskIndicator = pair.second;
           suspender.attachToProgress(taskIndicator);
           taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
@@ -564,6 +567,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
         // previously installed.
         myCurrentSuspender = null;
+        activity.finished();
       }
     }
   }

@@ -532,6 +532,12 @@
 
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>
 
+    <statistics.counterUsagesCollector groupId="vfs" version="1"/>
+    <statistics.counterUsagesCollector groupId="indexing" version="1"/>
+    <statistics.counterUsagesCollector groupId="vcs" version="1"/>
+    <statistics.counterUsagesCollector groupId="build" version="1"/>
+    <statistics.counterUsagesCollector groupId="project.import" version="1"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
 

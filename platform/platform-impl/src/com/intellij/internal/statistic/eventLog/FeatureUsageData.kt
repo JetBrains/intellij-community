@@ -277,6 +277,11 @@ class FeatureUsageData {
     return data
   }
 
+  fun addAll(from: FeatureUsageData) : FeatureUsageData{
+    data.putAll(from.data)
+    return this
+  }
+
   fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
     for ((key, value) in next.build()) {
       val newKey = if (key.startsWith("data_")) "$prefix$key" else key

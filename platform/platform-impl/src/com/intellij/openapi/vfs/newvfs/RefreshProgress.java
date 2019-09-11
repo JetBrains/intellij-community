@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.internal.statistic.DelayedIdeActivity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -23,6 +24,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   }
 
   private final String myMessage;
+  private DelayedIdeActivity myActivity;
 
   private RefreshProgress(@NotNull String message) {
     super(true);
@@ -33,12 +35,16 @@ final class RefreshProgress extends ProgressIndicatorBase {
   public void start() {
     super.start();
     updateIndicators(true);
+
+    myActivity = new DelayedIdeActivity("vfs", "refresh").started();
   }
 
   @Override
   public void stop() {
     super.stop();
     updateIndicators(false);
+
+    myActivity.finished();
   }
 
   private void updateIndicators(boolean start) {

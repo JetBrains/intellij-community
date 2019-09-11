@@ -7,6 +7,7 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -334,6 +335,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
+      IdeActivity activity = IdeActivity.started(myProject, "vcs", "update");
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
@@ -367,6 +369,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
           BackgroundTaskUtil.syncPublisher(myProject, UpdatedFilesListener.UPDATED_FILES).
             consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
+          activity.finished();
         }
       }
     }

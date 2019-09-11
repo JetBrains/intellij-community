@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
@@ -129,6 +131,11 @@ public class MavenProjectsProcessor {
         }
         indicator.setFraction(counter / (double)(counter + remained));
 
+        MavenProjectsProcessorTask finalTask = task;
+        IdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, data -> {
+          data.addData("task_class", finalTask.getClass().getName());
+        });
+
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
           task.perform(myProject, myEmbeddersManager,
@@ -140,6 +147,9 @@ public class MavenProjectsProcessor {
         }
         catch (Throwable e) {
           logImportErrorIfNotControlFlow(e);
+        }
+        finally {
+          activity.finished();
         }
 
         synchronized (myQueue) {
