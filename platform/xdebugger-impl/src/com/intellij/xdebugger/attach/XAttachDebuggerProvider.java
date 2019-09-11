@@ -22,6 +22,7 @@ public interface XAttachDebuggerProvider {
   /**
    * will be removed in 2018.2, right after {@link XLocalAttachDebuggerProvider}
    */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
