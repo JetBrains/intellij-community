@@ -100,7 +100,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       if (descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted()) continue;
       final Boolean enabled = myEnabled.get(pluginId);
       if (enabled == null || enabled.booleanValue()) {
-        for (PluginId depId : PluginManagerCore.pluginIdTraverser().withRoot(descriptor.getPluginId())) {
+        for (PluginId depId : PluginManagerCore.pluginIdTraverser().withRoot(pluginId)) {
+          if (depId.equals(pluginId)) continue;
           Boolean enabled1 = myEnabled.get(depId);
           if ((enabled1 == null && !ourState.wasUpdated(depId)) ||
               (enabled1 != null && !enabled1.booleanValue())) {
@@ -162,13 +163,15 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     for (final IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
-      for (PluginId dependencyPluginId : PluginManagerCore.pluginIdTraverser().withRoot(descriptorToCheckDependencies.getPluginId())) {
-        Boolean enabled = myEnabled.get(dependencyPluginId);
+      PluginId pluginId = descriptorToCheckDependencies.getPluginId();
+      for (PluginId depId : PluginManagerCore.pluginIdTraverser().withRoot(pluginId)) {
+        if (depId.equals(pluginId)) continue;
+        Boolean enabled = myEnabled.get(depId);
         if (enabled == null) {
           break;
         }
         if (newEnabledState && !enabled.booleanValue()) {
-          deps.add(dependencyPluginId);
+          deps.add(depId);
         }
 
         if (!newEnabledState) {
@@ -179,10 +182,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           if (descriptorToCheckDependencies.isImplementationDetail()) {
             continue;
           }
-          final PluginId pluginDescriptorId = descriptorToCheckDependencies.getPluginId();
           for (IdeaPluginDescriptor descriptor : descriptorsWithChangedEnabledState) {
-            if (dependencyPluginId.equals(descriptor.getPluginId())) {
-              deps.add(pluginDescriptorId);
+            if (depId.equals(descriptor.getPluginId())) {
+              deps.add(pluginId);
               break;
             }
           }

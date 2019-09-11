@@ -131,10 +131,12 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
     Collection<PluginId> res = new HashSet<>();
     IdeaPluginDescriptor descriptor = maybeDescriptor.get();
-    for (PluginId pluginId : PluginManagerCore.pluginIdTraverser().withRoot(descriptor.getPluginId())) {
-      boolean enabled = optionalDescriptor(pluginId).map(IdeaPluginDescriptor::isEnabled).orElse(true);
+    PluginId pluginId = descriptor.getPluginId();
+    for (PluginId depId : PluginManagerCore.pluginIdTraverser().withRoot(pluginId)) {
+      if (depId.equals(pluginId)) continue;
+      boolean enabled = optionalDescriptor(depId).map(IdeaPluginDescriptor::isEnabled).orElse(true);
       if (!enabled) {
-        res.add(pluginId);
+        res.add(depId);
       }
     }
     return res;
