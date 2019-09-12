@@ -31,6 +31,8 @@ import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.Joining;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -364,18 +366,28 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int[] result = ArrayUtil.newIntArray(childrenIds.length);
       VirtualFile[] files = childrenIds.length == 0 ? VirtualFile.EMPTY_ARRAY : new VirtualFile[childrenIds.length];
       if (childrenIds.length != 0) {
+        int[] errorsCount = {0};
         Arrays.sort(childrenIds, (o1, o2) -> {
           CharSequence name1 = o1.name;
           CharSequence name2 = o2.name;
           int cmp = compareNames(name1, name2, caseSensitive);
-          if (cmp == 0 && name1 != name2) {
+          if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
             LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
                       " caseSensitive: " + caseSensitive +
                       " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
                       " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
                       " in the dir: " + this + ";" +
-                      " children: " + Arrays.toString(childrenIds));
+                      " children: " + StreamEx.of(childrenIds).map(Objects::toString).collect(Joining.with(", ").maxCodePoints(256)));
+            errorsCount[0]++;
+            if (!caseSensitive) {
+              // Sometimes file system rules for case insensitive comparison differ from Java rules.
+              // E.g. on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
+              // can coexist while the uppercase for \u1E9B is \u1E60. It's probably because the lower case of
+              // \u1E60 is \u1E61 (small S with dot), not \u1E9B. If we encounter such a case,
+              // we fallback to case-sensitive comparison, at least to establish some order between these names.
+              cmp = compareNames(name1, name2, true);
+            }
           }
           return cmp;
         });
