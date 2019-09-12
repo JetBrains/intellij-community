@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildProgressListener {
 
   /**
