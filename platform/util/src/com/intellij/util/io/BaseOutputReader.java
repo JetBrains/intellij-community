@@ -117,8 +117,8 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   /**
    * Reads data with blocking.
-   * Should be used in case when ready method always returns false for your input stream.
-   * Should be used if we want to to make our reader exit when end of stream reached.
+   * Should be used in case when {@link Reader#ready()} method always returns {@code false} for your input stream.
+   * Should be used if we want to make our reader exit when the end of a stream is reached.
    * Could be used if we prefer IO-blocking over CPU sleeping.
    *
    * @return true if non-zero amount of data has been read, false if end of the stream is reached

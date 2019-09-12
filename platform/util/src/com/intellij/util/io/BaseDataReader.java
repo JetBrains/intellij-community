@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,15 +30,7 @@ public abstract class BaseDataReader {
     mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.SIMPLE;
   }
 
-  /** @deprecated use {@link #start(String)} instead (to be removed in IDEA 17) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
-  protected void start() {
-    DeprecatedMethodException.report("Use start(String) instead");
-    start("");
-  }
-
-  protected void start(@NotNull final String presentableName) {
+  protected void start(@NotNull String presentableName) {
     if (StringUtil.isEmptyOrSpaces(presentableName)) {
       LOG.warn(new Throwable("Must provide not-empty presentable name"));
     }
@@ -89,7 +67,7 @@ public abstract class BaseDataReader {
   }
 
   /**
-   * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after stream is closed.
+   * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after the stream is closed.
    */
   protected boolean readAvailableBlocking() throws IOException {
     throw new UnsupportedOperationException();
@@ -112,8 +90,7 @@ public abstract class BaseDataReader {
     SleepingPolicy BLOCKING = new SleepingPolicy() {
       @Override
       public int getTimeToSleep(boolean wasActive) {
-        // in blocking mode we need to sleep only when we have reached end of the stream
-        // so it can be a long sleeping
+        // in the blocking mode we need to sleep only when we have reached the end of the stream, so it can be a long sleeping
         return 50;
       }
     };
@@ -122,9 +99,85 @@ public abstract class BaseDataReader {
     int getTimeToSleep(boolean wasActive);
   }
 
-  /** @deprecated use one of default policies (recommended) or implement your own (to be removed in IDEA 2018) */
+  protected void doRun() {
+    try {
+      boolean stopSignalled = false;
+      while (true) {
+        final boolean read = readAvailable();
+
+        if (stopSignalled || mySleepingPolicy == SleepingPolicy.BLOCKING) {
+          break;
+        }
+
+        stopSignalled = isStopped;
+
+        if (!stopSignalled) {
+          // if process stopped, there is no sense to sleep, just check if there is unread output in the stream
+          beforeSleeping(read);
+          synchronized (mySleepMonitor) {
+            mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        close();
+      }
+      catch (IOException e) {
+        LOG.error("Can't close stream", e);
+      }
+    }
+  }
+
+  protected void beforeSleeping(boolean hasJustReadSomething) {}
+
+  protected abstract void close() throws IOException;
+
+  public void stop() {
+    isStopped = true;
+    synchronized (mySleepMonitor) {
+      mySleepMonitor.notifyAll();
+    }
+  }
+
+  public void waitFor() throws InterruptedException {
+    try {
+      myFinishedFuture.get();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+  }
+
+  public void waitFor(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    try {
+      myFinishedFuture.get(timeout, unit);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #start(String)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected void start() {
+    DeprecatedMethodException.report("Use start(String) instead");
+    start("");
+  }
+
+  /** @deprecated use one of default policies (recommended) or implement your own */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("NonAtomicOperationOnVolatileField")
   public static class AdaptiveSleepingPolicy implements SleepingPolicy {
     private static final int maxSleepTimeWhenIdle = 200;
     private static final int maxIterationsWithCurrentSleepTime = 50;
@@ -152,75 +205,5 @@ public abstract class BaseDataReader {
       return currentSleepTime;
     }
   }
-
-  protected void doRun() {
-    try {
-      boolean stopSignalled = false;
-      while (true) {
-        final boolean read = readAvailable();
-
-        if (stopSignalled || mySleepingPolicy == SleepingPolicy.BLOCKING) {
-          break;
-        }
-
-        stopSignalled = isStopped;
-
-        if (!stopSignalled) {
-          // if process stopped, there is no sense to sleep,
-          // just check if there is unread output in the stream
-          beforeSleeping(read);
-          synchronized (mySleepMonitor) {
-            mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
-          }
-        }
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        close();
-      }
-      catch (IOException e) {
-        LOG.error("Can't close stream", e);
-      }
-    }
-  }
-
-  protected void beforeSleeping(boolean hasJustReadSomething) {}
-
-  private void resumeReading() {
-    synchronized (mySleepMonitor) {
-      mySleepMonitor.notifyAll();
-    }
-  }
-
-  protected abstract void close() throws IOException;
-
-  public void stop() {
-    isStopped = true;
-    resumeReading();
-  }
-
-  public void waitFor() throws InterruptedException {
-    try {
-      myFinishedFuture.get();
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-  }
-
-  public void waitFor(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-    try {
-      myFinishedFuture.get(timeout, unit);
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-  }
+  //</editor-fold>
 }
