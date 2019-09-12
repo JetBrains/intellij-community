@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val componentFactory: GHPREditorReviewThreadComponentFactory,
                                         componentInlaysManager: EditorComponentInlaysManager) {
-  private val inlayByThread = mutableMapOf<GHPRReviewThreadModelImpl, Inlay<*>>()
+  private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
 
   init {
     for ((line, threads) in threadMap.threadsByLine) {
@@ -18,14 +18,14 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
     }
 
     threadMap.addChangesListener(object : GHPREditorReviewThreadsModel.ChangesListener {
-      override fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModelImpl>) {
+      override fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>) {
         for (thread in threads) {
           val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(thread)) ?: break
           inlayByThread[thread] = inlay
         }
       }
 
-      override fun threadsRemoved(line: Int, threads: List<GHPRReviewThreadModelImpl>) {
+      override fun threadsRemoved(line: Int, threads: List<GHPRReviewThreadModel>) {
         for (thread in threads) {
           val inlay = inlayByThread.remove(thread) ?: continue
           Disposer.dispose(inlay)

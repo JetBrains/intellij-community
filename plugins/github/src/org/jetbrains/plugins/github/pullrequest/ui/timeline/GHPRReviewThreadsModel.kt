@@ -4,14 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.containers.SortedList
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModelImpl
 
 class GHPRReviewThreadsModel(list: List<GHPullRequestReviewThread>)
-  : CollectionListModel<GHPRReviewThreadModelImpl>(createSortedList(list), true) {
+  : CollectionListModel<GHPRReviewThreadModel>(createSortedList(list), true) {
 
   fun update(list: List<GHPullRequestReviewThread>) {
     val threadsById = list.associateBy { it.id }.toMutableMap()
-    val removals = mutableListOf<GHPRReviewThreadModelImpl>()
+    val removals = mutableListOf<GHPRReviewThreadModel>()
     for (item in items) {
       val thread = threadsById.remove(item.id)
       if (thread != null) item.update(thread)
@@ -26,8 +27,8 @@ class GHPRReviewThreadsModel(list: List<GHPullRequestReviewThread>)
   }
 
   companion object {
-    private fun createSortedList(list: List<GHPullRequestReviewThread>): SortedList<GHPRReviewThreadModelImpl> {
-      val sorted = SortedList<GHPRReviewThreadModelImpl>(compareBy { it.createdAt })
+    private fun createSortedList(list: List<GHPullRequestReviewThread>): SortedList<GHPRReviewThreadModel> {
+      val sorted = SortedList<GHPRReviewThreadModel>(compareBy { it.createdAt })
       for (thread in list) {
         sorted.add(GHPRReviewThreadModelImpl(thread))
       }

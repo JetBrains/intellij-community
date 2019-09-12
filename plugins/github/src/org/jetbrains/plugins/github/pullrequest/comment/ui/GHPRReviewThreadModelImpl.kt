@@ -5,15 +5,15 @@ import com.intellij.ui.CollectionListModel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
-  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel.Companion::convert)) {
+  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel.Companion::convert)),
+    GHPRReviewThreadModel {
 
-  val id: String = thread.id
-  val createdAt = thread.createdAt
-  val filePath = thread.path
-  val diffHunk = thread.diffHunk
+  override val id: String = thread.id
+  override val createdAt = thread.createdAt
+  override val filePath = thread.path
+  override val diffHunk = thread.diffHunk
 
-  // New comments can only appear at the end of the list and cannot change order
-  fun update(thread: GHPullRequestReviewThread) {
+  override fun update(thread: GHPullRequestReviewThread) {
     var removed = 0
     for (i in 0 until items.size) {
       val idx = i - removed

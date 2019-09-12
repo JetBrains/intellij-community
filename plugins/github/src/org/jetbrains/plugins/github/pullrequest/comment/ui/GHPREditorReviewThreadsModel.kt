@@ -9,7 +9,7 @@ import java.util.*
 class GHPREditorReviewThreadsModel {
   private val changeEventDispatcher = EventDispatcher.create(ChangesListener::class.java)
 
-  val threadsByLine: MutableMap<Int, SortedList<GHPRReviewThreadModelImpl>> = mutableMapOf()
+  val threadsByLine: MutableMap<Int, SortedList<GHPRReviewThreadModel>> = mutableMapOf()
 
   fun addChangesListener(listener: ChangesListener) = changeEventDispatcher.addListener(listener)
 
@@ -31,7 +31,7 @@ class GHPREditorReviewThreadsModel {
         changeEventDispatcher.multicaster.threadsRemoved(line, removedThreads.toList())
       }
 
-      val addedThreads = mutableListOf<GHPRReviewThreadModelImpl>()
+      val addedThreads = mutableListOf<GHPRReviewThreadModel>()
       for ((id, mapping) in mappingsById) {
         val current = threadsById[id]
         if (current == null) {
@@ -48,7 +48,7 @@ class GHPREditorReviewThreadsModel {
   }
 
   interface ChangesListener : EventListener {
-    fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModelImpl>)
-    fun threadsRemoved(line: Int, threads: List<GHPRReviewThreadModelImpl>)
+    fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>)
+    fun threadsRemoved(line: Int, threads: List<GHPRReviewThreadModel>)
   }
 }

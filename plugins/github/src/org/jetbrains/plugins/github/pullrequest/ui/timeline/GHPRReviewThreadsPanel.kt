@@ -5,7 +5,7 @@ import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModelImpl
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -44,7 +44,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
     }
   }
 
-  private fun createComponent(thread: GHPRReviewThreadModelImpl): JComponent {
+  private fun createComponent(thread: GHPRReviewThreadModel): JComponent {
     return JBUI.Panels.simplePanel(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
       .addToBottom(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
       .andTransparent()

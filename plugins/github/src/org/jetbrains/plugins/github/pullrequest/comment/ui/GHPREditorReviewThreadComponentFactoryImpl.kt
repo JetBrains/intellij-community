@@ -19,7 +19,7 @@ class GHPREditorReviewThreadComponentFactoryImpl
 internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GHPREditorReviewThreadComponentFactory {
 
-  override fun createComponent(thread: GHPRReviewThreadModelImpl): JComponent {
+  override fun createComponent(thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
       border = IdeBorderFactory.createRoundedBorder(10, 1)
     }
