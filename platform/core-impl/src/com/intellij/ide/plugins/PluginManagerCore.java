@@ -1205,18 +1205,18 @@ public class PluginManagerCore {
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(PluginId.getId(CORE_PLUGIN_ID));
     boolean checkModuleDependencies = !coreDescriptor.getModules().isEmpty() && !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
 
-    Set<PluginId> explicitlyEnabled = null;
+    LinkedHashSet<PluginId> explicitlyEnabled = null;
     if (selectedIds != null) {
       HashSet<String> set = new HashSet<>(StringUtil.split(selectedIds, ","));
       explicitlyEnabled = JBIterable.from(allDescriptors)
         .map(IdeaPluginDescriptorImpl::getPluginId)
-        .filter(o -> set.contains(o.getIdString())).toSet();
+        .filter(o -> set.contains(o.getIdString())).addAllTo(new LinkedHashSet<>());
     }
     else if (selectedCategory != null) {
       explicitlyEnabled = JBIterable.from(allDescriptors)
         .filter(o -> selectedCategory.equals(o.getCategory()))
         .map(IdeaPluginDescriptorImpl::getPluginId)
-        .toSet();
+        .addAllTo(new LinkedHashSet<>());
     }
     if (explicitlyEnabled != null) {
       // add all required dependencies
