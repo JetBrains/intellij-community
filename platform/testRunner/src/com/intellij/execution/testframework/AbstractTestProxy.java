@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,9 +121,10 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   /**
-   * to be deleted in 2017.1
+   * @deprecated to be deleted in 2017.1
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017.1")
   public static void flushOutput(AbstractTestProxy testProxy) {
     testProxy.flush();
 
