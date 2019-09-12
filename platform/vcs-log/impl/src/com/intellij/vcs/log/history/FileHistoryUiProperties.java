@@ -6,7 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = ContainerUtilRt.newArrayList(ROOT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN, COMMIT_COLUMN);
+        order = ContainerUtil.newArrayList(ROOT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN, COMMIT_COLUMN);
       }
       return (T)order;
     }

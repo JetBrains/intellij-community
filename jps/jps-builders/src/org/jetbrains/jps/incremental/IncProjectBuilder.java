@@ -643,7 +643,7 @@ public class IncProjectBuilder {
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final long cleanStart = System.currentTimeMillis();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
-    final Set<File> allSourceRoots = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> allSourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();

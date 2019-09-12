@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -29,10 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
@@ -122,7 +118,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     Set<Pair<String, String>> result = new THashSet<>();
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(getMavenProjectManager().getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(myProject));
+      remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(myProject));
     }
     for (MavenRemoteRepository each : remoteRepositories) {
       String id = each.getId();

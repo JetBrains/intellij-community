@@ -218,7 +218,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
   @NotNull
   public List<T> toStrongList() {
-    return ContainerUtilRt.mapNotNull(myList, deref());
+    return ContainerUtil.mapNotNull(myList, deref());
   }
 
   /**

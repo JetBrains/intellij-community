@@ -179,7 +179,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @SafeVarargs
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null || elements.length == 0 ? empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? empty() : from(ContainerUtil.newArrayList(elements));
   }
 
   private static final JBIterable<?> EMPTY = new Empty();
@@ -840,7 +840,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final List<E> toList() {
     Iterable<E> itt = asIterable();
     if (itt == null) return Collections.singletonList(asElement());
-    return Collections.unmodifiableList(ContainerUtilRt.newArrayList(itt));
+    return Collections.unmodifiableList(ContainerUtil.newArrayList(itt));
   }
 
   /**
@@ -865,7 +865,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     if (itt == null) {
       return Collections.singletonList(asElement()).toArray(array);
     }
-    return ContainerUtilRt.newArrayList(itt).toArray(array);
+    return ContainerUtil.newArrayList(itt).toArray(array);
   }
 
   /**

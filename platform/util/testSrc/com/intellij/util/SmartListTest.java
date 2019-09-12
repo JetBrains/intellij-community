@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -263,7 +263,7 @@ public class SmartListTest {
     assertThat(list).isEqualTo(new LinkedList<>());
     assertThat(list).isEqualTo(Collections.emptyList());
     assertThat(list).isEqualTo(Arrays.asList());
-    assertThat(list).isEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isEqualTo(ContainerUtil.emptyList());
 
     assertThat(list).isNotEqualTo(new SmartList<>(1));
     assertThat(list).isNotEqualTo(new ArrayList<>(Collections.singletonList(1)));
@@ -287,7 +287,7 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new LinkedList<>());
     assertThat(list).isNotEqualTo(Collections.emptyList());
     assertThat(list).isNotEqualTo(Arrays.asList());
-    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isNotEqualTo(ContainerUtil.emptyList());
   }
 
   @Test
@@ -307,7 +307,7 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new LinkedList<>());
     assertThat(list).isNotEqualTo(Collections.emptyList());
     assertThat(list).isNotEqualTo(Arrays.asList());
-    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isNotEqualTo(ContainerUtil.emptyList());
   }
 
   @Test

@@ -4,7 +4,6 @@ package com.intellij.testFramework;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public class RunAll implements Runnable {
   @SafeVarargs
   @Contract(pure=true)
   public final RunAll append(@NotNull ThrowableRunnable<Throwable>... actions) {
-    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : ContainerUtilRt.newArrayList(actions)));
+    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : ContainerUtil.newArrayList(actions)));
   }
 
   @Override

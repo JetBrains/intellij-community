@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
@@ -39,31 +38,6 @@ public class ContainerUtilRt {
     return new HashMap<K, V>(map);
   }
 
-  @NotNull
-  @Contract(value = "_,_ -> new", pure = true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull List<? extends K> keys, @NotNull List<? extends V> values) {
-    if (keys.size() != values.size()) {
-      throw new IllegalArgumentException(keys + " should have same length as " + values);
-    }
-
-    Map<K, V> map = new HashMap<K, V>(keys.size());
-    for (int i = 0; i < keys.size(); ++i) {
-      map.put(keys.get(i), values.get(i));
-    }
-    return map;
-  }
-
-  @NotNull
-  @Contract(value = "_,_ -> new", pure = true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
-    Map<K, V> map = new HashMap<K, V>(entries.length + 1);
-    map.put(first.getFirst(), first.getSecond());
-    for (Pair<? extends K, ? extends V> entry : entries) {
-      map.put(entry.getFirst(), entry.getSecond());
-    }
-    return map;
-  }
-
   /**
    * @deprecated Use {@link HashMap#HashMap(int)}
    */
@@ -75,33 +49,6 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
-    return new LinkedHashMap<K, V>();
-  }
-
-  @NotNull
-  @Contract(value = "_,_ -> new", pure = true)
-  public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
-    LinkedHashMap<K, V> map = new LinkedHashMap<K, V>();
-    map.put(first.getFirst(), first.getSecond());
-    for (Pair<? extends K, ? extends V> entry : entries) {
-      map.put(entry.getFirst(), entry.getSecond());
-    }
-    return map;
-  }
-
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  public static <T> LinkedList<T> newLinkedList() {
-    return new LinkedList<T>();
-  }
-
-  /**
    * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
    */
   @NotNull
@@ -110,12 +57,20 @@ public class ContainerUtilRt {
     return copy(new LinkedList<T>(), elements);
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList()} instead
+   */
   @NotNull
+  @Deprecated
   @Contract(value = " -> new", pure = true)
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<T>();
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
+   */
+  @Deprecated
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
@@ -124,6 +79,10 @@ public class ContainerUtilRt {
     return list;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Iterable)} instead
+   */
+  @Deprecated
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
@@ -154,15 +113,9 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link HashSet#HashSet(int)}
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(java.lang.Object[])}
    */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
   @Deprecated
-  public static <T> HashSet<T> newHashSet(int initialCapacity) {
-    return new HashSet<T>(initialCapacity);
-  }
-
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
@@ -176,16 +129,16 @@ public class ContainerUtilRt {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
       return new HashSet<T>(collection);
     }
-    return newHashSet(elements.iterator());
-  }
-
-  @NotNull
-  public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
+    Iterator<? extends T> iterator = elements.iterator();
     HashSet<T> set = new HashSet<T>();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
+   */
+  @Deprecated
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
@@ -200,12 +153,6 @@ public class ContainerUtilRt {
   @Deprecated
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
-    return copy(new TreeSet<T>(), elements);
   }
 
   /**
@@ -282,6 +229,10 @@ public class ContainerUtilRt {
     }
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#emptyList()}
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> emptyList() {
@@ -289,6 +240,10 @@ public class ContainerUtilRt {
     return (List<T>)EmptyList.INSTANCE;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#addIfNotNull(java.util.Collection, java.lang.Object)}
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
@@ -296,19 +251,12 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @return read-only list consisting of the elements from array converted by mapper
-   */
-  @NotNull
-  @Contract(pure=true)
-  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2List(Arrays.asList(array), mapper);
-  }
-
-  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#mapNotNull(Collection, Function)}
    * @param collection an input collection to process
    * @param mapping a side-effect free function which transforms collection elements
    * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
    */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
@@ -327,8 +275,10 @@ public class ContainerUtilRt {
   }
 
   /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map2Set(Collection, Function)}
    * @return read-only list consisting of the elements from collection converted by mapper
    */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
@@ -341,81 +291,30 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @return read-only list consisting key-value pairs of a map
-   */
-  @NotNull
-  @Contract(pure=true)
-  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<? extends K, ? extends V> map) {
-    if (map.isEmpty()) return emptyList();
-    final List<Pair<K, V>> result = new ArrayList<Pair<K, V>>(map.size());
-    for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
-      result.add(Pair.create(entry.getKey(), entry.getValue()));
-    }
-    return result;
-  }
-
-  /**
-   * @return read-only set consisting of the elements from collection converted by mapper
-   */
-  @NotNull
-  @Contract(pure=true)
-  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2Set(Arrays.asList(collection), mapper);
-  }
-
-  /**
-   * @return read-only set consisting of the elements from collection converted by mapper
-   */
-  @NotNull
-  @Contract(pure=true)
-  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
-    if (collection.isEmpty()) return Collections.emptySet();
-    Set <V> set = new HashSet<V>(collection.size());
-    for (final T t : collection) {
-      set.add(mapper.fun(t));
-    }
-    return set;
-  }
-
-  /**
-   * @deprecated use {@link List#toArray(Object[])} instead
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#getLastItem(java.util.List)}
    */
   @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
-    return collection.toArray(array);
-  }
-
-  @Contract(pure=true)
-  public static <T> T getLastItem(@Nullable List<? extends T> list, @Nullable T def) {
-    return isEmpty(list) ? def : list.get(list.size() - 1);
-  }
-
   @Contract(pure=true)
   public static <T> T getLastItem(@Nullable List<? extends T> list) {
-    return getLastItem(list, null);
+    return list == null || list.isEmpty() ? null : list.get(list.size() - 1);
   }
 
-  @Contract(value = "null -> true", pure = true)
-  public static <T> boolean isEmpty(@Nullable Collection<? extends T> collection) {
-    return collection == null || collection.isEmpty();
-  }
-
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#find(Iterable, Condition)}
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
-    return find(iterable.iterator(), condition);
-  }
-
-  @Contract(pure=true)
-  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull Condition<? super T> condition) {
-    while (iterator.hasNext()) {
-      T value = iterator.next();
+    for (T value : iterable) {
       if (condition.value(value)) return value;
     }
     return null;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#indexOf(List, Condition)}
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {

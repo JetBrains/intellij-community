@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LibrariesDownloadAssistant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.LibrariesDownloadAssistant");
@@ -78,7 +75,7 @@ public class LibrariesDownloadAssistant {
       if (allArtifacts != null) {
         final Artifact[] vers = allArtifacts.getArtifacts();
         if (vers != null) {
-          ContainerUtil.addAll(versions, Arrays.asList(vers));
+          versions.addAll(Arrays.asList(vers));
         }
       }
     }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
-import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 
 public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
@@ -61,7 +61,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
                                                  boolean allListsLoaded) {
     return new SelectMergeItemsResult(
       mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all,
-      mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList()
+      mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : ContainerUtil.emptyList()    
     );
   }
 

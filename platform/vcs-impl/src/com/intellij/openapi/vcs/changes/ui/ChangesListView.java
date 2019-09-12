@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -454,7 +455,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   private static class DistinctChangePredicate implements Predicate<Change> {
-    private final Set<Object> seen = ContainerUtil.newTroveSet(ChangeListChange.HASHING_STRATEGY);
+    private final Set<Object> seen = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
 
     @Override
     public boolean test(Change change) {

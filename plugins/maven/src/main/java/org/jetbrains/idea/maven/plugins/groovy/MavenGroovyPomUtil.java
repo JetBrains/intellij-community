@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -32,7 +31,7 @@ public class MavenGroovyPomUtil {
 
   @NotNull
   public static List<String> getGroovyMethodCalls(PsiElement psiElement) {
-    LinkedList<String> methodCallInfo = ContainerUtilRt.newLinkedList();
+    LinkedList<String> methodCallInfo = new LinkedList<String>();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(psiElement, GrMethodCall.class);
          current != null;
          current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class)) {

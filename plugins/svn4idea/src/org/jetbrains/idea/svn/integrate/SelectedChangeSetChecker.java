@@ -4,13 +4,12 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.addAll;
 
 public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
   @NotNull private final Set<Change> mySelectedChanges = new HashSet<>();
@@ -20,7 +19,7 @@ public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
 
     final Change[] changes = event.getData(VcsDataKeys.CHANGES);
     if (changes != null) {
-      addAll(mySelectedChanges, changes);
+      ContainerUtil.addAll(mySelectedChanges, changes);
     }
   }
 

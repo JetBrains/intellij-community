@@ -8,7 +8,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +207,7 @@ public class ArrangementStandardSettingsManager {
   }
 
   public List<ArrangementSettingsToken> sort(@NotNull Collection<? extends ArrangementSettingsToken> tokens) {
-    List<ArrangementSettingsToken> result = ContainerUtilRt.newArrayList(tokens);
+    List<ArrangementSettingsToken> result = new ArrayList<>(tokens);
     Collections.sort(result, myComparator);
     return result;
   }

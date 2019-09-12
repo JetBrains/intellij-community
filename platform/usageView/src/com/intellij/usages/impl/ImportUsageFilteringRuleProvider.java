@@ -10,7 +10,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +27,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
   public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<>();
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
-      ContainerUtil.addAll(rules, ImportFilteringRule.EP_NAME.getExtensionList());
+      rules.addAll(ImportFilteringRule.EP_NAME.getExtensionList());
     }
     return rules.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }

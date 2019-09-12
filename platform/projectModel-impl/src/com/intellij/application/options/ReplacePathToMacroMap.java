@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -199,7 +199,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       }
 
       entries.sort((o1, o2) -> weights.get(o2.getKey()) - weights.get(o1.getKey()));
-      myPathsIndex = ContainerUtilRt.map2List(entries, entry -> entry.getKey());
+      myPathsIndex = ContainerUtil.map2List(entries, entry -> entry.getKey());
     }
     return myPathsIndex;
   }

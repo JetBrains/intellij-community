@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -113,9 +113,9 @@ class ForkedGroovyc implements GroovycFlavor {
   }
 
   private List<String> getProgramParams(File tempFile, JpsGroovySettings settings, boolean forStubs) {
-    List<String> programParams = ContainerUtilRt.newArrayList(myOptimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
+    List<String> programParams = ContainerUtil.newArrayList(myOptimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
                                                               forStubs ? "stubs" : "groovyc",
-                                                              tempFile.getPath());
+                                                            tempFile.getPath());
     if (settings.invokeDynamic) {
       programParams.add("--indy");
     }

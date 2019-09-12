@@ -202,7 +202,7 @@ public class NewMappings implements Disposable {
     List<VcsDirectoryMapping> newMapping = new ArrayList<>();
     Set<String> paths = new HashSet<>();
 
-    for (VcsDirectoryMapping mapping : reverse(newArrayList(mappings))) {
+    for (VcsDirectoryMapping mapping : reverse(new ArrayList<>(mappings))) {
       // take last mapping in collection in case of duplicates
       if (paths.add(mapping.getDirectory())) {
         newMapping.add(mapping);

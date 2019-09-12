@@ -23,7 +23,6 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.addAll;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class BranchInfo {
@@ -334,7 +333,7 @@ public class BranchInfo {
     for (MergeRange range : mergeRangeList.getRanges()) {
       // TODO: Seems there is no much sense in converting merge range to list of revisions - we need just implement smart search
       // TODO: of revision in sorted list of ranges
-      addAll(range.isInheritable() ? revisions : nonInheritableRevisions, range.getRevisions());
+      ContainerUtil.addAll(range.isInheritable() ? revisions : nonInheritableRevisions, range.getRevisions());
     }
 
     myPathMergedMap.put(pathWithRevisionNumber, revisions);

@@ -838,7 +838,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         if (issues == null) issues = new ArrayList<>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
           List<Task> filteredTasks = TaskUtil.filterTasks(request, Arrays.asList(tasks));
-          ContainerUtil.addAll(issues, filteredTasks);
+          issues.addAll(filteredTasks);
         }
         else {
           ContainerUtil.addAll(issues, tasks);

@@ -33,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-
 public abstract class SliceNullnessAnalyzerBase {
   @NotNull
   private final SliceLeafEquality myLeafEquality;
@@ -64,9 +62,9 @@ public abstract class SliceNullnessAnalyzerBase {
     root.targetEqualUsages.clear();
 
     List<SliceLeafValueClassNode> children = new ArrayList<>();
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
     root.setChildren(children);
     return root;
   }

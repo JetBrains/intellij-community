@@ -17,10 +17,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
@@ -61,7 +60,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
 
   @Nullable
   default List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, new CommitContext(), newHashSet());
+    return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
   }
 
   @Nullable

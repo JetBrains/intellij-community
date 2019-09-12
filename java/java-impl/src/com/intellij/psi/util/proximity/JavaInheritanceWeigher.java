@@ -21,7 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
                                                                                                                     final HashSet<String> result = new HashSet<>();
                                                                                                                     PsiClass contextClass = PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
                                                                                                                     Processor<PsiClass> processor = psiClass -> {
-                                                                                                                      ContainerUtilRt.addIfNotNull(result, psiClass.getQualifiedName());
+                                                                                                                      ContainerUtil.addIfNotNull(result, psiClass.getQualifiedName());
                                                                                                                       return true;
                                                                                                                     };
                                                                                                                     while (contextClass != null) {

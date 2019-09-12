@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -379,7 +380,7 @@ public final class ParametersList implements Cloneable {
     if (application == null || application.isUnitTestMode() && ourTestMacros != null) {
       return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
-    Map<String, String> map = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    Map<String, String> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
     Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
     if (!pathMacros.isEmpty()) {
       for (String name : pathMacros.keySet()) {

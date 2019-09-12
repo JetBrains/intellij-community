@@ -48,9 +48,9 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   public PsiElement[] getChildren() {
     List<PsiElement> children = new ArrayList<>();
     ContainerUtil.addAll(children, getChildren(getDocComment(), getModifierListInternal(), getNameIdentifier(), getExtendsList(), getImplementsList()));
-    ContainerUtil.addAll(children, getOwnFields());
-    ContainerUtil.addAll(children, getOwnMethods());
-    ContainerUtil.addAll(children, getOwnInnerClasses());
+    children.addAll(getOwnFields());
+    children.addAll(getOwnMethods());
+    children.addAll(getOwnInnerClasses());
     return PsiUtilCore.toPsiElementArray(children);
   }
 

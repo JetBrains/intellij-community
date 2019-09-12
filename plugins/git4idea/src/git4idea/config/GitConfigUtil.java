@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -30,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Git utilities for working with configuration
@@ -99,8 +98,8 @@ public class GitConfigUtil {
   @Nullable
   public static Boolean getBooleanValue(@NotNull String value) {
     value = StringUtil.toLowerCase(value);
-    if (newHashSet("true", "yes", "on", "1").contains(value)) return true;
-    if (newHashSet("false", "no", "off", "0", "").contains(value)) return false;
+    if (ContainerUtil.newHashSet("true", "yes", "on", "1").contains(value)) return true;
+    if (ContainerUtil.newHashSet("false", "no", "off", "0", "").contains(value)) return false;
     return null;
   }
 

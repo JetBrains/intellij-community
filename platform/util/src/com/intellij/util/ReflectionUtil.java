@@ -504,7 +504,7 @@ public class ReflectionUtil {
   }
 
   public static boolean copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
-    Set<Field> sourceFields = ContainerUtilRt.newHashSet(from.getClass().getFields());
+    Set<Field> sourceFields = ContainerUtil.newHashSet(from.getClass().getFields());
     boolean valuesChanged = false;
     for (Field field : fields) {
       if (sourceFields.contains(field)) {

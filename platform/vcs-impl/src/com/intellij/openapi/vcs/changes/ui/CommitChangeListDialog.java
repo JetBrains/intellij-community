@@ -90,12 +90,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
-  @NotNull private final List<DataProvider> myDataProviders = newArrayList();
+  @NotNull private final List<DataProvider> myDataProviders = new ArrayList<>();
   @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
   @NotNull private String myDefaultCommitActionName = "";
   @Nullable private CommitAction myCommitAction;
-  @NotNull private final List<CommitExecutorAction> myExecutorActions = newArrayList();
+  @NotNull private final List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;

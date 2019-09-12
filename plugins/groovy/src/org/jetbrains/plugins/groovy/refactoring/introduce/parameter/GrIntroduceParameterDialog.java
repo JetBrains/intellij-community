@@ -22,7 +22,6 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -336,7 +335,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     if (var != null) {
       names.add(var.getName());
     }
-    ContainerUtil.addAll(names, suggestNames());
+    names.addAll(suggestNames());
 
     return new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }

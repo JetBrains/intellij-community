@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +52,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
         }
       }
     }
-    return ContainerUtilRt.emptyList();
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
