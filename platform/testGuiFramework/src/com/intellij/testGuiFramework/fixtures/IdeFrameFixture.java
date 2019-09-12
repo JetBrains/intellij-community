@@ -92,7 +92,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
-        Project project = Objects.requireNonNull(ProjectFrameHelper.getFrameHelper(frame)).getProject();
+        ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(frame);
+        Project project = helper != null ? helper.getProject() : null;
         if (projectPath == null && project != null) return true;
         if (project != null &&
             PathManager.getAbsolutePath(projectPath.toString()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
