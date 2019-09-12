@@ -17,13 +17,14 @@ sealed class StringEntry {
   class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
   class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
 
-  val rangeAlignedToHost: TextRange?
+  val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
     get() {
       val entry = this
       val sourcePsi = entry.sourcePsi ?: return null
-      if (sourcePsi is PsiLanguageInjectionHost) return entry.range
-      if (sourcePsi.parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
-        return entry.range.shiftRight(sourcePsi.startOffsetInParent - ElementManipulators.getValueTextRange(sourcePsi.parent).startOffset)
+      if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
+      val parent = sourcePsi.parent
+      if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
+        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent - ElementManipulators.getValueTextRange(parent).startOffset)
       }
       return null
     }
