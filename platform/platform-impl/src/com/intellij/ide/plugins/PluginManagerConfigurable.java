@@ -137,6 +137,9 @@ public class PluginManagerConfigurable
   public PluginManagerConfigurable() {
   }
 
+  /**
+   * @deprecated use {@link PluginManagerConfigurable}
+   */
   @Deprecated
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
   }
