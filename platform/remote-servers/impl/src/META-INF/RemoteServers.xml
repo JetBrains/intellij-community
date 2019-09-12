@@ -11,6 +11,8 @@
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
     <extensionPoint name="ir.targetType"
                     interface="com.intellij.remoteServer.ir.configuration.RemoteTargetType"/>
+    <extensionPoint name="ir.languageRuntime"
+                    interface="com.intellij.remoteServer.ir.configuration.LanguageRuntimeType"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

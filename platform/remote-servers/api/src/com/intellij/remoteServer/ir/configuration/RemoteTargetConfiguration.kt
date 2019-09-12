@@ -3,8 +3,10 @@ package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
 
+//typealias RuntimesList = ExtendableConfigurationsList<LanguageRuntimeConfiguration, LanguageRuntimeType<*>>
+
 abstract class RemoteTargetConfiguration(typeId: String) : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
-  private val resolvedRuntimes: MutableList<LanguageRuntimeConfiguration> = mutableListOf();
+  //private val runtimes = RuntimesList(LanguageRuntimeType.EXTENSION_NAME)
 
 }
 
