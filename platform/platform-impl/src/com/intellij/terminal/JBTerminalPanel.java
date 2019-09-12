@@ -62,6 +62,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "HideActiveWindow",
     "HideAllWindows",
 
+    "NextWindow",
+    "PreviousWindow",
+
     "ShowBookmarks",
     "GotoBookmark0",
     "GotoBookmark1",
