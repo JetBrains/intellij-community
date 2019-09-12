@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.configuration
+package com.intellij.remoteServer.ir.target
 
 import com.intellij.execution.ExecutionTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.remoteServer.ir.config.BaseExtendableType
 
 //TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
 abstract class RemoteTargetType<C : RemoteTargetConfiguration>(id: String) : BaseExtendableType<C>(id) {

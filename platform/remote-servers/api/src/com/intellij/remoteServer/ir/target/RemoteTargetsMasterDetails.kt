@@ -1,4 +1,5 @@
-package com.intellij.remoteServer.ir.configuration
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.remoteServer.ir.target
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.NamedConfigurable
-import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.util.text.UniqueNameGenerator
 import javax.swing.Icon
 import javax.swing.JComponent

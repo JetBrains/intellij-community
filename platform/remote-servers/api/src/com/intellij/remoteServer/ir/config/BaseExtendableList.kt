@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.configuration
+package com.intellij.remoteServer.ir.config
 
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.util.xmlb.annotations.XCollection
 
 open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
-  : BaseState(), PersistentStateComponent<BaseExtendableList.ListState>
+  : PersistentStateComponent<BaseExtendableList.ListState>
   where C : BaseExtendableConfiguration, T : BaseExtendableType<out C> {
 
   private val resolvedInstances = mutableListOf<C>()
@@ -32,8 +32,12 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
   }
 
   override fun loadState(state: ListState) {
+    loadState(state.configs)
+  }
+
+  fun loadState(configs: List<BaseExtendableState>) {
     clear()
-    state.configs.forEach {
+    configs.forEach {
       val nextConfig = fromOneState(it)
       if (nextConfig == null) {
         unresolvedInstances.add(it)
