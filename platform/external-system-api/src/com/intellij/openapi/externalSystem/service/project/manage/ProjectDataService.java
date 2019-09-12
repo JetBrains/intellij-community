@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
@@ -99,7 +100,7 @@ public interface ProjectDataService<E, I> {
    * <b>Note:</b> as more than one {@link ProjectDataService} might be configured for a target entity type, there is a possible case
    * that the entities have already been removed when this method is called. Then it's necessary to cleanup auxiliary data (if any)
    * or just return otherwise.
-   * 
+   *
    * @param toRemove     project entities to remove
    * @param project      target project
    */
@@ -108,4 +109,19 @@ public interface ProjectDataService<E, I> {
                   @NotNull ProjectData projectData,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider);
+
+  default void postProcess(@NotNull Collection<DataNode<E>> toImport,
+                           @Nullable ProjectData projectData,
+                           @NotNull Project project,
+                           @NotNull IdeModifiableModelsProvider modelsProvider) {
+  }
+
+  default void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                               @Nullable ProjectData projectData,
+                               @NotNull Project project,
+                               @NotNull IdeModelsProvider modelsProvider) {
+  }
+
+  default void onFailureImport(Project project) {
+  }
 }
