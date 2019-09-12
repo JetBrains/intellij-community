@@ -53,7 +53,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -84,7 +83,7 @@ public class PluginManagerCore {
 
   private static Set<String> ourDisabledPlugins;
   private static Reference<MultiMap<String, String>> ourBrokenPluginVersions;
-  private static final AtomicReference<IdeaPluginDescriptorImpl[]> ourPlugins = new AtomicReference<>();
+  private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   private static List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
 
   @SuppressWarnings("StaticNonFinalField")
@@ -130,7 +129,7 @@ public class PluginManagerCore {
    */
   @NotNull
   public static IdeaPluginDescriptor[] getPlugins() {
-    IdeaPluginDescriptor[] result = ourPlugins.get();
+    IdeaPluginDescriptor[] result = ourPlugins;
     return result == null ? initPlugins(null) : result;
   }
 
@@ -154,14 +153,14 @@ public class PluginManagerCore {
 
   @ApiStatus.Internal
   public static boolean arePluginsInitialized() {
-    return ourPlugins.get() != null;
+    return ourPlugins != null;
   }
 
   @ApiStatus.Internal
   public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
     //noinspection SuspiciousToArrayCall
     IdeaPluginDescriptorImpl[] copy = Arrays.asList(descriptors).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    ourPlugins.set(copy);
+    ourPlugins = copy;
     ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(copy, IdeaPluginDescriptor::isEnabled));
   }
 
@@ -528,13 +527,13 @@ public class PluginManagerCore {
   }
 
   public static synchronized void invalidatePlugins() {
-    ourPlugins.set(null);
+    ourPlugins = null;
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
   }
 
   public static boolean isPluginClass(@NotNull String className) {
-    return ourPlugins.get() != null && getPluginByClassName(className) != null;
+    return ourPlugins != null && getPluginByClassName(className) != null;
   }
 
   private static void logPlugins(@NotNull IdeaPluginDescriptorImpl[] plugins) {
@@ -1571,7 +1570,7 @@ public class PluginManagerCore {
         ourPlugins2Disable = d;
         ourPlugins2Enable = e;
       });
-      ourPlugins.set(sorted);
+      ourPlugins = sorted;
       ourLoadedPlugins = JBIterable.of(sorted).filter(IdeaPluginDescriptorImpl::isEnabled).toList();
       checkEssentialPluginsAreAvailable(ourLoadedPlugins);
       int count = 0;
@@ -1623,7 +1622,7 @@ public class PluginManagerCore {
 
   @NotNull
   public static JBTreeTraverser<PluginId> pluginIdTraverser() {
-    IdeaPluginDescriptorImpl[] plugins = ourPlugins.get();
+    IdeaPluginDescriptorImpl[] plugins = ourPlugins;
     if (plugins == null) return new JBTreeTraverser<>(Functions.constant(null));
     return new PluginTraverser(buildPluginIdMap(plugins, new ArrayList<>()), false, true).unique();
   }
