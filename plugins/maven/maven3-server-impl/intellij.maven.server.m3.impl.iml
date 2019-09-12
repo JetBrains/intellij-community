@@ -158,16 +158,16 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="com.google.inject:guice:4.0" type="repository">
+      <library name="com.google.inject:guice-no_aop:4.0" type="repository">
         <properties maven-id="com.google.inject:guice:4.0">
           <exclude>
+            <dependency maven-id="aopalliance:aopalliance" />
             <dependency maven-id="com.google.guava:guava" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/google/inject/guice/4.0/guice-4.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/aopalliance/aopalliance/1.0/aopalliance-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
