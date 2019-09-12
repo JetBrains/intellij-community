@@ -36,7 +36,7 @@ object GithubUtil {
   }
 
   private fun addCancellationListener(indicator: ProgressIndicator, thread: Thread): ScheduledFuture<*> {
-    return addCancellationListener({ if (indicator.isCanceled) thread.interrupt() })
+    return addCancellationListener { if (indicator.isCanceled) thread.interrupt() }
   }
 
   @Throws(IOException::class)
@@ -51,7 +51,7 @@ object GithubUtil {
       return task.compute()
     }
     finally {
-      if (future != null) future.cancel(true)
+      future?.cancel(true)
       Thread.interrupted()
     }
   }
@@ -151,5 +151,4 @@ object GithubUtil {
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }
-  //endregion
 }
