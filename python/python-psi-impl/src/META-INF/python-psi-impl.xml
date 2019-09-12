@@ -124,7 +124,7 @@
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonOverridingBuiltinReferenceResolveProvider"/>
 
     <!-- PyDocstring -->
-    <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider" id="pythonDocstringTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor"/>
 
 
