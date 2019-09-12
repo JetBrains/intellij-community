@@ -28,6 +28,7 @@ target('build-intellij-core' : 'Build intellij-core.zip') {
 target('update-from-sources': 'Update locally installed distribution from compiled classes') {
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
+  options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
   options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
   options.buildStepsToSkip << BuildOptions.PROVIDED_MODULES_LIST_STEP
   options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
