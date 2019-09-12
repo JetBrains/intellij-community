@@ -46,6 +46,8 @@
     <executionTargetProvider implementation="com.intellij.remoteServer.ir.target.RemoteRunnersExecutionTargetProvider"/>
 
     <applicationService serviceImplementation="com.intellij.remoteServer.ir.target.RemoteTargetsManager"/>
+
+    <ir.languageRuntime implementation="com.intellij.remoteServer.ir.runtime.sample.SampleLanguageRuntimeType" />
   </extensions>
 
   <actions>
