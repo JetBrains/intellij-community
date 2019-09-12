@@ -76,6 +76,12 @@ public class BaseOutputReaderTest {
   }
 
   @Test(timeout = 30000)
+  public void testNonBlockingLineRead() throws Exception {
+    List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, true, false, true);
+    assertThat(lines).containsExactly(r(TEST_DATA[0]), r(TEST_DATA[1] + TEST_DATA[2]), r(TEST_DATA[3]), r(TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]));
+  }
+
+  @Test(timeout = 30000)
   public void testNonBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, true, true, true);
     assertThat(lines.size()).as("chunks: " + lines).isBetween(7, 9);

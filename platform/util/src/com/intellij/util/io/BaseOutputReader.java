@@ -77,10 +77,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
       throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
     }
 
-    if (options.policy() != SleepingPolicy.BLOCKING && !options.sendIncompleteLines()) {
-      throw new IllegalArgumentException("In non-blocking mode, the reader cannot produce complete lines reliably");
-    }
-
     myReader = reader;
     myOptions = options;
   }
@@ -115,7 +111,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
         myLineBuffer.append('\r');
         myCarry = false;
       }
-      if (myLineBuffer.length() > 0) {
+      if (myLineBuffer.length() > 0 && myOptions.sendIncompleteLines()) {
         sendText(myLineBuffer);
       }
     }
@@ -156,6 +152,13 @@ public abstract class BaseOutputReader extends BaseDataReader {
     }
 
     return read;
+  }
+
+  @Override
+  protected void flush() {
+    if (myLineBuffer.length() > 0) {
+      sendText(myLineBuffer);
+    }
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")

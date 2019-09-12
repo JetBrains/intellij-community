@@ -175,6 +175,7 @@ public abstract class BaseDataReader {
       LOG.error(e);
     }
     finally {
+      flush();
       try {
         close();
       }
@@ -183,6 +184,8 @@ public abstract class BaseDataReader {
       }
     }
   }
+
+  protected void flush() {}
 
   protected void beforeSleeping(boolean hasJustReadSomething) {}
 
