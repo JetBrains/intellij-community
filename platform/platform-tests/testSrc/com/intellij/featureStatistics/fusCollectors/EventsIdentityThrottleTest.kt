@@ -38,5 +38,10 @@ class EventsIdentityThrottleTest {
     assertTrue(throttle.tryPass(1, 24))
     assertTrue(throttle.tryPass(2, 25))
     assertTrue(throttle.tryPass(3, 26))
+
+    val freshThrottle = EventsIdentityThrottle(3, 10)
+
+    assertTrue(freshThrottle.tryPass(1, -10))
+    assertTrue(freshThrottle.tryPass(1, 0))
   }
 }
