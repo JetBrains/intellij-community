@@ -1176,7 +1176,8 @@ public class PluginManagerCore {
     initClassLoader(descriptor, coreLoader, pluginIdTraverser());
   }
 
-  private static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
+  @ApiStatus.Internal
+  public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
                                      @NotNull ClassLoader coreLoader,
                                      @NotNull JBTreeTraverser<PluginId> traverser) {
     File[] classPath = descriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
@@ -1624,6 +1625,12 @@ public class PluginManagerCore {
   public static JBTreeTraverser<PluginId> pluginIdTraverser() {
     IdeaPluginDescriptorImpl[] plugins = ourPlugins;
     if (plugins == null) return new JBTreeTraverser<>(Functions.constant(null));
+    return pluginIdTraverser(plugins);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static JBTreeTraverser<PluginId> pluginIdTraverser(IdeaPluginDescriptorImpl[] plugins) {
     return new PluginTraverser(buildPluginIdMap(plugins, new ArrayList<>()), false, true).unique();
   }
 

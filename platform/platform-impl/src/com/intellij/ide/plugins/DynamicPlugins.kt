@@ -127,7 +127,8 @@ object DynamicPlugins {
   @JvmStatic
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
     val coreLoader = ReflectionUtil.findCallerClass(1)!!.classLoader
-    PluginManagerCore.initClassLoader(pluginDescriptor, coreLoader)
+    val pluginsWithNewPlugin = (PluginManagerCore.getPlugins().filterIsInstance<IdeaPluginDescriptorImpl>() + listOf(pluginDescriptor)).toTypedArray()
+    PluginManagerCore.initClassLoader(pluginDescriptor, coreLoader, PluginManagerCore.pluginIdTraverser(pluginsWithNewPlugin))
 
     val application = ApplicationManager.getApplication() as ApplicationImpl
     application.runWriteAction {
