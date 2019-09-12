@@ -131,3 +131,4 @@ com.intellij.flex.uiDesigner 183.3795.13
 project_manager 1.0
 com.mabdurrahman.intellij.customtitle 0.0.3 0.0.2 0.0.1
 "JRebel for IntelliJ" 2019.1.6
+Codota 3.0.1 3.0.2 3.0.3 3.0.4 3.0.5 3.0.6 3.0.7
