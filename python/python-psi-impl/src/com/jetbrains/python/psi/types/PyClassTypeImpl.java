@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -51,7 +51,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
    * @param isDefinition whether this type describes an instance or a definition of the class.
    */
   public PyClassTypeImpl(@NotNull PyClass source, boolean isDefinition) {
-    PyClass originalElement = CompletionUtil.getOriginalElement(source);
+    PyClass originalElement = CompletionUtilCoreImpl.getOriginalElement(source);
     myClass = originalElement != null ? originalElement : source;
     myIsDefinition = isDefinition;
   }
@@ -497,7 +497,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (isRecursive(context)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final Set<String> visited = visitedNames(context);
 
-    final PsiFile origin = location != null ? CompletionUtil.getOriginalOrSelf(location).getContainingFile() : null;
+    final PsiFile origin = location != null ? CompletionUtilCoreImpl.getOriginalOrSelf(location).getContainingFile() : null;
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
 
     final boolean withinOurClass = withinClass(getPyClass(), location);
@@ -570,7 +570,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static boolean withinClass(@NotNull PyClass cls, @Nullable PsiElement location) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(location, PyClass.class);
     if (containingClass != null) {
-      containingClass = CompletionUtil.getOriginalElement(containingClass);
+      containingClass = CompletionUtilCoreImpl.getOriginalElement(containingClass);
     }
     return containingClass == PyiUtil.getOriginalElementOrLeaveAsIs(cls, PyClass.class) || isInSuperCall(location);
   }

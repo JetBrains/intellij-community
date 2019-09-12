@@ -6,7 +6,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public abstract class PushedFilePropertiesUpdater {
+  public abstract void runConcurrentlyIfPossible(List<Runnable> tasks);
+
   @NotNull
   public static PushedFilePropertiesUpdater getInstance(@NotNull Project project) {
     return project.getComponent(PushedFilePropertiesUpdater.class);

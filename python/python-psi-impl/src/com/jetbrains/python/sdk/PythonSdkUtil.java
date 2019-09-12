@@ -18,14 +18,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +37,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -117,11 +115,11 @@ public class PythonSdkUtil {
         originPath = originFile.getPath();
       }
 
-      final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+      final VirtualFile libDir = PySearchUtilBase.findLibDir(pythonSdk);
       if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
-      final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+      final VirtualFile venvLibDir = PySearchUtilBase.findVirtualEnvLibDir(pythonSdk);
       if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
@@ -156,7 +154,7 @@ public class PythonSdkUtil {
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
+    return sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker;
   }
 
   public static String getUserSite() {
@@ -221,11 +219,7 @@ public class PythonSdkUtil {
 
   @NotNull
   private static String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
-    final RemoteSdkAdditionalData remoteSdkData = as(sdk.getSdkAdditionalData(), RemoteSdkAdditionalData.class);
-    if (remoteSdkData != null) {
-      return remoteSdkData.getPathMappings().convertToRemote(localRoot);
-    }
-    return localRoot;
+    return PythonRuntimeService.getInstance().mapToRemote(localRoot, sdk);
   }
 
   private static boolean isUnderLibDirButNotSitePackages(@Nullable VirtualFile file,
@@ -440,10 +434,10 @@ public class PythonSdkUtil {
   public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
     final VirtualFile libDir;
     if (isVirtualEnv(pythonSdk)) {
-      libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+      libDir = PySearchUtilBase.findVirtualEnvLibDir(pythonSdk);
     }
     else {
-      libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+      libDir = PySearchUtilBase.findLibDir(pythonSdk);
     }
     return libDir != null ? libDir.findChild(PyNames.SITE_PACKAGES) : null;
   }

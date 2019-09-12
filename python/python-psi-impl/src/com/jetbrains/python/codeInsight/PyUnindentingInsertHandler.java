@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -96,9 +96,10 @@ public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupEle
       assert outer_indent >= 0;
       int current_indent = nonspace_offset - line_start_offset;
       int indent = outer_indent - current_indent;
-      EditorActionUtil.indentLine(project, editor, document.getLineNumber(offset), editor.getSettings().isUseTabCharacter(project)
+      EditorCoreUtil.indentLine(project, editor, document.getLineNumber(offset), editor.getSettings().isUseTabCharacter(project)
                                                                                    ? indent * editor.getSettings().getTabSize(project)
-                                                                                   : indent);
+                                                                                   : indent, false);
+      //TODO!!!: shouldUseSmartTabs! is it applicable?
       return true;
     }
     return false;

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -133,7 +133,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
       LookupElement lookupElement = LookupElementBuilder.create(variant);
       if (entry.getValue()) {
-        lookupElement = TailTypeDecorator.withTail(lookupElement, TailType.EQ);
+        lookupElement = TailTypeDecorator.withTail(lookupElement, EqTailType.INSTANCE);
       }
 
       result.addElement(lookupElement);

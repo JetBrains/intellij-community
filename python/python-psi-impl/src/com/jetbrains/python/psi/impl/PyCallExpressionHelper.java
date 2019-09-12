@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -657,7 +657,7 @@ public class PyCallExpressionHelper {
       if (second_type instanceof PyClassType) {
         // imitate isinstance(second_arg, possible_class)
         PyClass secondClass = ((PyClassType)second_type).getPyClass();
-        if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
+        if (CompletionUtilCoreImpl.getOriginalOrSelf(firstClass) == secondClass) {
           return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {

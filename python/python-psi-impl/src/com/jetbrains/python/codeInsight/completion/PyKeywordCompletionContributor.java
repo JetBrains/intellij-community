@@ -12,7 +12,7 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -152,7 +152,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
       final PsiFile file = p.getContainingFile().getOriginalFile();
       Document doc = docMgr.getDocument(file);
-      String indentCharacters = file.getViewProvider() instanceof InjectedFileViewProvider? " \t>": " \t";
+      String indentCharacters = file.getViewProvider() instanceof FreeThreadedFileViewProvider ? " \t>" : " \t";
 
       if (doc != null) {
         CharSequence chs = doc.getCharsSequence();

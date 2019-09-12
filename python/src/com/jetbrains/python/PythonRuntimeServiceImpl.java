@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
@@ -21,6 +22,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
@@ -68,5 +71,14 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public String formatDocstring(Module module, DocStringFormat format, String docstring) {
     return PyRuntimeDocstringFormatter.runExternalTool(module, format, docstring);
+  }
+
+  @Override
+  public String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
+    final RemoteSdkAdditionalData remoteSdkData = as(sdk.getSdkAdditionalData(), RemoteSdkAdditionalData.class);
+    if (remoteSdkData != null) {
+      return remoteSdkData.getPathMappings().convertToRemote(localRoot);
+    }
+    return localRoot;
   }
 }

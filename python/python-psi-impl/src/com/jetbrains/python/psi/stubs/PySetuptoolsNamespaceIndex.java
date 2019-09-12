@@ -22,7 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -92,7 +92,7 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static Collection<VirtualFile> find(@NotNull String name, @NotNull Project project) {
-    final GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(project);
+    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
     return FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
   }
 }

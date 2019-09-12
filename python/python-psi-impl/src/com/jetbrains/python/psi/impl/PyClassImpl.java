@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
@@ -1246,7 +1246,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final Map<String, PyTargetExpression> declarationsInMethod = new HashMap<>();
     final PyFunction instanceMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
-    if (instanceMethod != null && containingClass != null && CompletionUtil.getOriginalElement(containingClass) == this) {
+    if (instanceMethod != null && containingClass != null && CompletionUtilCoreImpl.getOriginalElement(containingClass) == this) {
       collectInstanceAttributes(instanceMethod, declarationsInMethod);
       for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
         if (!processor.execute(targetExpression, ResolveState.initial())) {

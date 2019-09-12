@@ -3,10 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -123,7 +120,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   }
 
   private static TailType getTail(boolean last) {
-    return last ? new CharTailType('>') : TailType.COMMA;
+    return last ? new CharTailType('>') : CommaTailType.INSTANCE;
   }
 
   @Nullable

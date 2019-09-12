@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python.psi.impl.references;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -27,13 +28,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -48,7 +47,7 @@ import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -129,7 +128,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     if (match.size() > 1) {
       final PyClass ourClass = PyiUtil.getOriginalElementOrLeaveAsIs(qualifierType.getPyClass(), PyClass.class);
-      final PsiElement theirClass = CompletionUtil.getOriginalOrSelf(match.get(match.size() - 1));
+      final PsiElement theirClass = CompletionUtilCoreImpl.getOriginalOrSelf(match.get(match.size() - 1));
       if (ourClass != theirClass) return true;
     }
     return false;
@@ -137,7 +136,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   private void addImplicitResolveResults(String referencedName, ResolveResultList ret) {
     final Project project = myElement.getProject();
-    final GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(project);
+    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
     final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
     final PsiFile containingFile = myElement.getContainingFile();
     final List<QualifiedName> imports;
@@ -148,11 +147,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
       imports = Collections.emptyList();
     }
     for (Object function : functions) {
-      if (!(function instanceof PyFunction)) {
-        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                     new Throwable("found non-function object " + function + " in function list"));
-        break;
-      }
+      //TODO: most likely the following code is obsolete
+      //if (!(function instanceof PyFunction)) {
+      //  FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+      //                                               new Throwable("found non-function object " + function + " in function list"));
+      //  break;
+      //}
       PyFunction pyFunction = (PyFunction)function;
       if (pyFunction.getContainingClass() != null) {
         ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports)));
@@ -258,12 +258,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
   public Object[] getVariants() {
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
-      qualifier = CompletionUtil.getOriginalOrSelf(qualifier);
+      qualifier = CompletionUtilCoreImpl.getOriginalOrSelf(qualifier);
     }
     if (qualifier == null) {
       return EMPTY_ARRAY;
     }
-    final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
+    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
 
     PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
@@ -285,7 +285,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
           final Collection<PyTargetExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
           for (PyTargetExpression expression : attrs) {
             final String name = expression.getName();
-            if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+            if (name != null && name.endsWith(CompletionInitializationContext.DUMMY_IDENTIFIER.trim())) {
               continue;
             }
             if (qualifierType instanceof PyClassType && name != null) {

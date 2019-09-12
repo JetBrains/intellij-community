@@ -73,6 +73,7 @@ public class PyNames {
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";
   @NonNls public static final String PYTHON_MODULE_ID = "PYTHON_MODULE";
   public static final String TESTCASE_SETUP_NAME = "setUp";
+  public static final String PY_DOCSTRING_ID = "PyDocstring";
 
   private PyNames() {
   }

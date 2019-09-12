@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -672,7 +672,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
     final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
@@ -744,7 +744,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     for (LookupElement item : processor.getResultList()) {
       final PsiElement e = item.getPsiElement();
       if (e != null) {
-        final PsiElement original = CompletionUtil.getOriginalElement(e);
+        final PsiElement original = CompletionUtilCoreImpl.getOriginalElement(e);
         if (original == null) {
           continue;
         }

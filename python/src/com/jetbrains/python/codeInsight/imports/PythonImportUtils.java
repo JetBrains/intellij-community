@@ -22,13 +22,11 @@ import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProv
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -147,7 +145,7 @@ public final class PythonImportUtils {
                                                 Set<String> seenCandidateNames, PsiFile existingImportFile) {
     Project project = node.getProject();
     List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(refText, project, true));
-    GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(node);
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(node);
     if (!isQualifier(node)) {
       symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
     }

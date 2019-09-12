@@ -49,6 +49,10 @@ public class PythonRuntimeService {
     return null;
   }
 
+  public String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
+    return localRoot;
+  }
+
   public static PythonRuntimeService getInstance() {
     return ServiceManager.getService(PythonRuntimeService.class);
   }

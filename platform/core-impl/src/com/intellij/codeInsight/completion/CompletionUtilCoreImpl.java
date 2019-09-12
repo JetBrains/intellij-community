@@ -63,4 +63,10 @@ public class CompletionUtilCoreImpl {
 
     return psi;
   }
+
+  @NotNull
+  public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
+    final T element = getOriginalElement(psi);
+    return element == null ? psi : element;
+  }
 }

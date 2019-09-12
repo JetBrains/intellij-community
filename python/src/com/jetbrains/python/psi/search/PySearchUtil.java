@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PySearchUtil {
+public class PySearchUtil extends PySearchUtilBase {
   /**
    * Returns string that represents element in string search.
    *

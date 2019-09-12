@@ -30,7 +30,7 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +85,7 @@ public class PyIndexingTest extends PyTestCase {
     final Module module = myFixture.getModule();
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
-    final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(sdk);
+    final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
 
     ModuleRootModificationUtil.addContentRoot(module, libDir);
     try {

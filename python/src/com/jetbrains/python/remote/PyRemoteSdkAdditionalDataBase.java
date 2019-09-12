@@ -16,11 +16,13 @@
 package com.jetbrains.python.remote;
 
 import com.intellij.remote.RemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 
 /**
  * @author traff
  */
-public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware {
+public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware,
+                                                       PyRemoteSdkAdditionalDataMarker {
   String getVersionString();
 
   void setVersionString(String versionString);
