@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManage
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
@@ -127,7 +128,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     if (myEscapePressed) {
       result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
     }
-    result.append(shellCommand).append('\n');
+    String enterCode = new String(getTerminalStarter().getCode(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+    result.append(shellCommand).append(enterCode);
     getTtyConnector().write(result.toString());
   }
 
