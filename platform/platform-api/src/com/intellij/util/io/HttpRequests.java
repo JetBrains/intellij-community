@@ -50,7 +50,7 @@ import java.util.Map;
  * {@code int firstByte = HttpRequests.request("file:///dev/random").connect(request -> request.getInputStream().read())}<br>
  * {@code String firstLine = HttpRequests.request("https://example.com").connect(request -> new BufferedReader(request.getReader()).readLine())}</p>
  *
- * @see HttpStatusException a sublass of IOException which includes an actual URL and HTTP response code
+ * @see HttpStatusException a sublass of IOException, which includes an actual URL and HTTP response code
  * @see URLUtil
  */
 public final class HttpRequests {
@@ -190,7 +190,7 @@ public final class HttpRequests {
   }
 
   /**
-   * Java does not support "newer" HTTP methods so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
+   * Java does not support "newer" HTTP methods, so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
    * For reasoning see {@link HttpURLConnection#setRequestMethod(String)}
    * <p>
    * TODO: either fiddle with reflection or patch JDK to avoid server reliance
@@ -252,7 +252,7 @@ public final class HttpRequests {
     private String myAccept;
     private ConnectionTuner myTuner;
     private final ConnectionTuner myInternalTuner;
-    public boolean myThrowStatusCodeException = true;
+    private boolean myThrowStatusCodeException = true;
 
     private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
@@ -654,7 +654,7 @@ public final class HttpRequests {
     try {
       SSLSocketFactory factory = CertificateManager.getInstance().getSslContext().getSocketFactory();
       if (factory == null) {
-        LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
+        LOG.info("SSLSocketFactory is not defined by the IDE Certificate Manager; Using default SSL configuration to connect to " + url);
       }
       else {
         connection.setSSLSocketFactory(factory);
