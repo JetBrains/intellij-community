@@ -123,15 +123,25 @@ envs {
                true)
 
   // For TensorFlow
-  createPython("py37_tensorflow1",
+  createPython("py37_tensorflow1_oldpaths",
                "3.7.3",
-               ["tensorflow < 2"],
-               "python3.7\npython3\ntensorflow1",
+               ["tensorflow < 1.15.0rc0"],
+               "tensorflow1\ntensorflow_oldpaths",
                true)
-  createPython("py37_tensorflow2",
+  createPython("py37_tensorflow1_newpaths",
                "3.7.3",
-               ["tensorflow ~= 2.0.0b1"],
-               "python3.7\npython3\ntensorflow2",
+               ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
+               "tensorflow1\ntensorflow_newpaths",
+               true)
+  createPython("py37_tensorflow2_oldpaths",
+               "3.7.3",
+               ["tensorflow >= 2.0.0a0, < 2.0.0rc0"],
+               "tensorflow2\ntensorflow_oldpaths",
+               true)
+  createPython("py37_tensorflow2_newpaths",
+               "3.7.3",
+               ["tensorflow >= 2.0.0rc0"],
+               "tensorflow2\ntensorflow_newpaths",
                true)
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
