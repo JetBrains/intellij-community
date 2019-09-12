@@ -1,49 +1,44 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.fixes;
 
-import com.intellij.codeInsight.EditorInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingTestBase {
+
+  @Override
+  protected String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
+  }
+
   protected void doTest(@Language("JSON") @NotNull String schema, @NotNull String text, String fixName, String afterFix) throws Exception {
-    PsiFile file = configureInitially(schema, text, "json");
-    HashMap<VirtualFile, EditorInfo> map = new HashMap<>();
-    map.put(file.getVirtualFile(), new EditorInfo(file.getText()));
-    List<Editor> editors = openEditors(map);
-    Collection<HighlightInfo> infos = doDoTest(true, false);
-    PsiFile psiFile = getPsiFile(editors.get(0).getDocument());
-    findAndInvokeIntentionAction(infos, fixName, editors.get(0), psiFile);
-    String fileText = getFile().getText();
+    configureInitially(schema, text, "json");
+    myFixture.doHighlighting();
+    List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+    IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getFamilyName()));
+    action.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    String fileText = myFixture.getFile().getText();
     int caretIndex = afterFix.indexOf("<caret>");
     if (caretIndex >= 0) {
-      int caretOffset = getEditor().getCaretModel().getOffset();
+      int caretOffset = myFixture.getEditor().getCaretModel().getOffset();
       fileText = fileText.substring(0, caretOffset - 1) + "<caret>" + fileText.substring(caretOffset - 1);
     }
     assertEquals(afterFix, fileText);
   }
-
-  @NotNull
+/*
   @Override
-  protected PsiFile doCreateFile(@NotNull String text) throws Exception {
-    File dir = createTempDir("json_schema_test_r", true);
-    File child = new File(dir, getTestFileName());
-    //noinspection ResultOfMethodCallIgnored
-    child.createNewFile();
-    FileUtil.writeToFile(child, text);
-    VirtualFile schemaFile = getVirtualFile(child);
-    schemaFile.setWritable(true);
-    return getPsiManager().findFile(schemaFile);
-  }
+  @NotNull
+  protected PsiFile configureInitially(@NotNull String schema,
+                                       @NotNull String text,
+                                       @NotNull String schemaExt) {
+    myFixture.enableInspections(getInspectionProfile());
+    registerProvider(schema, schemaExt);
+    return myFixture.addFileToProject("json_schema_test_r/" + getTestFileName(), text);
+  }*/
 }

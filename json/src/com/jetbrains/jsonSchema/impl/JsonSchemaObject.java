@@ -34,6 +34,7 @@ public class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 
   public static final String MOCK_URL = "mock:///";
+  public static final String TEMP_URL = "temp:///";
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
   @NonNls public static final String ITEMS = "items";
@@ -133,7 +134,7 @@ public class JsonSchemaObject {
 
   public JsonSchemaObject(@Nullable VirtualFile file, @NotNull String pointer) {
     myFileUrl = file == null ? null : file.getUrl();
-    myRawFile = myFileUrl != null && myFileUrl.startsWith(MOCK_URL) ? file : null;
+    myRawFile = myFileUrl != null && JsonFileResolver.isTempOrMockUrl(myFileUrl) ? file : null;
     myPointer = pointer;
     myProperties = new HashMap<>();
   }

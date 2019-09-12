@@ -2,12 +2,16 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTestBase;
 import org.jetbrains.yaml.YAMLLanguage;
 
+import java.util.Calendar;
+
+@Bombed(user = "Anton.Lobov", month = Calendar.NOVEMBER, day = 1)
 public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   @Override
   protected String getTestFileName() {

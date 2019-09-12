@@ -2,12 +2,16 @@
 package com.jetbrains.jsonSchema.fixes;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.idea.Bombed;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 
+import java.util.Calendar;
+
+@Bombed(user = "Anton.Lobov", month = Calendar.NOVEMBER, day = 1)
 public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   @Override
   protected String getTestFileName() {
@@ -33,7 +37,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    }\n" +
            "  },\n" +
            "  \"required\": [\"a\", \"b\"]\n" +
-           "}", "<warning>{\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
+           "}", "<warning>{<caret>\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
                                                                                     "  \"a\": \"q\",\n" +
                                                                                     "  \"b\":\n" +
                                                                                     "}");
@@ -52,7 +56,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "      \"default\": 1\n" +
            "    }\n" +
            "  }\n" +
-           "}", "<warning>{}</warning>", "Add missing properties 'x', 'y'", "{\n" +
+           "}", "<warning>{<caret>}</warning>", "Add missing properties 'x', 'y'", "{\n" +
                                                                             "  \"x\": true,\n" +
                                                                             "  \"y\": 1\n" +
                                                                             "}");
@@ -65,7 +69,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    \"c\": {}\n" +
            "  },\n" +
            "  \"additionalProperties\": false\n" +
-           "}", "{\"a\": 5, <warning>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
+           "}", "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
                                                                                                        "  \"c\": 7}");
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.idea.Bombed;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,6 +14,9 @@ import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
 
+import java.util.Calendar;
+
+@Bombed(user = "Anton.Lobov", month = Calendar.NOVEMBER, day = 1)
 public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
   @Override
   protected String getTestFileName() {
@@ -32,7 +36,8 @@ public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBas
   @SuppressWarnings("SameParameterValue")
   private void doTest(@Language("JSON") String schema, @Language("YAML") String text, boolean shouldHaveInjection) throws Exception {
     final PsiFile file = configureInitially(schema, text, "json");
-    PsiElement injectedElement = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, getEditor().getCaretModel().getOffset());
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(
+      file, myFixture.getEditor().getCaretModel().getOffset());
     assertSame(shouldHaveInjection, injectedElement != null);
   }
 
