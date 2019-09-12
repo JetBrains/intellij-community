@@ -430,6 +430,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  /**
+   * @deprecated use {@link #setAutoDirectoryMappings(List)}
+   */
   @Deprecated
   public void setAutoDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
