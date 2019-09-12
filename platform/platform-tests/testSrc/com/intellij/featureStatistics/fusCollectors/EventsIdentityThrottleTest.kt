@@ -7,41 +7,90 @@ import kotlin.test.assertTrue
 
 class EventsIdentityThrottleTest {
 
+  private val ONE = -67834
+  private val TWO = 908542
+  private val THREE = 12314
+  private val FOUR = 482309581
+
   @Test
-  fun `test tryPass`() {
-    val throttle = EventsIdentityThrottle(3, 10)
+  fun `test throttling`() {
+    val timer = Timer()
+    val throttle = EventsIdentityThrottle(2, 10)
 
-    assertTrue(throttle.tryPass(1, 0))
-    assertTrue(throttle.tryPass(2, 2))
-    assertFalse(throttle.tryPass(1, 4))
-    assertTrue(throttle.tryPass(3, 5))
+    assertTrue(throttle.tryPass(ONE, timer.tick()))
+    assertTrue(throttle.tryPass(TWO, timer.tick()))
 
-    assertFalse(throttle.tryPass(1, 6))
-    assertFalse(throttle.tryPass(2, 7))
-    assertFalse(throttle.tryPass(3, 8))
-    assertFalse(throttle.tryPass(1, 9))
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == ONE)
 
-    assertTrue(throttle.tryPass(1, 10))
-    assertTrue(throttle.tryPass(4, 11))
-    assertTrue(throttle.tryPass(5, 12))
-    assertTrue(throttle.tryPass(6, 13))
+    assertFalse(throttle.tryPass(ONE, timer.tick()))
 
-    assertFalse(throttle.tryPass(4, 14))
-    assertFalse(throttle.tryPass(5, 15))
-    assertFalse(throttle.tryPass(6, 16))
-    assertFalse(throttle.tryPass(5, 21))
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == ONE)
 
-    assertTrue(throttle.tryPass(4, 21))
-    assertTrue(throttle.tryPass(5, 22))
-    assertTrue(throttle.tryPass(6, 23))
+    assertFalse(throttle.tryPass(TWO, timer.tick()))
 
-    assertTrue(throttle.tryPass(1, 24))
-    assertTrue(throttle.tryPass(2, 25))
-    assertTrue(throttle.tryPass(3, 26))
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == ONE)
+  }
 
-    val freshThrottle = EventsIdentityThrottle(3, 10)
+  @Test
+  fun `test max size`() {
+    val timer = Timer()
+    val throttle = EventsIdentityThrottle(2, 10)
 
-    assertTrue(freshThrottle.tryPass(1, -10))
-    assertTrue(freshThrottle.tryPass(1, 0))
+    assertTrue(throttle.tryPass(ONE, timer.tick()))
+    assertTrue(throttle.tryPass(TWO, timer.tick()))
+
+    assertTrue(throttle.tryPass(THREE, timer.tick()))
+
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == TWO)
+
+    assertTrue(throttle.tryPass(FOUR, timer.tick()))
+
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == THREE)
+  }
+
+  @Test
+  fun `test timeout`() {
+    val timer = Timer()
+    val throttle = EventsIdentityThrottle(2, 10)
+
+    assertTrue(throttle.tryPass(ONE, timer.tick()))
+    assertTrue(throttle.tryPass(TWO, timer.tick()))
+
+    assert(throttle.size(timer.bigTick(9)) == 1)
+    assert(throttle.getOldest(timer.now()) == TWO)
+
+    assertTrue(throttle.tryPass(ONE, timer.tick()))
+
+    assert(throttle.size(timer.now()) == 1)
+    assert(throttle.getOldest(timer.now()) == ONE)
+
+    assertTrue(throttle.tryPass(TWO, timer.tick()))
+
+    assert(throttle.size(timer.now()) == 2)
+    assert(throttle.getOldest(timer.now()) == ONE)
+  }
+
+  private class Timer {
+
+    private var time: Long = -572893L
+
+    fun now(): Long {
+      return time
+    }
+
+    fun tick(): Long {
+      time += 1
+      return time
+    }
+
+    fun bigTick(value: Long): Long {
+      time += value
+      return time
+    }
   }
 }
