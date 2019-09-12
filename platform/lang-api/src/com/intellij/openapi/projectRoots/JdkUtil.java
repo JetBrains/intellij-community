@@ -59,7 +59,7 @@ public class JdkUtil {
   private JdkUtil() { }
 
   /**
-   * Returns the specified attribute of the JDK (examines rt.jar), or {@code null} if cannot determine the value.
+   * Returns the specified attribute of the JDK (examines 'rt.jar'), or {@code null} if cannot determine the value.
    */
   @Nullable
   public static String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
@@ -166,7 +166,7 @@ public class JdkUtil {
     boolean dynamicParameters = dynamicClasspath && javaParameters.isDynamicParameters() && useDynamicParameters();
     boolean dynamicMainClass = false;
 
-    //copy javaagents to the beginning of the classpath to load agent classes faster
+    // copies 'javaagent' .jar files to the beginning of the classpath to load agent classes faster
     if (isUrlClassloader(vmParameters)) {
       for (String parameter : vmParameters.getParameters()) {
         if (parameter.startsWith(JAVAAGENT)) {
@@ -177,7 +177,7 @@ public class JdkUtil {
     }
 
     if (dynamicClasspath) {
-      Class commandLineWrapper;
+      Class<?> commandLineWrapper;
       if (javaParameters.isArgFile()) {
         setArgFileParams(commandLine, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters);
         dynamicMainClass = dynamicParameters;
@@ -303,7 +303,7 @@ public class JdkUtil {
   private static void setCommandLineWrapperParams(@NotNull GeneralCommandLine commandLine,
                                                   @NotNull SimpleJavaParameters javaParameters,
                                                   @NotNull ParametersList vmParameters,
-                                                  @NotNull Class commandLineWrapper,
+                                                  @NotNull Class<?> commandLineWrapper,
                                                   boolean dynamicVMOptions,
                                                   boolean dynamicParameters) throws CantRunException {
     try {
@@ -398,7 +398,7 @@ public class JdkUtil {
   private static void setClasspathJarParams(@NotNull GeneralCommandLine commandLine,
                                             @NotNull SimpleJavaParameters javaParameters,
                                             @NotNull ParametersList vmParameters,
-                                            @NotNull Class commandLineWrapper,
+                                            @NotNull Class<?> commandLineWrapper,
                                             boolean dynamicVMOptions,
                                             boolean dynamicParameters) throws CantRunException {
     try {
@@ -457,7 +457,7 @@ public class JdkUtil {
   }
 
   private static void throwUnableToCreateTempFile(@NotNull IOException cause) throws CantRunException {
-    throw new CantRunException("Failed to a create temporary file in " + FileUtilRt.getTempDirectory(), cause);
+    throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
   private static void appendParamsEncodingClasspath(@NotNull SimpleJavaParameters javaParameters,
@@ -483,7 +483,7 @@ public class JdkUtil {
   private static void appendEncoding(@NotNull SimpleJavaParameters javaParameters,
                                      @NotNull GeneralCommandLine commandLine,
                                      @NotNull ParametersList parametersList) {
-    // Value of file.encoding and charset of GeneralCommandLine should be in sync in order process's input and output be correctly handled.
+    // for correct handling of process's input and output, values of file.encoding and charset of GeneralCommandLine should be in sync
     String encoding = parametersList.getPropertyValue("file.encoding");
     if (encoding == null) {
       Charset charset = javaParameters.getCharset();
@@ -520,7 +520,7 @@ public class JdkUtil {
   }
 
   @Nullable
-  private static Class getCommandLineWrapperClass() {
+  private static Class<?> getCommandLineWrapperClass() {
     try {
       return Class.forName(WRAPPER_CLASS);
     }
@@ -549,13 +549,10 @@ public class JdkUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2018) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
-  public static GeneralCommandLine setupJVMCommandLine(final String exePath,
-                                                       final SimpleJavaParameters javaParameters,
-                                                       final boolean forceDynamicClasspath) {
+  public static GeneralCommandLine setupJVMCommandLine(String exePath, SimpleJavaParameters javaParameters, boolean forceDynamicClasspath) {
     try {
       javaParameters.setUseDynamicClasspath(forceDynamicClasspath);
       GeneralCommandLine commandLine = new GeneralCommandLine(exePath);

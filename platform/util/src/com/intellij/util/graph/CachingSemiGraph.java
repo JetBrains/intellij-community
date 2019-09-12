@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
+public class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
   public static <T> InboundSemiGraph<T> cache(InboundSemiGraph<T> original) {
     return new CachingSemiGraph<>(original);
   }
@@ -45,5 +45,4 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
            ? inNodes.iterator()
            : ContainerUtil.emptyIterator();
   }
-
 }
