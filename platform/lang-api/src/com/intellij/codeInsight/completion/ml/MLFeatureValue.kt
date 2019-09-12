@@ -13,6 +13,14 @@ sealed class MLFeatureValue {
     @JvmStatic
     fun float(value: Double): MLFeatureValue = FloatValue(value)
 
+    // alias for float(Int), but could be used from java sources (since java forbids to use method named like a keyword)
+    @JvmStatic
+    fun numerical(value: Int): MLFeatureValue = float(value)
+
+    // alias for float(Double), but could be used from java sources (since java forbids to use method named like a keyword)
+    @JvmStatic
+    fun numerical(value:Double): MLFeatureValue = float(value)
+
     @JvmStatic
     fun <T : Enum<*>> categorical(value: T): MLFeatureValue = CategoricalValue(value.toString())
   }
