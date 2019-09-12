@@ -42,14 +42,6 @@ public abstract class ApplicationInfo {
   }
 
   /**
-   * @deprecated This method always returns null.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Nullable
-  public abstract String getHelpURL();
-
-  /**
    * Use this method to refer to the company in official contexts where it may have any legal implications.
    *
    * @return full name of the product vendor, e.g. 'JetBrains s.r.o.' for JetBrains products

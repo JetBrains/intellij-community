@@ -283,12 +283,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return fullName;
   }
 
-  @Nullable
-  @Override
-  public String getHelpURL() {
-    return null;
-  }
-
   @Override
   public String getShortCompanyName() {
     return myShortCompanyName;
