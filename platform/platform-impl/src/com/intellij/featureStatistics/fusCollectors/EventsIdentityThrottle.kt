@@ -6,12 +6,13 @@ import gnu.trove.TIntLongHashMap
 class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long) {
 
   private val identities: TIntLongHashMap = TIntLongHashMap(maxSize)
-  private var oldestIdentity: Int = 0
-  private var oldestTimestamp: Long = 0
+
+  private var oldestIdentityCache: Int = 0
+  private var oldestTimestampCache: Long = Long.MAX_VALUE
 
   fun tryPass(identity: Int, now: Long): Boolean {
 
-    clearTimestamps(now)
+    clearObsolete(now)
 
     if (identities.containsKey(identity)) {
       return false
@@ -27,59 +28,69 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
     }
   }
 
-  private fun put(identity: Int, now: Long) {
-    if (oldIdentitiesAbsent() || isOldest(now)) {
-      oldestIdentity = identity
-      oldestTimestamp = now
-    }
-
-    identities.put(identity, now)
+  fun size(now: Long): Int {
+    clearObsolete(now)
+    return identities.size()
   }
 
-  private fun clearTimestamps(now: Long) {
-    if (oldIdentitiesAbsent()) {
-      return
-    }
+  fun getOldest(now: Long): Int? {
+    clearObsolete(now)
+    return withOldest { oldestIdentity, _ -> oldestIdentity }
+  }
 
-    if (isObsolete(oldestTimestamp, now)) {
+  private fun put(identity: Int, now: Long) {
+    identities.put(identity, now)
+    takeIntoAccountInOldest(identity, now)
+  }
 
-      oldestTimestamp = Long.MAX_VALUE
-
-      for (identity in identities.keys()) {
-        val timestamp = identities.get(identity)
-        if (isObsolete(timestamp, now)) {
-          identities.remove(identity)
-        }
-        else if (isOldest(timestamp)) {
-          oldestIdentity = identity
-          oldestTimestamp = timestamp
-        }
+  private fun clearObsolete(now: Long) {
+    withOldest { _, oldestTimestamp ->
+      if (isObsolete(oldestTimestamp, now)) {
+        doClearObsolete(now)
       }
     }
   }
 
   private fun clearOldest() {
-    if (oldIdentitiesAbsent()) {
-      return
+    withOldest { oldestIdentity, _ ->
+      identities.remove(oldestIdentity)
+      updateOldest()
+    }
+  }
+
+  private fun doClearObsolete(now: Long) {
+
+    for (identity in identities.keys()) {
+      if (isObsolete(identities.get(identity), now)) {
+        identities.remove(identity)
+      }
     }
 
-    identities.remove(oldestIdentity)
+    updateOldest()
+  }
 
-    oldestTimestamp = Long.MAX_VALUE
+  private fun updateOldest() {
+    oldestTimestampCache = Long.MAX_VALUE
 
     identities.forEachEntry { identity, timestamp ->
-      if (isOldest(timestamp)) {
-        oldestIdentity = identity
-        oldestTimestamp = timestamp
-      }
-
+      takeIntoAccountInOldest(identity, timestamp)
       true
     }
   }
 
-  private fun isOldest(timestamp: Long): Boolean = timestamp <= oldestTimestamp
+  private fun takeIntoAccountInOldest(identity: Int, timestamp: Long) {
+    if (timestamp <= oldestTimestampCache) {
+      oldestIdentityCache = identity
+      oldestTimestampCache = timestamp
+    }
+  }
+
+  private inline fun <T> withOldest(identityAndTimestamp: (Int, Long) -> T): T? {
+    if (oldestTimestampCache != Long.MAX_VALUE) {
+      return identityAndTimestamp(oldestIdentityCache, oldestTimestampCache)
+    }
+    return null
+  }
 
   private fun isObsolete(timestamp: Long, now: Long): Boolean = timestamp + timeout <= now
-
-  private fun oldIdentitiesAbsent() = identities.isEmpty
 }
