@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -249,6 +250,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
+
+    ShortcutSet ss = ActionManager.getInstance().getAction("FocusEditor").getShortcutSet();
+    DumbAwareAction.create(__ -> ToolWindowManager.getInstance(myProject).activateEditorComponent()).registerCustomShortcutSet(ss, this);
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {

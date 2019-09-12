@@ -3,38 +3,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 public class FocusEditorAction extends AnAction {
 
-  @Override
-  public boolean isDumbAware() {
-    return true;
+  public FocusEditorAction() {
+    getTemplatePresentation().setEnabledAndVisible(false);
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
-  }
-
-  private static boolean isEnabled(@NotNull DataContext e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return false;
-    }
-    return !ToolWindowManager.getInstance(project).isEditorComponentActive();
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
-    ToolWindowManager.getInstance(project).activateEditorComponent();
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {}
 }
