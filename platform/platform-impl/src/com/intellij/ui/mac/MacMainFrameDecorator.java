@@ -311,7 +311,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       return Promises.rejectedPromise();
     }
     if (myInFullScreen == state) {
-      return Promises.resolvedPromise(true);
+      return Promises.resolvedPromise(state);
     }
 
     AsyncPromise<Boolean> promise = new AsyncPromise<>();
