@@ -478,6 +478,9 @@
     <keyboard-shortcut first-keystroke="control F"/>
   </action>
 
+  <action id="ServiceView.GroupByContributor">
+    <keyboard-shortcut first-keystroke="control T"/>
+  </action>
   <action id="ServiceView.GroupByServiceGroups">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
