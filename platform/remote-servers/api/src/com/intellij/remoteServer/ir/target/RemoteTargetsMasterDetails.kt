@@ -56,6 +56,17 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
     super.apply()
 
     val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.targets.resolvedConfigs()
+
+    //FIXME: temporary hack to have some runtimes in UI
+    addedConfigs.forEach {
+      if (it.displayName.contains("-sample") && it.runtimes.resolvedConfigs().isEmpty()) {
+        it.runtimes.addConfig(SampleLanguageRuntimeConfiguration().also {
+          it.homePath = "my home"
+          it.applicationFolder = "my app"
+        })
+      }
+    }
+
     addedConfigs.forEach { RemoteTargetsManager.instance.targets.addConfig(it) }
   }
 
