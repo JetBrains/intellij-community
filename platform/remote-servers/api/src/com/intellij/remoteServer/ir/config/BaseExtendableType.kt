@@ -4,6 +4,7 @@ package com.intellij.remoteServer.ir.config
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.util.xmlb.XmlSerializerUtil
 import javax.swing.Icon
 
 abstract class BaseExtendableType<C : BaseExtendableConfiguration>(val id: String) {
@@ -15,6 +16,10 @@ abstract class BaseExtendableType<C : BaseExtendableConfiguration>(val id: Strin
   abstract fun createSerializer(config: C): PersistentStateComponent<*>
 
   abstract fun createDefaultConfig(): C
+
+  fun duplicateConfig(config: C): C = createDefaultConfig().also {
+    XmlSerializerUtil.copyBean(config, it)
+  }
 
   abstract fun createConfigurable(project: Project, config: C): Configurable
 
