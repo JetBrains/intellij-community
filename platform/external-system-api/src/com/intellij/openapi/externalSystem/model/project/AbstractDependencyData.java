@@ -65,7 +65,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   /**
-   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
+   * @deprecated use {@link #getExternalName()} or {@link #getInternalName()} instead
    */
   @NotNull
   @Deprecated
@@ -75,7 +75,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   /**
-   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
+   * @deprecated  use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
    */
   @Deprecated
   @Override
