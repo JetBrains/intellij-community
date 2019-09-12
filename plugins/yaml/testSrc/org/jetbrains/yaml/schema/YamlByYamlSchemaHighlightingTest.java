@@ -151,8 +151,11 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "    \"type\": \"number\", \"minimum\": 18" +
                                                    "  }, {\"type\" : \"string\"}]\n" +
                                                    "}");
-    doTestYaml(schema, "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>");
+    doTestYaml(schema,
+               "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>");
+  }
 
+  public void testArrayTuples2() {
     @Language("YAML") final String schema2 = schema("{\n" +
                                                     "  \"type\": \"array\",\n" +
                                                     "  \"items\": [{\n" +
@@ -559,12 +562,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
 
 
-  public void testExclusiveMinMaxV6() {
+  public void testExclusiveMinMaxV6_1() {
     @Language("YAML") String exclusiveMinSchema = "{\"properties\": {\"prop\": {\"exclusiveMinimum\": 3}}}";
     doTestYaml(exclusiveMinSchema, "prop: <warning>2</warning>");
     doTestYaml(exclusiveMinSchema, "prop: <warning>3</warning>");
     doTestYaml(exclusiveMinSchema, "prop: 4");
+  }
 
+  public void testExclusiveMinMaxV6_2() {
     @Language("YAML") String exclusiveMaxSchema = "{\"properties\": {\"prop\": {\"exclusiveMaximum\": 3}}}";
     doTestYaml(exclusiveMaxSchema, "prop: 2");
     doTestYaml(exclusiveMaxSchema, "prop: <warning>3</warning>");
@@ -841,14 +846,17 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "}", "x: 2.99792458e8");
   }
 
-  public void testTreatEmptyValueAsNull() {
+  public void testTreatEmptyValueAsNull_1() {
     doTestYaml("{\n" +
-           "  \"properties\": {\n" +
-           "    \"x\": {\n" +
-           "      \"type\": \"number\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
+               "  \"properties\": {\n" +
+               "    \"x\": {\n" +
+               "      \"type\": \"number\"\n" +
+               "    }\n" +
+               "  }\n" +
+               "}", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
+  }
+
+  public void testTreatEmptyValueAsNull_2() {
     doTestYaml("{\n" +
            "  \"properties\": {\n" +
            "    \"x\": {\n" +
