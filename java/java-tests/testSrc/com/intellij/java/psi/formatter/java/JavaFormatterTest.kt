@@ -3275,6 +3275,31 @@ enum Foo {
     )
   }
 
+  fun testIdea184461() {
+    settings.rootSettings.FORMATTER_TAGS_ENABLED = true
+    val indentOptions = settings.indentOptions
+    TestCase.assertNotNull(indentOptions)
+    indentOptions!!.USE_TAB_CHARACTER = true
+    doTextTest(
+      "public class Test {\n" +
+      "/* @formatter:off */\n" +
+      "      String foo;\n" +
+      "      String bar;\n" +
+      "/* @formatter:on */\n" +
+      "      String abc;\n" +
+      "}",
+
+      "public class Test {\n" +
+      "\t/* @formatter:off */\n" +
+      "      String foo;\n" +
+      "      String bar;\n" +
+      "/* @formatter:on */\n" +
+      "\tString abc;\n" +
+      "}"
+
+    )
+  }
+
   fun testReformatCodeWithErrorElementsWithoutAssertions() {
     doTextTest("class  RedTest   {   \n\n\n\n\n\n\n\n   " +
                "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
