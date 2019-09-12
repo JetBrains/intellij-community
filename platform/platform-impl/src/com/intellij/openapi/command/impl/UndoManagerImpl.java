@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -98,12 +99,8 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl() {
-    this(null);
-  }
-
-  public UndoManagerImpl(@Nullable Project project) {
-    myProject = (ProjectEx)project;
+  private UndoManagerImpl(@Nullable ComponentManager componentManager) {
+    myProject = componentManager instanceof ProjectEx ? (ProjectEx)componentManager : null;
     myMerger = new CommandMerger(this);
 
     if (myProject != null && myProject.isDefault()) {

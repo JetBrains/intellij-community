@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
@@ -41,9 +40,7 @@ import java.util.concurrent.ConcurrentMap
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
-    private val constructorParameterResolver = ConstructorParameterResolver(isExtensionSupported = false)
-    private val heavyConstructorParameterResolver = ConstructorParameterResolver(isExtensionSupported = true)
-
+    private val constructorParameterResolver = ConstructorParameterResolver()
 
     @JvmStatic
     protected val fakeCorePluginDescriptor = object : PluginDescriptor {
@@ -217,7 +214,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  internal fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
+  internal open fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
 
   private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
     val picoContainer = myPicoContainer
@@ -504,36 +501,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId?): T {
-    // constructorParameterResolver is very expensive, because pico container behaviour is to find greediest satisfiable constructor,
-    // so, if class has constructors (Project) and (Project, Foo, Bar), then Foo and Bar unrelated classes will be searched for.
-    // To avoid this expensive nearly linear search of extension, first resolve without our logic to resolve extensions, and in case of error try expensive.
-    try {
-      return instantiateUsingPicoContainer(aClass, key, this, constructorParameterResolver)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: ExtensionNotApplicableException) {
-      throw e
-    }
-    catch (e: Exception) {
-      if (lightServices == null || e is IncorrectOperationException) {
-        throw e
-      }
-      else {
-        assertExtensionInjection(pluginId, e)
-        return instantiateUsingPicoContainer(aClass, key, this, heavyConstructorParameterResolver)
-      }
-    }
+    return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
   }
 
-  protected open fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
-    val app = getApplication()
-    @Suppress("SpellCheckingInspection")
-    if (app != null && app.isUnitTestMode && pluginId?.idString != "org.jetbrains.kotlin" && pluginId?.idString != "Lombook Plugin") {
-      throw UnsupportedOperationException("In tests, extension classes are not resolved for constructor injection, to enforce removing such deprecated references.", e)
-    }
-  }
+  internal open fun isContainerInTestMode() = false
 
   final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
     val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")

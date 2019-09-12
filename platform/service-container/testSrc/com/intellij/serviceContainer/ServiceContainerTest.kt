@@ -2,9 +2,9 @@
 package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.extensions.PluginId
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 
@@ -28,8 +28,7 @@ class ServiceContainerTest {
 internal class TestComponentManager : PlatformComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.appContainerDescriptor
 
-  override fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
-  }
+  override fun getApplication(): Application? = null
 }
 
 private class C1(componentManager: ComponentManager) {

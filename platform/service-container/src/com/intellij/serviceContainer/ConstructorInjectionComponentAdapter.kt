@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
+import com.intellij.openapi.extensions.PluginId
 import gnu.trove.THashSet
 import org.picocontainer.PicoInitializationException
 import org.picocontainer.PicoIntrospectionException
@@ -10,7 +11,11 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 
-internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: Any, componentManager: PlatformComponentManagerImpl, parameterResolver: ConstructorParameterResolver): T {
+internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
+                                               requestorKey: Any,
+                                               pluginId: PluginId?,
+                                               componentManager: PlatformComponentManagerImpl,
+                                               parameterResolver: ConstructorParameterResolver): T {
   val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
 
   val parameterTypes: Array<Class<*>>
@@ -20,7 +25,9 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: A
     parameterTypes = constructor.parameterTypes
   }
   else {
-    val result = getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, componentManager, parameterResolver)
+    // first round - try to find without extensions (because class can have several constructors - we cannot resolve using extension area at first place,
+    // because some another constructor can be satisfiable
+    val result = getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, pluginId, componentManager, parameterResolver, false)
     constructor = result.first
     parameterTypes = result.second
   }
@@ -29,7 +36,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>, requestorKey: A
     constructor.isAccessible = true
     @Suppress("UNCHECKED_CAST")
     return constructor.newInstance(*Array(parameterTypes.size) {
-      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterTypes[it])
+      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterTypes.get(it), pluginId)
     }) as T
   }
   catch (e: InvocationTargetException) {
@@ -47,8 +54,10 @@ internal fun isNotApplicableClass(type: Class<*>): Boolean {
 private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                                                sortedMatchingConstructors: Array<Constructor<*>>,
                                                requestorKey: Any,
+                                               pluginId: PluginId?,
                                                componentManager: PlatformComponentManagerImpl,
-                                               parameterResolver: ConstructorParameterResolver): Pair<Constructor<*>, Array<Class<*>>> {
+                                               parameterResolver: ConstructorParameterResolver,
+                                               isExtensionSupported: Boolean): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null
   var unsatisfiableDependencyTypes: MutableSet<Array<Class<*>>>? = null
   var greediestConstructor: Constructor<*>? = null
@@ -75,7 +84,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       }
 
       // check whether this constructor is satisfiable
-      if (parameterResolver.isResolvable(componentManager, requestorKey, aClass, constructor, expectedType)) {
+      if (parameterResolver.isResolvable(componentManager, requestorKey, aClass, constructor, expectedType, pluginId, isExtensionSupported)) {
         continue
       }
 
@@ -123,8 +132,14 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
     }
     !unsatisfiableDependencyTypes.isNullOrEmpty() -> {
-      throw PicoIntrospectionException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
-                                       "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
+      // second (and final) round
+      if (isExtensionSupported) {
+        throw PicoIntrospectionException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
+                                         "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
+      }
+      else {
+        return getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, pluginId, componentManager, parameterResolver, true)
+      }
     }
     else -> {
       throw createNoSatisfiableConstructorError(aClass)
