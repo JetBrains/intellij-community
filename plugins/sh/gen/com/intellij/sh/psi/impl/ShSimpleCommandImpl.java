@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
-import com.intellij.psi.PsiReference;
 
 public class ShSimpleCommandImpl extends ShCommandImpl implements ShSimpleCommand {
 
@@ -36,12 +35,6 @@ public class ShSimpleCommandImpl extends ShCommandImpl implements ShSimpleComman
   @NotNull
   public List<ShSimpleCommandElement> getSimpleCommandElementList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShSimpleCommandElement.class);
-  }
-
-  @Override
-  @NotNull
-  public PsiReference[] getReferences() {
-    return ShPsiImplUtil.getReferences(this);
   }
 
 }
