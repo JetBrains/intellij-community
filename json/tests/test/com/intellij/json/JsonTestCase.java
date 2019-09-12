@@ -5,8 +5,10 @@ import com.intellij.json.formatter.JsonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,6 +42,11 @@ public abstract class JsonTestCase extends BasePlatformTestCase {
   @Override
   @NotNull
   public String getBasePath() {
-    return "/community/json/tests/testData";
+    String communityPath = PlatformTestUtil.getCommunityPath();
+    String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    if (communityPath.startsWith(homePath)) {
+      return communityPath.substring(homePath.length()) + "/json/tests/testData";
+    }
+    return "/json/tests/testData";
   }
 }
