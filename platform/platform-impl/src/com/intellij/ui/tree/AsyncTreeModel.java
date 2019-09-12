@@ -581,8 +581,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
-        //noinspection unchecked
-        ChildrenProvider<Object> provider = (ChildrenProvider)model;
+        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
         List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
@@ -594,7 +593,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     @Nullable
-    private List<Node> load(int count, @NotNull IntFunction function) {
+    private List<Node> load(int count, @NotNull IntFunction<?> function) {
       if (count < 0) LOG.warn("illegal child count: " + count);
       if (count <= 0) return emptyList();
 
