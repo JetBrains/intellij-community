@@ -10,9 +10,9 @@ abstract class RemoteTargetType<C : RemoteTargetConfiguration>(id: String) : Bas
 
   abstract fun createExecutionTarget(project: Project, config: C): ExecutionTarget?
 
-  companion object {
-    val EXTENSION_NAME = ExtensionPointName.create<RemoteTargetType<*>>("com.intellij.ir.targetType")
 
-    fun findTargetType(id: String) = EXTENSION_NAME.extensionList.find { it.id == id }
+  companion object {
+    @JvmStatic
+    val EXTENSION_NAME = ExtensionPointName.create<RemoteTargetType<*>>("com.intellij.ir.targetType")
   }
 }

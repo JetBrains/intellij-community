@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.util.text.UniqueNameGenerator
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -83,11 +84,11 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
   private class TargetDetailsConfigurable(project: Project, private val config: RemoteTargetConfiguration)
     : NamedConfigurable<RemoteTargetConfiguration>(true, null) {
 
-    private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config)
+    private val targetConfigurable: Configurable = config.getTypeImpl().createConfigurable(project, config)
 
     override fun getBannerSlogan(): String = config.displayName
 
-    override fun getIcon(expanded: Boolean): Icon? = config.getTargetType().icon
+    override fun getIcon(expanded: Boolean): Icon? = config.getTypeImpl().icon
 
     override fun isModified(): Boolean = targetConfigurable.isModified
 

@@ -3,16 +3,19 @@ package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-abstract class BaseExtendableConfiguration(val typeId: String) {
+abstract class BaseExtendableConfiguration(val typeId: String,
+                                           internal val extensionPoint: ExtensionPointName<out BaseExtendableType<*>>) {
+
   var displayName: String = ""
+
+  companion object {
+    @JvmStatic
+    @Suppress("UNCHECKED_CAST")
+    internal fun <C : BaseExtendableConfiguration, T : BaseExtendableType<C>> C.getTypeImpl(): T =
+      this.extensionPoint.extensionList.find { it.id == typeId } as T?
+      ?: throw IllegalStateException("for type: $typeId, name: $displayName")
+  }
 }
 
-@Suppress("UNCHECKED_CAST")
-internal fun <C : BaseExtendableConfiguration, T : BaseExtendableType<C>>
-  C.getExtendableTypeImpl(extPoint: ExtensionPointName<out BaseExtendableType<*>>): T {
 
-  val result = extPoint.extensionList.find { it.id == typeId }
-  return result as T?
-         ?: throw IllegalStateException("for type: $typeId, name: $displayName")
-}
 

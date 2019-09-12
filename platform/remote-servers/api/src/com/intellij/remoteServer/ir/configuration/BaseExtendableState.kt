@@ -1,0 +1,32 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.remoteServer.ir.configuration
+
+import com.intellij.openapi.components.BaseState
+import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
+import org.jdom.Element
+
+class BaseExtendableState : BaseState() {
+  @get:Attribute("type")
+  var typeId by string()
+
+  @get:Attribute("name")
+  var name by string()
+
+  @get:Tag("config")
+  var innerState: Element? by property<Element?>(null) { it === null }
+
+  companion object {
+    @JvmStatic
+    internal fun fromConfiguration(config: BaseExtendableConfiguration) = BaseExtendableState().apply {
+      typeId = config.typeId
+      name = config.displayName
+      innerState = config.getSerializer().state?.let { XmlSerializer.serialize(it) }
+    }
+
+    private fun BaseExtendableConfiguration.getSerializer() = getTypeImpl().createSerializer(this)
+  }
+}
+
