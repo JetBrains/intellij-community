@@ -2,7 +2,9 @@
 package com.theoryinpractice.testng.configuration;
 
 
-//to be delete in 2018
+import org.jetbrains.annotations.ApiStatus;
+
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2018")
 public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGInClassConfigurationProducer {
 }
