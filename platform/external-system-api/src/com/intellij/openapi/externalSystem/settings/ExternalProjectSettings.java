@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.util.PlatformUtils.getPlatformPrefix;
+import static com.intellij.util.PlatformUtils.isIntelliJ;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
@@ -30,7 +32,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   private boolean myUseAutoImport;
-  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde(); // backward-compatible defaults
+  private boolean myUseQualifiedModuleNames = !isIntelliJ() && !"AndroidStudio".equals(getPlatformPrefix()); // backward-compatible defaults
 
   /**
    * @deprecated left for settings backward-compatibility

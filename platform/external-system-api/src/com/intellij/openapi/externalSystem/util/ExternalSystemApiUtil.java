@@ -51,9 +51,6 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.util.PlatformUtils.getPlatformPrefix;
-import static com.intellij.util.PlatformUtils.isIntelliJ;
-
 /**
  * @author Denis Zhdanov
  */
@@ -739,17 +736,5 @@ public class ExternalSystemApiUtil {
     if (linkedProjectSettings == null) return null;
     String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
     return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
-  }
-
-  /**
-   * DO NOT USE THIS METHOD.
-   * The method should be removed when the 'java' subsystem features will be extracted from External System API [IDEA-187832]
-   *
-   * @return check if the current IDE is compatible with the 'java' IntelliJ subsystem
-   */
-  @ApiStatus.Experimental
-  @Deprecated
-  public static boolean isJavaCompatibleIde() {
-    return isIntelliJ() || "AndroidStudio".equals(getPlatformPrefix());
   }
 }
