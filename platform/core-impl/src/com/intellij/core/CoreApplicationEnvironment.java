@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
@@ -93,6 +94,7 @@ public class CoreApplicationEnvironment {
       return new DocumentImpl(charSequence);
     }, null));
 
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
