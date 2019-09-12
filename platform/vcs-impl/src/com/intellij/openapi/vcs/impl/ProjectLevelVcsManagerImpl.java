@@ -715,7 +715,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   /**
-   * @deprecated {@link BackgroundableActionLock}
+   * @deprecated use {@link BackgroundableActionLock}
    */
   @Deprecated
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
