@@ -364,10 +364,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project" +
-           (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
-           " " + myName;
+    return "Project (name=" + myName + ", containerState=" + myContainerState.name() +
+           ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
+           (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
 
   @TestOnly

@@ -185,8 +185,8 @@ public class FileTypeUtil {
     return preview.substring(0, preview.length() - 1);
   }
 
-  public boolean isSupportedFile(VirtualFile file) {
-    if (file == null || file.isDirectory()) {
+  public boolean isSupportedFile(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
       return false;
     }
 

@@ -490,5 +490,4 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     return myUiActivity;
   }
-
 }

@@ -2,14 +2,10 @@
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -17,25 +13,31 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.containers.ContainerUtil
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
 import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
-import com.maddyhome.idea.copyright.util.NewFileTracker
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 private const val DEFAULT = "default"
@@ -212,36 +214,68 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
   }
 }
 
-private class CopyrightManagerPostStartupActivity : StartupActivity {
-  val newFileTracker = NewFileTracker()
+private class CopyrightManagerDocumentListener : BulkFileListener {
+  private val newFiles = ContainerUtil.newConcurrentSet<VirtualFile>()
 
-  override fun runActivity(project: Project) {
-    Disposer.register(project, Disposable { newFileTracker.clear() })
+  private val isDocumentListenerAdded = AtomicBoolean()
 
+  override fun after(events: List<VFileEvent>) {
+    for (event in events) {
+      if (event.isFromRefresh) {
+        continue
+      }
+
+      if (event is VFileCreateEvent || event is VFileMoveEvent) {
+        newFiles.add(event.file ?: continue)
+        if (isDocumentListenerAdded.compareAndSet(false, true)) {
+          addDocumentListener()
+        }
+      }
+    }
+  }
+
+  private fun addDocumentListener() {
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
-        val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
-        val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-        if (!newFileTracker.poll(virtualFile) ||
-            !FileTypeUtil.getInstance().isSupportedFile(virtualFile) ||
-            PsiManager.getInstance(project).findFile(virtualFile) == null) {
+        if (newFiles.isEmpty()) {
           return
         }
 
-        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-          if (!virtualFile.isValid) {
-            return@execute
+        val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
+        if (!newFiles.remove(virtualFile)) {
+          return
+        }
+
+        val projectManager = serviceIfCreated<ProjectManager>() ?: return
+        for (project in projectManager.openProjects) {
+          if (project !is ProjectEx || project.isContainerDisposedOrDisposeInProgress) {
+            continue
           }
 
-          val file = PsiManager.getInstance(project).findFile(virtualFile)
-          if (file != null && file.isWritable) {
-            CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
-              UpdateCopyrightProcessor(project, module, file).run()
-            }
-          }
+          handleEvent(virtualFile, project)
         }
       }
-    }, project)
+    }, ApplicationManager.getApplication())
+  }
+
+  private fun handleEvent(virtualFile: VirtualFile, project: ProjectEx) {
+    val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
+    if (!FileTypeUtil.getInstance().isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
+      return
+    }
+
+    AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
+      if (project.isContainerDisposedOrDisposeInProgress || !virtualFile.isValid) {
+        return@execute
+      }
+
+      val file = PsiManager.getInstance(project).findFile(virtualFile)
+      if (file != null && file.isWritable) {
+        CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
+          UpdateCopyrightProcessor(project, module, file).run()
+        }
+      }
+    }
   }
 }
 

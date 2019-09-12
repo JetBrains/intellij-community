@@ -13,7 +13,6 @@
     <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
     <applicationService serviceImplementation="com.maddyhome.idea.copyright.util.FileTypeUtil"/>
     <projectService serviceImplementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState"/>
-    <postStartupActivity implementation="com.intellij.copyright.CopyrightManagerPostStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.copyright.CopyrightManager"/>
     <externalSystemConfigurationHandler implementation="com.maddyhome.idea.copyright.import.CopyrightConfigurationHandler"/>
@@ -30,8 +29,10 @@
     <extensionPoint name="variablesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.pattern.CopyrightVariablesProvider"/>
     </extensionPoint>
-
   </extensionPoints>
+  <applicationListeners>
+    <listener class="com.intellij.copyright.CopyrightManagerDocumentListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 
   <actions>
     <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..."

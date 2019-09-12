@@ -1281,13 +1281,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
+    myContainerState = disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE;
   }
 
   @Override
   public String toString() {
-    return "Application" +
-           (isDisposed() ? " (Disposed)" : "") +
+    return "Application (containerState=" + myContainerState.name() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +

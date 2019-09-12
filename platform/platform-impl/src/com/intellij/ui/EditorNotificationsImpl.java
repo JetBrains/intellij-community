@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
@@ -76,15 +77,16 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Override
-  public void updateNotifications(@NotNull final VirtualFile file) {
+  public void updateNotifications(@NotNull VirtualFile file) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed() || !file.isValid()) {
+      if (((ProjectEx)myProject).isContainerDisposedOrDisposeInProgress() || !file.isValid()) {
         return;
       }
 
-      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
-                                                      editor -> !(editor instanceof TextEditor)
-                                                                || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
+        return !(editor instanceof TextEditor) ||
+               AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
+      });
 
       ReadAction
         .nonBlocking(() -> calcNotificationUpdates(file, editors))
