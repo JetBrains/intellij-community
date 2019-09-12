@@ -41,8 +41,8 @@ import java.util.concurrent.ConcurrentMap
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
-    private val constructorParameterResolver = ServiceContainerConstructorParameterResolver(isExtensionSupported = false)
-    private val heavyConstructorParameterResolver = ServiceContainerConstructorParameterResolver(isExtensionSupported = true)
+    private val constructorParameterResolver = ConstructorParameterResolver(isExtensionSupported = false)
+    private val heavyConstructorParameterResolver = ConstructorParameterResolver(isExtensionSupported = true)
 
 
     @JvmStatic
