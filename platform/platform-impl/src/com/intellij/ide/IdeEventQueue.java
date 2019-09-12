@@ -363,7 +363,7 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-    // DO NOT ADD ANYTHING BEFORE hackSequenceEvent is called
+    // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
     try {
