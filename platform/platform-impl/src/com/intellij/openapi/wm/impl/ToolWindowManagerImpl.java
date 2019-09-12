@@ -2344,7 +2344,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
             public void extensionRemoved(@NotNull ToolWindowEP extension, @NotNull PluginDescriptor pluginDescriptor) {
               manager.unregisterToolWindow(extension.id);
             }
-          }, false, project);
+          }, project);
       }
     }
   }

@@ -290,7 +290,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           myFileTypeDetectorMap = null;
         }
       }
-    }, false, this);
+    }, this);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
       @Override
@@ -312,7 +312,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           }
         }
       }
-    }, false, this);
+    }, this);
   }
 
   @VisibleForTesting

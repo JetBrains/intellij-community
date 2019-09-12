@@ -99,7 +99,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         // annotations changed
         DaemonCodeAnalyzer.getInstance(myProject).restart();
       }
-    }, false, this);
+    }, this);
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {

@@ -187,7 +187,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           }
         }
       }
-    }, false, this);
+    }, this);
   }
 
   @Override

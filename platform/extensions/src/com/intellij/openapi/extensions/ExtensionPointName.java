@@ -143,7 +143,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
     ((ExtensionPointImpl<T>)getPoint(null)).processWithPluginDescriptor(consumer);
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable) {
-    getPoint(null).addExtensionPointListener(listener, invokeForLoadedExtensions, parentDisposable);
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
+    getPoint(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 }

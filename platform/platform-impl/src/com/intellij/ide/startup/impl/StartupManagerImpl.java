@@ -204,7 +204,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
             dumbService.runWhenSmart(() -> runActivity(new AtomicBoolean(), extension, pluginDescriptor));
           }
         }
-      }, false, this);
+      }, this);
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -421,7 +421,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
           public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
             extension.runActivity(myProject);
           }
-        }, false, this);
+        }, this);
 
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
         for (StartupActivity activity : backgroundPostStartupActivities) {

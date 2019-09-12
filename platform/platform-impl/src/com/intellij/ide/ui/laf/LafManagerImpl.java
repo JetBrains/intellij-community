@@ -236,7 +236,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           updateUI();
         }
       }
-    }, false, this);
+    }, this);
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {

@@ -33,7 +33,7 @@ class RegistryKeyBean : PluginAware {
         override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
           Registry.removeKey(extension.key)
         }
-      }, false, null)
+      }, null)
     }
 
     private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
