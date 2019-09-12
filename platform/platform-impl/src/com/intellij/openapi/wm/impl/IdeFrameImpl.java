@@ -93,7 +93,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     }
   }
 
-  public void doSetTitle(String value) {
+  void doSetTitle(String value) {
     super.setTitle(value);
   }
 
@@ -112,12 +112,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
       UISettings.setupAntialiasing(g);
     }
 
-    //Image selfie = this.selfie;
-    //if (selfie != null) {
-    //  StartupUiUtil.drawImage(g, selfie, 0, 0, null);
-    //  return;
-    //}
-
     super.paint(g);
   }
 
@@ -131,7 +125,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @NotNull
   @Override
   public Insets getInsets() {
-    return (SystemInfo.isMac && isInFullScreen()) ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -153,7 +147,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     super.dispose();
   }
 
-  public void releaseFrame() {
+  void releaseFrame() {
     if (myFrameHelper != null) {
       myFrameHelper.releaseFrame();
     }
