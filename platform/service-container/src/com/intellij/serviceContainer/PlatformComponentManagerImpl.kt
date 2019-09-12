@@ -41,43 +41,9 @@ import java.util.concurrent.ConcurrentMap
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
-    private val constructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = false)
-    private val heavyConstructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = true)
+    private val constructorParameterResolver = ServiceContainerConstructorParameterResolver(isExtensionSupported = false)
+    private val heavyConstructorParameterResolver = ServiceContainerConstructorParameterResolver(isExtensionSupported = true)
 
-    private class PlatformConstructorParameterResolver(private val isExtensionSupported: Boolean) : ConstructorParameterResolver() {
-      override fun isResolvable(componentManager: PlatformComponentManagerImpl,
-                                requestorKey: Any,
-                                requestorClass: Class<*>,
-                                requestorConstructor: Constructor<*>,
-                                expectedType: Class<*>): Boolean {
-        if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType)) {
-          return true
-        }
-        return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
-      }
-
-      override fun resolveInstance(componentManager: PlatformComponentManagerImpl,
-                                   requestorKey: Any,
-                                   requestorClass: Class<*>,
-                                   requestorConstructor: Constructor<*>,
-                                   expectedType: Class<*>): Any? {
-        if (isLightService(expectedType)) {
-          return componentManager.getLightService(componentManager.lightServices!!, expectedType, true)
-        }
-        return super.resolveInstance(componentManager, requestorKey, requestorClass, requestorConstructor, expectedType)
-      }
-
-      override fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>): Any? {
-        if (isExtensionSupported) {
-          val extension = componentManager.extensionArea.findExtensionByClass(expectedType)
-          if (extension != null) {
-            LOG.warn("Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})")
-          }
-          return extension
-        }
-        return super.handleUnsatisfiedDependency(componentManager, requestorClass, expectedType)
-      }
-    }
 
     @JvmStatic
     protected val fakeCorePluginDescriptor = object : PluginDescriptor {
@@ -312,7 +278,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
-      return getLightService(lightServices, serviceClass, createIfNeeded)
+      return getLightService(serviceClass, createIfNeeded)
     }
 
     val key = serviceClass.name
@@ -338,7 +304,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return result
   }
 
-  private fun <T : Any> getLightService(lightServices: ConcurrentMap<Class<*>, Any>, serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  internal fun <T : Any> getLightService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+    val lightServices = lightServices!!
     @Suppress("UNCHECKED_CAST")
     val result = lightServices.get(serviceClass) as T?
     if (result != null || !createIfNeeded) {
@@ -688,6 +655,6 @@ private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId):
   }
 }
 
-private fun <T> isLightService(serviceClass: Class<T>): Boolean {
+internal fun <T> isLightService(serviceClass: Class<T>): Boolean {
   return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }
