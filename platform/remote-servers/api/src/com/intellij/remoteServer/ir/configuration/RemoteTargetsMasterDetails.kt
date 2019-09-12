@@ -41,18 +41,18 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
 
   override fun processRemovedItems() {
     val deletedTargets = allTargets().toSet() - getConfiguredTargets()
-    deletedTargets.forEach { RemoteTargetsManager.instance.removeTarget(it) }
+    deletedTargets.forEach { RemoteTargetsManager.instance.removeConfig(it) }
     super.processRemovedItems()
   }
 
   override fun apply() {
     super.apply()
 
-    val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.allConfigs
-    addedConfigs.forEach { RemoteTargetsManager.instance.addTarget(it) }
+    val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.resolvedConfigs()
+    addedConfigs.forEach { RemoteTargetsManager.instance.addConfig(it) }
   }
 
-  private fun allTargets() = RemoteTargetsManager.instance.allConfigs
+  private fun allTargets() = RemoteTargetsManager.instance.resolvedConfigs()
 
   private fun addTargetNode(config: RemoteTargetConfiguration): MyNode {
     val configurable = TargetDetailsConfigurable(project, config)

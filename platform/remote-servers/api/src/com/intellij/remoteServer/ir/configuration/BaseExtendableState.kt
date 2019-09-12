@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import org.jdom.Element
 
-class BaseExtendableState : BaseState() {
+open class BaseExtendableState : BaseState() {
   @get:Attribute("type")
   var typeId by string()
 
@@ -18,14 +18,13 @@ class BaseExtendableState : BaseState() {
   @get:Tag("config")
   var innerState: Element? by property<Element?>(null) { it === null }
 
-  companion object {
-    @JvmStatic
-    internal fun fromConfiguration(config: BaseExtendableConfiguration) = BaseExtendableState().apply {
-      typeId = config.typeId
-      name = config.displayName
-      innerState = config.getSerializer().state?.let { XmlSerializer.serialize(it) }
-    }
+  open fun loadFromConfiguration(config: BaseExtendableConfiguration) {
+    typeId = config.typeId
+    name = config.displayName
+    innerState = config.getSerializer().state?.let { XmlSerializer.serialize(it) }
+  }
 
+  companion object {
     private fun BaseExtendableConfiguration.getSerializer() = getTypeImpl().createSerializer(this)
   }
 }

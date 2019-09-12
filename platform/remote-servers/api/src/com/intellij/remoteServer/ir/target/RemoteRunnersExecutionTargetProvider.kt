@@ -10,7 +10,7 @@ import com.intellij.remoteServer.ir.configuration.getTargetType
 class RemoteRunnersExecutionTargetProvider : ExecutionTargetProvider() {
 
   override fun getTargets(project: Project, configuration: RunConfiguration): List<ExecutionTarget> {
-    val allConfigs = RemoteTargetsManager.instance.allConfigs
+    val allConfigs = RemoteTargetsManager.instance.resolvedConfigs()
     return allConfigs
       .map { it.getTargetType().createExecutionTarget(project, it) }
       .filterNotNull()

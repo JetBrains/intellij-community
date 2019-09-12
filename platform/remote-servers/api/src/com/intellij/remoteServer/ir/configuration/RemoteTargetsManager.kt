@@ -1,42 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.ir.configuration
 
-import com.intellij.openapi.components.*
-import com.intellij.util.xmlb.annotations.XCollection
-
-typealias TargetsList = ExtendableConfigurationsList<RemoteTargetConfiguration, RemoteTargetType<*>>
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.util.xmlb.annotations.Tag
 
 @State(name = "RemoteTargetsManager", storages = [Storage("remote-targets.xml")])
-class RemoteTargetsManager : PersistentStateComponent<RemoteTargetsManager.AllTargetsState> {
-  private val _targets = TargetsList(RemoteTargetType.EXTENSION_NAME)
+class RemoteTargetsManager : BaseExtendableList<RemoteTargetConfiguration, RemoteTargetType<*>>(RemoteTargetType.EXTENSION_NAME) {
 
-  override fun getState(): AllTargetsState = AllTargetsState().apply {
-    targets.addAll(_targets.toListOfStates())
+  override fun toBaseState(config: RemoteTargetConfiguration): OneTargetState =
+    OneTargetState().also {
+      it.loadFromConfiguration(config)
+      it.runtimes = config.runtimes.state
+    }
+
+  override fun fromOneState(state: BaseExtendableState): RemoteTargetConfiguration? {
+    val result = super.fromOneState(state)
+    if (result != null && state is OneTargetState) {
+      state.runtimes?.let { result.runtimes.loadState(it) }
+    }
+    return result
   }
-
-  override fun loadState(state: AllTargetsState) {
-    _targets.clear()
-    _targets.resetFromListOfStates(state.targets)
-  }
-
-  val allConfigs: List<RemoteTargetConfiguration>
-    get() = _targets.resolvedConfigs()
-
-  //fun <C : RemoteTargetConfiguration> configsForType(type: RemoteTargetType<C>): List<C> =
-  //  allConfigs.filter { it.typeId == type.id }.map { type.castConfiguration(it) }
-
-  internal fun addTarget(target: RemoteTargetConfiguration) = _targets.addConfig(target)
-
-  internal fun removeTarget(target: RemoteTargetConfiguration) = _targets.removeConfig(target)
 
   companion object {
     @JvmStatic
-    val instance: RemoteTargetsManager = ServiceManager.getService(RemoteTargetsManager::class.java)
+    val instance: RemoteTargetsManager = service()
   }
 
-  class AllTargetsState : BaseState() {
-    @get: XCollection(style = XCollection.Style.v2)
-    var targets by list<BaseExtendableState>()
+  @Tag("target")
+  class OneTargetState : BaseExtendableState() {
+    var runtimes by property<ListState>()
   }
-
 }

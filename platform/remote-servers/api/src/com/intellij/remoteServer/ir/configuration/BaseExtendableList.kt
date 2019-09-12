@@ -2,11 +2,17 @@
 package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.configurationStore.ComponentSerializationUtil
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.remoteServer.ir.configuration.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.util.xmlb.annotations.XCollection
 
-class ExtendableConfigurationsList<C : BaseExtendableConfiguration, T : BaseExtendableType<out C>>(val extPoint: ExtensionPointName<T>) {
-  private val resolvedInstances: MutableList<C> = mutableListOf()
+open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
+  : BaseState(), PersistentStateComponent<BaseExtendableList.ListState>
+  where C : BaseExtendableConfiguration, T : BaseExtendableType<out C> {
+
+  private val resolvedInstances = mutableListOf<C>()
   private val unresolvedInstances = mutableListOf<BaseExtendableState>()
 
   fun clear() {
@@ -20,13 +26,14 @@ class ExtendableConfigurationsList<C : BaseExtendableConfiguration, T : BaseExte
 
   fun removeConfig(config: C) = resolvedInstances.remove(config)
 
-  fun toListOfStates(): List<BaseExtendableState> {
-    return resolvedInstances.map { BaseExtendableState.fromConfiguration(it) } + unresolvedInstances
+  override fun getState(): ListState = ListState().also {
+    it.configs.addAll(resolvedInstances.map { toBaseState(it) })
+    it.configs.addAll(unresolvedInstances)
   }
 
-  fun resetFromListOfStates(states: List<BaseExtendableState>): ExtendableConfigurationsList<C, T> {
+  override fun loadState(state: ListState) {
     clear()
-    states.forEach {
+    state.configs.forEach {
       val nextConfig = fromOneState(it)
       if (nextConfig == null) {
         unresolvedInstances.add(it)
@@ -35,10 +42,13 @@ class ExtendableConfigurationsList<C : BaseExtendableConfiguration, T : BaseExte
         resolvedInstances.add(nextConfig)
       }
     }
-    return this
   }
 
-  private fun fromOneState(state: BaseExtendableState): C? {
+  open fun toBaseState(config: C): BaseExtendableState = BaseExtendableState().also {
+    it.loadFromConfiguration(config)
+  }
+
+  protected open fun fromOneState(state: BaseExtendableState): C? {
     val type = extPoint.extensionList.firstOrNull { it.id == state.typeId }
     val defaultConfig = type?.createDefaultConfig()
     return defaultConfig?.also {
@@ -49,5 +59,10 @@ class ExtendableConfigurationsList<C : BaseExtendableConfiguration, T : BaseExte
 
   companion object {
     private fun BaseExtendableConfiguration.getSerializer() = getTypeImpl().createSerializer(this)
+  }
+
+  open class ListState : BaseState() {
+    @get: XCollection(style = XCollection.Style.v2)
+    var configs by list<BaseExtendableState>()
   }
 }

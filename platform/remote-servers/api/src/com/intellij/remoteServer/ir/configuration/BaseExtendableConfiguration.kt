@@ -3,8 +3,7 @@ package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-abstract class BaseExtendableConfiguration(val typeId: String,
-                                           internal val extensionPoint: ExtensionPointName<out BaseExtendableType<*>>) {
+abstract class BaseExtendableConfiguration(val typeId: String, internal val extensionPoint: ExtensionPointName<out BaseExtendableType<*>>) {
 
   var displayName: String = ""
 
