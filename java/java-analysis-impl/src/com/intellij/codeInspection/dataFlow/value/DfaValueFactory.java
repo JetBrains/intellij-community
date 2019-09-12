@@ -316,6 +316,10 @@ public class DfaValueFactory {
     }
 
     private static boolean canCallMethodsInConstructors(@NotNull PsiClass aClass, boolean virtual) {
+      PsiElement navigationElement = aClass.getNavigationElement();
+      if (navigationElement instanceof PsiClass) {
+        aClass = (PsiClass)navigationElement;
+      }
       for (PsiMethod constructor : aClass.getConstructors()) {
         if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
 
