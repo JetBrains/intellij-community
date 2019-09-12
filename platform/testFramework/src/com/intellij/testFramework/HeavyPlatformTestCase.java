@@ -538,7 +538,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
-      AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+      // clear "show param info" delayed requests leaking project
+      AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+      if (autoPopupController != null) {
+        autoPopupController.cancelAllRequests();
+      }
       waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
     // don't use method references here to make stack trace reading easier

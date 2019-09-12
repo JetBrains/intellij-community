@@ -28,4 +28,8 @@ public interface ProjectEx extends Project {
   default boolean isLight() {
     return false;
   }
+
+  default boolean isContainerDisposedOrDisposeInProgress() {
+    return false;
+  }
 }

@@ -55,6 +55,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   private var handlingInitComponentError = false
 
+  @Volatile
+  private var isServicePreloadingCancelled = false
+
   var componentCreated = false
     private set
 
@@ -608,7 +611,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       for (service in getContainerDescriptor(plugin).services) {
         if (service.preload) {
           futures.add(CompletableFuture.runAsync(Runnable {
-            if (!isContainerDisposedOrDisposeInProgress()) {
+            if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
               (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
             }
           }, executor))
@@ -621,8 +624,13 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   // todo check is it safe to use this implementation in `isContainerDisposed` (for now, old behaviour is not changed)
   // if it is safe, this method is not needed
-  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
+  fun isContainerDisposedOrDisposeInProgress(): Boolean {
     return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  }
+
+  @Internal
+  fun stopServicePreloading() {
+    isServicePreloadingCancelled = true
   }
 }
 
