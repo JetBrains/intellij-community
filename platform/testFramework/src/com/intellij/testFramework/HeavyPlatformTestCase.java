@@ -537,6 +537,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
+    if (project instanceof ProjectImpl) {
+      ((ProjectImpl)project).stopServicePreloading();
+    }
+
     if (project != null && !project.isDisposed()) {
       // clear "show param info" delayed requests leaking project
       AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
@@ -545,6 +549,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       }
       waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
+
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll()
@@ -1018,6 +1023,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    if (project instanceof ProjectImpl) {
+      ((ProjectImpl)project).stopServicePreloading();
+    }
+
     NonBlockingReadActionImpl.cancelAllTasks();
     GeneratedSourceFileChangeTrackerImpl tracker =
       (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
