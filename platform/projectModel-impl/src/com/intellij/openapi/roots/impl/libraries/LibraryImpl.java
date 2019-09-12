@@ -404,8 +404,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     rootElement.addContent(element);
   }
 
-  // just to maintain .xml compatibility
-  // VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+  /**
+   * @deprecated just to maintain .xml compatibility.
+   * VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+   */
   @Deprecated // todo to remove sometime later
   private void writeJarDirectories(@NotNull Element element) {
     final List<OrderRootType> rootTypes = sortRootTypes(myRoots.keySet());
