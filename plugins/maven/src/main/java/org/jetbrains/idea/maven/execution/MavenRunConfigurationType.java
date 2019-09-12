@@ -46,48 +46,7 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
    */
   MavenRunConfigurationType() {
     super(MavenUtil.SYSTEM_ID);
-    myFactory = new ConfigurationFactory(this) {
-      @NotNull
-      @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new MavenRunConfiguration(project, this, "");
-      }
-
-      @NotNull
-      @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
-        return new MavenRunConfiguration(project, this, "");
-      }
-
-      @NotNull
-      @Override
-      public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
-        MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
-
-        if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
-
-        Project project = cfg.getProject();
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-
-        List<MavenProject> projects = projectsManager.getProjects();
-        if (projects.size() != 1) {
-          return cfg;
-        }
-
-        VirtualFile directory = projects.get(0).getDirectoryFile();
-
-        cfg.getRunnerParameters().setWorkingDirPath(directory.getPath());
-
-        return cfg;
-      }
-
-      @Override
-      public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
-        if (providerID == CompileStepBeforeRun.ID || providerID == CompileStepBeforeRunNoErrorCheck.ID) {
-          task.setEnabled(false);
-        }
-      }
-    };
+    myFactory = new MavenRunConfigurationFactory(this);
   }
 
   @NotNull
@@ -205,15 +164,70 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
   @NotNull
   public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
                                                                                     @Nullable MavenRunnerSettings runnerSettings,
-                                                                                    MavenRunnerParameters params,
-                                                                                    Project project) {
+                                                                                    @NotNull MavenRunnerParameters params,
+                                                                                    @NotNull Project project) {
+    return createRunnerAndConfigurationSettings(generalSettings, runnerSettings, params, project, generateName(project, params));
+  }
+
+
+  @NotNull
+  public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+                                                                                    @Nullable MavenRunnerSettings runnerSettings,
+                                                                                    @NotNull MavenRunnerParameters params,
+                                                                                    @NotNull Project project,
+                                                                                    @NotNull String name) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(name, type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);
     runConfiguration.setRunnerSettings(runnerSettings);
     return settings;
+  }
+
+  public static class MavenRunConfigurationFactory extends ConfigurationFactory {
+    public MavenRunConfigurationFactory(ConfigurationType type) {super(type);}
+
+    @NotNull
+    @Override
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      return new MavenRunConfiguration(project, this, "");
+    }
+
+    @NotNull
+    @Override
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
+      return new MavenRunConfiguration(project, this, "");
+    }
+
+    @NotNull
+    @Override
+    public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
+      MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
+
+      if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
+
+      Project project = cfg.getProject();
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+
+      List<MavenProject> projects = projectsManager.getProjects();
+      if (projects.size() != 1) {
+        return cfg;
+      }
+
+      VirtualFile directory = projects.get(0).getDirectoryFile();
+
+      cfg.getRunnerParameters().setWorkingDirPath(directory.getPath());
+
+      return cfg;
+    }
+
+    @Override
+    public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
+      if (providerID == CompileStepBeforeRun.ID || providerID == CompileStepBeforeRunNoErrorCheck.ID) {
+        task.setEnabled(false);
+      }
+    }
   }
 }

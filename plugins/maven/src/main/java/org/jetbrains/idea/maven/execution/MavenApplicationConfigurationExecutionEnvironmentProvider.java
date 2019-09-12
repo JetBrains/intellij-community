@@ -3,15 +3,13 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -52,8 +50,9 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
   @Nullable
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
-    ConfigurationFactory configurationFactory = MavenRunConfigurationType.getInstance().getConfigurationFactories()[0];
+
     ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)task.getRunProfile();
+    ConfigurationFactory configurationFactory = new MavenExecConfigurationFactory(applicationConfiguration);
     String mainClassName = applicationConfiguration.getMainClassName();
     if (isEmpty(mainClassName)) {
       return null;
@@ -69,7 +68,11 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       return null;
     }
 
-    MavenRunConfiguration mavenRunConfiguration = new MyExecRunConfiguration(project, configurationFactory, applicationConfiguration);
+    //todo: Should be merged with MavenRunConfiguration
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
+      RunManager.getInstance(project).createConfiguration(applicationConfiguration.getName(), configurationFactory);
+
+    MyExecRunConfiguration mavenRunConfiguration = (MyExecRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
     mavenRunConfiguration.setBeforeRunTasks(applicationConfiguration.getBeforeRunTasks());
     copyLogParameters(applicationConfiguration, mavenRunConfiguration);
@@ -106,7 +109,12 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
     if (executor == null) {
       executor = DefaultRunExecutor.getRunExecutorInstance();
     }
-    return new ExecutionEnvironmentBuilder(project, executor).runProfile(mavenRunConfiguration).build();
+
+    return new ExecutionEnvironmentBuilder(project, executor)
+      .runProfile(mavenRunConfiguration)
+      .runnerAndSettings(ProgramRunner.getRunner(executor.getId(), runnerAndConfigurationSettings.getConfiguration()), runnerAndConfigurationSettings)
+      .build();
+
   }
 
   private static String getJdkExecPath(@NotNull ApplicationConfiguration applicationConfiguration) {
@@ -131,11 +139,11 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
   }
 
   private static void copyLogParameters(ApplicationConfiguration applicationConfiguration, MavenRunConfiguration mavenRunConfiguration) {
-    for (PredefinedLogFile file: applicationConfiguration.getPredefinedLogFiles()) {
+    for (PredefinedLogFile file : applicationConfiguration.getPredefinedLogFiles()) {
       mavenRunConfiguration.addPredefinedLogFile(file);
     }
 
-    for (LogFileOptions op: applicationConfiguration.getLogFiles()) {
+    for (LogFileOptions op : applicationConfiguration.getLogFiles()) {
       mavenRunConfiguration.addLogFile(op.getPathPattern(), op.getName(), op.isEnabled(), op.isSkipContent(), op.isShowAll());
     }
 
@@ -164,7 +172,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
     private final ApplicationConfiguration myApplicationConfiguration;
 
     MyExecRunConfiguration(Project project, ConfigurationFactory configurationFactory,
-                                  ApplicationConfiguration applicationConfiguration) {
+                           ApplicationConfiguration applicationConfiguration) {
       super(project, configurationFactory, applicationConfiguration.getName());
       myApplicationConfiguration = applicationConfiguration;
     }
@@ -209,6 +217,27 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
           return true;
         }
       };
+    }
+  }
+
+  private class MavenExecConfigurationFactory extends ConfigurationFactory {
+    private final ApplicationConfiguration myApplicationConfiguration;
+
+    protected MavenExecConfigurationFactory(ApplicationConfiguration applicationConfiguration) {
+      super(MavenRunConfigurationType.getInstance());
+      myApplicationConfiguration = applicationConfiguration;
+    }
+
+    @NotNull
+    @Override
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      return new MyExecRunConfiguration(project, this, myApplicationConfiguration);
+    }
+
+    @NotNull
+    @Override
+    public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
+      return new MyExecRunConfiguration(template.getProject(), this, myApplicationConfiguration);
     }
   }
 }
