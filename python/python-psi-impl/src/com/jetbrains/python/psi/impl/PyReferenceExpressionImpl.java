@@ -180,7 +180,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             }
           }
         }
-        else if (element instanceof PyElement && resolveResult.isValidResult()) {
+        else if (element != null && resolveResult.isValidResult()) {
           result.add(
             new QualifiedRatedResolveResult(
               element,
