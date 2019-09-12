@@ -720,6 +720,13 @@ public final class TreeUtil {
 
     if (visible == null) return 0;
 
+    int rowHeight = tree.getRowHeight();
+    if (rowHeight > 0) {
+      int firstRow = visible.y / rowHeight;
+      int lastRow = (visible.y + visible.height) / rowHeight;
+      return lastRow - firstRow + 1;
+    }
+
     int count = 0;
     for (int i=0; i < tree.getRowCount(); i++) {
       final Rectangle bounds = tree.getRowBounds(i);
