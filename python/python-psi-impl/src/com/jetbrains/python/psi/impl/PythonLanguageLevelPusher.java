@@ -77,7 +77,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   private final Map<Module, Sdk> myModuleSdks = ContainerUtil.createWeakMap();
 
-  public static void pushLanguageLevel(final Project project) {
+  public static void pushLanguageLevel(@NotNull Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
   }
 
