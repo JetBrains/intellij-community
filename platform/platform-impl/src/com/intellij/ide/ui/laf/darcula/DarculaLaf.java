@@ -102,7 +102,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       final UIDefaults defaults = base.getDefaults();
       if (SystemInfo.isLinux) {
-        if (!Registry.is("darcula.use.native.fonts.on.linux")) {
+        if (!Registry.is("darcula.use.native.fonts.on.linux", true)) {
           Font font = findFont("DejaVu Sans");
           if (font != null) {
             for (Object key : defaults.keySet()) {
