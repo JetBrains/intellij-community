@@ -10,6 +10,7 @@ import org.picocontainer.PicoInitializationException;
 import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.defaults.*;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -22,10 +23,9 @@ import java.util.*;
  * The same code (generified and cleaned up) but without constructor caching (hence taking up less memory).
  * This class also inlines instance caching (e.g. it doesn't need to be wrapped in a CachingComponentAdapter).
  */
-public class CachingConstructorInjectionComponentAdapter extends InstantiatingComponentAdapter {
+public final class CachingConstructorInjectionComponentAdapter extends InstantiatingComponentAdapter {
   @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard =
-    new ThreadLocal<>();
+  private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
@@ -126,6 +126,10 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     int lastSatisfiableConstructorSize = -1;
     Class<?> unsatisfiedDependencyType = null;
     for (Constructor<?> constructor : sortedMatchingConstructors) {
+      if (constructor.isSynthetic() || isNonInjectable(constructor)) {
+        continue;
+      }
+
       boolean failedDependency = false;
       Class<?>[] parameterTypes = constructor.getParameterTypes();
       Parameter[] currentParameters = parameters != null ? parameters : createDefaultParameters(parameterTypes);
@@ -175,6 +179,16 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
                                             nonMatching + " or the constructors were not accessible for '" + getComponentImplementation() + "'");
     }
     return greediestConstructor;
+  }
+
+  private static boolean isNonInjectable(@NotNull Constructor<?> constructor) {
+    for (Annotation o : constructor.getAnnotations()) {
+      String name = o.annotationType().getName();
+      if ("com.intellij.serviceContainer.NonInjectable".equals(name) || "java.lang.Deprecated".equals(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private List<Constructor<?>> getSortedMatchingConstructors() {
