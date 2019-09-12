@@ -15,9 +15,17 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public abstract class BaseOutputReader extends BaseDataReader {
-  /** See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, and {@link #processInput} for reference. */
+  /** See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, {@link BaseDataReader.SleepingPolicy}
+   * and {@link #processInput} for reference.
+   * */
   public static class Options {
+    /**
+     * @see BaseDataReader.SleepingPolicy#BLOCKING
+     */
     public static final Options BLOCKING = withPolicy(SleepingPolicy.BLOCKING);
+    /**
+     * @see BaseDataReader.SleepingPolicy#SIMPLE
+     */
     public static final Options NON_BLOCKING = withPolicy(SleepingPolicy.SIMPLE);
 
     public SleepingPolicy policy() { return null; }

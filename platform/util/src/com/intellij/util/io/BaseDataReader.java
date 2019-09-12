@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +28,11 @@ public abstract class BaseDataReader {
 
   private Future<?> myFinishedFuture;
 
+  /**
+   * @param sleepingPolicy default is {@link SleepingPolicy#SIMPLE} for the reasons described on {@link SleepingPolicy} which may be changed
+   *                       in future versions.
+   */
+  @ReviseWhenPortedToJDK("Loom")
   public BaseDataReader(SleepingPolicy sleepingPolicy) {
     mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.SIMPLE;
   }
@@ -53,6 +60,7 @@ public abstract class BaseDataReader {
    * If the process handler assumes that reader handles the blocking mode, while it doesn't, it will result into premature stream close.
    *
    * @return true in case any data was read
+   * @see SleepingPolicy
    * @throws IOException if an exception during IO happened
    */
   protected boolean readAvailable() throws IOException {
@@ -61,6 +69,7 @@ public abstract class BaseDataReader {
 
   /**
    * Non-blocking read returns the control back to the process handler when there is no data to read.
+   * @see SleepingPolicy#SIMPLE
    */
   protected boolean readAvailableNonBlocking() throws IOException {
     throw new UnsupportedOperationException();
@@ -68,6 +77,7 @@ public abstract class BaseDataReader {
 
   /**
    * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after the stream is closed.
+   * @see SleepingPolicy#BLOCKING
    */
   protected boolean readAvailableBlocking() throws IOException {
     throw new UnsupportedOperationException();
@@ -76,6 +86,44 @@ public abstract class BaseDataReader {
   @NotNull
   protected abstract Future<?> executeOnPooledThread(@NotNull Runnable runnable);
 
+  /**
+   * <p>
+   *   <h2>Blocking</h2>
+   * In Java you can only read data from child process's stdout/stderr using blocking {@link InputStream#read()}.
+   * (Async approach like {@link java.nio.channels.SelectableChannel} is not supported for process's streams,
+   * although some native api may be used).
+   * Thread stays blocked by {@link InputStream#read()} until some data arrived or stream is closed (because of process death).
+   * It may lead to issues like <code>IDEA-32376</code>: you can't unlock blocked thread (at least non-daemon) otherwise than by killing
+   * process (and you may want to keep it running). {@link Thread#interrupt()} doesn't work here.
+   * This approach is good for short-living processes.
+   * If you know for sure that process will end soon (i.e. helper process) you can enable this behaviour using {@link #BLOCKING} policy.
+   * It is implemented in {@link #readAvailableBlocking()}
+   * </p>
+   * <p>
+   *   <h2>Non-blocking</h2>
+   * Before reading data, you can call {@link InputStream#available()} to see how much data can be read without of blocking.
+   * This gives us ability to use simple loop
+   * <ol>
+   * <li>Check <{@link InputStream#available()}</li>
+   * <li>If not zero then {@link InputStream#read()}} which is guaranteed not to block </li>
+   * <li>If <code>processTerminated</code> flag set then exit loop</li>
+   * <li>Sleep for a while</li>
+   * <li>Repeat</li>
+   * </ol>
+   * This "busy-wait" antipattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
+   * user process and used by {@link #SIMPLE} (aka non-blocking) policy. Drawback is that process may finish (when {@link Process#waitFor()} returns)
+   * leaving some data unread.
+   * It is implemented in {@link #readAvailableNonBlocking()}}
+   * </p>
+   * <p>
+   * <h2>Conclusion</h2>
+   * For helper (simple script that is guaranteed to finish soon) and should never be left after Idea is closed use {@link #BLOCKING}.
+   * For user process that may run forever, even after idea is closed, and user should have ability to disconnect from it
+   * use {@link #SIMPLE}.
+   * If you see some data lost in stdout/stderr try switching to {@link #BLOCKING}.
+   * </p>
+   */
+  @ReviseWhenPortedToJDK("Loom")
   public interface SleepingPolicy {
     int sleepTimeWhenWasActive = 1;
     int sleepTimeWhenIdle = 5;

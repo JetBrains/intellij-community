@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 
@@ -237,7 +238,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * In case of pty this process handler will use blocking read. The value should be set before
+   * In case of pty this process handler will use blocking read because {@link InputStream#available()} doesn't work for pty4j, and there
+   * is no reason to "disconnect" leaving pty alive.
+   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for more info.
+   * The value should be set before
    * startNotify invocation. It is set by default in case of using GeneralCommandLine based constructor.
    *
    * @param hasPty true if process is pty based
@@ -246,6 +250,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myHasPty = hasPty;
   }
 
+  /**
+   * Rule of thumb: use {@link BaseOutputReader.Options#BLOCKING} for short-living process that you never want to "disconnect" from.
+   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for the whole story.
+   */
   @NotNull
   @Override
   protected BaseOutputReader.Options readerOptions() {
