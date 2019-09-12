@@ -608,7 +608,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       for (service in getContainerDescriptor(plugin).services) {
         if (service.preload) {
           futures.add(CompletableFuture.runAsync(Runnable {
-            (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+            if (!isContainerDisposedOrDisposeInProgress()) {
+              (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+            }
           }, executor))
         }
       }
@@ -617,7 +619,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return CompletableFuture.allOf(*futures.toTypedArray())
   }
 
-  internal fun isContainerDisposed() = super.isDisposed()
+  // todo check is it safe to use this implementation in `isContainerDisposed` (for now, old behaviour is not changed)
+  // if it is safe, this method is not needed
+  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
+    return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  }
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {

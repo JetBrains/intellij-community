@@ -38,8 +38,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected final DefaultPicoContainer myPicoContainer;
 
-  private volatile boolean myDisposed;
-  private volatile boolean myDisposeCompleted;
+  protected enum ContainerState {
+    ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
+  }
+
+  protected volatile ContainerState myContainerState = ContainerState.ACTIVE;
 
   private volatile MessageBus myMessageBus;
 
@@ -68,7 +71,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   @Override
   public final MessageBus getMessageBus() {
-    if (myDisposed) {
+    if (isContainerDisposed()) {
       throwAlreadyDisposed();
     }
 
@@ -90,8 +93,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected abstract MessageBus createMessageBus();
 
   protected final synchronized void disposeComponents() {
-    assert !myDisposeCompleted : "Already disposed!";
-    myDisposed = true;
+    if (isDisposeCompleted()) {
+      throwAlreadyDisposed();
+    }
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    myContainerState = ContainerState.DISPOSED;
 
     // we cannot use list of component adapters because we must dispose in reverse order of creation
     List<BaseComponent> components = myBaseComponents;
@@ -139,7 +145,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   public final DefaultPicoContainer getPicoContainer() {
     DefaultPicoContainer container = myPicoContainer;
-    if (container == null || myDisposeCompleted) {
+    if (container == null || isDisposeCompleted()) {
       throwAlreadyDisposed();
     }
     return container;
@@ -161,7 +167,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myDisposeCompleted = true;
+    myContainerState = ContainerState.DISPOSE_COMPLETED;
 
     if (myMessageBus != null) {
       Disposer.dispose(myMessageBus);
@@ -176,7 +182,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public boolean isDisposed() {
-    return myDisposed;
+    return isContainerDisposed();
   }
 
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {
@@ -243,5 +249,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     myBaseComponents.add(baseComponent);
+  }
+
+  private boolean isContainerDisposed() {
+    return myContainerState.ordinal() >= ContainerState.DISPOSED.ordinal();
+  }
+
+  private boolean isDisposeCompleted() {
+    return myContainerState == ContainerState.DISPOSE_COMPLETED;
   }
 }

@@ -748,6 +748,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project);
 
+      if (project instanceof ProjectImpl) {
+        ((ProjectImpl)project).setDisposeInProgress();
+      }
       app.runWriteAction(() -> {
         removeFromOpened(project);
 

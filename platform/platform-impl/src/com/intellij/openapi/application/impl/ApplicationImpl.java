@@ -84,7 +84,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
-  private volatile boolean myDisposeInProgress;
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
@@ -644,7 +643,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
-      myDisposeInProgress = true;
+      myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
 
       if (!force && !canExit()) {
         return;
@@ -675,7 +674,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       System.exit(exitCode);
     }
     finally {
-      myDisposeInProgress = false;
       myExitInProgress = false;
     }
   }
@@ -1272,7 +1270,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isDisposeInProgress() {
-    return myDisposeInProgress || ShutDownTracker.isShutdownHookRunning();
+    return myContainerState == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
   }
 
   @Override
@@ -1283,7 +1281,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
-    myDisposeInProgress = disposeInProgress;
+    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
   }
 
   @Override

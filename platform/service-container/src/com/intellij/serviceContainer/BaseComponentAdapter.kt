@@ -71,7 +71,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
       return instance
     }
 
-    if (componentManager.isContainerDisposed()) {
+    if (componentManager.isContainerDisposedOrDisposeInProgress()) {
       throw PluginException("Cannot create ${toString()} because service container is already disposed (container=${componentManager}", pluginId)
     }
 

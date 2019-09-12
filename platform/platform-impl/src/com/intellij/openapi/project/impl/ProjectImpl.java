@@ -331,6 +331,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
+    setDisposeInProgress();
+
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
@@ -378,5 +380,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public String activityNamePrefix() {
     return "project ";
+  }
+
+  @ApiStatus.Internal
+  public final void setDisposeInProgress() {
+    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
   }
 }
