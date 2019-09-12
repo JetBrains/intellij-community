@@ -96,7 +96,7 @@ class CircletIdeaJobExecutionProvider(
         if (imageName.endsWith("_toFail")) {
             return ExecutionStatus.FAILED
         }
-        return ExecutionStatus.SUCCEEDED
+        return ExecutionStatus.FINISHED
     }
 
     private fun launch(body: suspend () -> Unit) {
