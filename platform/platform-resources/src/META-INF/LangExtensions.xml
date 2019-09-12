@@ -946,6 +946,7 @@
 
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
+    <renamerFactory implementation="com.intellij.refactoring.rename.RenameHandlerRenamerFactory"/>
     <renameHandler implementation="com.intellij.refactoring.rename.PlainDirectoryRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
