@@ -105,12 +105,10 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
-  @ApiStatus.Experimental
   default <T> T getService(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, true);
   }
 
-  @ApiStatus.Experimental
   @Nullable
   default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, false);

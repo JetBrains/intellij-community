@@ -486,8 +486,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           templateDataLanguageMappings.cleanupForNextTest();
         }
       }).
-      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
-      append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
+      append(() -> {
+        PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
+        if (psiManager != null) {
+          ((PsiManagerImpl)psiManager).cleanupForNextTest();
+        }
+      }).
+      append(() -> {
+        StructureViewFactory structureViewFactory = project.getServiceIfCreated(StructureViewFactory.class);
+        if (structureViewFactory != null) {
+          ((StructureViewFactoryImpl)structureViewFactory).cleanupForNextTest();
+        }
+      }).
       append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
