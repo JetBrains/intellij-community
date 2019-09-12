@@ -2,8 +2,14 @@
 package com.jetbrains.jsonSchema.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -17,28 +23,20 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
   }
 
-  protected void doTest(@Language("JSON") @NotNull String schema, @NotNull String text, String fixName, String afterFix) throws Exception {
-    configureInitially(schema, text, "json");
-    myFixture.doHighlighting();
+  protected void doTest(@Language("JSON") @NotNull String schema, @NotNull String text, String fixName, String afterFix) {
+    PsiFile psiFile = configureInitially(schema, text, "json");
+    myFixture.checkHighlighting();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getFamilyName()));
-    action.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    String fileText = myFixture.getFile().getText();
-    int caretIndex = afterFix.indexOf("<caret>");
-    if (caretIndex >= 0) {
-      int caretOffset = myFixture.getEditor().getCaretModel().getOffset();
-      fileText = fileText.substring(0, caretOffset - 1) + "<caret>" + fileText.substring(caretOffset - 1);
-    }
-    assertEquals(afterFix, fileText);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, myFixture.getEditor(), action, action.getText());
+      }
+      catch (StubTextInconsistencyException e) {
+        PsiTestUtil.compareStubTexts(e);
+      }
+    });
+    UIUtil.dispatchAllInvocationEvents();
+    myFixture.checkResult(afterFix);
   }
-/*
-  @Override
-  @NotNull
-  protected PsiFile configureInitially(@NotNull String schema,
-                                       @NotNull String text,
-                                       @NotNull String schemaExt) {
-    myFixture.enableInspections(getInspectionProfile());
-    registerProvider(schema, schemaExt);
-    return myFixture.addFileToProject("json_schema_test_r/" + getTestFileName(), text);
-  }*/
 }
