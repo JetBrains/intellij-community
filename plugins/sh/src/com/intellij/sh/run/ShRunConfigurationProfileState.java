@@ -5,6 +5,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
@@ -26,6 +27,8 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 import static com.intellij.sh.ShStringUtil.quote;
 
@@ -114,13 +117,16 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   @NotNull
   private String buildCommand() {
-    return quote(myRunConfiguration.getInterpreterPath()) +
-           WHITESPACE +
-           myRunConfiguration.getInterpreterOptions() +
-           WHITESPACE +
-           quote(myRunConfiguration.getScriptPath()) +
-           WHITESPACE +
-           myRunConfiguration.getScriptOptions() +
-           LineSeparator.CR.getSeparatorString();
+    return String.join(" ", Arrays.asList(adaptPathForExecution(myRunConfiguration.getInterpreterPath()),
+                                          myRunConfiguration.getInterpreterOptions(),
+                                          adaptPathForExecution(myRunConfiguration.getScriptPath()),
+                                          myRunConfiguration.getScriptOptions(),
+                                          LineSeparator.CR.getSeparatorString()));
+  }
+
+  private static String adaptPathForExecution(@NotNull String systemDependentPath) {
+    if (Platform.current() != Platform.WINDOWS) return quote(systemDependentPath);
+    String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
+    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
   }
 }
