@@ -36,9 +36,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
         System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
 
         // https://youtrack.jetbrains.com/issue/IDEA-208908
-        val numArenas = if (PlatformUtils.isIdeaCommunity()) "1" else "2"
-        System.setProperty("io.netty.allocator.numDirectArenas", numArenas)
-        System.setProperty("io.netty.allocator.numHeapArenas", numArenas)
+        System.setProperty("io.netty.allocator.numDirectArenas", "1")
       }
 
       val logger = IdeaNettyLogger()
