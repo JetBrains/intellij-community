@@ -24,6 +24,9 @@ public interface CommitExecutor {
     return false;
   }
 
+  /**
+   * @deprecated use {@link #createCommitSession(CommitContext)}
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @NotNull
