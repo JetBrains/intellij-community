@@ -66,7 +66,7 @@ public class BootstrapClassLoaderUtil {
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
-      .logJarAccess(jarOrder.isEmpty())
+      .logJarAccess(Boolean.getBoolean("idea.log.classpath.info"))
       .autoAssignUrlsWithProtectionDomain()
       .useCache();
     if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {

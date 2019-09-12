@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -35,6 +36,8 @@ class DistributionJARsBuilder {
    * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
+  private static final String PLUGINS_DIRECTORY = "/plugins"
+  
   private final BuildContext buildContext
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
@@ -79,21 +82,24 @@ class DistributionJARsBuilder {
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
-        def libraries = JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
-          !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
-            it.libraryName == library.name && it.relativeOutputPath == ""
+        def libraries =
+          JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+            !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
+              it.libraryName == library.name && it.relativeOutputPath == ""
+            }
           }
-        }
         if (!libraries.isEmpty()) {
-          buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect {"'$it.name'"}.join(",")}")
+          buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect { "'$it.name'" }.join(",")}")
         }
         libraries
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + getIncludedPlatformModules(productLayout)).collectMany(new LinkedHashSet<String>()) {
-      JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
-    }
+    Set<String> allProductDependencies = (
+      productLayout.getIncludedPluginModules(enabledPluginModules) + getIncludedPlatformModules(productLayout)).
+      collectMany(new LinkedHashSet<String>()) {
+        JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect { it.name }
+      }
 
     platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
       productLayout.additionalPlatformJars.entrySet().each {
@@ -230,7 +236,7 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     prebuildSVG()
-    buildJarOrderFile()
+    buildOrderFiles()
     buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
@@ -250,20 +256,24 @@ class DistributionJARsBuilder {
   }
 
   /**
-   * Creates jar file with module loading order.
-   * The file is used in {@link #addJarOrderFile(java.lang.Object)} for creating the "classpath-order.txt" file inside bootstrap module  
+   * Creates files with modules and class loading order.
+   * The files are used in {@link #processOrderFiles} for creating the "classpath-order.txt" and "order.txt"  
    */
-  void buildJarOrderFile() {
+  void buildOrderFiles() {
     buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
       def directory = "$buildContext.paths.temp/jarOrder"
-      def targetFile = "$directory/modules-order.txt"
-      List<String> modulesToIndex = getModulesToCompile(buildContext)
+      def modulesOrder = "$directory/modules-order.txt"
+      def classesOrder = "$directory/classes-order.txt"
+      List<String> modulesToIndex =  buildContext.productProperties.productLayout.mainModules + getModulesToCompile(buildContext)
       buildContext.messages.progress("Generating jar loading order for ${modulesToIndex.size()} modules")
-      FileUtil.delete(new File(targetFile))
-      BuildTasksImpl.runApplicationStarter(buildContext, directory, modulesToIndex, ['jarOrder', targetFile])
+      FileUtil.delete(new File(modulesOrder))
+      FileUtil.delete(new File(classesOrder))
+      BuildTasksImpl.runApplicationStarter(buildContext, directory, modulesToIndex,
+                                           ['jarOrder', modulesOrder, classesOrder],
+                                           ["idea.log.classpath.info": true])
     })
   }
-  
+
   /**
    * Build index which is used to search options in the Settings dialog.
    */
@@ -382,73 +392,164 @@ class DistributionJARsBuilder {
     "$buildContext.paths.temp/third-party-libraries.json"
   }
 
+
   /**
-   * @see #buildJarOrderFile() 
+   * Post processing after {@link #buildOrderFiles}
    */
-  private void addJarOrderFile(layoutBuilder) {
+  private void processOrderFiles(layoutBuilder) {
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      buildContext.messages.info("Start processing order files")
+      def libModulesToJar = getModuleToJarMap(platform)
+      Map<String, String> pluginsToJar = getPluginModulesToJar()
+      Map<String, String> pathToToJarName = getLibraryPathPathToJarName()
+      Map<String, String> pathToModuleName = getModulePathToModuleName(libModulesToJar.keySet() + pluginsToJar.keySet())
+
+      addClassesOrderFile(pathToModuleName, pathToToJarName, pluginsToJar, libModulesToJar)
+      addJarOrderFile(layoutBuilder, pathToModuleName, pathToToJarName, libModulesToJar)
+      buildContext.messages.info("End processing order files")
+    }
+  }
+
+  private void addClassesOrderFile(Map<String, String> pathToModuleName,
+                                   Map<String, String> pathToToJarName,
+                                   Map<String, String> pluginModulesToJar,
+                                   Map<String, String> libModulesToJar) {
+    def jarOrderTempDirectoryPath = "$buildContext.paths.temp/jarOrder"
+    def classesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/classes-order.txt"
+    def finalOrder = "$jarOrderTempDirectoryPath/order.txt"
+    def classesFile = new File(classesLoadingOrderFilePath)
+    def lines = classesFile.readLines()
+    if (!classesFile.exists() || lines.isEmpty()) {
+      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath doesn't exist or empty")
+      return
+    }
+
+    def resultLines = new ArrayList<String>()
+    for (def line : lines) {
+      List<String> split = StringUtil.split(line, ":")
+      if (!(split.size() == 2)) continue
+      String modulePath = split.get(1)
+      if (modulePath.endsWith(".jar")) {
+        String jarName = pathToToJarName.get(modulePath)
+        //possible jar from a plugin
+        if (jarName == null) continue
+        resultLines.add(split.get(0) + ":/lib/" + jarName)
+      }
+      else {
+        def moduleName = pathToModuleName.get(modulePath)
+        if (moduleName == null) continue
+        def libJarName = libModulesToJar.get(moduleName)
+        if (libJarName != null) {
+          resultLines.add(split.get(0) + ":/lib/" + libJarName)
+        }
+        else {
+          def moduleJarName = pluginModulesToJar.get(moduleName)
+          if (moduleName == null) continue
+          resultLines.add("${split.get(0)}:$moduleJarName")
+        }
+      }
+    }
+    def resultFile = new File(finalOrder)
+    FileUtil.writeToFile(resultFile, resultLines.join("\n"))
+    buildContext.productProperties.productLayout.classesLoadingOrderFilePath = resultFile.getPath()
+    buildContext.messages.info("Completed generating classes order file. Before preparing: ${lines.size()} after: ${resultLines.size()}")
+  }
+
+  private Map<String, String> getPluginModulesToJar() {
+    def pluginsToJar = new HashMap<String, String>()
+    def productLayout = buildContext.productProperties.productLayout
+    def allPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules + productLayout.pluginModulesToPublish)
+    for (def plugin : allPlugins) {
+      def directory = getActualPluginDirectoryName(plugin, buildContext)
+      getModuleToJarMap(plugin, pluginsToJar, "$PLUGINS_DIRECTORY/$directory/lib/")
+    }
+    return pluginsToJar
+  }
+
+  private Map<String, String> getModulePathToModuleName(Set<String> allModules) {
+    def pathToModuleName = new HashMap<String, String>()
+    for (def moduleName in allModules) {
+      def module = buildContext.findModule(moduleName)
+      if (module == null) continue
+      def classpath = buildContext.getModuleOutputPath(module)
+      pathToModuleName.put(classpath, moduleName)
+    }
+    return pathToModuleName
+  }
+  
+  private Map<String, String> getLibraryPathPathToJarName() {
+    def libWithoutVersion = new HashSet(platform.projectLibrariesWithRemovedVersionFromJarNames)
+    def libraryJarPathToJarName = new HashMap()
+    buildContext.project.libraryCollection.libraries.each {
+      def name = it.getName()
+      for (def libFile : it.getFiles(JpsOrderRootType.COMPILED)) {
+        def fileName = libFile.getName()
+        def jarName = fileName
+        if (libWithoutVersion.contains(name)) {
+          def candidate = getLibraryNameWithoutVersion(libFile)
+          if (candidate != null) {
+            jarName = candidate
+          }
+        }
+        libraryJarPathToJarName.put(libFile.getPath(), jarName)
+      }
+    }
+    return libraryJarPathToJarName
+  }
+  
+  private void addJarOrderFile(layoutBuilder,
+                               Map<String, String> pathToModuleName,
+                               Map<String, String> pathToToJarName,
+                               Map<String, String> libModulesToJar) {
     def jarOrderTempDirectoryPath = "$buildContext.paths.temp/jarOrder"
     def modulesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/modules-order.txt"
     def file = new File(modulesLoadingOrderFilePath)
-    if (file.exists()) {
-      def moduleToJar = new HashMap<String, String>()
-      def jarFileNames = new LinkedHashSet()
-
-      def libsWithoutPrefix = new HashSet()
-      for (def lib  : getLibsToRemoveVersion()) {
-        libsWithoutPrefix.add(lib.toLowerCase())
-      }
-
-      for (def entry : platform.moduleJars.entrySet()) {
-        def jarName = entry.key
-        def fixedJarName = getActualModuleJarPath(jarName, entry.value, platform.explicitlySetJarPaths)
-        entry.value.forEach({ el -> moduleToJar.put(el, fixedJarName) })
-      }
-      def lines = FileUtil.loadLines(file)
-
-      for (def line : lines) {
-        if (line.endsWith(".jar")) {
-          def prefixIndex = line.indexOf("-")
-          String libName = line
-          if (prefixIndex >= 0) {
-            libName = line.substring(0, prefixIndex)
-          }
-          if (libsWithoutPrefix.contains(libName)) {
-            jarFileNames.add(libName + ".jar")
-          }
-          else {
-            jarFileNames.add(line)
-          }
-        }
-        else {
-          def jar = moduleToJar.get(line)
-          if (jar != null) {
-            jarFileNames.add(jar)
-          }
-        }
-      }
-
-      if (!jarFileNames.isEmpty()) {
-        def bootstrap = "intellij.platform.bootstrap"
-        def newFile = new File(jarOrderTempDirectoryPath, bootstrap + "/com/intellij/ide/classpath-order.txt")
-        FileUtil.writeToFile(newFile, jarFileNames.join("\n"))
-        layoutBuilder.patchModuleOutput(bootstrap, "$jarOrderTempDirectoryPath/$bootstrap") 
-        
-        buildContext.messages.info("Created patch to apply jar order:" + newFile.path)
-      } else {
-        buildContext.messages.warning("Jar order file is empty")
-      }
-    }
-    else {
+    if (!file.exists()) {
       buildContext.messages.info("Failed to generate jar loading order file: $modulesLoadingOrderFilePath doesn't exist")
     }
+
+    def lines = FileUtil.loadLines(file)
+
+    def jarFileNames = new LinkedHashSet()
+    for (def line : lines) {
+      def jarName
+      if (line.endsWith(".jar")) {
+        jarName = pathToToJarName.get(line)
+      }
+      else {
+        def moduleName = pathToModuleName.get(line)
+        jarName = moduleName != null ? libModulesToJar.get(moduleName) : null
+      }
+      if (jarName != null) jarFileNames.add(jarName)
+    }
+
+    if (jarFileNames.isEmpty()) {
+      buildContext.messages.warning("Jar order file is empty")
+      return
+    }
+    def bootstrap = "intellij.platform.bootstrap"
+    def newFile = new File(jarOrderTempDirectoryPath, bootstrap + "/com/intellij/ide/classpath-order.txt")
+    FileUtil.writeToFile(newFile, jarFileNames.join("\n"))
+    buildContext.messages.info("Completed generating jar file. Before preparing: ${lines.size()} after: ${jarFileNames.size()}")
+    layoutBuilder.patchModuleOutput(bootstrap, "$jarOrderTempDirectoryPath/$bootstrap")
+    buildContext.messages.info("Add patch to apply jar order:" + newFile.path)
   }
-  
+
+  private Map<String, String> getModuleToJarMap(BaseLayout layout, Map<String, String> moduleToJar = new HashMap<>(), String jarPrefix = "") {
+    for (def entry : layout.moduleJars.entrySet()) {
+      def jarName = entry.key
+      def fixedJarName = getActualModuleJarPath(jarName, entry.value, platform.explicitlySetJarPaths)
+      entry.value.forEach({ el -> moduleToJar.put(el, jarPrefix + fixedJarName) })
+    }
+    return moduleToJar
+  }
+
   private void buildLib() {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-
-    addJarOrderFile(layoutBuilder)
+    
+    processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
     SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 
@@ -491,11 +592,20 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
+  static String getLibraryNameWithoutVersion(library) {
+    def matcher = library.name =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
+    if (matcher.matches()) {
+      return matcher.group(1) + ".jar"
+    }
+
+    return null
+  }
+
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
     buildContext.messages.block("Build bundled plugins") {
-      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
     }
     usedModules.addAll(layoutBuilder.usedModules)
   }

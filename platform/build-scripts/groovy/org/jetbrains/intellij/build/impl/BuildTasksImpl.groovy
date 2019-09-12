@@ -96,8 +96,8 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     })
   }
-
-  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments) {
+  
+  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = null) {
     def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
@@ -126,6 +126,13 @@ class BuildTasksImpl extends BuildTasks {
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
       sysproperty(key: "idea.config.path", value: configPath)
+      
+      if (systemProperties != null) {
+        systemProperties.each {
+          sysproperty(key: it.key, value: it.value)
+        }
+      }
+      
       if (buildContext.productProperties.platformPrefix != null) {
         sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
       }
@@ -351,7 +358,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        distributionJARsBuilder.buildJarOrderFile()
+        distributionJARsBuilder.buildOrderFiles()
         distributionJARsBuilder.buildSearchableOptions()
         distributionJARsBuilder.buildNonBundledPlugins()
       }

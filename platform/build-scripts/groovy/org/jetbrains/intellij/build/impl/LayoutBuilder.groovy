@@ -21,6 +21,8 @@ import java.util.regex.Pattern
  * @author nik
  */
 class LayoutBuilder {
+  public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
+  
   private final AntBuilder ant
   private final boolean compressJars
   final Set<String> usedModules = new LinkedHashSet<>()
@@ -190,8 +192,6 @@ class LayoutBuilder {
       }
       jpsLibrary(library)
     }
-
-    private static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
 
     /**
      * @param removeVersionFromJarName if {@code true} versions will be removed from the JAR names. <strong>It may be used to temporary

@@ -32,7 +32,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
-    productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = [
