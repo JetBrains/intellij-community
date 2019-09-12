@@ -118,7 +118,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<RuntimeException>() {
         private VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();
@@ -147,7 +147,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).attempts(10).assertTiming();
     });
   }
 
