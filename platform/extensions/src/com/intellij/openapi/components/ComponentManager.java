@@ -136,7 +136,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @Nullable PluginId pluginId) {
+  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
     //noinspection unchecked
     return (T)new CachingConstructorInjectionComponentAdapter(key, aClass, null, true).getComponentInstance(getPicoContainer());
   }

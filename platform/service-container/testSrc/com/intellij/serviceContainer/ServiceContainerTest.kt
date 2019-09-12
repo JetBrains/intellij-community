@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -23,12 +21,13 @@ class ServiceContainerTest {
     }
       .hasMessageContaining("Cyclic service initialization")
   }
-}
 
-internal class TestComponentManager : PlatformComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.appContainerDescriptor
-
-  override fun getApplication(): Application? = null
+  @Test
+  fun `service as data class`() {
+    val componentManager = TestComponentManager()
+    componentManager.registerService(ServiceAsDataClass::class.java, ServiceAsDataClass::class.java, testPluginDescriptor, false)
+    componentManager.getService(ServiceAsDataClass::class.java)
+  }
 }
 
 private class C1(componentManager: ComponentManager) {
@@ -42,3 +41,5 @@ private class C2(componentManager: ComponentManager) {
     componentManager.getService(C1::class.java)
   }
 }
+
+private data class ServiceAsDataClass(var a: String? = null, var b: String? = null)

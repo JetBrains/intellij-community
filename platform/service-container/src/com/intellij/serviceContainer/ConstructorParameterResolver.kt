@@ -30,7 +30,7 @@ internal class ConstructorParameterResolver {
                    requestorClass: Class<*>,
                    requestorConstructor: Constructor<*>,
                    expectedType: Class<*>,
-                   pluginId: PluginId?,
+                   pluginId: PluginId,
                    isExtensionSupported: Boolean): Boolean {
     if (isLightService(expectedType) ||
         expectedType === ComponentManager::class.java ||
@@ -45,7 +45,7 @@ internal class ConstructorParameterResolver {
                       requestorClass: Class<*>,
                       requestorConstructor: Constructor<*>,
                       expectedType: Class<*>,
-                      pluginId: PluginId?): Any? {
+                      pluginId: PluginId): Any? {
     if (expectedType === ComponentManager::class.java) {
       return componentManager
     }
@@ -66,18 +66,13 @@ internal class ConstructorParameterResolver {
     }
   }
 
-  private fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId?): Any? {
+  private fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId): Any? {
     val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
     val message = "Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})"
     val app = componentManager.getApplication()
     @Suppress("SpellCheckingInspection")
-    if (app != null && app.isUnitTestMode && pluginId?.idString != "org.jetbrains.kotlin" && pluginId?.idString != "Lombook Plugin") {
-      if (pluginId == null) {
-        throw RuntimeException(message)
-      }
-      else {
-        throw PluginException(message, pluginId)
-      }
+    if (app != null && app.isUnitTestMode && pluginId.idString != "org.jetbrains.kotlin" && pluginId.idString != "Lombook Plugin") {
+      throw PluginException(message, pluginId)
     }
     else {
       LOG.warn(message)
@@ -90,7 +85,7 @@ internal class ConstructorParameterResolver {
                                 requestorKey: Any,
                                 requestorClass: Class<*>,
                                 requestorConstructor: Constructor<*>,
-                                @Suppress("UNUSED_PARAMETER") pluginId: PluginId?): ComponentAdapter? {
+                                @Suppress("UNUSED_PARAMETER") pluginId: PluginId): ComponentAdapter? {
     val container = componentManager.picoContainer
     val byKey = container.getComponentAdapter(expectedType)
     if (byKey != null && requestorKey != byKey.componentKey) {
@@ -110,7 +105,7 @@ internal class ConstructorParameterResolver {
       return null
     }
 
-    if (componentManager.getApplication() != null) {
+    if (componentManager.isGetComponentAdapterOfTypeCheckEnabled) {
       LOG.error("getComponentAdapterOfType is used to get ${expectedType.name} (requestorClass=${requestorClass.name}, requestorConstructor=${requestorConstructor})." +
                 "\n\nProbably constructor should be marked as NonInjectable.")
     }

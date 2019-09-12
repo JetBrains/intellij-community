@@ -500,11 +500,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId?): T {
+  final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
   }
 
-  internal open fun isContainerInTestMode() = false
+  internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
+    get() = true
 
   final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
     val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")

@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.extensions.PluginId
 import gnu.trove.THashSet
-import org.picocontainer.PicoInitializationException
-import org.picocontainer.PicoIntrospectionException
-import org.picocontainer.defaults.TooManySatisfiableConstructorsException
 import java.io.File
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
@@ -13,7 +11,7 @@ import java.nio.file.Path
 
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                                                requestorKey: Any,
-                                               pluginId: PluginId?,
+                                               pluginId: PluginId,
                                                componentManager: PlatformComponentManagerImpl,
                                                parameterResolver: ConstructorParameterResolver): T {
   val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
@@ -48,13 +46,15 @@ internal fun isNotApplicableClass(type: Class<*>): Boolean {
   return type.isPrimitive || type.isEnum || type.isArray ||
          Collection::class.java.isAssignableFrom(type) ||
          Map::class.java.isAssignableFrom(type) ||
-         type === File::class.java || type === Path::class.java
+         type === String::class.java ||
+         type === File::class.java ||
+         type === Path::class.java
 }
 
 private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                                                sortedMatchingConstructors: Array<Constructor<*>>,
                                                requestorKey: Any,
-                                               pluginId: PluginId?,
+                                               pluginId: PluginId,
                                                componentManager: PlatformComponentManagerImpl,
                                                parameterResolver: ConstructorParameterResolver,
                                                isExtensionSupported: Boolean): Pair<Constructor<*>, Array<Class<*>>> {
@@ -126,7 +126,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
 
   when {
     !conflicts.isNullOrEmpty() -> {
-      throw TooManySatisfiableConstructorsException(aClass, conflicts)
+      throw PluginException("Too many satisfiable constructors: ${sortedMatchingConstructors.joinToString { it.toString() }}", pluginId)
     }
     greediestConstructor != null -> {
       return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
@@ -134,23 +134,18 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
     !unsatisfiableDependencyTypes.isNullOrEmpty() -> {
       // second (and final) round
       if (isExtensionSupported) {
-        throw PicoIntrospectionException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
-                                         "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.")
+        throw PluginException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
+                              "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.", pluginId)
       }
       else {
         return getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, pluginId, componentManager, parameterResolver, true)
       }
     }
     else -> {
-      throw createNoSatisfiableConstructorError(aClass)
+      throw PluginException("The specified parameters not match any of the following constructors: " +
+                            "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" + "for $aClass", pluginId)
     }
   }
-}
-
-private fun createNoSatisfiableConstructorError(aClass: Class<*>): RuntimeException {
-  return PicoInitializationException("The specified parameters not match any of the following constructors: " +
-                                     "${aClass.declaredConstructors.joinToString(separator = "\n") { it.toString() }}\n" +
-                                     "for $aClass")
 }
 
 private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
