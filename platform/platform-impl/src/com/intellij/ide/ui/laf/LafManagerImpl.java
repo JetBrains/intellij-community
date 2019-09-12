@@ -638,14 +638,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
+    patchRowHeight(defaults, "List.rowHeight", prevScale);
+    patchRowHeight(defaults, "Table.rowHeight", prevScale);
+    patchRowHeight(defaults, "Tree.rowHeight", prevScale);
+
     if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
-                                           "Tree.rowHeight",
-                                           "SettingsTree.rowHeight",
-                                           "Table.rowHeight",
-                                           "List.rowHeight");
+                                           "SettingsTree.rowHeight");
 
     List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
                                                  "Slider.verticalSize",
@@ -673,6 +674,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
+  }
+
+  private static void patchRowHeight(UIDefaults defaults, String key, float prevScale) {
+    Object value = defaults.get(key);
+    int rowHeight = value instanceof Integer ? (Integer)value : 0;
+    if (rowHeight <= 0) {
+      LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
+      rowHeight = Registry.intValue("ide.laf.manager.default.row.height", 0); // use default row height to increase performance
+    }
+    defaults.put(key, rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
 
   private static void fixMenuIssues(@NotNull UIDefaults uiDefaults) {
