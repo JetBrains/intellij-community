@@ -8,10 +8,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration
 import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.remoteServer.ir.runtime.sample.SampleLanguageRuntimeConfiguration
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: Project, private val initialSelectedName: String? = null)
   : MasterDetailsComponent() {
@@ -42,18 +48,18 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
 
   override fun processRemovedItems() {
     val deletedTargets = allTargets().toSet() - getConfiguredTargets()
-    deletedTargets.forEach { RemoteTargetsManager.instance.removeConfig(it) }
+    deletedTargets.forEach { RemoteTargetsManager.instance.targets.removeConfig(it) }
     super.processRemovedItems()
   }
 
   override fun apply() {
     super.apply()
 
-    val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.resolvedConfigs()
-    addedConfigs.forEach { RemoteTargetsManager.instance.addConfig(it) }
+    val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.targets.resolvedConfigs()
+    addedConfigs.forEach { RemoteTargetsManager.instance.targets.addConfig(it) }
   }
 
-  private fun allTargets() = RemoteTargetsManager.instance.resolvedConfigs()
+  private fun allTargets() = RemoteTargetsManager.instance.targets.resolvedConfigs()
 
   private fun addTargetNode(config: RemoteTargetConfiguration): MyNode {
     val configurable = TargetDetailsConfigurable(project, config)
@@ -82,10 +88,10 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
     }
   }
 
-  private class TargetDetailsConfigurable(project: Project, private val config: RemoteTargetConfiguration)
+  private class TargetDetailsConfigurable(private val project: Project, private val config: RemoteTargetConfiguration)
     : NamedConfigurable<RemoteTargetConfiguration>(true, null) {
 
-    private val targetConfigurable: Configurable = config.getTypeImpl().createConfigurable(project, config)
+    private val targetConfigurable: Configurable = doCreateConfigurable(config)
 
     override fun getBannerSlogan(): String = config.displayName
 
@@ -108,6 +114,20 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
 
     override fun getEditableObject() = config
 
-    override fun createOptionsPanel(): JComponent = targetConfigurable.createComponent() ?: throw IllegalStateException()
+    override fun createOptionsPanel(): JComponent {
+      val panel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+      panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
+
+      config.runtimes.resolvedConfigs().forEach {
+        val nextConfigurable = doCreateConfigurable(it)
+        panel.add(nextConfigurable.createComponent())
+      }
+
+      return panel
+    }
+
+    private fun doCreateConfigurable(config: BaseExtendableConfiguration) =
+      config.getTypeImpl().createConfigurable(project, config)
+
   }
 }
