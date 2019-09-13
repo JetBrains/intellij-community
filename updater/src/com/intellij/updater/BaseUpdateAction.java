@@ -132,12 +132,21 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
+    if (isCritical()) {
+      Runner.logger().info("critical file, writing raw");
+
+      patchOutput.write(RAW);
+      Utils.copyStream(newerFileIn, patchOutput);
+
+      return;
+    }
+
     Runner.logger().info("writing diff");
     ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
     diffOutput.close();
 
-    if (!isCritical() && diffOutput.size() < newerFileBuffer.length) {
+    if (diffOutput.size() < newerFileBuffer.length) {
       patchOutput.write(COMPRESSED);
       diffOutput.writeTo(patchOutput);
     }
