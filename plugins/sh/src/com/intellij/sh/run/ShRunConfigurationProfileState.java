@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -120,8 +119,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     return String.join(" ", Arrays.asList(adaptPathForExecution(myRunConfiguration.getInterpreterPath()),
                                           myRunConfiguration.getInterpreterOptions(),
                                           adaptPathForExecution(myRunConfiguration.getScriptPath()),
-                                          myRunConfiguration.getScriptOptions(),
-                                          LineSeparator.CR.getSeparatorString()));
+                                          myRunConfiguration.getScriptOptions()));
   }
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath) {
