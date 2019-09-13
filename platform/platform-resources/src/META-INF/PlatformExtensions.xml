@@ -465,6 +465,10 @@
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingProjectManager"
+                    serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$EncodingProjectManagerStartUpActivity"/>
+
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
 

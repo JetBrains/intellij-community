@@ -68,12 +68,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent</implementation-class>
     </component>
   </project-components>
