@@ -18,7 +18,7 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
   private final Map<String, String> myEnvs = new LinkedHashMap<>();
   private boolean myPassParentEnvs = true;
 
-  public AbstractRunConfiguration(String name, RunConfigurationModule configurationModule, ConfigurationFactory factory) {
+  public AbstractRunConfiguration(String name, @NotNull RunConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(name, configurationModule, factory);
   }
 
