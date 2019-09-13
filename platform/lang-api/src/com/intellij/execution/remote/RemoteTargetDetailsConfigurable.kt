@@ -2,6 +2,8 @@
 package com.intellij.execution.remote
 
 import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
@@ -9,8 +11,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -47,18 +51,34 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
   override fun getEditableObject() = config
 
   override fun createOptionsPanel(): JComponent {
-    val panel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
-    panel.border = JBUI.Borders.empty(4, 10, 6, 10)
+    val result = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    result.border = JBUI.Borders.empty(4, 10, 6, 10)
 
-    panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
+    result.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
     config.runtimes.resolvedConfigs().forEach {
-      val nextConfigurable = doCreateConfigurable(it)
-      runtimeConfigurables.add(nextConfigurable)
-      panel.add(nextConfigurable.createComponent())
+      result.add(createRuntimePanel(it))
     }
-    panel.add(createAddRuntimeHyperlink())
-    return panel
+    result.add(createAddRuntimeHyperlink())
+    return result
+  }
+
+  private fun createRuntimePanel(runtime: LanguageRuntimeConfiguration): JPanel {
+    return panel {
+      row {
+        val separator = TitledSeparator(runtime.getRuntimeType().configurableDescription)
+        separator(CCFlags.growX, CCFlags.pushX)
+        gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(runtime))
+      }
+      row {
+        val languageUI = doCreateConfigurable(runtime)
+          .also { runtimeConfigurables.add(it) }
+          .let {
+            it.createComponent() ?: throw IllegalStateException("for runtime: $runtime")
+          }
+        languageUI(CCFlags.growX, CCFlags.pushX)
+      }
+    }
   }
 
   private fun createAddRuntimeHyperlink(): HyperlinkLabel {
@@ -74,8 +94,7 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
             selectedValue?.also {
               val newRuntime = it.createDefaultConfig()
               config.runtimes.addConfig(newRuntime)
-              resetOptionsPanel()
-              createComponent()
+              forceRefreshUI()
             }
           }
         }
@@ -100,4 +119,25 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
   private fun doCreateConfigurable(config: BaseExtendableConfiguration) =
     config.getTypeImpl().createConfigurable(project, config)
 
+  private fun forceRefreshUI() {
+    resetOptionsPanel()
+    createComponent()
+  }
+
+  private abstract inner class ChangeRuntimeActionBase(protected val runtime: LanguageRuntimeConfiguration, text: String) : AnAction(text)
+
+  private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Duplicate") {
+    override fun actionPerformed(e: AnActionEvent) {
+      val copy = runtime.getRuntimeType().duplicateConfig(runtime)
+      config.runtimes.addConfig(copy)
+      forceRefreshUI()
+    }
+  }
+
+  private inner class RemoveRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Remove") {
+    override fun actionPerformed(e: AnActionEvent) {
+      config.runtimes.removeConfig(runtime)
+      forceRefreshUI()
+    }
+  }
 }

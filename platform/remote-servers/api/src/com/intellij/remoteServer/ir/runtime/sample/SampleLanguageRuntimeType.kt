@@ -2,11 +2,12 @@
 package com.intellij.remoteServer.ir.runtime.sample
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.remote.LanguageRuntimeType
+import com.intellij.execution.remote.*
 import com.intellij.execution.remote.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
@@ -16,31 +17,33 @@ class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfi
 
   override val displayName = "Java"
 
+  override val configurableDescription = "Configure Java"
+
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
   override fun createDefaultConfig() = SampleLanguageRuntimeConfiguration()
 
   override fun createSerializer(config: SampleLanguageRuntimeConfiguration): PersistentStateComponent<*> = config
 
-  override fun createConfigurable(project: Project, config: SampleLanguageRuntimeConfiguration) = SampleLanguageRuntimeUI(config)
+  override fun createConfigurable(project: Project, config: SampleLanguageRuntimeConfiguration): Configurable = //
+    SampleLanguageRuntimeUI(config)
 
   companion object {
     @JvmStatic
     val TYPE_ID = "languageRuntime:sample"
   }
 
-  class SampleLanguageRuntimeUI(val config: SampleLanguageRuntimeConfiguration)
-    : BoundConfigurable(config.displayName, config.getTargetType().helpTopic) {
+  private class SampleLanguageRuntimeUI(val config: SampleLanguageRuntimeConfiguration)
+    : BoundConfigurable(config.displayName, config.getTypeImpl().helpTopic) {
 
     override fun createPanel(): DialogPanel {
       return panel {
-        titledRow("Java configuration") {
-          row("JDK home path:") {
-            textField(config::homePath)
-          }
-          row("Application folder:") {
-            textField(config::applicationFolder)
-          }
+        titledRow()
+        row("JDK home path:") {
+          textField(config::homePath)
+        }
+        row("Application folder:") {
+          textField(config::applicationFolder)
         }
       }
     }

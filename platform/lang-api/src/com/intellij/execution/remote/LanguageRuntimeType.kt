@@ -9,9 +9,16 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   abstract fun isApplicableTo(runConfig: RunnerAndConfigurationSettings): Boolean
 
+  /**
+   * Description of type's Configurable, e.g : "Configure GO"
+   */
+  abstract val configurableDescription: String
+
   companion object {
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.ir.languageRuntime")
     @JvmStatic
     fun allTypes() = EXTENSION_NAME.extensionList.toArray(emptyArray<LanguageRuntimeType<*>>())
   }
 }
+
+fun <C : LanguageRuntimeConfiguration, T : LanguageRuntimeType<C>> C.getRuntimeType(): T = this.getTypeImpl()
