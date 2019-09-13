@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  * @deprecated to be removed in 2020.1
  */
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @Deprecated
 public class YAMLFileTypeLoader extends FileTypeFactory {
   @Override
