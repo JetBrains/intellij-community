@@ -133,7 +133,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager" preload="true"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.impl.http.RemoteFileManager"
@@ -577,7 +577,6 @@
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryPreloader"/>
-    <preloadingActivity implementation="com.intellij.openapi.actionSystem.ex.QuickListPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
