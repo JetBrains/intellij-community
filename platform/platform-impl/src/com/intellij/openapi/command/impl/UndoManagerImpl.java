@@ -345,25 +345,25 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
     myCurrentOperationState = isUndo ? OperationState.UNDO : OperationState.REDO;
-
-    final RuntimeException[] exception = new RuntimeException[1];
-    Runnable executeUndoOrRedoAction = () -> {
-      try {
-        CopyPasteManager.getInstance().stopKillRings();
-        myMerger.undoOrRedo(editor, isUndo);
-      }
-      catch (RuntimeException ex) {
-        exception[0] = ex;
-      }
-      finally {
-        myCurrentOperationState = OperationState.NONE;
-      }
-    };
-
-    String name = getUndoOrRedoActionNameAndDescription(editor, isUndoInProgress()).second;
-    CommandProcessor.getInstance()
-      .executeCommand(myProject, executeUndoOrRedoAction, name, null, myMerger.getUndoConfirmationPolicy());
-    if (exception[0] != null) throw exception[0];
+    try {
+      final RuntimeException[] exception = new RuntimeException[1];
+      Runnable executeUndoOrRedoAction = () -> {
+        try {
+          CopyPasteManager.getInstance().stopKillRings();
+          myMerger.undoOrRedo(editor, isUndo);
+        }
+        catch (RuntimeException ex) {
+          exception[0] = ex;
+        }
+      };
+      String name = getUndoOrRedoActionNameAndDescription(editor, isUndoInProgress()).second;
+      CommandProcessor.getInstance()
+        .executeCommand(myProject, executeUndoOrRedoAction, name, null, myMerger.getUndoConfirmationPolicy());
+      if (exception[0] != null) throw exception[0];
+    }
+    finally {
+      myCurrentOperationState = OperationState.NONE;
+    }
   }
 
   @Override
