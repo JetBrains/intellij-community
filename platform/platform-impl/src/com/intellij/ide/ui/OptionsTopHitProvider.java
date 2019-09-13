@@ -2,7 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter;
 import com.intellij.ide.IdeBundle;
@@ -83,7 +83,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     else {
       result = ((OptionsTopHitProvider)provider).getOptions(project);
     }
-    ParallelActivity category = project == null ? ParallelActivity.APP_OPTIONS_TOP_HIT_PROVIDER : ParallelActivity.PROJECT_OPTIONS_TOP_HIT_PROVIDER;
+    ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;
     StartUpMeasurer.addCompletedActivity(startTime, clazz, category, null, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
     Collection<OptionDescription> prevValue = cache.map.putIfAbsent(clazz, result);
     return prevValue == null ? result : prevValue;

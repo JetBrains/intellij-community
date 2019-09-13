@@ -2,7 +2,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingPhase
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
@@ -440,7 +440,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     initializeComponent(result, null)
     val pluginClassLoader = serviceClass.classLoader as? PluginClassLoader
-    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, ParallelActivity.SERVICE, getActivityLevel(), pluginClassLoader?.pluginIdString)
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, ActivityCategory.SERVICE, getActivityLevel(), pluginClassLoader?.pluginIdString)
     return result
   }
 

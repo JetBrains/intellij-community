@@ -24,7 +24,7 @@ public final class ActivityImpl implements Activity {
   private final StartUpMeasurer.Level level;
 
   @Nullable
-  private ParallelActivity parallelActivity;
+  private ActivityCategory parallelActivity;
   @Nullable
   private final String pluginId;
 
@@ -68,11 +68,11 @@ public final class ActivityImpl implements Activity {
   }
 
   @Nullable
-  public ParallelActivity getParallelActivity() {
+  public ActivityCategory getParallelActivity() {
     return parallelActivity;
   }
 
-  void setCategory(@Nullable ParallelActivity value) {
+  void setCategory(@Nullable ActivityCategory value) {
     parallelActivity = value;
   }
 

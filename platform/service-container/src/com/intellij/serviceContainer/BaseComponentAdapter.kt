@@ -2,7 +2,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingPhase
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
@@ -111,7 +111,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  protected abstract fun getParallelActivity(): ParallelActivity?
+  protected abstract fun getParallelActivity(): ActivityCategory?
 
   protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 

@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
@@ -228,7 +228,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
 
     String pluginId = pluginDescriptor.getPluginId().getIdString();
-    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ParallelActivity.POST_STARTUP_ACTIVITY, null, pluginId);
+    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, null, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned);
     }
@@ -402,7 +402,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       runActivity(runnable);
 
-      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ParallelActivity.POST_STARTUP_ACTIVITY, null, pluginId);
+      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, null, pluginId);
     }
 
     activity.end();

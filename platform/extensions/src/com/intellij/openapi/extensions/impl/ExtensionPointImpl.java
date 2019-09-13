@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
@@ -448,7 +448,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
     StartUpMeasurer.Level level = DefaultPicoContainer.getActivityLevel(myComponentManager.getPicoContainer());
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, ParallelActivity.EXTENSION, level, /* pluginId = */ null);
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, ActivityCategory.EXTENSION, level, /* pluginId = */ null);
     return result;
   }
 

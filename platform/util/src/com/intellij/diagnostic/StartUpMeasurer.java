@@ -101,16 +101,16 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static Activity startActivity(@NotNull String name) {
-    return startActivity(name, ParallelActivity.APP_INIT);
+    return startActivity(name, ActivityCategory.APP_INIT);
   }
 
   @NotNull
-  public static Activity startActivity(@NotNull String name, @NotNull ParallelActivity category) {
+  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category) {
     return startActivity(name, category, null);
   }
 
   @NotNull
-  public static Activity startActivity(@NotNull String name, @NotNull ParallelActivity category, @Nullable String pluginId) {
+  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
     ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */ null, pluginId);
     activity.setCategory(category);
     return activity;
@@ -124,7 +124,7 @@ public final class StartUpMeasurer {
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
     long end = getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
@@ -138,7 +138,7 @@ public final class StartUpMeasurer {
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
     long end = getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
@@ -149,7 +149,7 @@ public final class StartUpMeasurer {
     return duration;
   }
 
-  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, level, pluginId);
     item.setCategory(category);
     item.setEnd(end);

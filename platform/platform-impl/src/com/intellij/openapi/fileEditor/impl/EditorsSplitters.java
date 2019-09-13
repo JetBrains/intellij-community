@@ -2,7 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -855,7 +855,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final Element file = fileElements.get(i);
         Element historyElement = file.getChild(HistoryEntry.TAG);
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
-        Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ParallelActivity.REOPENING_EDITOR);
+        Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR);
         VirtualFile virtualFile = null;
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();

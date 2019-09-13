@@ -2,7 +2,7 @@
 package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -145,7 +145,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       return freeRootFrame.frame
     }
 
-    runActivity("create a frame", ParallelActivity.MAIN) {
+    runActivity("create a frame", ActivityCategory.MAIN) {
       var frame = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
       if (frame == null) {
         frame = createNewProjectFrame()

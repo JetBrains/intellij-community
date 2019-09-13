@@ -4,7 +4,7 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.NotNull;
 
 // non-sequential and repeated items
-public enum ParallelActivity {
+public enum ActivityCategory {
   MAIN("item"),
   APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
   APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
@@ -18,7 +18,7 @@ public enum ParallelActivity {
 
   private final String jsonName;
 
-  ParallelActivity(@NotNull String jsonName) {
+  ActivityCategory(@NotNull String jsonName) {
     this.jsonName = jsonName;
   }
 

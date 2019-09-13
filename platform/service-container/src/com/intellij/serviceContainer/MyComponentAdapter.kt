@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -17,10 +17,10 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
-  override fun getParallelActivity(): ParallelActivity? {
+  override fun getParallelActivity(): ActivityCategory? {
     return when {
       componentManager.activityNamePrefix() == null -> null
-      else -> ParallelActivity.COMPONENT
+      else -> ActivityCategory.COMPONENT
     }
   }
 

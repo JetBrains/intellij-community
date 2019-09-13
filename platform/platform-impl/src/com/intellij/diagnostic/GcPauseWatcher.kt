@@ -50,7 +50,7 @@ open class GcPauseWatcher {
 
   protected open fun recordGcPauseTime(name: String, currPauseDuration: Long) {
     if (!LoadingPhase.isStartupComplete()) {
-      StartUpMeasurer.addCompletedActivity(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration), Integer.toString(counter.incrementAndGet()), ParallelActivity.GC, null, null)
+      StartUpMeasurer.addCompletedActivity(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration), Integer.toString(counter.incrementAndGet()), ActivityCategory.GC, null, null)
     }
   }
 

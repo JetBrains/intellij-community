@@ -4,7 +4,7 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
@@ -42,7 +42,7 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
             }
           }
 
-          for (event in activities.get(ParallelActivity.APP_INIT.jsonName) ?: emptyList()) {
+          for (event in activities.get(ActivityCategory.APP_INIT.jsonName) ?: emptyList()) {
             writer.obj {
               writeCompleteEvent(event, writer)
             }

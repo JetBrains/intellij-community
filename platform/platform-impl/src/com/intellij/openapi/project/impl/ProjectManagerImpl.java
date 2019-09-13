@@ -857,7 +857,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       StartupManagerImpl.runActivity(() -> {
         ClassLoader loader = component.getClass().getClassLoader();
         String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader)loader).getPluginIdString() : null;
-        Activity componentActivity = StartUpMeasurer.startActivity(component.getClass().getName(), ParallelActivity.PROJECT_OPEN_HANDLER, pluginId);
+        Activity componentActivity = StartUpMeasurer.startActivity(component.getClass().getName(), ActivityCategory.PROJECT_OPEN_HANDLER, pluginId);
         component.projectOpened();
         componentActivity.end();
       });

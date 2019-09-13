@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
@@ -22,7 +22,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun getParallelActivity() = ParallelActivity.SERVICE
+  override fun getParallelActivity() = ActivityCategory.SERVICE
 
   override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     if (LOG.isDebugEnabled) {

@@ -112,7 +112,7 @@ private fun executeInitAppInEdt(args: List<String>,
 fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture
     .thenApply {
-      runActivity("app component registration", ParallelActivity.MAIN) {
+      runActivity("app component registration", ActivityCategory.MAIN) {
         app.registerComponents(it)
       }
       it
