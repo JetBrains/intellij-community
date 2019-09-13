@@ -322,6 +322,7 @@ public class DfaValueFactory {
       }
       for (PsiMethod constructor : aClass.getConstructors()) {
         if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+        if (JavaMethodContractUtil.isPure(constructor)) continue;
 
         PsiCodeBlock body = constructor.getBody();
         if (body == null) continue;
