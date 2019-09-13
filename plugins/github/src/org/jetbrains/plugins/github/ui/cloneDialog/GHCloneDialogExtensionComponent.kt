@@ -7,14 +7,17 @@ import com.intellij.dvcs.ui.DvcsBundle.getString
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.rd.attachChild
@@ -24,24 +27,21 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
-import com.intellij.ui.speedSearch.NameFilteringListModel
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.cloneDialog.AccountMenuItem
+import com.intellij.util.ui.cloneDialog.*
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
-import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
-import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
-import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
@@ -63,12 +63,11 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.FlowLayout
-import java.awt.event.*
+import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.nio.file.Paths
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JSeparator
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
@@ -94,7 +93,7 @@ internal class GHCloneDialogExtensionComponent(
 
   private val wrapper: Wrapper = Wrapper()
   private val repositoriesPanel: DialogPanel
-  private val repositoryList: GHRepositoryList
+  private val repositoryList: JBList<GHRepositoryListItem>
 
   private val popupMenuMouseAdapter = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent?) = showPopupMenu()
@@ -104,9 +103,7 @@ internal class GHCloneDialogExtensionComponent(
     addMouseListener(popupMenuMouseAdapter)
   }
 
-  private val searchField: SearchTextField = SearchTextField(false).apply {
-    textEditor.emptyText.appendText("Search or enter a GitHub repository URL")
-  }
+  private val searchField: SearchTextField
   private val directoryField = SelectChildTextFieldWithBrowseButton(
     ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())).apply {
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -131,47 +128,23 @@ internal class GHCloneDialogExtensionComponent(
   private val avatarsByAccount = hashMapOf<GithubAccount, Icon>()
 
   init {
-    val speedSearch = SpeedSearch()
+    val listWithSearchBundle = ListWithSearchComponent(originListModel,
+                                                       GHRepositoryListCellRenderer(authenticationManager))
 
-    val filteringListModel = NameFilteringListModel<GHRepositoryListItem>(originListModel,
-                                                                          { it.stringToSearch },
-                                                                          speedSearch::shouldBeShowing,
-                                                                          { speedSearch.filter ?: "" }
-    ).apply {
-      setFilter { item ->
-        item != null && when (item) {
-          is GHRepositoryListItem.Repo -> speedSearch.shouldBeShowing(item.repo.fullName)
-          else -> speedSearch.filter.isEmpty()
-        }
-      }
+    repositoryList = listWithSearchBundle.list
+    val mouseAdapter = GHRepositoryMouseAdapter(repositoryList)
+    repositoryList.addMouseListener(mouseAdapter)
+    repositoryList.addMouseMotionListener(mouseAdapter)
+    repositoryList.addListSelectionListener {
+      if (it.valueIsAdjusting) return@addListSelectionListener
+      updateSelectedUrl()
     }
 
+    searchField = listWithSearchBundle.searchField
     searchField.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        speedSearch.updatePattern(searchField.text)
-        filteringListModel.refilter()
-        updateSelectedUrl()
-      }
+      override fun textChanged(e: DocumentEvent) = updateSelectedUrl()
     })
-
-    repositoryList = GHRepositoryList(filteringListModel).apply {
-      addListSelectionListener {
-        if (it.valueIsAdjusting) return@addListSelectionListener
-        updateSelectedUrl()
-      }
-    }
-
-    searchField.addKeyboardListener(object : KeyAdapter() {
-      override fun keyPressed(e: KeyEvent?) {
-        e ?: return
-        if (e.keyCode == KeyEvent.VK_DOWN && repositoryList.itemsCount != 0) {
-          if (repositoryList.selectedIndex == -1) {
-            repositoryList.selectedIndex = 0
-          }
-          repositoryList.requestFocus()
-        }
-      }
-    })
+    createFocusFilterFieldAction(searchField)
 
     progressManager = object : ProgressVisibilityManager() {
       override fun setProgressVisible(visible: Boolean) = repositoryList.setPaintBusy(visible)
@@ -368,6 +341,7 @@ internal class GHCloneDialogExtensionComponent(
       }
     }
     repositoryList.setSelectedValue(selectedValue, false)
+    ScrollingUtil.ensureSelectionExists(repositoryList)
   }
 
   override fun getView() = wrapper
@@ -400,6 +374,13 @@ internal class GHCloneDialogExtensionComponent(
   override fun onComponentSelected() {
     dialogStateListener.onOkActionNameChanged("Clone")
     updateSelectedUrl()
+
+    val focusManager = IdeFocusManager.getInstance(project)
+    getPreferredFocusedComponent()?.let { focusManager.requestFocus(it, true) }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return searchField
   }
 
   private fun buildGitHubLoginPanel(account: GithubAccount?,
@@ -541,5 +522,16 @@ internal class GHCloneDialogExtensionComponent(
     menuItems += Action("Add Account\u2026", { switchToLogin() }, showSeparatorAbove = true)
 
     AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems)).showUnderneathOf(accountsPanel)
+  }
+
+  private fun createFocusFilterFieldAction(searchField: SearchTextField) {
+    val action = DumbAwareAction.create {
+      val focusManager = IdeFocusManager.getInstance(project)
+      if (focusManager.getFocusedDescendantFor(repositoriesPanel) != null) {
+        focusManager.requestFocus(searchField, true)
+      }
+    }
+    val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_FIND)
+    action.registerCustomShortcutSet(shortcuts, repositoriesPanel, this)
   }
 }
