@@ -624,7 +624,7 @@ class CompilationPartsUtil {
     }
   }
 
-  private static class NamedThreadPoolExecutor extends ThreadPoolExecutor {
+  static class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private final AtomicInteger counter = new AtomicInteger()
     private final List<Future> futures = new LinkedList<Future>()
     private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()

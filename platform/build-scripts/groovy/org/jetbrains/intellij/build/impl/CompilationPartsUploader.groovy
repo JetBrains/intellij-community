@@ -132,7 +132,7 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
-  private int doHead(String path) throws UploadException {
+  protected int doHead(String path) throws UploadException {
     CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
