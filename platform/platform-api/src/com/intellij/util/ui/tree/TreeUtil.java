@@ -721,14 +721,15 @@ public final class TreeUtil {
     if (visible == null) return 0;
 
     int rowHeight = tree.getRowHeight();
+    int rowCount = tree.getRowCount();
     if (rowHeight > 0) {
       int firstRow = visible.y / rowHeight;
-      int lastRow = (visible.y + visible.height) / rowHeight;
+      int lastRow = Math.min((visible.y + visible.height) / rowHeight, rowCount - 1);
       return lastRow - firstRow + 1;
     }
 
     int count = 0;
-    for (int i=0; i < tree.getRowCount(); i++) {
+    for (int i = 0; i < rowCount; i++) {
       final Rectangle bounds = tree.getRowBounds(i);
       if (bounds == null) continue;
       if (visible.y <= bounds.y && visible.y + visible.height >= bounds.y + bounds.height) {
