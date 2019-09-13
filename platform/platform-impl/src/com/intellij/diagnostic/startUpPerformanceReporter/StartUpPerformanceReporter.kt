@@ -135,7 +135,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
 
     val traceFilePath = System.getProperty("idea.log.perf.trace.file")
     if (!traceFilePath.isNullOrBlank()) {
-      val traceEventFormat = TraceEventFormat(startTime, instantEvents, threadNameManager)
+      val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
       Paths.get(traceFilePath).outputStream().writer().use {
         traceEventFormat.write(items, activities, it)
       }

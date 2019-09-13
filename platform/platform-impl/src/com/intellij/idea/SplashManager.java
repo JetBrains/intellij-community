@@ -4,6 +4,7 @@ package com.intellij.idea;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -116,6 +117,8 @@ public final class SplashManager {
     if (SystemInfoRt.isMac) {
       frame.setIconImage(null);
     }
+
+    StartUpMeasurer.addInstantEvent("frame shown");
     frame.setVisible(true);
     return frame;
   }

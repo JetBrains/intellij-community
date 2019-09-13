@@ -12,7 +12,7 @@ export interface ItemStats {
 }
 
 const statSupportMinVersion = semver.coerce("3")!!
-const instantEventSupportMinVersion = semver.coerce("10")!!
+const instantEventSupportMinVersion = semver.coerce("11")!!
 
 export class DataManager {
   private readonly version: SemVer | null

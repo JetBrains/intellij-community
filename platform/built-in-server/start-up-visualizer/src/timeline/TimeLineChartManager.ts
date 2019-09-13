@@ -162,18 +162,19 @@ export class TimelineChartManager extends XYChartManager {
 
     const guides: Array<TimeLineGuide> = []
 
-    // if (data.isInstantEventProvided) {
-    //   for (const item of data.data.traceEvents) {
-    //     // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
-    //     if (item.ph === "i" && !item.name.startsWith("app component ") && item.name !== "LaF initialized" && item.name !== "shown") {
-    //       guides.push({label: item.name, value: Math.round(item.ts / 1000)})
-    //     }
-    //   }
-    // }
-
-    for (const item of data.data.prepareAppInitActivities) {
-      if (item.name === "splash initialization") {
-        guides.push({label: "splash", value: item.start})
+    if (data.isInstantEventProvided) {
+      for (const item of data.data.traceEvents) {
+        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
+        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
+          guides.push({label: item.name, value: Math.round(item.ts / 1000)})
+        }
+      }
+    }
+    else {
+      for (const item of data.data.prepareAppInitActivities) {
+        if (item.name === "splash initialization") {
+          guides.push({label: "splash", value: item.start})
+        }
       }
     }
 

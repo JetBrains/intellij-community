@@ -266,7 +266,6 @@ public final class StartupUtil {
           LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
-            LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
             return;
           }
 
@@ -282,8 +281,6 @@ public final class StartupUtil {
             SplashManager.show(args);
             prepareSplashActivity.end();
           });
-
-          LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
           EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());

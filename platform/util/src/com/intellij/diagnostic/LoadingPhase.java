@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public enum LoadingPhase {
   BOOTSTRAP("bootstrap"),
   LAF_INITIALIZED("LaF is initialized"),
-  SPLASH("splash shown"),
   COMPONENT_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENT_LOADED("app component loaded"),
