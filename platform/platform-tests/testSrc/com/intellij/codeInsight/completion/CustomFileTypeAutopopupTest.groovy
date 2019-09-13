@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.codeInsight.completion
+package com.intellij.codeInsight.completion
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import groovy.transform.CompileStatic

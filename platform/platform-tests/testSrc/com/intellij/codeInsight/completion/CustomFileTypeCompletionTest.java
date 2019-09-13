@@ -13,61 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.codeInsight.completion;
+package com.intellij.codeInsight.completion;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import junit.framework.TestCase;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeCompletionTest extends LightFixtureCompletionTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/customFileType/";
+public class CustomFileTypeCompletionTest extends BasePlatformTestCase {
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return "platform/platform-tests/testData/codeInsight/completion/customFileType/";
+  }
+
+  @Override
+  protected boolean isCommunity() {
+    return true;
   }
 
   public void testKeyWordCompletion() {
-    configureByFile(BASE_PATH + "1.cs");
-    checkResultByFile(BASE_PATH + "1_after.cs");
+    myFixture.configureByFile("1.cs");
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile("1_after.cs");
 
-    configureByFile(BASE_PATH + "2.cs");
-    checkResultByFile(BASE_PATH + "2_after.cs");
+    myFixture.configureByFile("2.cs");
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile("2_after.cs");
   }
 
   public void testWordCompletion() {
-    configureByFile(BASE_PATH + "WordCompletion.cs");
+    myFixture.configureByFile("WordCompletion.cs");
+    myFixture.complete(CompletionType.BASIC);
     myFixture.assertPreferredCompletionItems(0, "while", "whiwhiwhi");
   }
 
   public void testErlang() {
-    configureByFile(BASE_PATH + "Erlang.erl");
+    myFixture.configureByFile("Erlang.erl");
+    myFixture.complete(CompletionType.BASIC);
     myFixture.assertPreferredCompletionItems(0, "case", "catch");
   }
 
   public void testComment() {
-    configureByFile(BASE_PATH + "foo.cs");
-    assertEmpty(myFixture.getLookupElements());
+    myFixture.configureByFile("foo.cs");
+    myFixture.complete(CompletionType.BASIC);
+    UsefulTestCase.assertEmpty(myFixture.getLookupElements());
   }
 
   public void testEmptyFile() {
     myFixture.configureByText("a.cs", "<caret>");
-    complete();
-    assertTrue(myFixture.getLookupElementStrings().contains("abstract"));
-    assertFalse(myFixture.getLookupElementStrings().contains("x"));
+    myFixture.complete(CompletionType.BASIC);
+    TestCase.assertTrue(myFixture.getLookupElementStrings().contains("abstract"));
+    TestCase.assertFalse(myFixture.getLookupElementStrings().contains("x"));
   }
 
   public void testPlainTextSubstitution() {
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.xxx", MockLanguageFileType.INSTANCE, "aaa a<caret>", 0, true);
     myFixture.configureFromExistingVirtualFile(file.getViewProvider().getVirtualFile());
-    complete();
+    myFixture.complete(CompletionType.BASIC);
     myFixture.checkResult("aaa aaa<caret>");
   }
 

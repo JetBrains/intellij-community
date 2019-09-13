@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.codeInsight.completion
+package com.intellij.codeHighlighting
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class CustomFileTypeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+class CustomFileTypeInspectionTest extends BasePlatformTestCase {
 
   void testSpellChecking() {
     myFixture.configureByText 'a.hs', '''

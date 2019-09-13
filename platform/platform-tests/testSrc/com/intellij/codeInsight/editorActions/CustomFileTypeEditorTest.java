@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInsight.defaultAction;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.CodeBlockEndAction;
-import com.intellij.codeInsight.editorActions.CodeBlockStartAction;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,36 +13,46 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import junit.framework.TestCase;
 
 import static com.intellij.testFramework.EditorTestUtil.BACKSPACE_FAKE_CHAR;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
-  private static final String BASE_PATH = "/codeInsight/defaultAction/customFileType/";
+public class CustomFileTypeEditorTest extends BasePlatformTestCase {
+
+  @Override
+  protected String getBasePath() {
+    return "platform/platform-tests/testData/editor/actionsInCustomFileType";
+  }
+
+  @Override
+  protected boolean isCommunity() {
+    return true;
+  }
 
   private void _testBlockNavigation(String test, String ext) {
-    configureByFile(BASE_PATH + test + "." + ext);
+    myFixture.configureByFile(test + "." + ext);
     performEndBlockAction();
-    checkResultByFile(BASE_PATH + test + "_after." + ext);
+    myFixture.checkResultByFile(test + "_after." + ext);
 
-    configureByFile(BASE_PATH + test + "_after." + ext);
+    myFixture.configureByFile(test + "_after." + ext);
     performStartBlockAction();
-    checkResultByFile(BASE_PATH + test + "." + ext);
+    myFixture.checkResultByFile(test + "." + ext);
   }
 
   private void performStartBlockAction() {
     EditorActionHandler actionHandler = new CodeBlockStartAction().getHandler();
-
-    actionHandler.execute(getEditor(), getCurrentEditorDataContext());
+    actionHandler.execute(myFixture.getEditor(), myFixture.getEditor().getCaretModel().getPrimaryCaret(),
+                          ((EditorEx)myFixture.getEditor()).getDataContext());
   }
 
   private void performEndBlockAction() {
     EditorActionHandler actionHandler = new CodeBlockEndAction().getHandler();
-
-    actionHandler.execute(getEditor(), getCurrentEditorDataContext());
+    actionHandler.execute(myFixture.getEditor(), myFixture.getEditor().getCaretModel().getPrimaryCaret(),
+                          ((EditorEx)myFixture.getEditor()).getDataContext());
   }
 
   public void testBlockNavigation() {
@@ -65,73 +60,73 @@ public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testInsertDeleteQuotes() {
-    configureByFile(BASE_PATH + "InsertDeleteQuote.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '"');
-    checkResultByFile(BASE_PATH + "InsertDeleteQuote_after.cs");
+    myFixture.configureByFile("InsertDeleteQuote.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '"');
+    myFixture.checkResultByFile("InsertDeleteQuote_after.cs");
 
-    configureByFile(BASE_PATH+"InsertDeleteQuote_after.cs");
-    EditorTestUtil.performTypingAction(getEditor(), BACKSPACE_FAKE_CHAR);
-    checkResultByFile(BASE_PATH+"InsertDeleteQuote.cs");
+    myFixture.configureByFile("InsertDeleteQuote_after.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), BACKSPACE_FAKE_CHAR);
+    myFixture.checkResultByFile("InsertDeleteQuote.cs");
 
     FileType extension = FileTypeManager.getInstance().getFileTypeByExtension("pl");
-    assertTrue("Test is not set up correctly:"+extension, extension instanceof AbstractFileType);
-    configureByFile(BASE_PATH + "InsertDeleteQuote.pl");
-    EditorTestUtil.performTypingAction(getEditor(), '"');
-    checkResultByFile(BASE_PATH + "InsertDeleteQuote_after.pl");
+    TestCase.assertTrue("Test is not set up correctly:" + extension, extension instanceof AbstractFileType);
+    myFixture.configureByFile("InsertDeleteQuote.pl");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '"');
+    myFixture.checkResultByFile("InsertDeleteQuote_after.pl");
 
-    configureByFile(BASE_PATH+"InsertDeleteQuote_after.pl");
-    EditorTestUtil.performTypingAction(getEditor(), BACKSPACE_FAKE_CHAR);
-    checkResultByFile(BASE_PATH+"InsertDeleteQuote.pl");
+    myFixture.configureByFile("InsertDeleteQuote_after.pl");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), BACKSPACE_FAKE_CHAR);
+    myFixture.checkResultByFile("InsertDeleteQuote.pl");
 
-    configureByFile(BASE_PATH + "InsertDeleteQuote.aj");
-    EditorTestUtil.performTypingAction(getEditor(), '"');
-    checkResultByFile(BASE_PATH + "InsertDeleteQuote_after.aj");
+    myFixture.configureByFile("InsertDeleteQuote.aj");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '"');
+    myFixture.checkResultByFile("InsertDeleteQuote_after.aj");
 
-    configureByFile(BASE_PATH+"InsertDeleteQuote_after.aj");
-    EditorTestUtil.performTypingAction(getEditor(), BACKSPACE_FAKE_CHAR);
-    checkResultByFile(BASE_PATH+"InsertDeleteQuote.aj");
+    myFixture.configureByFile("InsertDeleteQuote_after.aj");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), BACKSPACE_FAKE_CHAR);
+    myFixture.checkResultByFile("InsertDeleteQuote.aj");
   }
 
   public void testInsertDeleteBracket() {
-    configureByFile(BASE_PATH + "InsertDeleteBracket.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '[');
-    checkResultByFile(BASE_PATH + "InsertDeleteBracket_after.cs");
+    myFixture.configureByFile("InsertDeleteBracket.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '[');
+    myFixture.checkResultByFile("InsertDeleteBracket_after.cs");
 
-    configureByFile(BASE_PATH+"InsertDeleteBracket_after.cs");
-    EditorTestUtil.performTypingAction(getEditor(), BACKSPACE_FAKE_CHAR);
-    checkResultByFile(BASE_PATH+"InsertDeleteBracket.cs");
+    myFixture.configureByFile("InsertDeleteBracket_after.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), BACKSPACE_FAKE_CHAR);
+    myFixture.checkResultByFile("InsertDeleteBracket.cs");
 
-    configureByFile(BASE_PATH+"InsertDeleteBracket_after.cs");
-    EditorTestUtil.performTypingAction(getEditor(), ']');
-    checkResultByFile(BASE_PATH + "InsertDeleteBracket_after2.cs");
+    myFixture.configureByFile("InsertDeleteBracket_after.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), ']');
+    myFixture.checkResultByFile("InsertDeleteBracket_after2.cs");
   }
 
   public void testInsertDeleteParenth() {
-    configureByFile(BASE_PATH + "InsertDeleteParenth.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '(');
-    checkResultByFile(BASE_PATH + "InsertDeleteParenth_after.cs");
+    myFixture.configureByFile("InsertDeleteParenth.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '(');
+    myFixture.checkResultByFile("InsertDeleteParenth_after.cs");
 
-    configureByFile(BASE_PATH+"InsertDeleteParenth_after.cs");
-    EditorTestUtil.performTypingAction(getEditor(), BACKSPACE_FAKE_CHAR);
-    checkResultByFile(BASE_PATH+"InsertDeleteParenth.cs");
+    myFixture.configureByFile("InsertDeleteParenth_after.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), BACKSPACE_FAKE_CHAR);
+    myFixture.checkResultByFile("InsertDeleteParenth.cs");
 
-    configureByFile(BASE_PATH+"InsertDeleteParenth_after.cs");
-    EditorTestUtil.performTypingAction(getEditor(), ')');
-    checkResultByFile(BASE_PATH+"InsertDeleteParenth_after2.cs");
+    myFixture.configureByFile("InsertDeleteParenth_after.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), ')');
+    myFixture.checkResultByFile("InsertDeleteParenth_after2.cs");
 
-    configureByFile(BASE_PATH + "InsertDeleteParenth2_2.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '(');
-    checkResultByFile(BASE_PATH + "InsertDeleteParenth2_2_after.cs");
+    myFixture.configureByFile("InsertDeleteParenth2_2.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '(');
+    myFixture.checkResultByFile("InsertDeleteParenth2_2_after.cs");
 
-    configureByFile(BASE_PATH + "InsertDeleteParenth2.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '(');
-    checkResultByFile(BASE_PATH + "InsertDeleteParenth2_after.cs");
+    myFixture.configureByFile("InsertDeleteParenth2.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '(');
+    myFixture.checkResultByFile("InsertDeleteParenth2_after.cs");
   }
 
   private void checkTyping(String fileName, String before, char typed, String after) {
-    configureFromFileText(fileName, before);
-    EditorTestUtil.performTypingAction(getEditor(), typed);
-    checkResultByText(after);
+    myFixture.configureByText(fileName, before);
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), typed);
+    myFixture.checkResult(after);
   }
 
   public void testParenthesesBeforeNonWs() {
@@ -195,23 +190,23 @@ public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testClosingBraceInPlainText() {
-    configureFromFileText("a.txt", "<caret>");
-    EditorTestUtil.performTypingAction(getEditor(), '(');
-    EditorTestUtil.performTypingAction(getEditor(), ')');
-    checkResultByText("()<caret>");
+    myFixture.configureByText("a.txt", "<caret>");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '(');
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), ')');
+    myFixture.checkResult("()<caret>");
   }
 
   public void testInsertBraceOnEnter() {
-    configureByFile(BASE_PATH + "InsertBraceOnEnter.cs");
-    EditorTestUtil.performTypingAction(getEditor(), '\n');
-    checkResultByFile(BASE_PATH + "InsertBraceOnEnter_after.cs");
+    myFixture.configureByFile("InsertBraceOnEnter.cs");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    myFixture.checkResultByFile("InsertBraceOnEnter_after.cs");
   }
 
   public void testInsertBraceOnEnterJavaFx() {
     String testName = getTestName(false);
-    configureByFile(BASE_PATH + testName + ".fx");
-    EditorTestUtil.performTypingAction(getEditor(), '\n');
-    checkResultByFile(BASE_PATH + testName + "_after.fx");
+    myFixture.configureByFile(testName + ".fx");
+    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    myFixture.checkResultByFile(testName + "_after.fx");
   }
 
   public void testCpp() {
@@ -219,25 +214,25 @@ public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
     //                   0123456789012345678 9 0123 45 6 7
     highlighter.setText("#include try enum \"\\xff\\z\\\"xxx\"");
     HighlighterIterator iterator = highlighter.createIterator(2);
-    assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
 
     iterator = highlighter.createIterator(9);
-    assertEquals(CustomHighlighterTokenType.KEYWORD_2, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_2, iterator.getTokenType());
 
     iterator = highlighter.createIterator(15);
-    assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
 
     iterator = highlighter.createIterator(19);
-    assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
+    TestCase.assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
 
     iterator = highlighter.createIterator(23);
-    assertEquals(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, iterator.getTokenType());
+    TestCase.assertEquals(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, iterator.getTokenType());
 
     iterator = highlighter.createIterator(25);
-    assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
+    TestCase.assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
 
     iterator = highlighter.createIterator(27);
-    assertEquals(CustomHighlighterTokenType.STRING, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.STRING, iterator.getTokenType());
   }
 
   public void testHaskel() {
@@ -245,9 +240,9 @@ public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
     //                   0123456789012345678 9 0123 45 6 7
     highlighter.setText("{-# #-} module");
     HighlighterIterator iterator = highlighter.createIterator(2);
-    assertEquals(CustomHighlighterTokenType.MULTI_LINE_COMMENT, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.MULTI_LINE_COMMENT, iterator.getTokenType());
 
     iterator = highlighter.createIterator(12);
-    assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
+    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
   }
 }
