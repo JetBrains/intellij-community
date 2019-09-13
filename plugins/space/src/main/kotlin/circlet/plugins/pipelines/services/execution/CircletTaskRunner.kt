@@ -66,7 +66,7 @@ class CircletTaskRunner(val project: Project) {
             SystemTimeTicker(),
             tracer,
             listOf(provider))
-        val automationStarterCommon = AutomationStarterImpl(
+        val automationStarterCommon = AutomationRunnerImpl(
             orgInfo,
             storage,
             CircletIdeaAutomationBootstrapper(),
