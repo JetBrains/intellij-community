@@ -3,7 +3,9 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,17 +23,7 @@ import java.util.function.Supplier;
 public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentMap<K, V> myMap = createMap();
 
-  /**
-   * @deprecated Use {@link #createMap(Function)} instead
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  public ConcurrentFactoryMap() {
-    DeprecatedMethodException.report("Use ConcurrentFactoryMap.create() instead");
-  }
-
-  private ConcurrentFactoryMap(@SuppressWarnings("unused") boolean goodConstructorHereHaveABiscuit) {
+  private ConcurrentFactoryMap() {
 
   }
 
@@ -178,7 +170,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @NotNull
   public static <T, V> ConcurrentMap<T, V> createMap(@NotNull final Function<? super T, ? extends V> computeValue) {
-    return new ConcurrentFactoryMap<T, V>(true) {
+    return new ConcurrentFactoryMap<T, V>() {
       @Nullable
       @Override
       protected V create(T key) {
@@ -190,7 +182,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   public static <K, V> ConcurrentMap<K, V> create(@NotNull Function<? super K, ? extends V> computeValue,
                                                   @NotNull Supplier<? extends ConcurrentMap<K, V>> mapCreator) {
-    return new ConcurrentFactoryMap<K, V>(true) {
+    return new ConcurrentFactoryMap<K, V>() {
       @Nullable
       @Override
       protected V create(K key) {
