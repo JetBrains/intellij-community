@@ -420,9 +420,13 @@ class DistributionJARsBuilder {
     def classesLoadingOrderFilePath = "$jarOrderTempDirectoryPath/classes-order.txt"
     def finalOrder = "$jarOrderTempDirectoryPath/order.txt"
     def classesFile = new File(classesLoadingOrderFilePath)
+    if (!classesFile.exists()) {
+      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath doesn't exist")
+      return
+    }
     def lines = classesFile.readLines()
-    if (!classesFile.exists() || lines.isEmpty()) {
-      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath doesn't exist or empty")
+    if (lines.isEmpty()) {
+      buildContext.messages.info("Failed to generate classes order file: $classesLoadingOrderFilePath empty")
       return
     }
 
