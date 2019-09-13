@@ -38,6 +38,10 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
         return CircletIdeaAGraphMetaEntity(metaTaskId, task)
     }
 
+    override fun findExecution(id: Long): AGraphExecutionEntity? {
+        TODO("findExecution not implemented")
+    }
+
     override fun createTaskExecution(metaTask: AGraphMetaEntity, taskStartContext: TaskStartContext, bootstrapJobFactory: (AGraphExecutionEntity) -> ProjectJob.Process.Container?): AGraphExecutionEntity {
         logger.debug { "createTaskExecution $metaTask" }
         val now = System.currentTimeMillis()
