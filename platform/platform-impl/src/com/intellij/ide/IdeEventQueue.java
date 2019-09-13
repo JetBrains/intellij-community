@@ -1082,55 +1082,55 @@ public final class IdeEventQueue extends EventQueue {
 
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      boolean dispatch = true;
-      if (e instanceof KeyEvent) {
-        KeyEvent ke = (KeyEvent)e;
-        final Component component = ke.getComponent();
-        boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
-        if (!pureAlt) {
-          myWaitingForAltRelease = false;
-        }
-        else {
-          UISettings uiSettings = UISettings.getInstanceOrNull();
-          if (uiSettings == null ||
-              !SystemInfo.isWindows ||
-              !Registry.is("actionSystem.win.suppressAlt") ||
-              !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
-            return false;
-          }
+      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
+    }
 
-          if (ke.getID() == KeyEvent.KEY_PRESSED) {
-            dispatch = !myWaitingForAltRelease;
+    private boolean dispatchKeyEvent(@NotNull KeyEvent ke) {
+      boolean dispatch = true;
+      final Component component = ke.getComponent();
+      boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
+      if (!pureAlt) {
+        myWaitingForAltRelease = false;
+      }
+      else {
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        if (uiSettings == null ||
+            !SystemInfo.isWindows ||
+            !Registry.is("actionSystem.win.suppressAlt") ||
+            !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
+          return false;
+        }
+
+        if (ke.getID() == KeyEvent.KEY_PRESSED) {
+          dispatch = !myWaitingForAltRelease;
+        }
+        else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+          if (myWaitingForAltRelease) {
+            myWaitingForAltRelease = false;
+            dispatch = false;
           }
-          else if (ke.getID() == KeyEvent.KEY_RELEASED) {
-            if (myWaitingForAltRelease) {
-              myWaitingForAltRelease = false;
-              dispatch = false;
-            }
-            else if (component != null) {
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(() -> {
-                try {
-                  final Window window = ComponentUtil.getWindow(component);
-                  if (window == null || !window.isActive()) {
-                    return;
-                  }
-                  myWaitingForAltRelease = true;
-                  if (myRobot == null) {
-                    myRobot = new Robot();
-                  }
-                  myRobot.keyPress(KeyEvent.VK_ALT);
-                  myRobot.keyRelease(KeyEvent.VK_ALT);
+          else if (component != null) {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(() -> {
+              try {
+                final Window window = ComponentUtil.getWindow(component);
+                if (window == null || !window.isActive()) {
+                  return;
                 }
-                catch (AWTException e1) {
-                  LOG.debug(e1);
+                myWaitingForAltRelease = true;
+                if (myRobot == null) {
+                  myRobot = new Robot();
                 }
-              });
-            }
+                myRobot.keyPress(KeyEvent.VK_ALT);
+                myRobot.keyRelease(KeyEvent.VK_ALT);
+              }
+              catch (AWTException e1) {
+                LOG.debug(e1);
+              }
+            });
           }
         }
       }
-
       return !dispatch;
     }
   }
@@ -1166,19 +1166,21 @@ public final class IdeEventQueue extends EventQueue {
   private static class EditingCanceller implements EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
-          !getInstance().getPopupManager().isPopupActive()) {
-        final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
-                                                             component -> component instanceof JTable || component instanceof JTree);
+      return e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
+             !getInstance().getPopupManager().isPopupActive() && cancelCellEditing();
+    }
 
-        if (owner instanceof JTable && ((JTable)owner).isEditing()) {
-          ((JTable)owner).editingCanceled(null);
-          return true;
-        }
-        if (owner instanceof JTree && ((JTree)owner).isEditing()) {
-          ((JTree)owner).cancelEditing();
-          return true;
-        }
+    private static boolean cancelCellEditing() {
+      final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
+                                                           component -> component instanceof JTable || component instanceof JTree);
+
+      if (owner instanceof JTable && ((JTable)owner).isEditing()) {
+        ((JTable)owner).editingCanceled(null);
+        return true;
+      }
+      if (owner instanceof JTree && ((JTree)owner).isEditing()) {
+        ((JTree)owner).cancelEditing();
+        return true;
       }
       return false;
     }
