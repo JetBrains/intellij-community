@@ -21,7 +21,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public static ProjectManagerEx getInstanceExIfCreated() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
+    return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
   }
 
   /**

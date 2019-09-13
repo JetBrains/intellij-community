@@ -118,7 +118,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
         return;
       }
 
-      ProjectManager projectManager = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+      ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
       if (projectManager == null) {
         return;
       }

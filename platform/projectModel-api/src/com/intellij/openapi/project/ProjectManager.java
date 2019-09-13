@@ -27,6 +27,11 @@ public abstract class ProjectManager {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
+  @Nullable
+  public static ProjectManager getInstanceIfCreated() {
+    return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+  }
+
   /**
    * @deprecated Use {@link #TOPIC} instead
    */
