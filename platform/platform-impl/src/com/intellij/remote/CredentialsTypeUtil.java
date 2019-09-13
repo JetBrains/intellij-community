@@ -2,8 +2,6 @@
 package com.intellij.remote;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.remote.ext.CredentialsLanguageContribution;
 import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.remote.ext.CredentialsTypeEx;
@@ -11,9 +9,7 @@ import com.intellij.remote.ui.CredentialsEditorProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -25,24 +21,6 @@ public class CredentialsTypeUtil {
   private CredentialsTypeUtil() {
   }
 
-
-  public static void showCannotLoadCredentialsErrorDialog(@Nullable Project project,
-                                                          @NotNull String interpreterId,
-                                                          @NotNull CredentialsType connectionType) {
-    final String message = connectionType instanceof CredentialsTypeEx ? getCannotLoadCredentialsTypeMessage(connectionType) :
-                           getCannotLoadCredentialsTypeMessage(interpreterId);
-    UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, message, "Failed Loading Interpreter"));
-  }
-
-  @NotNull
-  public static String getCannotLoadCredentialsTypeMessage(@NotNull final CredentialsType type) {
-    return getCannotLoadCredentialsTypeMessage(type.getName());
-  }
-
-  @NotNull
-  private static String getCannotLoadCredentialsTypeMessage(@NotNull final String interpreterId) {
-    return "Cannot load " + interpreterId + " interpreter. Please make sure corresponding plugin is enabled.";
-  }
 
   public static boolean isCredentialsTypeSupportedForLanguage(@NotNull CredentialsType credentialsType,
                                                               @NotNull Class<?> languageContributionMarkerClass) {
