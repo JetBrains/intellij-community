@@ -3285,7 +3285,7 @@ enum Foo {
       "/* @formatter:off */\n" +
       "      String foo;\n" +
       "      String bar;\n" +
-      "/* @formatter:on */\n" +
+      "/* @formatter:on */\n\n" +
       "      String abc;\n" +
       "}",
 
@@ -3293,7 +3293,7 @@ enum Foo {
       "\t/* @formatter:off */\n" +
       "      String foo;\n" +
       "      String bar;\n" +
-      "/* @formatter:on */\n" +
+      "/* @formatter:on */\n\n" +
       "\tString abc;\n" +
       "}"
 
