@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
 import com.intellij.openapi.util.SystemInfo
@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -27,6 +28,7 @@ import org.apache.tools.ant.taskdefs.ExecTask
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
@@ -624,78 +626,6 @@ class CompilationPartsUtil {
     }
   }
 
-  static class NamedThreadPoolExecutor extends ThreadPoolExecutor {
-    private final AtomicInteger counter = new AtomicInteger()
-    private final List<Future> futures = new LinkedList<Future>()
-    private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
-
-    NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-      super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
-      setThreadFactory(new ThreadFactory() {
-        @NotNull
-        @Override
-        Thread newThread(@NotNull Runnable r) {
-          Thread thread = new Thread(r, threadNamePrefix + ' ' + counter.incrementAndGet())
-          thread.setPriority(Thread.NORM_PRIORITY - 1)
-          return thread
-        }
-      })
-    }
-
-    void close() {
-      shutdown()
-      awaitTermination(10, TimeUnit.SECONDS)
-      shutdownNow()
-    }
-
-    void submit(Closure<?> block) {
-      futures.add(this.submit(new Runnable() {
-        @Override
-        void run() {
-          try {
-            block()
-          }
-          catch (Throwable e) {
-            errors.add(e)
-          }
-        }
-      }))
-    }
-
-    boolean reportErrors(BuildMessages messages) {
-      if (!errors.isEmpty()) {
-        messages.warning("Several (${errors.size()}) errors occured:")
-        errors.each { Throwable t ->
-          def writer = new StringWriter()
-          new PrintWriter(writer).withCloseable { t?.printStackTrace(it) }
-          messages.warning("${t.message}\n$writer" )
-        }
-        messages.error("Several (${errors.size()}) errors occured, see above")
-        return true
-      }
-      return false
-    }
-
-    void waitForAllComplete(BuildMessages messages) {
-      while (!futures.isEmpty()) {
-        def iterator = futures.listIterator()
-        while (iterator.hasNext()) {
-          Future f = iterator.next()
-          if (f.isDone()) {
-            iterator.remove()
-          }
-        }
-        if (futures.isEmpty()) break
-        messages.info("${futures.size()} tasks left...")
-        if (futures.size() < 100) {
-          futures.last().get()
-        }
-        else {
-          Thread.sleep(TimeUnit.SECONDS.toMillis(1))
-        }
-      }
-    }
-  }
 
   // based on org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.block
   private static <V> V runUnderStatisticsTimer(BuildMessages messages, String name, Closure<V> body) {

@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -14,6 +13,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUploader
+import org.jetbrains.intellij.build.impl.compilation.NamedThreadPoolExecutor
 import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -31,24 +32,26 @@ import static org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE
 import static org.jetbrains.jps.model.java.JavaResourceRootType.TEST_RESOURCE
 import static org.jetbrains.jps.model.java.JavaSourceRootType.SOURCE
 import static org.jetbrains.jps.model.java.JavaSourceRootType.TEST_SOURCE
-import static org.jetbrains.intellij.build.impl.CompilationPartsUtil.NamedThreadPoolExecutor
 
 @CompileStatic
-class JpsCompilationOutputUploader {
-  private static final int HASH_SIZE_IN_BYTES = 16;
+class CompilationOutputsUploader {
+  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final byte CARRIAGE_RETURN_CODE = 13
+  private static final int HASH_SIZE_IN_BYTES = 16
   private static final String PRODUCTION = "production"
   private static final String TEST = "test"
   private final JpsCompilationPartsUploader uploader
-  private final NamedThreadPoolExecutor executor
   private final IgnoredPatternSet ignoredPatterns
-  private final MessageDigest messageDigest
+  private final NamedThreadPoolExecutor executor
+  private final String agentPersistentStorage
   private final CompilationContext context
+  private final BuildMessages messages
   private final String commitHash
 
-  JpsCompilationOutputUploader(CompilationContext context, MessageDigest messageDigest, String remoteCacheUrl, String commitHash) {
-    uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
-    this.messageDigest = messageDigest
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
+    this.uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+    this.agentPersistentStorage = agentPersistentStorage
+    this.messages = context.messages
     this.commitHash = commitHash
     this.context = context
 
@@ -62,44 +65,46 @@ class JpsCompilationOutputUploader {
     executor.prestartAllCoreThreads()
   }
 
-  def upload(String metadataDir) {
-    BuildMessages messages = context.messages
+  def upload() {
     Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
 
-    messages.block("Upload production outputs") {
-      def productionModules = new File("$context.paths.buildOutputRoot/classes/$PRODUCTION")
-      def moduleFolders = productionModules.listFiles()
-      if (moduleFolders == null) {
-        context.messages.warning("Production output is empty")
-      } else {
-        uploadCompilationOutputs(productionModules, moduleFolders, PRODUCTION, hashes) { JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE) }
-      }
+    def start = System.currentTimeMillis()
+    executor.submit {
+      // Upload jps caches started first because of the significant size of the output
+      def sourcePath = "caches/$commitHash"
+      if (uploader.isExist(sourcePath)) return
+      def dataStorageRoot = context.compilationData.dataStorageRoot
+      File zipFile = new File(dataStorageRoot.parent, commitHash)
+      zipBinaryData(zipFile, dataStorageRoot)
+      uploader.upload(sourcePath, zipFile)
+      FileUtil.delete(zipFile)
+      return
     }
 
-    messages.block("Upload test outputs") {
-      def testModules = new File("$context.paths.buildOutputRoot/classes/$TEST")
-      def moduleFolders = testModules.listFiles()
-      if (moduleFolders == null) {
-        context.messages.warning("Test output is empty")
-      } else {
-        uploadCompilationOutputs(testModules, moduleFolders, TEST, hashes) { JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE) }
-      }
+    // Upload production classes output
+    def productionModules = new File("$context.paths.buildOutputRoot/classes/$PRODUCTION")
+    def moduleFolders = productionModules.listFiles()
+    if (moduleFolders == null) {
+      context.messages.warning("Production output is empty")
+    }
+    else {
+      uploadCompilationOutputs(productionModules, moduleFolders, PRODUCTION, hashes) { JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE) }
     }
 
-    messages.block("Upload JPS caches") {
-      executor.submit {
-        def sourcePath = "caches/$commitHash"
-        if (uploader.isExist(sourcePath)) return
-        def dataStorageRoot = context.compilationData.dataStorageRoot
-        File zipFile = new File(dataStorageRoot.parent, commitHash);
-        zipBinaryData(zipFile, dataStorageRoot);
-        uploader.upload(sourcePath, zipFile)
-        FileUtil.delete(zipFile);
-      }
+    // Upload test classes output
+    def testModules = new File("$context.paths.buildOutputRoot/classes/$TEST")
+    moduleFolders = testModules.listFiles()
+    if (moduleFolders == null) {
+      context.messages.warning("Test output is empty")
     }
+    else {
+      uploadCompilationOutputs(testModules, moduleFolders, TEST, hashes) { JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE) }
+    }
+
     executor.waitForAllComplete(messages)
     executor.reportErrors(messages)
     executor.close()
+    messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(System.currentTimeMillis() - start))
     StreamUtil.closeStream(uploader)
 
     // Save and publish metadata file
@@ -108,14 +113,15 @@ class JpsCompilationOutputUploader {
     metadata.files = new TreeMap<String, String>(hashes)
     String metadataJson = new Gson().toJson(metadata)
 
-    def metadataFile = new File("$metadataDir/metadata.json")
+    def metadataFile = new File("$agentPersistentStorage/metadata.json")
     FileUtil.writeToFile(metadataFile, metadataJson)
     messages.artifactBuilt(metadataFile.absolutePath)
   }
 
-  def uploadCompilationOutputs(File root, File[] moduleFolders, String prefix, Map<String, String> hashes, Closure<String> calculateModuleHash) {
-    for (File moduleFolder : moduleFolders) {
-      executor.execute {
+  def uploadCompilationOutputs(File root, File[] moduleFolders, String prefix, Map<String, String> hashes,
+                               Closure<String> calculateModuleHash) {
+    moduleFolders.each { File moduleFolder ->
+      executor.submit {
         def module = context.findModule(moduleFolder.name)
         def sourcesHash = calculateModuleHash(module)
 
@@ -127,7 +133,7 @@ class JpsCompilationOutputUploader {
         File zipFile = new File(root, sourcesHash)
         zipBinaryData(zipFile, moduleFolder);
         uploader.upload(sourcePath, zipFile)
-        FileUtil.delete(zipFile);
+        FileUtil.delete(zipFile)
       }
     }
   }
@@ -139,6 +145,7 @@ class JpsCompilationOutputUploader {
                   module.getSourceRoots(resourceRootType).toList().stream().map { it.file })
       .collect(Collectors.toList())
       .each { folder ->
+        if (!folder.exists()) return
         folder.eachFileRecurse(FileType.FILES) { file ->
           if (ignoredPatterns.isIgnored(file.getName())) return
           def fileHash = hashFile(file, folder)
@@ -199,23 +206,33 @@ class JpsCompilationOutputUploader {
     }
   }
 
+  private static MessageDigest getMessageDigest() throws IOException {
+    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get();
+    if (messageDigest != null) return messageDigest;
+    messageDigest = MessageDigest.getInstance("MD5");
+    MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest);
+    return messageDigest;
+  }
+
   @CompileStatic
   private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
     private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
       super(serverUrl, messages)
     }
 
-    boolean isExist(@NotNull final String path) throws UploadException {
+    boolean isExist(@NotNull final String path) {
       int code = doHead(path)
       if (code == 200) {
         log("File '$path' already exist on server, nothing to upload")
         return true
       }
-      error("HEAD $path responded with unexpected $code")
+      if (code != 404) {
+        error("HEAD $path responded with unexpected $code")
+      }
       return false
     }
 
-    boolean upload(@NotNull final String path, @NotNull final File file) throws UploadException {
+    boolean upload(@NotNull final String path, @NotNull final File file) {
       return super.upload(path, file, false)
     }
   }
