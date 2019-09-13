@@ -23,7 +23,7 @@ public class JavaLanguageLevelCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "java.project.language.level";
+    return "java.module.language.level";
   }
 
   @NotNull
@@ -46,7 +46,7 @@ public class JavaLanguageLevelCollector extends ProjectUsagesCollector {
         FeatureUsageData data = new FeatureUsageData()
           .addData("version", level.toJavaVersion().feature)
           .addData("preview", level.isPreview());
-        usages.add(newMetric("PROJECT_LANGUAGE_LEVEL", data));
+        usages.add(newMetric("MODULE_LANGUAGE_LEVEL", data));
       }
     }
     return usages;
