@@ -5,7 +5,10 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -13,6 +16,7 @@ import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +32,11 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected void runTest() throws Throwable {
+    doRunTest(); // don't wrap in command
   }
 
   public void testIDEADEV3320() {
@@ -59,22 +68,16 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   }
 
   public void testRenameParamUniqueName() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
+    configureByFile();
     final HashSet<String> result = new HashSet<>();
-    new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
+    new JavaNameSuggestionProvider().getSuggestedNames(getTargetElement(), getFile(), result);
     assertTrue(result.toString(), result.contains("window"));
   }
 
   private void doTest(final String newName) {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    new RenameProcessor(getProject(), element, newName, true, true).run();
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    configureByFile();
+    new RenameProcessor(getProject(), getTargetElement(), newName, true, true).run();
+    checkResultByFile();
   }
 
   public void testRenameInPlaceQualifyFieldReference() {
@@ -121,18 +124,19 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("s");
   }
 
-  private void doTestInplaceRename(final String newName) {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-
-    final PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    assertTrue("In-place rename not allowed for " + element,
-               JavaRefactoringSupportProvider.mayRenameInplace(element, null));
-
-    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
-
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  public void testUndoAfterEditingOutsideOfTemplate() {
+    configureByFile();
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    EditorTestUtil.testUndoInEditor(getEditor(), () -> {
+      PsiElement element = getTargetElement();
+      assertInPlaceRenameAllowedFor(element);
+      new VariableInplaceRenameHandler().doRename(element, getEditor(),
+                                                  DataManager.getInstance().getDataContext(getEditor().getComponent()));
+      executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+      executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+      executeAction(IdeActions.ACTION_UNDO);
+    });
+    checkResultByFile();
   }
 
   public void testRenameWrongRef() {
@@ -140,8 +144,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   }
 
   private void doRenameWrongRef(final String newName) {
-    final String name = getTestName(false);
-    configureByFile(BASE_PATH + name + ".java");
+    configureByFile();
 
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
 
@@ -156,6 +159,38 @@ public class RenameLocalTest extends LightRefactoringTestCase {
                       .run(() -> getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName));
 
     state.gotoEnd(false);
-    checkResultByFile(BASE_PATH + name + "_after.java");
+    checkResultByFile();
+  }
+
+  private void doTestInplaceRename(final String newName) {
+    configureByFile();
+
+    PsiElement element = getTargetElement();
+    assertInPlaceRenameAllowedFor(element);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
+    }, null, null);
+
+    checkResultByFile();
+  }
+
+  @NotNull
+  private PsiElement getTargetElement() {
+    final PsiElement element = TargetElementUtil
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    return element;
+  }
+
+  private static void assertInPlaceRenameAllowedFor(PsiElement element) {
+    assertTrue("In-place rename not allowed for " + element, JavaRefactoringSupportProvider.mayRenameInplace(element, null));
+  }
+
+  private void configureByFile() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+  }
+
+  private void checkResultByFile() {
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }
