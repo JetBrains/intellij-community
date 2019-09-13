@@ -95,7 +95,6 @@ public class VfsUtil extends VfsUtilCore {
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file or directory to make a copy of
    * @param toDir     directory to make a copy in
-   * @return a copy of the file
    * @throws IOException if file failed to be copied
    */
   public static VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
@@ -377,15 +376,10 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  /**
-   * Returns all files in some virtual files recursively
-   * @param root virtual file to get descendants
-   * @return descendants
-   */
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
     List<VirtualFile> result = new ArrayList<>();
-    visitChildrenRecursively(root, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Object>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         result.add(file);
@@ -444,28 +438,22 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * @param url Url for virtual file
-   * @return url for parent directory of virtual file
+   * Return a URL of a parent directory of the given file.
    */
   @Nullable
-  public static String getParentDir(@Nullable final String url) {
-    if (url == null) {
-      return null;
-    }
-    final int index = url.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
+  public static String getParentDir(@Nullable String url) {
+    if (url == null) return null;
+    int index = url.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : url.substring(0, index);
   }
 
   /**
-   * @param urlOrPath Url for virtual file
-   * @return file name
+   * Returns a name of the given file.
    */
   @Nullable
-  public static String extractFileName(@Nullable final String urlOrPath) {
-    if (urlOrPath == null) {
-      return null;
-    }
-    final int index = urlOrPath.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
+  public static String extractFileName(@Nullable String urlOrPath) {
+    if (urlOrPath == null) return null;
+    int index = urlOrPath.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 
@@ -527,18 +515,17 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }
 
-  /** @deprecated to be removed in IDEA 2018 */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  /** @deprecated obsolete */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -560,6 +547,7 @@ public class VfsUtil extends VfsUtilCore {
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -579,8 +567,8 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();

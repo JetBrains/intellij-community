@@ -13,19 +13,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -41,14 +42,7 @@ public class VfsUtilCore {
   private static final String PROTOCOL_DELIMITER = ":";
 
   /**
-   * Checks whether the <code>ancestor {@link VirtualFile}</code> is parent of <code>file
-   * {@link VirtualFile}</code>.
-   *
-   * @param ancestor the file
-   * @param file     the file
-   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
-   *                 and {@code file} are equal
-   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
+   * @param strict if {@code false} then this method returns {@code true} if {@code ancestor} and {@code file} are equal
    */
   public static boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile file, boolean strict) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
@@ -103,7 +97,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Gets relative path of {@code file} to {@code root} when it's possible
+   * Gets a relative path of {@code file} to {@code root} when it's possible
    * This method is designed to be used for file descriptions (in trees, lists etc.)
    * @param file the file
    * @param root candidate to be parent file (Project base dir, any content roots etc.)
@@ -224,7 +218,6 @@ public class VfsUtilCore {
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
-   * @return a copy of the file
    * @throws IOException if file failed to be copied
    */
   @NotNull
@@ -240,7 +233,7 @@ public class VfsUtilCore {
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
-   * @param newName   new name of the file
+   * @param newName   a new name of the file
    * @return a copy of the file
    * @throws IOException if file failed to be copied
    */
@@ -677,11 +670,11 @@ public class VfsUtilCore {
    * Gets an array of files representing paths from root to the passed file.
    *
    * @param file the file
-   * @return virtual files which represents paths from root to the passed file
+   * @return virtual files that represents paths from root to the passed file
    */
   @NotNull
   static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
-    ArrayList<VirtualFile> componentsList = new ArrayList<>();
+    List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
       file = file.getParent();
@@ -719,8 +712,6 @@ public class VfsUtilCore {
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
-    public DistinctVFilesRootsCollection() { }
-
     public DistinctVFilesRootsCollection(@NotNull Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
@@ -744,32 +735,4 @@ public class VfsUtilCore {
     }
     return file;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @Deprecated
-  public static void processFilesRecursively(@NotNull VirtualFile root,
-                                             @NotNull Processor<? super VirtualFile> processor,
-                                             @NotNull Convertor<? super VirtualFile, Boolean> directoryFilter) {
-    if (!processor.process(root)) return;
-
-    if (root.isDirectory() && directoryFilter.convert(root)) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return;
-          if (file.isDirectory() && directoryFilter.convert(file)) {
-            queue.add(file.getChildren());
-          }
-        }
-      } while (!queue.isEmpty());
-    }
-  }
-  //</editor-fold>
 }

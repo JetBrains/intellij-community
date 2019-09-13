@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class StandardFileSystems {
@@ -44,14 +43,4 @@ public class StandardFileSystems {
   public static VirtualFileSystem jar() {
     return ourJar.getValue();
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated use ArchiveFileSystem#getRootByLocal(VirtualFile) (to remove in IDEA 2018) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @Deprecated
-  public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile local) {
-    return jar().findFileByPath(local.getPath() + URLUtil.JAR_SEPARATOR);
-  }
-  //</editor-fold>
 }
