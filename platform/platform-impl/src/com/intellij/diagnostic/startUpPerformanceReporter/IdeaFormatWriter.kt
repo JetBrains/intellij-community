@@ -104,7 +104,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         computeOwnTime(list, ownDurations)
       }
 
-      val measureThreshold = if (name == ParallelActivity.APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+      val measureThreshold = if (name == ParallelActivity.APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
     }
   }
@@ -113,7 +113,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
                               offset: Long, writer: JsonGenerator,
                               fieldName: String,
                               ownDurations: ObjectLongHashMap<ActivityImpl>,
-                              measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
+                              measureThreshold: Long = StartUpMeasurer.MEASURE_THRESHOLD) {
     if (activities.isEmpty()) {
       return
     }

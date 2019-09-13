@@ -447,7 +447,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
-    ParallelActivity.EXTENSION.record(startTime, extensionClass, DefaultPicoContainer.getActivityLevel(myComponentManager.getPicoContainer()));
+    StartUpMeasurer.Level level = DefaultPicoContainer.getActivityLevel(myComponentManager.getPicoContainer());
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, ParallelActivity.EXTENSION, level, /* pluginId = */ null);
     return result;
   }
 

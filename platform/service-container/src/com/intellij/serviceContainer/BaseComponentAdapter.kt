@@ -92,7 +92,9 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         val implementationClass = getImplementationClass()
         @Suppress("UNCHECKED_CAST")
         instance = doCreateInstance(componentManager, implementationClass as Class<T>, indicator)
-        getParallelActivity()?.record(startTime, implementationClass, componentManager.getActivityLevel(), pluginId.idString)
+        getParallelActivity()?.let { category ->
+          StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, componentManager.getActivityLevel(), pluginId.idString)
+        }
 
         initializedInstance = instance
         return instance

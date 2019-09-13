@@ -375,10 +375,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return messageBus
   }
 
-  protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, durationInNano: Long) {
+  protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
     val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_PLUGIN_ID
-    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationInNano)
+    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
   /**
@@ -439,7 +439,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     initializeComponent(result, null)
-    ParallelActivity.SERVICE.record(startTime, serviceClass, getActivityLevel())
+    val pluginClassLoader = serviceClass.classLoader as? PluginClassLoader
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, ParallelActivity.SERVICE, getActivityLevel(), pluginClassLoader?.pluginIdString)
     return result
   }
 

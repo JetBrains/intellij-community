@@ -1314,16 +1314,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void logMessageBusDelivery(@NotNull Topic<?> topic, String messageName, @NotNull Object handler, long durationInNano) {
-    super.logMessageBusDelivery(topic, messageName, handler, durationInNano);
+  protected void logMessageBusDelivery(@NotNull Topic<?> topic, String messageName, @NotNull Object handler, long duration) {
+    super.logMessageBusDelivery(topic, messageName, handler, duration);
 
     if (topic == ProjectManager.TOPIC) {
-      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationInNano, handler.getClass(), StartUpMeasurer.Level.PROJECT);
+      long start = StartUpMeasurer.getCurrentTime() - duration;
+      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ParallelActivity.PROJECT_OPEN_HANDLER, StartUpMeasurer.Level.PROJECT, null);
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
-      if (TimeUnit.NANOSECONDS.toMillis(durationInNano) > 50) {
+      if (TimeUnit.NANOSECONDS.toMillis(duration) > 50) {
         LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(
-          durationInNano)));
+          duration)));
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
@@ -73,7 +74,8 @@ final class Preloader implements ApplicationInitializedListener {
         }
 
         progressManager.runProcess(() -> {
-          Activity measureActivity = ParallelActivity.PRELOAD_ACTIVITY.start(activity.getClass().getName(), null, descriptor.getPluginId().getIdString());
+          Activity measureActivity = StartUpMeasurer.startActivity(activity.getClass().getName(), ParallelActivity.PRELOAD_ACTIVITY,
+                                                                   descriptor.getPluginId().getIdString());
           try {
             activity.preload(myWrappingIndicator);
           }

@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -11,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
+  public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
+
   // Use constants for better overview of existing phases (and preserve consistent naming).
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
   // not to put common part of name to end of).
@@ -103,7 +106,12 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static Activity startActivity(@NotNull String name, @NotNull ParallelActivity category) {
-    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */ null, null);
+    return startActivity(name, category, null);
+  }
+
+  @NotNull
+  public static Activity startActivity(@NotNull String name, @NotNull ParallelActivity category, @Nullable String pluginId) {
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */ null, pluginId);
     activity.setCategory(category);
     return activity;
   }
@@ -111,6 +119,41 @@ public final class StartUpMeasurer {
   @NotNull
   public static Activity startMainActivity(@NotNull String name) {
     return new ActivityImpl(name, null, null);
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+    long end = getCurrentTime();
+    long duration = end - start;
+    if (duration <= MEASURE_THRESHOLD) {
+      return duration;
+    }
+
+    addCompletedActivity(start, end, clazz.getName(), category, level, pluginId);
+    return duration;
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+    long end = getCurrentTime();
+    long duration = end - start;
+    if (duration <= MEASURE_THRESHOLD) {
+      return duration;
+    }
+
+    addCompletedActivity(start, end, name, category, level, pluginId);
+    return duration;
+  }
+
+  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ParallelActivity category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, level, pluginId);
+    item.setCategory(category);
+    item.setEnd(end);
+    add(item);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
