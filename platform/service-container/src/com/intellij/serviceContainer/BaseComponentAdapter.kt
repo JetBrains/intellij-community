@@ -63,17 +63,20 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
-    var instance = initializedInstance as T?
+    val instance = initializedInstance as T?
     if (instance != null || !createIfNeeded) {
       return instance
     }
+    return getInstanceUncached(componentManager, indicator)
+  }
 
+  private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
     checkContainerIsActive(componentManager)
 
     synchronized(this) {
       @Suppress("UNCHECKED_CAST")
-      instance = initializedInstance as T?
+      var instance = initializedInstance as T?
       if (instance != null) {
         return instance
       }
