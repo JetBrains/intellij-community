@@ -77,6 +77,7 @@ class GitRepositoryReader {
     }
     if (currentBranch == null && currentRevision == null) {
       LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+      LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
       logDebugAllRefsFiles();
     }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
