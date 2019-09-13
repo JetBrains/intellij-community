@@ -17,6 +17,7 @@ import kotlin.system.exitProcess
  * Performance tests show 200ms startup performance improvement after adding jar files order
  * Performance tests (mostly Windows) show 600ms startup performance improvement after reordering classes in jar files
  */
+@Suppress("UNCHECKED_CAST")
 class JarOrderStarter : ApplicationStarter {
   override fun getCommandName(): String = "jarOrder"
 
@@ -34,6 +35,8 @@ class JarOrderStarter : ApplicationStarter {
   }
 
   /**
+   * Generates module loading order file.
+   *
    * We cannot start this code on the final jar-s so the output contains mostly module paths (jar only for libraries):
    * path/to/intellij.platform.bootstrap
    * path/to/intellij.platform.impl
@@ -47,8 +50,7 @@ class JarOrderStarter : ApplicationStarter {
     // Must use reflection because the classloader class is loaded with a different classloader
     val accessor = loader::class.memberFunctions.find { it.name == "getJarAccessLog" }
                    ?: throw Exception("Can't find getJarAccessLog() method")
-    @Suppress("UNCHECKED_CAST") val log = accessor.call(loader) as? Collection<String>
-                                          ?: throw Exception("Unexpected return type of getJarAccessLog()")
+    val log = accessor.call(loader) as? Collection<String> ?: throw Exception("Unexpected return type of getJarAccessLog()")
     val result = log
       .stream()
       .map { it.removePrefix("jar:").removePrefix("file:").removeSuffix("!/").removeSuffix("/") }
@@ -60,7 +62,12 @@ class JarOrderStarter : ApplicationStarter {
   }
 
   /**
+   * Generates class loading order file.
    * 
+   * Format:
+   * com/package/ClassName.class:path/to/intellij.platform.impl
+   * com/package2/ClassName2.class:path/to/module
+   * com/package3/ClassName3.class:path/to/some.jar
    */
   private fun generateClassesAccessLog(loader: ClassLoader, path: String?) {
     val classPathMember = loader::class.memberFunctions.find { it.name == "getClassPath" }
@@ -70,8 +77,7 @@ class JarOrderStarter : ApplicationStarter {
     val field = javaClass.getDeclaredField("ourLoadedClasses")
     field.isAccessible = true
 
-    @Suppress("UNCHECKED_CAST") val log = field.get(null) as? Collection<String>
-                                          ?: throw Exception("Unexpected return type of getClassPath()")
+    val log = field.get(null) as? Collection<String> ?: throw Exception("Unexpected type of ourLoadedClasses")
 
     if (log.isNotEmpty()) {
       synchronized(log) {

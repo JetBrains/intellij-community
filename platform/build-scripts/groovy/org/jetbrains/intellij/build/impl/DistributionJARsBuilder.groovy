@@ -401,7 +401,7 @@ class DistributionJARsBuilder {
       buildContext.messages.info("Start processing order files")
       def libModulesToJar = getModuleToJarMap(platform)
       Map<String, String> pluginsToJar = getPluginModulesToJar()
-      Map<String, String> pathToToJarName = getLibraryPathPathToJarName()
+      Map<String, String> pathToToJarName = getLibraryPathToJarName()
       Map<String, String> pathToModuleName = getModulePathToModuleName(libModulesToJar.keySet() + pluginsToJar.keySet())
 
       addClassesOrderFile(pathToModuleName, pathToToJarName, pluginsToJar, libModulesToJar)
@@ -477,7 +477,7 @@ class DistributionJARsBuilder {
     return pathToModuleName
   }
   
-  private Map<String, String> getLibraryPathPathToJarName() {
+  private Map<String, String> getLibraryPathToJarName() {
     def libWithoutVersion = new HashSet(platform.projectLibrariesWithRemovedVersionFromJarNames)
     def libraryJarPathToJarName = new HashMap()
     buildContext.project.libraryCollection.libraries.each {
