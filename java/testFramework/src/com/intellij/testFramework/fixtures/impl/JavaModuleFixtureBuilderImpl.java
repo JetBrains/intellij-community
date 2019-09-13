@@ -39,16 +39,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author mike
- */
 public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private final List<Lib> myLibraries = new ArrayList<>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
   private LanguageLevel myLanguageLevel;
 
-  public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+  public JavaModuleFixtureBuilderImpl(@NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(StdModuleTypes.JAVA, fixtureBuilder);
   }
 

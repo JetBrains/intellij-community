@@ -44,9 +44,9 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
 
 internal fun isNotApplicableClass(type: Class<*>): Boolean {
   return type.isPrimitive || type.isEnum || type.isArray ||
-         Collection::class.java.isAssignableFrom(type) ||
-         Map::class.java.isAssignableFrom(type) ||
-         type === String::class.java ||
+         java.util.Collection::class.java.isAssignableFrom(type) ||
+         java.util.Map::class.java.isAssignableFrom(type) ||
+         type === java.lang.String::class.java ||
          type === File::class.java ||
          type === Path::class.java
 }
