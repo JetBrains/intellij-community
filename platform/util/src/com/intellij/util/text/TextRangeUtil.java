@@ -19,10 +19,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Miscellaneous utility methods to manipulate lists of text ranges.
@@ -47,7 +44,7 @@ public class TextRangeUtil {
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
+  public static Collection<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
         excludedRanges.sort(RANGE_COMPARATOR);
@@ -111,7 +108,7 @@ public class TextRangeUtil {
     return rangesContain(rangeList, 0, rangeList.size() - 1, offset);
   }
 
-  static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
+  private static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
     if (endIndex < startIndex || ranges.size() <= startIndex || ranges.size() <= endIndex) return false;
     int startOffset = ranges.get(startIndex).getStartOffset();
     int endOffset = ranges.get(endIndex).getEndOffset();
