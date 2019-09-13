@@ -15,7 +15,8 @@
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
   <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
 
-  <plugins url="https://plugins.jetbrains.com/"/>
+  <plugins url="https://plugins.jetbrains.com/"
+           builtin-url="__BUILTIN_PLUGINS_URL__"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"
                patches="https://download.jetbrains.com/python/"/>
 
