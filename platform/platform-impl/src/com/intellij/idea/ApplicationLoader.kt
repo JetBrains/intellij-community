@@ -526,6 +526,8 @@ open class IdeStarter : ApplicationStarter {
 
           val keymap = KeymapManager.getInstance().activeKeymap
           SystemShortcuts().checkConflictsAndNotify(keymap)
+
+          StartupUtil.disableInputMethodsIfPossible()
         }
       }
     }
