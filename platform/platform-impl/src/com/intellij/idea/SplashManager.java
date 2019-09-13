@@ -2,7 +2,6 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
@@ -66,7 +65,7 @@ public final class SplashManager {
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
+    Activity activity = StartUpMeasurer.startDurationEvent("init splash");
     SPLASH_WINDOW = new Splash(appInfo);
     EventQueue.invokeLater(() -> {
       Splash splash = SPLASH_WINDOW;
@@ -74,8 +73,8 @@ public final class SplashManager {
       if (splash != null) {
         splash.initAndShow();
       }
+      activity.end();
     });
-    activity.end();
   }
 
   @Nullable
@@ -119,7 +118,9 @@ public final class SplashManager {
     }
 
     StartUpMeasurer.addInstantEvent("frame shown");
+    Activity activity = StartUpMeasurer.startDurationEvent("set frame visible");
     frame.setVisible(true);
+    activity.end();
     return frame;
   }
 

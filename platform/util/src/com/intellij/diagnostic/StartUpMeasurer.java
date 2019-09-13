@@ -124,6 +124,11 @@ public final class StartUpMeasurer {
   }
 
   @NotNull
+  public static Activity startDurationEvent(@NotNull String name) {
+    return ActivityImpl.createParallelActivity(ParallelActivity.APP_INIT, name);
+  }
+
+  @NotNull
   public static Activity start(@NotNull String name) {
     return new ActivityImpl(name, null, null);
   }
