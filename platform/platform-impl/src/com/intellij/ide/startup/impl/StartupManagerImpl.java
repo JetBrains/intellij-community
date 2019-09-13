@@ -409,25 +409,28 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   public final void scheduleBackgroundPostStartupActivities() {
+    if (myProject.isDisposedOrDisposeInProgress()) {
+      return;
+    }
+
     myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      if (ReadAction.compute(() -> myProject.isDisposed())) {
+      if (myProject.isDisposedOrDisposeInProgress()) {
         return;
       }
 
-      List<StartupActivity.Background> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
-      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(
-        new ExtensionPointListener<StartupActivity.Background>() {
-          @Override
-          public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
-            extension.runActivity(myProject);
-          }
-        }, this);
+      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity.Background>() {
+        @Override
+        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extension.runActivity(myProject);
+        }
+      }, this);
 
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-        for (StartupActivity activity : backgroundPostStartupActivities) {
+        for (StartupActivity activity : activities) {
           ProgressManager.checkCanceled();
 
-          if (ReadAction.compute(() -> myProject.isDisposed())) {
+          if (myProject.isDisposedOrDisposeInProgress()) {
             return;
           }
 

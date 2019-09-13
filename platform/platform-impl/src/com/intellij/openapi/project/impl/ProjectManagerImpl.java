@@ -464,26 +464,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     startupManager.runPostStartupActivitiesFromExtensions();
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      if (!project.isDisposed()) {
-        startupManager.runPostStartupActivities();
-
-        Application application = ApplicationManager.getApplication();
-        if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-          StorageUtilKt.checkUnknownMacros(project, true);
-        }
-        StartUpMeasurer.stopPluginCostMeasurement();
+      if (project.isDisposedOrDisposeInProgress()) {
+        return;
       }
-    }, ModalityState.NON_MODAL);
+
+      startupManager.runPostStartupActivities();
+
+      Application application = ApplicationManager.getApplication();
+      if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+        StorageUtilKt.checkUnknownMacros(project, true);
+      }
+      StartUpMeasurer.stopPluginCostMeasurement();
+    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
     ApplicationManager.getApplication().invokeLater(() -> {
       LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
                                  DumbService.isDumb(project)
                                  ? LoadingPhase.PROJECT_OPENED
                                  : LoadingPhase.INDEXING_FINISHED);
 
-      if (!project.isDisposed()) {
+      if (!project.isDisposedOrDisposeInProgress()) {
         startupManager.scheduleBackgroundPostStartupActivities();
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
   }
 
   private static void assertInTransaction() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -28,10 +27,5 @@ public interface ProjectEx extends Project {
   @TestOnly
   default boolean isLight() {
     return false;
-  }
-
-  @NotNull
-  default Condition<?> getDisposedOrDisposeInProgress() {
-    return __ -> isDisposedOrDisposeInProgress();
   }
 }
