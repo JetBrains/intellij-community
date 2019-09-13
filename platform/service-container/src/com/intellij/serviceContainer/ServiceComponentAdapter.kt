@@ -2,19 +2,15 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ParallelActivity
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.pico.AssignableToComponentAdapter
-
-internal val LOG = logger<ServiceComponentAdapter>()
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        pluginDescriptor: PluginDescriptor,
@@ -26,11 +22,13 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T {
+  override fun getParallelActivity() = ParallelActivity.SERVICE
+
+  override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     if (LOG.isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
-          PersistentStateComponent::class.java.isAssignableFrom(getImplementationClass())) {
+          PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
         LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${implementationClassName}"))
       }
     }
@@ -38,29 +36,24 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
     // heavy to prevent storages from flushing and blocking FS
     HeavyProcessLatch.INSTANCE.processStarted(implementationClassName).use {
       if (ProgressManager.getGlobalProgressIndicator() == null) {
-        return createAndInitialize(componentManager)
+        return createAndInitialize(componentManager, implementationClass)
       }
       else {
         var instance: T? = null
         ProgressManager.getInstance().executeNonCancelableSection {
-          instance = createAndInitialize(componentManager)
+          instance = createAndInitialize(componentManager, implementationClass)
         }
         return instance!!
       }
     }
   }
 
-  private fun <T : Any> createAndInitialize(componentManager: PlatformComponentManagerImpl): T {
-    val startTime = StartUpMeasurer.getCurrentTime()
-    @Suppress("UNCHECKED_CAST")
-    val implementationClass = getImplementationClass() as Class<T>
+  private fun <T : Any> createAndInitialize(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>): T {
     val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     if (instance is Disposable) {
       Disposer.register(componentManager, instance)
     }
-
     componentManager.initializeComponent(instance, descriptor)
-    ParallelActivity.SERVICE.record(startTime, implementationClass, componentManager.getActivityLevel(), pluginId.idString)
     return instance
   }
 

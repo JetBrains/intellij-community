@@ -14,6 +14,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -37,6 +38,8 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
+
+internal val LOG = logger<PlatformComponentManagerImpl>()
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
@@ -622,8 +625,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return CompletableFuture.allOf(*futures.toTypedArray())
   }
 
-  // todo check is it safe to use this implementation in `isContainerDisposed` (for now, old behaviour is not changed)
-  // if it is safe, this method is not needed
+  // todo fix tests to use this implementation in `isContainerDisposed`
   fun isContainerDisposedOrDisposeInProgress(): Boolean {
     return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
   }

@@ -2,9 +2,10 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.ParallelActivity
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -15,12 +16,8 @@ import org.picocontainer.PicoVisitor
 
 internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
                                              val pluginDescriptor: PluginDescriptor,
-                                             @field:Volatile protected var initializedInstance: Any?,
+                                             @field:Volatile private var initializedInstance: Any?,
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
-  companion object {
-    private val LOG = logger<BaseComponentAdapter>()
-  }
-
   private var initializing = false
 
   final override fun verify(container: PicoContainer) {}
@@ -63,21 +60,19 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     return getInstance(componentManager)
   }
 
-  @Suppress("UNCHECKED_CAST")
   fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
+    @Suppress("UNCHECKED_CAST")
     var instance = initializedInstance as T?
     if (instance != null || !createIfNeeded) {
       return instance
     }
 
-    if (componentManager.isContainerDisposedOrDisposeInProgress()) {
-      throw PluginException("Cannot create ${toString()} because service container is already disposed (container=${componentManager}", pluginId)
-    }
-
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+    checkContainerIsActive(componentManager)
 
     synchronized(this) {
+      @Suppress("UNCHECKED_CAST")
       instance = initializedInstance as T?
       if (instance != null) {
         return instance
@@ -89,7 +84,13 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
       try {
         initializing = true
-        instance = doCreateInstance(componentManager, indicator)
+
+        val startTime = StartUpMeasurer.getCurrentTime()
+        val implementationClass = getImplementationClass()
+        @Suppress("UNCHECKED_CAST")
+        instance = doCreateInstance(componentManager, implementationClass as Class<T>, indicator)
+        getParallelActivity()?.record(startTime, implementationClass, componentManager.getActivityLevel(), pluginId.idString)
+
         initializedInstance = instance
         return instance
       }
@@ -99,7 +100,15 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T
+  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl) {
+    if (componentManager.isContainerDisposedOrDisposeInProgress()) {
+      throw PluginException("Cannot create ${toString()} because service container is already disposed (container=${componentManager}", pluginId)
+    }
+  }
+
+  protected abstract fun getParallelActivity(): ParallelActivity?
+
+  protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 
   @Synchronized
   fun <T : Any> replaceInstance(instance: T, parentDisposable: Disposable?): T? {
