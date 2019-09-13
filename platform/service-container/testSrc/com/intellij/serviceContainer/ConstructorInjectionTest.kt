@@ -24,6 +24,13 @@ class ConstructorInjectionTest {
     val componentManager = TestComponentManager()
     componentManager.instantiateClassWithConstructorInjection(BarServiceClient::class.java, BarServiceClient::class.java.name, pluginDescriptor.pluginId)
   }
+
+  @Test
+  fun `constructor with bool`() {
+    val componentManager = TestComponentManager()
+    componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, testPluginDescriptor, false)
+    componentManager.getService(ConstructorWithBoolean::class.java)
+  }
 }
 
 private interface Bar

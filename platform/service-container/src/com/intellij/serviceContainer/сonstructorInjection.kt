@@ -5,9 +5,17 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.extensions.PluginId
 import gnu.trove.THashSet
 import java.io.File
+import java.lang.Deprecated
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
+import kotlin.Any
+import kotlin.Array
+import kotlin.Boolean
+import kotlin.Comparator
+import kotlin.Pair
+import kotlin.Suppress
+import kotlin.let
 
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                                                requestorKey: Any,
@@ -65,24 +73,35 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
   var lastSatisfiableConstructorSize = -1
   var unsatisfiedDependencyType: Class<*>? = null
 
-  loop@ for (constructor in sortedMatchingConstructors) {
+  val lastIndex = sortedMatchingConstructors.size - 1
+  var someConstructorWasChecked = false
+  for (index in 0..lastIndex) {
+    val constructor = sortedMatchingConstructors[index]
     if (constructor.isSynthetic) {
-      continue
-    }
-
-    if (sortedMatchingConstructors.size > 1 &&
-        (constructor.isAnnotationPresent(java.lang.Deprecated::class.java) || constructor.isAnnotationPresent(NonInjectable::class.java))) {
       continue
     }
 
     var failedDependency = false
     val parameterTypes = constructor.parameterTypes
 
-    for (expectedType in parameterTypes) {
-      if (isNotApplicableClass(expectedType)) {
-        continue@loop
-      }
+    // first, perform fast check to ensure that assert about getComponentAdapterOfType is thrown only if constructor is applicable
+    if (parameterTypes.any(::isNotApplicableClass)) {
+      continue
+    }
 
+    if (!someConstructorWasChecked && index == lastIndex) {
+      // Don't call isResolvable at all - resolveInstance will do it. No need to check the only constructor in advance.
+      return Pair(constructor, parameterTypes)
+    }
+
+    if (lastIndex > 0 &&
+        (constructor.isAnnotationPresent(NonInjectable::class.java) || constructor.isAnnotationPresent(Deprecated::class.java))) {
+      continue
+    }
+
+    someConstructorWasChecked = true
+
+    for (expectedType in parameterTypes) {
       // check whether this constructor is satisfiable
       if (parameterResolver.isResolvable(componentManager, requestorKey, aClass, constructor, expectedType, pluginId, isExtensionSupported)) {
         continue
