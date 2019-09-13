@@ -182,7 +182,7 @@
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.remoteInterpreter/META-INF/plugin.xml">
     <id>org.jetbrains.plugins.python-remote-interpreter</id>
-    <name>Python Remote Interpreter</name>
+    <name>Python SSH Interpreter</name>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.jetbrains.plugins.webDeployment</depends>
     <depends>org.jetbrains.plugins.remote-run</depends>

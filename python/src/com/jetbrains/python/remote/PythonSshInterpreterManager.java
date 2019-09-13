@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 /**
  * This service provides functionality for SSH remote interpreters. It is
- * expected to be implemented in Python Remote Interpreter plugin using the
+ * expected to be implemented in Python SSH Interpreter plugin using the
  * extension point {@link #EP_NAME}.
  */
 public interface PythonSshInterpreterManager {
