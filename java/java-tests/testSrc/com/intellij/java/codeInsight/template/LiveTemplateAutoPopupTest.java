@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.template;
 
 
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -9,10 +10,9 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
-public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
+public class LiveTemplateAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
