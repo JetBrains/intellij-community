@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
@@ -248,7 +247,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
 
         val projectManager = serviceIfCreated<ProjectManager>() ?: return
         for (project in projectManager.openProjects) {
-          if (project !is ProjectEx || project.isContainerDisposedOrDisposeInProgress) {
+          if (project.isDisposedOrDisposeInProgress) {
             continue
           }
 
@@ -258,14 +257,14 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
     }, ApplicationManager.getApplication())
   }
 
-  private fun handleEvent(virtualFile: VirtualFile, project: ProjectEx) {
+  private fun handleEvent(virtualFile: VirtualFile, project: Project) {
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
     if (!FileTypeUtil.getInstance().isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
       return
     }
 
     AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-      if (project.isContainerDisposedOrDisposeInProgress || !virtualFile.isValid) {
+      if (project.isDisposedOrDisposeInProgress || !virtualFile.isValid) {
         return@execute
       }
 

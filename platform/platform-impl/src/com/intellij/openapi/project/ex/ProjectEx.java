@@ -30,12 +30,8 @@ public interface ProjectEx extends Project {
     return false;
   }
 
-  default boolean isContainerDisposedOrDisposeInProgress() {
-    return false;
-  }
-
   @NotNull
   default Condition<?> getDisposedOrDisposeInProgress() {
-    return __ -> isContainerDisposedOrDisposeInProgress();
+    return __ -> isDisposedOrDisposeInProgress();
   }
 }

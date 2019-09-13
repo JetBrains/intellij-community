@@ -89,6 +89,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   boolean isDisposed();
 
+  @ApiStatus.Experimental
+  default boolean isDisposedOrDisposeInProgress() {
+    return isDisposed();
+  }
+
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
    */

@@ -108,6 +108,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
+  public boolean isDisposedOrDisposeInProgress() {
+    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
+  }
+
+  @Override
   @TestOnly
   public boolean isLight() {
     return myLight;

@@ -626,9 +626,14 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return CompletableFuture.allOf(*futures.toTypedArray())
   }
 
-  // todo fix tests to use this implementation in `isContainerDisposed`
-  fun isContainerDisposedOrDisposeInProgress(): Boolean {
+  // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)
+  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
     return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  }
+
+  // todo fix tests to use this implementation in `isContainerDisposed`
+  override fun isDisposedOrDisposeInProgress(): Boolean {
+    return isContainerDisposedOrDisposeInProgress()
   }
 
   @Internal

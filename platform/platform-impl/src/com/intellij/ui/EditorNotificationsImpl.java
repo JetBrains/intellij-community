@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
@@ -79,7 +78,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   @Override
   public void updateNotifications(@NotNull VirtualFile file) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (((ProjectEx)myProject).isContainerDisposedOrDisposeInProgress() || !file.isValid()) {
+      if (myProject.isDisposedOrDisposeInProgress() || !file.isValid()) {
         return;
       }
 
