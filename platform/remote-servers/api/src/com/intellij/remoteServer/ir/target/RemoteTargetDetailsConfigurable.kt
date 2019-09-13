@@ -4,11 +4,19 @@ package com.intellij.remoteServer.ir.target
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration
 import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.remoteServer.ir.runtime.LanguageRuntimeType
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -40,17 +48,48 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
   override fun getEditableObject() = config
 
   override fun createOptionsPanel(): JComponent {
-    val panel = JPanel(
-      VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    val panel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    panel.border = JBUI.Borders.empty(4, 10, 6, 10)
+
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
     config.runtimes.resolvedConfigs().forEach {
       val nextConfigurable = doCreateConfigurable(it)
       panel.add(nextConfigurable.createComponent())
     }
-
+    panel.add(createAddRuntimeHyperlink())
     return panel
   }
+
+  private fun createAddRuntimeHyperlink(): HyperlinkLabel {
+    val result = HyperlinkLabel()
+    result.setHyperlinkText("Add language runtime")
+    result.addHyperlinkListener { e ->
+      val types = LanguageRuntimeType.allTypes()
+      val popup = JBPopupFactory.getInstance().createListPopup(
+        object : BaseListPopupStep<LanguageRuntimeType<*>>("Choose runtime type", types, emptyArray()) {
+          override fun getTextFor(runtime: LanguageRuntimeType<*>?) = runtime!!.displayName
+
+          override fun onChosen(selectedValue: LanguageRuntimeType<*>?, finalChoice: Boolean): PopupStep<*>? = doFinalStep {
+            selectedValue?.also {
+              val newRuntime = it.createDefaultConfig()
+              config.runtimes.addConfig(newRuntime)
+              resetOptionsPanel()
+              createComponent()
+            }
+          }
+        }
+      )
+      if (e.inputEvent is MouseEvent) {
+        popup.show(RelativePoint(e.inputEvent as MouseEvent))
+      }
+      else {
+        popup.showInCenterOf(result)
+      }
+    }
+    return result
+  }
+
 
   private fun doCreateConfigurable(config: BaseExtendableConfiguration) =
     config.getTypeImpl().createConfigurable(project, config)

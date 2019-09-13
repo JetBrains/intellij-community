@@ -14,7 +14,7 @@ import com.intellij.ui.layout.*
 class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
 
-  override val displayName = "Sample Language Runtime"
+  override val displayName = "Java"
 
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 

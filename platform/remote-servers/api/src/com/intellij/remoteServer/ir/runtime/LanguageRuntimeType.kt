@@ -4,6 +4,7 @@ package com.intellij.remoteServer.ir.runtime
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.remoteServer.ir.config.BaseExtendableType
+import com.intellij.util.containers.toArray
 
 abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String) : BaseExtendableType<C>(id) {
 
@@ -11,5 +12,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   companion object {
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.ir.languageRuntime")
+    @JvmStatic
+    fun allTypes() = EXTENSION_NAME.extensionList.toArray(emptyArray<LanguageRuntimeType<*>>())
   }
 }

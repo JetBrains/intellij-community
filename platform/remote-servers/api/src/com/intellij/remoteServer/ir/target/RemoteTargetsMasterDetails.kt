@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
-import com.intellij.remoteServer.ir.runtime.sample.SampleLanguageRuntimeConfiguration
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
@@ -55,17 +54,6 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
     super.apply()
 
     val addedConfigs = getConfiguredTargets() - RemoteTargetsManager.instance.targets.resolvedConfigs()
-
-    //FIXME: temporary hack to have some runtimes in UI
-    addedConfigs.forEach {
-      if (it.displayName.contains("-sample") && it.runtimes.resolvedConfigs().isEmpty()) {
-        it.runtimes.addConfig(SampleLanguageRuntimeConfiguration().also { rt ->
-          rt.homePath = "my home"
-          rt.applicationFolder = "my app"
-        })
-      }
-    }
-
     addedConfigs.forEach { RemoteTargetsManager.instance.targets.addConfig(it) }
   }
 
