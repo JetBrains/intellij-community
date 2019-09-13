@@ -24,9 +24,9 @@ public abstract class BaseOutputReader extends BaseDataReader {
      */
     public static final Options BLOCKING = withPolicy(SleepingPolicy.BLOCKING);
     /**
-     * @see BaseDataReader.SleepingPolicy#SIMPLE
+     * @see BaseDataReader.SleepingPolicy#NON_BLOCKING
      */
-    public static final Options NON_BLOCKING = withPolicy(SleepingPolicy.SIMPLE);
+    public static final Options NON_BLOCKING = withPolicy(SleepingPolicy.NON_BLOCKING);
 
     public SleepingPolicy policy() { return null; }
     public boolean splitToLines() { return true; }

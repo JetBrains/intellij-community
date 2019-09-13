@@ -29,12 +29,12 @@ public abstract class BaseDataReader {
   private Future<?> myFinishedFuture;
 
   /**
-   * @param sleepingPolicy default is {@link SleepingPolicy#SIMPLE} for the reasons described on {@link SleepingPolicy} which may be changed
+   * @param sleepingPolicy default is {@link SleepingPolicy#NON_BLOCKING} for the reasons described on {@link SleepingPolicy} which may be changed
    *                       in future versions.
    */
   @ReviseWhenPortedToJDK("Loom")
   public BaseDataReader(SleepingPolicy sleepingPolicy) {
-    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.SIMPLE;
+    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.NON_BLOCKING;
   }
 
   protected void start(@NotNull String presentableName) {
@@ -69,7 +69,7 @@ public abstract class BaseDataReader {
 
   /**
    * Non-blocking read returns the control back to the process handler when there is no data to read.
-   * @see SleepingPolicy#SIMPLE
+   * @see SleepingPolicy#NON_BLOCKING
    */
   protected boolean readAvailableNonBlocking() throws IOException {
     throw new UnsupportedOperationException();
@@ -111,7 +111,7 @@ public abstract class BaseDataReader {
    * <li>Repeat</li>
    * </ol>
    * This "busy-wait" antipattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
-   * user process and used by {@link #SIMPLE} (aka non-blocking) policy. Drawback is that process may finish (when {@link Process#waitFor()} returns)
+   * user process and used by {@link #NON_BLOCKING} (aka non-blocking) policy. Drawback is that process may finish (when {@link Process#waitFor()} returns)
    * leaving some data unread.
    * It is implemented in {@link #readAvailableNonBlocking()}}
    * </p>
@@ -119,7 +119,7 @@ public abstract class BaseDataReader {
    * <h2>Conclusion</h2>
    * For helper (simple script that is guaranteed to finish soon) and should never be left after Idea is closed use {@link #BLOCKING}.
    * For user process that may run forever, even after idea is closed, and user should have ability to disconnect from it
-   * use {@link #SIMPLE}.
+   * use {@link #NON_BLOCKING}.
    * If you see some data lost in stdout/stderr try switching to {@link #BLOCKING}.
    * </p>
    */
@@ -128,7 +128,7 @@ public abstract class BaseDataReader {
     int sleepTimeWhenWasActive = 1;
     int sleepTimeWhenIdle = 5;
 
-    SleepingPolicy SIMPLE = new SleepingPolicy() {
+    SleepingPolicy NON_BLOCKING = new SleepingPolicy() {
       @Override
       public int getTimeToSleep(boolean wasActive) {
         return wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
@@ -145,6 +145,12 @@ public abstract class BaseDataReader {
 
 
     int getTimeToSleep(boolean wasActive);
+
+    /**
+     * @deprecated use {@link #NON_BLOCKING} instead
+     */
+    @Deprecated
+    SleepingPolicy SIMPLE = NON_BLOCKING;
   }
 
   protected void doRun() {
