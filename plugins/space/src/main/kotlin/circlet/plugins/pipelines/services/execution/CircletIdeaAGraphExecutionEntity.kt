@@ -28,4 +28,6 @@ class CircletIdeaAGraphExecutionEntity(
     override fun hashCode(): Int {
         return this.id.hashCode()
     }
+
+    override val problems = emptySet<Int>()
 }

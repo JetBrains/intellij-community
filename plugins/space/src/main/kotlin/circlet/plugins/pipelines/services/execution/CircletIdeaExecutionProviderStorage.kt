@@ -29,10 +29,6 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun findMetaTask(metaTaskId: Long): AGraphMetaEntity? {
         logger.debug { "findMetaTask $metaTaskId" }
         return CircletIdeaAGraphMetaEntity(metaTaskId, task)
