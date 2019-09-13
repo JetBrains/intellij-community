@@ -33,16 +33,24 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
         System.setProperty("io.netty.processId", Random().nextInt(65535).toString())
-        System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
-
-        // https://youtrack.jetbrains.com/issue/IDEA-208908
-        System.setProperty("io.netty.allocator.numDirectArenas", "1")
       }
+
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
+
+      // https://youtrack.jetbrains.com/issue/IDEA-208908
+      setSystemPropertyIfNotConfigured("io.netty.allocator.numDirectArenas", "1")
+      setSystemPropertyIfNotConfigured("io.netty.allocator.numHeapArenas", "1")
 
       val logger = IdeaNettyLogger()
       InternalLoggerFactory.setDefaultFactory(object : InternalLoggerFactory() {
         override fun newInstance(name: String) = logger
       })
+    }
+
+    private fun setSystemPropertyIfNotConfigured(name: String, @Suppress("SameParameterValue") value: String) {
+      if (System.getProperty(name) == null) {
+        System.setProperty(name, value)
+      }
     }
 
     @JvmStatic
