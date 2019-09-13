@@ -993,8 +993,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final Processor<? super VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
     return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
-                                                                        file -> !index.shouldBeFound(scope, file) || processor.process(file)));
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor));
   }
 
   @NotNull

@@ -82,7 +82,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           public boolean process(@NotNull final VirtualFile file, final Integer value) {
             ProgressIndicatorProvider.checkCanceled();
             final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {
+            if ((mask & occurrenceMask) != 0) {
               if (!fileProcessor.process(file)) return false;
             }
             return true;
