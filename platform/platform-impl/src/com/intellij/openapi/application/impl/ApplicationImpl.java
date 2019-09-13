@@ -168,16 +168,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
-    final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
+    ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
     SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
     if (manager != null) {
       final boolean[] canClose = {true};
       try {
-        CommandProcessor.getInstance().executeCommand(null, () -> {
+        Runnable task = () -> {
           if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
             canClose[0] = false;
           }
-        }, ApplicationBundle.message("command.exit"), null);
+        };
+        CommandProcessor commandProcessor = ApplicationManager.getApplication().getServiceIfCreated(CommandProcessor.class);
+        if (commandProcessor == null) {
+          task.run();
+        }
+        else {
+          commandProcessor.executeCommand(null, task, ApplicationBundle.message("command.exit"), null);
+        }
       }
       catch (Throwable e) {
         LOG.error(e);

@@ -19,6 +19,11 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
+  @Nullable
+  public static ProjectManagerEx getInstanceExIfCreated() {
+    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
+  }
+
   /**
    * @param filePath path to .ipr file or directory where .idea directory is located
    */
