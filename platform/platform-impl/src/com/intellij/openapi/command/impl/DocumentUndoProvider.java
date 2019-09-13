@@ -69,7 +69,7 @@ public final class DocumentUndoProvider implements DocumentListener {
     }
 
     handleDocumentChanged(getUndoManager(null), document, e);
-    ProjectManager projectManager = ApplicationManager.getApplication().getService(ProjectManager.class, false);
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     if (projectManager != null) {
       for (Project project : projectManager.getOpenProjects()) {
         handleDocumentChanged(getUndoManager(project), document, e);
