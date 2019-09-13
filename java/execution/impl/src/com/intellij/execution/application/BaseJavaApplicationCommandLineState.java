@@ -23,7 +23,8 @@ import java.io.File;
 /**
  * @author nik
  */
-public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase&CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
+public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
+  extends JavaCommandLineState {
   @NotNull protected final T myConfiguration;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {

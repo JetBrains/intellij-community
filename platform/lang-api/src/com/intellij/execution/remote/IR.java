@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,11 @@ public class IR {
   public interface RemoteEnvironmentRequest {
     RemotePlatform getRemotePlatform();
 
-    //todo[remoteServers]: change to Path
+    /**
+     * Runtimes must perform uploads in the order they were created
+     * 
+     * todo[remoteServers]: change to Path
+     */
     RemoteValue<String> createUpload(@NotNull String localPath);
 
     RemoteValue<Integer> bindRemotePort(int remotePort);
@@ -47,6 +52,10 @@ public class IR {
     RemoteLocation createRemoteLocation(@Nullable String remotePath/*, @Nullable Object __options*/);
 
     RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv);
+
+    void addValueResolutionListener(@NotNull RemoveValueResolutionListener listener);
+
+    void removeValueResolutionListener(@NotNull RemoveValueResolutionListener listener);
   }
 
   public interface RemoteValue<T> {
@@ -239,7 +248,14 @@ public class IR {
     }
   }
 
+  public interface RemoveValueResolutionListener {
+    default void beforeResolution(@NotNull RemoteValue<?> value) {}
+
+    default void afterResolution(@NotNull RemoteValue<?> value) {}
+  }
+
   public static class LocalRunner implements RemoteRunner {
+
     @NotNull
     @Override
     public RemotePlatform getRemotePlatform() {
@@ -259,6 +275,8 @@ public class IR {
 
     public class LocalEnvironmentRequest implements RemoteEnvironmentRequest {
       @NotNull
+      private final Collection<RemoveValueResolutionListener> myListeners = new SmartList<>();
+      @NotNull
       private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
 
       @Override
@@ -268,12 +286,22 @@ public class IR {
 
       @Override
       public RemoteValue<String> createUpload(@NotNull String localPath) {
-        return new FixedValue<>(localPath);
+        FixedValue<String> value = new FixedValue<>(localPath);
+        for (RemoveValueResolutionListener listener : myListeners) {
+          listener.beforeResolution(value);
+          listener.afterResolution(value);
+        }
+        return value;
       }
 
       @Override
       public RemoteValue<Integer> bindRemotePort(int remotePort) {
-        return new FixedValue<>(remotePort);
+        FixedValue<Integer> value = new FixedValue<>(remotePort);
+        for (RemoveValueResolutionListener listener : myListeners) {
+          listener.beforeResolution(value);
+          listener.afterResolution(value);
+        }
+        return value;
       }
 
       @Override
@@ -288,6 +316,16 @@ public class IR {
 
       public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
         myParentEnvironmentType = parentEnvironmentType;
+      }
+
+      @Override
+      public void addValueResolutionListener(@NotNull RemoveValueResolutionListener listener) {
+        myListeners.add(listener);
+      }
+
+      @Override
+      public void removeValueResolutionListener(@NotNull RemoveValueResolutionListener listener) {
+        myListeners.remove(listener);
       }
     }
   }

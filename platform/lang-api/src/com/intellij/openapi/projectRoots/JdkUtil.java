@@ -142,7 +142,8 @@ public class JdkUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static IR.NewCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters, @NotNull IR.RemoteEnvironmentRequest request)
+  public static IR.NewCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
+                                                      @NotNull IR.RemoteEnvironmentRequest request)
     throws CantRunException {
     IR.NewCommandLine commandLine = new IR.NewCommandLine();
     if (request instanceof IR.LocalRunner.LocalEnvironmentRequest) {
@@ -170,7 +171,9 @@ public class JdkUtil {
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request));
   }
 
-  private static void setupCommandLine(@NotNull IR.NewCommandLine commandLine, @NotNull IR.RemoteEnvironmentRequest request, @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
+  private static void setupCommandLine(@NotNull IR.NewCommandLine commandLine,
+                                       @NotNull IR.RemoteEnvironmentRequest request,
+                                       @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     commandLine.setWorkingDirectory(request.createUpload(javaParameters.getWorkingDirectory()));
     javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
 
@@ -190,7 +193,8 @@ public class JdkUtil {
       for (String parameter : vmParameters.getParameters()) {
         if (parameter.startsWith(JAVAAGENT)) {
           int agentArgsIdx = parameter.indexOf("=", JAVAAGENT.length());
-          javaParameters.getClassPath().addFirst(parameter.substring(JAVAAGENT.length() + 1, agentArgsIdx > -1 ? agentArgsIdx : parameter.length()));
+          javaParameters.getClassPath()
+            .addFirst(parameter.substring(JAVAAGENT.length() + 1, agentArgsIdx > -1 ? agentArgsIdx : parameter.length()));
         }
       }
     }
@@ -202,12 +206,16 @@ public class JdkUtil {
         setArgFileParams(commandLine, request, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters, cs);
         dynamicMainClass = dynamicParameters;
       }
-      else if (!explicitClassPath(vmParameters) && javaParameters.getJarPath() == null && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
+      else if (!explicitClassPath(vmParameters) &&
+               javaParameters.getJarPath() == null &&
+               (commandLineWrapper = getCommandLineWrapperClass()) != null) {
         if (javaParameters.isUseClasspathJar()) {
-          setClasspathJarParams(commandLine, request, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
+          setClasspathJarParams(commandLine, request, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions,
+                                dynamicParameters);
         }
         else if (javaParameters.isClasspathFile()) {
-          setCommandLineWrapperParams(commandLine, request, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters, cs);
+          setCommandLineWrapperParams(commandLine, request, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions,
+                                      dynamicParameters, cs);
         }
       }
       else {
@@ -220,13 +228,8 @@ public class JdkUtil {
     }
 
     if (!dynamicMainClass) {
-      List<String> mainClassParams = getMainClassParams(javaParameters);
-      for (int i = 0; i < mainClassParams.size(); i++) {
-        if (i > 0 && "-jar".equals(mainClassParams.get(i - 1))) {
-          commandLine.addParameter(request.createUpload(mainClassParams.get(i)));
-          continue;
-        }
-        commandLine.addParameter(mainClassParams.get(i));
+      for (IR.RemoteValue<String> parameter : getMainClassParams(javaParameters, request)) {
+        commandLine.addParameter(parameter);
       }
     }
 
@@ -237,7 +240,8 @@ public class JdkUtil {
     }
   }
 
-  private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
+  private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters)
+    throws CantRunException {
     IR.NewCommandLine newCommandLine = new IR.NewCommandLine();
     IR.LocalRunner runner = new IR.LocalRunner();
     IR.RemoteEnvironmentRequest request = runner.createRequest();
@@ -269,41 +273,66 @@ public class JdkUtil {
                                        boolean dynamicParameters,
                                        Charset cs) throws CantRunException {
     try {
-      File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
-      List<String> fileArgs = new ArrayList<>();
-
-      if (dynamicVMOptions) {
-        fileArgs.addAll(vmParameters.getList());
-      }
-      else {
-        commandLine.addParameters(vmParameters.getList());
-      }
-
+      IR.RemoteValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        fileArgs.add("-classpath");
-        fileArgs.add(classPath.getPathsString());
+        List<IR.RemoteValue<String>> pathValues = ContainerUtil.map(classPath.getPathList(), path -> request.createUpload(path));
+        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator));
+      }
+      else {
+        classPathParameter = null;
       }
 
+      IR.RemoteValue<String> modulePathParameter;
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        fileArgs.add("-p");
-        fileArgs.add(modulePath.getPathsString());
+        List<IR.RemoteValue<String>> pathValues = ContainerUtil.map(modulePath.getPathList(), path -> request.createUpload(path));
+        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator));
+      }
+      else {
+        modulePathParameter = null;
       }
 
-      if (dynamicParameters) {
-        fileArgs.addAll(getMainClassParams(javaParameters));
-        fileArgs.addAll(javaParameters.getProgramParametersList().getList());
-      }
+      List<IR.RemoteValue<String>> mainClassParameters = dynamicParameters ? getMainClassParams(javaParameters, request)
+                                                                           : Collections.emptyList();
+      
+      File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
+      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+        @Override
+        public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
+          if (argFile.getAbsolutePath().equals(value.getLocalValue())) {
+            List<String> fileArgs = new ArrayList<>();
+            if (dynamicVMOptions) {
+              fileArgs.addAll(vmParameters.getList());
+            }
+            else {
+              commandLine.addParameters(vmParameters.getList());
+            }
+            if (classPathParameter != null) {
+              fileArgs.add("-classpath");
+              fileArgs.add(classPathParameter.getRemoteValue());
+            }
+            if (modulePathParameter != null) {
+              fileArgs.add("-p");
+              fileArgs.add(modulePathParameter.getRemoteValue());
+            }
 
-      CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, cs);
-
-      //todo[remoteServers]: support COMMAND_LINE_CONTENT
-      //commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
+            for (IR.RemoteValue<String> mainClassParameter : mainClassParameters) {
+              fileArgs.add(mainClassParameter.getRemoteValue());
+            }
+            if (dynamicParameters) {
+              fileArgs.addAll(javaParameters.getProgramParametersList().getList());
+            }
+            CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, cs);
+          }
+        }
+      });
 
       appendEncoding(javaParameters, commandLine, vmParameters);
-
-      commandLine.addParameter(new IR.MapValue<>(request.createUpload(argFile.getAbsolutePath()), s -> "@" + s));
+      IR.RemoteValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
+      commandLine.addParameter(new IR.MapValue<>(argFileParameter, s -> "@" + s));
+      //todo[remoteServers]: support COMMAND_LINE_CONTENT
+      //commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
 
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
@@ -350,10 +379,24 @@ public class JdkUtil {
         CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), cs);
       }
 
-      //todo[remoteServers]: handle paths inside file
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
+      Collection<IR.RemoteValue<String>> classPathParameters = new ArrayList<>();
       PathsList classPath = javaParameters.getClassPath();
-      CommandLineWrapperUtil.writeWrapperFile(classpathFile, classPath.getPathList(), cs);
+      for (String path : classPath.getPathList()) {
+        classPathParameters.add(request.createUpload(path));
+      }
+      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+        @Override
+        public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
+          if (classpathFile.getAbsolutePath().equals(value.getLocalValue())) {
+            List<String> pathList = new ArrayList<>();
+            for (IR.RemoteValue<String> parameter : classPathParameters) {
+              pathList.add(parameter.getRemoteValue());
+            }
+            CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, cs);
+          }
+        }
+      });
 
       Map<String, String> map = ContainerUtil.stringMap(classpathFile.getAbsolutePath(), classPath.getPathsString());
       //todo[remoteServers]: support COMMAND_LINE_CONTENT
@@ -370,7 +413,7 @@ public class JdkUtil {
         Sdk jdk = javaParameters.getJdk();
         if (jdk != null) {
           for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-            //todo[remoteServers]: do we need this? it looks like SDK copying
+            //todo[remoteServers]: get jars from the remote target
             String path = PathUtil.getLocalPath(file);
             if (StringUtil.isNotEmpty(path)) {
               classpath.add(request.createUpload(path));
@@ -439,14 +482,39 @@ public class JdkUtil {
       appendEncoding(javaParameters, commandLine, vmParameters);
 
       if (dynamicParameters) {
-        manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
+        manifest.getMainAttributes()
+          .putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
         manifestText += "Program-Parameters: " + ParametersListUtil.join(javaParameters.getProgramParametersList().getList()) + "\n";
       }
 
-      boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
-      PathsList path = javaParameters.getClassPath();
-      //todo[remoteServers]: handle paths inside file
-      File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, path.getPathList(), notEscape);
+      File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
+      Collection<IR.RemoteValue<String>> classPathParameters = new ArrayList<>();
+      PathsList classPath = javaParameters.getClassPath();
+      for (String path : classPath.getPathList()) {
+        classPathParameters.add(request.createUpload(path));
+      }
+
+      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+        @Override
+        public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
+          if (classpathJarFile.getAbsolutePath().equals(value.getLocalValue())) {
+            try {
+              boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
+              StringBuilder classPath = new StringBuilder();
+              for (IR.RemoteValue<String> parameter : classPathParameters) {
+                if (classPath.length() > 0) classPath.append(' ');
+                File file = new File(parameter.getRemoteValue());
+                String url = (notEscape ? file.toURL() : file.toURI().toURL()).toString();
+                classPath.append(!StringUtil.endsWithChar(url, '/') && new File(parameter.getLocalValue()).isDirectory() ? url + "/" : url);
+              }
+              CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
+            }
+            catch (IOException e) {
+              //todo[remoteServers]: interrupt preparing environment
+            }
+          }
+        }
+      });
 
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
@@ -515,22 +583,24 @@ public class JdkUtil {
       try {
         commandLine.setCharset(Charset.forName(encoding));
       }
-      catch (UnsupportedCharsetException | IllegalCharsetNameException ignore) { }
+      catch (UnsupportedCharsetException | IllegalCharsetNameException ignore) {
+      }
     }
   }
 
-  private static List<String> getMainClassParams(SimpleJavaParameters javaParameters) throws CantRunException {
+  private static List<IR.RemoteValue<String>> getMainClassParams(SimpleJavaParameters javaParameters,
+                                                                 @NotNull IR.RemoteEnvironmentRequest request) throws CantRunException {
     String mainClass = javaParameters.getMainClass();
     String moduleName = javaParameters.getModuleName();
     String jarPath = javaParameters.getJarPath();
     if (mainClass != null && moduleName != null) {
-      return Arrays.asList("-m", moduleName + '/' + mainClass);
+      return Arrays.asList(new IR.FixedValue<>("-m"), new IR.FixedValue<>(moduleName + '/' + mainClass));
     }
     else if (mainClass != null) {
-      return Collections.singletonList(mainClass);
+      return Collections.singletonList(new IR.FixedValue<>(mainClass));
     }
     else if (jarPath != null) {
-      return Arrays.asList("-jar", jarPath);
+      return Arrays.asList(new IR.FixedValue<>("-jar"), request.createUpload(jarPath));
     }
     else {
       throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));

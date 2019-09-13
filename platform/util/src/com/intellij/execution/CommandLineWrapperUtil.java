@@ -18,12 +18,13 @@ public class CommandLineWrapperUtil {
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX;
 
   public static @NotNull File createClasspathJarFile(@NotNull Manifest manifest, @NotNull List<String> pathList) throws IOException {
-    return createClasspathJarFile(manifest, pathList, false);
+    File file = FileUtil.createTempFile(CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt(Integer.MAX_VALUE)), ".jar", true);
+    fillClasspathJarFile(manifest, pathList, false, file);
+    return file;
   }
 
-  public static @NotNull File createClasspathJarFile(@NotNull Manifest manifest, @NotNull List<String> pathList, boolean notEscape) throws IOException {
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-
+  public static void fillClasspathJarFile(Manifest manifest, List<String> pathList, boolean notEscape, @NotNull File outputJar)
+    throws IOException {
     StringBuilder classPath = new StringBuilder();
     for (String path : pathList) {
       if (classPath.length() > 0) classPath.append(' ');
@@ -31,12 +32,15 @@ public class CommandLineWrapperUtil {
       @SuppressWarnings("deprecation") String url = (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
       classPath.append(url);
     }
-    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath.toString());
+    fillClasspathJarFile(manifest, classPath.toString(), outputJar);
+  }
 
-    File jarFile = FileUtil.createTempFile(CLASSPATH_JAR_FILE_NAME_PREFIX + new Random().nextInt(Integer.MAX_VALUE), ".jar", true);
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest).close();
-    return jarFile;
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
+  public static void fillClasspathJarFile(Manifest manifest, String classPath, @NotNull File outputJar)
+    throws IOException {
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath);
+    new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputJar)), manifest).close();
   }
 
   public static @NotNull File createArgumentFile(@NotNull List<String> args, @NotNull Charset cs) throws IOException {
