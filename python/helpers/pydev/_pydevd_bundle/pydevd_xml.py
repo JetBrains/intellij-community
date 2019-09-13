@@ -290,7 +290,7 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     return return_values_xml + xml
 
 
-def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
+def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True, format='%s'):
     """ single variable or dictionary to xml representation """
 
     try:
@@ -338,7 +338,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
                     except:
                         cName = str(v.__class__)
 
-                    value = '%s: %s' % (cName, v)
+                    value = ('%s: ' + format) % (cName, v)
             else:
                 value = str(v)
         except:
