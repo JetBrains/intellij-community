@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -158,8 +159,21 @@ public class HelpTooltip {
 
     CURSOR {
       @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
-        mouseLocation.y += CURSOR_OFFSET.get();
-        return mouseLocation;
+        Point location = mouseLocation.getLocation();
+        location.y += CURSOR_OFFSET.get();
+
+        SwingUtilities.convertPointToScreen(location, owner);
+        Rectangle r = new Rectangle(location, popupSize);
+        ScreenUtil.fitToScreen(r);
+        location = r.getLocation();
+        SwingUtilities.convertPointFromScreen(location, owner);
+        r.setLocation(location);
+
+        if (r.contains(mouseLocation)) {
+          location.y = - popupSize.height - JBUI.scale(1);
+        }
+
+        return location;
       }
     };
 
