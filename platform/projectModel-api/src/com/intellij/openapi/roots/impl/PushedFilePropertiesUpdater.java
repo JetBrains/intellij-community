@@ -13,7 +13,7 @@ public abstract class PushedFilePropertiesUpdater {
   }
 
   public abstract void initializeProperties();
-  public abstract void pushAll(final FilePropertyPusher... pushers);
+  public abstract void pushAll(final FilePropertyPusher<?>... pushers);
 
   /**
    * @deprecated Use {@link #filePropertiesChanged(VirtualFile, Condition)}
