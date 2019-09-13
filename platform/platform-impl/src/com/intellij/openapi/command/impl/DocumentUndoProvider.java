@@ -55,7 +55,7 @@ public final class DocumentUndoProvider implements DocumentListener {
   }
 
   private static void handleBeforeDocumentChange(@NotNull UndoManagerImpl undoManager, @NotNull Document document) {
-    if (undoManager.isActive() && isUndoable(undoManager, document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
+    if (undoManager.isActive() && isUndoable(undoManager, document) && undoManager.isUndoOrRedoInProgress() &&
         document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
       throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
     }

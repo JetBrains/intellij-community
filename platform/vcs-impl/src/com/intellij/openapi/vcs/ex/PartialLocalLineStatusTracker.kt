@@ -302,7 +302,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   private inner class MyUndoDocumentListener : DocumentListener {
     override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
-      if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
+      if (undoManager.isUndoOrRedoInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)

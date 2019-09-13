@@ -492,9 +492,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       final IProperty property = propertiesFile.findPropertyByKey(propertyName);
       final Document document = editor.getDocument();
       CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        if (!checkIsUnderUndoRedoAction ||
-            !undoManager.isActive() ||
-            !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+        if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !undoManager.isUndoOrRedoInProgress()) {
           updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
         }
       }), "", this);

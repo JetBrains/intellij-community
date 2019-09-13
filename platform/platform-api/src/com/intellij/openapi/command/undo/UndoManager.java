@@ -46,6 +46,10 @@ public abstract class UndoManager {
 
   public abstract boolean isRedoInProgress();
 
+  public boolean isUndoOrRedoInProgress() {
+    return isUndoInProgress() || isRedoInProgress();
+  }
+
   public abstract void undo(@Nullable FileEditor editor);
 
   public abstract void redo(@Nullable FileEditor editor);
