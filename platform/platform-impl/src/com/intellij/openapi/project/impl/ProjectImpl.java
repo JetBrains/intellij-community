@@ -261,7 +261,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     // before components
-    if (!isDefault()) {
+    //noinspection TestOnlyProblems
+    if (!isDefault() && !isLight()) {
       Activity activity = ParallelActivity.APP_INIT.start("preload project services");
       preloadServices(PluginManagerCore.getLoadedPlugins())
         .whenComplete((o, throwable) -> {
