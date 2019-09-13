@@ -43,7 +43,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   private void doTest(final boolean lowercaseFirstLetter) throws Exception {
     doTest(getTestName(lowercaseFirstLetter) + ".xml", false, false);
   }
-  
+
   @Override
   protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
     super.configureByFile(filePath);
@@ -66,7 +66,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   public void testRefid() throws Exception {
     doTest();
   }
-  
+
   public void testRefidInCustomDomElement() throws Exception {
     doTest();
   }
@@ -100,8 +100,10 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new AntDuplicateTargetsInspection(),
+    return new LocalInspectionTool[]{
+      new AntDuplicateTargetsInspection(),
       new AntResolveInspection(),
-    new XmlPathReferenceInspection()};
+      new XmlPathReferenceInspection()
+    };
   }
 }
