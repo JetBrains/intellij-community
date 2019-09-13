@@ -106,7 +106,11 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     }
     else {
       profile.enableTool(shortName, project)
-      Disposer.register(disposable, Disposable { profile.setToolEnabled(shortName, false) })
+      Disposer.register(disposable, Disposable { 
+        if (profile.getToolsOrNull(shortName, project) != null) {
+          profile.setToolEnabled(shortName, false)
+        }
+      })
     }
   }
 
