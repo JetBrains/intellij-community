@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -48,6 +49,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -264,13 +267,22 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     //noinspection TestOnlyProblems
     if (!isDefault() && !isLight()) {
       Activity activity = ParallelActivity.APP_INIT.start("preload project services");
-      preloadServices(PluginManagerCore.getLoadedPlugins())
+      CompletableFuture<?> future = preloadServices(PluginManagerCore.getLoadedPlugins())
         .whenComplete((o, throwable) -> {
           if (throwable != null) {
             LOG.error(throwable);
           }
           activity.end();
         });
+
+      if (SystemInfo.isWindows && System.getenv("TEAMCITY_VERSION") != null) {
+        try {
+          future.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
 
     createComponents(indicator);
