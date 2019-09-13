@@ -31,10 +31,12 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException {
+    boolean notifyBusAboutTopic = false;
     synchronized (myPendingMessages) {
       Object currentHandler = mySubscriptions.get(topic);
       if (currentHandler == null) {
         mySubscriptions = mySubscriptions.plus(topic, handler);
+        notifyBusAboutTopic = true;
       }
       else if (currentHandler instanceof List<?>) {
         //noinspection unchecked
@@ -47,7 +49,10 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
         mySubscriptions = mySubscriptions.plus(topic, newList);
       }
     }
-    myBus.notifyOnSubscription(this, topic);
+
+    if (notifyBusAboutTopic) {
+      myBus.notifyOnSubscription(this, topic);
+    }
   }
 
   // avoid notifyOnSubscription and map modification for each handler
