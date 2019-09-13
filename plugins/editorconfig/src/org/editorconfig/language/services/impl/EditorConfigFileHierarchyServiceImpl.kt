@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.reference.SoftReference
+import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -62,9 +63,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   override fun after(events: List<VFileEvent>) {
     val editorConfigs = events
       .asSequence()
-      .filter { it.path.endsWith(EditorConfigFileConstants.FILE_NAME) }
-      .mapNotNull(VFileEvent::getFile)
-      .filter { it.name == EditorConfigFileConstants.FILE_NAME }
+      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME }
       .toList()
     if (editorConfigs.isNotEmpty()) {
       synchronized(cacheLocker) {

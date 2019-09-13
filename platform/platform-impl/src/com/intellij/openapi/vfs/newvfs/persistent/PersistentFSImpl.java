@@ -1055,12 +1055,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                      @NotNull NewVirtualFileSystem delegate) {
     for (VFileCreateEvent createEvent : createEvents) {
       ChildInfo[] children = createEvent.getChildren();
-      if (children == null) continue;
+      if (children == null || !createEvent.isDirectory()) continue;
       // todo avoid expensive findFile
-      VirtualFile createdFile = createEvent.getFile();
-      if (createdFile instanceof VirtualDirectoryImpl) {
+      VirtualFile createdDir = createEvent.getFile();
+      if (createdDir instanceof VirtualDirectoryImpl) {
         Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(Pair.create((VirtualDirectoryImpl)createdFile, children));
+        queue.add(Pair.create((VirtualDirectoryImpl)createdDir, children));
         while (!queue.isEmpty()) {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;
