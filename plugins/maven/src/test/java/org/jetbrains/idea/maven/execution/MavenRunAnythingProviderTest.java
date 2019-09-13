@@ -1,21 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.ide.actions.runAnything.RunAnythingContext;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static com.intellij.openapi.util.text.StringUtil.substringBefore;
-import static com.intellij.openapi.util.text.StringUtil.trimStart;
+import static com.intellij.openapi.util.text.StringUtil.*;
 import static java.util.stream.Collectors.groupingBy;
-import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author ibessonov
@@ -34,26 +39,41 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
   }
 
   public void testRegularProject() {
-    assertEmpty(myProvider.getValues(myDataContext, "mvn"));
+    withVariantsFor("", it -> {
+      assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
+      Collection<MavenCommandLineOptions.Option> options = MavenCommandLineOptions.getAllOptions();
+      assertTrue(it.containsAll(ContainerUtil.map(options, option -> option.getName(true))));
+      assertTrue(it.containsAll(ContainerUtil.map(options, option -> option.getName(false))));
+      assertDoNotContain(it, "clean:clean", "clean:help", "compiler:testCompile", "compiler:compile", "compiler:help");
+    });
   }
 
   public void testSingleMavenProject() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-
-    Collection<String> values = myProvider.getValues(myDataContext, "mvn");
-    assertEquals(40, values.size());
-
-    Map<String, List<String>> groupedValues = values.stream().map(value -> trimStart(value, "mvn ")).collect(
-      groupingBy(value -> value.contains(":") ? substringBefore(value, ":") : "")
-    );
-    assertSameElements(groupedValues.keySet(), "", "clean", "compiler", "surefire", "resources", "jar", "install", "deploy", "site");
-
-    assertSameElements(groupedValues.get(""), MavenConstants.BASIC_PHASES);
-    assertSameElements(groupedValues.get("clean"), "clean:clean", "clean:help");
-    assertSameElements(groupedValues.get("compiler"), "compiler:testCompile", "compiler:compile", "compiler:help");
-    // and so on
+    withVariantsFor("", variants -> {
+      Function<String, String> classifier = it -> it.contains(":") ? substringBefore(it, ":") : startsWith(it, "-") ? "-" : "";
+      Map<String, List<String>> groupedValues = variants.stream().collect(groupingBy(classifier));
+      assertSameElements(groupedValues.keySet(), "", "-", "clean", "compiler", "surefire", "resources", "jar", "install", "deploy", "site");
+      assertSameElements(groupedValues.get(""), MavenConstants.BASIC_PHASES);
+      assertSameElements(groupedValues.get("clean"), "clean:clean", "clean:help");
+      assertSameElements(groupedValues.get("compiler"), "compiler:testCompile", "compiler:compile", "compiler:help");
+    });
+    withVariantsFor("", it -> {
+      assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
+      assertContain(it, "clean:clean", "clean:help", "compiler:testCompile", "compiler:compile", "compiler:help");
+    });
+    withVariantsFor("clean ", it -> {
+      assertDoNotContain(it, "clean", "clean clean");
+      assertContain(it, "clean validate", "clean compile", "clean test");
+      assertContain(it, "clean clean:clean", "clean clean:help");
+    });
+    withVariantsFor("clean:clean ", it -> {
+      assertDoNotContain(it, "clean:clean", "clean:clean clean:clean");
+      assertContain(it, "clean:clean clean", "clean:clean validate", "clean:clean compile", "clean:clean test");
+      assertContain(it, "clean:clean clean:help");
+    });
   }
 
   public void testMavenProjectWithModules() {
@@ -78,48 +98,30 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     resolvePlugins();
 
-    Collection<String> values = myProvider.getValues(myDataContext, "mvn");
-    assertSameElements(values, "mvn m1", "mvn m2");
-
-    values = myProvider.getValues(myDataContext, "mvn something");
-    assertSameElements(values, "mvn m1", "mvn m2");
-
-
-    Collection<String> moduleValues = myProvider.getValues(myDataContext, "mvn m1");
-    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("mvn m1") || value.equals("mvn m2")));
-
-    moduleValues = myProvider.getValues(myDataContext, "mvn m1 ");
-    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("mvn m1")));
-
-
-    Collection<String> projectValues = myProvider.getValues(myDataContext, "mvn m2");
-    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("mvn m2") || value.equals("mvn m1")));
-
-    projectValues = myProvider.getValues(myDataContext, "mvn m2 ");
-    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("mvn m2")));
-
-
-    assertNotEquals(new HashSet<>(projectValues), new HashSet<>(moduleValues));
-
-    assertContain((List<String>)moduleValues, "mvn m1 war:help", "mvn m1 war:inplace", "mvn m1 war:exploded", "mvn m1 war:war");
-    assertDoNotContain((List<String>)projectValues, "mvn m2 war:war");
-
-    projectValues = myProvider.getValues(myDataContext, "mvn m2 compiler:compile ");
-    assertContain((List<String>)projectValues, "mvn m2 compiler:compile compiler:help");
-    assertDoNotContain((List<String>)projectValues, "mvn m2 compiler:compile compiler:compile");
+    withVariantsFor("", "m1", it -> {
+      assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war");
+      assertContain(it, "compiler:compile", "compiler:help");
+    });
+    withVariantsFor("", "m2", it -> {
+      assertDoNotContain(it, "war:help", "war:inplace", "war:exploded", "war:war");
+      assertContain(it, "compiler:compile", "compiler:help");
+    });
   }
 
-  public void testOptions() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+  private void withVariantsFor(@NotNull String command, @NotNull String moduleName, @NotNull Consumer<List<String>> supplier) {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    Module module = moduleManager.findModuleByName(moduleName);
+    withVariantsFor(new RunAnythingContext.ModuleContext(module), command, supplier);
+  }
 
-    Collection<String> values = myProvider.getValues(myDataContext, "mvn -");
-    assertEquals(37, values.size());
-    assertFalse(values.stream().map(value -> trimStart(value,"mvn ")).anyMatch(option -> option.startsWith("--")));
+  private void withVariantsFor(@NotNull String command, @NotNull Consumer<List<String>> supplier) {
+    withVariantsFor(new RunAnythingContext.ProjectContext(myProject), command, supplier);
+  }
 
-    values = myProvider.getValues(myDataContext, "mvn --");
-    assertEquals(37, values.size());
-    assertTrue(values.stream().map(value -> trimStart(value,"mvn ")).allMatch(option -> option.startsWith("--")));
+  private void withVariantsFor(@NotNull RunAnythingContext context, @NotNull String command, @NotNull Consumer<List<String>> supplier) {
+    String contextKey = RunAnythingProvider.EXECUTING_CONTEXT.getName();
+    DataContext dataContext = SimpleDataContext.getSimpleContext(contextKey, context, myDataContext);
+    List<String> variants = myProvider.getValues(dataContext, "mvn " + command);
+    supplier.accept(ContainerUtil.map(variants, it -> trimStart(it, "mvn ")));
   }
 }
