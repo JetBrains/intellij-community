@@ -24,6 +24,8 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
@@ -34,6 +36,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private String myCommandHistoryFilePath;
   private boolean myPromptUpdateNeeded = true;
   private String myPrompt = "";
+  private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
 
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -124,17 +127,42 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     if (!typedCommand.isEmpty()) {
       throw new IOException("Cannot execute command when another command is typed: " + typedCommand);
     }
+    TtyConnector connector = getTtyConnector();
+    if (connector != null) {
+      doExecuteCommand(shellCommand, connector);
+    }
+    else {
+      myPendingCommandsToExecute.add(shellCommand);
+    }
+  }
+
+  @Override
+  public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
+    super.setTtyConnector(ttyConnector);
+    String command;
+    while ((command = myPendingCommandsToExecute.poll()) != null) {
+      try {
+        doExecuteCommand(command, ttyConnector);
+      }
+      catch (IOException e) {
+        LOG.warn("Cannot execute " + command, e);
+      }
+    }
+  }
+
+  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) throws IOException {
     StringBuilder result = new StringBuilder();
     if (myEscapePressed) {
       result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
     }
     String enterCode = new String(getTerminalStarter().getCode(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
     result.append(shellCommand).append(enterCode);
-    getTtyConnector().write(result.toString());
+    connector.write(result.toString());
   }
 
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
+    if (connector == null) return false;
     if (connector instanceof ProcessTtyConnector) {
       return TerminalUtil.hasRunningCommands((ProcessTtyConnector)connector);
     }
