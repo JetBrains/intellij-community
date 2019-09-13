@@ -241,6 +241,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
+        if (isDisposedOrDisposeInProgress()) {
+          LOG.debug("Task to execute on pooled thread is skipped because app is being disposed: " + this.getClass().getName());
+          return;
+        }
+
         // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           action.run();
