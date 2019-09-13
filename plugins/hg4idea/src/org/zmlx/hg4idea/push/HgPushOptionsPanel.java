@@ -3,6 +3,7 @@ package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -21,5 +22,11 @@ public class HgPushOptionsPanel extends VcsPushOptionsPanel {
   @Nullable
   public HgVcsPushOptionValue getValue() {
     return myPushBookmarkCheckBox.isSelected() ? HgVcsPushOptionValue.Current : null;
+  }
+
+  @NotNull
+  @Override
+  public OptionsPanelPosition getPosition() {
+    return OptionsPanelPosition.SOUTH;
   }
 }

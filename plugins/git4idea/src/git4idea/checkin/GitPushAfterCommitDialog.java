@@ -36,9 +36,8 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
       return basePanel;
     }
 
-    return JBUI.Panels.simplePanel()
-                      .addToCenter(basePanel)
-                      .addToBottom(myDontShowAgainCheckbox);
+    basePanel.add(myDontShowAgainCheckbox);
+    return basePanel;
   }
 
   @Override

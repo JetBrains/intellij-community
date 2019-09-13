@@ -76,4 +76,9 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     return new GitVcsPushOptionValue(tagMode, myRunHooks.isVisible() && !myRunHooks.isSelected());
   }
 
+  @NotNull
+  @Override
+  public OptionsPanelPosition getPosition() {
+    return OptionsPanelPosition.SOUTH;
+  }
 }
