@@ -3,8 +3,9 @@ package com.intellij.idea;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.*;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
@@ -157,17 +158,17 @@ public final class StartupUtil {
   public static void prepareApp(@NotNull String[] args,
                                 @NotNull String mainClass,
                                 @NotNull String methodName) throws Exception {
-    Activity fjp = StartUpMeasurer.start("configure ForkJoin CommonPool");
+    Activity fjp = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     fjp.end();
 
     LoadingPhase.setStrictMode();
 
-    Activity scheduleLafInitActivity = StartUpMeasurer.start("schedule LaF init");
+    Activity scheduleLafInitActivity = StartUpMeasurer.startMainActivity("LaF init scheduling");
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
     Future<Method> mainStartFuture = executorService.submit(() -> {
-      Activity activity = ParallelActivity.APP_INIT.start(Phases.LOAD_MAIN_CLASS);
+      Activity activity = StartUpMeasurer.startActivity("main class loading");
       Class<?> aClass = Class.forName(mainClass);
       Method method = aClass.getDeclaredMethod(methodName, String[].class, CompletableFuture.class, Logger.class, boolean.class);
       method.setAccessible(true);
@@ -187,28 +188,28 @@ public final class StartupUtil {
     // this check must be performed before system directories are locked
     boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
 
-    Activity dirsAndLogs = StartUpMeasurer.start(Phases.CHECK_SYSTEM_DIR);
+    Activity dirsAndLogs = StartUpMeasurer.startMainActivity("system dirs checking");
     if (!checkSystemDirs()) {  // note: uses config directory!
       System.exit(Main.DIR_CHECK_FAILED);
     }
-    dirsAndLogs = dirsAndLogs.endAndStart(Phases.LOCK_SYSTEM_DIRS);
+    dirsAndLogs = dirsAndLogs.endAndStart("system dirs locking");
     lockSystemDirs(args);
-    dirsAndLogs = dirsAndLogs.endAndStart("configure file logger");
+    dirsAndLogs = dirsAndLogs.endAndStart("file logger configuration");
     Logger log = setupLogger();  // log initialization should happen only after locking the system directory
     dirsAndLogs.end();
 
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity activity = ParallelActivity.APP_INIT.start("log essential info about the IDE");
+      Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
       logEssentialInfoAboutIde(log, appInfo);
       activity.end();
     });
 
     List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
-      Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
+      Activity activity = StartUpMeasurer.startActivity("system libs setup");
       setupSystemLibraries();
-      activity = activity.endAndStart(ActivitySubNames.FIX_PROCESS_ENV);
+      activity = activity.endAndStart("process env fixing");
       fixProcessEnvironment(log);
       activity.end();
     }));
@@ -220,7 +221,7 @@ public final class StartupUtil {
 
     executorService.execute(() -> loadSystemLibraries(log));
 
-    Activity waitTaskActivity = StartUpMeasurer.start(Phases.WAIT_TASKS);
+    Activity waitTaskActivity = StartUpMeasurer.startMainActivity("tasks waiting");
     for (Future<?> future : futures) future.get();
     waitTaskActivity.end();
     futures.clear();
@@ -231,12 +232,12 @@ public final class StartupUtil {
     method.invoke(null, argsArray);
   }
 
-  static void startApp(@NotNull CompletableFuture<?> initUiTask, 
-                       @NotNull Logger log,  
+  static void startApp(@NotNull CompletableFuture<?> initUiTask,
+                       @NotNull Logger log,
                        boolean configImportNeeded,
                        @NotNull AppStarter appStarter) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.start(Phases.IMPORT_CONFIGS);
+      Activity activity = StartUpMeasurer.startMainActivity("config importing");
 
       if (configImportNeeded) {
         appStarter.beforeImportConfigs();
@@ -297,13 +298,13 @@ public final class StartupUtil {
           }
 
           // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
-          Activity activity = ParallelActivity.APP_INIT.start("init system font data");
+          Activity activity = StartUpMeasurer.startActivity("system font data initialization");
           JBUIScale.getSystemFontData();
 
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          Activity prepareSplashActivity = activity.endAndStart("prepare splash");
+          Activity prepareSplashActivity = activity.endAndStart("splash preparation");
           EventQueue.invokeLater(() -> {
             SplashManager.show(args);
             prepareSplashActivity.end();
@@ -328,7 +329,7 @@ public final class StartupUtil {
   }
 
   private static void updateFrameClassAndWindowIcon() {
-    Activity activity = ParallelActivity.APP_INIT.start("update frame class");
+    Activity activity = StartUpMeasurer.startActivity("frame class updating");
     AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
 
     activity = activity.endAndStart("update window icon");
@@ -341,7 +342,7 @@ public final class StartupUtil {
   }
 
   private static void configureLog4j() {
-    Activity activity = StartUpMeasurer.start("configure console logger");
+    Activity activity = StartUpMeasurer.startMainActivity("console logger configuration");
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
@@ -528,6 +529,7 @@ public final class StartupUtil {
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     String ideTempPath = PathManager.getTempPath();
 
@@ -551,7 +553,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemLibraries(Logger log) {
-    Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.LOAD_SYSTEM_LIBS);
+    Activity activity = StartUpMeasurer.startActivity("system libs loading");
 
     JnaLoader.load(log);
 
@@ -633,7 +635,7 @@ public final class StartupUtil {
       return false;
     }
 
-    Activity activity = ParallelActivity.APP_INIT.start("replace event queue");
+    Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     replaceSystemEventQueue(log);
     if (!Main.isHeadless()) {
       patchSystemForUi(log);

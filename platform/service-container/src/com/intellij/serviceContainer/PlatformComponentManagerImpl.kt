@@ -93,7 +93,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val isHeadlessMode = app?.isHeadlessEnvironment == true
     val isUnitTestMode = app?.isUnitTestMode == true
 
-    var activity = if (activityNamePrefix == null) null else StartUpMeasurer.start("${activityNamePrefix}service and ep registration")
+    var activity = if (activityNamePrefix == null) null else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
     for (plugin in plugins) {
@@ -171,7 +171,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val activityNamePrefix = activityNamePrefix()
     val activity = when (activityNamePrefix) {
       null -> null
-      else -> StartUpMeasurer.start("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
+      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
     }
 
     for (componentAdapter in myPicoContainer.componentAdapters) {

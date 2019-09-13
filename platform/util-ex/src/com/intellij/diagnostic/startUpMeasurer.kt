@@ -8,16 +8,17 @@ inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
   return result
 }
 
-inline fun <T> ParallelActivity?.run(name: String, task: () ->T): T {
-  val activity = this?.start(name)
-  val result = task()
-  activity?.end()
-  return result
-}
-
-inline fun <T> runActivity(name: String, task: () -> T): T {
-  val activity = StartUpMeasurer.start(name)
+inline fun <T> runActivity(name: String, category: ParallelActivity = ParallelActivity.APP_INIT, task: () -> T): T {
+  val activity = createActivity(name, category)
   val result = task()
   activity.end()
   return result
+}
+
+@PublishedApi
+internal fun createActivity(name: String, category: ParallelActivity): Activity {
+  return when (category) {
+    ParallelActivity.MAIN -> StartUpMeasurer.startMainActivity(name)
+    else -> StartUpMeasurer.startActivity(name, ParallelActivity.APP_INIT)
+  }
 }

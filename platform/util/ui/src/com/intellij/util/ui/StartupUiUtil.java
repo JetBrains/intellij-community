@@ -2,8 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JreHiDpiUtil;
@@ -51,6 +50,7 @@ public class StartupUiUtil {
       // installation in order to let it properly scale default font
       // based on Xft.dpi value.
       try {
+        @SuppressWarnings("SpellCheckingInspection")
         String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
         Class<?> cls = Class.forName(name);
         LookAndFeel laf = (LookAndFeel)cls.newInstance();
@@ -73,7 +73,7 @@ public class StartupUiUtil {
 
     blockATKWrapper();
 
-    Activity activity = ParallelActivity.APP_INIT.start(ActivitySubNames.INIT_DEFAULT_LAF);
+    Activity activity = StartUpMeasurer.startActivity("LaF initialization");
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
@@ -83,7 +83,7 @@ public class StartupUiUtil {
       return;
     }
 
-    Activity activity = ParallelActivity.APP_INIT.start("configure html kit");
+    Activity activity = StartUpMeasurer.startActivity("html kit configuration");
 
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
@@ -135,6 +135,7 @@ public class StartupUiUtil {
    */
   private static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
+    //noinspection SpellCheckingInspection
     if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
       return;
     }

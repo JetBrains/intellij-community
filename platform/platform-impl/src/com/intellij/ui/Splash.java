@@ -61,7 +61,7 @@ public final class Splash extends Window {
     initImages();
 
     StartUpMeasurer.addInstantEvent("splash shown");
-    Activity activity = StartUpMeasurer.startDurationEvent("set splash visible");
+    Activity activity = StartUpMeasurer.startActivity("splash set visible");
     setVisible(true);
     activity.end();
     paint(getGraphics());

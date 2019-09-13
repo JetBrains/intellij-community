@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@types/semver": "^6.0.2",
-    "@vue/cli-plugin-typescript": "^3.11.0",
-    "@vue/cli-service": "^3.11.0",
+    "@vue/cli-plugin-typescript": "^4.0.0-rc.3",
+    "@vue/cli-service": "^4.0.0-rc.3",
     "typescript": "^3.6.3",
     "vue-template-compiler": "^2.6.10",
     "vuex-module-decorators": "^0.10.1"
@@ -35,5 +35,8 @@
     "last 2 versions",
     "not ie <= 8",
     "not dead"
-  ]
+  ],
+  "resolutions": {
+    "webpack": "4.39"
+  }
 }

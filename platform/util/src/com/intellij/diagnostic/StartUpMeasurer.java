@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -18,16 +17,6 @@ public final class StartUpMeasurer {
   // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
   // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
   public static final class Phases {
-    public static final String LOAD_MAIN_CLASS = "load main class";
-
-    // this phase name is not fully clear - it is time from `PluginManager.start` to `ApplicationLoader.initApplication`
-    public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
-    public static final String CHECK_SYSTEM_DIR = "check system dirs";
-    public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-
-    public static final String WAIT_TASKS = "wait tasks";
-    public static final String IMPORT_CONFIGS = "import configs";
-
     public static final String APP_STARTER = "appStarter";
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
@@ -40,20 +29,11 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
-    public static final String FRAME_INITIALIZATION = "frame initialization";
 
-    public static final String PROJECT_INSTANTIATION = "project instantiation";
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE = "project post-startup dumb-aware activities";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT = "project post-startup edt activities";
-
-    public static final String LOAD_MODULES = "module loading";
-    public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
-
-    public static final String RESTORING_EDITORS = "restoring editors";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -104,13 +84,6 @@ public final class StartUpMeasurer {
     return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
   }
 
-  @NotNull
-  public static Activity start(@NotNull String name, @Nullable String description) {
-    ActivityImpl activity = new ActivityImpl(name, null, null);
-    activity.setDescription(description);
-    return activity;
-  }
-
   /**
    * The instant events correspond to something that happens but has no duration associated with it.
    * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp
@@ -124,18 +97,20 @@ public final class StartUpMeasurer {
   }
 
   @NotNull
-  public static Activity startDurationEvent(@NotNull String name) {
-    return ActivityImpl.createParallelActivity(ParallelActivity.APP_INIT, name);
+  public static Activity startActivity(@NotNull String name) {
+    return startActivity(name, ParallelActivity.APP_INIT);
   }
 
   @NotNull
-  public static Activity start(@NotNull String name) {
+  public static Activity startActivity(@NotNull String name, @NotNull ParallelActivity category) {
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */ null, null);
+    activity.setCategory(category);
+    return activity;
+  }
+
+  @NotNull
+  public static Activity startMainActivity(@NotNull String name) {
     return new ActivityImpl(name, null, null);
-  }
-
-  @NotNull
-  public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, level, null);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {

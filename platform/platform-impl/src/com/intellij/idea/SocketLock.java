@@ -2,7 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
@@ -168,7 +168,7 @@ public final class SocketLock {
     }
 
     myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
-      Activity activity = ParallelActivity.APP_INIT.start("built-in server launch");
+      Activity activity = StartUpMeasurer.startActivity("built-in server launch");
 
       String token = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};

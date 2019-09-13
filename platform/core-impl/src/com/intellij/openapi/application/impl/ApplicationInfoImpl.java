@@ -3,7 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -616,7 +616,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     synchronized (ApplicationInfoImpl.class) {
       result = ourShadowInstance;
       if (result == null) {
-        Activity activity = ParallelActivity.APP_INIT.start("load app info");
+        Activity activity = StartUpMeasurer.startActivity("app info loading");
         result = new ApplicationInfoImpl();
         ourShadowInstance = result;
         activity.end();

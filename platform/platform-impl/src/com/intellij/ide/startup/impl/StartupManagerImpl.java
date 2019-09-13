@@ -154,7 +154,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
     // (depending on dumb-awareness), but because there is no other concurrent phase and timeline end equals to last dumb-aware activity,
     // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
-    Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
+    Activity dumbAwareActivity = StartUpMeasurer.startMainActivity("project post-startup dumb-aware activities");
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
 
@@ -168,7 +168,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       }
       else {
         if (edtActivity.get() == null) {
-          edtActivity.set(StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT));
+          edtActivity.set(StartUpMeasurer.startMainActivity("project post-startup edt activities"));
         }
 
         counter.incrementAndGet();
@@ -383,7 +383,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {
-    Activity activity = StartUpMeasurer.start(phaseName);
+    Activity activity = StartUpMeasurer.startMainActivity(phaseName);
 
     while (true) {
       Runnable runnable;

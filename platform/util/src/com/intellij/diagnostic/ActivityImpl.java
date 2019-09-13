@@ -32,13 +32,6 @@ public final class ActivityImpl implements Activity {
     this(name, System.nanoTime(), null, level, pluginId);
   }
 
-  @NotNull
-  static ActivityImpl createParallelActivity(@NotNull ParallelActivity parallelActivity, @NotNull String name) {
-    ActivityImpl activity = new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* level = */ null, null);
-    activity.setParallelActivity(parallelActivity);
-    return activity;
-  }
-
   ActivityImpl(@Nullable String name,
                long start,
                @Nullable ActivityImpl parent,
@@ -79,7 +72,7 @@ public final class ActivityImpl implements Activity {
     return parallelActivity;
   }
 
-  void setParallelActivity(@Nullable ParallelActivity value) {
+  void setCategory(@Nullable ParallelActivity value) {
     parallelActivity = value;
   }
 
@@ -138,7 +131,7 @@ public final class ActivityImpl implements Activity {
   public Activity endAndStart(@NotNull String name) {
     end();
     ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */null, pluginId);
-    activity.setParallelActivity(parallelActivity);
+    activity.setCategory(parallelActivity);
     return activity;
   }
 

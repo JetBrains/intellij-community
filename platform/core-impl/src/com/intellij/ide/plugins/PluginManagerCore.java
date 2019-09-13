@@ -2,9 +2,8 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1565,7 +1564,7 @@ public class PluginManagerCore {
 
     IdeaPluginDescriptorImpl[] result;
     try {
-      Activity loadPluginsActivity = ParallelActivity.APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
+      Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();
       IdeaPluginDescriptorImpl[] sorted = initializePlugins(result, coreLoader, (d, e) -> {
         ourPlugins2Disable = d;

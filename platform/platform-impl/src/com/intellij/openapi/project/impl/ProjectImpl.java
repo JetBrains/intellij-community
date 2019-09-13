@@ -3,7 +3,6 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -87,6 +86,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+
   // default project constructor
   ProjectImpl() {
     super(ApplicationManager.getApplication());
@@ -101,8 +101,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myName = TEMPLATE_PROJECT_NAME;
     myLight = false;
   }
-
-
 
   @Override
   public boolean isDisposed() {
@@ -230,7 +228,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public final void registerComponents() {
     String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
+    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     registerComponents(PluginManagerCore.getLoadedPlugins());
     if (activity != null) {
@@ -266,7 +264,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     // before components
     //noinspection TestOnlyProblems
     if (!isDefault() && !isLight()) {
-      Activity activity = ParallelActivity.APP_INIT.start("preload project services");
+      Activity activity = StartUpMeasurer.startActivity("project services preloading");
       CompletableFuture<?> future = preloadServices(PluginManagerCore.getLoadedPlugins())
         .whenComplete((o, throwable) -> {
           if (throwable != null) {

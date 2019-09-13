@@ -23,10 +23,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -45,6 +43,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -245,7 +244,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
-    Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
+    Activity restoringEditors = StartUpMeasurer.startMainActivity("editor restoring");
     JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
     restoringEditors.end();
 
@@ -856,8 +855,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final Element file = fileElements.get(i);
         Element historyElement = file.getChild(HistoryEntry.TAG);
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
-        Activity activity = ParallelActivity.REOPENING_EDITOR
-          .start(FileUtil.getLocationRelativeToUserHome(VirtualFileManager.extractPath(fileName), false));
+        Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ParallelActivity.REOPENING_EDITOR);
         VirtualFile virtualFile = null;
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();

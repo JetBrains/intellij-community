@@ -84,7 +84,7 @@ private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
                                 pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
   StartupUtil.patchSystem(LOG)
-  val app = ParallelActivity.APP_INIT.run("create app") {
+  val app = runActivity("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
   }
 
@@ -112,7 +112,7 @@ private fun executeInitAppInEdt(args: List<String>,
 fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture
     .thenApply {
-      runActivity("app component registration") {
+      runActivity("app component registration", ParallelActivity.MAIN) {
         app.registerComponents(it)
       }
       it
@@ -132,7 +132,7 @@ private fun startApp(app: ApplicationImpl,
 
   val headless = app.isHeadlessEnvironment
   if (!headless) {
-    ParallelActivity.APP_INIT.run("icon loader activation") {
+    runActivity("icon loader activation") {
       // todo investigate why in test mode dummy icon manager is not suitable
       IconLoader.activate()
       IconLoader.setStrictGlobally(app.isInternal)
@@ -142,7 +142,7 @@ private fun startApp(app: ApplicationImpl,
   // preload services only after icon activation
   registerRegistryAndInitStoreFuture
     .thenAccept {
-      val preloadServiceActivity = ParallelActivity.APP_INIT.start("preload services")
+      val preloadServiceActivity = StartUpMeasurer.startActivity("preload services")
       app.preloadServices(it)
         .whenComplete(BiConsumer { _, error ->
           preloadServiceActivity.end()
@@ -154,14 +154,14 @@ private fun startApp(app: ApplicationImpl,
 
   if (!headless) {
     if (SystemInfo.isMac) {
-      ParallelActivity.APP_INIT.run("mac app init") {
+      runActivity("mac app init") {
         MacOSApplicationProvider.initApplication()
       }
 
       // ensure that TouchBarsManager is loaded before WelcomeFrame/project
       // do not wait completion - it is thread safe and not required for application start
       AppExecutorUtil.getAppExecutorService().execute {
-        ParallelActivity.APP_INIT.run("mac touchbar") {
+        runActivity("mac touchbar") {
           Foundation.init()
           TouchBarsManager.isTouchBarAvailable()
         }
@@ -202,7 +202,7 @@ private fun startApp(app: ApplicationImpl,
 
       // execute in parallel to loading components - this functionality should be used only by plugin functionality,
       // that used after start-up
-      ParallelActivity.APP_INIT.run("init system properties") {
+      runActivity("init system properties") {
         SystemPropertyBean.initSystemProperties()
       }
 
@@ -228,7 +228,7 @@ private fun startApp(app: ApplicationImpl,
 
 private fun scheduleIconPreloading() {
   AppExecutorUtil.getAppExecutorService().execute {
-    ParallelActivity.APP_INIT.run("preload icons") {
+    runActivity("preload icons") {
       AsyncProcessIcon("")
       AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
       AnimatedIcon.FS()
@@ -242,7 +242,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
   return registerFuture
     .thenCompose { plugins ->
       val future = CompletableFuture.runAsync(Runnable {
-        ParallelActivity.APP_INIT.run("add registry keys") {
+        runActivity("add registry keys") {
           RegistryKeyBean.addKeysFromPlugins()
         }
       }, AppExecutorUtil.getAppExecutorService())
@@ -313,7 +313,7 @@ fun initApplication(rawArgs: Array<String>, initUiTask: CompletionStage<*> = Com
       }
 
       if (!Main.isHeadless()) {
-        ParallelActivity.APP_INIT.run("load system fonts") {
+        runActivity("load system fonts") {
           // editor and other UI components need the list of system fonts to implement font fallback
           // this list is pre-loaded here, in parallel to other activities, to speed up project opening
           // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
@@ -370,7 +370,7 @@ fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
 }
 
 fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
-  var activity = StartUpMeasurer.start("beforeApplicationLoaded")
+  var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
   val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
@@ -435,7 +435,7 @@ open class IdeStarter : ApplicationStarter {
   }
 
   override fun main(args: Array<String>) {
-    val frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION)
+    val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
     val app = ApplicationManager.getApplication()
     // Event queue should not be changed during initialization of application components.
@@ -518,7 +518,7 @@ open class IdeStarter : ApplicationStarter {
   private fun postOpenUiTasks(app: Application) {
     if (SystemInfo.isMac) {
       AppExecutorUtil.getAppExecutorService().execute {
-        ParallelActivity.APP_INIT.run("mac touchbar on app init") {
+        runActivity("mac touchbar on app init") {
           TouchBarsManager.onApplicationInitialized()
           if (TouchBarsManager.isTouchBarAvailable()) {
             CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
@@ -547,7 +547,7 @@ open class IdeStarter : ApplicationStarter {
 
 private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
   EventQueue.invokeLater {
-    ParallelActivity.APP_INIT.run(name, task)
+    runActivity(name, task = task)
   }
 }
 
@@ -629,7 +629,7 @@ private fun reportPluginError() {
 }
 
 private fun createLocatorFile() {
-  ParallelActivity.APP_INIT.run("create locator file") {
+  runActivity("create locator file") {
     val locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
     try {
       locatorFile.write(PathManager.getHomePath())

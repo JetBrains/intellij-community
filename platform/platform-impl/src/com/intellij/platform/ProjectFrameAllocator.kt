@@ -3,7 +3,6 @@ package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.ParallelActivity
-import com.intellij.diagnostic.run
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -69,7 +68,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
               return@invokeLater
             }
 
-            ParallelActivity.APP_INIT.run("init frame") {
+            runActivity("init frame") {
               initNewFrame(frame)
             }
           }
@@ -146,7 +145,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       return freeRootFrame.frame
     }
 
-    runActivity("create a frame") {
+    runActivity("create a frame", ParallelActivity.MAIN) {
       var frame = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
       if (frame == null) {
         frame = createNewProjectFrame()

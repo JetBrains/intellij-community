@@ -311,7 +311,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       indicator.setText("Loading components...");
     }
 
-    Activity activity = StartUpMeasurer.start("project before loaded callbacks");
+    Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 
@@ -331,7 +331,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @NotNull
   private static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
+    Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
     return project;
@@ -615,7 +615,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   @ApiStatus.Internal
   public static Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
-    Activity activity = StartUpMeasurer.start("project conversion");
+    Activity activity = StartUpMeasurer.startMainActivity("project conversion");
     ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
     if (conversionResult.openingIsCanceled()) {
@@ -846,7 +846,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.debug("projectOpened");
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
+    Activity activity = StartUpMeasurer.startMainActivity("project opened callbacks");
     getPublisher().projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages

@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.WindowsCommandLineListener;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 
 public final class MainRunner {
@@ -23,7 +23,7 @@ public final class MainRunner {
                             @NotNull LinkedHashMap<String, Long> startupTimings) {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
 
-    startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
+    startupStart = StartUpMeasurer.startMainActivity("app initialization preparation");
 
     Main.setFlags(args);
 
