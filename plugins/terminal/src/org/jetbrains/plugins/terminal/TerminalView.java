@@ -67,6 +67,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -152,14 +153,23 @@ public class TerminalView {
     createNewSession(terminalRunner, tabState, true);
   }
 
-  private void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
+  @NotNull
+  public ShellTerminalWidget createLocalShellWidget() {
+    JBTerminalWidget widget = createNewSession(myTerminalRunner, null, true);
+    return (ShellTerminalWidget)Objects.requireNonNull(widget);
+  }
+
+  @Nullable
+  private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window != null && window.isAvailable()) {
       // ensure TerminalToolWindowFactory.createToolWindowContent gets called
       ((ToolWindowImpl)window).ensureContentInitialized();
-      createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
+      Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
       window.activate(null);
+      return Objects.requireNonNull(getWidgetByContent(content));
     }
+    return null;
   }
 
   @NotNull
