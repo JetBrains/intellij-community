@@ -3,7 +3,10 @@ package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -19,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -133,10 +137,10 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return result;
   }
 
-  private static class CommitMessageInspectionToolSupplier extends InspectionToolsSupplier {
+  private static class CommitMessageInspectionToolSupplier implements Supplier<List<InspectionToolWrapper>> {
     @NotNull
     @Override
-    public List<InspectionToolWrapper> createTools() {
+    public List<InspectionToolWrapper> get() {
       return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
                        new CommitMessageSpellCheckingInspection())
                    .map(LocalInspectionToolWrapper::new)
