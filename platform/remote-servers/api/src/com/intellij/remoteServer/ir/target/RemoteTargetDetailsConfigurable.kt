@@ -25,16 +25,17 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
   : NamedConfigurable<RemoteTargetConfiguration>(true, null) {
 
   private val targetConfigurable: Configurable = doCreateConfigurable(config)
+  private val runtimeConfigurables = mutableListOf<Configurable>()
 
   override fun getBannerSlogan(): String = config.displayName
 
   override fun getIcon(expanded: Boolean): Icon? = config.getTypeImpl().icon
 
-  override fun isModified(): Boolean = targetConfigurable.isModified
+  override fun isModified(): Boolean = allConfigurables().any { it.isModified }
 
   override fun getDisplayName(): String = config.displayName
 
-  override fun apply() = targetConfigurable.apply()
+  override fun apply() = allConfigurables().forEach { it.apply() }
 
   override fun setDisplayName(name: String) {
     config.displayName = name
@@ -42,7 +43,7 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
 
   override fun disposeUIResources() {
     super.disposeUIResources()
-    targetConfigurable.disposeUIResources()
+    allConfigurables().forEach { it.disposeUIResources() }
   }
 
   override fun getEditableObject() = config
@@ -55,6 +56,7 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
 
     config.runtimes.resolvedConfigs().forEach {
       val nextConfigurable = doCreateConfigurable(it)
+      runtimeConfigurables.add(nextConfigurable)
       panel.add(nextConfigurable.createComponent())
     }
     panel.add(createAddRuntimeHyperlink())
@@ -90,6 +92,12 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
     return result
   }
 
+  private fun allConfigurables() = sequenceOf(targetConfigurable) + runtimeConfigurables.asSequence()
+
+  override fun resetOptionsPanel() {
+    runtimeConfigurables.clear()
+    super.resetOptionsPanel()
+  }
 
   private fun doCreateConfigurable(config: BaseExtendableConfiguration) =
     config.getTypeImpl().createConfigurable(project, config)
