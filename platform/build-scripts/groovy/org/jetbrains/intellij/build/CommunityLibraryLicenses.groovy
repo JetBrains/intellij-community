@@ -134,8 +134,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Apache Commons Lang", libraryName: "org.apache.commons:commons-lang3:3.9", attachedTo: "intellij.grazie",
                        version: "3.9", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "http://commons.apache.org/proper/commons-lang/"),
-    new LibraryLicense(name: "Apache Commons Lang 3", libraryName: "commons-lang3-3.2.1.jar", version: "3.2.1", license: "Apache 2.0",
-                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     new LibraryLicense(name: "Apache Commons Logging", libraryName: "commons-logging", version: "1.1.1", license: "Apache 2.0",
                        url: "http://commons.apache.org/logging/"),
     new LibraryLicense(name: "Apache Commons Net", libraryName: "commons-net", version: "3.3", license: "Apache 2.0",
