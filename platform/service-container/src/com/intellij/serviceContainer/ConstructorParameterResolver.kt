@@ -106,8 +106,8 @@ internal class ConstructorParameterResolver {
     }
 
     if (componentManager.isGetComponentAdapterOfTypeCheckEnabled) {
-      LOG.error("getComponentAdapterOfType is used to get ${expectedType.name} (requestorClass=${requestorClass.name}, requestorConstructor=${requestorConstructor})." +
-                "\n\nProbably constructor should be marked as NonInjectable.")
+      LOG.error(PluginException("getComponentAdapterOfType is used to get ${expectedType.name} (requestorClass=${requestorClass.name}, requestorConstructor=${requestorConstructor})." +
+                                "\n\nProbably constructor should be marked as NonInjectable.", pluginId))
     }
 
     val result = container.getComponentAdaptersOfType(expectedType)
