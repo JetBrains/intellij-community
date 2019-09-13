@@ -60,11 +60,12 @@ public class DataManagerImpl extends DataManager {
 
   @Nullable
   private Object getData(@NotNull String dataId, final Component focusedComponent) {
+    GetDataRule rule = getDataRule(dataId);
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       for (Component c = focusedComponent; c != null; c = c.getParent()) {
         final DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
-        Object data = getDataFromProvider(dataProvider, dataId, null);
+        Object data = getDataFromProvider(dataProvider, dataId, null, rule);
         if (data != null) return data;
       }
     }
@@ -73,6 +74,14 @@ public class DataManagerImpl extends DataManager {
 
   @Nullable
   public Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+    return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
+  }
+
+  @Nullable
+  private Object getDataFromProvider(@NotNull DataProvider provider,
+                                     @NotNull String dataId,
+                                     @Nullable Set<String> alreadyComputedIds,
+                                     @Nullable GetDataRule dataRule) {
     ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
@@ -81,7 +90,6 @@ public class DataManagerImpl extends DataManager {
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
-      GetDataRule dataRule = getDataRule(dataId);
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
         ids.add(dataId);
