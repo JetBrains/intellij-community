@@ -20,6 +20,8 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.util.stream.Collectors
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -695,6 +697,8 @@ class DistributionJARsBuilder {
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+      def whiteList = new File("$buildContext.paths.projectHome/build/plugins-autoupload-whitelist.txt").readLines()
+        .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
 
       pluginsToPublish.each { pluginAndPublishing ->
         def plugin = pluginAndPublishing.key
@@ -704,7 +708,10 @@ class DistributionJARsBuilder {
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
         String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
-        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading ? "$nonBundledPluginsArtifacts/auto-uploading" : nonBundledPluginsArtifacts
+        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading &&
+                              whiteList.contains(plugin.mainModule)
+          ? "$nonBundledPluginsArtifacts/auto-uploading"
+          : nonBundledPluginsArtifacts
         def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
