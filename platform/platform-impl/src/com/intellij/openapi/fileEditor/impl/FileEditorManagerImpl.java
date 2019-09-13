@@ -98,7 +98,7 @@ import java.util.concurrent.atomic.AtomicInteger;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
+  private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
@@ -113,7 +113,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<>(null);
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true,
-                                                                    MergingUpdateQueue.ANY_COMPONENT);
+                                                                    MergingUpdateQueue.ANY_COMPONENT, this);
 
   private final BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
 
@@ -131,8 +131,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
     myDockManager = DockManager.getInstance(myProject);
-    myListenerList =
-      new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+    myListenerList = new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
     if (FileEditorAssociateFinder.EP_NAME.hasAnyExtensions()) {
       myListenerList.add(new FileEditorManagerListener() {
@@ -146,15 +145,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     myQueue.setTrackUiActivity(true);
 
-    final MessageBusConnection connection = project.getMessageBus().connect();
+    MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (!myProject.isDisposed())
-            dumbModeFinished(myProject);
-        });
+          dumbModeFinished(myProject);
+        }, myProject.getDisposed());
       }
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -1412,7 +1410,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final EditorComposite composite = getEditorComposite(editor);
+    EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.removeBottomComponent(editor, component);
     }
@@ -1421,17 +1419,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private final MessageListenerList<FileEditorManagerListener> myListenerList;
 
   @Override
-  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.add(listener);
   }
 
   @Override
-  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, @NotNull final Disposable parentDisposable) {
-    myListenerList.add(listener, parentDisposable);
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
+    myProject.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
   }
 
   @Override
-  public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
+  public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.remove(listener);
   }
 
